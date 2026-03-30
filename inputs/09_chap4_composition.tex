@@ -1,0 +1,78 @@
+\section*{4.2 Composition of Measurable Functions}
+
+Given a function $f$ mapping from domain $\Omega$ to $\Omega'$, the inverse image of a set $A$ in $\Omega'$ is defined as the set of elements $x \in \Omega$ such that $f(x) \in A$, i.e.,
+\[
+f^{-1}(A) \triangleq \{x \in \Omega : f(x) \in A\}.
+\]
+We remark that the function $f$ need not be an injective function. The mapping above is defined for any function $f$.
+
+The inverse image function enjoys several nice properties.
+
+\begin{thmbox}{4.2}
+Suppose $f : \Omega \to \Omega'$ and $A$ is any set in $\Omega'$. Then we have:
+\begin{enumerate}
+    \item 
+    \begin{equation}
+    f^{-1}(A^c) = (f^{-1}(A))^c, \tag{4.1}
+    \end{equation}
+    where $A^c$ denotes the complement of $A$ in $\Omega'$, and $(f^{-1}(A))^c$ denotes the complement of $f^{-1}(A)$ in $\Omega$.
+    \item If $(A_i)_{i \in I}$ is any collection of sets in $\Omega'$, then
+    \begin{align}
+    f^{-1}(\cap_{i \in I} A_i) &= \bigcap_{i \in I} f^{-1}(A_i), \tag{4.2} \\
+    f^{-1}(\cup_{i \in I} A_i) &= \bigcup_{i \in I} f^{-1}(A_i). \tag{4.3}
+    \end{enumerate}
+    The index set $I$ can be uncountably infinite.
+    \item If $h$ is the composition $g \circ f$, then $h^{-1}(B) = f^{-1}(g^{-1}(B))$ for any subset $B$ of the codomain of $g$.
+\end{enumerate}
+\end{thmbox}
+
+
+\noindent\textit{Proof} We will prove part 1 and leave parts 2 and 3 as exercise.
+
+Let $A$ be any set in $\Omega'$. By definition, $f^{-1}(A)$ consists of all elements $x$ in $A$ such that $f(x)$ is an element in $A$. Therefore, any element $x'$ that is not in $f^{-1}(A)$ does not satisfy $f(x') \in A$. Equivalently, any element $x'$ in the complement of $f^{-1}(A)$ must satisfy $f(x') \in A^c$. This proves that $(f^{-1}(A))^c \subseteq f^{-1}(A^c)$.
+
+Conversely, let $x$ be any element in $f^{-1}(A^c)$. Then $f(x)$ is an element in $A^c$, which implies that $f(x)$ cannot be an element in $A$. Therefore, $x$ must be in the complement of $f^{-1}(A)$. This proves that $f^{-1}(A^c) \subseteq (f^{-1}(A))^c$.
+
+Hence, we have shown that $f^{-1}(A^c) = (f^{-1}(A))^c$. \hfill $\blacksquare$
+
+We give several simple but important properties of measurable functions. The first one is about the composition of two measurable functions.
+
+\begin{thmbox}{4.3 (Composition of Measurable Functions)}
+Suppose $f : (\Omega, \mathcal{F}) \to (\Omega', \mathcal{G})$ is $(\mathcal{F}, \mathcal{G})$-measurable, and $g : (\Omega', \mathcal{G}) \to (\Omega'', \mathcal{H})$ is $(\mathcal{G}, \mathcal{H})$-measurable. Then the composed function $h = g \circ f$ is $(\mathcal{F}, \mathcal{H})$-measurable.
+\end{thmbox}
+
+\noindent\textit{Proof} Suppose $A$ is a set in $\mathcal{H}$. Because $g$ is $(\mathcal{G}, \mathcal{H})$-measurable, the pre-image $g^{-1}(A)$ is in $\mathcal{G}$. Because $f$ is $(\mathcal{F}, \mathcal{G})$-measurable, we have $f^{-1}(g^{-1}(A))$ in $\mathcal{F}$. The proof is completed by noting that $h^{-1}(A) = f^{-1}(g^{-1}(A))$. \hfill $\blacksquare$
+
+Some analysis textbooks state that the composition of two measurable functions may not be measurable. However, this statement refers specifically to the Lebesgue $\sigma$-field, which is larger than the Borel $\sigma$-field used in the definition of measurability in Theorem 4.3. The Lebesgue $\sigma$-field on $\mathbb{R}$, which we denote by $\mathcal{L}(\mathbb{R})$, is a complete measure constructed using the outer measure and is much larger than the Borel algebra. The statement in those analysis textbook is in fact ``if $f$ and $g$ are $(\mathcal{L}(\mathbb{R}), \mathcal{B}(\mathbb{R}))$-measurable, then the composition $g \circ f$ may not be $(\mathcal{L}(\mathbb{R}), \mathcal{B}(\mathbb{R}))$-measurable''. This makes sense because, for any Borel set $B$, the inverse image $f^{-1}(B)$ in general is a set in $\mathcal{L}(\mathbb{R})$ and may not be in $\mathcal{B}(\mathbb{R})$. However, the $\sigma$-fields in Theorem 4.3 are explicitly given, and there is no such mismatch.
+
+As an example, let $N$ denote a null set in $\mathbb{R}$ that is not Borel measurable, such as a non-Borel measurable subset of the Cantor set (See Sect. 3.4). Because the Lebesgue $\sigma$-algebra is complete with respect to the Lebesgue measure, the null set $N$ is in $\mathcal{L}(\mathbb{R})$, but not in $\mathcal{B}(\mathbb{R})$. Suppose $f(x) = x^2$ is the square function, and $g(x) = \mathbf{1}_N(x)$ be the indicator function of $N$. Then there is no guarantee that the composition $g \circ f$ is $(\mathcal{L}(\mathbb{R}), \mathcal{B}(\mathbb{R}))$-measurable.
+
+In fact, the compositionality of the measurable functions makes the collection of all measurable spaces a category.
+\textbf{The Category of Measurable Spaces} \\
+In category theory, a category is a collection of objects and morphisms that describe the relationships among the objects. We can view probability spaces as the objects of a category, and the random variables as the morphisms between them. Theorem 4.3 states that the category of measurable spaces and measurable functions is closed under composition. By viewing measurable spaces and measurable functions as objects and morphisms in a category, we can apply the tools of category theory to gain deeper understanding of random variables.
+
+The next property provides an effective way to check measurability.
+
+\begin{thmbox}{4.4}
+Let $f : (\Omega, \mathcal{F}) \to (\Omega', \mathcal{G})$ be a function, and let $\mathcal{C}$ be a generating set of $\mathcal{G}$, i.e., $\sigma(\mathcal{C}) = \mathcal{G}$. Then, $f$ is $(\mathcal{F}, \mathcal{G})$-measurable if and only if $f^{-1}(A) \in \mathcal{F}$ for all $A \in \mathcal{C}$.
+\end{thmbox}
+
+\noindent\textit{Proof} The ``only if'' part follows directly from the definition of measurable functions. To prove the other direction, suppose $f^{-1}(A) \in \mathcal{F}$ for all $A \in \mathcal{C}$. Let
+\[
+\mathcal{H} \triangleq \{B \subseteq \Omega' : f^{-1}(B) \in \mathcal{F}\}.
+\]
+We claim that $\mathcal{H}$ is a $\sigma$-field containing $\mathcal{C}$.
+
+To see this, note that $\Omega'$ is in $\mathcal{H}$ since $f^{-1}(\Omega') = \Omega$. Moreover, if $B \in \mathcal{H}$, then $f^{-1}(B) \in \mathcal{F}$, and by (4.1), we have $f^{-1}(B^c) = (f^{-1}(B))^c$, proving that $f^{-1}(B^c)$ is in $\mathcal{F}$, and hence, $B^c$ is in $\mathcal{H}$. Similarly, by applying (4.2) and (4.3), we can show that $\mathcal{H}$ is closed under countable intersection and countable union. This proves that $\mathcal{H}$ is a $\sigma$-field.
+
+By assumption $\mathcal{H}$ contains all sets in $\mathcal{C}$. Hence, $\mathcal{C} \subseteq \sigma(\mathcal{C}) \subseteq \mathcal{H}$. Since $\mathcal{G}$ is the same as $\sigma(\mathcal{C})$, we get $\mathcal{G} = \sigma(\mathcal{C}) \subseteq \mathcal{H}$, i.e., every set in $\mathcal{G}$ is in $\mathcal{H}$. By the definition of $\mathcal{H}$, we obtain $f^{-1}(A) \in \mathcal{F}$ for any set $A$ in $\mathcal{G}$. \hfill $\blacksquare$
+
+We note that this is an indirect proof, as there is no explicit description of all Borel sets. For concreteness, we present the following theorem for functions with domain $\mathbb{R}^m$ and codomain $\mathbb{R}^n$. The result holds for more general topological spaces.
+
+\begin{thmbox}{4.5}
+A continuous function $f : \mathbb{R}^m \to \mathbb{R}^n$ is $(\mathcal{B}(\mathbb{R}^m), \mathcal{B}(\mathbb{R}^n))$-measurable. In particular, a continuous real-valued function $f : \mathbb{R}^m \to \mathbb{R}$ is measurable.
+\end{thmbox}
+
+\noindent\textit{Proof} Recall that $\mathcal{B}(\mathbb{R}^n)$ is the smallest $\sigma$-algebra containing all open balls in $\mathbb{R}^n$ (see Definition 2.8). Since $f$ is continuous, the inverse image of any open ball under $f$ is an open set in $\mathbb{R}^m$, which belongs to $\mathcal{B}(\mathbb{R}^m)$. Hence, by Theorem 4.4, $f$ is $(\mathcal{B}(\mathbb{R}^m), \mathcal{B}(\mathbb{R}^n))$-measurable. \hfill $\blacksquare$
+
+This theorem says that the class of measurable functions is generally larger than the class of continuous functions.

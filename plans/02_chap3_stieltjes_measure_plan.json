@@ -1,0 +1,84 @@
+[
+    {
+        "block_id": "remark_3_2_1",
+        "type": "Remark",
+        "title": "Introduction to Stieltjes Measure Function",
+        "content": "\\section*{3.2 Stieltjes Measure Function}\n\nWe begin by considering a probability space $(\\mathbb{R}, \\mathcal{B}(\\mathbb{R}), P)$ defined on the real number line $\\mathbb{R}$, equipped with the Borel algebra $\\mathcal{B}(\\mathbb{R})$. The distribution function provides a convenient way to visualize a probability measure.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "02_chap3_stieltjes_measure"
+    },
+    {
+        "block_id": "def_3_4",
+        "type": "Definition",
+        "title": "Definition 3.4 (Distribution Function)",
+        "content": "\\begin{defbox}{3.4}\nLet $(\\mathbb{R}, \\mathcal{B}(\\mathbb{R}), P)$ be a probability space. The \\textit{distribution function} induced by $P$ is defined as\n\\[\nF(x) \\triangleq P((-\\infty, x]) \\qquad \\text{for } x \\in \\mathbb{R}.\n\\]\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "02_chap3_stieltjes_measure"
+    },
+    {
+        "block_id": "remark_3_2_2",
+        "type": "Remark",
+        "title": "Distribution Function Vs. Cumulative Distribution Function",
+        "content": "\\textbf{Distribution Function Vs. Cumulative Distribution Function} The function $F(x)$ in Definition 3.4 is very similar to the cumulative distribution function (cdf) of a random variable. The main difference is that a cdf is defined for a random variable, whereas a distribution function is defined for a probability measure.\n\n\\textbf{Convention} \\\\\nSome people prefer to define the distribution function using open intervals of the form $(-\\infty, x)$, instead of the left-open-right-closed intervals $(-\\infty, x]$. In this case, the distribution function is defined as $P((-\\infty, x))$ for $x \\in \\mathbb{R}$. The choice between using one type of intervals or the other is a matter of convention.",
+        "dependencies": [
+            "def_3_4"
+        ],
+        "is_renowned": false,
+        "source_plan": "02_chap3_stieltjes_measure"
+    },
+    {
+        "block_id": "thm_3_2",
+        "type": "Theorem_with_Proof",
+        "title": "Theorem 3.2 (Properties of Distribution Function)",
+        "content": "\\begin{thmbox}{3.2}\nThe distribution function $F(x)$ of a probability measure satisfies the following properties:\n\\begin{enumerate}\n    \\item $F(x)$ is non-decreasing.\n    \\item $F(x)$ is continuous from the right.\n    \\item $\\lim_{x \\to \\infty} F(x) = 1$.\n    \\item $\\lim_{x \\to -\\infty} F(x) = 0$.\n\\end{enumerate}\n\\end{thmbox}\n\n\\noindent\\textit{Proof} Property 1 follows from the monotonic property of measure. Property 2 is a consequence of the upper semi-continuity. If $(x_i)_{i=1}^{\\infty}$ is a decreasing sequence converging to $x$ from the right, then $(-\\infty, x_i]$ is a decreasing sequence of sets, and the intersection is $(-\\infty, x]$. Hence, $\\lim_{i \\to \\infty} F(x_i) = \\lim_{i \\to \\infty} P((-\\infty, x_i]) = P((-\\infty, x]) = F(x)$. Properties 3 and 4 also follow from semi-continuity properties of probability measure. \\hfill $\\blacksquare$",
+        "dependencies": [
+            "def_3_4"
+        ],
+        "is_renowned": false,
+        "source_plan": "02_chap3_stieltjes_measure"
+    },
+    {
+        "block_id": "remark_3_2_3",
+        "type": "Remark",
+        "title": "Motivation for Stieltjes Measure Function",
+        "content": "Motivated by the previous theorem, we define a Stieltjes measure function in general.",
+        "dependencies": [
+            "thm_3_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "02_chap3_stieltjes_measure"
+    },
+    {
+        "block_id": "def_3_5",
+        "type": "Definition",
+        "title": "Definition 3.5 (Stieltjes Measure Function)",
+        "content": "\\begin{defbox}{3.5}\nA function $F: \\mathbb{R} \\to \\mathbb{R}$ is called a \\textit{Stieltjes measure function} if:\n\\begin{enumerate}\n    \\item $F$ is non-decreasing.\n    \\item $F$ is continuous from the right, i.e., $\\lim_{y \\to x^+} F(y) = F(x)$ for all $x \\in \\mathbb{R}$.\n\\end{enumerate}\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "02_chap3_stieltjes_measure"
+    },
+    {
+        "block_id": "remark_3_2_4",
+        "type": "Remark",
+        "title": "Properties of Stieltjes Measure Function",
+        "content": "A Stieltjes measure function does not necessarily have a density function on the real number line. However, if $F$ is both continuous and differentiable, then the derivative $f(x) = F'(x)$ is a density function, and an interval $[a, b]$ in the real number line has measure $\\int_{a}^{b} f(x) \\, dx$.\n\nIn general, as we will show in the next section, a Stieltjes measure function defines a measure on the Borel algebra of $\\mathbb{R}$, called the Lebesgue--Stieltjes measure, which assigns to each left-open-right-closed interval $(a, b]$ the value $F(b) - F(a)$.",
+        "dependencies": [
+            "def_3_5"
+        ],
+        "is_renowned": false,
+        "source_plan": "02_chap3_stieltjes_measure"
+    },
+    {
+        "block_id": "ex_3_2_1",
+        "type": "Example_Proof",
+        "title": "Example 3.2.1 (Examples of Stieltjes Measure Functions)",
+        "content": "\\textbf{Example 3.2.1 (Examples of Stieltjes Measure Functions)}\n\\begin{enumerate}\n    \\item The identity function $F(x) = x$ is a Stieltjes measure function, since it is both continuous and non-decreasing.\n    \\item Fix a constant $x_0$. The function\n    \\[\n    F(x) = \\begin{cases} 1 & \\text{if } x \\ge x_0 \\\\ 0 & \\text{if } x < x_0 \\end{cases}\n    \\]\n    defines a Stieltjes measure function. The function $F(x)$ is continuous everywhere except at $x = x_0$, where it has a discontinuity jump.\n    \\item The cumulative distribution function $F(x)$ of the standard normal distribution\n    \\[\n    F(x) = \\int_{-\\infty}^{x} \\frac{1}{\\sqrt{2\\pi}} e^{-t^2/2} \\, dt\n    \\]\n    is a Stieltjes measure function. In fact, if $f(x)$ is the pdf of any continuous-type distribution, the function $F(x) = \\int_{-\\infty}^{x} f(t) \\, dt$ is a Stieltjes measure function.\n\\end{enumerate}",
+        "dependencies": [
+            "def_3_5"
+        ],
+        "is_renowned": false,
+        "source_plan": "02_chap3_stieltjes_measure"
+    }
+]

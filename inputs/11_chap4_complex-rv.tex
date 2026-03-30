@@ -1,0 +1,87 @@
+\section*{4.4 Complex-Valued Random Variables}
+
+A \textit{complex number} $z$ is an expression in the form $a + bi$, where $a$ and $b$ are real numbers and $i$ is a symbol that satisfies $i^2 = -1$. The \textit{real part} $a$ of $z$ is denoted by $\text{Re}(z)$ and the \textit{imaginary part} $b$ by $\text{Im}(z)$. The set of all complex numbers is denoted by $\mathbb{C}$. We can identify the complex numbers with the two-dimensional space $\mathbb{R}^2$, where the real part corresponds to the $x$-axis and the imaginary part corresponds to the $y$-axis. Using this identification, the Borel algebra of $\mathbb{C}$ is the same as the Borel algebra of $\mathbb{R}^2$. For example, we can generate the Borel algebra of $\mathbb{C}$ by open rectangles in the form
+\[
+\{x + yi \in \mathbb{C} : a < x < b, \ c < y < d\},
+\]
+where $a < b$ and $c < d$ are real numbers.
+
+The addition of complex numbers is equivalent to vector addition.
+\[
+(a + bi) + (c + di) = (a + c) + (b + d)i.
+\]
+The absolute value (also known as \textit{modulus} or \textit{magnitude}) of $z$ is the length of the vector $(a, b)$ and is defined as $|z| = \sqrt{a^2 + b^2}$. The absolute value satisfies the triangle inequality,
+\[
+|z_1 + z_2| \le |z_1| + |z_2|.
+\]
+We perform complex multiplication by expanding
+\[
+(a + bi)(c + di) = ac + ibc + iad + i^2bd = (ac - bd) + i(bc + ad).
+\]
+The \textit{conjugate} of $z$ denoted by $(a + bi)^* \triangleq a - bi$ is the reflection of $z$ along the real axis.
+
+Suppose we have a probability space $(\Omega, \mathcal{F}, P)$. A \textit{complex random variable} is a complex-valued function from $\Omega$ to $\mathbb{C}$ such that the inverse image $X^{-1}(B)$ is in $\mathcal{F}$ for all $B$ in $\mathcal{B}(\mathbb{C})$. A complex random variable $Z(\omega)$ can be represented as $X(\omega) + iY(\omega)$, where $X(\omega)$ and $Y(\omega)$ are real-valued functions. We can see that $X(\omega)$ and $Y(\omega)$ are measurable by observing that the real and imaginary parts of a complex number $z$ can be obtained as $\text{Re}(z) = (z + z^*)/2$ and $\text{Im}(z) = (z - z^*)/(2i)$, respectively. Furthermore, since $Z(\omega)^*$ is the composition of the measurable function $Z$ and a continuous reflection, we have
+\[
+Z(\omega) \text{ is measurable} \implies Z(\omega)^* \text{ is measurable}.
+\]
+Consequently, the real part $\text{Re}(Z) = (Z + Z^*)/2$ and imaginary part $\text{Im}(Z) = (Z - Z^*)/(2i)$ are both measurable if $Z$ is measurable and \textit{vice versa}.
+
+We can represent a complex number $z = a + bi$ in polar form as
+\[
+z = r \cos \theta + ir \sin \theta,
+\]
+where $r = \sqrt{a^2 + b^2}$ is called the \textit{radius}, and $\theta$ is the \textit{argument} or \textit{phase}. We denote the radius and argument of a complex number $z$ by $|z|$ and $\arg(z)$, respectively. Note that the argument $\arg(z)$ has a $2\pi$ ambiguity when $r > 0$. When $r = 0$, the argument is undefined. When two complex numbers are given in polar form, we can compute their product as follows:
+\[
+(r_1 \cos \theta_1 + ir_1 \sin \theta_1)(r_2 \cos \theta_2 + ir_2 \sin \theta_2) = r_1 r_2 (\cos(\theta_1 + \theta_2) + i \sin(\theta_1 + \theta_2)).
+\]
+Using Euler's formula
+\[
+e^{i\theta} = \cos \theta + i \sin \theta,
+\]
+complex multiplication can be simplified as
+\[
+(r_1 e^{i\theta_1})(r_2 e^{i\theta_2}) = r_1 r_2 e^{i(\theta_1 + \theta_2)}.
+\]
+We can represent a complex-valued random variable $Z(\omega)$ in polar form as
+\[
+Z(\omega) = R(\omega) e^{i\Theta(\omega)},
+\]
+where $R(\omega)$ is a nonnegative function, and $\Theta(\omega)$ takes values in the quotient group $\mathbb{R}/(2\pi\mathbb{Z})$. Geometrically, we can visualize this quotient group as a circle with circumference $2\pi$.
+
+\textbf{Example 4.4.1 (Unit Disc in Complex Plane)} \\
+Suppose $Z(\omega)$ is a complex random variable that is uniformly distributed inside the unit disc
+\[
+D \triangleq \{z \in \mathbb{C} : |z| < 1\}
+\]
+in the complex plane. By symmetry, the argument $\Theta(\omega)$ is uniformly distributed between 0 and $2\pi$. The radius is distributed between 0 and 1 with cumulative distribution function
+\[
+F(r) \triangleq \text{Pr}(|Z(\omega)| < r) = \frac{2\pi r^2}{2\pi (1)^2} = r^2,
+\]
+for $0 \le r \le 1$.
+
+\textbf{Example 4.4.2 (Eigenvalue of Random Matrix)} \\
+Consider $2 \times 2$ skew-symmetric matrix
+\[
+\begin{bmatrix} 0 & X(\omega) \\ -X(\omega) & 0 \end{bmatrix},
+\]
+where $X(\omega)$ is a real-valued random variable distributed according to the standard Gaussian distribution. For any fixed $\omega \in \Omega$, we can compute the eigenvalues of this random matrix, and they are the roots of the characteristic polynomial
+\[
+\det \begin{bmatrix} -\lambda & X(\omega) \\ -X(\omega) & -\lambda \end{bmatrix} = \lambda^2 + X(\omega)^2.
+\]
+Hence, the eigenvalues are $iX(\omega)$ and $-iX(\omega)$. The two eigenvalues are complex random variables.
+
+\textbf{Example 4.4.3 (Complex Gaussian Random Variable)} \\
+The standard complex Gaussian random variable is defined as a complex random variable whose real part and imaginary part are independent real-valued normal random variables with mean 0 and variance $1/2$. We use the notation $Z \sim \mathcal{CN}(0, 1)$ if $Z$ is a complex-valued random variable distributed according to the standard complex Gaussian distribution. The variance of $Z$ is equal to $E[\text{Re}(Z)^2 + \text{Im}(Z)^2] = 1$.
+
+A complex Gaussian random variable $Z$ is \textit{circularly symmetric}, which means that its probability distribution is invariant under rotations in the complex plane, i.e., for any real number $\theta$, the complex random variable $e^{i\theta}Z$ has the same distribution as $Z$. The complex Gaussian distribution is commonly used to model additive noise in wireless communication. Using Python, we can generate $Z \in \mathcal{CN}(0, 1)$ using the following commands:
+
+\begin{verbatim}
+from numpy import random
+Z = random.normal(0,1/2) + random.normal(0,1/2)*1j
+print(Z)  # print the random sample
+\end{verbatim}
+
+A sample output is
+\begin{verbatim}
+(-0.2916888782004312+0.4270105512204956j)
+\end{verbatim}

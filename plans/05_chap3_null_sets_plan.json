@@ -1,0 +1,53 @@
+[
+    {
+        "block_id": "remark_3_4_intro",
+        "type": "Remark",
+        "title": "Introduction to Null Sets",
+        "content": "\\section*{3.4 Null Sets and Complete Measures}\n\nConsider a probability space $(\\Omega, \\mathcal{F}, P)$. If an event $E$ has probability zero, we might expect that all subsets of $E$ also have probability zero. However, in some cases, not all subsets of a set are measurable, and therefore, we cannot assign any measure to them. To address this issue, we introduce the following definitions.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "05_chap3_null_sets"
+    },
+    {
+        "block_id": "def_3_9",
+        "type": "Definition",
+        "title": "Definition 3.9 (Null Set and Complete Measure Space)",
+        "content": "\\begin{defbox}{3.9}\nGiven a measure space $(\\Omega, \\mathcal{F}, \\mu)$, we define a set $N \\subseteq \\Omega$ as a \\textit{null set} if there exists a set $E \\in \\mathcal{F}$ such that $N \\subseteq E$ and $\\mu(E) = 0$. Note that $N$ need not be $\\mathcal{F}$-measurable. The measure space $(\\Omega, \\mathcal{F}, \\mu)$ is said to be \\textit{complete} if all null sets are indeed $\\mathcal{F}$-measurable.\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "05_chap3_null_sets"
+    },
+    {
+        "block_id": "remark_null_sets_cardinality",
+        "type": "Remark",
+        "title": "Remarks on Null Sets and Cardinality",
+        "content": "The concept of a null set depends on the choice of measure $\\mu$. A set may be a null set under one measure $\\mu$ but is not a null set under another measure $\\nu$.\n\nUsing cardinality argument, one can demonstrate the existence of null sets with respect to the Lebesgue measure that are not Borel sets. Let $\\mathfrak{c}$ denote the cardinality of $\\mathbb{R}$. One can prove that there are $\\mathfrak{c}$ Borel subsets of $\\mathbb{R}$, while the Cantor set has cardinality $\\mathfrak{c}$ and $2^{\\mathfrak{c}}$ subsets. Therefore, there must be a subset of the Cantor set that is not measurable with respect to the Lebesgue measure. However, the proof of this result requires more advanced set theory and is beyond the scope of this book.\n\nTo address the issue of non-measurable null sets, we can construct a completion of the measure space.",
+        "dependencies": [
+            "def_3_9"
+        ],
+        "is_renowned": false,
+        "source_plan": "05_chap3_null_sets"
+    },
+    {
+        "block_id": "thm_3_6",
+        "type": "Theorem_Statement",
+        "title": "Theorem 3.6 (Completion of a Measure Space)",
+        "content": "\\begin{thmbox}{3.6}\nLet $(\\Omega, \\mathcal{F}, \\mu)$ be a measure space and $\\mathcal{N}$ be the set of all null sets. We can define a new collection of sets\n\\[\n\\mathcal{F}' \\triangleq \\{A \\cup N : A \\in \\mathcal{F} \\text{ and } N \\in \\mathcal{N}\\}.\n\\]\nWe can extend the measure $\\mu$ to a measure on $\\mathcal{F}'$, denoted by $\\mu'$, by\n\\[\n\\mu'(A \\cup N) \\triangleq \\mu(A),\n\\]\nand the extended measure space $(\\Omega, \\mathcal{F}', \\mu')$ is complete.\n\\end{thmbox}",
+        "dependencies": [
+            "def_3_9"
+        ],
+        "is_renowned": false,
+        "source_plan": "05_chap3_null_sets"
+    },
+    {
+        "block_id": "remark_completion_wlog",
+        "type": "Remark",
+        "title": "Concluding Remark on Complete Measures",
+        "content": "By enlarging the $\\sigma$-field in this way, we may assume that the measure is complete without loss of generality.",
+        "dependencies": [
+            "thm_3_6"
+        ],
+        "is_renowned": false,
+        "source_plan": "05_chap3_null_sets"
+    }
+]

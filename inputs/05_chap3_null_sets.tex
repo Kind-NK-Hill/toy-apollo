@@ -1,0 +1,27 @@
+\section*{3.4 Null Sets and Complete Measures}
+
+Consider a probability space $(\Omega, \mathcal{F}, P)$. If an event $E$ has probability zero, we might expect that all subsets of $E$ also have probability zero. However, in some cases, not all subsets of a set are measurable, and therefore, we cannot assign any measure to them. To address this issue, we introduce the following definitions.
+
+\begin{defbox}{3.9}
+Given a measure space $(\Omega, \mathcal{F}, \mu)$, we define a set $N \subseteq \Omega$ as a \textit{null set} if there exists a set $E \in \mathcal{F}$ such that $N \subseteq E$ and $\mu(E) = 0$. Note that $N$ need not be $\mathcal{F}$-measurable. The measure space $(\Omega, \mathcal{F}, \mu)$ is said to be \textit{complete} if all null sets are indeed $\mathcal{F}$-measurable.
+\end{defbox}
+
+The concept of a null set depends on the choice of measure $\mu$. A set may be a null set under one measure $\mu$ but is not a null set under another measure $\nu$.
+
+Using cardinality argument, one can demonstrate the existence of null sets with respect to the Lebesgue measure that are not Borel sets. Let $\mathfrak{c}$ denote the cardinality of $\mathbb{R}$. One can prove that there are $\mathfrak{c}$ Borel subsets of $\mathbb{R}$, while the Cantor set has cardinality $\mathfrak{c}$ and $2^{\mathfrak{c}}$ subsets. Therefore, there must be a subset of the Cantor set that is not measurable with respect to the Lebesgue measure. However, the proof of this result requires more advanced set theory and is beyond the scope of this book.
+
+To address the issue of non-measurable null sets, we can construct a completion of the measure space.
+
+\begin{thmbox}{3.6}
+Let $(\Omega, \mathcal{F}, \mu)$ be a measure space and $\mathcal{N}$ be the set of all null sets. We can define a new collection of sets
+\[
+\mathcal{F}' \triangleq \{A \cup N : A \in \mathcal{F} \text{ and } N \in \mathcal{N}\}.
+\]
+We can extend the measure $\mu$ to a measure on $\mathcal{F}'$, denoted by $\mu'$, by
+\[
+\mu'(A \cup N) \triangleq \mu(A),
+\]
+and the extended measure space $(\Omega, \mathcal{F}', \mu')$ is complete.
+\end{thmbox}
+
+By enlarging the $\sigma$-field in this way, we may assume that the measure is complete without loss of generality.
