@@ -1,0 +1,72 @@
+{
+  "generated_at": "2026-03-30T21:45:00+08:00",
+  "workspace_scanned": "D:/Grad_Study/Practimum/toy_apollo",
+  "items": [
+    {
+      "path": "output_lean_files",
+      "type": "dir",
+      "files": 185,
+      "size_bytes": 269325
+    },
+    {
+      "path": "formalized_chapters",
+      "type": "dir",
+      "files": 11,
+      "size_bytes": 185835
+    },
+    {
+      "path": "reports",
+      "type": "dir",
+      "files": 15,
+      "size_bytes": 56662
+    },
+    {
+      "path": "error_logs",
+      "type": "dir",
+      "files": 251,
+      "size_bytes": 5481382
+    },
+    {
+      "path": "error_logs_1",
+      "type": "dir",
+      "files": 139,
+      "size_bytes": 3052086
+    },
+    {
+      "path": "aristotle_outbox",
+      "type": "dir",
+      "files": 721,
+      "size_bytes": 1090388
+    },
+    {
+      "path": "aristotle_archives",
+      "type": "dir",
+      "files": 13276,
+      "size_bytes": 359975033
+    },
+    {
+      "path": "aristole-example-outputs",
+      "type": "dir",
+      "files": 80494,
+      "size_bytes": 7626304075
+    },
+    {
+      "path": "mathlib_index.faiss",
+      "type": "file",
+      "files": 1,
+      "size_bytes": 360004653
+    },
+    {
+      "path": "mathlib_corpus.json",
+      "type": "file",
+      "files": 1,
+      "size_bytes": 149603525
+    },
+    {
+      "path": "project_ledger.json",
+      "type": "file",
+      "files": 1,
+      "size_bytes": 56640
+    }
+  ]
+}

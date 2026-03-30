@@ -1,0 +1,36 @@
+{
+  "generated_at": "2026-03-30T21:45:00+08:00",
+  "workspace_scanned": "D:/Grad_Study/Practimum/toy_apollo",
+  "items": [
+    {
+      "path": "archieve_2",
+      "type": "dir",
+      "files": 86,
+      "size_bytes": 144355
+    },
+    {
+      "path": "archive_old",
+      "type": "dir",
+      "files": 72,
+      "size_bytes": 181805
+    },
+    {
+      "path": "research_notes",
+      "type": "dir",
+      "files": 13,
+      "size_bytes": 522712
+    },
+    {
+      "path": "aristotle_archives",
+      "type": "dir",
+      "files": 13276,
+      "size_bytes": 359975033
+    },
+    {
+      "path": "aristole-example-outputs",
+      "type": "dir",
+      "files": 80494,
+      "size_bytes": 7626304075
+    }
+  ]
+}

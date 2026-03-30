@@ -2,6 +2,8 @@
 .repl_tmp/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 output_lean_files/
 formalized_chapters/
 reports/
@@ -10,9 +12,12 @@ error_logs_1/
 aristotle_outbox/
 aristotle_archives/
 aristole-example-outputs/
+archive_old/
+archieve_2/
 mathlib_index.faiss
 mathlib_corpus.json
 project_ledger.json
 lab_notebook.json
 _migration_*/
 _rollback/
+_tmp_artifacts/

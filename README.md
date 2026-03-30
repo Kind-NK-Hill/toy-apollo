@@ -25,6 +25,13 @@ $env:MODEL_NAME="gemini-3-flash-preview"
 $env:ARCHITECT_MODEL_NAME="gemini-3-pro-preview"
 ```
 
+可选路径覆盖（不改 CLI，用于 artifacts 分仓）：
+
+```powershell
+$env:TOY_APOLLO_RUNTIME_ROOT="D:\Grad_Study\Practimum\toy_apollo\_migration_20260330_211429\toy-apollo"
+$env:TOY_APOLLO_ARTIFACT_ROOT="D:\Grad_Study\Practimum\toy_apollo\_migration_20260330_211429\toy-apollo-artifacts"
+```
+
 4. 查看命令帮助：
 
 ```powershell
@@ -45,3 +52,5 @@ python .\run_chapter.py --status
 
 - 本仓库只保留源码、配置和最小输入。
 - 运行产物（输出、日志、归档、大文件）应进入 `toy-apollo-artifacts` 仓库。
+- 一键同步脚本：`.\tools\sync_artifacts.ps1 -Mode push|pull`
+- 仓库卫生检查：`python .\tools\check_repo_hygiene.py`
