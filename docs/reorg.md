@@ -46,6 +46,7 @@ Current `src/*.py` modules remain active as compatibility shims for one migratio
 - Keep phase boundaries unchanged.
 - Document setup/runbook in `README.md` and this file.
 - Keep `AGENTS.md` as the engineering contract.
+- Current key policy for this stage: keep hardcoded defaults in `src/config.py`; env vars are optional overrides.
 - New environment variable overrides:
   - `TOY_APOLLO_RUNTIME_ROOT`
   - `TOY_APOLLO_ARTIFACT_ROOT`

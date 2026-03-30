@@ -31,9 +31,10 @@
 - 可选环境变量覆盖：
   - `TOY_APOLLO_RUNTIME_ROOT`
   - `TOY_APOLLO_ARTIFACT_ROOT`
-- 密钥只允许环境变量：
-  - `GOOGLE_API_KEY`
-  - `ARISTOTLE_API_KEY`
+- 密钥策略（结构收尾阶段默认）：
+  - `src/config.py` 保留硬编码默认 key（与 legacy 仓一致）。
+  - 如设置同名环境变量（`GOOGLE_API_KEY` / `ARISTOTLE_API_KEY`），优先使用环境变量覆盖。
+  - 仅在后续“安全加固计划”中再迁移为纯环境变量策略。
 
 ## D. 禁改区与风险区
 
@@ -151,7 +152,7 @@
 - 仓库当前是重度 dirty 状态（大量 `D`/`??`），执行 Git 操作前先明确“保留/清理”策略。
 
 ## 9) 建议的下一步（按优先级）
-1. 先把密钥迁移到环境变量，移除 `src/config.py` 中明文密钥。  
-2. 抽象 `LLMProvider`，把 Gemini 调用封装到单层适配器，便于替换为新后端。  
-3. 将 `ToyApollo.lean` 与流水线产物解耦（或修复默认 target），避免 `lake build` 总体误报失败。  
-4. 补齐最小 `README`/`requirements.txt`，固定 Python 依赖版本，降低环境漂移。  
+1. 抽象 `LLMProvider`，把 Gemini 调用封装到单层适配器，便于替换为新后端。  
+2. 将 `ToyApollo.lean` 与流水线产物解耦（或修复默认 target），避免 `lake build` 总体误报失败。  
+3. 启动安全加固计划：把明文密钥迁移为纯环境变量并轮换现有 key。  
+4. 固化依赖版本与开发容器，降低环境漂移。  

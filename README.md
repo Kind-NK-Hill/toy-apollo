@@ -16,7 +16,7 @@ Toy Apollo 是一个 Lean 4 教材自动形式化流水线，保留四阶段执�
 pip install -r requirements.txt
 ```
 
-3. 配置环境变量（不要把密钥写入代码）：
+3. 配置密钥（当前默认策略：`src/config.py` 已内置硬编码 key；环境变量可选覆盖）：
 
 ```powershell
 $env:GOOGLE_API_KEY="..."
@@ -24,6 +24,11 @@ $env:ARISTOTLE_API_KEY="..."
 $env:MODEL_NAME="gemini-3-flash-preview"
 $env:ARCHITECT_MODEL_NAME="gemini-3-pro-preview"
 ```
+
+说明：
+- 本轮结构收尾按既定策略保留硬编码 key，优先保证可运行。
+- 若设置了同名环境变量，将覆盖 `src/config.py` 默认值。
+- 安全加固（全面迁移到环境变量）将在后续独立计划中处理。
 
 可选路径覆盖（不改 CLI，用于 artifacts 分仓）：
 
