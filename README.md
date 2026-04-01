@@ -33,8 +33,8 @@ $env:ARCHITECT_MODEL_NAME="gemini-3-pro-preview"
 可选路径覆盖（不改 CLI，用于 artifacts 分仓）：
 
 ```powershell
-$env:TOY_APOLLO_RUNTIME_ROOT="D:\Grad_Study\Practimum\toy_apollo\_migration_20260330_211429\toy-apollo"
-$env:TOY_APOLLO_ARTIFACT_ROOT="D:\Grad_Study\Practimum\toy_apollo\_migration_20260330_211429\toy-apollo-artifacts"
+$env:TOY_APOLLO_RUNTIME_ROOT="D:\Grad_Study\Practimum\toy_apollo_archive\_migration_20260330_211429\toy-apollo"
+$env:TOY_APOLLO_ARTIFACT_ROOT="D:\Grad_Study\Practimum\toy_apollo_archive\_migration_20260330_211429\toy-apollo-artifacts"
 ```
 
 4. 查看命令帮助：
