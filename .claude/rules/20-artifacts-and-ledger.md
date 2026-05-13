@@ -1,0 +1,61 @@
+# Artifacts And Ledger
+
+## What The Artifacts Repo Is For
+
+`toy-apollo-artifacts` exists to hold runtime outputs and large generated state so the main repository can stay source-focused.
+
+Typical artifact sets:
+
+- `output_lean_files/`
+- `formalized_chapters/`
+- `reports/`
+- `error_logs/`
+- `aristotle_outbox/`
+- `aristotle_archives/`
+- `mathlib_index.faiss`
+- `mathlib_corpus.json`
+- `project_ledger.json`
+- `lab_notebook.json`
+
+## Artifact Glossary
+
+- `must-ignore-but-preserve`: generated runtime state that should stay out of Git and must not be deleted as cleanup.
+- `must-archive-not-delete`: historical/provenance material that is not active runtime truth but remains evidence.
+- `do-not-touch`: high-risk state that requires explicit user scope before any edit.
+- `artifact-root shared`: state that may be synchronized through the artifact root instead of the source repo.
+- `tracked source truth`: small, reviewed source/config/docs needed for a clean checkout to run.
+
+## Current Runtime Resolution
+
+Settings come from `src/toy_apollo/core/settings.py`:
+
+- `TOY_APOLLO_RUNTIME_ROOT`
+- `TOY_APOLLO_ARTIFACT_ROOT`
+
+Without overrides, artifact paths resolve inside the main repo.
+
+## Ledger Rules
+
+- `project_ledger.json` is persistent runtime state and is `ignored-but-protected`.
+- `lab_notebook.json` follows the same preserve-by-default rule.
+- Do not delete it as cleanup.
+- Do not rename status strings without deliberate migration work.
+- Treat ledger snapshots and prompt-pack metadata as generated state unless the task explicitly requires editing them.
+
+## Protected Provenance And Prompt Packs
+
+- `dependency_decisions/` is protected provenance, not disposable output. Keep it local/artifact-rooted by default; promote only curated chapter-scoped summaries to Git after review.
+- `phase0_ingestion_packs/` and `phase1_prompt_packs/` are prompt-pack handoff state: ignore them, preserve them locally, and archive summaries when needed instead of deleting packs.
+- Chapter 9 prompt packs and related provenance deserve special preserve-before-review handling; do not collapse them into a generic cleanup bucket.
+- Phase 2/3 packs are generated runtime state. They are normally `must-ignore-but-preserve`, not tracked source.
+
+## Sync Commands
+
+```powershell
+.\tools\sync_artifacts.ps1 -Mode push -ArtifactsRepoPath ..\toy-apollo-artifacts -MainRepoPath .
+.\tools\sync_artifacts.ps1 -Mode pull -ArtifactsRepoPath ..\toy-apollo-artifacts -MainRepoPath .
+```
+
+## Important Current Gap
+
+The artifacts repo README describes snapshot-style storage, but the current sync script mirrors artifact paths directly at repo root. Treat the script as implementation truth until snapshot storage is actually implemented.
