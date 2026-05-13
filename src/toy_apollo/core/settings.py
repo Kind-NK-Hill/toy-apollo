@@ -13,6 +13,8 @@ class Settings:
     reports_dir: Path
     formalized_chapters_dir: Path
     output_lean_files_dir: Path
+    phase2_prompt_packs_dir: Path
+    phase3_softdep_packs_dir: Path
     error_logs_dir: Path
     toyapollo_output_dir: Path
     aristotle_outbox_dir: Path
@@ -22,6 +24,11 @@ class Settings:
     project_ledger_file: Path
     lab_notebook_file: Path
     mathlib_path: Path
+    phase0_ingestion_packs_dir: Path | None = None
+    phase1_prompt_packs_dir: Path | None = None
+    phase3_execution_batches_dir: Path | None = None
+    phase3_post_harvest_packs_dir: Path | None = None
+    dependency_decisions_dir: Path | None = None
 
 
 def _to_path(raw: str, fallback: Path) -> Path:
@@ -42,6 +49,12 @@ def get_settings() -> Settings:
         reports_dir=artifact_root / "reports",
         formalized_chapters_dir=artifact_root / "formalized_chapters",
         output_lean_files_dir=artifact_root / "output_lean_files",
+        phase2_prompt_packs_dir=artifact_root / "phase2_prompt_packs",
+        phase3_softdep_packs_dir=artifact_root / "phase3_softdep_packs",
+        phase1_prompt_packs_dir=artifact_root / "phase1_prompt_packs",
+        phase3_execution_batches_dir=artifact_root / "phase3_execution_batches",
+        phase3_post_harvest_packs_dir=artifact_root / "phase3_post_harvest_packs",
+        dependency_decisions_dir=artifact_root / "dependency_decisions",
         error_logs_dir=artifact_root / "error_logs",
         toyapollo_output_dir=runtime_root / "ToyApollo" / "Output",
         aristotle_outbox_dir=artifact_root / "aristotle_outbox",
@@ -51,5 +64,5 @@ def get_settings() -> Settings:
         project_ledger_file=artifact_root / "project_ledger.json",
         lab_notebook_file=artifact_root / "lab_notebook.json",
         mathlib_path=runtime_root / ".lake" / "packages" / "mathlib" / "Mathlib",
+        phase0_ingestion_packs_dir=artifact_root / "phase0_ingestion_packs",
     )
-
