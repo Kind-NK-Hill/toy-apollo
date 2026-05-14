@@ -67,3 +67,10 @@ Only stop the same-session loop on:
 - explicit user interruption
 
 Everything else is continuation work, not a pause point. In particular, review-prepared, repair-ready, authoring-required, and reviewer-required states must stay inside the same-session loop until one of the stop reasons above is reached.
+
+`hard_failure` is only valid after the task satisfies the admission criteria in
+`docs/phase2_prompt_pack_workflow.md`: original TeX proof inspection when
+available, source proof-spine decomposition, search/attempt evidence for the
+blocking obligation, and a task-local hard-failure note or equivalent artifact.
+Do not treat "large proof", "needs decomposition", or "no one-shot theorem was
+found" as `hard_failure`.

@@ -101,6 +101,8 @@ python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks ex_4_4_3 --re
 - `pack -> build-check -> review-now` 是推荐主路径
 - 旧 direct-generation/orchestrator Phase 2 路径已从 active CLI 移除
 - 新路径强制依赖本地 Mathlib grounding 与本地验证
+- 对带证明或解答的任务，必须回到 `inputs/<source>.tex` 检查原始证明主线；prompt pack 中的复制文本只是镜像。
+- `hard_failure` 是最后手段，必须有原始 TeX proof-spine 拆解和具体 blocker 记录，不能用来代替大证明的分解工作。
 
 权威 runbook 见：
 
@@ -113,6 +115,7 @@ Phase 3 已并入 Phase 2，作为 Problem soft dependency selection 的特殊�
 ## 仓库边界
 
 - 本仓库只保留源码、配置和最小输入。
+- `ToyApollo.lean` 是库级 smoke test；教材章节输出位于 `ToyApollo/Output/`，不要把两者混为一谈。
 - 运行产物（输出、日志、归档、大文件）应进入 `toy-apollo-artifacts` 仓库。
 - 被保护的运行状态不一定要进入 Git；被 ignore 的文件也不是删除候选。
 - 一键同步脚本：`.\tools\sync_artifacts.ps1 -Mode push|pull`

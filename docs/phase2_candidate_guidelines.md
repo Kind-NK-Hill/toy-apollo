@@ -22,6 +22,7 @@ Textbook TeX fidelity has higher priority than minimizing local proof effort. If
 6. Use the imports provided by the pack unless there is a clear, necessary correction.
 7. For `Problem` tasks, treat stored `soft imports` as mandatory imports, not optional hints.
 8. Stay in the build loop until `build-check` passes; semantic review happens only after the candidate is technically runnable.
+9. For proof-bearing tasks, inspect the original `inputs/<source>.tex` proof or solution span before writing or judging the candidate; prompt-pack mirrors are not a substitute for the source file.
 
 ## Preferred Construction Order
 
@@ -79,6 +80,11 @@ For proof-heavy theorems:
 - preserve the main construction / partition / reduction steps from the source proof
 - use local helper lemmas to organize the proof, but keep them inside the task unless a true reusable dependency is needed
 - do not compress a long source proof into a vacuous impossibility shell
+
+Before classifying a proof-heavy theorem as blocked, write down the source proof
+spine from the original TeX and identify which step has no faithful Lean landing
+place. A long proof, a missing one-shot Mathlib theorem, or an inconvenient first
+draft is not by itself a hard failure.
 
 ## Examples
 
@@ -199,6 +205,7 @@ Check:
 4. would a fresh reader understand why this declaration exists?
 5. has the current draft already passed `build-check`?
 6. if the source TeX contains a substantial proof or construction, does the candidate still reflect that proof spine rather than hiding it behind placeholders or theorem-specific assumptions?
+7. for proof-bearing tasks, did you inspect the original `inputs/<source>.tex` span rather than only `task.json` or `context.md`?
 
 ## Reference Cases
 
