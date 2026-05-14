@@ -453,30 +453,21 @@ async def process_target(args):
             print(f"❌ {exc}")
             return
     elif phase == 3:
-        from ..phase3_execution_batches import task_ids_for_batch, write_execution_batch_plan
-        from ..phase3_post_harvest_pack import (
-            verify_repair_candidate,
-            write_repair_pack,
-        )
-        from ..phase3_softdep_pack import (
-            apply_softdep_selection,
-            write_softdep_pack,
-        )
-
-        settings.phase3_softdep_packs_dir.mkdir(parents=True, exist_ok=True)
-        if settings.phase3_execution_batches_dir is not None:
-            settings.phase3_execution_batches_dir.mkdir(parents=True, exist_ok=True)
-        if settings.phase3_post_harvest_packs_dir is not None:
-            settings.phase3_post_harvest_packs_dir.mkdir(parents=True, exist_ok=True)
         if args.phase3_mode == "offload":
             await step3_aristotle_offload(ledger, plans_dir=settings.plans_dir, selected_task_ids=selected_task_ids)
         elif args.phase3_mode == "soft-pack":
+            from ..phase3_softdep_pack import write_softdep_pack
+
+            settings.phase3_softdep_packs_dir.mkdir(parents=True, exist_ok=True)
             if not selected_task_ids:
                 print("❌ Phase 3 soft-pack requires at least one problem task via --tasks.")
                 return
             pack_dir = write_softdep_pack(sorted(selected_task_ids), ledger, settings)
             print(f"📦 Soft dependency pack generated: {pack_dir}")
         elif args.phase3_mode == "soft-apply":
+            from ..phase3_softdep_pack import apply_softdep_selection
+
+            settings.phase3_softdep_packs_dir.mkdir(parents=True, exist_ok=True)
             if not selected_task_ids:
                 print("❌ Phase 3 soft-apply requires at least one problem task via --tasks.")
                 return
@@ -487,12 +478,20 @@ async def process_target(args):
                 print(f"❌ Soft imports apply failed for batch: {pack_dir.name}")
             print(detail)
         elif args.phase3_mode == "plan-batches":
+            from ..phase3_execution_batches import write_execution_batch_plan
+
+            if settings.phase3_execution_batches_dir is not None:
+                settings.phase3_execution_batches_dir.mkdir(parents=True, exist_ok=True)
             if not selected_task_ids:
                 print("❌ Phase 3 plan-batches requires at least one problem task via --tasks.")
                 return
             plan_dir = write_execution_batch_plan(sorted(selected_task_ids), ledger, settings)
             print(f"🧭 Execution batch plan generated: {plan_dir}")
         elif args.phase3_mode == "offload-batch":
+            from ..phase3_execution_batches import task_ids_for_batch
+
+            if settings.phase3_execution_batches_dir is not None:
+                settings.phase3_execution_batches_dir.mkdir(parents=True, exist_ok=True)
             if not args.batch:
                 print("❌ Phase 3 offload-batch requires --batch.")
                 return
@@ -504,6 +503,10 @@ async def process_target(args):
                 explicit_task_ids=batch_task_ids,
             )
         elif args.phase3_mode == "repair-pack":
+            from ..phase3_post_harvest_pack import write_repair_pack
+
+            if settings.phase3_post_harvest_packs_dir is not None:
+                settings.phase3_post_harvest_packs_dir.mkdir(parents=True, exist_ok=True)
             if not selected_task_ids:
                 print("❌ Phase 3 repair-pack requires exactly one valid task id via --tasks.")
                 return
@@ -514,6 +517,10 @@ async def process_target(args):
             pack_dir = write_repair_pack(task_id, ledger, settings)
             print(f"🩹 Post-harvest repair pack generated: {pack_dir}")
         elif args.phase3_mode == "repair-verify":
+            from ..phase3_post_harvest_pack import verify_repair_candidate
+
+            if settings.phase3_post_harvest_packs_dir is not None:
+                settings.phase3_post_harvest_packs_dir.mkdir(parents=True, exist_ok=True)
             if not selected_task_ids:
                 print("❌ Phase 3 repair-verify requires exactly one valid task id via --tasks.")
                 return
@@ -536,7 +543,7 @@ async def process_target(args):
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Toy Apollo Ledger-Driven Pipeline")
-    parser.add_argument("--phase", type=int, choices=[0, 1, 2, 3, 4], required=False, help="0: Ingest, 1: Plan, 2: Local, 3: Aristotle, 4: Align")
+    parser.add_argument("--phase", type=int, choices=[0, 1, 2, 3, 4], required=False, help="0: Ingest, 1: Plan, 2: Local, 3: Dependency selection, optional external candidates, post-harvest repair, 4: Align")
     parser.add_argument("--input", type=str, required=False, default="", help="Path for Phase 0 pack and Phase 1 inputs")
     parser.add_argument("--phase0-mode", type=str, choices=["pack", "validate", "apply"], default="pack", dest="phase0_mode", help="Phase 0 mode: pack extracts source materials, validate checks draft_input.tex, apply writes inputs/<stem>.tex")
     parser.add_argument("--page-range", type=str, required=False, default="", dest="page_range", help="Physical PDF page range for --phase 0 --phase0-mode pack, 1-based inclusive, for example 157-160")
@@ -544,7 +551,7 @@ def main() -> int:
     parser.add_argument("--phase1-mode", type=str, choices=["pack", "apply"], default="pack", dest="phase1_mode", help="Phase 1 mode: pack generates operator prompt packs, apply validates and registers a filled draft_plan.json")
     parser.add_argument("--tasks", type=str, required=False, default="", help="Comma-separated block_id filter for Phase 2 prompt-pack modes and Phase 3/4")
     parser.add_argument("--phase2-mode", type=str, choices=["pack", "build-check", "verify", "audit", "review-pack", "review-existing", "review-now", "review-fix", "auto-loop", "review-existing-queue", "review-apply"], default="pack", help="Phase 2 mode: default workflow is pack -> build-check -> review-pack/review-existing -> review-now/review-apply; review-now prepares a Codex handoff request for current/existing/candidate subjects; review-fix activates a semantic-repair build loop from the latest failed review; auto-loop advances the same-session Codex author/reviewer loop state and runtime transitions; review-existing-queue prepares a batch Codex reviewer queue from ToyApollo/Output; verify/audit are optional runner-backed modes")
-    parser.add_argument("--phase3-mode", type=str, choices=["offload", "soft-pack", "soft-apply", "plan-batches", "offload-batch", "repair-pack", "repair-verify"], default="offload", help="Phase 3 mode: Aristotle offload, soft dependency selection, execution batch planning, post-harvest repair, or offload by planned batch")
+    parser.add_argument("--phase3-mode", type=str, choices=["offload", "soft-pack", "soft-apply", "plan-batches", "offload-batch", "repair-pack", "repair-verify"], default="offload", help="Phase 3 mode: soft dependency selection, optional external-provider offload, execution batch planning, post-harvest repair, or offload by planned batch")
     parser.add_argument("--candidate", type=str, required=False, default="", help="Optional external Lean file for --phase 2 --phase2-mode build-check/verify; review-pack only accepts ToyApollo/Output/<task>.lean as a compatibility alias for review-existing; also supported by --phase 3 --phase3-mode repair-verify")
     parser.add_argument("--review-result", type=str, required=False, default="", dest="review_result", help="Filled semantic review result JSON for --phase 2 --phase2-mode review-apply")
     parser.add_argument("--review-subject", type=str, choices=["current", "existing", "candidate"], default="current", dest="review_subject", help="Review subject selector for --phase 2 --phase2-mode review-now/auto-loop")
