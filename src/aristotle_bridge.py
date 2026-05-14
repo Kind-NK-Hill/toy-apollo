@@ -1,65 +1,123 @@
 import os
 import re
 import shutil
-import asyncio
+import json
 from pathlib import Path
 from typing import Set
-from src.config import PROJECT_ROOT
-from src.agent import GeminiAgent
+from src.block_id_naming import (
+    canonicalize_block_id,
+    canonicalize_id_list,
+)
 
 class AristotleBridge:
     def __init__(self, staging_root="plans/aristotle_staging"):
         self.staging_root = Path(staging_root)
-        self.agent = GeminiAgent()
+        self.plan_task_index = self._build_phase1_plan_task_index(Path("plans"))
+
+    @staticmethod
+    def _normalize_summary_text(text: str, max_chars: int = 240) -> str:
+        cleaned = re.sub(r"\s+", " ", text or "").strip()
+        if not cleaned:
+            return ""
+        if len(cleaned) <= max_chars:
+            return cleaned
+        return cleaned[: max_chars - 3].rstrip() + "..."
+
+    def _build_phase1_plan_task_index(self, plans_dir: Path) -> dict[str, dict]:
+        index: dict[str, dict] = {}
+        if not plans_dir.exists():
+            return index
+
+        for plan_file in sorted(plans_dir.glob("*_plan.json")):
+            try:
+                with open(plan_file, "r", encoding="utf-8") as f:
+                    payload = json.load(f)
+            except Exception:
+                continue
+
+            if isinstance(payload, dict):
+                records = [payload]
+            elif isinstance(payload, list):
+                records = [row for row in payload if isinstance(row, dict)]
+            else:
+                records = []
+
+            for row in records:
+                row = dict(row)
+                block_id = canonicalize_block_id(row.get("block_id", ""))
+                if not isinstance(block_id, str) or not block_id.strip():
+                    continue
+                row["block_id"] = block_id
+                row["dependencies"] = canonicalize_id_list(row.get("dependencies", []))
+                if "soft_imports" in row:
+                    row["soft_imports"] = canonicalize_id_list(row.get("soft_imports", []))
+                if block_id in index:
+                    continue
+                index[block_id] = row
+        return index
+
+    def _summary_from_phase1_plan(self, block_id: str) -> str:
+        task = self.plan_task_index.get(canonicalize_block_id(block_id))
+        if not isinstance(task, dict):
+            return ""
+        title = task.get("title", "")
+        content = task.get("content", "")
+        parts: list[str] = []
+        if isinstance(title, str) and title.strip():
+            parts.append(title.strip())
+        if isinstance(content, str) and content.strip():
+            parts.append(content.strip())
+        return self._normalize_summary_text(" | ".join(parts))
+
+    def _phase1_task_payload(self, block_id: str, max_chars: int = 1200) -> dict[str, str] | None:
+        canonical_id = canonicalize_block_id(block_id)
+        task = self.plan_task_index.get(canonical_id)
+        if not isinstance(task, dict):
+            return None
+        title = task.get("title", "")
+        content = task.get("content", "")
+        task_type = task.get("type", "")
+        source_plan = task.get("source_plan", "")
+        return {
+            "block_id": canonical_id,
+            "type": str(task_type or "").strip(),
+            "title": self._normalize_summary_text(str(title or ""), max_chars=160),
+            "content": self._normalize_summary_text(str(content or ""), max_chars=max_chars),
+            "source_plan": str(source_plan or "").strip(),
+        }
+
+    def _summary_from_lean_source(self, source: str) -> str:
+        # Match Lean block comments: /- ... -/, /-! ... -/, or /-- ... -/
+        doc_match = re.search(r"/-(?:!|--)?\s*(.*?)\s*-/", source, re.DOTALL)
+        if not doc_match:
+            return ""
+        raw_summary = doc_match.group(1).strip()
+        if not raw_summary:
+            return ""
+        # Keep first two lines before normalization for concise context.
+        first_two = "\n".join(raw_summary.splitlines()[:2])
+        return self._normalize_summary_text(first_two)
         
     def get_library_catalog(self) -> str:
-        """[NEW] Scans ToyApollo/Output to build a semantic catalog for the LLM."""
+        """Scans ToyApollo/Output and builds a catalog (Phase1 plan summary preferred)."""
         catalog = []
         output_path = Path("ToyApollo/Output")
         if not output_path.exists(): return "No local library found."
         
-        for lean_file in output_path.glob("*.lean"):
-            block_id = lean_file.stem
+        for lean_file in sorted(output_path.glob("*.lean")):
+            block_id = canonicalize_block_id(lean_file.stem)
             try:
-                with open(lean_file, "r", encoding="utf-8") as f:
-                    content = f.read()
-                    # Extract the first doc-string or comment as summary
-                    doc_match = re.search(r"\/--\s*(.*?)\*\/", content, re.DOTALL)
-                    summary = doc_match.group(1).strip() if doc_match else "No description available."
-                    # Keep only the first 2 lines of summary for brevity
-                    summary = "\n".join(summary.split("\n")[:2])
-                    catalog.append(f"- {block_id}: {summary}")
-            except:
+                summary = self._summary_from_phase1_plan(block_id)
+                if not summary:
+                    with open(lean_file, "r", encoding="utf-8") as f:
+                        content = f.read()
+                    summary = self._summary_from_lean_source(content)
+                if not summary:
+                    summary = "No description available."
+                catalog.append(f"- {block_id}: {summary}")
+            except Exception:
                 continue
         return "\n".join(catalog)
-
-    async def select_local_imports(self, task_content: str, task_id: str) -> list:
-        """[NEW] Uses LLM mathematical skill to select which local files to import."""
-        catalog = self.get_library_catalog()
-        prompt = f"""
-        You are a Lean 4 Mathematical Architect. Your task is to decide which LOCAL theorems or definitions 
-        should be imported to solve the given [TASK]. 
-
-        [LOCAL LIBRARY CATALOG]:
-        {catalog}
-
-        [TASK TO SOLVE]:
-        {task_content}
-
-        [INSTRUCTIONS]:
-        1. Think like a mathematician: 
-           - If it's a THEOREM, what DEFINITIONS are needed to state it?
-           - If it's a PROBLEM, what prior THEOREMS are needed as tools?
-        2. Select only the MOST ESSENTIAL block_ids from the catalog.
-        3. Do NOT import the task itself ({task_id}).
-        4. Output ONLY a comma-separated list of block_ids. If none are needed, output 'NONE'.
-        """
-        response = await self.agent.generate_async(prompt)
-        cleaned = response.strip().upper()
-        if "NONE" in cleaned or not cleaned: return []
-        # Extract block_ids using regex to be safe
-        ids = re.findall(r"(\w+_\d+_\d+|\w+_\d+)", response)
-        return list(set(ids))
 
     def get_local_imports(self, content: str) -> Set[str]:
         """Finds all 'import ToyApollo.Output.xxx' statements."""
@@ -96,29 +154,6 @@ class AristotleBridge:
                     break
         
         return found_files
-
-    async def generate_sorry_stub(self, task_id: str, task_content: str) -> str:
-        """Generates a syntax-perfect Lean 4 skeleton with 'sorry'."""
-        prompt = f"""
-        Extract the Lean 4 theorem signature for the following task and provide a syntax-perfect skeleton with 'sorry'.
-        Include all necessary imports based on the description.
-        
-        [TASK]: {task_content}
-        [THEOREM NAME]: {task_id}
-        
-        [REQUIREMENTS]:
-        - NO natural language.
-        - Theorem proof MUST be 'sorry'.
-        - Use standard Mathlib 4 imports.
-        """
-        code = await self.agent.generate_async(prompt)
-        # Surgical cleaning
-        clean = re.sub(r"```lean|```", "", code).strip()
-        # Ensure the theorem name matches exactly
-        if f"theorem {task_id}" not in clean and f"lemma {task_id}" not in clean:
-             # Fallback: find the first theorem/lemma and rename it
-             clean = re.sub(r"(theorem|lemma)\s+\w+", f"\\1 {task_id}", clean)
-        return clean
 
     def create_staging_area(self, task_id: str, main_code: str, dependencies: Set[Path], original_latex: str, hint: str):
         """Assembles a v4.28.0 compatible Lean project for Aristotle."""
