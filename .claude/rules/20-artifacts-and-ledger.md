@@ -10,8 +10,8 @@ Typical artifact sets:
 - `formalized_chapters/`
 - `reports/`
 - `error_logs/`
-- `aristotle_outbox/`
-- `aristotle_archives/`
+- `aristotle_outbox/` (legacy/protected local provider artifact)
+- `aristotle_archives/` (legacy/protected local provider artifact)
 - `mathlib_index.faiss`
 - `mathlib_corpus.json`
 - `project_ledger.json`
@@ -48,6 +48,7 @@ Without overrides, artifact paths resolve inside the main repo.
 - `phase0_ingestion_packs/` and `phase1_prompt_packs/` are prompt-pack handoff state: ignore them, preserve them locally, and archive summaries when needed instead of deleting packs.
 - Chapter 9 prompt packs and related provenance deserve special preserve-before-review handling; do not collapse them into a generic cleanup bucket.
 - Phase 2/3 packs are generated runtime state. They are normally `must-ignore-but-preserve`, not tracked source.
+- Retired Phase 3 provider artifacts are still protected local artifacts. Do not delete them as cleanup, and do not treat them as active workflow inputs.
 
 ## Sync Commands
 

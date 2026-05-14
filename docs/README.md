@@ -10,9 +10,6 @@ Use these when operating or modifying the current pipeline:
 - `phase2_candidate_guidelines.md`
 - `phase2_review_loop_protocol.md`
 - `phase3_soft_dependency_workflow.md`
-- `phase3_execution_batch_workflow.md`
-- `phase3_post_harvest_workflow.md`
-- `phase3_post_harvest_guidelines.md`
 - `dependency_decision_trail.md`
 - `interface_dependency_policy.md`
 
@@ -21,6 +18,9 @@ Use these when operating or modifying the current pipeline:
 These are useful for understanding why the repo looks this way, but they are not runtime contracts:
 
 - `unsolved_closure_runbook.md` (legacy closure guidance; current Phase 4 automation is disabled)
+- `phase3_execution_batch_workflow.md` (legacy provider workflow; not active Phase 3 runtime)
+- `phase3_post_harvest_workflow.md` (legacy provider workflow; not active Phase 3 runtime)
+- `phase3_post_harvest_guidelines.md` (legacy provider guidance; not active Phase 3 runtime)
 - `phase2_inventory.md`
 - `phase3_softdep_review.md`
 - `chapter1_2_cross_chapter_dependency.md`

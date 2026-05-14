@@ -9,7 +9,8 @@
 ## Current Required Secrets
 
 - No current secret is required for Phase 0/1/2 prompt-pack workflows.
-- `ARISTOTLE_API_KEY` is required only for Phase 3 Aristotle offload.
+- No current secret is required for Phase 3 soft dependency selection.
+- Retired provider-specific keys are not active required secrets.
 
 Common optional variables:
 

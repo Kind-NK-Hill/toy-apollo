@@ -10,8 +10,8 @@ This is the active package namespace behind `run_chapter.py`.
 
 - `cli/`: argument parsing and phase dispatch
 - `core/`: settings and ledger exports
-- `integrations/`: Aristotle-facing adapters
-- phase helper modules at package root: prompt-pack, soft-dependency, execution-batch workflows
+- `integrations/`: reserved for future adapters; no active provider adapter is currently required
+- phase helper modules at package root: prompt-pack and soft-dependency workflows
 
 ## Edit Rules
 

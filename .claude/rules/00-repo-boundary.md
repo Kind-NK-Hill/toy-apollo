@@ -43,11 +43,11 @@ Classify important files before proposing Git tracking or cleanup:
   - `phase1_prompt_packs/`
   - `phase2_prompt_packs/`
   - `phase3_softdep_packs/`
-  - `phase3_execution_batches/`
-  - `phase3_post_harvest_packs/`
+  - `phase3_execution_batches/` (legacy/protected local artifact; not active workflow)
+  - `phase3_post_harvest_packs/` (legacy/protected local artifact; not active workflow)
   - `dependency_decisions/`
-  - `aristotle_outbox/`
-  - `aristotle_archives/`
+  - `aristotle_outbox/` (legacy/protected local artifact; not active workflow)
+  - `aristotle_archives/` (legacy/protected local artifact; not active workflow)
   - `.claude/worktrees/`
 
 High-risk protected boundaries:

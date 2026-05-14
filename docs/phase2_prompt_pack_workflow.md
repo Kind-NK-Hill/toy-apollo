@@ -563,7 +563,7 @@ Use only when you want runner-backed re-review of the current official output.
   - `COMPLETED`
   - `VERIFYING`
 - fine-grained Phase2 state lives in `pack_candidate_state`
-- `pack_candidate_state = review_rejected` blocks automatic Phase3 offload
+- `pack_candidate_state = review_rejected` stays in the Phase 2 repair path; it does not trigger Phase 3
 
 ## Failure Triage
 

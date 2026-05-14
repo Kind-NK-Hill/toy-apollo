@@ -5,7 +5,7 @@ Toy Apollo 是一个 Lean 4 教材自动形式化流水线，当前执行模型�
 - Phase 0: source PDF/page range -> cleaned `inputs/*.tex`
 - Phase 1: `pack` -> agent/human writes `draft_plan.json` -> `apply` writes `plans/*_plan.json`
 - Phase 2: 本地 formalization 与验证
-- Phase 3: 失败任务卸载到 Aristotle 云端
+- Phase 3: Problem task 的 soft dependency selection（仅 `soft-pack` / `soft-apply`）
 - Phase 4: disabled/no-op；旧自动回收/对齐流程仅作 legacy/manual 参考
 
 注：
@@ -22,15 +22,10 @@ Toy Apollo 是一个 Lean 4 教材自动形式化流水线，当前执行模型�
 pip install -r requirements.txt
 ```
 
-3. 配置 Phase 3 密钥（仅 Aristotle offload 需要，且不入库）：
+3. 查看当前 secret 要求：
 
-```powershell
-$env:ARISTOTLE_API_KEY="..."
-```
-
-说明：
 - Phase 0/1/2 prompt-pack workflow 不需要旧的 DeepSeek/Gemini direct-generation key。
-- Phase 3 Aristotle offload 需要 `ARISTOTLE_API_KEY`。
+- Phase 3 soft dependency workflow 不需要外部 provider key。
 - 不要把密钥写入代码或提交到 Git 历史。
 - 建议使用系统环境变量，不要在项目根目录放置 `.env` 文件。
 
@@ -61,8 +56,6 @@ python .\run_chapter.py --phase 2 --phase2-mode build-check --tasks thm_4_7
 python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks thm_4_7 --review-subject candidate
 python .\run_chapter.py --phase 3 --phase3-mode soft-pack --tasks prob_4_2,prob_4_4
 python .\run_chapter.py --phase 3 --phase3-mode soft-apply --tasks prob_4_2,prob_4_4 --selection .\selection.json
-python .\run_chapter.py --phase 3 --phase3-mode plan-batches --tasks prob_4_2,prob_4_4
-python .\run_chapter.py --phase 3 --phase3-mode offload-batch --batch <batch_id>
 python .\run_chapter.py --status
 ```
 
@@ -77,7 +70,7 @@ Phase 3 任务过滤示例：
 python .\run_chapter.py --phase 3 --phase3-mode soft-pack --tasks prob_3_1,prob_3_2
 ```
 
-Problem task 的 Aristotle offload 不会自动推断 soft imports；必须先通过 `soft-pack -> soft-apply` 写入 `soft_imports_confirmed_at`，空列表也需要显式确认。
+Problem task 的 soft imports 必须先通过 `soft-pack -> soft-apply` 写入 `soft_imports_confirmed_at`，空列表也需要显式确认。
 
 当前状态：
 

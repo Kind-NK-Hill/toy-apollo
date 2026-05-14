@@ -30,21 +30,19 @@ If this file conflicts with older notes, trust current runtime code and the rule
   - supported operator modes: `pack`, `build-check`, `review-pack`, `review-existing`, `review-now`, `review-fix`, `auto-loop`, `review-existing-queue`, `review-apply`, `verify`, `audit`
   - default local path is prompt-pack driven, with `build-check` as the normal technical gate, `review-now` as the Codex-facing semantic review entrypoint, `review-fix` as the semantic-repair entrypoint after failed review, and `auto-loop` as the same-session Codex orchestration mode
 - Phase 3:
-  - supported operator modes: `offload`, `soft-pack`, `soft-apply`, `plan-batches`, `offload-batch`, `repair-pack`, `repair-verify`
-  - combines Aristotle offload, problem soft-dependency selection, execution-batch planning, and post-harvest repair
+  - supported operator modes: `soft-pack`, `soft-apply`
+  - handles problem-oriented soft-dependency selection only
+  - ordinary failed local tasks stay in Phase 2 review/repair workflows
 - Phase 4:
   - CLI branch is currently disabled/no-op
   - do not document or route work as if it were an active automated path
 
 ## Key Boundaries
 
-- Do not touch high-risk protected state unless the user explicitly scopes that exact path: ledger files, Chapter 1-8 outputs, bridge/offload state, `dependency_decisions/`, prompt packs, and `.claude/worktrees/`.
+- Do not touch high-risk protected state unless the user explicitly scopes that exact path: ledger files, Chapter 1-8 outputs, retired bridge/provider state, `dependency_decisions/`, prompt packs, and `.claude/worktrees/`.
 - `soft-apply` means apply selected soft imports to the ledger and soft-dependency pack artifacts.
-- `soft-apply` does not run Aristotle, does not generate execution batches, and does not perform a Lean verification gate.
-- Aristotle offload must use operator-confirmed `candidate_snapshot.soft_imports` plus `soft_imports_confirmed_at`; do not add automatic soft-import inference in the offloader.
-- The phase3 post-harvest repair track means `repair-pack -> edit draft.lean -> repair-verify`.
-- The phase3 post-harvest repair track is only for local repair after Aristotle harvest; it is not the generic phase2 verification path.
-- Do not treat every harvest failure as an ordinary repair candidate. `statement_drift` and `harvest_missing_clean_file` are not routine proof-repair cases.
+- `soft-apply` does not call an external provider, does not generate execution batches, and does not perform a Lean verification gate.
+- Removed Phase 3 provider and post-processing artifacts remain protected local/historical state, not active workflow inputs.
 
 ## Recommended Routing
 
@@ -52,13 +50,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
   - `soft-pack`
   - operator writes the selection JSON
   - `soft-apply`
-  - `plan-batches`
-  - `offload-batch`
-- Post-harvest repair workflow:
-  - `repair-pack`
-  - edit `phase3_post_harvest_packs/<task_id>/draft.lean`
-  - `repair-verify`
-- If the task is about prompt-pack formalization or operator review, route through phase2 modes, not the phase3 repair track.
+- If the task is about prompt-pack formalization, build failure, or semantic review failure, route through Phase 2 modes, not Phase 3.
 - Phase 2 Codex semantic review workflow:
   - existing official output: `review-now --review-subject existing`
   - current build-ready candidate: `review-now --review-subject candidate`
@@ -105,15 +97,15 @@ If this file conflicts with older notes, trust current runtime code and the rule
 - Deleting or bulk-moving runtime outputs, prompt packs, logs, or historical plans.
 - Changing ledger status names, plan JSON schema, or stable CLI flags.
 - Reworking directory layout for `ToyApollo/Output`, `output_lean_files`, or artifacts sync.
-- Editing cloud-offload behavior or introducing new external service dependencies.
+- Reintroducing retired external-provider behavior or adding new external service dependencies.
 
 ## Never Do
 
 - Commit secrets, tokens, or `.env` files.
 - Treat archive notes as runtime truth unless active code implements them.
 - Use `plans/unsolved_tasks.json` as the default Phase 3 source of truth.
-- Describe `soft-apply` as Aristotle execution or as a Lean acceptance gate.
-- Describe the phase3 post-harvest repair track as the default follow-up for every harvest failure.
+- Describe `soft-apply` as external-provider execution or as a Lean acceptance gate.
+- Describe removed Phase 3 provider/post-processing tracks as active workflow.
 - Reformat the repository by hand in agent prompts; use dedicated tooling when formatter/linter policy is added.
 
 ## Repo Map

@@ -1,14 +1,12 @@
 # Unsolved Closure Runbook (Windows)
 
 > Historical/legacy guidance. This is not the current active closure path while
-> Phase 4 automation is disabled/no-op. Prefer the current Phase 3 runbooks:
-> `phase3_soft_dependency_workflow.md`,
-> `phase3_execution_batch_workflow.md`, and
-> `phase3_post_harvest_workflow.md`.
+> Phase 4 automation is disabled/no-op. Active Phase 3 is now limited to
+> problem soft dependency selection with `soft-pack` / `soft-apply`.
 
 ## 1. Preconditions
 
-Set required secrets before running:
+Historical provider-only secret setup, not required for current active workflows:
 
 ```powershell
 $env:ARISTOTLE_API_KEY="..."
@@ -63,12 +61,12 @@ Legacy regression checks:
   - Action: regenerate Phase 1 plan or restore `candidate_snapshot` in ledger, then rerun Phase 3.
 
 - `staging_dir_not_found:<task_id>`
-  - Meaning: package not generated after offloader step.
-  - Action: inspect Phase 3 logs and `aristotle_outbox/`, then rerun Phase 3.
+  - Meaning: package not generated after retired provider step.
+  - Historical/manual-only action: inspect archived logs and protected local artifacts such as `aristotle_outbox/`; do not route this through active Phase 3.
 
 - `aristotle_result_cli_failed:*`
-  - Meaning: Aristotle CLI result harvest failed.
-  - Action: confirm `aristotle` CLI is installed and authenticated, then rerun Phase 3.
+  - Meaning: retired provider CLI result harvest failed.
+  - Historical/manual-only action: confirm the old CLI environment only when auditing legacy runs; do not route this through active Phase 3.
 
 - `phase4_local_file_not_found:<task_id>`
   - Meaning: harvested file not found for align stage.
