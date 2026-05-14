@@ -1,6 +1,6 @@
 [
     {
-        "block_id": "remark_problems_1",
+        "block_id": "rem_4_0_problems_header",
         "type": "Remark",
         "title": "Section Header",
         "content": "\\section*{Problems}",
@@ -36,7 +36,7 @@
         "source_plan": "12_chap4_problems"
     },
     {
-        "block_id": "remark_problems_2",
+        "block_id": "rem_4_0_problems_header_2",
         "type": "Remark",
         "title": "Section Header",
         "content": "\\section*{Problems}",
@@ -66,7 +66,7 @@
         "block_id": "prob_4_6",
         "type": "Problem",
         "title": "Problem 4.6",
-        "content": "\\textbf{4.6.} Define a collection of subsets in $\\mathbb{R}$ by $\\mathcal{G} \\triangleq \\{\\cup_{n \\in S} (n, n+1] : S \\in \\mathbb{Z}\\}$:\n\\begin{enumerate}[label=(\\alph*)]\n    \\item Show that $\\mathcal{G}$ is a $\\sigma$-algebra.\n    \\item Show that a $\\mathcal{G}$-measurable function $f$ is constant on the interval $(n, n+1]$ for each integer $n$.\n\\end{enumerate}",
+        "content": "\\textbf{4.6.} Define a collection of subsets in $\\mathbb{R}$ by $\\mathcal{G} \\triangleq \\{\\cup_{n \\in S} (n, n+1] : S \\subseteq \\mathbb{Z}\\}$:\n\\begin{enumerate}[label=(\\alph*)]\n    \\item Show that $\\mathcal{G}$ is a $\\sigma$-algebra.\n    \\item Show that a $\\mathcal{G}$-measurable function $f$ is constant on the interval $(n, n+1]$ for each integer $n$.\n\\end{enumerate}",
         "dependencies": [],
         "is_renowned": false,
         "source_plan": "12_chap4_problems"

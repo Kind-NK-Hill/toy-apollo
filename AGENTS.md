@@ -1,93 +1,137 @@
-# AGENTS 协作说明（Toy Apollo）
+# Toy Apollo Agent Contract
 
-## 1) 项目目标（当前代码语义）
-- 本项目是一个 **Lean 4 自动形式化流水线**：把 `inputs/*.tex` 的教材内容拆解为任务，自动生成 Lean 代码，编译验证，并将结果落盘到章节目录与 `ToyApollo/Output`。
-- 主控脚本是 `run_chapter.py`，按 Phase 1-4 驱动。
-- 当前仓库历史显示此前由 Gemini 驱动；你已明确弃用 Gemini，但**代码层仍大量绑定 Gemini 与 Aristotle**（见第 6 节）。
+This is the canonical root contract for coding agents working in `toy-apollo`.
 
-## 2) 当前状态快照（本地盘点于 2026-03-30）
-- `inputs`: 12 个 `.tex`
-- `plans`: 12 个 `*_plan.json` + `unsolved_tasks.json`
-- `formalized_chapters`: 11 个章节汇总 `.lean`
-- `output_lean_files`: 185 个 `.lean`
-- `ToyApollo/Output`: 38 个 `.lean`
-- `project_ledger.json`: `tasks_total=119`  
-  `COMPLETED=33`, `DISCOVERED=82`, `FAILED_LOCAL=4`
-- `lake build`（默认目标 `ToyApollo`）当前失败：`ToyApollo.lean` 有 unresolved goals/unknown identifiers  
-  但单模块（例如 `lake build ToyApollo.Output.def_3_1`）可通过。
+If this file conflicts with older notes, trust current runtime code and the rule files under `.claude/rules/`.
 
-## 3) 目录职责（高频）
-- `src/`: Python 核心实现（编排、检索、编译、账本、云端卸载）
-- `inputs/`: LaTeX 输入
-- `plans/`: 任务分块 JSON（parser 输出）
-- `output_lean_files/<chapter>/`: 每任务产物
-- `output_lean_files/general/`: 通用/补救产物（含 phase3/phase4 回流结果）
-- `ToyApollo/Output/`: Lean 编译镜像目录（模块化导入目标）
-- `formalized_chapters/`: 每章合并文档
-- `error_logs/<chapter>/`: 各任务日志
-- `reports/*_report.md`: 章节运行报告
-- `project_ledger.json`: 全局任务状态机与输出哈希
-- `research_notes/`: 研究文档（非运行时）
+## Always Do
 
-## 4) 运行入口与命令
-- 查看帮助：
-  - `python run_chapter.py -h`
-- Phase 1（LaTeX -> 计划）：
-  - `python run_chapter.py --phase 1 --input inputs`
-  - 或单文件：`python run_chapter.py --phase 1 --input inputs/01_chap3_premeasure.tex`
-- Phase 2（本地自动形式化）：
-  - `python run_chapter.py --phase 2 --input plans`
-  - 或单计划：`python run_chapter.py --phase 2 --input plans/01_chap3_premeasure_plan.json`
-- Phase 3（Aristotle 卸载失败任务）：
-  - `python run_chapter.py --phase 3`
-- Phase 4（对齐云端结果并回编译）：
-  - `python run_chapter.py --phase 4`
-- 状态总览：
-  - `python run_chapter.py --status`
+- Keep the stable entrypoints working: `python run_chapter.py --phase {0,1,2,3}` and `python run_chapter.py --status`; Phase 4 is currently disabled/no-op.
+- Treat `.claude/rules/10-phase-runtime.md` as the phase behavior source of truth before making any phase-routing decision.
+- Prefer active package paths under `src/toy_apollo/*` for new code.
+- Treat `project_ledger.json` as persistent runtime state, not disposable scratch data.
+- Remember that must-protect is not the same as must-track: important runtime/provenance files may be ignored by Git while still being protected from deletion or cleanup.
+- Validate changes with the smallest relevant check before finishing.
 
-## 5) 核心代码地图（必须先读）
-- `run_chapter.py`
-  - 顶层 phase 调度，串接 parser/orchestrator/offloader/ledger
-- `src/orchestrator.py`
-  - 任务队列主循环、缓存命中、依赖注入、分解策略、失败回退与日志
-- `src/pipeline.py`
-  - 生成-编译-反馈循环（guided + rescue）、REPL 校验、retrofit、对齐
-- `src/compiler.py`
-  - Lean REPL 校验 + `lake build` 定向编译（`ToyApollo.Output.Temp_Validation`）
-- `src/context_manager.py`
-  - 依赖传递闭包、成功代码池、失败签名池
-- `src/searcher.py` + `src/indexer.py`
-  - 本地 Mathlib 向量检索（FAISS + sentence-transformers）+ rerank
-- `src/ledger_manager.py`
-  - 任务生命周期状态机、哈希审计、符号索引
-- `src/aristotle_offloader.py` + `src/aristotle_phase3.py` + `src/aristotle_bridge.py`
-  - 云端打包/提交/收割/本地回流
+## Phase Map
 
-## 6) 关键技术债与迁移事实（与“弃用 Gemini”直接相关）
-- `src/config.py` 仍硬编码：
-  - `GOOGLE_API_KEY`
-  - `MODEL_NAME="gemini-3-flash-preview"`
-  - `ARCHITECT_MODEL_NAME="gemini-3-pro-preview"`
-  - `ARISTOTLE_API_KEY`
-- 多模块直接依赖 `google.genai` 客户端（`agent.py`, `textbook_parser.py`, `architect.py`, `parser.py`, `searcher.py`）。
-- 结论：若正式弃用 Gemini，需要先完成“模型后端抽象/替换”再谈功能迭代；否则 pipeline 默认仍会走 Gemini。
+- Phase 0:
+  - `pack` prepares ingestion materials from source PDFs/pages
+  - `validate` checks `draft_input.tex`
+  - `apply` writes cleaned `inputs/<source>.tex`
+- Phase 1:
+  - `pack` prepares `phase1_prompt_packs/<source>/`
+  - agent/human writes `draft_plan.json`
+  - `apply` validates the draft and writes `plans/*_plan.json`
+  - register discovery state in the ledger
+  - the middle `draft_plan.json` authoring step is not a CLI mode; CLI supports only `--phase1-mode pack` and `--phase1-mode apply`
+  - CLI `apply --input` points to the source `.tex` or `inputs/` directory, not to `phase1_prompt_packs/<source>/draft_plan.json`
+- Phase 2:
+  - supported operator modes: `pack`, `build-check`, `review-pack`, `review-existing`, `review-now`, `review-fix`, `auto-loop`, `review-existing-queue`, `review-apply`, `verify`, `audit`
+  - default local path is prompt-pack driven, with `build-check` as the normal technical gate, `review-now` as the Codex-facing semantic review entrypoint, `review-fix` as the semantic-repair entrypoint after failed review, and `auto-loop` as the same-session Codex orchestration mode
+- Phase 3:
+  - supported operator modes: `soft-pack`, `soft-apply`
+  - handles problem-oriented soft-dependency selection only
+  - ordinary failed local tasks stay in Phase 2 review/repair workflows
+- Phase 4:
+  - CLI branch is currently disabled/no-op
+  - do not document or route work as if it were an active automated path
 
-## 7) 数据契约（实现时常用）
-- `plans/*.json` 每个 task 基本字段：
-  - `block_id`, `type`, `title`, `content`, `dependencies`
-  - 常见附加：`is_renowned`, `source_plan`, `depth`
-- Ledger 状态枚举（`TaskStatus`）：
-  - `DISCOVERED -> LOCAL_FIXING -> FAILED_LOCAL -> OFFLOADED -> HARVESTED -> ALIGNING -> COMPLETED`
-  - 旁路状态：`USER_MODIFIED`, `ORPHANED`
+## Key Boundaries
 
-## 8) 当前协作约束（给后续 Codex/人工）
-- 先以模块为单位验证：`lake build ToyApollo.Output.<block_id>`，不要把 `ToyApollo.lean` 当作唯一健康指标。
-- 不要删除 `project_ledger.json`；它是重试与增量执行基线。
-- `output_lean_files` 与 `ToyApollo/Output` 是双产物区，修改时注意保持同步语义。
-- 仓库当前是重度 dirty 状态（大量 `D`/`??`），执行 Git 操作前先明确“保留/清理”策略。
+- Do not touch high-risk protected state unless the user explicitly scopes that exact path: ledger files, Chapter 1-8 outputs, retired bridge/provider state, `dependency_decisions/`, prompt packs, and `.claude/worktrees/`.
+- `soft-apply` means apply selected soft imports to the ledger and soft-dependency pack artifacts.
+- `soft-apply` does not call an external provider, does not generate execution batches, and does not perform a Lean verification gate.
+- Removed Phase 3 provider and post-processing artifacts remain protected local/historical state, not active workflow inputs.
 
-## 9) 建议的下一步（按优先级）
-1. 先把密钥迁移到环境变量，移除 `src/config.py` 中明文密钥。  
-2. 抽象 `LLMProvider`，把 Gemini 调用封装到单层适配器，便于替换为新后端。  
-3. 将 `ToyApollo.lean` 与流水线产物解耦（或修复默认 target），避免 `lake build` 总体误报失败。  
-4. 补齐最小 `README`/`requirements.txt`，固定 Python 依赖版本，降低环境漂移。  
+## Recommended Routing
+
+- Problem soft-dependency workflow:
+  - `soft-pack`
+  - operator writes the selection JSON
+  - `soft-apply`
+- If the task is about prompt-pack formalization, build failure, or semantic review failure, route through Phase 2 modes, not Phase 3.
+- Phase 2 Codex semantic review workflow:
+  - existing official output: `review-now --review-subject existing`
+  - current build-ready candidate: `review-now --review-subject candidate`
+  - failed review follow-up: `review-fix -> edit draft.lean -> build-check -> review-now --review-subject candidate`
+  - same-session orchestration: `auto-loop`
+  - detailed same-session loop semantics: `docs/phase2_review_loop_protocol.md`
+  - `review-pack` / `review-existing` are low-level prepare-only modes and should not be presented as the preferred Codex operator path.
+
+## Codex Review Contract
+
+- For chapter-wide or task-set Phase 2 work, prefer Codex durable goals (`/goal`) when the
+  current Codex client supports them.
+- Use `/goal` for requests that require continuing across many build/review/repair iterations,
+  such as completing all non-remark/non-problem tasks in a chapter.
+- The durable goal must include explicit stop conditions: `completed`, `hard_failure`,
+  `nonprogress`, `max_rounds`, `build_budget_exhausted`, or explicit user interruption.
+- If `/goal` is unavailable, create an explicit local batch state/checklist and run a pre-final
+  guard before ending the turn.
+- `review-now`, `review-fix`, and `auto-loop` are agent-assisted composite actions.
+- `review-apply` remains the only step that lands a Codex semantic-review result.
+- `auto-loop` is not an unattended reviewer/author daemon.
+- Build-fail and review-prepared states are not normal waiting points; the current Codex agent continues in the same session.
+- Pre-final guard: if `current_auto_loop_status = active`, do not end the turn with a completion-style summary unless the ledger also shows a documented stop reason.
+- The documented stop reasons are only `completed`, `freshness_error`, `hard_failure`, `nonprogress`, `max_rounds`, `build_budget_exhausted`, or explicit user interruption.
+- Needing a substantial semantic rewrite, wanting to summarize current blockers, or waiting for the current Codex agent to perform reviewer/repair work are not stop reasons.
+- `nonprogress` is a semantic stop reason, not a generic build stop.
+- Only stop the same-session loop on `completed`, `freshness_error`, `hard_failure`, `nonprogress`, `max_rounds`, `build_budget_exhausted`, or explicit user interruption.
+- When the user asks to review an existing chapter, section, or ordered task set, interpret that as a same-session self-driving existing-output batch review unless the user explicitly asks for prepare-only behavior.
+- In that existing-output batch mode:
+  - use `review_subject=existing`, not `current`
+  - process tasks in deterministic `block_id` order
+  - do not stop after `review-now`, build failure, or a prepared review request; the current Codex agent continues the author/reviewer step in the same session
+  - for pass results, continue to `review-apply` automatically
+  - for fail/inconclusive results, continue through `review-apply -> review-fix -> build-check -> review-now --review-subject candidate -> review-apply`
+- Only treat `review existing` as prepare-only when the user explicitly asks to inspect or prepare review materials without landing/apply behavior.
+- When the user asks to "review existing", "review pack", or "review now" in the Codex path, do not stop at `codex_handoff_pending` unless the user explicitly wants prepare-only behavior.
+- When the user asks to continue after a failed semantic review, do not rerun `review-existing` on the rejected object; route through `review-fix` and the build loop.
+- When `auto-loop` is active, ledger runtime metadata is the only live loop state source; `metadata.json`, `context.md`, `failure_summary.md`, and `operator_prompt.md` are mirrors.
+- For ad hoc single-task review requests, if the user does not explicitly ask to apply the review result, stop after the reviewer result is generated and report the verdict plus the result path.
+- The explicit single-task prepare-only rule above does not override the existing-output batch rule; chapter/section/task-set `review existing` requests default to landing/apply behavior unless the user asks otherwise.
+
+## Ask First
+
+- Deleting or bulk-moving runtime outputs, prompt packs, logs, or historical plans.
+- Changing ledger status names, plan JSON schema, or stable CLI flags.
+- Reworking directory layout for `ToyApollo/Output`, `output_lean_files`, or artifacts sync.
+- Reintroducing retired external-provider behavior or adding new external service dependencies.
+
+## Never Do
+
+- Commit secrets, tokens, or `.env` files.
+- Treat archive notes as runtime truth unless active code implements them.
+- Use `plans/unsolved_tasks.json` as the default Phase 3 source of truth.
+- Describe `soft-apply` as external-provider execution or as a Lean acceptance gate.
+- Describe removed Phase 3 provider/post-processing tracks as active workflow.
+- Reformat the repository by hand in agent prompts; use dedicated tooling when formatter/linter policy is added.
+
+## Repo Map
+
+- Runtime entry: `run_chapter.py`
+- Active CLI: `src/toy_apollo/cli/app.py`
+- New package home: `src/toy_apollo/`
+- Root-level `src/*.py` modules are retained only where active package code imports them; old direct-generation/orchestrator modules are not a supported runtime layer.
+- Lean output module root: `ToyApollo/Output`
+- Runtime state and generated outputs: artifact-rooted paths from `src/toy_apollo/core/settings.py`
+
+## Minimum Verification
+
+- `python run_chapter.py -h`
+- `python run_chapter.py --status`
+- `python tools/check_repo_hygiene.py`
+- `lake build ToyApollo.Output.<block_id>` for any touched Lean-facing task path
+
+## Progressive Disclosure
+
+Read only the rules needed for the task:
+
+- `@.claude/rules/00-repo-boundary.md`
+- `@.claude/rules/10-phase-runtime.md`
+- `@.claude/rules/20-artifacts-and-ledger.md`
+- `@.claude/rules/30-security-secrets.md`
+- `@.claude/rules/40-folder-playbooks.md`
+
+Then read the nearest folder-level `AGENTS.md` before editing inside that subtree.

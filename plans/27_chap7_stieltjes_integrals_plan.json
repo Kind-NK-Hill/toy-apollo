@@ -1,0 +1,87 @@
+[
+    {
+        "block_id": "rem_7_3_stieltjes_integrals_intro",
+        "type": "Remark",
+        "title": "Section Header",
+        "content": "\\subsection*{7.3 Application: Evaluation of Lebesgue--Stieltjes Integrals}\n\nAs an application of the dominated convergence theorem, we provide a sufficient condition under which a Lebesgue integral on the real number line can be computed as a Riemann--Stieltjes integral. This connection allows us to evaluate abstract Lebesgue--Stieltjes (LS) integral using tools from calculus. Throughout the rest of this section, we denote the Riemann--Stieltjes (RS) integral of a function $g(x)$ with respect to a Stieltjes measure function $F(x)$ from $a$ to $b$ by $\\int_a^b g(x)\\, dF(x)$.\n\nThe next theorem is a link between the Lebesgue--Stieltjes integral and the Riemann--Stieltjes integral.",
+        "dependencies": [
+            "thm_7_8"
+        ],
+        "is_renowned": true,
+        "source_plan": "27_chap7_stieltjes_integrals"
+    },
+    {
+        "block_id": "rem_7_3_transition_1",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "\\subsection*{7.3 Application: Evaluation of Lebesgue--Stieltjes Integrals}\n\nAs an application of the dominated convergence theorem, we provide a sufficient condition under which a Lebesgue integral on the real number line can be computed as a Riemann--Stieltjes integral. This connection allows us to evaluate abstract Lebesgue--Stieltjes (LS) integral using tools from calculus. Throughout the rest of this section, we denote the Riemann--Stieltjes (RS) integral of a function $g(x)$ with respect to a Stieltjes measure function $F(x)$ from $a$ to $b$ by $\\int_a^b g(x)\\, dF(x)$.\n\nThe next theorem is a link between the Lebesgue--Stieltjes integral and the Riemann--Stieltjes integral.",
+        "dependencies": [
+            "thm_7_8"
+        ],
+        "is_renowned": true,
+        "source_plan": "27_chap7_stieltjes_integrals"
+    },
+    {
+        "block_id": "thm_7_8",
+        "type": "Theorem_with_Proof",
+        "title": "Theorem",
+        "content": "\\begin{thmbox}{7.8}\nConsider a measure space $(\\mathbb{R},\\mathcal{B}(\\mathbb{R}),\\mu)$ associated with the Stieltjes measure function $F(x)=\\mu((-\\infty,x])$. Assume that $\\mu(\\{a\\})=0$, i.e., assume $F(x)$ is continuous at $x=a$. If $g$ is a continuous function on $[a,b]$, then $g$ is $\\mu$-integrable on $[a,b]$ and we have\n\\[\n\\int_{[a,b]} g\\, d\\mu = \\int_a^b g(x)\\, dF(x),\n\\]\nwhere the left-hand side is an LS integral and the right-hand side is an RS integral.\n\\end{thmbox}\n\n\\textit{Proof} Since $g$ is continuous on $[a,b]$, it is measurable. Furthermore, $g$ is bounded on $[a,b]$, i.e., there exists a constant $K$ such that $|g(x)|\\le K$ for all $x\\in [a,b]$. Therefore, the function $g$ is $\\mu$-integrable because\n\\[\n\\int_{[a,b]} g^+\\, d\\mu \\le \\int_{[a,b]} K\\, d\\mu = K\\mu([a,b])<\\infty\n\\]\n\\[\n\\int_{[a,b]} g^-\\, d\\mu \\le \\int_{[a,b]} K\\, d\\mu = K\\mu([a,b])<\\infty.\n\\]\n\nBy Theorem 1.1, the Riemann--Stieltjes on the right-hand side exists since $g$ is continuous.\n\nThe idea of proof is to approximate the function $g$ by simple functions. We partition $[a,b]$ into mutually disjoint intervals\n\\[\n\\{a\\},\\ (a_1,b_1],\\ (a_2,b_2],\\dots,(a_n,b_n],\n\\]\nwith $a=a_1<b_1=a_2<b_2=\\cdots a_n<b_n=b$, and define two simple functions\n\\[\n\\underline{g}(x)\\triangleq g(a)1_{\\{a\\}}+\\sum_{i=1}^{n} m_i 1_{(a_i,b_i]},\n\\qquad\n\\overline{g}(x)\\triangleq g(a)1_{\\{a\\}}+\\sum_{i=1}^{n} M_i 1_{(a_i,b_i]},\n\\]\nwhere\n\\[\nm_i \\triangleq \\inf_{a_i<x\\le b_i} g(x)\n\\qquad \\text{and} \\qquad\nM_i \\triangleq \\sup_{a_i<x\\le b_i} g(x)\n\\]\nfor $i=1,2,\\dots,n$. It is easily seen that\n\\[\n\\underline{g}\\le g \\le \\overline{g}.\n\\]\n\nCompute the Lebesgue integrals of $\\underline{g}$, $g$, and $\\overline{g}$ and apply the monotonic property,\n\\[\n\\sum_{i=1}^{n} m_i \\mu((a_i,b_i])\n=\n\\int_{[a,b]} \\underline{g}\n\\le\n\\int_{[a,b]} g\n\\le\n\\int_{[a,b]} \\overline{g}\n\\le\n\\sum_{i=1}^{n} M_i \\mu((a_i,b_i]).\n\\]\n\nWe have used the assumption that $\\mu(\\{a\\})=0$ in this step.\n\nBecause the Riemann--Stieltjes integral $\\int_a^b g(x)\\, dF(x)$ exists, the left-most and right-most sums above converge to a common limit. By a sandwich argument, the integral $\\int_{[a,b]} g\\, d\\mu$ in the middle is equal to the Riemann--Stieltjes integral $\\int_a^b g(x)\\, dF(x)$. \\hfill $\\square$",
+        "dependencies": [
+            "thm_1_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "27_chap7_stieltjes_integrals"
+    },
+    {
+        "block_id": "rem_7_3_transition_2",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "\\noindent$\\blacktriangleright$ \\textbf{Practical Calculations of Lebesgue--Stieltjes Integrals} Theorem 7.8 assumes that $g$ is continuous, but this assumption can be relaxed. With a little more work, one can show that:\n\\begin{enumerate}[label=(\\alph*)]\n    \\item A function $g$ is Riemann--Stieltjes integrable if and only if $g$ is continuous almost everywhere with respect to the measure $\\mu$ on $[a,b]$.\n    \\item If $g$ is Riemann--Stieltjes integrable on $[a,b]$, then $g$ is integrable with respect to the completion of the measure $\\mu$ induced by the Stieltjes measure function $F$, and the two integrals are equal to each other.\n\\end{enumerate}\n\nNonetheless, Theorem 7.8 is sufficient for many practical calculations. If the function $g$ to be integrated is piece-wise continuous, we can compute the integral by dividing the $x$-axis into multiple pieces so that $g$ is continuous in each part. As long as the discontinuity points of $g(x)$ and the discontinuity points of the Stieltjes measure function $F(x)$ do not overlap, we can compute the integral of $g(x)$.\n\nWe note that the result in Theorem 7.8 also covers Lebesgue integration with respect to the Lebesgue measure $\\lambda$. The Lebesgue integral $\\int_{[a,b]} g\\, d\\lambda$ can be evaluated using the Riemann integral $\\int_a^b g(x)\\, dx$.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "27_chap7_stieltjes_integrals"
+    },
+    {
+        "block_id": "ex_7_3_1",
+        "type": "Example_Proof",
+        "title": "Computation of Lebesgue--Stieltjes Integral",
+        "content": "\\textbf{Example 7.3.1 (Computation of Lebesgue--Stieltjes Integral)} \\\\\nConsider a probability space $(\\mathbb{R},\\mathcal{B}(\\mathbb{R}),P)$, where $P$ is the probability measure generated by the Stieltjes measure function\n\\[\nF(x)=\n\\begin{cases}\n0 & \\text{if } x\\le 0,\\\\\nx^2 & \\text{if } 0<x\\le 1,\\\\\n1 & \\text{if } 1\\le x.\n\\end{cases}\n\\]\n\nThe Lebesgue integral of a continuous function $g(x)$ defined on interval $[0,1]$ can be evaluated by\n\\[\n\\int_{[0,1]} g(x)\\, dP(x)=\\int_{0}^{1} g(x)\\, d(x^2).\n\\]\n\nWhen $g(x)=x$, it is the expectation of the probability distribution\n\\[\n\\int_{0}^{1} x\\, d(x^2)=\\int_{0}^{1} 2x^2\\, dx = \\frac{2}{3}[x^3]_0^1 = \\frac{2}{3}.\n\\]\n\nIf we want to compute $\\int \\sin(\\pi x)\\, dP(x)$, we can first reduce it to a Riemann integral\n\\[\n\\int \\sin(\\pi x)\\, dP(x)=\\int_{0}^{1} \\sin(\\pi x)\\, d(x^2)=2\\int_{0}^{1} x\\sin(\\pi x)\\, dx.\n\\]\n\nUsing integration by parts, we obtain the answer $2/\\pi$.",
+        "dependencies": [
+            "thm_7_8"
+        ],
+        "is_renowned": false,
+        "source_plan": "27_chap7_stieltjes_integrals"
+    },
+    {
+        "block_id": "thm_7_9",
+        "type": "Theorem_with_Proof",
+        "title": "Theorem",
+        "content": "\\begin{thmbox}{7.9}\nWe continue with the notation in Theorem 7.8. Suppose $g$ is a piece-wise continuous function so that the Riemann--Stieltjes integral\n\\[\n\\int_a^b g(x)\\, dF(x)\n\\]\nexists for all $a<b$.\n\nIf one of the integrals\n\\begin{equation}\n\\lim_{a\\to-\\infty,\\ b\\to\\infty} \\int_a^b |g(x)|\\, dF(x)\n\\qquad \\text{or} \\qquad\n\\int_{\\mathbb{R}} |g(x)|\\, d\\mu(x)\n\\tag{7.4}\n\\end{equation}\nexists and is finite, then the other integral exists and is finite. In this case, we have\n\\begin{equation}\n\\int_{\\mathbb{R}} g(x)\\, d\\mu(x)=\\int_{-\\infty}^{\\infty} g(x)\\, dF(x).\n\\tag{7.5}\n\\end{equation}\n\\end{thmbox}\n\n\\textit{Proof} We first suppose that $\\int_{-\\infty}^{\\infty} g(x)\\, dF(x)$ exists and prove that $g(x)$ is $\\mu$-integrable. We truncate the function $g(x)$ to $g(x)\\cdot 1_{[-n,n]}(x)$, whose value is zero when $|x|>n$. By the monotone convergence theorem,\n\\[\n\\int_{\\mathbb{R}} |g(x)|\\, d\\mu\n=\n\\lim_{n\\to\\infty} \\int |g(x)|1_{[-n,n]}\\, d\\mu\n=\n\\lim_{n\\to\\infty} \\int_{-n}^{n} |g(x)|\\, dF(x)\n<\\infty.\n\\]\n\nWe have applied Theorem 7.8 in the second step above. Therefore $g\\in L^1(\\mu)$.\n\nConversely, suppose that $g(x)$ is $\\mu$-integrable. This is equivalent to $\\int_{\\mathbb{R}} |g|\\, d\\mu < \\infty$. Therefore, for any finite $a<b$,\n\\[\n\\int_a^b |g(x)|\\, dF(x)\n=\n\\int_{[a,b]} |g(x)|\\, d\\mu(x)\n\\le\n\\int_{\\mathbb{R}} |g(x)|\\, d\\mu(x).\n\\]\n\nSince $g$ is in $L^1(\\mu)$, the Lebesgue integral $\\int_{\\mathbb{R}} |g|$ is finite. So $\\int_a^b |g(x)|\\, dF(x)$ is upper bounded by a constant, for all $a$ and for all $b$. Taking limit, the integral $\\int_{-\\infty}^{\\infty} |g(x)|\\, dF(x)$ is also upper bounded by the same constant and hence is finite.\n\nNext, assume that one (and hence both) of the integrals in (7.4) is finite. Apply DCT with $X_n \\triangleq g\\cdot 1_{[-n,n]}$ and $Y=|g|$. We check that $|X_n|\\le Y$ and $X_n\\to g$ as $n\\to\\infty$. Since $Y$ is integrable by assumption, we can apply DCT to obtain\n\\[\n\\int_{\\mathbb{R}} g(x)\\, d\\mu(x)\n=\n\\lim_{n\\to\\infty} \\int_{\\mathbb{R}} g(x)\\cdot 1_{[-n,n]}(x)\\, d\\mu(x).\n\\]\n\n\\[\n= \\lim_{n\\to\\infty} \\int_{-n}^{n} g(x)\\, dF(x)\n\\triangleq \\int_{-\\infty}^{\\infty} g(x)\\, dF(x).\n\\]\n\nThis proves that the LS integral and the improper RS integral in (7.5) have the same value. \\hfill $\\square$",
+        "dependencies": [
+            "thm_7_8",
+            "def_1_4"
+        ],
+        "is_renowned": true,
+        "source_plan": "27_chap7_stieltjes_integrals"
+    },
+    {
+        "block_id": "rem_7_3_transition_3",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "We will demonstrate the application of the previous theorem by using it to calculate the mean of the exponential distribution, which has infinite support.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "27_chap7_stieltjes_integrals"
+    },
+    {
+        "block_id": "ex_7_3_2",
+        "type": "Example_Proof",
+        "title": "Expected Value of the Exponential Distribution",
+        "content": "\\textbf{Example 7.3.2 (Expected Value of the Exponential Distribution)} \\\\\nThe probability density function of the exponential distribution is given by\n\\[\nf(x)\\triangleq \\lambda e^{-\\lambda x}\\cdot 1_{[0,\\infty)}(x),\n\\]\nwhere $\\lambda$ is a positive constant. We can create an LS measure on $\\mathbb{R}$ from the Stieltjes measure function\n\\[\nF(x)=\n\\begin{cases}\n\\int_{0}^{x} \\lambda e^{-\\lambda t}\\, dt & \\text{if } x\\ge 0,\\\\\n0 & \\text{if } x<0.\n\\end{cases}\n\\]\n\nDenote the resulting LS measure by $P$. Suppose we want to compute the mean $\\int_{\\mathbb{R}} x\\, dP(x)$. Since the negative real number line has measure zero with respect to measure $P$, we may focus on the positive real number line. To apply Theorem 7.9, we check that the RS integral\n\\[\n\\int_{a}^{b} x\\, dF(x)=\\int_{a}^{b} x\\lambda e^{-\\lambda x}\\, dx\n\\]\nexists for all $0\\le a<b$, and moreover, the improper integral $\\int_{0}^{\\infty} x\\lambda e^{-\\lambda x}\\, dx$ exists and is equal to $1/\\lambda$, which is a finite value. Therefore $\\int_{[0,\\infty)} x\\, dP(x)=1/\\lambda$.",
+        "dependencies": [
+            "thm_7_9"
+        ],
+        "is_renowned": false,
+        "source_plan": "27_chap7_stieltjes_integrals"
+    }
+]

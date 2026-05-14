@@ -1,0 +1,245 @@
+\subsection*{1.3 Riemann--Stieltjes Integrals}
+
+Although there are several types of random variables, we can define the expectation of them in a unified manner using Riemann--Stieltjes integral. The Riemann--Stieltjes integral is a precursor to the more general Lebesgue--Stieltjes integral, which we will introduce in a later chapter.
+
+Consider a closed interval $[a,b]$, with $a<b$, and let $\alpha(x)$ be a non-decreasing function on $[a,b]$. We can imagine that there is a metal wire on the interval $[a,b]$, and $\alpha(x)$ models the distribution of mass on the wire, so that $\alpha(x_2)-\alpha(x_1)$ is the mass from $x_1$ to $x_2$ ($x_1<x_2$). In the context of probability, the function $\alpha(x)$ is the cumulative distribution function of a random variable with $\alpha(a)=0$ and $\alpha(b)=1$.
+
+In the following, we let $f(x)$ be a bounded function on the interval $[a,b]$. A \textit{partition} $P$ of $[a,b]$ is a finite sequence of numbers between $a$ and $b$, arranged in ascending order:
+\begin{equation}
+P:\ a=x_0<x_1<x_2<\cdots <x_n=b.
+\tag{1.5}
+\end{equation}
+
+Given a partition $P$ of $[a,b]$ as in (1.5), we define the \textit{upper sum} $U(P,f,\alpha)$ by
+\[
+U(P,f,\alpha)\triangleq \sum_{k=1}^{n} M_k\cdot (\alpha(x_k)-\alpha(x_{k-1})),
+\]
+where $M_k$ is the maximum value of $f$ in the subinterval $[x_{k-1},x_k]$,
+\[
+M_k\triangleq \sup\{f(x): x_{k-1}\le x\le x_k\}.
+\]
+
+Likewise, we define the \textit{lower sum} $L(P,f,\alpha)$ by
+\[
+L(P,f,\alpha)\triangleq \sum_{k=1}^{n} m_k\cdot (\alpha(x_k)-\alpha(x_{k-1})),
+\]
+where $m_k$ is the minimum value of $f$ in the subinterval $[x_{k-1},x_k]$,
+\[
+m_k\triangleq \inf\{f(x): x_{k-1}\le x\le x_k\}.
+\]
+
+A \textit{Riemann--Stieltjes sum} $S(P,f,\alpha)$ is defined as
+\[
+S(P,f,\alpha)\triangleq \sum_{k=1}^{n} f(t_k)\cdot (\alpha(x_k)-\alpha(x_{k-1})),
+\]
+where $t_k$ is chosen arbitrarily in $[x_{k-1},x_k]$.
+
+Since $\alpha$ is a non-decreasing function, the difference $\alpha(x_k)-\alpha(x_{k-1})$ is nonnegative for all $k$. The Riemann--Stieltjes sum $S(P,f,\alpha)$ is thus a weighted sum of the sample function values $f(t_k)$. To simplify notation, we do not reflect the dependency on the sample points $t_k$'s in the notation $S(P,f,\alpha)$.
+
+We can use the following sandwiching inequalities to relate the Riemann--Stieltjes sum $S(P,f,\alpha)$ to the upper and lower sums:
+\begin{equation}
+L(P,f,\alpha)\le S(P,f,\alpha)\le U(P,f,\alpha),
+\tag{1.6}
+\end{equation}
+which hold for any partition $P$.
+
+We study the convergence of $S(P,f,\alpha)$ as the number of partitions tends to infinity by analyzing the behavior of the upper and lower sums. Note that when $\alpha(x)=x$ for all $x$, the Riemann--Stieltjes integral that we define below reduces to the Riemann integral. Thus, the Riemann--Stieltjes is a more flexible extension of the Riemann integral.
+
+\begin{defbox}{1.2}
+We continue with the notation introduced in the previous paragraphs. If the upper sum $U(P,f,\alpha)$ and lower sum $L(P,f,\alpha)$ converge to the same limit as $\max_k (x_k-x_{k-1})\to 0$, we say that $f$ is \textit{Riemann--Stieltjes (RS)-integrable} on $[a,b]$ with respect to $\alpha(x)$. We denote the common limit as
+\[
+\int_a^b f\, d\alpha
+\qquad \text{or} \qquad
+\int_a^b f(x)\, d(\alpha(x)).
+\]
+
+We use the notation $\mathcal{R}(\alpha)$ to denote the set of all RS-integrable functions on $[a,b]$ with respect to $\alpha$. If $f$ is RS-integrable on $[a,b]$ with respect to $\alpha$, we write $f\in \mathcal{R}(\alpha)$.
+\end{defbox}
+
+Riemann--Stieltjes integral can be defined more generally when $\alpha(x)$ belongs to the more general class of bounded-variation functions. In probability theory, the cdf of random variables are non-decreasing, and so integration with respect to non-decreasing functions is sufficient for our purposes.
+
+From (1.6), we see that if $f\in \mathcal{R}(\alpha)$,
+\[
+\lim L(P,f,\alpha)=\lim S(P,f,\alpha)=\lim U(P,f,\alpha)
+\]
+as $\max_k(x_k-x_{k-1})\to 0$, and all three limits converge to the same value, which is equal to $\int_a^b f\, d\alpha$. The next example is a special case of Riemann--Stieltjes integrals.
+
+\textbf{Example 1.3.1 (Riemann--Stieltjes Integral When $\alpha$ is a Step Function)} \\
+Suppose $\alpha(x)$ is a step function with a single discontinuity at $c$,
+\[
+\alpha(x)=
+\begin{cases}
+u_1 & \text{if } x<c,\\
+u_2 & \text{if } x\ge c,
+\end{cases}
+\]
+for some $u_1<u_2$. Assume that $f(x)$ is continuous at $x=c$. Then
+\[
+\int_a^b f\, d\alpha = f(c)(u_2-u_1).
+\]
+
+The reason for this is that in the Riemann--Stieltjes sum, the only term that can be nonzero is $f(t_k)(u_2-u_1)$, where $t_k$ is a number in the subinterval containing $c$. As the size of the subintervals in the partition approaches zero, $t_k$ approaches $c$, and hence, $f(t_k)$ approaches $f(c)$.
+
+\begin{thmbox}{1.1}
+Suppose $f$ is bounded on $[a,b]$ and there are finitely many points $c_1,c_2,\dots,c_n$ in $[a,b]$ such that $f$ is discontinuous at each $c_i$. If the function $\alpha$ is continuous on each of these discontinuity points of $f$, then $f\in \mathcal{R}(\alpha)$.
+\end{thmbox}
+
+See [7, Theorem 6.10] for a proof of Theorem 1.1.
+
+\begin{thmbox}{1.2}
+\begin{enumerate}[label=\arabic*.]
+    \item If $f\in \mathcal{R}(\alpha)$ and $g\in \mathcal{R}(\alpha)$, then $f+g\in \mathcal{R}(\alpha)$ and
+    \[
+    \int_a^b f+g\, d\alpha = \int_a^b f\, d\alpha + \int_a^b g\, d\alpha.
+    \]
+    \item If $f\in \mathcal{R}(\alpha)$, then $cf\in \mathcal{R}(\alpha)$ for any constant $c$ and
+    \[
+    \int_a^b cf\, d\alpha = c\int_a^b f\, d\alpha.
+    \]
+    \item If $f,g\in \mathcal{R}(\alpha)$ and $f(x)\le g(x)$ for all $x\in [a,b]$, then
+    \[
+    \int_a^b f\, d\alpha \le \int_a^b g\, d\alpha.
+    \]
+    \item Suppose $a<c<b$. If $f\in \mathcal{R}(\alpha)$ on $[a,c]$ and $f\in \mathcal{R}(\alpha)$ on $[c,b]$, then $f$ is RS-integrable on $[a,b]$, and
+    \[
+    \int_a^b f\, d\alpha = \int_a^c f\, d\alpha + \int_c^b f\, d\alpha.
+    \]
+\end{enumerate}
+\end{thmbox}
+These properties are all analogous to the properties of Riemann integrals, and hence, the proofs are omitted. The following property concerns the effect of changing the function $\alpha(x)$ on the Riemann--Stieltjes integral.
+
+\begin{thmbox}{1.3}
+If $f \in \mathcal{R}(\alpha_1)$ and $f \in \mathcal{R}(\alpha_2)$ for two non-decreasing functions $\alpha_1$ and $\alpha_2$, then $f \in \mathcal{R}(\alpha_1+\alpha_2)$ and
+\[
+\int_a^b f\, d(\alpha_1+\alpha_2)=\int_a^b f\, d\alpha_1+\int_a^b f\, d\alpha_2.
+\]
+\end{thmbox}
+
+\textit{Proof} It is clear that $\alpha_1+\alpha_2$ is a non-decreasing function. Let $P$ be a partition of the interval $[a,b]$ as in (1.5) and choose any point $t_k \in [x_{k-1},x_k]$. The Riemann--Stieltjes sum of $f$ with respect to $\alpha_1+\alpha_2$ can be decomposed as
+\[
+S(P,f,\alpha_1+\alpha_2)
+=
+\sum_{k=1}^{n} f(t_k)\bigl[\alpha_1(x_k)+\alpha_2(x_k)-(\alpha_1(x_{k-1})+\alpha_2(x_{k-1}))\bigr]
+\]
+\[
+=
+\sum_{k=1}^{n} f(t_k)(\alpha_1(x_k)-\alpha_1(x_{k-1}))
++
+\sum_{k=1}^{n} f(t_k)(\alpha_2(x_k)-\alpha_2(x_{k-1})).
+\]
+
+As $n\to \infty$ and $\max_k (x_k-x_{k-1})\to 0$, we have
+\[
+S(P,f,\alpha_1+\alpha_2)\to \int_a^b f\, d\alpha_1+\int_a^b f\, d\alpha_2.
+\]
+\hfill $\square$
+
+\begin{thmbox}{1.4}
+Suppose $f$ is a continuous function on $[a,b]$ and let $\alpha$ be a non-decreasing function on $[a,b]$ with a continuous derivative $\alpha'(x)$. If $f \in \mathcal{R}(\alpha)$, then the function $f\alpha'$ is Riemann integrable on $[a,b]$, and we have
+\[
+\int_a^b f\, d\alpha = \int_a^b f(\alpha)\alpha'(x)\, dx.
+\]
+\end{thmbox}
+
+\textit{Proof} Fix a partition $P$ as in (1.5). Because $\alpha$ is differentiable, by the mean value theorem, we can find a point $t_k \in [x_{k-1},x_k]$ such that
+\[
+\alpha(x_k)-\alpha(x_{k-1})=\alpha'(t_k)(x_k-x_{k-1}).
+\]
+
+We can write the Riemann--Stieltjes sum $S(P,f,\alpha)$ as
+\[
+S(P,f,\alpha)=\sum_{k=1}^{n} f(t_k)\alpha'(t_k)(x_k-x_{k-1}).
+\]
+
+Since $f$ and $\alpha'$ are continuous, their product is also continuous. We can treat the above sum as a Riemann sum and use it to approximate the Riemann integral $\int_a^b f(x)\alpha'(x)\, dx$. \hfill $\square$
+
+\textbf{About the Assumption of $\alpha(x)$ in Theorem 1.4} \\
+The condition ``$\alpha'(x)$ is continuous on $[a,b]$'' in the previous theorem can be relaxed to ``$\alpha'(x)$ is Riemann integrable on $[a,b]$''. See [7, Theorem 6.17]. This result has important implications for the theory of Riemann--Stieltjes integration, as it allows for a wider class of functions to be integrated using the Riemann--Stieltjes integral.
+
+Using Riemann--Stieltjes integral, we can define the expectation of a random variable in a unified manner.
+
+\begin{defbox}{1.3}
+Let $X$ be a random variable, and let $F_X(x)=\Pr(X\le x)$ be its cdf. We define the \textit{expectation} and \textit{variance} of $X$ as follows:
+\[
+E[X]\triangleq \int x\, dF_X(x),
+\]
+\[
+\operatorname{Var}(X)\triangleq \int (x-E[X])^2\, dF_X(x).
+\]
+
+In this definition, the expectation of $X$ is the weighted average of its possible values, where the weights are given by the probabilities in the cdf $F_X(x)$. The variance of $X$ measures how much its values typically deviate from their expected value and is also based on the probabilities in the cdf $F_X(x)$. The definition of expectation and variance of a random variable $X$ applies to random variables of discrete type, continuous type, and singular type. If the cdf is differentiable with derivative $f_X(x)$, we can use Theorem 1.4 to simplify the calculation of the expectation:
+\[
+E[X]=\int x f_X(x)\, dx.
+\]
+
+In this case, the expectation is the integral of the product of $x$ and the pdf $f_X(x)$, which is an ordinary Riemann integral. This allows us to compute the expectation using standard techniques from calculus.
+\end{defbox}
+
+Suppose $X$ is a discrete random variable that takes values in $c_1,c_2,c_3,\dots,c_m$ with probabilities $\Pr(X=c_i)=p_i$, for $i=1,2,\dots,m$. We can write the cdf $F_X(x)$ of $X$ as
+\[
+F_X(x)=\sum_{i=1}^{m} p_i \cdot 1_{[c_i,\infty)}(x),
+\]
+where $1_{[c,\infty)}(x)$ is the step function defined in (1.1).
+
+By applying Theorem 1.3 several times, we can express the expectation of a discrete random variable $X$ as a finite sum. Let $a<c_1$ and $b>c_m$. The expectation of $X$ can be written as
+\[
+\int_a^b x\, dF_X(x)
+=
+\sum_{i=1}^{m}\int_a^b x\, d(p_i1_{[c_i,\infty)})
+=
+\sum_{i=1}^{m} c_i p_i.
+\]
+
+This recovers the formula that computes the expectation of a discrete random variable $X$ using its probability mass function.
+
+Using the Riemann--Stieltjes integral, we can also define the expectation of a Cantor distributed random variable. Recall that the Cantor function $F_U(u)$ is a non-decreasing function that increases from $F_U(0)=0$ to $F_U(1)=1$. We can define the expectation of a Cantor distributed random variable $U$ as
+\[
+E[U]=\int_0^1 u\, dF_U(u).
+\]
+
+One can show that the expectation of the Cantor distribution is $1/2$ and the variance is $1/8$. This formula extends the concept of expectation to a singular continuous distribution that does not have a probability density function or a probability mass function.
+
+For random variable whose range is not bounded, we can extend the Riemann--Stieltjes integral to an improper integral to compute its expectation.
+
+\begin{defbox}{1.4}
+We define an improper Riemann--Stieltjes integral of a function $f$ with respect to a non-decreasing function $\alpha$ by the double limit
+\[
+\int_{-\infty}^{\infty} f\, d\alpha
+\triangleq
+\lim_{\substack{a\to -\infty\\ b\to \infty}} \int_a^b f\, d\alpha
+\]
+provided that the limit exists and is finite. In this case, we say that the improper integral converges.
+\end{defbox}
+
+Improper Riemann--Stieltjes integrals are useful for computing the expectation of random variables whose range is not bounded. However, we note that not all functions have well-defined improper integrals, and care must be taken in computing them.
+
+\textbf{Example 1.3.2 (Computing the Mean of a Random Variable of Mixed Type)} \\
+Consider the random variable $Y$ in Example 1.2.1. Let $p$ be the probability that a standard normal random variable is larger than $1.5$. We can decompose the cdf of $Y$ into a discrete part and a continuous part as follows.
+
+The first part corresponds to the discrete part of $Y$ and is given by
+\[
+\alpha_1(x)\triangleq p1_{[-1.5,\infty)}(x)+p1_{[1.5,\infty)}(x).
+\]
+
+The second part corresponds to the continuous part of $Y$ and is given by
+\[
+\alpha_2(x)\triangleq
+\begin{cases}
+0 & \text{if } x<-1.5,\\
+(1-2p)\int_{-1.5}^{x}\frac{1}{\sqrt{2\pi}}e^{-t^2/2}\, dt & \text{for } -1.5\le x<1.5,\\
+1-2p & \text{if } x\ge 1.5.
+\end{cases}
+\]
+
+By Theorem 1.3, we can compute the expectation of $Y$ as
+\[
+E[Y]=\int_{-\infty}^{\infty} y\, d\alpha_1(y)+\int_{-\infty}^{\infty} y\, d\alpha_2(y).
+\]
+
+Since both integrals are zero by symmetry, the expectation of $Y$ is zero.
+
+In this section, we have seen how to give a unified treatment of defining the mathematical expectation of random variables of various types, including discrete random variables, continuous random variables, and random variables of mixed type. By using the concept of the cumulative distribution function, we can decompose the expectation of a random variable into a sum of its discrete and continuous parts and then compute each part separately.
+
+However, the Riemann--Stieltjes integral has some limitations compared to the Lebesgue integral that we are going to introduce in a latter chapter. While the Riemann--Stieltjes integral can integrate a wide class of functions, it is not powerful enough to integrate certain types of functions that arise in advanced theory. For example, it cannot integrate the indicator function of the rational numbers.
+
+In contrast, the Lebesgue integral is more versatile but is also more abstract. It requires a deeper understanding of measure theory to unfold its power.

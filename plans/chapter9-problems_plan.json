@@ -1,0 +1,131 @@
+[
+    {
+        "block_id": "prob_9_1",
+        "type": "Problem",
+        "title": "Problem 9.1",
+        "content": "\\textbf{Problem 9.1} Find the moment generating function of the exponential distribution with parameter $\\lambda$, and use it to determine the $k$-th moment, for $k\\geq 1$.",
+        "dependencies": [
+            "def_9_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter9-problems"
+    },
+    {
+        "block_id": "prob_9_2",
+        "type": "Problem",
+        "title": "Problem 9.2",
+        "content": "\\textbf{Problem 9.2} Use characteristic function to show that the sum of two independent Poisson random variables is Poisson distributed.",
+        "dependencies": [
+            "def_9_3",
+            "thm_9_3"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter9-problems"
+    },
+    {
+        "block_id": "prob_9_3",
+        "type": "Problem",
+        "title": "Problem 9.3",
+        "content": "\\textbf{Problem 9.3} By using characteristic function, show that the sum of two independent Gamma random variables with distributions $\\Gamma(\\alpha_1,\\beta)$ and $\\Gamma(\\alpha_2,\\beta)$ has distribution $\\Gamma(\\alpha_1+\\alpha_2,\\beta)$.",
+        "dependencies": [
+            "def_9_3",
+            "thm_9_3"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter9-problems"
+    },
+    {
+        "block_id": "prob_9_4",
+        "type": "Problem",
+        "title": "Problem 9.4",
+        "content": "\\textbf{Problem 9.4} Show that the characteristic function of $Y=aX+b$ is $\\phi_Y(t)=\\phi_X(at)e^{ibt}$.",
+        "dependencies": [
+            "def_9_3"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter9-problems"
+    },
+    {
+        "block_id": "prob_9_5",
+        "type": "Problem",
+        "title": "Problem 9.5",
+        "content": "\\textbf{Problem 9.5} Denote the characteristic function of the standard Gaussian distribution by $\\psi(t)$.\n\\begin{enumerate}\n\\item Show that the imaginary part of $\\psi(t)$ is zero, and\n\\[\n\\psi(t)=\\frac{1}{\\sqrt{2\\pi}}\\int_{-\\infty}^{\\infty}\\cos(tx)e^{-x^2/2}\\,dx.\n\\]\n\\item By applying Theorem 9.7, differentiate $\\psi(t)$ and derive $\\psi'(t)=-t\\psi(t)$.\n\\item Derive $\\psi(t)=e^{-t^2/2}$ by solving the differential equation in part (b).\n\\item Show that the moment of $N(0,1)$ of order $2k$ is $(2k-1)(2k-3)\\cdots 3\\cdot 1$.\n\\end{enumerate}",
+        "dependencies": [
+            "def_9_3",
+            "thm_9_7"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter9-problems"
+    },
+    {
+        "block_id": "prob_9_6",
+        "type": "Problem",
+        "title": "Problem 9.6",
+        "content": "\\textbf{Problem 9.6} Let $X_1,\\ldots,X_n$ be i.i.d. Cauchy random variables. Show that $(X_1+\\cdots+X_n)/n$ is Cauchy with the same distribution as $X_1$.",
+        "dependencies": [
+            "def_9_3",
+            "thm_9_6"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter9-problems"
+    },
+    {
+        "block_id": "prob_9_7",
+        "type": "Problem",
+        "title": "Problem 9.7",
+        "content": "\\textbf{Problem 9.7} A random variable $Z$ is called symmetric if $Z$ and $-Z$ have the same distribution.\n\\begin{enumerate}\n\\item Show that the characteristic function of a symmetric random variable is a real-valued function.\n\\item Show that the difference of two i.i.d. random variables is symmetric.\n\\end{enumerate}",
+        "dependencies": [
+            "def_9_3",
+            "thm_9_3"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter9-problems"
+    },
+    {
+        "block_id": "prob_9_8",
+        "type": "Problem",
+        "title": "Problem 9.8",
+        "content": "\\textbf{Problem 9.8} Prove that $\\phi_X(2\\pi)=1$ if and only if $P(X\\in\\mathbb{Z})=1$.",
+        "dependencies": [
+            "def_9_3",
+            "thm_9_6"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter9-problems"
+    },
+    {
+        "block_id": "prob_9_9",
+        "type": "Problem",
+        "title": "Problem 9.9",
+        "content": "\\textbf{Problem 9.9} Let $\\phi_X(t)$ denote the characteristic function of a random variable $X$. Given any $n$ distinct real numbers $t_1<t_2<\\cdots<t_n$ in ascending order, define an $n\\times n$ matrix $M$ by letting the $(i,j)$-entry be $m_{ij}=\\phi_X(t_j-t_i)$. Prove that $M$ is Hermitian and positive semi-definite. That is, show that $M^H=M$ and $v^H Mv\\geq 0$ for all complex vectors $v\\in\\mathbb{C}^n$. The superscript $H$ means conjugate transpose.",
+        "dependencies": [
+            "def_9_3"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter9-problems"
+    },
+    {
+        "block_id": "prob_9_10",
+        "type": "Problem",
+        "title": "Problem 9.10",
+        "content": "\\textbf{Problem 9.10} It is known that the characteristic function of a $\\chi^2$ distribution with $k$ degrees of freedom is $(1-2it)^{-k/2}$. Find the mean and variance.",
+        "dependencies": [
+            "def_9_3",
+            "thm_9_7"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter9-problems"
+    },
+    {
+        "block_id": "prob_9_11",
+        "type": "Problem",
+        "title": "Problem 9.11",
+        "content": "\\textbf{Problem 9.11} Prove that if $\\phi(t)$ is the characteristic function of a random variable, the squared magnitude $\\lvert\\phi(t)\\rvert^2$ is also a characteristic function.",
+        "dependencies": [
+            "def_9_3",
+            "thm_9_3"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter9-problems"
+    }
+]

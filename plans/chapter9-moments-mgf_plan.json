@@ -1,0 +1,94 @@
+[
+    {
+        "block_id": "intro_9",
+        "type": "Remark",
+        "title": "Moment Generating Functions and Characteristic Functions",
+        "content": "\\section*{Moment Generating Functions and Characteristic Functions}\n\nThe moment generating function and characteristic function are both examples of transform functions used to analyze probability distributions. The moment generating function of a random variable contains all the information about its moments. However, a drawback of the moment generating function is that it may not exist in certain cases. In this chapter we will prove that the moment generating function of a random variable exists if and only if the moments of all orders are finite.\n\nIn contrast, the characteristic function of a random variable is well-defined for all types of random variables, even if the moments are not finite. The inversion formula and the uniqueness theorem state that we can recover not only the moments, but the entire probability distribution of a random variable from its characteristic function. Although the inversion formula is not frequently used to compute probability explicitly, it provides a theoretical basis for checking convergence in distribution through characteristic functions.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter9-moments-mgf"
+    },
+    {
+        "block_id": "intro_9_1",
+        "type": "Remark",
+        "title": "Moments and Moment Generating Functions",
+        "content": "\\subsection*{9.1 Moments and Moment Generating Functions}\n\nThe moments provide some information about the shape of the probability distribution.",
+        "dependencies": [
+            "intro_9"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter9-moments-mgf"
+    },
+    {
+        "block_id": "def_9_1",
+        "type": "Definition",
+        "title": "Moments and Central Moments",
+        "content": "\\begin{defbox}{9.1}\nFor an integer $r \\geq 1$, the $r$-th moment of $X$ is defined as the expectation $\\mathbb{E}[X^r]$. The $r$-th central moment is defined by $\\mathbb{E}[(X-\\mathbb{E}[X])^r]$. In particular, the second central moment is commonly called the variance of $X$; the square root of variance is called the standard deviation.\n\nThe third central moment measures the asymmetry of the probability distribution. The skewness of a random variable is defined as the third central moment normalized by the cube of the standard deviation $\\sigma$,\n\\[\n\\frac{\\mathbb{E}[(X-\\mathbb{E}[X])^3]}{\\sigma^3}.\n\\]\nThe analogous quantity of order $4$ is called the kurtosis,\n\\[\n\\frac{\\mathbb{E}[(X-\\mathbb{E}[X])^4]}{\\sigma^4}.\n\\]\nIt measures the tailedness of the probability distribution.\n\\end{defbox}",
+        "dependencies": [
+            "intro_9_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter9-moments-mgf"
+    },
+    {
+        "block_id": "thm_9_1",
+        "type": "Theorem_Statement",
+        "title": "Moment Formulas for Continuous-Type Random Variables",
+        "content": "By Theorem 7.12, we have the following formula for computing the moments of continuous-type random variables.\n\n\\begin{thmbox}{9.1}\nSuppose $X$ is a random variable such that $\\mathbb{E}[\\lvert X\\rvert^r] < \\infty$. If the cdf $F_X(x)$ of $X$ is differentiable and the derivative equals $f_X(x)$, we can compute the $r$-th moment and the $r$-th central moment by the following formulas:\n\\[\n\\mathbb{E}[X^r] = \\int_{-\\infty}^{\\infty} x^r f_X(x)\\,dx,\n\\qquad\n\\mathbb{E}[(X-\\mathbb{E}[X])^r] =\n\\int_{-\\infty}^{\\infty} (x-\\mathbb{E}[X])^r f_X(x)\\,dx.\n\\]\n\\end{thmbox}",
+        "dependencies": [
+            "def_9_1",
+            "thm_7_12"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter9-moments-mgf"
+    },
+    {
+        "block_id": "def_9_2",
+        "type": "Definition",
+        "title": "Moment Generating Function",
+        "content": "To compute the higher-order moments, we can use the moment generating function.\n\n\\begin{defbox}{9.2}\nLet $X$ be a real-valued random variable defined on a probability space $(\\Omega,\\mathcal{F},P)$. The moment generating function (mgf) of $X$ is defined as\n\\[\nM_X(t) \\coloneqq \\mathbb{E}[e^{tX}] =\n\\int_{\\Omega} e^{tX(\\omega)}\\,dP(\\omega),\n\\]\nwhere $t \\in \\mathbb{R}$. We say that $X$ has a moment generating function if there exists $\\delta > 0$ such that $M_X(t)$ is finite for all $t$ in the interval $(-\\delta,\\delta)$.\n\nSince $X$ is real-valued, the function $e^{tX}$ is nonnegative, and hence the expectation $\\mathbb{E}[e^{tX}]$ is well-defined. However, the expected value may be infinity. It is essential to have $M_X(t)$ defined and finite in a non-empty interval $(-\\delta,\\delta)$ that contains $0$ in the interior. This ensures that we can differentiate $M_X(t)$ with respect to $t$ at $t=0$.\n\\end{defbox}",
+        "dependencies": [
+            "def_9_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter9-moments-mgf"
+    },
+    {
+        "block_id": "thm_9_2",
+        "type": "Theorem_with_Proof",
+        "title": "Moments Recovered from the Moment Generating Function",
+        "content": "\\begin{thmbox}{9.2}\nIf $X$ has moment generating function $M_X(t)$, then $X$ has finite moments of all orders, and they can be recovered from the moment generating function by\n\\[\n\\mathbb{E}[X^n] =\n\\left.\\frac{d^n}{dt^n}M_X(t)\\right|_{t=0}\n\\]\nfor $n=1,2,3,\\ldots$.\n\\end{thmbox}\n\n\\textit{Proof}\nIn this proof we will use the inequality\n\\[\ne^{\\lvert tx\\rvert} \\leq e^{tx}+e^{-tx},\n\\]\nwhich holds for any real numbers $t$ and $x$. By assumption, there exists $\\delta>0$ such that $M_X(t)$ is finite for $-\\delta<t<\\delta$. Hence, $\\mathbb{E}[e^{tX}]<\\infty$ and $\\mathbb{E}[e^{-tX}]<\\infty$ for $\\lvert t\\rvert<\\delta$.\n\nWe first prove that all moments of $X$ are finite using Taylor expansion. For any positive integer $n$, we have\n\\[\n\\frac{\\lvert t\\rvert^n}{n!}\\lvert x\\rvert^n \\leq e^{\\lvert tx\\rvert},\n\\]\nbecause the left-hand side is one of the terms in the power series expansion of $e^{\\lvert tx\\rvert}$, and all other terms in the expansion are positive. Substituting $t$ by $\\delta/2$, we obtain\n\\[\n\\frac{(\\delta/2)^n}{n!}\\lvert x\\rvert^n \\leq e^{\\delta\\lvert x\\rvert/2}.\n\\]\nSince this holds for all $x$, we can replace $x$ by the random variable $X$ and take expectation on both sides. This gives\n\\[\n\\frac{(\\delta/2)^n}{n!}\\mathbb{E}[\\lvert X\\rvert^n]\n\\leq \\mathbb{E}[e^{\\delta\\lvert X\\rvert/2}],\n\\]\nand therefore\n\\[\n\\mathbb{E}[\\lvert X\\rvert^n]\n\\leq n!\\left(\\frac{2}{\\delta}\\right)^n\n\\left(\\mathbb{E}[e^{\\delta X/2}]+\\mathbb{E}[e^{-\\delta X/2}]\\right)\n<\\infty.\n\\]\nHence, by Theorem 6.6, the random variable $X^n$ is integrable for all $n$.\n\nNext, from the Taylor expansion of the exponential function, we can derive the following inequality that holds for any real numbers $t$ and $x$, and for all positive integers $n$:\n\\[\n\\left\\lvert \\sum_{k=0}^{n}\\frac{t^k}{k!}x^k \\right\\rvert\n\\leq \\sum_{k=0}^{n}\\frac{\\lvert t\\rvert^k}{k!}\\lvert x\\rvert^k\n\\leq e^{\\lvert t\\rvert\\lvert x\\rvert}.\n\\]\nFor each $t$ in the range $\\lvert t\\rvert<\\delta$, the sum $\\sum_{k=0}^{n}t^kX^k/k!$ is bounded by $e^{\\lvert tX\\rvert}$. On the other hand, $e^{\\lvert tX\\rvert}$ has finite expectation, because\n\\[\n\\mathbb{E}[e^{\\lvert t\\rvert\\lvert X\\rvert}]\n\\leq \\mathbb{E}[e^{tX}]+\\mathbb{E}[e^{-tX}]<\\infty\n\\]\nfor all $\\lvert t\\rvert<\\delta$. We can apply the dominated convergence theorem (Theorem 7.4) to obtain\n\\[\n\\mathbb{E}[e^{tX}]\n= \\mathbb{E}\\left[\\sum_{k=0}^{\\infty}\\frac{t^kX^k}{k!}\\right]\n= \\sum_{i=0}^{\\infty}\\mathbb{E}\\left[\\frac{t^iX^i}{i!}\\right]\n= \\sum_{i=0}^{\\infty}\\frac{\\mathbb{E}[X^i]}{i!}t^i.\n\\]\nTherefore, $M_X(t)$ can be expanded as a power series with radius of convergence $\\delta$. Using the properties of power series, we see that $M_X(t)$ is infinitely differentiable and\n\\[\n\\left.\\frac{d^n}{dt^n}M_X(t)\\right|_{t=0} = \\mathbb{E}[X^n].\n\\]\n\\hfill $\\square$",
+        "dependencies": [
+            "def_9_1",
+            "def_9_2",
+            "thm_6_6",
+            "thm_7_4"
+        ],
+        "is_renowned": true,
+        "source_plan": "chapter9-moments-mgf"
+    },
+    {
+        "block_id": "rem_9_1_mgf_existence",
+        "type": "Remark",
+        "title": "Existence of Moment Generating Functions",
+        "content": "\\textit{Existence of Moment Generating Function.}\nTheorem 9.2 illustrates that a random variable need not have a moment generating function. A necessary condition for the existence is that all moments are finite. For example, if a random variable has infinite variance, then it does not have a moment generating function. Moreover, it is possible that even if all moments are finite, the moment generating function still does not exist. One such example is the log-normal distribution.",
+        "dependencies": [
+            "thm_9_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter9-moments-mgf"
+    },
+    {
+        "block_id": "ex_9_1_1",
+        "type": "Example_Proof",
+        "title": "Moment Generating Function of Poisson Distribution",
+        "content": "\\textbf{Example 9.1.1 (Moment Generating Function of Poisson Distribution)} \\\\\nSuppose $X$ is a Poisson random variable with mean $\\lambda$. The probability mass function is\n\\[\nP(X=k)=\\frac{\\lambda^k}{k!}e^{-\\lambda}, \\qquad k=0,1,2,\\ldots.\n\\]\nUsing the discrete version of the change-of-variable formula (Theorem 7.12), we can calculate the moment generating function as\n\\[\nM_X(t)\\coloneqq \\mathbb{E}[e^{tX}]\n=\\sum_{k=0}^{\\infty}e^{kt}\\frac{\\lambda^k}{k!}e^{-\\lambda}\n=e^{-\\lambda}\\sum_{k=0}^{\\infty}\\frac{(\\lambda e^t)^k}{k!}\n=e^{\\lambda e^t-\\lambda}.\n\\]\nThus $M_X(t)$ is defined for all $t$.\n\nThe first two moments of $X$ can be obtained by differentiating $M_X(t)$:\n\\[\n\\mathbb{E}[X] = M_X'(0)\n=\\left.e^{-\\lambda}e^{\\lambda e^t}\\lambda e^t\\right|_{t=0}\n=\\lambda,\n\\]\nand\n\\[\n\\mathbb{E}[X^2]\n=\\left.\\frac{d^2}{dt^2}M_X(t)\\right|_{t=0}\n=\\left.e^{-\\lambda}e^{\\lambda e^t}\\left((\\lambda e^t)^2+\\lambda e^t\\right)\\right|_{t=0}\n=\\lambda^2+\\lambda.\n\\]\nThe variance of $X$ is thus $\\mathbb{E}[X^2]-\\mathbb{E}[X]^2=\\lambda$.",
+        "dependencies": [
+            "def_9_2",
+            "thm_9_2",
+            "thm_7_12"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter9-moments-mgf"
+    }
+]

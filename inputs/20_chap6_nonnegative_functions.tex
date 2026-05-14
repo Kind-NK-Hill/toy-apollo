@@ -1,0 +1,148 @@
+\subsection*{6.2 Lebesgue Integral of Nonnegative Functions}
+
+In this section we define the Lebesgue integral for measurable function whose values are either nonnegative real numbers or $\infty$. Unlike the Riemann--Stieltjes integral, we partition the \textit{range} of $X$ into subintervals and take limit as the width of the subintervals tends to zero.
+
+To define the Lebesgue integral of a nonnegative function, we first approximate it from below by simple functions and then take the supremum of the integrals of these simple functions.
+
+\begin{defbox}{6.3}
+For a nonnegative measurable function $X$, we define the \textit{Lebesgue integral} of $X$ by
+\[
+\int X\, d\mu \triangleq \sup \left\{ \int f\, d\mu : f \text{ is simple},\ 0\le f\le X \right\}.
+\]
+\end{defbox}
+Yes — the previous output was redundant because it started from a later page. Here is the corrected LaTeX beginning from the actual first image you just sent, and then continuing through the remaining pages in order:
+
+```latex id="p4k8m1"
+If we define the set
+\begin{equation}
+S(X) \triangleq \{f : f \text{ is simple, } 0 \le f \le X\},
+\tag{6.3}
+\end{equation}
+then the Lebesgue integral can be expressed as
+\[
+\int X\, d\mu = \sup \left\{ \int f\, d\mu : f \in S(X) \right\}.
+\]
+
+If the set $\left\{\int f\, d\mu : f \in S(X)\right\}$ is unbounded, then $\int X\, d\mu = \infty$. Furthermore, if $X(\omega)$ is equal to $\infty$ for $\omega$ in a set $A$ with positive measure, then the integral $\int X\, d\mu$ is also equal to $\infty$.
+
+We note that the set $S(X)$ in (6.3) is not empty. One way to approximate a nonnegative measurable function $X$ by simple functions is as follows. For any positive integer $n$, we define a simple function $X^{(n)}$ by
+\begin{equation}
+X^{(n)}(\omega)=
+\begin{cases}
+n & \text{if } n < X(\omega), \\[0.5em]
+\dfrac{k}{2^n} & \text{if } \dfrac{k}{2^n} < X(\omega) \le \dfrac{k+1}{2^n} \text{ for some } k=0,1,2,\dots,n2^n-1.
+\end{cases}
+\tag{6.4}
+\end{equation}
+
+By construction, the function $X^{(n)}$ has finite range and we have $X^{(n)}(\omega) \le X(\omega)$ for all $\omega$. We also note that for each fixed $\omega$, the sequence $(X^{(n)}(\omega))_{n \ge 1}$ converges to $X(\omega)$ from below as $n \to \infty$.
+
+\noindent$\blacktriangleright$ \textbf{Backward Compatibility} At this point, we have two apparently different definitions of integral for nonnegative simple functions. However, Definitions 6.2 and 6.3 are compatible with each other when $X$ is a simple nonnegative function. Specifically, suppose $X$ is a measurable function expressed as
+\[
+X(\omega)=\sum_{i=1}^{k} c_i 1_{A_i}(\omega),
+\]
+where $c_i \ge 0$ for all $i$, and the sets $A_i$'s are measurable and mutually disjoint. By Definition 6.2, the integral of $X$ is given by $\sum_{i=1}^{k} c_i \mu(A_i)$. It can be shown that this value is indeed the maximum of $\left\{\int f\, d\mu : f \in S(X)\right\}$.
+
+The monotonic property is a direct consequence of the definition.
+
+\begin{thmbox}{6.3 (Monotonicity)}
+Suppose $X$ and $Y$ are nonnegative measurable functions, and $X \le Y$. Then
+\[
+\int X\, d\mu \le \int Y\, d\mu.
+\]
+\end{thmbox}
+
+\textit{Proof} By the definition of Lebesgue integral for nonnegative functions, we have
+\[
+\int X\, d\mu \triangleq \sup \left\{ \int f\, d\mu : f \in S(X) \right\},
+\]
+\[
+\int Y\, d\mu \triangleq \sup \left\{ \int g\, d\mu : g \in S(Y) \right\}.
+\]
+
+Since $X \le Y$, we have $S(X) \subseteq S(Y)$. Therefore, for any $f \in S(X)$, we have $f \in S(Y)$, and so
+\[
+\int f\, d\mu \le \sup \left\{ \int g\, d\mu : g \in S(Y) \right\}.
+\]
+
+Taking the supremum over $S(X)$, we get $\int X\, d\mu \le \int Y\, d\mu$. \hfill $\square$
+
+The following theorem summarizes the behavior of integrals for non-decreasing sequences of functions, which is a fundamental result in measure theory and probability theory. We say that a sequence of functions $X_1,X_2,X_3,\dots$ is non-decreasing if they are non-decreasing pointwise, that is, for each $\omega$ in $\Omega$, we have
+\[
+X_1(\omega) \le X_2(\omega) \le X_3(\omega) \le \cdots,
+\]
+and we simply write it as $X_1 \le X_2 \le X_3 \le \cdots$.
+
+\begin{thmbox}{6.4 (Monotone Convergence Theorem (MCT))}
+If
+\[
+0 \le X_1 \le X_2 \le X_3 \le \cdots
+\]
+is a sequence of non-decreasing, nonnegative measurable functions converging to $X$ from below, then
+\[
+\int X_n\, d\mu \to \int X\, d\mu
+\]
+as $n \to \infty$.
+\end{thmbox}
+
+We note that the pointwise limit of $(X_n)_{n=1}^{\infty}$ in Theorem 6.4 always exists. We set $X(\omega)=\infty$ when $\lim_{n\to\infty} X_n(\omega)=\infty$. We use the notation $X_n \nearrow X$ to mean that $(X_n)_{n \ge 1}$ is a non-decreasing sequence converging pointwise to $X$.
+
+\textit{Proof} By monotonicity, we have $\int X_n \le \int X$ for all $n$. Therefore, $\sup_n \int X_n \le \int X$. To complete the proof, we need to show that $\sup_n \int X_n \ge \int X$.
+
+Suppose $g$ is a simple function in $S(X)$, so that $g(\omega) \le X(\omega)$ for all $\omega$. We write $g(\omega)$ as a finite summation
+\[
+g(\omega)=\sum_{i=1}^{k} a_i 1_{A_i}(\omega),
+\]
+where $a_i \ge 0$ for $i=1,2,\dots,k$, and the sets $A_i$'s are measurable and mutually disjoint.
+
+Fix $\epsilon > 0$. For any $n \ge 1$, let
+\[
+B_n^{\epsilon} \triangleq \{\omega \in \Omega : X_n(\omega) \ge (1-\epsilon)g(\omega)\}.
+\]
+
+The set $B_n^{\epsilon}$ is measurable because both $X_n$ and $g$ are measurable functions.
+
+Since $X_n \nearrow X$ by assumption and $g \le X$, we have $B_n^{\epsilon} \nearrow \Omega$ as $n \to \infty$. For each $n$, we can restrict the integral to the set $B_n^{\epsilon}$ and lower bound $X_n(\omega)$ by $(1-\epsilon)g(\omega)$. Hence, using the monotonicity of Lebesgue integral, we obtain
+\[
+\int X_n\, d\mu \ge \int 1_{B_n^{\epsilon}} X_n\, d\mu \ge \int 1_{B_n^{\epsilon}(\omega)}(1-\epsilon)g(\omega)\, d\mu(\omega)
+\]
+\[
+= (1-\epsilon)\int 1_{B_n^{\epsilon}} \sum_{i=1}^{k} a_i 1_{A_i}\, d\mu
+= (1-\epsilon)\sum_{i=1}^{k} a_i \mu(B_n^{\epsilon} \cap A_i).
+\]
+
+Since $B_n^{\epsilon} \nearrow \Omega$, we can take limits on both sides as $n \to \infty$. This yields
+\[
+\sup_n \int X_n\, d\mu \ge (1-\epsilon)\sum_{i=1}^{k} a_i \mu(A_i).
+\]
+
+Because $\epsilon$ can be arbitrarily small, we get $\sup_n \int X_n\, d\mu \ge \int g\, d\mu$. Since the above inequality holds for any $g \in S(X)$, we obtain $\sup_n \int X_n \ge \int X$. \hfill $\square$
+
+Using the monotone convergence theorem, we can now prove the linearity property.
+
+\begin{thmbox}{6.5 (Linear Property)}
+Let $X$ and $Y$ be nonnegative and measurable functions and let $\alpha$ be a nonnegative constant. Then
+\[
+\int (X+Y)\, d\mu = \int X\, d\mu + \int Y\, d\mu,
+\]
+\[
+\int \alpha X\, d\mu = \alpha \int X\, d\mu.
+\]
+\end{thmbox}
+
+The equalities in this theorem are interpreted as follows: If the one side of an equality in Theorem 6.5 is infinity, then the other side is also infinity.
+
+\textit{Proof} Let $X_n$'s and $Y_n$'s be simple nonnegative functions such that $X_n \nearrow X$ and $Y_n \nearrow Y$. Such sequences of simple functions always exist using the approximation in (6.4).
+
+For each $n$, the sum $X_n+Y_n$ is simple nonnegative functions converging to $X+Y$ from below. By applying the monotone convergence theorem, we obtain
+\[
+\int (X+Y)\, d\mu = \int \lim_{n\to\infty} (X_n+Y_n)\, d\mu
+\]
+\[
+= \lim_{n\to\infty} \int (X_n+Y_n)\, d\mu
+\]
+\[
+= \int X\, d\mu + \int Y\, d\mu.
+\]
+
+To prove the second equality, we approximate $\alpha X$ by $(\alpha X_n)_{n=1}^{\infty}$, which is non-decreasing and converging to $\alpha X$ from below. The proof is similar to the first part. \hfill $\square$

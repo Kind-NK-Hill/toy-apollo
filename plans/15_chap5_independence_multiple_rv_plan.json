@@ -1,0 +1,164 @@
+[
+    {
+        "block_id": "rem_5_3_independence_intro",
+        "type": "Remark",
+        "title": "Section Header",
+        "content": "\\subsection*{5.3 Independence of More Than Two Random Variables}\n\nWe generalize the notion of independence to infinitely many random variables.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "15_chap5_independence_multiple_rv"
+    },
+    {
+        "block_id": "def_5_5",
+        "type": "Definition",
+        "title": "Definition",
+        "content": "\\begin{defbox}{5.5}\nFor any positive integer $n$, events $A_1,A_2,\\ldots,A_n$ in $\\Omega$ are said to be \\textit{mutually independent}, or simply \\textit{independent}, if for any $2 \\le k \\le n$ and any $k$ distinct indices $i_1,i_2,\\ldots,i_k \\in \\{1,2,\\ldots,n\\}$,\n\\[\nP\\left(\\bigcap_{j=1}^{k} A_{i_j}\\right)=\\prod_{j=1}^{k} P(A_{i_j}).\n\\tag{5.3}\n\\]\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "15_chap5_independence_multiple_rv"
+    },
+    {
+        "block_id": "rem_5_3_three_events_example",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "For example, when we say that three events $A_1$, $A_2$, and $A_3$ are independent, we mean that\n\\[\nP(A_1 \\cap A_2)=P(A_1)P(A_2),\n\\]\n\\[\nP(A_1 \\cap A_3)=P(A_1)P(A_3),\n\\]\n\\[\nP(A_2 \\cap A_3)=P(A_2)P(A_3), \\qquad \\text{and}\n\\]\n\\[\nP(A_1 \\cap A_2 \\cap A_3)=P(A_1)P(A_2)P(A_3).\n\\]\n\nThe notion of pairwise independence is a much weaker condition compared with mutually independence.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "15_chap5_independence_multiple_rv"
+    },
+    {
+        "block_id": "def_5_6",
+        "type": "Definition",
+        "title": "Definition",
+        "content": "\\begin{defbox}{5.6}\nThe $n$ events $A_1,A_2,\\ldots,A_n$ in $\\Omega$ are said to be \\textit{pairwise independent} if (5.3) holds for $k=2$.\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "15_chap5_independence_multiple_rv"
+    },
+    {
+        "block_id": "rem_5_3_pairwise_vs_mutual",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "Mutually independence certainly implies pairwise independence, but in general the reverse implication does not hold.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "15_chap5_independence_multiple_rv"
+    },
+    {
+        "block_id": "ex_5_3_1",
+        "type": "Example_Proof",
+        "title": "Example",
+        "content": "\\textbf{Example 5.3.1 (Pairwise Independent But Not Mutually Independent Events)} \\\\\nSuppose $\\Omega=\\{a,b,c,d\\}$ and each of the outcomes $a$, $b$, $c$, and $d$ has probability $1/4$. Let $E_1$ be the event $\\{a,d\\}$, $E_2$ be $\\{b,d\\}$, and $E_3$ be $\\{c,d\\}$. Each of the events $E_1$, $E_2$, and $E_3$ has probability $1/2$ and contains the outcome $d$. The intersection of any pair of them is $\\{d\\}$ and hence has probability $1/4$. The events $E_1$, $E_2$, and $E_3$ are thus pairwise independent. However, they are not mutually independent, because $P(E_1 \\cap E_2 \\cap E_3)=1/4$, which is not equal to the product $P(E_1)P(E_2)P(E_3)=1/8$.\n\nThe following is an elementary property of independent events.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "15_chap5_independence_multiple_rv"
+    },
+    {
+        "block_id": "thm_5_6",
+        "type": "Theorem_with_Proof",
+        "title": "Theorem or Lemma",
+        "content": "\\begin{thmbox}{5.6}\nSuppose $B_1,B_2,\\ldots,B_n$ are $n$ mutually independent events. For any index $i$ between $1$ and $n$, the events $B_1,B_2,\\ldots,B_i^c,\\ldots,B_n$ are also mutually independent.\n\\end{thmbox}\n\n\\textit{Proof} By re-ordering the events we may assume without loss of generality that $i=1$. We need to show that if we take the complement of $B_1$, the events $B_1^c,B_2,\\ldots,B_n$ are mutually independent.\n\nTake any $k$ indices $j_1,j_2,\\ldots,j_k$ between $2$ and $n$, where $k$ can be any integer between $1$ and $n-1$. By the assumption of mutual independence,\n\\[\nP(B_{j_1} \\cap B_{j_2} \\cap \\cdots \\cap B_{j_k})=P(B_{j_1})P(B_{j_2})\\cdots P(B_{j_k}),\n\\]\n\\[\nP(B_1 \\cap B_{j_1} \\cap B_{j_2} \\cap \\cdots \\cap B_{j_k})=P(B_1)P(B_{j_1})P(B_{j_2})\\cdots P(B_{j_k}).\n\\]\n\nOn the other hand, we note that\n\\[\n(B_1 \\cap B_{j_1} \\cap B_{j_2} \\cap \\cdots \\cap B_{j_k}) \\uplus (B_1^c \\cap B_{j_1} \\cap B_{j_2} \\cap \\cdots \\cap B_{j_k}) = B_{j_1} \\cap B_{j_2} \\cap \\cdots \\cap B_{j_k}.\n\\]\n\nTherefore\n\\[\nP(B_1^c \\cap B_{j_1} \\cap B_{j_2} \\cap \\cdots \\cap B_{j_k})\n\\]\n\\[\n= P(B_{j_1} \\cap B_{j_2} \\cap \\cdots \\cap B_{j_k})-P(B_1 \\cap B_{j_1} \\cap B_{j_2} \\cap \\cdots \\cap B_{j_k})\n\\]\n\\[\n= (1-P(B_1))P(B_{j_1})P(B_{j_2})\\cdots P(B_{j_k}).\n\\]\n\\hfill $\\square",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "15_chap5_independence_multiple_rv"
+    },
+    {
+        "block_id": "rem_5_3_finite_extension",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "$\n\nBy applying the previous result multiple times inductively, we have the following extension. Suppose $A_1,A_2,\\ldots,A_n$ are $n$ mutually independent events. We take any $k$ distinct indices $i_1,i_2,\\ldots,i_k$ in $\\{1,2,\\ldots,n\\}$, and for each of the chosen indices, let $B_{i_j}$ to be either $A_{i_j}$ or $A_{i_j}^c$. No matter which indices and events are selected, we always have\n\\begin{equation}\nP(B_{i_1} \\cap B_{i_2} \\cap \\cdots \\cap B_{i_k})=P(B_{i_1})P(B_{i_2})\\cdots P(B_{i_k}).\n\\tag{5.4}\n\\end{equation}\n\nWe can take a step further and define the meaning of independence of $\\sigma$-algebras.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "15_chap5_independence_multiple_rv"
+    },
+    {
+        "block_id": "def_5_7",
+        "type": "Definition",
+        "title": "Definition",
+        "content": "\\begin{defbox}{5.7}\nSuppose $(\\Omega,\\mathcal{F},P)$ is a probability space and $\\mathcal{F}_1,\\mathcal{F}_2,\\ldots,\\mathcal{F}_n$ are sub-$\\sigma$-algebras of $\\mathcal{F}$. We say that $\\mathcal{F}_1,\\mathcal{F}_2,\\ldots,\\mathcal{F}_n$ are \\textit{independent} if for any $A_i \\in \\mathcal{F}_i$, $i=1,2,\\ldots,n$, we have\n\\[\nP(A_1 \\cap A_2 \\cap \\cdots \\cap A_n)=P(A_1)P(A_2)\\cdots P(A_n).\n\\]\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "15_chap5_independence_multiple_rv"
+    },
+    {
+        "block_id": "rem_5_3_ignore_omega",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "Note that since $\\Omega$ is in $\\mathcal{F}_i$ for all $i$, the set $A_i$ may equal $\\Omega$. Selecting $A_i=\\Omega$ in Definition 5.7 is the same as ignoring the sets with subscript $i$.\n\nThe definition of independence of events can be formulated in terms of independence of $\\sigma$-algebras. Recall that the $\\sigma$-algebra $\\sigma(\\{A\\})$ generated by a single event $A$ is $\\{\\emptyset,\\Omega,A,A^c\\}$.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "15_chap5_independence_multiple_rv"
+    },
+    {
+        "block_id": "thm_5_7",
+        "type": "Theorem_Statement",
+        "title": "Theorem or Lemma",
+        "content": "\\begin{thmbox}{5.7}\nEvents $A_1,A_2,\\ldots,A_n$ are mutually independent if and only if each of the corresponding $\\sigma$-algebras $\\sigma(\\{A_1\\}),\\sigma(\\{A_2\\}),\\ldots,\\sigma(\\{A_n\\})$ are independent.\n\\end{thmbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "15_chap5_independence_multiple_rv"
+    },
+    {
+        "block_id": "rem_5_3_random_variable_definition",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "We define the independence of $n$ random variables via the generated $\\sigma$-algebras.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "15_chap5_independence_multiple_rv"
+    },
+    {
+        "block_id": "def_5_8",
+        "type": "Definition",
+        "title": "Definition",
+        "content": "\\begin{defbox}{5.8}\nRandom variables $X_1,X_2,\\ldots,X_n$ are said to be \\textit{mutually independent}, or simply \\textit{independent}, if $\\sigma(X_1),\\sigma(X_2),\\ldots,\\sigma(X_n)$ are independent.\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "15_chap5_independence_multiple_rv"
+    },
+    {
+        "block_id": "rem_5_3_infinite_sigma_algebras",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "When there are infinitely many sub-$\\sigma$-algebras, they are defined to be independent if any finite combination of them is independent.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "15_chap5_independence_multiple_rv"
+    },
+    {
+        "block_id": "def_5_9",
+        "type": "Definition",
+        "title": "Definition",
+        "content": "\\begin{defbox}{5.9}\nLet $(\\Omega,\\mathcal{F},P)$ be a probability space and $(\\mathcal{F}_i)_{i=1}^{\\infty}$ be a sequence of sub-$\\sigma$-algebras in $\\mathcal{F}$. We say that the $\\sigma$-algebras $\\mathcal{F}_1,\\mathcal{F}_2,\\mathcal{F}_3,\\ldots$ are independent if for any positive integer $k$, any distinct indices $i_1,i_2,\\ldots,i_k \\in \\mathbb{N}$, and any choices of event $A_j \\in \\mathcal{F}_{i_j}$, for $j=1,2,\\ldots,k$, we have\n\\[\nP(A_1 \\cap A_2 \\cap \\cdots \\cap A_k)=P(A_1)P(A_2)\\cdots P(A_k).\n\\]\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "15_chap5_independence_multiple_rv"
+    },
+    {
+        "block_id": "rem_5_3_unified_definition",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "In terms of independence of $\\sigma$-algebras, we have a unified definition of independence of infinitely many events and infinitely many random variables.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "15_chap5_independence_multiple_rv"
+    },
+    {
+        "block_id": "def_5_10",
+        "type": "Definition",
+        "title": "Definition",
+        "content": "\\begin{defbox}{5.10}\nAn infinite sequence of events $(A_i)_{i=1}^{\\infty}$ in $\\Omega$ is said to be \\textit{independent} if the generated $\\sigma$-algebras $(\\sigma(\\{A_i\\}))_{i=1}^{\\infty}$ are independent.\n\nAn infinite sequence of random variables $(X_i)_{i=1}^{\\infty}$ in $\\Omega$ is said to be \\textit{independent} if the generated $\\sigma$-algebras $(\\sigma(X_i))_{i=1}^{\\infty}$ are independent.\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "15_chap5_independence_multiple_rv"
+    },
+    {
+        "block_id": "rem_5_3_finite_intersections_only",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "It is important to note that in the definition of independence, it is not necessary to consider the intersection of infinitely many events. Instead, it suffices to consider only finite intersections. For example, consider a sequence of events $A_1,A_2,A_3,\\ldots$, and suppose that any finite combination of them is independent. The infinite intersection $\\bigcap_{i=1}^{\\infty} A_i$ can be expressed as the limit of a decreasing sequence of finite intersections $\\bigcap_{i=1}^{k} A_i$, for $k \\ge 1$. By applying the upper semi-continuity of measure, we can show that the probability $P\\left(\\bigcap_{i=1}^{\\infty} A_i\\right)$ is equal to the limit of $P\\left(\\bigcap_{i=1}^{k} A_i\\right)$, as $k \\to \\infty$. Since the first $k$ events in the sequence are independent, we have\n\\[\nP\\left(\\bigcap_{i=1}^{\\infty} A_i\\right)=\\lim_{k \\to \\infty} P\\left(\\bigcap_{i=1}^{k} A_i\\right)=\\lim_{k \\to \\infty} \\prod_{i=1}^{k} P(A_i) \\triangleq \\prod_{i=1}^{\\infty} P(A_i).\n\\]\n\nBecause we are going to frequently investigate independent random variables with the same distribution, we introduce the short-hand notation ``i.i.d.'' to mean that a sequence of random variables is independent and identically distributed.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "15_chap5_independence_multiple_rv"
+    }
+]

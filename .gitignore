@@ -1,18 +1,45 @@
+# Git-ignored paths are not tracked by Git. They are not deletion candidates.
+# Preserve ignored runtime state locally unless an explicit migration task says otherwise.
+
 /.lake
 .repl_tmp/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
 output_lean_files/
 formalized_chapters/
 reports/
 error_logs/
 error_logs_1/
+
+phase0_ingestion_packs/
+phase1_prompt_packs/
+phase2_prompt_packs/
+phase3_softdep_packs/
+phase3_execution_batches/
+phase3_post_harvest_packs/
+
 aristotle_outbox/
 aristotle_archives/
 aristole-example-outputs/
+archive_old/
+archieve_2/
+
 mathlib_index.faiss
 mathlib_corpus.json
+
+# Ignored-but-protected runtime state: do not delete as cleanup.
 project_ledger.json
 lab_notebook.json
+
 _migration_*/
 _rollback/
+_tmp_artifacts/
+tests/_tmp*/
+src/toy_apollo/backups/
+.claude/worktrees/
+
+.env
+.env.*

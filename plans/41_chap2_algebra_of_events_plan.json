@@ -1,0 +1,70 @@
+[
+    {
+        "block_id": "rem_2_2_algebra_of_events_intro",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "\\subsection*{2.2 Algebra of Events}\n\nThe algebra of events is akin to a language, with a larger algebra representing a more extensive vocabulary. A larger algebra provides more events to reason about the outcomes of a random experiment, similar to how a richer language provides more means to communicate ideas. We use the following example to motivate the notion of an algebra of events.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "41_chap2_algebra_of_events"
+    },
+    {
+        "block_id": "ex_2_2_1",
+        "type": "Example_Proof",
+        "title": "Example 2.2.1 (Information Embedded in the Partition of Sample Space)",
+        "content": "\\textbf{Example 2.2.1 (Information Embedded in the Partition of Sample Space)} \\\\\nAlice generates two random bits of information. Whether the bits are uniformly distributed or statistically independent is not relevant in this example. We are interested in the possible events that Alice can observe. Naturally, Alice can take the sample space\n\\[\n\\Omega=\\{00,01,10,11\\}\n\\]\nas the set of all outcomes. Any subset of $\\Omega$ is a valid event that Alice can observe.\n\nAlice has two friends Bob and Cindy. Bob wants to determine the number of ones that appear among the two random bits, and Cindy wants to know whether the two bits are the same. Upon observing the generated bits, Alice will inform Bob of an integer between 0 and 2. Bob will know that one of the following three events has occurred:\n\\[\n\\{00\\}, \\{01,10\\}, \\{11\\}.\n\\]\n\nAlice will inform Cindy that one of the events\n\\[\n\\{00,11\\}, \\{10,01\\}\n\\]\noccurred. In fact, Alice does not need to inform Cindy herself. Alice may ask Bob to tell Cindy whether the two bits are the same, as Bob has enough information to do so. Mathematically speaking, this is because Cindy's partition of the sample space is coarser than Bob's partition, meaning that Bob has more detailed information about the possible outcomes of the random bits.\n\nThis example illustrates that in some cases, we may only be interested in certain subsets of the sample space. In order to work with these subsets in a rigorous mathematical way, we need to define a collection of events that is closed under the usual set operations. This leads us to the notion of an algebra of events.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "41_chap2_algebra_of_events"
+    },
+    {
+        "block_id": "def_2_2",
+        "type": "Definition",
+        "title": "Definition 2.2 (Algebra / Field of Events)",
+        "content": "\\begin{defbox}{2.2}\nA collection of subsets $\\mathcal{F}$ of a sample space $\\Omega$ is called an \\textit{algebra} or a \\textit{field} if it satisfies the following axioms:\n\\begin{enumerate}[label=\\arabic*.]\n    \\item The entire sample space $\\Omega$ is an element of the collection: $\\Omega\\in \\mathcal{F}$.\n    \\item The collection is closed under finite unions: $A\\in \\mathcal{F}$ and $B\\in \\mathcal{F}$ imply $A\\cup B\\in \\mathcal{F}$.\n    \\item The collection is closed under complement: If $A\\in \\mathcal{F}$, then its complement $A^c$ (taken relative to $\\Omega$) is in $\\mathcal{F}$.\n\\end{enumerate}\n\nA set in $\\mathcal{F}$ is called an \\textit{event}.\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "41_chap2_algebra_of_events"
+    },
+    {
+        "block_id": "def_2_3",
+        "type": "Definition",
+        "title": "Definition 2.3 (Sigma-Algebra)",
+        "content": "\\begin{defbox}{2.3}\nA collection of subsets $\\mathcal{F}$ of a sample space $\\Omega$ is called a $\\sigma$-\\textit{algebra} or a $\\sigma$-\\textit{field} if it satisfies the following axioms:\n\\begin{enumerate}[label=\\arabic*.]\n    \\item $\\Omega\\in \\mathcal{F}$.\n    \\item If $(A_i)_{i=1}^{\\infty}$ is a sequence of sets in $\\mathcal{F}$, then $\\cup_{i=1}^{\\infty} A_i \\in \\mathcal{F}$.\n    \\item If $A\\in \\mathcal{F}$, then $A^c\\in \\mathcal{F}$.\n\\end{enumerate}\n\nA set in $\\mathcal{F}$ is called $\\mathcal{F}$-\\textit{measurable}, or simply \\textit{measurable} if $\\mathcal{F}$ is understood from the context. We say that $(\\Omega,\\mathcal{F})$ is a \\textit{measurable space} if $\\mathcal{F}$ is a $\\sigma$-algebra of $\\Omega$.\n\nIf $\\mathcal{F}$ is a $\\sigma$-field and $\\mathcal{G}$ is a sub-collection of $\\mathcal{F}$, we say that $\\mathcal{G}$ is a \\textit{sub-$\\sigma$-field} or a \\textit{sub-$\\sigma$-algebra} of $\\mathcal{F}$ if $\\mathcal{G}$ is also a $\\sigma$-field.\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "41_chap2_algebra_of_events"
+    },
+    {
+        "block_id": "ex_2_2_2",
+        "type": "Example_Proof",
+        "title": "Example 2.2.2 (Co-finite Algebra)",
+        "content": "\\textbf{Example 2.2.2 (Co-finite Algebra)} \\\\\nConsider the set $\\Omega=\\mathbb{N}$, and let $\\mathcal{G}$ be the collection of subsets of $\\mathbb{N}$ that are finite or co-finite, i.e.,\n\\[\nA\\in \\mathcal{G}\n\\quad \\text{if and only if} \\quad\n|A|<\\infty \\ \\text{or}\\ |A^c|<\\infty.\n\\]\nFor example, $\\{1,2,3\\}$ is in $\\mathcal{G}$ because it is finite, and $\\mathbb{N}\\setminus \\{2,3,5,7\\}$ is in $\\mathcal{G}$ because its complement is finite. We can verify that $\\mathcal{G}$ is an algebra. However, $\\mathcal{G}$ is not a $\\sigma$-algebra because the sequence of events $\\{2\\},\\{4\\},\\{6\\},\\{8\\},\\{10\\},\\dots$ is in $\\mathcal{G}$, but their union is not.\n\nThere are two useful set constructions called liminf and limsup.",
+        "dependencies": [
+            "def_2_2",
+            "def_2_3"
+        ],
+        "is_renowned": false,
+        "source_plan": "41_chap2_algebra_of_events"
+    },
+    {
+        "block_id": "def_2_4",
+        "type": "Definition",
+        "title": "Definition 2.4 (liminf and limsup of Sets)",
+        "content": "\\begin{defbox}{2.4}\nLet $E_1,E_2,\\dots$ be an arbitrary sequence of subsets in a set $\\Omega$. The \\textit{limit inferior} and \\textit{limit superior} of $(E_i)_{i\\ge 1}$ are defined, respectively, as\n\\[\n\\liminf_{i\\to\\infty} E_i\n\\triangleq\n\\bigcup_{j=1}^{\\infty}\\bigcap_{k\\ge j} E_k,\n\\qquad\n\\limsup_{i\\to\\infty} E_i\n\\triangleq\n\\bigcap_{j=1}^{\\infty}\\bigcup_{k\\ge j} E_k.\n\\]\n\nIn general, we have the following set inclusion:\n\\[\n\\liminf_{i\\to\\infty} E_i \\subseteq \\limsup_{i\\to\\infty} E_i.\n\\]\n\nIf equality holds, we say that the \\textit{limit} of $(E_i)_{i\\ge 1}$ exists and is defined as $\\liminf_i E_i$ or $\\limsup_i E_i$.\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "41_chap2_algebra_of_events"
+    },
+    {
+        "block_id": "thm_2_1",
+        "type": "Theorem_with_Proof",
+        "title": "Theorem 2.1 (Definition 2.4)",
+        "content": "\\begin{thmbox}{2.1 (Definition 2.4)}\nLet $(E_i)_{i\\ge 1}$ be a sequence of subsets in a set $\\Omega$. We have\n\\[\n\\liminf_{i\\to\\infty} E_i\n=\n\\{\\omega\\in \\Omega : \\omega \\text{ belongs to } E_i \\text{ for all but finitely many } i\\},\n\\]\n\\[\n\\limsup_{i\\to\\infty} E_i\n=\n\\{\\omega\\in \\Omega : \\omega \\text{ belongs to } E_i \\text{ infinitely often}\\}.\n\\]\n\\end{thmbox}\n\n\\textit{Proof} We note that the condition of an outcome $\\omega$ being in $E_i$ for all but finite many $i$ is equivalent to the statement that $\\omega$ belongs to $E_i$ eventually for all $i\\ge N$, for some integer $N$. Using the definition of liminf, we see that an outcome $\\omega$ belongs to $\\cup_{j\\ge 1}\\cap_{k\\ge j} E_k$ if and only if it belongs to $\\cap_{k\\ge j} E_k$ for some $j$. This is the same as saying that $\\omega$ belongs to $E_k$ eventually for all $k\\ge j$.\n\nTo see that an element in limsup$_i\\, E_i$ occurs in $E_i$ infinitely often, we define $F_j\\triangleq \\cup_{k\\ge j} E_k$ and write limsup$_{i\\to\\infty} E_i \\triangleq \\cap_{j=1}^{\\infty} F_j$.\n\nConsider an element $\\omega$ in the limsup of $E_i$'s. It must be in $F_j$ for all $j$. In particular, it must be in $F_1$. Since $F_1$ is the union of all $E_k$'s, we can find an index $k_1$ such that $\\omega\\in E_{k_1}$. Next, we use the fact that $\\omega$ is in $F_{k_1+1}$. Since $F_{k_1+1}$ is the union of all $E_i$'s for $i\\ge k_1+1$, we can find an index $k_2>k_1$ such that $\\omega\\in E_{k_2}$. This process can be repeated indefinitely. Therefore, $\\omega$ belongs to $E_{k_1},E_{k_2},E_{k_3},\\dots$, for some strictly increasing indices $k_1<k_2<k_3<\\cdots$. This shows that $\\omega$ occurs in $E_i$ infinitely often, as desired.\n\nConversely, if $\\omega$ belongs to $E_i$ for infinitely many indices $i$, then $\\omega$ belongs to $F_j$ for all indices $j$. This is because $F_j$ contains all $E_i$'s for $i\\ge j$, and since $\\omega$ belongs to infinitely many $E_i$'s, it must belong to $F_j$ for all $j$. Therefore, $\\omega$ is in $\\cap_{j\\ge 1} F_j$, which is the limsup of $E_i$'s. \\hfill $\\square$",
+        "dependencies": [
+            "def_2_4"
+        ],
+        "is_renowned": false,
+        "source_plan": "41_chap2_algebra_of_events"
+    }
+]

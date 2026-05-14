@@ -1,0 +1,96 @@
+\subsection*{8.3 Application: Monge Problem and Kantorovich Problem}
+
+In this section, we will consider couplings of measures in which the sample space has more structure than a $\sigma$-field, such as a metric space, which allows us to define a notion of the distance between two points.
+
+In 1781, the French mathematician Gaspard Monge proposed an optimization problem now known as the Monge transport problem. The problem involves moving a pile of sands to fill up a hole with the same volume using minimum effort. The cost of moving a unit of sand is measured by the distance traveled.
+
+To formulate this problem mathematically, we view the distribution of sand as a measure $\mu$ on $\mathbb{R}^2$ and the shape of the hole as another measure $\nu$ on $\mathbb{R}^2$. We define the \textit{support} of a measure $\mu$ as the smallest closed subset in which every open neighborhood of any point of the set has positive $\mu$-measure. We denote this set by $\operatorname{supp}(\mu)$. The assumption that the hole has the same volume as the sand pile is translated to
+\[
+\mu(\operatorname{supp}(\mu)) = \nu(\operatorname{supp}(\nu)).
+\]
+
+A \textit{transport map} is a function $T$ from $\operatorname{supp}(\mu)$ to $\operatorname{supp}(\nu)$ such that the image measure $T_{\#}\mu$ is the same as measure $\nu$. The objective is to find the optimal transport map $T$ that minimizes the total cost
+\[
+\int_{\operatorname{supp}(\mu)} |\omega-T(\omega)|\, d\mu(\omega)
+\]
+over all transport maps $T$ such that $T_{\#}\mu=\nu$. This problem can be generalized by considering a more general cost function $c(x,y)$. Despite its generality, the Monge transport problem is highly nonlinear, and finding the optimal solution can be challenging.
+
+We illustrate a few special cases below. For notation simplicity, we consider one-dimensional space $\mathbb{R}$ and take the squared distance $(x-y)^2$ as the distance measure $c(x,y)$.
+
+\textbf{Example 8.3.1 (A Degenerate Example with Zero Transport Cost)} \\
+Suppose random variables $\tilde{X}\sim N(0,\sigma^2)$ and $\tilde{Y}\sim N(0,\sigma^2)$ have the same distribution. Then the obvious transport map is the identity map, which actually does nothing. The optimal transport cost is 0.
+
+
+\textbf{Example 8.3.2 (A Finite Version of Monge's Problem)} \\
+Let $\delta_x$ denote the Dirac measure of a point $x\in \mathbb{R}$ (See Example 3.3.4). Suppose there is one unit of sand located at point $x_i$, for $i=1,2,\dots,n$. The input measure $\mu$ is
+\[
+\mu=\sum_{i=1}^{n} \delta_{x_i}.
+\]
+
+We want to move the sands to $n$ other points $y_i$, $i=1,2,\dots,n$, such that each point $y_i$ receives exactly one unit of sand. The output measure $\nu$ is thus
+\[
+\nu=\sum_{i=1}^{n} \delta_{y_i}.
+\]
+
+With this data, Monge's problem becomes a combinatorial problem, which is to find the optimal permutation $\pi:\{1,2,\dots,n\}\to \{1,2,\dots,n\}$ that minimizes the transportation cost given by
+\[
+\sum_{i=1}^{n} (x_i-y_{\pi(i)})^2.
+\]
+
+In other words, we want to find the optimal way to move each unit of sand from its initial position $x_i$ to its final position $y_{\pi(i)}$ such that the total transport cost is minimized.
+
+\textbf{Example 8.3.3 (Nonexistence of Solution in Monge's Problem)} \\
+Monge's problem may fail to have a solution, because it is not allowed to split any mass. Consider the measures $\mu$ and $\nu$ given by $\mu=2\delta_{x_1}$ and $\nu=\delta_{y_1}+\delta_{y_2}$, where $x_1$, $y_1$, and $y_2$ are distinct real numbers. The measure $\mu$ represents two units of sand at position $x_1$, and we want to move the sand to positions $y_1$ and $y_2$. Suppose that the three points $x_1$, $y_1$, and $t_2$ are distinct. There is no transport map $T$ such that $T_{\#}\mu=\nu$, because any transport map must move both units of sand from $x_1$ to either $y_1$ or $y_2$, which violates the constraint that we cannot split the mass. Therefore, Monge's problem does not have a solution in this case.
+
+Kantorovich's problem can be seen as a relaxation of Monge's problem by allowing the splitting of mass. One of the advantages of the Kantorovich problem is that it guarantees the existence of feasible solution, even when Monge's problem does not have a solution. Moreover, in finite sample spaces, the optimal solution can be found efficiently using linear programming.
+
+The Kantorovich version of the transport problem differs from Monge's problem in that it deals with transport plan rather than transport map. To illustrate this, we consider an example borrowed from Villani [9]. There are $m$ bread bakeries in a city that produce bread and $n$ restaurants that demand bread on a daily basis. The amount of bread produced by each bakery and the demand of each restaurant are known in advance. The optimization problem is to minimize the total transport cost of bread from the bakeries to the restaurants.
+
+In contrast to Monge's problem, the output of a bakery can be sent to different restaurants. This is possible because the unit of bread is assumed to be infinitely divisible. The problem can be interpreted as finding the optimal coupling of the production measure (which describes the amount of bread produced by each bakery) and the demand measure (which describes the amount of bread demanded by each restaurant).
+
+Before we formally state the Kantorovich problem, we first define some relevant concepts. For simplicity, let $\mathcal{X}$ and $\mathcal{Y}$ be metric spaces, and let $\mathcal{B}(\mathcal{X}\times \mathcal{Y})$ be the Borel algebra that is generated by the open sets in the form $A\times B$, where $A$ and $B$ are open sets in $\mathcal{X}$ and $\mathcal{Y}$, respectively. We define the projection function $\pi_1$ from $\mathcal{X}\times \mathcal{Y}$ to $\mathcal{X}$ by $\pi_1(x,y)=x$ and the projection to $\mathcal{Y}$ by $\pi_2(x,y)=y$. The \textit{marginals} of a probability measure $\mu$ on $\mathcal{X}\times \mathcal{Y}$ are the image measures $(\pi_1)_{\#}\mu$ and $(\pi_2)_{\#}\mu$, which are probability measures on $\mathcal{X}$ and $\mathcal{Y}$, respectively. A \textit{transport plan} between two probability measures $P$ and $Q$ defined on $\mathcal{X}$ and $\mathcal{Y}$, respectively, is a probability measure on $\mathcal{X}\times \mathcal{Y}$ with marginals $P$ and $Q$.
+
+Let $\mathcal{PM}(\mathcal{X}\times \mathcal{Y})$ denote the set of all probability measures on the measurable space $(\mathcal{X}\times \mathcal{Y},\mathcal{B}(\mathcal{X}\times \mathcal{Y}))$. Given a cost function $c(x,y):\mathcal{X}\times \mathcal{Y}\to \bar{\mathbb{R}}_{\ge 0}$, the Kantorovich problem is to find a transport plan $\mu$ in
+\[
+\Pi(P,Q)\triangleq \{\mu\in \mathcal{PM}(\mathcal{X}\times \mathcal{Y}) : (\pi_1)_{\#}\mu=P,\ (\pi_2)_{\#}\nu=Q\},
+\]
+which minimizes
+\begin{equation}
+E[c(X,Y)] = \int_{\mathcal{X}\times \mathcal{Y}} c(x,y)\, d\mu(x,y).
+\tag{8.2}
+\end{equation}
+
+An optimal transport plan $\mu^{*}$ is a transport plan that solves the Kantorovich problem with the minimum cost.
+
+The spaces $\mathcal{X}$ and $\mathcal{Y}$ in this optimization problem can be finite sets or closed intervals in $\mathbb{R}$. We give a discrete example below.
+
+\textbf{Example 8.3.4 (A Discrete Kantorovich Problem)} \\
+Suppose $\mathcal{X}=\{a,b\}$ is a set with size $2$, and $\mathcal{Y}=\{1,2,3\}$ is a set with size $3$. Let $P$ be the probability measure on $\mathcal{X}$ defined by $P(\{a\})=1/3$ and $P(\{b\})=2/3$, and let $Q$ be the probability measure on $\mathcal{Y}$ defined by $Q(\{1\})=Q(\{2\})=1/5$ and $Q(\{3\})=3/5$. The Kantorovich problem is to find a transport plan between $P$ and $Q$ that minimizes the total transport cost, where the cost of transporting mass from $i\in \mathcal{X}$ to $j\in \mathcal{Y}$ is given by the cost function $c:\mathcal{X}\times \mathcal{Y}\to \mathbb{R}$.
+
+The transport plan can be represented by a $2\times 3$ matrix $T=[t_{ij}]$, where $t_{ij}$ represents the amount of mass transported from $i\in \mathcal{X}$ to $j\in \mathcal{Y}$. The cost of transporting mass from $i$ to $j$ is given by $c_{ij}=c(i,j)$. The Kantorovich problem can be formulated as a linear programming problem with variables $t_{ij}$. The objective function to be minimized is
+\[
+\sum_{i\in \{a,b\}}\sum_{j\in \{1,2,3\}} c_{ij}t_{ij}.
+\]
+
+The constraints are the marginal constraints that ensure that the total mass transported from each source equals the total mass received at each target:
+\[
+t_{a1}+t_{b1}=1/5, \qquad t_{a1}+t_{a2}+t_{a3}=1/3,
+\]
+\[
+t_{a2}+t_{b2}=1/5, \qquad t_{b1}+t_{b2}+t_{b3}=2/3,
+\]
+\[
+t_{a3}+t_{b3}=3/5,
+\]
+\[
+t_{ij}\ge 0 \qquad \text{for } i\in \{a,b\},\ j\in \{1,2,3\}.
+\]
+
+Solving this linear programming problem gives the optimal transport plan between $P$ and $Q$.
+
+In the Kantorovich problem, if $\mathcal{X}$ is the same as $\mathcal{Y}$ and is equipped with a metric $d(x,y)$, we can take $d(x,y)^p$ as the cost function, for some real number $p\ge 1$. The $p$-th root of the minimal transport cost is called the $p$-\textit{Wasserstein distance} between $P$ and $Q$
+\[
+W_p(P,Q)\triangleq \left( \min_{\mu\in \Pi(P,Q)} \int_{\mathcal{X}\times \mathcal{X}} d(x,y)^p\, d\mu(x,y) \right)^{1/p}.
+\]
+
+The optimal transport problem with Wasserstein distance is an emerging method in computer vision, statistics, and data science [6].

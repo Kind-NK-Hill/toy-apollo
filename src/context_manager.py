@@ -1,5 +1,6 @@
 import os
 import glob
+from src.block_id_naming import canonicalize_block_id, parent_block_id
 
 class ContextManager:
     """
@@ -25,7 +26,7 @@ class ContextManager:
         for file_path in cache_files:
             filename = os.path.basename(file_path)
             # 文件名为 block_id.lean
-            block_id = filename.replace(".lean", "")
+            block_id = canonicalize_block_id(filename.replace(".lean", ""))
             try:
                 with open(file_path, "r", encoding="utf-8") as f:
                     self.code_store[block_id] = f.read()
@@ -38,6 +39,7 @@ class ContextManager:
 
     def add_success(self, block_id, lean_code):
         """记录新成功的代码"""
+        block_id = canonicalize_block_id(block_id)
         self.code_store[block_id] = lean_code
         # Clear from failed statements if it now succeeded
         self.failed_statements.pop(block_id, None)
@@ -45,22 +47,25 @@ class ContextManager:
 
     def add_failed_statement(self, block_id, signature):
         """记录证明失败但签名可用的任务"""
+        block_id = canonicalize_block_id(block_id)
         self.failed_statements[block_id] = signature
         print(f"   📓 [ContextManager] Recorded failed statement for block: {block_id}")
 
     def _get_transitive_dependencies(self, block_id, all_blocks_dict):
         """递归获取所有的前置依赖（传递闭包），并支持分解感知"""
+        block_id = canonicalize_block_id(block_id)
         deps = set()
         if block_id not in all_blocks_dict:
             # [NEW] Decomposition Awareness: If the block_id is missing but exists as a prefix in code_store,
             # it means this was a decomposed parent.
             for stored_id in self.code_store.keys():
-                if stored_id.startswith(f"{block_id}_"):
+                if stored_id.startswith(f"{block_id}__") or parent_block_id(stored_id) == block_id:
                     deps.add(stored_id)
             return deps
             
         direct_deps = all_blocks_dict[block_id].get('dependencies', [])
         for dep in direct_deps:
+            dep = canonicalize_block_id(dep)
             if dep not in deps:
                 # If the dependency exists directly, add it
                 if dep in self.code_store:
@@ -68,6 +73,8 @@ class ContextManager:
                 else:
                     # If it doesn't exist directly, it might be a decomposed parent
                     children = [sid for sid in self.code_store.keys() if sid.startswith(f"{dep}_")]
+                    if not children:
+                        children = [sid for sid in self.code_store.keys() if sid.startswith(f"{dep}__")]
                     if children:
                         deps.update(children)
                     else:
@@ -80,7 +87,20 @@ class ContextManager:
 
     def get_context_for(self, current_task, all_tasks_list):
         """为当前任务生成精简的 Lean Context"""
-        all_blocks_dict = {task['block_id']: task for task in all_tasks_list}
+        all_blocks_dict = {}
+        for task in all_tasks_list:
+            canonical_id = canonicalize_block_id(task.get('block_id', ''))
+            if not canonical_id:
+                continue
+            canonical_task = dict(task)
+            canonical_task['block_id'] = canonical_id
+            canonical_task['dependencies'] = [
+                canonicalize_block_id(dep)
+                for dep in task.get('dependencies', [])
+                if canonicalize_block_id(dep)
+            ]
+            all_blocks_dict[canonical_id] = canonical_task
+
         required_deps = self._get_transitive_dependencies(current_task['block_id'], all_blocks_dict)
         
         if not required_deps:
@@ -89,7 +109,7 @@ class ContextManager:
         ordered_context_codes = []
         # 按照任务列表的顺序提取上下文，保证 Lean 编译的自上而下顺序
         for task in all_tasks_list:
-            b_id = task['block_id']
+            b_id = canonicalize_block_id(task['block_id'])
             if b_id in required_deps:
                 if b_id in self.code_store:
                     ordered_context_codes.append(f"-- Context from: {task['title']}\n{self.code_store[b_id]}")

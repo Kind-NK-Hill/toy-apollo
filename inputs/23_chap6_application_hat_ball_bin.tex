@@ -1,0 +1,70 @@
+\subsection*{6.5 Application: Hat Problem and Ball-and-Bin Model}
+
+The linearity of expectation
+\[
+E[X_1 + X_2 + X_3 + \cdots + X_n] = E[X_1] + E[X_2] + \cdots + E[X_n]
+\]
+is valid for the sum of integrable random variables, regardless of whether they are independent or not. This gives a simple but effective method in calculating the expectation of random variable in some examples. We decompose the random variable of interest into a sum of indicator functions and use the property that $E[1_A] = \Pr(A)$.
+
+We give two examples below.
+
+\textbf{Example 6.5.1 (Hat Problem)} \\
+Consider a group of $n$ people who enter a restaurant and put their hats in $n$ boxes. When they leave the restaurant, each person randomly selects a box and takes the hat inside. Let $X$ denote the number of people who retrieve their own hats. A direct calculation of expectation
+\[
+E[X] = \sum_k kP(X=k)
+\]
+requires the knowledge of the probability distribution $P(X=k)$. Alternately, We can use the linearity of expectation. For $i=1,2,\dots,n$, let $A_i$ be the event that person $i$ can get back his/her hat back. Writing $X=\sum_{i=1}^{n} 1_{A_i}$, we calculate $E[X]$ by
+\[
+E[X] = \sum_{i=1}^{n} E[1_{A_i}] = \sum_{i=1}^{n} P(A_i) = n\cdot \frac{1}{n} = 1.
+\]
+
+\textbf{Example 6.5.2 (Ball-and-Bin Model)} \\
+Consider an experiment in which $k$ indistinguishable balls are thrown independently to $n$ bins. The probability that a ball lands in the $i$-th bin is $1/n$, for $i=1,2,\dots,n$. Suppose we want to find the expected number of bins that contain exactly one ball. For each $i=1,2,\dots,n$, let $A_i$ be the event that the $i$-th bin contains exactly one ball. We want to compute the expectation of the sum of indicator functions
+\[
+X=\sum_{i=1}^{n} 1_{A_i}.
+\]
+
+We note that the events $A_i$'s are dependent, and therefore the indicator functions $1_{A_i}$, for $i=1,2,\dots,n$, are also dependent. However, the linearity property of expectation holds regardless of dependence between the random variables. Hence, we have
+\[
+E[X] = \sum_{i=1}^{n} E[1_{A_i}] = \sum_{i=1}^{n} P(A_i)
+= \sum_{i=1}^{n} \binom{k}{1}\frac{1}{n}\left(\frac{n-1}{n}\right)^{k-1}
+= k\left(\frac{n-1}{n}\right)^{k-1}.
+\]
+
+For fixed $n$, this expression is maximized when $k=n$. This is because the probability of a ball landing in a bin with exactly one ball is maximized when there is only one ball in each bin, which occurs when $k=n$.
+
+We end this chapter by simulating the ball-and-bin experiment using a Python program. The program generates $k$ independent random numbers, each taking a value in the range $\{0,1,\dots,n-1\}$. The sample space of the experiment is thus $\{0,1,\dots,n-1\}^k$. To generate the random integers, we use the \texttt{randint} command in Python. A realization is represented by a list of integers called \texttt{locations}.
+
+Next, the program calculates the number of balls in each bin and stores the result in another list of integers called \texttt{occupancy}. This list contains $n$ nonnegative integers, where the $i$-th number represents the number of balls in bin $i$. Finally, the program counts the number of entries in \texttt{occupancy} that is equal to $1$, which is represented by the variable $X$.
+
+\begin{verbatim}
+from random import randint
+
+# throw k balls into n bins
+n = 10  # number of bins
+k = 8   # number of balls
+
+# locations of the k balls
+location = [randint(0,n-1) for _ in range(k)]
+
+# compute the number of balls in each bin
+occupancy = [sum([x==i for x in locations]) for i in range(n)]
+
+# Find the number of bins with exactly 1 ball
+X = sum([y==1 for y in occupancy])
+
+print('location = ', location)
+print('occupancy = ', occupancy)
+print('Number of bins with exactly one ball: ', X)
+\end{verbatim}
+
+We note that only the function \texttt{randint} is a source of randomness in this simulation. The other operations are deterministic. The integers in the list \texttt{occupancy} are in fact dependent on each other, for instance, the sum of them should be equal to $k$. However, without deriving the pmf of the integers in \texttt{occupancy}, we know that the expected value of the random variable $X$ is equal to $k\left(\frac{n-1}{n}\right)^{k-1}$. For the parameters $k=8$ and $n=10$, on average, there are $3.826$ bins that contain exactly one ball.
+
+A sample run of this program is as follows:
+\begin{verbatim}
+location =  [8, 7, 0, 9, 7, 6, 8, 4]
+occupancy =  [1, 0, 0, 0, 1, 0, 1, 2, 2, 1]
+Number of bins with exactly one ball:  4
+\end{verbatim}
+
+In this realization, each of the bins $0,4,6,$ and $9$ contains exactly one ball.

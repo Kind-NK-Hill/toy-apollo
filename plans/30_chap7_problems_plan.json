@@ -1,0 +1,92 @@
+[
+    {
+        "block_id": "rem_7_0_problems_header",
+        "type": "Remark",
+        "title": "Section Header",
+        "content": "\\subsection*{Problems}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "30_chap7_problems"
+    },
+    {
+        "block_id": "prob_7_1",
+        "type": "Problem",
+        "title": "Problem 7.1",
+        "content": "\\textbf{7.1.} Compute the mean and variance of the random variable specified by cdf\n\\[\nF(x)=\n\\begin{cases}\n0 & \\text{if } x<0,\\\\\nx/3 & \\text{if } 0\\le x<1,\\\\\n2/3 & \\text{if } 1\\le x<2,\\\\\n1 & \\text{if } 2\\le x.\n\\end{cases}\n\\]",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "30_chap7_problems"
+    },
+    {
+        "block_id": "prob_7_2",
+        "type": "Problem",
+        "title": "Problem 7.2",
+        "content": "\\textbf{7.2 (Box--Muller Transform).} To generate standard normal random variables, one can use a transformation involving two independent uniform random variables $U$ and $V$, each of which takes values between 0 and 1. Specifically, generate a pair of random variables $(X,Y)$ according to\n\\[\nX=\\sqrt{-2\\log U}\\cos(2\\pi V),\n\\]\n\\[\nY=\\sqrt{-2\\log U}\\sin(2\\pi V).\n\\]\n\nShow that this transformation induces the joint Gaussian distribution with mean 0 and covariance matrix $I_{2\\times 2}$.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "30_chap7_problems"
+    },
+    {
+        "block_id": "prob_7_3",
+        "type": "Problem",
+        "title": "Problem 7.3",
+        "content": "\\textbf{7.3.} Let $f:[a,b]\\to \\mathbb{R}$ be a bounded function, $\\alpha(x)$ a Stieltjes measure function on $[a,b]$, and $\\mu$ the Lebesgue--Stieltjes measure induced by $\\alpha(x)$. Assume $\\mu(\\{a\\})=0$. Prove the following:\n\\begin{enumerate}[label=(\\alph*)]\n    \\item $f$ is Riemann--Stieltjes integrable on $[a,b]$ if and only if $f$ is continuous $\\mu$-almost everywhere.\n    \\item If $f$ is Riemann--Stieltjes integrable, then $f$ is integrable with respect to the completion $\\bar{\\mu}$ of $\\mu$, and $\\int_a^b f\\, d\\alpha = \\int_{[a,b]} f\\, d\\bar{\\mu}$.\n\\end{enumerate}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "30_chap7_problems"
+    },
+    {
+        "block_id": "prob_7_4",
+        "type": "Problem",
+        "title": "Problem 7.4",
+        "content": "\\textbf{7.4.} Let $X$ be an integrable function on a measure space $(\\Omega,\\mathcal{F},\\mu)$. Show that for any $\\epsilon$, there exists a set $E\\in \\mathcal{F}$ with $\\mu(E)<\\infty$ such that\n\\[\n\\left|\\int_{E^c} X\\, d\\mu\\right|<\\epsilon.\n\\]",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "30_chap7_problems"
+    },
+    {
+        "block_id": "prob_7_5",
+        "type": "Problem",
+        "title": "Problem 7.5",
+        "content": "\\textbf{7.5.} Let $(X_i)_{i=1}^{\\infty}$ be a sequence of nonnegative measurable functions defined on a common measure space $(\\Omega,\\mathcal{F},\\mu)$, such that $\\int X_n\\, d\\mu < K$ for a finite constant $K$. Suppose that $(X_i)_{i=1}^{\\infty}$ converges almost everywhere to a limit function $X$. Prove that $X$ is integrable and $\\int X\\, d\\mu \\le K$. (Hint: Apply Fatou's lemma.)",
+        "dependencies": [],
+        "is_renowned": true,
+        "source_plan": "30_chap7_problems"
+    },
+    {
+        "block_id": "prob_7_6",
+        "type": "Problem",
+        "title": "Problem 7.6",
+        "content": "\\textbf{7.6 (Scheff\\'e Lemma).} Suppose $f_n$'s are nonnegative measurable functions that converge to $f$ almost everywhere as $n\\to\\infty$. Assume that $\\int f_n\\, d\\mu \\to \\int f\\, d\\mu < \\infty$.\n\\begin{enumerate}[label=(\\alph*)]\n    \\item Show that $(f_k-f)^-$ is bounded by $f$, and hence, by the dominated convergence theorem, $\\int (f_n-f)^- \\to 0$.\n    \\item Show that $\\int |f_n-f|\\to 0$. (Hint: Write $|f_n-f|$ as $(f_n-f)+2(f_n-f)^-$.)\n\\end{enumerate}",
+        "dependencies": [],
+        "is_renowned": true,
+        "source_plan": "30_chap7_problems"
+    },
+    {
+        "block_id": "prob_7_7",
+        "type": "Problem",
+        "title": "Problem 7.7",
+        "content": "\\textbf{7.7.} Let $f_1,f_2,f_3,\\dots$ be measurable functions defined on a measure space $(\\Omega,\\mathcal{F},\\mu)$. Assume that $\\sum_{k=1}^{\\infty} \\int |f_k|\\, d\\mu$ is finite.\n\\begin{enumerate}[label=(\\alph*)]\n    \\item Show that $\\sum_{k=1}^{\\infty} f_k(\\omega)$ converges to a finite limit $\\mu$-almost everywhere.\n    \\item Use part (a) to derive the following result:\n    \\[\n    \\int \\left(\\sum_{k=1}^{\\infty} f_k\\right)\\, d\\mu\n    =\n    \\sum_{k=1}^{\\infty} \\int f_k\\, d\\mu.\n    \\]\n\\end{enumerate}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "30_chap7_problems"
+    },
+    {
+        "block_id": "prob_7_8",
+        "type": "Problem",
+        "title": "Problem 7.8",
+        "content": "\\textbf{7.8.} Let $(\\Omega,\\mathcal{F},\\mu)$ be a measure space, and consider a real-valued function\n\\[\nf:\\Omega\\times [a,b]\\to \\mathbb{R}\n\\]\nsatisfying the following conditions:\n\\begin{enumerate}[label=\\arabic*.]\n    \\item For any $x\\in [a,b]$, the function $f(\\omega,x)$ is Borel measurable and integrable with respect to $\\mu$.\n    \\item There exists a set $E\\in \\mathcal{F}$ with $\\mu(E)=0$ such that for any $\\omega \\in E^c$, the derivative of the function $f(\\omega,x)$ with respect to $x$ exists and is equal to $f'(\\omega,x)$.\n    \\item There exists a function $g\\in L^1(\\mu)$ such that $|f'(\\omega,x)|\\le g$ for $\\mu$-almost every $\\omega$ and for all $x\\in [a,b]$.\n\\end{enumerate}\n\nProve that $f'(\\omega,x)$ is integrable for any fixed $x\\in [a,b]$, and\n\\[\n\\frac{d}{dx}\\int_{\\Omega} f(\\omega,x)\\, d\\mu(\\omega)\n=\n\\int_{\\Omega} f'(\\omega,x)\\, d\\mu(\\omega).\n\\]",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "30_chap7_problems"
+    },
+    {
+        "block_id": "prob_7_9",
+        "type": "Problem",
+        "title": "Problem 7.9",
+        "content": "\\textbf{7.9.} Let $(f_n)_{n\\ge 1}$, $(g_n)_{n\\ge 1}$, and $(h_n)_{n\\ge 1}$ be sequences of integrable functions, satisfying the conditions:\n\\begin{enumerate}[label=\\arabic*.]\n    \\item $f_n \\to f$, $g_n \\to g$, and $h_n \\to h$.\n    \\item $f_n \\le g_n \\le h_n$, for all $n$.\n    \\item $\\int f_n \\to \\int f < \\infty$ and $\\int h_n \\to \\int h < \\infty$.\n\\end{enumerate}\n\nProve that $\\int g$ is finite and $\\int g_n \\to \\int g$.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "30_chap7_problems"
+    }
+]

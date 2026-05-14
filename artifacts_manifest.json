@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-03-30T22:30:00+08:00",
+  "artifacts_repo": "Kind-NK-Hill/toy-apollo-artifacts",
+  "tracked_sets": [
+    {
+      "path": "output_lean_files",
+      "required": true,
+      "regenerable": true,
+      "note": "Phase 2 and Phase 4 generated Lean outputs."
+    },
+    {
+      "path": "formalized_chapters",
+      "required": true,
+      "regenerable": true,
+      "note": "Merged chapter-level Lean outputs."
+    },
+    {
+      "path": "reports",
+      "required": false,
+      "regenerable": true,
+      "note": "Execution reports from orchestrator."
+    },
+    {
+      "path": "error_logs",
+      "required": false,
+      "regenerable": true,
+      "note": "Runtime error logs."
+    },
+    {
+      "path": "aristotle_outbox",
+      "required": false,
+      "regenerable": true,
+      "note": "Phase 3 upload staging artifacts."
+    },
+    {
+      "path": "aristotle_archives",
+      "required": false,
+      "regenerable": false,
+      "note": "Cloud return archives from Aristotle."
+    },
+    {
+      "path": "aristole-example-outputs",
+      "required": false,
+      "regenerable": false,
+      "note": "Historical experimental outputs."
+    },
+    {
+      "path": "mathlib_index.faiss",
+      "required": false,
+      "regenerable": true,
+      "note": "Vector index for local retrieval."
+    },
+    {
+      "path": "mathlib_corpus.json",
+      "required": false,
+      "regenerable": true,
+      "note": "Theorem corpus for local retrieval."
+    },
+    {
+      "path": "project_ledger.json",
+      "required": true,
+      "regenerable": false,
+      "note": "Task lifecycle source of truth."
+    }
+  ]
+}
+

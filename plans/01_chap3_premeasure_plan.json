@@ -1,17 +1,17 @@
 [
     {
-        "block_id": "remark_intro",
+        "block_id": "intro_3_1",
         "type": "Remark",
-        "title": "Introduction to Lebesgue-Stieltjes Measures",
+        "title": "Intro",
         "content": "\\section*{Lebesgue--Stieltjes Measures}\n\nDefining a measure function on the Borel algebra is a non-trivial task. It is impractical to explicitly specify the measure of each Borel set due to the lack of an explicit description of all Borel sets. Instead, we can begin with an algebra of sets that is closed under finite set operations, such as union and intersection. By using a Stieltjes measure function, we can define a pre-measure on this algebra that satisfies properties analogous to those of a measure function, such as monotonicity and additivity. Then, by applying the measure extension theorem, we can obtain a measure that is defined on the Borel algebra. This provides a method for constructing Borel measure on the real number line, encompassing all types of distributions, including that are discrete, continuous, or a mixture of both, as well as singular distributions.",
         "dependencies": [],
-        "is_renowned": true,
+        "is_renowned": false,
         "source_plan": "01_chap3_premeasure"
     },
     {
-        "block_id": "remark_3_1",
+        "block_id": "rem_3_1_pre_measure_intro",
         "type": "Remark",
-        "title": "Pre-measure Introduction",
+        "title": "Section Header",
         "content": "\\subsection*{3.1 Pre-measure}\n\nA pre-measure is a set function that takes a set as input and returns a nonnegative real number. Unlike a measure function, the domain of a pre-measure is an algebra or a field, rather than a $\\sigma$-algebra.",
         "dependencies": [],
         "is_renowned": false,
@@ -20,122 +20,100 @@
     {
         "block_id": "def_3_1",
         "type": "Definition",
-        "title": "Pre-measure",
+        "title": "Definition",
         "content": "\\begin{defbox}{3.1}\nA pre-measure $\\mu_0$ defined on a field $\\mathcal{F}_0$ is a set function that maps $\\mathcal{F}_0$ to $[0, \\infty]$, satisfying the following conditions:\n\\begin{enumerate}[label=\\arabic*.]\n    \\item $\\mu_0(\\emptyset) = 0$.\n    \\item If $A_i \\in \\mathcal{F}_0$ for $i = 1, 2, 3, \\dots$ are mutually disjoint sets in $\\Omega$ and $\\biguplus_i A_i \\in \\mathcal{F}_0$, then\n\\[\n\\mu_0\\Bigl(\\biguplus_{i=1}^{\\infty} A_i\\Bigr) = \\sum_{i=1}^{\\infty} \\mu_0(A_i).\n\\]\n\\end{enumerate}\n\\end{defbox}",
         "dependencies": [],
         "is_renowned": false,
         "source_plan": "01_chap3_premeasure"
     },
     {
-        "block_id": "remark_def_3_1",
+        "block_id": "rem_3_1_pre_measure_remark",
         "type": "Remark",
-        "title": "Remark on Pre-measure Definition",
+        "title": "Remark",
         "content": "\\noindent$\\blacktriangleright$ \\textbf{Remark} The conditions in Definition 3.1 ensure that the pre-measure satisfies some of the basic properties of a measure, such as nonnegativity and countable additivity. However, since $\\mathcal{F}_0$ is only assumed to be a field, the union $\\uplus_i A_i$ may or may not be in $\\mathcal{F}_0$. For this reason, the condition $\\uplus_i A_i \\in \\mathcal{F}_0$ is included in the definition of pre-measure to ensure that the pre-measure of the union is well-defined. If $\\uplus_i A_i$ is not in $\\mathcal{F}_0$, then the condition is vacuously true.",
-        "dependencies": [
-            "def_3_1"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "01_chap3_premeasure"
     },
     {
         "block_id": "ex_3_1_1",
         "type": "Example_Proof",
-        "title": "Example of a Pre-measure that is Not a Measure",
+        "title": "Example",
         "content": "\\textbf{Example 3.1.1 (Example of a Pre-measure that is Not a Measure)} \\\\\nRecall that one way to define a field on $\\Omega = \\mathbb{N}$ is to define it as the collection of all finite and co-finite sets. We can define a pre-measure on this field by setting $\\mu_0(E) = \\infty$ if $E$ is infinite, and $\\mu_0(E)$ to be the cardinality of $E$ if $E$ is finite.",
-        "dependencies": [
-            "def_3_1"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "01_chap3_premeasure"
     },
     {
         "block_id": "ex_3_1_2",
         "type": "Example_Proof",
-        "title": "A Pre-measure on R",
+        "title": "Example",
         "content": "\\textbf{Example 3.1.2 (A Pre-measure on $\\mathbb{R}$)} \\\\\nLet $\\Omega = \\mathbb{R}$, and consider the collection of sets $\\mathcal{B}_0$ in $\\Omega$ that can be expressed as a finite disjoint union of intervals of the form\n\\begin{equation}\n(a_1, b_1] \\uplus (a_2, b_2] \\uplus \\dots \\uplus (a_n, b_n], \\tag{3.1}\n\\end{equation}\nwhere $n$ is a positive integer, and $a_1$ or $b_n$ may be infinite. One can check that this collection of sets is an algebra, and it is closed under complement and finite union. For example, the complement of $(a, b]$ in $\\mathbb{R}$ is the union of $(-\\infty, a]$ and $(b, \\infty]$.\n\nIf $a_1 = -\\infty$ or $b_n = \\infty$, we define the length of the set in (3.1) to be $\\infty$. Otherwise, if all $a_i$ and $b_i$ in (3.1) are finite, we define the total length of the set to be\n\\[\n(b_1 - a_1) + (b_2 - a_2) + \\dots + (b_n - a_n).\n\\]\nThis length function is a pre-measure on $\\mathcal{B}_0$.",
-        "dependencies": [
-            "def_3_1"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "01_chap3_premeasure"
     },
     {
         "block_id": "def_3_2",
         "type": "Definition",
-        "title": "Extension of a Pre-measure",
+        "title": "Definition",
         "content": "\\begin{defbox}{3.2}\nSuppose $\\mu_0$ is a pre-measure defined on a field $\\mathcal{F}_0$, and let $\\mathcal{F}$ be the $\\sigma$-field generated by $\\mathcal{F}_0$. We say that $\\mu : \\mathcal{F} \\to [0, \\infty]$ is an \\textit{extension} of $\\mu_0$ if $\\mu$ is a measure and satisfies\n\\[\n\\mu(E) = \\mu_0(E), \\quad \\text{for all } E \\in \\mathcal{F}_0.\n\\]\n\\end{defbox}",
-        "dependencies": [
-            "def_3_1"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "01_chap3_premeasure"
     },
     {
-        "block_id": "remark_def_3_2",
+        "block_id": "rem_3_1_extension_remark",
         "type": "Remark",
-        "title": "Remark on Extension",
-        "content": "In other words, the extension of $\\mu_0$ to $\\mathcal{F}$ agrees with $\\mu_0$ on the field $\\mathcal{F}_0$.\n\nIn the measure extension theorem, we require a technical condition on the pre-measure called $\\sigma$-finiteness. A measure function is regarded as well-behaved in general if it is $\\sigma$-finite. We note that a probability measure is automatically $\\sigma$-finite.\n\\noindent$\\blacktriangleright$ ",
-        "dependencies": [
-            "def_3_2"
-        ],
+        "title": "Remark",
+        "content": "In other words, the extension of $\\mu_0$ to $\\mathcal{F}$ agrees with $\\mu_0$ on the field $\\mathcal{F}_0$.\n\nIn the measure extension theorem, we require a technical condition on the pre-measure called $\\sigma$-finiteness. A measure function is regarded as well-behaved in general if it is $\\sigma$-finite. We note that a probability measure is automatically $\\sigma$-finite.\n\\noindent$\\blacktriangleright$",
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "01_chap3_premeasure"
     },
     {
         "block_id": "def_3_3",
         "type": "Definition",
-        "title": "Sigma-finite Pre-measure",
+        "title": "Definition",
         "content": "\\begin{defbox}{3.3}\nA pre-measure $\\mu_0$ defined on $\\mathcal{F}_0$ is said to be \\textit{$\\sigma$-finite} if we can find at most countably many sets $\\Omega_i \\in \\mathcal{F}_0$, for $i = 1, 2, 3, \\dots$, such that $\\cup_i \\Omega_i = \\Omega$, and $\\mu_0(\\Omega_i) < \\infty$ for all $i$.\n\\end{defbox}",
-        "dependencies": [
-            "def_3_1"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "01_chap3_premeasure"
     },
     {
-        "block_id": "remark_def_3_3",
+        "block_id": "rem_3_1_sigma_finiteness_remark",
         "type": "Remark",
-        "title": "Remark on Sigma-finiteness",
+        "title": "Remark",
         "content": "Without loss of generality, we may assume that the sets $\\Omega_i$ in the definition of $\\sigma$-finiteness form a partition of $\\Omega$. If the $\\Omega_i$'s are not mutually disjoint, we can re-define $\\Omega_i$ by setting\n\\[\n\\Omega_i := \\Omega_i \\setminus (\\cup_{j=1}^{i-1} \\Omega_j).\n\\]\n\nThe following theorem is the main theorem in this chapter.",
-        "dependencies": [
-            "def_3_3"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "01_chap3_premeasure"
     },
     {
         "block_id": "thm_3_1",
         "type": "Theorem_Statement",
-        "title": "Hahn-Kolmogorov-Carathéodory Theorem",
+        "title": "Theorem or Lemma",
         "content": "\\begin{thmbox}{3.1 (Hahn--Kolmogorov--Carathéodory)}\nLet $\\mathcal{F}_0$ be a field on a sample space $\\Omega$. Given a pre-measure $\\mu_0$ defined on $\\mathcal{F}_0$, there is a measure $\\mu$ that extends to $\\sigma(\\mathcal{F}_0)$.\n\nMoreover, if $\\mu_0$ is $\\sigma$-finite, then the extension is unique, i.e., if $\\mu$ and $\\mu'$ are two extensions of $\\mu_0$, we have $\\mu(E) = \\mu'(E)$ for all $E \\in \\mathcal{F}$.\n\\end{thmbox}",
-        "dependencies": [
-            "def_3_1",
-            "def_3_2",
-            "def_3_3"
-        ],
-        "is_renowned": true,
+        "dependencies": [],
+        "is_renowned": false,
         "source_plan": "01_chap3_premeasure"
     },
     {
-        "block_id": "remark_thm_3_1",
+        "block_id": "rem_3_1_hahn_kolmogorov_remark",
         "type": "Remark",
-        "title": "Remark on Hahn-Kolmogorov-Carathéodory Theorem",
+        "title": "Remark",
         "content": "The proof of the uniqueness of the extension in Theorem 3.1 will be given in a subsequent section. The proof of the existence can be found in standard textbooks on measure theory, such as [2, Theorem 11.2] and [4, Theorem 1.1.9].",
-        "dependencies": [
-            "thm_3_1"
-        ],
-        "is_renowned": true,
+        "dependencies": [],
+        "is_renowned": false,
         "source_plan": "01_chap3_premeasure"
     },
     {
         "block_id": "ex_3_1_3",
         "type": "Example_Proof",
-        "title": "Counting Measure",
+        "title": "Example",
         "content": "\\textbf{Example 3.1.3 (Counting Measure)} \\\\\nThe pre-measure in Example 3.1.1 is $\\sigma$-finite, because $\\mathbb{N}$ can be covered by countably many singletons $\\{i\\}$, with $i$ running over all positive integers. We can take $\\Omega_i = \\{i\\}$ for $i = 1, 2, 3, \\dots$. This pre-measure can be extended to the power set $2^{\\mathbb{N}}$, and the resulting measure is the counting measure on $\\mathbb{N}$.",
         "dependencies": [
-            "ex_3_1_1",
-            "def_3_3",
-            "thm_3_1"
+            "ex_3_1_1"
         ],
         "is_renowned": false,
         "source_plan": "01_chap3_premeasure"
@@ -143,11 +121,11 @@
     {
         "block_id": "ex_3_1_4",
         "type": "Example_Proof",
-        "title": "Borel Measure",
+        "title": "Example",
         "content": "\\textbf{Example 3.1.4 (Borel Measure)} \\\\\nThe pre-measure in Example 3.1.2 is $\\sigma$-finite. We can take $\\Omega_i \\subset \\mathbb{R}$ to be the interval $(-i, i]$ in Definition 3.3, which covers $\\mathbb{R}$ and has finite measure. By Theorem 3.1, the pre-measure can be extended to the Borel algebra $\\mathcal{B}(\\mathbb{R})$, and the extension is unique. This measure is called the \\textit{Borel measure} on $\\mathbb{R}$ and is denoted by $\\lambda$.",
         "dependencies": [
-            "ex_3_1_2",
             "def_3_3",
+            "ex_3_1_2",
             "thm_3_1"
         ],
         "is_renowned": false,

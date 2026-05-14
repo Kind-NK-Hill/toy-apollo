@@ -1,0 +1,286 @@
+\subsection*{9.2 Characteristic Functions}
+
+The main disadvantage of the moment generating function is that it does not exist for some random variables. A better option is the characteristic function, which is similar to the moment generating function but requires complex functions and complex integration (see Definition 6.6). The characteristic function can be regarded as the Fourier transform of the probability distribution function.
+
+The characteristic function is an essential tool in determining whether a sequence of random variables converges in distribution. We will use it in the proof of the central limit theorem. In the remainder of this section, we reserve the symbol $i$ for the imaginary unit $\sqrt{-1}$.
+
+\begin{defbox}{9.3}
+Given a real-valued random variable $X$, define the characteristic function of $X$ by
+\[
+\phi_X(t) \coloneqq \mathbb{E}[e^{iXt}]
+= \int_{\Omega} e^{iX(\omega)t}\,dP(\omega)
+\]
+for $t\in\mathbb{R}$.
+
+If $X$ is a continuous random variable with pdf $f(x)$, we can compute its characteristic function by
+\[
+\int e^{ixt}f(x)\,dx.
+\]
+If $X$ is a discrete random variable with pmf $p(n)$, the characteristic function is equal to
+\[
+\sum_n e^{int}p(n).
+\]
+\end{defbox}
+
+\textbf{Example 9.2.1 (Characteristic Function of Bernoulli Random Variable)} \\
+Suppose $X$ follows a Bernoulli distribution with parameter $p$, where $P(X=0)=1-p$ and $P(X=1)=p$. The characteristic function of $X$ is given by
+\[
+\phi_X(t) = (1-p)e^{i\cdot 0\cdot t}+pe^{it}=1-p+pe^{it}.
+\]
+
+\textbf{Example 9.2.2 (Characteristic Function of Uniform Random Variable)} \\
+Suppose $X$ is a continuous random variable that is uniformly distributed on the interval $[-a,a]$, where $a$ is a positive constant. The characteristic function of $X$ is
+\[
+\phi_X(t)=\frac{1}{2a}\int_{-a}^{a} e^{ixt}\,dx
+=\frac{1}{2a}\frac{e^{iat}-e^{-iat}}{it}
+=\frac{\sin(at)}{at},
+\]
+for $t\neq 0$. When $t=0$, $\phi_X(0)$ is equal to $1$.
+
+Table 9.1 includes the characteristic functions of some commonly encountered random variables. The support column indicates the range of $k$ in the discrete case or the range of $x$ in the continuous case. The table includes the point mass, Bernoulli, binomial, geometric, negative binomial, Poisson, uniform, Gaussian, Gamma, exponential, chi-square, Laplace, and Cauchy distributions.
+
+\subsubsection*{9.2.1 Properties of Characteristic Functions}
+
+We prove the basic properties of characteristic functions in the next theorem.
+
+\begin{thmbox}{9.3}
+The characteristic function of a real-valued random variable $X$ satisfies the following properties.
+\begin{enumerate}
+\item Boundedness: $\lvert\phi_X(t)\rvert\leq 1$ and $\phi_X(0)=1$.
+\item Conjugate symmetry: $\phi_X(-t)=\phi_X(t)^*$, where $\phi_X(t)^*$ denotes the complex conjugate of $\phi_X(t)$.
+\item If $X$ and $Y$ are independent random variables, then
+\[
+\phi_{X+Y}(t)=\phi_X(t)\phi_Y(t).
+\]
+\item $\phi_X(t)$ is uniformly continuous.
+\end{enumerate}
+\end{thmbox}
+
+\textit{Proof}
+The property $\phi_X(0)=1$ follows from the fact that $\mathbb{E}[e^0]=\mathbb{E}[1]=1$. To show that $\lvert\phi_X(t)\rvert\leq 1$, we apply the triangle inequality:
+\[
+\left\lvert \int e^{iX(\omega)t}\,dP(\omega)\right\rvert
+\leq \int \lvert e^{iXt}\rvert\,dP
+=\int 1\,dP=1.
+\]
+
+For any $t\in\mathbb{R}$, we have
+\[
+\phi_X(-t)=\mathbb{E}[e^{-iXt}]
+=\mathbb{E}[e^{iXt}]^*
+=\phi_X(t)^*.
+\]
+This follows from the fact that the integral of the complex conjugate of a function is equal to the complex conjugate of the integral.
+
+Since $e^{iXt}$ and $e^{iYt}$ are independent complex random variables, we have
+\[
+\mathbb{E}[e^{i(X+Y)t}]
+=\mathbb{E}[e^{iXt}e^{iYt}]
+=\mathbb{E}[e^{iXt}]\mathbb{E}[e^{iYt}].
+\]
+Therefore $\phi_{X+Y}(t)=\phi_X(t)\phi_Y(t)$.
+
+Applying the triangle inequality yields
+\[
+\lvert\phi_X(t+h)-\phi_X(t)\rvert
+\leq \int \lvert e^{iX(t+h)}-e^{iXt}\rvert\,dP
+=\int \lvert e^{iXh}-1\rvert\,dP.
+\]
+Since the integrand is bounded by $2$, we can apply the dominated convergence theorem (Theorem 7.7) to obtain
+\[
+\lim_{h\to 0}\lvert\phi_X(t+h)-\phi_X(t)\rvert
+\leq \int \lim_{h\to 0}\lvert e^{iXh}-1\rvert\,dP=0.
+\]
+Because the above limit does not depend on $t$, this proves that $\phi_X(t)$ is uniformly continuous.
+\hfill $\square$
+
+The last property implies that a small change in the argument of the characteristic function results in a small change in the value of the function. This ensures that the characteristic function does not exhibit large fluctuations.
+
+\subsubsection*{9.2.2 Inversion Formula}
+
+The characteristic function contains complete information about the probability distribution of a random variable. Indeed, we can recover the cumulative distribution function of a random variable from its characteristic function. We first derive a useful estimate for the absolute value of $e^{ix}-1$.
+
+\begin{thmbox}{9.4}
+\[
+\lvert e^{ix}-1\rvert\leq \lvert x\rvert
+\]
+for all $x\in\mathbb{R}$.
+\end{thmbox}
+
+\textit{Proof}
+For fixed $x>0$, we have
+\[
+\int_0^x e^{iu}\,du
+=\left[\frac{e^{iu}}{i}\right]_0^x
+=\frac{e^{ix}-1}{i}.
+\]
+Hence, by the triangle inequality,
+\[
+\lvert e^{ix}-1\rvert\leq \int_0^x \lvert e^{iu}\rvert\,du=x.
+\]
+For negative $x$, we can write
+\[
+\lvert e^{ix}-1\rvert
+=\lvert e^{ix}\rvert\lvert 1-e^{i(-x)}\rvert
+=\lvert e^{i(-x)}-1\rvert
+\leq -x.
+\]
+Therefore $\lvert e^{ix}-1\rvert\leq \lvert x\rvert$ for all $x\in\mathbb{R}$.
+\hfill $\square$
+
+\begin{thmbox}{9.5}
+\textbf{Inversion Formula.}
+Let $X$ be a random variable on a probability space $(\Omega,\mathcal{F},P)$, and let $\phi_X(t)$ be the characteristic function of $X$. Denote the push-forward measure of $P$ by $\mu$. For $a<b$,
+\[
+\mu((a,b))+\frac{\mu(\{a\})}{2}+\frac{\mu(\{b\})}{2}
+=\frac{1}{2\pi}\lim_{T\to\infty}
+\int_{-T}^{T}\frac{e^{-ita}-e^{-itb}}{it}\phi_X(t)\,dt.
+\]
+\end{thmbox}
+
+On the left-hand side of the equation in Theorem 9.5, $(a,b)$ denotes an open interval, and $\mu(\{a\})$ and $\mu(\{b\})$ are probabilities at the points $a$ and $b$, respectively. This formulation is necessary to account for possible discontinuities in the cumulative distribution function. If the cdf is continuous, then both $\mu(\{a\})$ and $\mu(\{b\})$ are zero, and $\mu((a,b))=\mu([a,b])$. The limit on the right-hand side is the Cauchy principal value of the integral, and its existence is part of the theorem.
+
+In the proof we use the Dirichlet integral
+\[
+\lim_{T\to\infty}\int_0^T \frac{\sin u}{u}\,du=\frac{\pi}{2}.
+\]
+This limit is obtained from the Riemann integral of the function $(\sin u)/u$.
+
+\textit{Proof}
+For fixed $T$, consider
+\[
+I_T \coloneqq
+\int_{-T}^{T}\frac{e^{-ita}-e^{-itb}}{it}\phi_X(t)\,dt
+=\int_{-T}^{T}\int_{\mathbb{R}}
+\frac{e^{-ita}-e^{-itb}}{it}e^{itx}\,d\mu(x)\,dt.
+\]
+Using Theorem 9.4, we can bound the integrand by
+\[
+\left\lvert
+\frac{e^{-ita}-e^{-itb}}{it}e^{itx}
+\right\rvert
+=\left\lvert \frac{1}{t}(e^{it(b-a)}-1)\right\rvert
+\leq b-a.
+\]
+Therefore, by Fubini theorem (Theorem 8.5),
+\[
+I_T=\int_{\mathbb{R}}\int_{-T}^{T}
+\frac{e^{-ita}-e^{-itb}}{it}e^{itx}\,dt\,d\mu(x).
+\tag{9.1}
+\]
+
+Let $f(x,T)$ denote the inner integral in (9.1). The imaginary part of the integrand is odd and the real part is even, so integration over $[-T,T]$ gives
+\[
+f(x,T)
+=2\int_0^T \frac{1}{t}\sin(t(b-x))\,dt
+-2\int_0^T \frac{1}{t}\sin(t(a-x))\,dt.
+\]
+Changing variables gives
+\[
+f(x,T)
+=2\int_{(a-x)T}^{(b-x)T}\frac{\sin u}{u}\,du.
+\]
+There are four cases. If $a<x<b$, then $f(x,T)\to 2\pi$. If $x=a$ or $x=b$, then $f(x,T)\to \pi$. If $x<a$ or $x>b$, then $f(x,T)\to 0$. Thus
+\[
+\lim_{T\to\infty} f(x,T)=
+\begin{cases}
+2\pi, & x\in(a,b),\\
+\pi, & x=a\text{ or }x=b,\\
+0, & \text{otherwise}.
+\end{cases}
+\]
+The integral $\int_0^v (\sin u)/u\,du$ converges as $v\to\infty$ and is continuous as a function of $v$. Hence $\lvert f(x,T)\rvert$ is bounded by a constant independent of $x$ and $T$. Applying the complex version of the dominated convergence theorem (Theorem 7.6), we get
+\[
+\lim_{T\to\infty} I_T
+=2\pi\int 1_{(a,b)}(x)\,d\mu(x)
++\pi\int 1_{\{a\}}(x)\,d\mu(x)
++\pi\int 1_{\{b\}}(x)\,d\mu(x).
+\]
+Dividing by $2\pi$ gives the inversion formula.
+\hfill $\square$
+
+Using the inversion formula, we can show that the characteristic function of a random variable uniquely determines the cumulative distribution function.
+
+\begin{thmbox}{9.6}
+\textbf{Uniqueness Theorem.}
+Let $X$ and $Y$ be random variables with characteristic functions $\phi_X(t)$ and $\phi_Y(t)$, respectively. If $\phi_X(t)=\phi_Y(t)$ for all $t\in\mathbb{R}$, then $X$ and $Y$ have the same distribution.
+\end{thmbox}
+
+\textit{Proof}
+Let $F_X(x)$ and $F_Y(y)$ denote the cumulative distribution functions of $X$ and $Y$, respectively. If $F_X$ and $F_Y$ are both continuous at $a$ and $b$, the inversion formula can be simplified to
+\[
+P(a<X<b)
+=\frac{1}{2\pi}\lim_{T\to\infty}\int_{-T}^{T}
+\frac{e^{-iat}-e^{-ibt}}{it}\phi_X(t)\,dt,
+\]
+and
+\[
+P(a<Y<b)
+=\frac{1}{2\pi}\lim_{T\to\infty}\int_{-T}^{T}
+\frac{e^{-iat}-e^{-ibt}}{it}\phi_Y(t)\,dt.
+\]
+Since $\phi_X(t)=\phi_Y(t)$ for all $t$, we have $P(a<X<b)=P(a<Y<b)$.
+
+Because there are at most countably many discontinuity points in the cumulative distribution function of a random variable (see Exercise 3.5), the Lebesgue--Stieltjes measures induced by $F_X$ and $F_Y$ agree on a collection of open intervals $(a,b)$, where $a$ and $b$ range over a dense set in $\mathbb{R}$. This collection of intervals generates the Borel algebra on $\mathbb{R}$. Therefore, the two Lebesgue--Stieltjes measures are the same. Consequently, the cdf's of $X$ and $Y$ are the same (see Theorem 3.9).
+\hfill $\square$
+
+\subsubsection*{9.2.3 Computing Moments from Characteristic Function}
+
+We can determine the moments of a random variable by differentiating its characteristic function. The proof follows a similar idea as in the case of moment generating functions, and it involves justifying the exchange of the order of differentiation and expectation.
+
+\begin{thmbox}{9.7}
+\textbf{Derivatives of Characteristic Function.}
+Suppose $\mathbb{E}[\lvert X\rvert^n]<\infty$. Then the $n$-th derivative of $\phi_X(t)$ exists and
+\[
+\phi_X^{(n)}(t)=\mathbb{E}[(iX)^n e^{iXt}].
+\]
+In particular,
+\[
+\mathbb{E}[X^n]=\frac{1}{i^n}\phi_X^{(n)}(0).
+\]
+\end{thmbox}
+
+\textit{Sketch of Proof}
+We prove the theorem for $n=1$ and $n=2$ only. Suppose $\mathbb{E}[\lvert X\rvert]<\infty$. We want to evaluate
+\[
+\lim_{h\to 0}\frac{\phi_X(t+h)-\phi_X(t)}{h}
+=\lim_{h\to 0}\int \frac{1}{h}
+\left(e^{iX(\omega)(t+h)}-e^{iX(\omega)t}\right)\,dP(\omega).
+\]
+By Theorem 9.4,
+\[
+\frac{1}{\lvert h\rvert}
+\lvert e^{iX(\omega)(t+h)}-e^{iX(\omega)t}\rvert
+\leq
+\frac{1}{\lvert h\rvert}\lvert e^{iX(\omega)h}-1\rvert
+\leq \lvert X(\omega)\rvert.
+\]
+Hence, by the limit version of the dominated convergence theorem (Theorem 7.7),
+\[
+\phi'_X(t)
+=\int \lim_{h\to 0}\frac{1}{h}
+\left(e^{iX(\omega)(t+h)}-e^{iX(\omega)t}\right)\,dP(\omega)
+=\int iX(\omega)e^{iX(\omega)t}\,dP(\omega)
+=\mathbb{E}[iXe^{iXt}].
+\]
+
+For $n=2$, we compute the second derivative:
+\[
+\lim_{h\to 0}\frac{\phi'_X(t+h)-\phi'_X(t)}{h}
+=\lim_{h\to 0}\int \frac{i}{h}
+\left(X(\omega)e^{iX(\omega)(t+h)}-X(\omega)e^{iX(\omega)t}\right)\,dP(\omega).
+\]
+For each $\omega$, the absolute value of the integrand is bounded by
+\[
+\left\lvert
+iX(\omega)e^{iX(\omega)t}\frac{e^{iX(\omega)h}-1}{h}
+\right\rvert
+\leq \lvert X(\omega)\rvert^2.
+\]
+If $\mathbb{E}[\lvert X\rvert^2]$ is finite, dominated convergence gives
+\[
+\lim_{h\to 0}\frac{\phi'_X(t+h)-\phi'_X(t)}{h}
+=\mathbb{E}[(iX)^2e^{iXt}].
+\]
+This proves the formula for $n=2$.
+\hfill $\square$

@@ -1,0 +1,61 @@
+[
+    {
+        "block_id": "rem_7_5_product_expectation_intro",
+        "type": "Remark",
+        "title": "Section Header",
+        "content": "\\subsection*{7.5 Expectation of the Product of Two Independent Random Variables}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "29_chap7_product_expectation"
+    },
+    {
+        "block_id": "rem_7_5_transition_1",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "\\subsection*{7.5 Expectation of the Product of Two Independent Random Variables}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "29_chap7_product_expectation"
+    },
+    {
+        "block_id": "thm_7_13",
+        "type": "Theorem_with_Proof",
+        "title": "Theorem",
+        "content": "\\begin{thmbox}{7.13}\nSuppose $X$ and $Y$ are random variables defined on a common probability space $(\\Omega,\\mathcal{F},P)$. If $X$ and $Y$ are independent and if $E[X]$, $E[Y]$, and $E[XY]$ are all finite, then\n\\begin{equation}\nE[XY]=E[X]E[Y].\n\\tag{7.10}\n\\end{equation}\n\\end{thmbox}\n\n\\textit{Proof} We first suppose that $X$ and $Y$ are indicator functions. Suppose $X=1_A$ and $Y=1_B$ for some sets $A$ and $B$. Since $X$ and $Y$ are measurable, the sets $A$ and $B$ are both $\\mathcal{F}$-measurable. Moreover, since $X$ and $Y$ are independent, the events $A$ and $B$ are independent. Therefore,\n\\[\nE[1_A1_B] = E[1_{A\\cap B}] = P(A\\cap B) = P(A)P(B) = E[1_A]E[1_B].\n\\]\n\nBy linearity, (7.10) holds when $X$ and $Y$ are independent simple functions.\n\nSuppose $X$ and $Y$ are nonnegative, measurable, and independent random variables. Let $X_n$'s and $Y_n$'s be simple nonnegative functions obtained by the method mentioned after Definition 6.3. For each $n$, $X_n$ and $Y_n$ are independent because $X_n$ is a function of $X$ and $Y_n$ is a function of $Y$, and $X$ and $Y$ are independent (Theorem 5.2). Furthermore, we have $X_nY_n \\nearrow XY$ because $X_n \\nearrow X$ and $Y_n \\nearrow Y$. By the monotone convergence theorem,\n\\[\nE[XY]\n=\n\\lim_n E[X_nY_n]\n=\n\\lim_n (E[X_n]E[Y_n])\n=\n(\\lim_n E[X_n])(\\lim_n E[Y_n]),\n\\]\nwhich is the same as $E[X]E[Y]$.\n\nSuppose $X$ and $Y$ are in $L^1(P)$. Let $X^+$ and $X^-$ denote the positive and negative parts of $X$, respectively, and let $Y^+$ and $Y^-$ denote the positive and negative parts of $Y$, respectively. We note that the pair of random variables $(X^+,X^-)$ is independent with $(Y^+,Y^-)$ because $X^+=\\max(X,0)$ and $X^-=\\max(-X,0)$ are functions of $X$ and $Y^+=\\max(Y,0)$ and $Y^-=\\max(-Y,0)$ are functions of $Y$ (Theorem 5.2). Then, we can write\n\\[\nE[XY]=E[(X^+-X^-)(Y^+-Y^-)]\n\\]\n\\[\n= E[X^+]E[Y^+] - E[X^+]E[Y^-] - E[X^-]E[Y^+] + E[X^-]E[Y^-]\n\\]\n\\[\n= (E[X^+]-E[X^-])(E[Y^+]-E[Y^-])\n\\]\n\\[\n= E[X]E[Y].\n\\]\n\nThis establishes (7.10) for nonnegative random variables $X$ and $Y$. \\hfill $\\square$",
+        "dependencies": [
+            "def_6_3",
+            "thm_5_2"
+        ],
+        "is_renowned": true,
+        "source_plan": "29_chap7_product_expectation"
+    },
+    {
+        "block_id": "rem_7_5_transition_2",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "In view of Theorem 7.13, we can define the notion of uncorrelated random variables.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "29_chap7_product_expectation"
+    },
+    {
+        "block_id": "def_7_3",
+        "type": "Definition",
+        "title": "Definition",
+        "content": "\\begin{defbox}{7.3}\nWe say that two real-valued random variables $X$ and $Y$ are \\textit{uncorrelated} if\n\\[\nE[XY]=E[X]E[Y].\n\\]\n\nThe notion of uncorrelated random variables is closely related to the \\textit{covariance}, which is defined as\n\\[\n\\operatorname{Cov}(X,Y)\\triangleq E[(X-E[X])(Y-E[Y])].\n\\]\n\nIt is straightforward to show that $\\operatorname{Cov}(X,Y)=0$ if and only if $X$ and $Y$ are uncorrelated. Theorem 7.13 says that two independent random variables are uncorrelated, but the converse does not hold in general.\n\\end{defbox}",
+        "dependencies": [
+            "thm_7_13"
+        ],
+        "is_renowned": false,
+        "source_plan": "29_chap7_product_expectation"
+    },
+    {
+        "block_id": "ex_7_5_1",
+        "type": "Example_Proof",
+        "title": "Uncorrelated But Dependent Random Variables",
+        "content": "\\textbf{Example 7.5.1 (Uncorrelated But Dependent Random Variables)} \\\\\nLet $Z$ be any discrete random variable with zero mean. Let $U$ be a random variable that equals $0$ with probability $1/2$ and $1$ with probability $1/2$. Define random variables $X$ and $Y$ by\n\\[\n(X,Y)=\n\\begin{cases}\n(Z,Z) & \\text{if } U=0,\\\\\n(Z,-Z) & \\text{if } U=1.\n\\end{cases}\n\\]\n\nThe random variable $X$ has the same distribution as $Z$ and hence has zero mean. The expectation $E[XY]$ is zero by a symmetry argument. Therefore, $X$ and $Y$ are uncorrelated. Nevertheless, the random variables $X$ and $Y$ are not independent. It is because we can determine the absolute value of $X$ if we know the value of $Y$.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "29_chap7_product_expectation"
+    }
+]

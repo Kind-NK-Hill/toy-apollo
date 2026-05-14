@@ -1,0 +1,49 @@
+[
+    {
+        "block_id": "rem_6_4_expectation_intro",
+        "type": "Remark",
+        "title": "Section Header",
+        "content": "\\subsection*{6.4 Mathematical Expectation of Random Variable}\n\nWhen $(\\Omega,\\mathcal{F},\\mu)$ is a probability space, we define the expectation of $X$ in terms of the Lebesgue integral as follows.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "22_chap6_expectation"
+    },
+    {
+        "block_id": "def_6_7",
+        "type": "Definition",
+        "title": "Definition",
+        "content": "\\begin{defbox}{6.7}\nThe \\textit{expectation} of a random variable $X$ is defined by\n\\[\nE[X] \\triangleq \\int X\\, dP,\n\\]\nwhere the integral is taken over the sample space $\\Omega$ with probability measure $P$.\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "22_chap6_expectation"
+    },
+    {
+        "block_id": "rem_6_4_lebesgue_expectation_advantage",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "The use of Lebesgue integration to define the expectation allows for integration over more general measure spaces and a wider range of random variables than the Riemann integral, which is limited to functions on $\\mathbb{R}$ or $\\mathbb{R}^d$. The expectation of $X$ is also called the \\textit{mean} of $X$. This is an operator that maps a random variable to a real number, satisfying linearity property $E[aX+bY]=aE[X]+bE[Y]$ and monotonic property $X\\le Y \\Rightarrow E[X]\\le E[Y]$.\n\nWe recover the formulas for the expectation of discrete random variables.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "22_chap6_expectation"
+    },
+    {
+        "block_id": "ex_6_4_1",
+        "type": "Example_Proof",
+        "title": "Example",
+        "content": "\\textbf{Example 6.4.1 (Expectation of Discrete Random Variable with Finite Range)} \\\\\nSuppose $X$ is a random variable defined on a probability space $(\\Omega,\\mathcal{F},P)$ that takes value in $\\{a_1,a_2,\\dots,a_n\\}$. For $i=1,2,\\dots,n$, let $A_i = X^{-1}(\\{a_i\\})$. We get\n\\[\nX(\\omega)=\\sum_{i=1}^{n} a_i 1_{A_i}(\\omega).\n\\]\n\nThe expectation of $X$ can be computed as a finite sum\n\\[\nE[X]=\\int X\\, dP=\\sum_{i=1}^{n} a_i P(A_i)=\\sum_{i=1}^{n} a_i P(X=a_i).\n\\]\n\nWhen a discrete random variable is integer-valued, we need to consider the positive and negative integers separately.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "22_chap6_expectation"
+    },
+    {
+        "block_id": "ex_6_4_2",
+        "type": "Example_Proof",
+        "title": "Example",
+        "content": "\\textbf{Example 6.4.2 (Expectation of Integer-Valued Random Variable)} \\\\\nSuppose $X$ is a random variable on the probability space $(\\Omega,\\mathcal{F},P)$ whose values are integers. We consider the positive part $X^+$ and the negative part $X^-$.\n\nTo compute $E[X^+]$, we can take an increasing sequence of simple random variables. For $k=0,1,2,3,\\dots$, let $E_k$ be the event $\\{\\omega : 0\\le X(\\omega)\\le k\\}$. By the previous example, we obtain\n\\[\n\\int_{E_k} X^+\\, dP \\triangleq \\int X^+1_{E_k}\\, dP = \\sum_{i=0}^{k} iP(X=i).\n\\]\n\nBecause $X^+1_{E_k} \\nearrow X^+$ as $k\\to\\infty$, by the monotone convergence theorem, we get\n\\[\nE[X^+] = \\lim_{k\\to\\infty} \\sum_{i=0}^{k} iP(X^+=i)\n\\triangleq \\sum_{i=0}^{\\infty} iP(X=i).\n\\]\n\nBy a similar argument, we obtain\n\\[\nE[X^-] = \\sum_{i\\in\\mathbb{Z},\\, i\\le -1} (-i)P(X=i)\n= \\sum_{i=1}^{\\infty} iP(X=-i).\n\\]\n\nWhen $E[X^+]$ and $E[X^-]$ are not both equal to infinity, the expectation of $X$ can be computed by\n\\[\nE[X] = E[X^+] - E[X^-] = \\left(\\sum_{i=1}^{\\infty} iP(X=i)\\right) - \\left(\\sum_{i=1}^{\\infty} iP(X=-i)\\right).\n\\]",
+        "dependencies": [
+            "ex_6_4_1"
+        ],
+        "is_renowned": true,
+        "source_plan": "22_chap6_expectation"
+    }
+]

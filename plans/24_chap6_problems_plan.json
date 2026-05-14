@@ -1,0 +1,103 @@
+[
+    {
+        "block_id": "rem_6_0_problems_header",
+        "type": "Remark",
+        "title": "Section Header",
+        "content": "\\subsection*{Problems}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "24_chap6_problems"
+    },
+    {
+        "block_id": "prob_6_1",
+        "type": "Problem",
+        "title": "Problem 6.1",
+        "content": "\\textbf{6.1.} Consider $\\{0,1,2,\\dots,n\\}$ as a sample space with the discrete $\\sigma$-algebra. Let $p$ be a real number between 0 and 1. Define a probability measure $P$ by\n\\[\nP(\\{k\\}) = \\binom{n}{k}p^k(1-p)^{n-k},\n\\]\nfor $k=0,1,2,\\dots,n$. Evaluate the expectation of the following random variables:\n\n\\noindent (a) \\quad $X(k)=k$.\n\n\\noindent (b) \\quad $Y(k)=\n\\begin{cases}\n1 & \\text{if } k \\text{ is even}, \\\\\n-1 & \\text{if } k \\text{ is odd}.\n\\end{cases}$",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "24_chap6_problems"
+    },
+    {
+        "block_id": "prob_6_2",
+        "type": "Problem",
+        "title": "Problem 6.2",
+        "content": "\\textbf{6.2.} In the hat problem described in Example 6.5.1, find the variance of the number of people who can get back his/her own hat. (Hint: Compute $E[1_{A_i}1_{A_j}]$.)",
+        "dependencies": [
+            "ex_6_5_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "24_chap6_problems"
+    },
+    {
+        "block_id": "prob_6_3",
+        "type": "Problem",
+        "title": "Problem 6.3",
+        "content": "\\textbf{6.3.} There are $n$ different types of coupons. In each iteration, a coupon of random type is drawn. Let $X_k$ denote the time you first get $k$ different types of coupons. Trivially, we have $X_1=1$. $X_2$ is the first time that you get a coupon different from the first one. For $k \\ge 1$, find the expectation of $X_k$.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "24_chap6_problems"
+    },
+    {
+        "block_id": "prob_6_4",
+        "type": "Problem",
+        "title": "Problem 6.4",
+        "content": "\\textbf{6.4.} Let $X$ be a nonnegative random variable that may take $\\infty$ as its value. Show that if $E[X]$ is finite, then $X$ is finite almost surely.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "24_chap6_problems"
+    },
+    {
+        "block_id": "prob_6_5",
+        "type": "Problem",
+        "title": "Problem 6.5",
+        "content": "\\textbf{6.5.} Let $X$ be an integrable random variable. For any $\\epsilon$, show that there is a simple function $f$ such that $E[|X-f|]<\\epsilon$.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "24_chap6_problems"
+    },
+    {
+        "block_id": "prob_6_6",
+        "type": "Problem",
+        "title": "Problem 6.6",
+        "content": "\\textbf{6.6.} Suppose $X$ is a random variable in $L^1(P)$. Show that\n\\[\n\\lim_{n\\to\\infty} \\int X1_{|X|\\ge n}\\, dP = 0.\n\\]",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "24_chap6_problems"
+    },
+    {
+        "block_id": "prob_6_7",
+        "type": "Problem",
+        "title": "Problem 6.7",
+        "content": "\\textbf{6.7.} Consider a sequence $X_1,X_2,X_3,\\dots$ of nonnegative independent random variables, where $P(X_k>a)\\ge \\delta$ for all $k$. Here, $a$ is a positive constant and $\\delta$ is another positive constant between 0 and 1. Show that $\\sum_{k=1}^{\\infty} X_k=\\infty$ with probability 1. (Hint: Use the Borel--Cantelli lemma.)",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "24_chap6_problems"
+    },
+    {
+        "block_id": "prob_6_8",
+        "type": "Problem",
+        "title": "Problem 6.8",
+        "content": "\\textbf{6.8.} Let $(\\Omega,\\mathcal{F},\\mu)$ be a measure space and $X$ be a nonnegative measurable function defined on this measure space such that $\\int_{\\Omega} X\\, d\\mu =1$. Prove that the set function $Q$, defined by $Q(A)=\\int_A X\\, d\\mu$ for $A\\in\\mathcal{F}$, is a probability measure.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "24_chap6_problems"
+    },
+    {
+        "block_id": "prob_6_9",
+        "type": "Problem",
+        "title": "Problem 6.9",
+        "content": "\\textbf{6.9.} The objective of this question is to prove that for any infinite array of nonnegative real numbers $a_{ij}$, for $i\\ge 1$ and $j\\ge 1$, the two different orders of summation give the same answer\n\\begin{equation}\n\\sum_{i=1}^{\\infty}\\sum_{j=1}^{\\infty} a_{ij}\n=\n\\sum_{j=1}^{\\infty}\\sum_{i=1}^{\\infty} a_{ij}.\n\\tag{6.5}\n\\end{equation}\n\n(The answer may equal $\\infty$. In this case, both sides are equal to $\\infty$.)\n\nTo formulate the problem using the measure theory, we take $\\mathbb{N}=\\{1,2,3,\\dots\\}$ as the sample space, equipped with the discrete $\\sigma$-algebra $\\mathcal{P}(\\mathbb{N})$. Let $\\mu$ denote the counting measure on $\\mathbb{N}$, i.e., $\\mu(A)$ is the size of $A$ for any $A\\subseteq \\mathbb{N}$.\n\n\\noindent (a) For each fixed $i\\ge 1$, let $X_i$ be the function defined by $X_i(j)=a_{ij}$. Verify that\n\\[\n\\int X_i\\, d\\mu = \\sum_{j=1}^{\\infty} a_{ij}.\n\\]\n\n\\noindent (b) Let $Y_n=X_1+X_2+\\cdots+X_n$. Prove that $Y_1,Y_2,Y_3,\\dots$ is an increasing sequence of functions. What is the limit function $Y \\triangleq \\lim_n Y_n$?\n\n\\noindent (c) Apply the monotone convergence theorem to prove (6.5).",
+        "dependencies": [],
+        "is_renowned": true,
+        "source_plan": "24_chap6_problems"
+    },
+    {
+        "block_id": "prob_6_10",
+        "type": "Problem",
+        "title": "Problem 6.10",
+        "content": "\\textbf{6.10.} Consider the random series\n\\[\nS = 1 \\pm \\frac{1}{2} \\pm \\frac{1}{4} \\pm \\frac{1}{8} \\pm \\frac{1}{16} \\pm \\frac{1}{32} \\pm \\cdots,\n\\]\nwhere the signs are chosen independently by tossing a fair coin infinitely many times. Find the mean and the variance of $S$.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "24_chap6_problems"
+    }
+]
