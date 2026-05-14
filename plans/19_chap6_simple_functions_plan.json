@@ -1,0 +1,105 @@
+[
+    {
+        "block_id": "rem_6_0_lebesgue_integral_intro",
+        "type": "Remark",
+        "title": "Intro",
+        "content": "\\section*{Lebesgue Integral and Mathematical Expectation}\n\nConsider a sequence of random variables $X_n(\\omega)$ that converge pointwise to a function $X(\\omega)$. In Chap.~4, we showed that $X(\\omega)$ is measurable. In many cases, it is of interest to know whether the limit of the expected values $E[X_n]$ will converge to the expected value of the limit $E[X]$. However, we cannot always exchange the order of limit and expectation, as there exist examples that give different results depending on the order of operations. Therefore, it is important to find conditions under which such an exchange is justified.\n\nFor Riemann integration, there is a useful condition called ``uniform convergence.'' If we can show that the sequence of functions are Riemann integrable and that the convergence is uniform, then the limit function is Riemann integrable and we can exchange the order of limit and integration. However, the notion of uniform convergence requires a distance function defined on the domain of the functions, making it a metric space. In the probability theory, the sample space may be an abstract space, and no such distance function is available. Therefore, we need a way to perform integration on a general probability space, and this is accomplished by Lebesgue integration.\n\nLebesgue's approach to integration differs from Riemann's by dividing the range of functions into small intervals. The derivation of Lebesgue integral proceeds in several stages. First it is defined for the class of simple functions and then extended to nonnegative functions and, more generally, to real-valued functions. From there, the range is further extended to include the extended real numbers and, separately, the complex numbers. The relationship between these stages of the Lebesgue integral is illustrated below.\n\n\\[\n\\begin{array}{c}\n\\text{Simple functions} \\\\\n\\vert \\\\\n\\text{Nonnegative functions} \\\\\n\\vert \\\\\n\\mathbb{R}\\text{-valued functions} \\qquad - \\qquad \\mathbb{C}\\text{-valued functions} \\\\\n\\vert \\\\\n\\bar{\\mathbb{R}}\\text{-valued functions}\n\\end{array}\n\\]",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "19_chap6_simple_functions"
+    },
+    {
+        "block_id": "rem_6_1_simple_functions_intro",
+        "type": "Remark",
+        "title": "Section Header",
+        "content": "\\subsection*{6.1 Simple Functions}\n\nIn this chapter we will work with a fixed measure space $(\\Omega,\\mathcal{F},\\mu)$, where $\\mu$ may be the Lebesgue measure, the counting measure, or a probability measure.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "19_chap6_simple_functions"
+    },
+    {
+        "block_id": "def_6_1",
+        "type": "Definition",
+        "title": "Definition",
+        "content": "\\begin{defbox}{6.1}\nLet $(\\Omega,\\mathcal{F},\\mu)$ be a measure space. A function $X:\\Omega \\to \\bar{\\mathbb{R}}$ is called a \\textit{simple function} if its range is finite and it is $\\mathcal{F}$-measurable.\n\nSuppose $X$ takes on $n$ distinct values, denoted by $a_1,a_2,\\ldots,a_n$, for some integer $n$. Since $X$ is a function with values in $\\bar{\\mathbb{R}}$, one of the $a_i$'s may be $\\infty$ or $-\\infty$. For $i=1,2,\\ldots,n$, let $A_i$ be the pre-image $X^{-1}(\\{a_i\\}) \\triangleq \\{\\omega : X(\\omega)=a_i\\}$. Because a simple function is $\\mathcal{F}$-measurable by definition, the sets $A_i$'s are also $\\mathcal{F}$-measurable and form a partition of the sample space $\\Omega$. We can write $X(\\omega)$ as a linear combination of indicator functions\n\\begin{equation}\nX(\\omega)=\\sum_{i=1}^{n} a_i 1_{A_i}(\\omega).\n\\tag{6.1}\n\\end{equation}\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "19_chap6_simple_functions"
+    },
+    {
+        "block_id": "def_6_2",
+        "type": "Definition",
+        "title": "Definition",
+        "content": "\\begin{defbox}{6.2}\nThe \\textit{Lebesgue integral} of a simple function $X$ expressed as in (6.1) is defined by\n\\begin{equation}\n\\int X\\, d\\mu \\triangleq \\sum_{i=1}^{n} a_i \\mu(A_i),\n\\tag{6.2}\n\\end{equation}\nunless the summation contains both $\\infty$ and $-\\infty$, in which case the integral is not defined.\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "19_chap6_simple_functions"
+    },
+    {
+        "block_id": "rem_6_1_infinity_convention",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "When working with infinity in (6.2), we adopt the following conventions:\n\n\\noindent$\\blacktriangleright$ \\textbf{Convention with $\\infty$ and $0$}\n\\begin{itemize}\n    \\item A term in (6.2) equals $\\infty$ if (i) $a_i>0$ and $\\mu(A_i)=\\infty$, or $a_i=\\infty$ and $\\mu(A_i)>0$.\n    \\item If all terms in (6.2) are either finite or $\\infty$, the integral equals a real number or $\\infty$.\n    \\item If $a_i<0$ and $\\mu(A_i)=\\infty$, then $a_i\\mu(A_i)$ equals $-\\infty$. The integral is equal to $-\\infty$ if all the other terms are either finite or $-\\infty$.\n    \\item If $a_i=0$ or $\\mu(A_i)=0$, the product $a_i\\mu(A_i)$ is defined as $0$ by convention, and it makes no contribution to the integral.\n\\end{itemize}\n\n\\noindent$\\blacktriangleright$ \\textbf{Notation for Lebesgue Integral} We will define the Lebesgue integral for a more general class of functions later. To emphasize that $\\omega$ is the variable of integration, we can write\n\\[\n\\int X(\\omega)\\, d\\mu(\\omega)\n\\qquad \\text{or} \\qquad\n\\int X(x)\\, d\\mu(x)\n\\qquad \\text{or} \\qquad\n\\int X(\\omega)\\, \\mu(d\\omega)\n\\qquad \\text{or} \\qquad\n\\int X(x)\\, \\mu(dx).\n\\]\nIf $\\mu$ is understood from the context, we will use the shorthand notation $\\int X$.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "19_chap6_simple_functions"
+    },
+    {
+        "block_id": "ex_6_1_1",
+        "type": "Example_Proof",
+        "title": "Example",
+        "content": "\\textbf{Example 6.1.1 (Lebesgue Integral for Finite Sample Space)} \\\\\nWhen $\\Omega$ is a finite set and $\\mu$ is the counting measure, the Lebesgue integral reduces to a finite sum. If $\\Omega$ is a finite set and $\\mu$ is a general measure on $\\Omega$, then the Lebesgue integral of a simple function is a finite weighted sum.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "19_chap6_simple_functions"
+    },
+    {
+        "block_id": "ex_6_1_2",
+        "type": "Example_Proof",
+        "title": "Example",
+        "content": "\\textbf{Example 6.1.2 (Lebesgue Integral of a Single Indicator Function)} \\\\\nSuppose $B$ is a measurable set. By Theorem 4.1, the indicator function $1_B$ is measurable. It takes two values and can be expressed as\n\\[\n1_B(\\omega)=1\\cdot 1_B(\\omega)+0\\cdot 1_{B^c}(\\omega).\n\\]\nThe Lebesgue integral $\\int 1_B\\, d\\mu$ equals $1\\cdot \\mu(B)+0\\cdot \\mu(B^c)=\\mu(B)$, where the second term $0\\cdot \\mu(B^c)$ is $0$ by the convention of $0\\cdot x=0$.",
+        "dependencies": [
+            "thm_4_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "19_chap6_simple_functions"
+    },
+    {
+        "block_id": "thm_6_1",
+        "type": "Theorem_with_Proof",
+        "title": "Theorem or Lemma",
+        "content": "\\begin{thmbox}{6.1}\nLet $X$ and $Y$ be simple functions, and let $\\alpha \\in \\mathbb{R}$ be a constant. Then,\n\\begin{enumerate}[label=(\\alph*)]\n    \\item $\\int \\alpha X\\, d\\mu = \\alpha \\int X\\, d\\mu$.\n    \\item $\\int X+Y\\, d\\mu = \\int X\\, d\\mu + \\int Y\\, d\\mu$.\n    \\item if $X\\le Y$, then $\\int X\\, d\\mu \\le \\int Y\\, d\\mu$.\n\\end{enumerate}\n\\end{thmbox}\n\nThe two properties in parts (a) and (b) are called the \\textit{linearity property} of integral. The property in part (c) is called the \\textit{monotonic property}.\n\n\\textit{Proof} \\\\\n(a) Suppose $X$ is expressed as $X=\\sum_{i=1}^{m} a_i 1_{A_i}$, where $A_i=X^{-1}(\\{a_i\\})$ for all $i$, and the sets $A_i$'s form a partition of $\\Omega$. If $\\alpha=0$, then both sides of (a) are zero. When $\\alpha\\neq 0$, the function $\\alpha X$ takes $m$ distinct values and can be written as $\\sum_{i=1}^{m} (\\alpha a_i)1_{A_i}$. Hence\n\\[\n\\int \\alpha X = \\sum_{i=1}^{m} (\\alpha a_i)\\mu(A_i)\n= \\alpha \\sum_{i=1}^{m} a_i \\mu(A_i)\n= \\alpha \\int X.\n\\]\n\n(b) We continue with the notation in part (a) and write $Y=\\sum_{j=1}^{n} b_j 1_{B_j}$, where $B_j=Y^{-1}(\\{b_j\\})$ and the sets $B_j$'s form a partition of $\\Omega$. The function $X+Y$ is measurable because both $X$ and $Y$ are measurable. The number of values that $X+Y$ can take is no more than the number of values of $X$ times the number of values of $Y$ and hence is finite. This verifies that $X+Y$ is a simple function.\n\nWe can consider the refined partition $\\{A_i \\cap B_j : i=1,\\ldots,m,\\ j=1,\\ldots,n\\}$ of $\\Omega$ and write $X+Y$ as $\\sum_{i=1}^{m}\\sum_{j=1}^{n}(a_i+b_j)1_{A_i \\cap B_j}$. The set $A_i \\cap B_j$ may be empty for some $i$ and $j$, but it will not affect the integral, as $A_i \\cap B_j$ has zero measure in this case and makes zero contribution to the integral. The Lebesgue integral of $X+Y$ is equal to\n\\[\n\\sum_{i=1}^{m}\\sum_{j=1}^{n}(a_i+b_j)\\mu(A_i \\cap B_j)\n= \\sum_{i=1}^{m}\\sum_{j=1}^{n} a_i\\mu(A_i \\cap B_j)+\\sum_{i=1}^{m}\\sum_{j=1}^{n} b_j\\mu(A_i \\cap B_j)\n\\]\n\\[\n= \\sum_{i=1}^{m} a_i\\mu(A_i)+\\sum_{j=1}^{n} b_j\\mu(B_j),\n\\]\nwhich is the same as $\\int X\\, d\\mu + \\int Y\\, d\\mu$.\n\n(c) We first prove the inequality with $X=0$ and $Y\\ge 0$. When $Y\\ge 0$, then $b_j\\ge 0$ for all $j$, and thus\n\\[\n\\int Y\\, d\\mu = \\sum_{j=1}^{n} b_j \\mu(B_j)\\ge 0.\n\\]\n\nIn general, when $X\\le Y$, then $Y-X\\ge 0$, and $0\\le \\int Y-X\\, d\\mu = \\int Y - \\int X$ using linearity property of integral in (b). We then get $\\int X\\le \\int Y$. \\hfill $\\square",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "19_chap6_simple_functions"
+    },
+    {
+        "block_id": "rem_6_1_transition_1",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "$",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "19_chap6_simple_functions"
+    },
+    {
+        "block_id": "thm_6_2",
+        "type": "Theorem_with_Proof",
+        "title": "Theorem or Lemma",
+        "content": "\\begin{thmbox}{6.2}\nSuppose\n\\[\nX=\\sum_{j=1}^{n} b_j 1_{B_j},\n\\]\nwhere $B_j$'s are measurable sets (not necessarily mutually disjoint). Then $X$ is a simple function, and\n\\[\n\\int X\\, d\\mu = \\sum_{j=1}^{n} b_j \\mu(B_j).\n\\]\n\\end{thmbox}\n\n\\textit{Proof} By the linearity of Lebesgue integral for simple functions,\n\\[\n\\int X\\, d\\mu = \\sum_{j=1}^{n} b_j \\int 1_{B_j}\\, d\\mu = \\sum_{j=1}^{n} b_j \\mu(B_j).\n\\]\nIn the second equality in the above line, we have applied Example 6.1.2 to evaluate the integral of indicator functions. \\hfill $\\square",
+        "dependencies": [
+            "ex_6_1_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "19_chap6_simple_functions"
+    },
+    {
+        "block_id": "rem_6_1_transition_2",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "$",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "19_chap6_simple_functions"
+    }
+]

@@ -1,0 +1,203 @@
+\subsection*{6.3 Lebesgue Integral of Real-Valued and Complex-Valued Functions}
+
+\begin{defbox}{6.4}
+For real-valued measurable function $X$, we let
+\[
+X^+ \triangleq \max(X,0)
+\qquad \text{and} \qquad
+X^- \triangleq -\min(X,0)
+\]
+be the \textit{positive part} and \textit{negative part} of $X$, respectively.
+
+Both the positive and negative parts of $X$ are measurable because the functions $\max(x,0)$ and $-\min(x,0)$ are continuous (Theorem 4.5). Moreover, we have
+\[
+X=X^+-X^-
+\qquad \text{and} \qquad
+|X|=X^+ + X^-.
+\]
+
+Using these concepts, we can define the Lebesgue integral of a real-valued function by reducing the definition to the nonnegative case.
+\end{defbox}
+
+\begin{defbox}{6.5 (Real Lebesgue Integral)}
+We define the \textit{Lebesgue integral} of a measurable $\bar{\mathbb{R}}$-valued function $X$ on a measure space $(\Omega,\mathcal{F},\mu)$ by
+\[
+\int X\, d\mu \triangleq \int X^+\, d\mu - \int X^-\, d\mu.
+\]
+
+It is well-defined unless we have $\infty-\infty$ on the right-hand side. When $\int X^+$ and $\int X^-$ are both finite, we say that $X$ is $\mu$-\textit{integrable} and write $X \in L^1(\mu)$.
+\end{defbox}
+
+To simplify the notation, we will write ``$X$ is integrable'' if the measure $\mu$ is known from the context. If $\int X\, d\mu = \infty$ or $\int X\, d\mu = -\infty$, the function $X$ is not integrable, but the integral is still considered well-defined. An example of a function with an undefined integral is demonstrated below.
+
+\textbf{Example 6.3.1 (An Example of Undefined Integral)} \\
+Suppose $\Omega=\mathbb{Z}$ is the set of integers equipped with discrete $\sigma$-field $\mathcal{F}=\mathcal{P}(\mathbb{Z})$. Define a probability measure on $\mathbb{Z}$ by $P(\{\omega\})=p_{\omega}$, where $p_0=0$, and $p_k=p_{-k}=c/k^2$ for $k=1,2,3,\dots$. The constant $c$ is chosen such that $\sum_{k\in\mathbb{Z}} p_k =1$. Consider the function $X(\omega)=\omega$. The integral $\int \omega\, dP(\omega)$ is not defined because the positive and negative parts are infinite
+\[
+\int X^+\, dP = \sum_{k=1}^{\infty} k \frac{c}{k^2}
+= c\sum_{k=1}^{\infty} \frac{1}{k}
+= \infty,
+\]
+\[
+\int X^-\, dP = \sum_{k=1}^{\infty} k \frac{c}{k^2}
+= \infty.
+\]
+
+The distribution in the example is a discrete analogue of the Cauchy distribution.
+
+In probability theory, the Cauchy distribution is defined by the pdf
+\[
+f(x)=(\pi(x^2+1))^{-1}
+\]
+for $x \in \mathbb{R}$. The calculation of its expectation requires that we first compute the positive and negative Lebesgue integrals of $xf(x)$, respectively. However, in the case of Cauchy distribution, both the positive and negative Lebesgue integrals are infinite. Hence, even though the pdf is symmetric around the origin, the expectation is undefined.
+
+\noindent$\blacktriangleright$ \textbf{Convention on Integration over a Set} In the Lebesgue integration, integrating a measurable function over a measurable subset $E$ of $\Omega$ is equivalent to multiplying the integrand by the indicator function $1_E(\omega)$ that takes the value $1$ on $E$ and $0$ elsewhere. We denote this operation by
+\[
+\int_E X\, dP \triangleq \int X1_E\, dP.
+\]
+
+If we want to emphasize that the integration is over the entire sample space, we use the notation $\int_{\Omega} X\, dP$.
+
+In the field of complex numbers, we do not have a natural ordering, and there is no $-\infty$. We define the Lebesgue integral of a complex-valued function in terms of the Lebesgue integral of its real and imaginary parts. Specifically, motivated by the linearity of integral, we add the Lebesgue integrals of the real and imaginary parts to obtain the Lebesgue integral of the complex-valued function. To avoid confusion, we generally assume that the complex-valued function to be integrated does not take $\infty$ as its value.
+
+\begin{defbox}{6.6 (Complex Lebesgue Integral)}
+Suppose $Z(\omega)=X(\omega)+iY(\omega)$, where $X(\omega)$ and $Y(\omega)$ are the real and imaginary parts of $Z(\omega)$, respectively. If both $X$ and $Y$ are integrable, then we say that $Z$ is \textit{integrable} and define the Lebesgue integral of $Z$ by
+\[
+\int Z\, d\mu \triangleq \int X\, d\mu + i\int Y\, d\mu
+\]
+and write $Z \in L^1(\mu)$. The integral of $Z$ is not defined if $X$ or $Y$ is not integrable.
+\end{defbox}
+
+The integral of complex-valued function will be used later in the study of a characteristic function. We give a simple example below.
+
+\textbf{Example 6.3.2 (An Example of Complex Integral)} \\
+Take $\Omega=[0,1]$ as the sample space and $\mu$ be the Lebesgue measure on $[0,1]$. Assume for the time being that the integral with respect to the Lebesgue measure can be computed by Riemann integral. (This will be proved in the next chapter.)
+
+Let $t$ be a real number. We are interested in computing the integral
+\[
+\phi(t)=\int_{\Omega} e^{ixt}\, d\mu(x)
+\]
+as a function of $t$. By using Euler's formula, we can write $e^{ixt}$ as $\cos(xt)+i\sin(xt)$ and compute the complex integral as
+\[
+\phi(t)=\int_{\Omega} e^{ixt}\, d\mu(x)
+\triangleq \int_{0}^{1} \cos(xt)\, dx + i\int_{0}^{1} \sin(xt)\, dx.
+\]
+
+When $t$ is nonzero, it is equal to
+\[
+\left[\frac{\sin(xt)}{t}\right]_{0}^{1}
++i\left[-\frac{\cos(xt)}{t}\right]_{0}^{1}
+=\frac{\sin(t)-i\cos(t)+i}{t}
+=\frac{i-ie^{it}}{t}.
+\]
+
+The next theorem provides a useful criterion for determining whether a measurable function is integrable.
+
+\begin{thmbox}{6.6}
+An $\bar{\mathbb{R}}$-valued or $\mathbb{C}$-valued measurable function $X$ is integrable if and only if $\int |X|\, d\mu$ is finite.
+\end{thmbox}
+
+\textit{Proof} We first consider an $\bar{\mathbb{R}}$-valued function $X$. If $X$ is integrable, then by definition $\int X^+$ and $\int X^-$ are finite. This implies $\int |X|=\int X^+ + \int X^-$ is finite (by the linear property of Lebesgue integral for nonnegative function). Conversely, suppose $\int |X|$ is finite. Since $X^+ \le |X|$ and $X^- \le |X|$, by the monotonic property in Theorem 6.3, both $\int X^+$ and $\int X^-$ are finite, and hence $X$ is integrable.
+
+Let $Z(\omega)=X(\omega)+iY(\omega)$ denote a complex-valued function. Suppose $Z$ is integrable, i.e., both its real and imaginary parts are integrable. Using the triangle inequality of complex numbers $|x+iy|\le |x|+|y|$ and the monotonic property of real integral, we obtain
+\[
+\int |Z| = \int |X+iY|
+\le \int |X|+|Y|
+= \int |X|+\int |Y| < \infty.
+\]
+
+Conversely, suppose $\int |Z|$ is finite. Since $|X(\omega)|\le |Z(\omega)|$ for all $\omega \in \Omega$, we obtain $\int |X|<\infty$. Similarly, we have $\int |Y|<\infty$. This proves that $Z$ is integrable. \hfill $\square$
+
+\noindent$\blacktriangleright$ \textbf{About Conditional Integrable Function in Riemann Integration} In the theory of Lebesgue integral, there is no such thing as ``conditional convergence'' or ``conditionally integrable.'' The previous theorem says that integrable function is the same as ``absolutely integrable function.'' This means that if a function is not absolutely integrable, then it is not integrable in the Lebesgue sense, regardless of any ``conditional'' convergence or integrability properties it may have. This is in contrast to the theory of Riemann integration, where a function can be conditionally convergent or integrable, even if its absolute value is not integrable. As a result, there are functions that are integrable in the Riemann sense but not in the Lebesgue sense.
+
+We now establish the linearity of Lebesgue integral in general.
+
+\begin{thmbox}{6.7}
+If $X$ and $Y$ are an $\bar{\mathbb{R}}$-valued or $\mathbb{C}$-valued integrable function and $\alpha$ is a constant, then $X+Y$ and $\alpha X$ are integrable, and
+\[
+\int (X+Y)\, d\mu = \int X\, d\mu + \int Y\, d\mu,
+\]
+\[
+\int \alpha X\, d\mu = \alpha \int X\, d\mu.
+\]
+\end{thmbox}
+
+The equalities in this theorem are interpreted as follows: If the one side is well-defined, then the other side is well-defined and the equality holds. If the one side is not defined, then the other side is also not defined. In the case of an $\bar{\mathbb{R}}$-valued function, when the one side of the equation is infinity, then the other side is also infinity.
+
+\textit{Proof} Suppose $X$ and $Y$ are measurable functions with values in $\bar{\mathbb{R}}$. For all $\omega \in \Omega$, we have $|X(\omega)+Y(\omega)|\le |X(\omega)|+|Y(\omega)|$. Therefore, by the monotonic property,
+\[
+\int |X+Y| \le \int |X|+\int |Y|.
+\]
+
+Since $\int |X|$ and $\int |Y|$ are both finite by the assumption and Theorem 6.6, the integral $\int |X+Y|$ is finite.
+
+For any real number $\alpha$, the function $\alpha X$ is integrable because
+\[
+\int |\alpha X| = \int |\alpha||X| = |\alpha|\int |X| < \infty.
+\]
+
+The proof integrability in the complex case is the similar. We use the triangle inequality $|z_1+z_2|\le |z_1|+|z_2|$ for complex numbers $z_1$ and $z_2$, and the equality $|\alpha z|=|\alpha||z|$, which holds for constants $\alpha$ and complex numbers $z$.
+
+For linearity, we first consider the case of $\bar{\mathbb{R}}$-valued measurable functions $X$ and $Y$. Denote the positive and negative parts of $X$ by $X^+$ and $X^-$ and the positive and negative parts of $Y$ by $Y^+$ and $Y^-$. We write $X+Y$ in two ways:
+\[
+X+Y=(X+Y)^+-(X+Y)^-
+\]
+\[
+X+Y=X^+-X^-+Y^+-Y^-.
+\]
+
+Eliminating $X+Y$ from the above two identities, we obtain
+\[
+(X+Y)^+ + X^- + Y^- = (X+Y)^- + X^+ + Y^+.
+\]
+
+Both the left- and right-hand sides are sum of nonnegative functions and hence are also nonnegative. By the linearity of Lebesgue integral for nonnegative functions,
+\[
+\int (X+Y)^+ + \int X^- + \int Y^- = \int (X+Y)^- + \int X^+ + \int Y^+
+\]
+\[
+\int (X+Y)^+ - \int (X+Y)^- = \int X^+ - \int X^- + \int Y^+ - \int Y^-
+\]
+\[
+\int (X+Y) = \int X+\int Y.
+\]
+
+When $\alpha$ is a positive real number, $(\alpha X)^+ = \alpha(X)^+$ and $(\alpha X)^- = \alpha(X)^-$. Thus
+\[
+\int \alpha X \triangleq \int (\alpha X)^+ - \int (\alpha X)^-
+= \alpha\left(\int X^+ - \int X^-\right)
+= \alpha \int X.
+\]
+
+When $\alpha=-1$, from $(-X)^+ = X^-$ and $(-X)^- = X^+$, we can deduce
+\[
+\int (-X)\, d\mu \triangleq \int (-X)^+ - \int (-X)^-
+= \int X^- - \int X^+
+= -\int X.
+\]
+
+This finish the proof of the linear property for $\bar{\mathbb{R}}$-valued functions.
+
+Now suppose that $X$ and $Y$ are complex-valued measurable functions. The first equality $\int X+Y = \int X+\int Y$ can be proved similarly as in the real case. We only need to prove that second part, which involves complex multiplication.
+
+Let $\alpha = a+bi$ and $X(\omega)=U(\omega)+iV(\omega)$, where $a$ and $b$ are real numbers and $U(\omega)$ and $V(\omega)$ are real-valued random variables. Write
+\[
+\alpha X(\omega)=(a+bi)(U(\omega)+iV(\omega))
+\]
+\[
+= (aU(\omega)-bV(\omega)) + i(aV(\omega)+bU(\omega)).
+\]
+
+The above equality holds for all $\omega \in \Omega$. Take Lebesgue integral on both sides, we obtain
+\[
+\int \alpha X \triangleq \int (aU-bV) + i\int (aV+bU)
+\]
+\[
+= a\int U - b\int V + i\left(a\int V + b\int U\right)
+\]
+\[
+= (a+ib)\left(\int U+i\int V\right)=\alpha \int X.
+\]
+
+This completes the proof of Theorem 6.7. \hfill $\square$
+
+We have finished the definition of Lebesgue integral for real-valued and complex-valued and proved the linear and monotonic properties. We will use the Lebesgue integral to define the notion of mathematical expectation of random variable in the next section.
