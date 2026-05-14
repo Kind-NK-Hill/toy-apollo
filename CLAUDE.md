@@ -11,14 +11,14 @@ Do:
 - Keep `run_chapter.py` and current CLI mode names stable.
 - Treat active code and `.claude/rules/*` as truth over archive notes.
 - Use phase2 modes for prompt-pack formalization, build gating, and operator review.
-- Use `soft-pack` / `soft-apply` for problem soft-import selection.
-- Use the phase3 post-harvest repair track (`repair-pack` / `repair-verify`) for local repair after Aristotle harvest.
+- Use only `soft-pack` / `soft-apply` for Phase 3 problem soft-import selection.
+- Treat legacy provider/offload/harvest notes as history, not active workflow.
 - Keep runtime artifacts and secrets out of source-control changes unless the task explicitly requires them.
 
 Do not:
 
 - Route phase work from memory without checking `10-phase-runtime.md`.
-- Describe `soft-apply` as Aristotle execution, execution-batch generation, or Lean verification.
-- Treat the phase3 post-harvest repair track as the generic follow-up for all harvest failures.
+- Describe `soft-apply` as external provider execution, execution-batch generation, or Lean verification.
+- Use removed Phase 3 mode names such as `plan-batches`, `offload-batch`, `repair-pack`, or `repair-verify`.
 - Treat phase4 as an active automated path while the CLI branch is disabled.
 - Skip folder-level `AGENTS.md` when working inside `src/`, `docs/`, `plans/`, `tests/`, or `tools/`.

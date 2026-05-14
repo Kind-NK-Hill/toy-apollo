@@ -105,14 +105,9 @@ python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks ex_4_4_3 --re
 
 - `docs/phase2_prompt_pack_workflow.md`
 
-## Phase 3/4 Legacy Closure Scripts
+## Phase 3/4 边界
 
-```powershell
-.\tools\run_phase3_phase4.ps1
-.\tools\regression_unsolved_closure.ps1
-```
-
-这些脚本涉及 legacy/manual closure 操作；当前 Phase 4 自动分支 disabled/no-op，不应作为默认路径执行。历史运行手册见：`docs/unsolved_closure_runbook.md`
+Phase 3 当前只保留 Problem soft dependency selection：`soft-pack` / `soft-apply`。旧 provider offload、post-harvest repair、Phase 4 closure 脚本和 runbook 不再作为 tracked operator docs 保留；如需恢复，必须先恢复对应 CLI 代码，再补回文档。
 
 ## 仓库边界
 

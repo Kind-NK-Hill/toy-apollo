@@ -1,8 +1,8 @@
 # Docs Boundary
 
-This directory mixes active operator runbooks with historical audit notes. Treat the categories below as the default reading order.
+This directory is for current operator runbooks and stable policy notes. Historical migration, reorg, provider-offload, and one-off handoff notes were removed from the tracked docs; use git history if you need to audit them.
 
-## Active Runtime Docs
+## Current Runtime Docs
 
 Use these when operating or modifying the current pipeline:
 
@@ -10,30 +10,21 @@ Use these when operating or modifying the current pipeline:
 - `phase2_candidate_guidelines.md`
 - `phase2_review_loop_protocol.md`
 - `phase3_soft_dependency_workflow.md`
+
+## Policy Notes
+
+Use these when changing dependency modeling or source-plan boundaries:
+
+- `chapter1_2_cross_chapter_dependency.md`
 - `dependency_decision_trail.md`
 - `interface_dependency_policy.md`
 
-## Historical Or Inspection Docs
+## Runtime Boundary
 
-These are useful for understanding why the repo looks this way, but they are not runtime contracts:
-
-- `unsolved_closure_runbook.md` (legacy closure guidance; current Phase 4 automation is disabled)
-- `phase3_execution_batch_workflow.md` (legacy provider workflow; not active Phase 3 runtime)
-- `phase3_post_harvest_workflow.md` (legacy provider workflow; not active Phase 3 runtime)
-- `phase3_post_harvest_guidelines.md` (legacy provider guidance; not active Phase 3 runtime)
-- `phase2_inventory.md`
-- `phase3_softdep_review.md`
-- `chapter1_2_cross_chapter_dependency.md`
-- `workspaces.md`
-
-## Archive And Migration Notes
-
-These should not be searched as active surface unless you are auditing history:
-
-- `reorg.md`
-- `reorg/`
-- `superpowers/`
-- `2026-04-20-old-*.md`
+- Current Phase 3 is only Problem soft dependency selection: `soft-pack` and `soft-apply`.
+- Phase 3 does not run an external provider, create execution batches, repair harvested output, or verify Lean.
+- Phase 4 is disabled/no-op in the current CLI.
+- Removed legacy mode names such as `plan-batches`, `offload-batch`, `repair-pack`, and `repair-verify` are not active contracts.
 
 ## Search Boundary
 

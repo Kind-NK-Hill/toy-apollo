@@ -2,19 +2,19 @@
 
 ## Purpose
 
-This document is the operator runbook for the first stage of `phase3`: batch soft-dependency selection on `Problem` tasks.
+This document is the operator runbook for the current `phase3` surface: batch soft-dependency selection on `Problem` tasks.
 
 The goal is to select chapter-local `def/thm` materials once, persist them to the ledger, and then reuse the same results in:
 
 - `phase 2` prompt-pack problem formalization
-- future `phase 3` Aristotle packaging
+- later operator work that explicitly consumes confirmed soft imports
 
 This is an operator-driven workflow. The code only prepares md/json materials; the actual `soft_imports_selection.json` is intended to be produced by the local Codex/GPT-5.4 operator workflow.
 
 ## Core Rule
 
 `soft imports` are externally selected, but once selected they are mandatory imports.
-Phase 3 offload does not infer missing soft imports automatically. A `Problem` task must have `soft_imports_confirmed_at`, even when the confirmed selection is an empty list.
+The current Phase 3 CLI does not include offload batching or repair modes. A `Problem` task must have `soft_imports_confirmed_at`, even when the confirmed selection is an empty list.
 Having `candidate_snapshot.soft_imports` alone is not enough; confirmation is explicit.
 
 Canonical storage remains:
@@ -33,7 +33,7 @@ Rules:
 
 - only `Problem` task ids are allowed
 - a batch may contain multiple problems
-- `soft-pack` does not call Aristotle
+- `soft-pack` does not call an external provider
 - `soft-apply` does not offload anything
 
 ## Directory Layout
@@ -65,7 +65,7 @@ python .\run_chapter.py --phase 3 --phase3-mode soft-pack --tasks prob_4_2,prob_
 Expected result:
 
 - the batch directory appears under `phase3_softdep_packs/`
-- no Aristotle call is made
+- no external provider call is made
 - no ledger soft imports are changed yet
 
 ### Step 2: Read the pack
@@ -118,15 +118,16 @@ After `soft-apply`, inspect:
 - `project_ledger.json`
 - `phase3_softdep_packs/<batch_id>/apply_report.md`
 
-The next step is not immediate Aristotle offload. The correct order is:
+The next step is not Phase 3 provider offload. The current local order is:
 
 1. `soft-pack`
 2. operator/Codex writes the selection JSON
 3. `soft-apply`
-4. `plan-batches`
-5. `offload-batch`
+4. Phase 2 `pack`
+5. Phase 2 `build-check`
+6. Phase 2 `review-now`
 
-If you are also doing local prompt-pack formalization for a `Problem`, the next local step is:
+The next local command is:
 
 ```powershell
 python .\run_chapter.py --phase 2 --phase2-mode pack --tasks <problem_id>
@@ -135,7 +136,7 @@ python .\run_chapter.py --phase 2 --phase2-mode pack --tasks <problem_id>
 ## What This Workflow Does Not Do
 
 - it does not change the canonical storage location
-- it does not run Aristotle
+- it does not run an external provider
 - it does not verify Lean code
 - it does not formalize the problem itself
 - it does not generate execution batches

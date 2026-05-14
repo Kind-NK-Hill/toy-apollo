@@ -41,7 +41,7 @@ Each line is independent and idempotent by `decision_id`.
 - `hard`: selected as a true task dependency.
 - `soft`: selected as a problem-support import.
 - `bridge`: selected to connect a textbook interface to a Mathlib interface.
-- `materialized`: included in an Aristotle dependency manifest.
+- `materialized`: legacy audit kind for old external offload manifests; not emitted by the current CLI.
 - `violation`: observed as an undeclared candidate import.
 - `legacy_inferred`: inferred from old artifacts without changing them.
 
@@ -51,7 +51,7 @@ Each line is independent and idempotent by `decision_id`.
 - `explicit_text_reference`: injected from text such as `Theorem 7.12`.
 - `soft_minimal_sufficient`: chosen by Phase 3 soft dependency selection.
 - `interface_bridge`: needed to connect textbook and Mathlib formulations.
-- `final_union_materialized`: emitted into an offload dependency manifest.
+- `final_union_materialized`: legacy criterion for an old offload dependency manifest.
 - `undeclared_candidate_import`: candidate imported something outside the
   declared hard/soft union.
 - `legacy_inferred_from_output`: read-only inference from archived output.
@@ -67,7 +67,7 @@ Each line is independent and idempotent by `decision_id`.
 - Phase 2 consumes the final import union and writes
   `dependency_decision_context.*` into each prompt pack.
 - Phase 2 `build-check` records undeclared local imports as violations.
-- Phase 3 offload records the final union that was materialized for Aristotle.
+- The current CLI does not materialize external offload manifests. Old `materialized` records, if present, are legacy audit data.
 
 ## History Policy
 

@@ -105,7 +105,7 @@ def _build_operator_prompt(batch_id: str, chapter: int, problem_ids: list[str]) 
             f"# Soft Dependency Selection Prompt for {batch_id}",
             "",
             f"You are selecting chapter-level soft imports for chapter {chapter} problem tasks.",
-            "The result will be consumed by the local operator/Codex workflow before any optional external offload batching.",
+            "The result will be consumed by the local operator/Codex workflow before Phase 2 prompt-pack formalization.",
             "",
             "Rules:",
             "1. Output only JSON matching `selection_schema.json`.",
@@ -220,7 +220,7 @@ def _build_selection_hints(tasks: list[dict[str, Any]], materials: list[dict[str
         "Selection target:",
         "- choose a minimal but sufficient import set",
         "- prefer direct closure/measurability theorems for proof-oriented problems",
-        "- do not optimize for the absolute fewest imports if that would force an external provider to re-derive obvious chapter results",
+        "- do not optimize for the absolute fewest imports if that would force later local formalization to re-derive obvious chapter results",
         "",
     ]
     for task in tasks:
