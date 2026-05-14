@@ -78,7 +78,10 @@ If this file conflicts with older notes, trust current runtime code and the rule
 - Needing a substantial semantic rewrite, wanting to summarize current blockers, or waiting for the current Codex agent to perform reviewer/repair work are not stop reasons.
 - `nonprogress` is a semantic stop reason, not a generic build stop.
 - Only stop the same-session loop on `completed`, `freshness_error`, `hard_failure`, `nonprogress`, `max_rounds`, `build_budget_exhausted`, or explicit user interruption.
+- For proof-bearing tasks, inspect the original `inputs/<source>.tex` proof or solution span before authoring, reviewing, or declaring a blocker; prompt-pack mirrors are not a substitute for the source file.
+- Treat `hard_failure` as a last-resort semantic stop: it requires source proof-spine decomposition, resource search/attempt evidence for the blocking obligation, and a task-local hard-failure note. Proof length or missing one-shot library theorem is not enough.
 - When the user asks to review an existing chapter, section, or ordered task set, interpret that as a same-session self-driving existing-output batch review unless the user explicitly asks for prepare-only behavior.
+- In chapter-wide or task-set Phase 2 goals, a hard-stopped task makes its hard-dependency downstream tasks dependency-failed for that goal; mark/skip those blocked tasks and continue with independent tasks instead of stopping the whole goal.
 - In that existing-output batch mode:
   - use `review_subject=existing`, not `current`
   - process tasks in deterministic `block_id` order
