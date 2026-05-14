@@ -1,0 +1,146 @@
+\subsection*{2.2 Algebra of Events}
+
+The algebra of events is akin to a language, with a larger algebra representing a more extensive vocabulary. A larger algebra provides more events to reason about the outcomes of a random experiment, similar to how a richer language provides more means to communicate ideas. We use the following example to motivate the notion of an algebra of events.
+
+\textbf{Example 2.2.1 (Information Embedded in the Partition of Sample Space)} \\
+Alice generates two random bits of information. Whether the bits are uniformly distributed or statistically independent is not relevant in this example. We are interested in the possible events that Alice can observe. Naturally, Alice can take the sample space
+\[
+\Omega=\{00,01,10,11\}
+\]
+as the set of all outcomes. Any subset of $\Omega$ is a valid event that Alice can observe.
+
+Alice has two friends Bob and Cindy. Bob wants to determine the number of ones that appear among the two random bits, and Cindy wants to know whether the two bits are the same. Upon observing the generated bits, Alice will inform Bob of an integer between 0 and 2. Bob will know that one of the following three events has occurred:
+\[
+\{00\}, \{01,10\}, \{11\}.
+\]
+
+Alice will inform Cindy that one of the events
+\[
+\{00,11\}, \{10,01\}
+\]
+occurred. In fact, Alice does not need to inform Cindy herself. Alice may ask Bob to tell Cindy whether the two bits are the same, as Bob has enough information to do so. Mathematically speaking, this is because Cindy's partition of the sample space is coarser than Bob's partition, meaning that Bob has more detailed information about the possible outcomes of the random bits.
+
+This example illustrates that in some cases, we may only be interested in certain subsets of the sample space. In order to work with these subsets in a rigorous mathematical way, we need to define a collection of events that is closed under the usual set operations. This leads us to the notion of an algebra of events.
+
+\begin{defbox}{2.2}
+A collection of subsets $\mathcal{F}$ of a sample space $\Omega$ is called an \textit{algebra} or a \textit{field} if it satisfies the following axioms:
+\begin{enumerate}[label=\arabic*.]
+    \item The entire sample space $\Omega$ is an element of the collection: $\Omega\in \mathcal{F}$.
+    \item The collection is closed under finite unions: $A\in \mathcal{F}$ and $B\in \mathcal{F}$ imply $A\cup B\in \mathcal{F}$.
+    \item The collection is closed under complement: If $A\in \mathcal{F}$, then its complement $A^c$ (taken relative to $\Omega$) is in $\mathcal{F}$.
+\end{enumerate}
+
+A set in $\mathcal{F}$ is called an \textit{event}.
+\end{defbox}
+
+In this book, we will use the notation ``algebra'' and ``field'' interchangeably.
+
+Using de Morgan's law, we can deduce that an algebra is closed under taking intersections as well as unions. In fact, we can perform finitely many set operations to the subsets of an algebra, and the resulting set will be an event in the algebra.
+
+A trivial example of an algebra is $\mathcal{F}=\{\emptyset,\Omega\}$. In this algebra, the only subsets that are considered events are the empty set and the entire sample space $\Omega$. At the other end of the spectrum, we have the power set $\mathcal{F}=\mathcal{P}(\Omega)$, which is the set of all possible subsets of $\Omega$. In this case, every subset of $\Omega$ is considered an event.
+
+In Example 2.2.1, Alice has full information, so she can consider the power set $\mathcal{F}_A=\mathcal{P}(\Omega)$ as the algebra of events. For Bob, the algebra of events is given by
+\[
+\mathcal{F}_B=
+\{\emptyset,\{00\},\{11\},\{01,10\},\{00,11\},\{00,01,10\},\{01,10,11\},\Omega\}.
+\]
+
+This algebra includes all possible events that Bob can observe, based on the information that Alice has provided him. We can see that $\mathcal{F}_A \supset \mathcal{F}_B$, which makes sense since Alice has more information than Bob.
+
+For Cindy, the algebra of events is given by
+\[
+\mathcal{F}_C=\{\emptyset,\{10,01\},\{00,11\},\Omega\}.
+\]
+
+This algebra includes all possible events that Cindy can observe. We can see that $\mathcal{F}_A \supset \mathcal{F}_B \supset \mathcal{F}_C$, as Bob has more detailed information than Cindy.
+
+In practice, we may encounter situations where we have infinitely many events, and we want to compute the probability that all of them occur simultaneously. In probability theory, this type of operation is allowed as long as the events involved are at most countable.
+
+\begin{defbox}{2.3}
+A collection of subsets $\mathcal{F}$ of a sample space $\Omega$ is called a $\sigma$-\textit{algebra} or a $\sigma$-\textit{field} if it satisfies the following axioms:
+\begin{enumerate}[label=\arabic*.]
+    \item $\Omega\in \mathcal{F}$.
+    \item If $(A_i)_{i=1}^{\infty}$ is a sequence of sets in $\mathcal{F}$, then $\cup_{i=1}^{\infty} A_i \in \mathcal{F}$.
+    \item If $A\in \mathcal{F}$, then $A^c\in \mathcal{F}$.
+\end{enumerate}
+
+A set in $\mathcal{F}$ is called $\mathcal{F}$-\textit{measurable}, or simply \textit{measurable} if $\mathcal{F}$ is understood from the context. We say that $(\Omega,\mathcal{F})$ is a \textit{measurable space} if $\mathcal{F}$ is a $\sigma$-algebra of $\Omega$.
+
+If $\mathcal{F}$ is a $\sigma$-field and $\mathcal{G}$ is a sub-collection of $\mathcal{F}$, we say that $\mathcal{G}$ is a \textit{sub-$\sigma$-field} or a \textit{sub-$\sigma$-algebra} of $\mathcal{F}$ if $\mathcal{G}$ is also a $\sigma$-field.
+\end{defbox}
+
+\textbf{Set Notation} \\
+Let $\mathcal{I}$ be an index set, which may be uncountably infinite, and $A_i$ be a subset of a universal set $U$, for $i\in \mathcal{I}$. We denote the union of all $A_i$ over all $i\in \mathcal{I}$ by
+\[
+\bigcup_{i\in \mathcal{I}} A_i
+\triangleq
+\{x\in U : x\in A_i \text{ for some } i\in \mathcal{I}\},
+\]
+which is the set of all $x\in U$ such that $x$ belongs to $A_i$ for some index $i\in \mathcal{I}$. If $\mathcal{I}$ is countable, say $\mathcal{I}=\mathbb{N}$, we may use the notation
+\[
+\bigcup_{i=1}^{\infty} A_i
+\triangleq
+\{x\in U : x\in A_i \text{ for some } i\in \mathbb{N}\}
+\]
+to represent the union of $A_i$ over $i\in \mathbb{N}$. Similarly, the intersection of infinitely many sets can be defined using analogous notation.
+
+It is important to note that these are mere notational conventions, and no limit process is involved in taking the union or intersection of infinitely many sets. In the special case where the sets $A_i$ are mutually disjoint, i.e., $A_i\cap A_j=\emptyset$ whenever $i\neq j$, we may use the notation $\biguplus_{i=1}^{\infty} A_i$ to emphasize that the union is disjoint.
+
+It is clear that a $\sigma$-algebra is always an algebra. When the sample space $\Omega$ is finite, a $\sigma$-algebra is the same as an algebra. However, when the sample space $\Omega$ is infinite, it is possible to construct $\sigma$-algebra that is not an algebra.
+
+\textbf{Example 2.2.2 (Co-finite Algebra)} \\
+Consider the set $\Omega=\mathbb{N}$, and let $\mathcal{G}$ be the collection of subsets of $\mathbb{N}$ that are finite or co-finite, i.e.,
+\[
+A\in \mathcal{G}
+\quad \text{if and only if} \quad
+|A|<\infty \ \text{or}\ |A^c|<\infty.
+\]
+For example, $\{1,2,3\}$ is in $\mathcal{G}$ because it is finite, and $\mathbb{N}\setminus \{2,3,5,7\}$ is in $\mathcal{G}$ because its complement is finite. We can verify that $\mathcal{G}$ is an algebra. However, $\mathcal{G}$ is not a $\sigma$-algebra because the sequence of events $\{2\},\{4\},\{6\},\{8\},\{10\},\dots$ is in $\mathcal{G}$, but their union is not.
+
+There are two useful set constructions called liminf and limsup.
+
+\begin{defbox}{2.4}
+Let $E_1,E_2,\dots$ be an arbitrary sequence of subsets in a set $\Omega$. The \textit{limit inferior} and \textit{limit superior} of $(E_i)_{i\ge 1}$ are defined, respectively, as
+\[
+\liminf_{i\to\infty} E_i
+\triangleq
+\bigcup_{j=1}^{\infty}\bigcap_{k\ge j} E_k,
+\qquad
+\limsup_{i\to\infty} E_i
+\triangleq
+\bigcap_{j=1}^{\infty}\bigcup_{k\ge j} E_k.
+\]
+
+In general, we have the following set inclusion:
+\[
+\liminf_{i\to\infty} E_i \subseteq \limsup_{i\to\infty} E_i.
+\]
+
+If equality holds, we say that the \textit{limit} of $(E_i)_{i\ge 1}$ exists and is defined as $\liminf_i E_i$ or $\limsup_i E_i$.
+\end{defbox}
+
+We remark that the liminf and limsup of a sequence of sets are always well-defined as set-theoretic constructions. However, if the sequence of sets $(E_i)_{i\ge 1}$ is $\mathcal{F}$-measurable, then the limit inferior and limit superior of this sequence are also $\mathcal{F}$-measurable. This is because their definitions rely only on the union and intersection of countably many events, which are themselves $\mathcal{F}$-measurable.
+
+The following theorem provides an alternate characterization of liminf and limsup.
+
+\begin{thmbox}{2.1 (Definition 2.4)}
+Let $(E_i)_{i\ge 1}$ be a sequence of subsets in a set $\Omega$. We have
+\[
+\liminf_{i\to\infty} E_i
+=
+\{\omega\in \Omega : \omega \text{ belongs to } E_i \text{ for all but finitely many } i\},
+\]
+\[
+\limsup_{i\to\infty} E_i
+=
+\{\omega\in \Omega : \omega \text{ belongs to } E_i \text{ infinitely often}\}.
+\]
+\end{thmbox}
+
+\textit{Proof} We note that the condition of an outcome $\omega$ being in $E_i$ for all but finite many $i$ is equivalent to the statement that $\omega$ belongs to $E_i$ eventually for all $i\ge N$, for some integer $N$. Using the definition of liminf, we see that an outcome $\omega$ belongs to $\cup_{j\ge 1}\cap_{k\ge j} E_k$ if and only if it belongs to $\cap_{k\ge j} E_k$ for some $j$. This is the same as saying that $\omega$ belongs to $E_k$ eventually for all $k\ge j$.
+
+To see that an element in limsup$_i\, E_i$ occurs in $E_i$ infinitely often, we define $F_j\triangleq \cup_{k\ge j} E_k$ and write limsup$_{i\to\infty} E_i \triangleq \cap_{j=1}^{\infty} F_j$.
+
+Consider an element $\omega$ in the limsup of $E_i$'s. It must be in $F_j$ for all $j$. In particular, it must be in $F_1$. Since $F_1$ is the union of all $E_k$'s, we can find an index $k_1$ such that $\omega\in E_{k_1}$. Next, we use the fact that $\omega$ is in $F_{k_1+1}$. Since $F_{k_1+1}$ is the union of all $E_i$'s for $i\ge k_1+1$, we can find an index $k_2>k_1$ such that $\omega\in E_{k_2}$. This process can be repeated indefinitely. Therefore, $\omega$ belongs to $E_{k_1},E_{k_2},E_{k_3},\dots$, for some strictly increasing indices $k_1<k_2<k_3<\cdots$. This shows that $\omega$ occurs in $E_i$ infinitely often, as desired.
+
+Conversely, if $\omega$ belongs to $E_i$ for infinitely many indices $i$, then $\omega$ belongs to $F_j$ for all indices $j$. This is because $F_j$ contains all $E_i$'s for $i\ge j$, and since $\omega$ belongs to infinitely many $E_i$'s, it must belong to $F_j$ for all $j$. Therefore, $\omega$ is in $\cap_{j\ge 1} F_j$, which is the limsup of $E_i$'s. \hfill $\square$

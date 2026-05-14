@@ -1,0 +1,105 @@
+[
+    {
+        "block_id": "rem_2_3_measure_functions_intro",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "\\subsection*{2.3 Measure Functions}\n\nWe will show in the last section of this chapter that it can lead to logical contradictions if we attempt to define a probability measure for all subsets in a sample space. To avoid this, probability theory adopts the solution of defining the probability only for some selected subsets.\n\nThe $\\sigma$-algebra is significant because it serves as the domain of a measure function in probability theory. The measure function is a set function that takes a set as input and returns a nonnegative real number as output, satisfying some axioms.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "42_chap2_measure_functions"
+    },
+    {
+        "block_id": "def_2_5",
+        "type": "Definition",
+        "title": "Definition 2.5 (Measure)",
+        "content": "\\begin{defbox}{2.5}\nLet $\\mathcal{F}$ be a $\\sigma$-field on a sample space $\\Omega$. A set function $m$ from $\\mathcal{F}$ to $[0,\\infty]$ is called a \\textit{measure} if it satisfies the following properties:\n\\begin{enumerate}[label=\\arabic*.]\n    \\item $m(\\emptyset)=0$.\n    \\item For any sequence of mutually disjoint $A_i\\in \\mathcal{F}$, for $i=1,2,3,\\dots$, we have\n    \\[\n    m\\left(\\biguplus_{i=1}^{\\infty} A_i\\right)\n    =\n    \\sum_{i=1}^{\\infty} m(A_i).\n    \\]\n\\end{enumerate}\n\nThis property is known as the $\\sigma$-\\textit{additive} property.\n\nA measure $m$ is said to be \\textit{finite} if $m(\\Omega)$ is finite. If $m(\\Omega)=1$, then $m$ is called a \\textit{probability measure}.\n\nA \\textit{measure space} is a triple $(\\Omega,\\mathcal{F},m)$ where $\\mathcal{F}$ is a $\\sigma$-field on $\\Omega$ and $m$ is a measure on $\\mathcal{F}$. A \\textit{probability space} is a measure space $(\\Omega,\\mathcal{F},m)$ when $\\mathcal{F}$ is a $\\sigma$-field on $\\Omega$ and $m$ is a probability measure.\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "42_chap2_measure_functions"
+    },
+    {
+        "block_id": "ex_2_3_1",
+        "type": "Example_Proof",
+        "title": "Example 2.3.1 (Counting Measure)",
+        "content": "\\textbf{Example 2.3.1 (Counting Measure)} \\\\\nLet $\\Omega$ be any countable set, and let the power set of $\\Omega$, $\\mathcal{P}(\\Omega)$, be the $\\sigma$-field $\\mathcal{F}$. Define the \\textit{counting measure} $\\mu$ of a set $A\\subseteq \\Omega$ to be the cardinality of $A$. Then $(\\Omega,\\mathcal{P}(\\Omega),\\mu)$ is a measure space.",
+        "dependencies": [
+            "def_2_5"
+        ],
+        "is_renowned": false,
+        "source_plan": "42_chap2_measure_functions"
+    },
+    {
+        "block_id": "ex_2_3_2",
+        "type": "Example_Proof",
+        "title": "Example 2.3.2 (Discrete Probability Space)",
+        "content": "\\textbf{Example 2.3.2 (Discrete Probability Space)} \\\\\nLet $\\Omega=\\mathbb{N}$. Suppose $p_1,p_2,p_3,\\dots$ is a sequence of nonnegative real numbers such that $\\sum_{i=1}^{\\infty} p_i=1$. For any $E\\subseteq \\Omega$, let $P(E)=\\sum_{i\\in E} p_i$. Then $(\\Omega,\\mathcal{P}(\\Omega),P)$ is a probability space.",
+        "dependencies": [
+            "def_2_5"
+        ],
+        "is_renowned": false,
+        "source_plan": "42_chap2_measure_functions"
+    },
+    {
+        "block_id": "rem_2_3_transition_1",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "The first two properties below are elementary, and they hold more generally for any pre-measure (which will be defined in the next chapter).",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "42_chap2_measure_functions"
+    },
+    {
+        "block_id": "thm_2_2",
+        "type": "Theorem_with_Proof",
+        "title": "Theorem 2.2 (Monotonicity)",
+        "content": "\\begin{thmbox}{2.2 (Monotonicity)}\nLet $(\\Omega,\\mathcal{F},\\mu)$ be a measure space, and suppose $A$ and $B$ are $\\mathcal{F}$-measurable sets such that $A\\subseteq B$. Then $\\mu(A)\\le \\mu(B)$.\n\\end{thmbox}\n\n\\textit{Proof} Since $A$ and $B\\setminus A$ are disjoint and $B=A\\cup (B\\setminus A)$, we have\n\\[\n\\mu(B)=\\mu(A)+\\mu(B\\setminus A).\n\\]\nSince $\\mu(B\\setminus A)$ is nonnegative, it follows that $\\mu(B)\\ge \\mu(A)$. \\hfill $\\square$",
+        "dependencies": [
+            "def_2_5"
+        ],
+        "is_renowned": false,
+        "source_plan": "42_chap2_measure_functions"
+    },
+    {
+        "block_id": "thm_2_3",
+        "type": "Theorem_with_Proof",
+        "title": "Theorem 2.3 (Finite Subadditivity)",
+        "content": "\\begin{thmbox}{2.3 (Finite Subadditivity)}\nLet $(\\Omega,\\mathcal{F},\\mu)$ be a measure space, and suppose $A$ and $B$ are $\\mathcal{F}$-measurable sets. Then\n\\[\n\\mu(A\\cup B)\\le \\mu(A)+\\mu(B).\n\\]\n\\end{thmbox}\n\n\\textit{Proof} $\\mu(A\\cup B)=\\mu(A \\uplus (B\\setminus A))=\\mu(A)+\\mu(B\\setminus A)\\le \\mu(A)+\\mu(B)$. \\hfill $\\square$\n\nThe next general property is about an increasing and decreasing sequence of events.",
+        "dependencies": [
+            "def_2_5"
+        ],
+        "is_renowned": false,
+        "source_plan": "42_chap2_measure_functions"
+    },
+    {
+        "block_id": "def_2_6",
+        "type": "Definition",
+        "title": "Definition 2.6 (Increasing and Decreasing Sequences of Sets)",
+        "content": "\\begin{defbox}{2.6}\nA sequence of sets $A_i$, for $i=1,2,3,\\dots$, is said to be \\textit{increasing} if $A_1\\subseteq A_2\\subseteq A_3\\subseteq \\cdots$, or \\textit{decreasing} if $A_1\\supseteq A_2\\supseteq A_3\\supseteq \\cdots$.\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "42_chap2_measure_functions"
+    },
+    {
+        "block_id": "thm_2_4",
+        "type": "Theorem_with_Proof",
+        "title": "Theorem 2.4 (Lower Semi-Continuity)",
+        "content": "\\begin{thmbox}{2.4 (Lower Semi-Continuity)}\nSuppose $A_1\\subseteq A_2\\subseteq A_3\\subseteq \\cdots$ is a sequence of increasing sets in $\\mathcal{F}$ and $(\\Omega,\\mathcal{F},\\mu)$ is a measure space. Then\n\\[\n\\lim_{k\\to\\infty} \\mu(A_k)=\\mu\\left(\\bigcup_{i=1}^{\\infty} A_i\\right).\n\\]\n\\end{thmbox}\n\n\\textit{Proof} Let $B_1=A_1$ and $B_i=A_i\\setminus A_{i-1}$ for $i\\ge 2$. The sets $B_i$'s are mutually disjoint by construction. Moreover, we have $\\biguplus_{i=1}^{\\infty} B_i=\\cup_{i=1}^{\\infty} A_i$. This gives\n\\[\n\\lim_{k\\to\\infty} \\mu(A_k)\n=\n\\lim_{k\\to\\infty} \\mu(B_1 \\uplus B_2 \\uplus \\cdots \\uplus B_k)\n\\]\n\\[\n=\n\\lim_{k\\to\\infty} \\sum_{i=1}^{k} \\mu(B_i)\n\\triangleq\n\\sum_{i=1}^{\\infty} \\mu(B_i)\n=\n\\mu\\left(\\biguplus_{i=1}^{\\infty} B_i\\right)\n=\n\\mu\\left(\\bigcup_{i=1}^{\\infty} A_i\\right),\n\\]\nwhere the second last equality follows from the countable additivity of measure $\\mu$. \\hfill $\\square$",
+        "dependencies": [
+            "def_2_6"
+        ],
+        "is_renowned": false,
+        "source_plan": "42_chap2_measure_functions"
+    },
+    {
+        "block_id": "thm_2_5",
+        "type": "Theorem_with_Proof",
+        "title": "Theorem 2.5 (Upper Semi-Continuity)",
+        "content": "\\begin{thmbox}{2.5 (Upper Semi-Continuity)}\nSuppose $A_1\\supseteq A_2\\supseteq A_3\\supseteq \\cdots$ is a sequence of decreasing sets in $\\mathcal{F}$, and $(\\Omega,\\mathcal{F},\\mu)$ is a measure space. Furthermore, suppose $\\mu(A_1)<\\infty$. Then\n\\[\n\\lim_{k\\to\\infty} \\mu(A_k)=\\mu\\left(\\bigcap_{i=1}^{\\infty} A_i\\right).\n\\]\n\\end{thmbox}\n\n\\textit{Proof} Apply Theorem 2.4 to the sequence of events $E_i\\triangleq A_1\\setminus A_i$, for $i=1,2,3,\\dots$, and exploit that fact that $\\mu(E_i)=\\mu(A_1)-\\mu(A_i)$. \\hfill $\\square$\n\nThe properties in Theorems 2.4 and 2.5 are also known as \\textit{continuity from below} and \\textit{continuity from above}, respectively.\n\nIt is a customary to use the notation $A_k \\nearrow A$ to signify that $(A_k)_{k=1}^{\\infty}$ is a sequence of increasing sets with union $A$. Similarly, we write $A_k \\searrow A$ for a sequence of decreasing sets with intersection $A$.",
+        "dependencies": [
+            "def_2_6",
+            "thm_2_4"
+        ],
+        "is_renowned": false,
+        "source_plan": "42_chap2_measure_functions"
+    }
+]
