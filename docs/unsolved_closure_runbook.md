@@ -14,7 +14,7 @@ $env:ARISTOTLE_API_KEY="..."
 
 ## 2. Legacy State Reconcile (Status-First + Conservative)
 
-Legacy source is read-only (`D:\Grad_Study\Practimum\toy_apollo`).
+Legacy source is read-only (`D:\Grad_Study\Practimum\Formalization\toy-apollo-archive-20260508`).
 
 Dry-run (default):
 

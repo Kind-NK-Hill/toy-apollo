@@ -24,11 +24,11 @@
   - `python run_chapter.py --phase 1 --input .\inputs\01_chap3_premeasure.tex`
 - Result: **Failed before parser execution** due missing credential:
   - `ValueError: No API key was provided. Please pass a valid API key.`
-- Environment check (sandbox + elevated): `GOOGLE_API_KEY=EMPTY`.
+- Environment check (sandbox + elevated): `DEEPSEEK_API_KEY=EMPTY`.
 - Phase 2 was not executed because Phase 1 plan generation did not complete.
 
 This file remains the fixed acceptance checklist. Re-run baseline after setting:
 
 ```powershell
-$env:GOOGLE_API_KEY = "<your-key>"
+$env:DEEPSEEK_API_KEY = "<your-key>"
 ```
