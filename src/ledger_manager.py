@@ -27,9 +27,9 @@ class TaskStatus(str, Enum):
     PACKED = "PACKED"                  # Prompt pack prepared; awaiting operator/model candidate
     VERIFYING = "VERIFYING"            # Candidate is being locally verified
     FAILED_LOCAL = "FAILED_LOCAL"      # Phase 2: Failed locally
-    OFFLOADED = "OFFLOADED"            # Phase 3: Sent to Aristotle
-    HARVESTED = "HARVESTED"            # Phase 3: Result received
-    ALIGNING = "ALIGNING"              # Phase 4: Fixing version/conflicts
+    OFFLOADED = "OFFLOADED"            # Legacy external-offload status; current Phase 3 does not emit it
+    HARVESTED = "HARVESTED"            # Legacy external-result status; current Phase 3 does not emit it
+    ALIGNING = "ALIGNING"              # Legacy Phase 4 status; current Phase 4 is disabled/no-op
     COMPLETED = "COMPLETED"            # Verified by lake build
     USER_MODIFIED = "USER_MODIFIED"    # Output hash mismatch (User manual edit)
     ORPHANED = "ORPHANED"              # Task no longer in LaTeX source
@@ -673,9 +673,11 @@ class LedgerManager:
         return result["value"]
 
     def mark_offloaded(self, task_id: str) -> None:
+        """Compatibility helper for legacy ledgers; current Phase 3 does not call this."""
         self.update_runtime_metadata(task_id, last_offload_at=self._now_iso())
 
     def mark_harvested(self, task_id: str, cloud_project_id: str | None = None) -> None:
+        """Compatibility helper for legacy ledgers; current Phase 3 does not call this."""
         updates = {"last_harvest_at": self._now_iso()}
         if cloud_project_id:
             updates["cloud_project_id"] = cloud_project_id

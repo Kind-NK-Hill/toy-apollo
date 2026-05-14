@@ -8,11 +8,6 @@
 
 src/toy_apollo/backups/
 
-docs/reorg/
-docs/superpowers/
-docs/reorg.md
-docs/2026-*-old-*.md
-
 phase0_ingestion_packs/
 phase1_prompt_packs/
 phase2_prompt_packs/
