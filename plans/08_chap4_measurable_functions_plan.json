@@ -27,7 +27,7 @@
         "source_plan": "08_chap4_measurable_functions"
     },
     {
-        "block_id": "rem_after_def_4_1",
+        "block_id": "rem_4_1_random_variables",
         "type": "Remark",
         "title": "Remarks on Measurable Functions and Random Variables",
         "content": "We note that the definition of measurable function does not depend on any probability measure, only the $\\sigma$-algebra is relevant. However, if a probability measure $\\mu$ is given, and $(\\Omega, \\mathcal{F}, \\mu)$ is a probability space, we refer to $X$ as a \\textit{random variable}.\n\nWe will use the terms ``measurable functions'' and ``random variables'' interchangeably in subsequent discussions. The definition of random variables ensures that we can assign a probability to any set in the form\n\\[\n\\{\\omega \\in \\Omega : X(\\omega) \\in B\\},\n\\]\nwhere $B$ is any Borel set. If we denote the probability measure by $P$, then the probability of the above event is written as\n\\[\nP(\\{\\omega \\in \\Omega : X(\\omega) \\in B\\}).\n\\]\nAs short-hand notation, we also write it as\n\\[\nP(X(\\omega) \\in B) \\text{ or } P(X \\in B).\n\\]\n\nIn this chapter, we will study the properties of random variables that do not depend on how we assign probability to Borel sets. That is why we use the terminology ``measurable function''. We will include the assignment of probability later, after we have studied the class of functions to which we can assign probability.\n\nIn general, we can define a random variable that takes values in a set $\\Omega'$ equipped with a $\\sigma$-field $\\mathcal{G}$. The range space $\\Omega'$ can be Euclidean space $\\mathbb{R}^d$, the set of complex numbers $\\mathbb{C}$, or the set of infinite binary sequences. When the range is $\\mathbb{R}^d$, the measurable function is called a random vector. Similarly, when the range is $\\mathbb{C}$, the measurable function is a complex-valued random variable, and when the range is the set of infinite binary sequences, it is called a random sequence.",
@@ -49,7 +49,7 @@
         "source_plan": "08_chap4_measurable_functions"
     },
     {
-        "block_id": "rem_notation_4_1",
+        "block_id": "rem_4_1_notation",
         "type": "Remark",
         "title": "Notation for Random Variables",
         "content": "\\noindent$\\blacktriangleright$ \\textbf{Notation} Although $f$ is a mapping from $\\Omega$ to $\\Omega'$, we sometime refer to $f$ as a map from the measurable space $(\\Omega, \\mathcal{F})$ to the measurable space $(\\Omega', \\mathcal{G})$, when we want to emphasize the associated $\\sigma$-fields. In probability theory, random variables are generally denoted using capital letters, such as $X$ and $Y$. Technically speaking, random variables are functions and should be written as $X(\\omega)$ and $Y(\\omega)$. However, for the sake of convenience, we often use the simplified notation $X$ and $Y$.",
@@ -82,7 +82,7 @@
         "source_plan": "08_chap4_measurable_functions"
     },
     {
-        "block_id": "rem_sigma_fields",
+        "block_id": "rem_4_1_sigma_fields",
         "type": "Remark",
         "title": "The Choice of Sigma-Fields in the Domain and Codomain",
         "content": "\\noindent$\\blacktriangleright$ \\textbf{The Choice of $\\sigma$-Fields in the Domain and Codomain} To maximize flexibility, we would like to choose the $\\sigma$-field $\\mathcal{F}$ in the domain to be as large as possible.\n\n\\begin{table}[h]\n\\centering\n\\caption{Codomains of measurable functions}\n\\label{tab:codomains}\n\\begin{tabular}{|l|l|l|}\n\\hline\n$\\Omega'$ & $\\mathcal{G}$ & \\\\\n\\hline\n$\\mathbb{R}$ & $\\mathcal{B}(\\mathbb{R})$ & Real-valued random variable \\\\\n$\\bar{\\mathbb{R}} = \\mathbb{R} \\cup \\{\\pm\\infty\\}$ & $\\mathcal{B}(\\bar{\\mathbb{R}})$ & Real-valued random variable with infinity \\\\\n$\\mathbb{R}^d$ & $\\mathcal{B}(\\mathbb{R}^d)$ & $d$-dim. random vector \\\\\n$\\mathbb{C}$ & $\\mathcal{B}(\\mathbb{C})$ & Complex-valued random variable \\\\\n$\\{0, 1\\}^\\infty$ & $\\mathcal{B}(\\{0, 1\\}^\\infty)$ & Infinite random bit stream \\\\\n$\\mathbb{R}^\\infty$ & $\\mathcal{B}(\\mathbb{R}^\\infty)$ & Infinite random sequence \\\\\n\\hline\n\\end{tabular}\n\\end{table}\n\nIf we choose $\\mathcal{F}$ to be the power set $\\mathcal{P}(\\Omega)$, then every function is measurable. On the other hand, we want $\\mathcal{G}$ to be as small as possible, but it cannot be too small. It should contain all the basic events of interests. For example, when the codomain of the measurable function is $\\mathbb{R}^n$, we usually take the Borel algebra on $\\mathbb{R}^n$ as the $\\sigma$-field in the codomain but do not necessarily consider complete measure space in the codomain.\n\nBy selecting different codomains and the associated $\\sigma$-algebra, we obtain various types of random variables. Table 4.1 lists a few useful combinations.\n\nWe note that when the codomain of a measurable function is the extended real numbers $\\bar{\\mathbb{R}} \\triangleq \\mathbb{R} \\cup \\{\\pm\\infty\\}$, the Borel algebra is generated by the ordinary open sets in $\\mathbb{R}$ and the special open sets of the form $(a, \\infty]$ and $[-\\infty, a)$. Some textbooks refer to $\\bar{\\mathbb{R}}$-valued measurable functions as \\textit{generalized random variables}.",
@@ -104,7 +104,7 @@
         "source_plan": "08_chap4_measurable_functions"
     },
     {
-        "block_id": "ex_after_thm_4_1",
+        "block_id": "ex_4_1_indicator_examples",
         "type": "Example_Proof",
         "title": "Examples of Measurable Indicator Functions",
         "content": "For example, we can consider the set $\\mathbb{Q}$ consisting of all rational numbers in the real number line. It is measurable because it is a countable union of singletons. The indicator function $\\mathbf{1}_{\\mathbb{Q}}$ is Borel measurable. However, if $C$ is the Cantor set, the indicator function $\\mathbf{1}_C$ is also Borel measurable. However, if $V$ is the Vitali set constructed in Sect. 2.5, the indicator function $\\mathbf{1}_V$ is not Borel measurable.",

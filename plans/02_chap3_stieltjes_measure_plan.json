@@ -1,6 +1,6 @@
 [
     {
-        "block_id": "remark_3_2_1",
+        "block_id": "intro_3_2",
         "type": "Remark",
         "title": "Introduction to Stieltjes Measure Function",
         "content": "\\section*{3.2 Stieltjes Measure Function}\n\nWe begin by considering a probability space $(\\mathbb{R}, \\mathcal{B}(\\mathbb{R}), P)$ defined on the real number line $\\mathbb{R}$, equipped with the Borel algebra $\\mathcal{B}(\\mathbb{R})$. The distribution function provides a convenient way to visualize a probability measure.",
@@ -18,7 +18,7 @@
         "source_plan": "02_chap3_stieltjes_measure"
     },
     {
-        "block_id": "remark_3_2_2",
+        "block_id": "rem_3_2_distribution_function_convention",
         "type": "Remark",
         "title": "Distribution Function Vs. Cumulative Distribution Function",
         "content": "\\textbf{Distribution Function Vs. Cumulative Distribution Function} The function $F(x)$ in Definition 3.4 is very similar to the cumulative distribution function (cdf) of a random variable. The main difference is that a cdf is defined for a random variable, whereas a distribution function is defined for a probability measure.\n\n\\textbf{Convention} \\\\\nSome people prefer to define the distribution function using open intervals of the form $(-\\infty, x)$, instead of the left-open-right-closed intervals $(-\\infty, x]$. In this case, the distribution function is defined as $P((-\\infty, x))$ for $x \\in \\mathbb{R}$. The choice between using one type of intervals or the other is a matter of convention.",
@@ -40,7 +40,7 @@
         "source_plan": "02_chap3_stieltjes_measure"
     },
     {
-        "block_id": "remark_3_2_3",
+        "block_id": "rem_3_2_stieltjes_motivation",
         "type": "Remark",
         "title": "Motivation for Stieltjes Measure Function",
         "content": "Motivated by the previous theorem, we define a Stieltjes measure function in general.",
@@ -60,7 +60,7 @@
         "source_plan": "02_chap3_stieltjes_measure"
     },
     {
-        "block_id": "remark_3_2_4",
+        "block_id": "rem_3_2_stieltjes_measure_properties",
         "type": "Remark",
         "title": "Properties of Stieltjes Measure Function",
         "content": "A Stieltjes measure function does not necessarily have a density function on the real number line. However, if $F$ is both continuous and differentiable, then the derivative $f(x) = F'(x)$ is a density function, and an interval $[a, b]$ in the real number line has measure $\\int_{a}^{b} f(x) \\, dx$.\n\nIn general, as we will show in the next section, a Stieltjes measure function defines a measure on the Borel algebra of $\\mathbb{R}$, called the Lebesgue--Stieltjes measure, which assigns to each left-open-right-closed interval $(a, b]$ the value $F(b) - F(a)$.",

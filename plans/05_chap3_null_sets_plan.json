@@ -1,6 +1,6 @@
 [
     {
-        "block_id": "remark_3_4_intro",
+        "block_id": "intro_3_4",
         "type": "Remark",
         "title": "Introduction to Null Sets",
         "content": "\\section*{3.4 Null Sets and Complete Measures}\n\nConsider a probability space $(\\Omega, \\mathcal{F}, P)$. If an event $E$ has probability zero, we might expect that all subsets of $E$ also have probability zero. However, in some cases, not all subsets of a set are measurable, and therefore, we cannot assign any measure to them. To address this issue, we introduce the following definitions.",
@@ -18,7 +18,7 @@
         "source_plan": "05_chap3_null_sets"
     },
     {
-        "block_id": "remark_null_sets_cardinality",
+        "block_id": "rem_3_4_null_set_cardinality",
         "type": "Remark",
         "title": "Remarks on Null Sets and Cardinality",
         "content": "The concept of a null set depends on the choice of measure $\\mu$. A set may be a null set under one measure $\\mu$ but is not a null set under another measure $\\nu$.\n\nUsing cardinality argument, one can demonstrate the existence of null sets with respect to the Lebesgue measure that are not Borel sets. Let $\\mathfrak{c}$ denote the cardinality of $\\mathbb{R}$. One can prove that there are $\\mathfrak{c}$ Borel subsets of $\\mathbb{R}$, while the Cantor set has cardinality $\\mathfrak{c}$ and $2^{\\mathfrak{c}}$ subsets. Therefore, there must be a subset of the Cantor set that is not measurable with respect to the Lebesgue measure. However, the proof of this result requires more advanced set theory and is beyond the scope of this book.\n\nTo address the issue of non-measurable null sets, we can construct a completion of the measure space.",
@@ -40,7 +40,7 @@
         "source_plan": "05_chap3_null_sets"
     },
     {
-        "block_id": "remark_completion_wlog",
+        "block_id": "rem_3_4_completion_wlog",
         "type": "Remark",
         "title": "Concluding Remark on Complete Measures",
         "content": "By enlarging the $\\sigma$-field in this way, we may assume that the measure is complete without loss of generality.",

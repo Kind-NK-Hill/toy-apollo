@@ -1,6 +1,6 @@
 [
     {
-        "block_id": "remark_3_3_intro",
+        "block_id": "intro_3_3",
         "type": "Remark",
         "title": "Introduction to Lebesgue-Stieltjes Measures",
         "content": "\\section*{3.3 Lebesgue--Stieltjes Measures}\n\nGiven a Stieltjes measure function, we can apply the measure extension theorem to construct a measure on the Borel algebra $\\mathcal{B}(\\mathbb{R})$. Intuitively, the Lebesgue--Stieltjes measure $\\mu$ assigns a length to each Borel set on the real line, where the length of an interval $(a, b]$ is given by the difference in the values of $F$ at the endpoints $a$ and $b$.",
@@ -18,7 +18,7 @@
         "source_plan": "03_chap3_lebesgue_stieltjes_thm"
     },
     {
-        "block_id": "remark_after_thm_3_3",
+        "block_id": "rem_3_3_extension_theorem_link",
         "type": "Remark",
         "title": "Remark on Theorem 3.3",
         "content": "This theorem is an application of the measure extension theorem (Theorem 3.1). The proof relies on a standard result from real analysis, which we first recall below.",
@@ -47,7 +47,7 @@
         "source_plan": "03_chap3_lebesgue_stieltjes_thm"
     },
     {
-        "block_id": "remark_heine_borel_intro",
+        "block_id": "rem_3_3_heine_borel_illustration",
         "type": "Remark",
         "title": "Illustration of Compactness and Covers",
         "content": "To illustrate these definitions, consider the closed interval $[0, 1]$, which is a compact set. Let $\\epsilon > 0$ be a fixed real number. We can cover $[0, 1]$ by infinitely many open intervals of the form $(a - \\epsilon, a + \\epsilon)$, where $a$ ranges over all real numbers in $[0, 1]$. However, there is a lot of redundancy in this open cover, and we can in fact cover $[0, 1]$ using only finitely many open sets from this collection. For instance, we can choose the open intervals $(k\\epsilon - \\epsilon, k\\epsilon + \\epsilon)$, where $k$ ranges over $0, 1, 2, \\dots, \\lfloor 1/\\epsilon \\rfloor$.\n\nThe Heine--Borel theorem states that the above example is a general phenomenon. We can always find a finite subcover for any compact set.",
@@ -71,7 +71,7 @@
         "source_plan": "03_chap3_lebesgue_stieltjes_thm"
     },
     {
-        "block_id": "remark_before_def_3_8",
+        "block_id": "rem_3_3_sigma_additivity_strategy",
         "type": "Remark",
         "title": "Remark on Sigma-additivity",
         "content": "In the proof of the main result Theorem 3.3 in this section, it is more convenient to show that a set function is $\\sigma$-additive through $\\sigma$-subadditivity.",
@@ -91,7 +91,7 @@
         "source_plan": "03_chap3_lebesgue_stieltjes_thm"
     },
     {
-        "block_id": "remark_before_thm_3_5",
+        "block_id": "rem_3_3_sigma_additive_conditions",
         "type": "Remark",
         "title": "Remark on Sigma-additive Functions",
         "content": "One can show that any $\\sigma$-additive function satisfies the two conditions in the above definition.",
@@ -108,22 +108,6 @@
         "content": "\\begin{thmbox}{3.5}\nA set function $\\mu$ defined on a field $\\mathcal{F}_0$, with $\\mu(\\emptyset) = 0$, is $\\sigma$-additive if:\n\\begin{enumerate}\n    \\item $\\mu$ is finitely additive, and\n    \\item $\\mu$ is $\\sigma$-subadditive.\n\\end{enumerate}\nHence, a nonnegative set function on a field $\\mathcal{F}_0$ that satisfies $\\mu(\\emptyset) = 0$, finite additivity, and $\\sigma$-subadditivity is a pre-measure on $\\mathcal{F}_0$.\n\\end{thmbox}\n\n\\noindent\\textit{Proof} Suppose $\\mu: \\mathcal{F}_0 \\to [0, \\infty]$ is a set function that satisfies finite additivity, $\\sigma$-subadditivity, and $\\mu(\\emptyset) = 0$. Suppose $E_i$ are mutually disjoint sets in $\\mathcal{F}_0$, for $i = 1, 2, 3, \\dots$, such that $\\uplus_{i=1}^{\\infty} E_i = E \\in \\mathcal{F}_0$. For each finite $n$, we have\n\\[\n\\mu(E) \\ge \\mu(E_1 \\uplus E_2 \\uplus \\dots \\uplus E_n) = \\sum_{i=1}^{n} \\mu(E_i).\n\\]\nTaking the limit as $n \\to \\infty$, we obtain $\\mu(E) \\ge \\sum_{i=1}^{\\infty} \\mu(E_i).\n\nTo show the reverse inequality, we note that $\\mu$ is $\\sigma$-subadditivity, and so\n\\[\n\\mu(E) = \\mu\\Bigl(\\bigcup_{i=1}^{\\infty} E_i\\Bigr) \\le \\sum_{i=1}^{\\infty} \\mu(E_i).\n\\]\nThis shows that $\\mu$ is $\\sigma$-additive and hence is a pre-measure. \\hfill $\\blacksquare$",
         "dependencies": [
             "def_3_8"
-        ],
-        "is_renowned": false,
-        "source_plan": "03_chap3_lebesgue_stieltjes_thm"
-    },
-    {
-        "block_id": "proof_thm_3_3",
-        "type": "Example_Proof",
-        "title": "Proof of Theorem 3.3",
-        "content": "\\noindent\\textit{Proof of Theorem 3.3} Suppose $F$ is a Stieltjes measure function and $\\mathcal{B}_0$ is the collection of sets as defined in Example 3.1.2, which are disjoint unions of intervals in the form $(a, b]$. We define a set function on $\\mathcal{B}_0$ as follows: for any $(a, b]$ in $\\mathcal{B}_0$, we set $\\mu_0((a, b]) \\triangleq F(b) - F(a)$, and we define $\\mu_0(\\emptyset) = 0$. For any disjoint union $A = \\uplus_{i=1}^{m} (a_i, b_i]$, we set\n\\[\n\\mu_0(A) \\triangleq \\sum_{i=1}^{m} [F(b_i) - F(a_i)].\n\\]\n\\textbf{Step 1.} Show that $\\mu_0$ is a well-defined set function.\n\nSuppose a set $A \\in \\mathcal{B}_0$ can be written in two ways:\n\\[\nA = \\uplus_{i=1}^m (a_i, b_i] = \\uplus_{j=1}^n (c_j, d_j].\n\\]\nWe want to check that the value of $\\mu_0$ on $A$ is independent of the choice of representation. The proof idea is to consider a common refinement of the two partitions.\n\nFor each pair $(i, j)$, for $1 \\le i \\le m$ and $1 \\le j \\le n$, define the interval\n\\[\nI_{ij} = (a_i, b_i] \\cap (c_j, d_j] = (\\max(a_i, c_j), \\min(b_i, d_j)],\n\\]\nwhich may be empty. It can be verified that the intervals $I_{ij}$ are pair-wise disjoint and their union is equal to $A$. Furthermore, $\\{I_{ij}\\}_{i,j}$ is a subdivision of the partitions $\\{(a_i, b_i]\\}_{i=1}^m$ and $\\{(c_j, d_j]\\}_{j=1}^n$. Hence,\n\\[\n\\sum_{i=1}^n \\mu_0((a_i, b_i]) = \\sum_{i=1}^m \\sum_{j=1}^n \\mu_0(I_{ij}) = \\sum_{j=1}^n \\mu_0((c_j, d_j]).\n\\]\nThis shows that $\\mu_0$ is well-defined on $\\mathcal{B}_0$.\n\n\\textbf{Step 2.} Show that $\\mu_0$ is finitely additive.\n\nSince a set in the algebra $\\mathcal{B}_0$ is a finite disjoint union of left-open-right-closed intervals, it is sufficient to consider the union of disjoint intervals $(a_i, b_i]$, for $i = 1, 2, \\dots, m$ such that $\\uplus_{i=1}^m (a_i, b_i]$ is equal to $(a, b]$. After some re-labeling, we can re-order them and write\n\\[\na = a_1 < b_1 = a_2 < b_2 = a_3 < b_3 \\cdots a_n < b_n = b.\n\\]\nWe have a telescoping sum\n\\[\n\\sum_{i=1}^n \\mu_0((a_i, b_i]) = \\sum_{i=1}^n [F(b_i) - F(a_i)] = F(b) - F(a) = \\mu_0((a, b]).\n\\]\nThis proves that $\\mu_0$ is finitely additive.\n\n\\textbf{Step 3.} Show that $\\mu_0$ is $\\sigma$-subadditive.\n\nSuppose $(a, b] = \\bigcup_{i=1}^\\infty (a_i, b_i]$. The subintervals $(a_i, b_i]$'s need not be mutually disjoint. We want to show\n\\begin{equation}\n\\mu_0((a, b]) \\le \\sum_{i=1}^\\infty \\mu_0((a_i, b_i]). \\tag{3.2}\n\\end{equation}\nThe difficulty in proving (3.2) is that it involves infinitely many intervals. We would like to reduce it to finitely many intervals using the Heine--Borel theorem.\n\n\nAs in a typical proof of real analysis, we fix a positive but arbitrarily small $\\epsilon$ and make some relaxation. Pick $\\delta > 0$ such that $F(a + \\delta) < F(a) + \\epsilon$. We choose $\\delta$ small enough so that $a + \\delta < b$. Note that the right continuity of $F$ is used when we pick $\\delta$.\n\nFor each $i = 1, 2, 3, \\dots$, pick $\\eta_i > 0$ such that $F(b_i + \\eta_i) < F(b_i) + \\frac{\\epsilon}{2^i}$. We have an open cover\n\\[\n[a + \\delta, b] \\subseteq \\bigcup_{i=1}^\\infty (a_i, b_i + \\eta_i).\n\\]\nBy Heine--Borel theorem, there exist $i_1, i_2, \\dots, i_m$, such that $(a_{i_j}, b_{i_j} + \\eta_{i_j})$, for $j = 1, 2, \\dots, m$, form a finite cover of the closed and bounded interval $[a + \\delta, b]$,\n\\[\n[a + \\delta, b] \\subseteq \\bigcup_{j=1}^m (a_{i_j}, b_{i_j} + \\eta_{i_j}).\n\\]\nWe cannot directly apply $\\mu_0$ to both sides in the above line because $\\mu_0$ is only defined on left-open-right-closed intervals, and their finite unions. To this end, we remove one point on the left side and add $m$ points on the right side to obtain\n\\[\n(a + \\delta, b] \\subseteq \\bigcup_{j=1}^m (a_{i_j}, b_{i_j} + \\eta_{i_j}].\n\\]\nWe now apply the set function $\\mu_0$ to both sides and use the assumption that $\\mu_0$ is finitely additive. This gives\n\\[\nF(b) - F(a + \\delta) \\le \\sum_{j=1}^m F(b_{i_j} + \\eta_{i_j}) - F(a_{i_j}) \\le \\sum_{i=1}^\\infty F(b_i + \\eta_i) - F(a_i).\n\\]\nIn the last step, we have simply added infinitely many nonnegative terms on the right side. We have used the assumption that $F$ is a non-decreasing function in this step.\n\nWe express all terms in terms of $\\epsilon$ and simplify the inequality to\n\\begin{align*}\nF(b) - F(a) - \\epsilon &\\le \\sum_{i=1}^\\infty \\left( F(b_i) - F(a_i) + \\frac{\\epsilon}{2^i} \\right) \\\\\nF(b) - F(a) &\\le 2\\epsilon + \\sum_{i=1}^\\infty \\big( F(b_i) - F(a_i) \\big).\n\\end{align*}\nBecause $\\epsilon$ could be arbitrarily small, we obtain\n\\[\nF(b) - F(a) \\le \\sum_{i=1}^\\infty \\big( F(b_i) - F(a_i) \\big).\n\\]\nThis proves that $\\mu_0$ is $\\sigma$-subadditive.\n\n\\textbf{Step 4.} $\\mu_0$ is $\\sigma$-finite.\n\nWe can partition the real number line as a union of $(m - 1, m]$, for $m \\in \\mathbb{Z}$. The pre-measure $\\mu_0((m - 1, m])$ is finite for all $m$.\n\nCombining all the previous steps, we see that $\\mu_0$ is a $\\sigma$-finite pre-measure on the algebra $\\mathcal{B}_0$, which generates the Borel algebra on $\\mathbb{R}$. By applying the measure extension theorem (Theorem 3.1), we obtain a unique measure on $\\mathcal{B}(\\mathbb{R})$ that extends $\\mu_0$. \\hfill $\\blacksquare$",
-        "dependencies": [
-            "thm_3_3",
-            "def_3_6",
-            "def_3_7",
-            "thm_3_4",
-            "def_3_8",
-            "thm_3_5"
         ],
         "is_renowned": false,
         "source_plan": "03_chap3_lebesgue_stieltjes_thm"
