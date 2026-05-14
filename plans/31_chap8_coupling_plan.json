@@ -1,0 +1,144 @@
+[
+    {
+        "block_id": "intro_8",
+        "type": "Remark",
+        "title": "Chapter Intro",
+        "content": "\\section*{Product Space and Coupling}\n\nConsider two real-valued continuous-type random variables $X$ and $Y$ with a joint probability density function $f_{XY}(x,y)$, defined on a common probability space. The probability of an event such as $\\{\\omega : X(\\omega)\\in B_1,\\ Y(\\omega)\\in B_2\\}$, where $B_1$ and $B_2$ are Borel sets, can be computed from the joint distribution. The marginal distributions of $X$ and $Y$ can also be derived from the joint distribution by integrating out the other variable.\n\nCoupling is the reverse process of marginalization. We are given two random variables $\\tilde{X}$ and $\\tilde{Y}$ defined on separate probability spaces. The goal of coupling is to construct a new probability space that serves as a common source of randomness for random variables $X$ and $Y$, and at the same time the law of $X$ is the same as the law of $\\tilde{X}$, and the law of $Y$ is the same as the law of $\\tilde{Y}$. A common coupling is the product space with product measure, in which the random variables $X$ and $Y$ are independent by construction. With the product measure, we can formulate the Tonelli--Fubini theorem, which is a fundamental theorem in the probability theory.\n\nIn general, the joint distribution of random variables $X$ and $Y$ need not be independent. When given a cost of $c(x,y)$ for moving from a point $x\\in \\mathcal{X}$ to a point $y\\in \\mathcal{Y}$, we may look for a coupling that minimizes the expected cost. This optimization problem, called the optimal transport problem, arises in various fields including economics, statistics, and machine learning. In the last section in this chapter, we will derive the relationship between the total variation distance and maximal coupling.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "31_chap8_coupling"
+    },
+    {
+        "block_id": "rem_8_1_coupling_intro",
+        "type": "Remark",
+        "title": "Section Header",
+        "content": "\\subsection*{8.1 Coupling}\n\nCoupling is a technique used to combine two or more stochastic experiments into a single experiment, enabling them to be studied and compared simultaneously. The key idea is to construct a common probability space that serves as a source of randomness for all the experiments. This new probability space is designed so that its marginal distributions match the given probability distributions of the individual experiment.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "31_chap8_coupling"
+    },
+    {
+        "block_id": "rem_8_1_transition_1",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "\\subsection*{8.1 Coupling}\n\nCoupling is a technique used to combine two or more stochastic experiments into a single experiment, enabling them to be studied and compared simultaneously. The key idea is to construct a common probability space that serves as a source of randomness for all the experiments. This new probability space is designed so that its marginal distributions match the given probability distributions of the individual experiment.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "31_chap8_coupling"
+    },
+    {
+        "block_id": "def_8_1",
+        "type": "Definition",
+        "title": "Definition",
+        "content": "\\begin{defbox}{8.1}\nGiven two probability spaces $(\\mathcal{X},\\mathcal{F},P)$ and $(\\mathcal{Y},\\mathcal{G},Q)$, a \\textit{coupling} of $P$ and $Q$ consists of a common probability space $(\\Omega,\\mathcal{H},\\mu)$ and two measurable functions $X:\\Omega\\to \\mathcal{X}$ and $Y:\\Omega\\to \\mathcal{Y}$ such that the push-forward measures $X_{\\#}\\mu$ and $Y_{\\#}\\mu$ are equal to $P$ and $Q$, respectively.\n\\[\n(\\Omega,\\mathcal{H},\\mu)\n\\]\n\\[\n\\overset{X}{\\swarrow} \\qquad \\qquad \\overset{Y}{\\searrow}\n\\]\n\\[\n(\\mathcal{X},\\mathcal{F},P) \\qquad \\qquad (\\mathcal{Y},\\mathcal{G},Q)\n\\]\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "31_chap8_coupling"
+    },
+    {
+        "block_id": "rem_8_1_transition_2",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "There are several ways to construct a coupling between two probability distributions. One approach is to construct the product measure on $\\mathcal{X}\\times \\mathcal{Y}$, which makes $X$ and $Y$ independent. This will be the topic of the next section.\n\nWe may also consider constructing a transformation $T:\\mathcal{X}\\to \\mathcal{Y}$ such that $T(X)$ has the same distribution as $Y$. In this case, we can use the probability space for $X$ as the common probability spaces for $X$ and $Y$, resulting in a deterministic coupling between $X$ and $Y$.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "31_chap8_coupling"
+    },
+    {
+        "block_id": "def_8_2",
+        "type": "Definition",
+        "title": "Definition",
+        "content": "\\begin{defbox}{8.2}\nContinuing with the notation in Definition 8.1, if there exists a map $T:\\mathcal{X}\\to \\mathcal{Y}$ that is $(\\mathcal{F},\\mathcal{G})$-measurable and satisfies $Y=T(X)$, we say that the coupling is \\textit{deterministic}. In this case, the function $T$ is called a \\textit{transport map}.\n\\[\n(\\mathcal{X},\\mathcal{F},P)\n\\]\n\\[\n\\overset{id}{\\swarrow} \\qquad \\qquad \\overset{T}{\\searrow}\n\\]\n\\[\n(\\mathcal{X},\\mathcal{F},P) \\qquad \\qquad (\\mathcal{Y},\\mathcal{G},Q)\n\\]\n\\end{defbox}",
+        "dependencies": [
+            "def_8_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "31_chap8_coupling"
+    },
+    {
+        "block_id": "rem_8_1_transition_3",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "Deterministic coupling establishes a relationship between two random variables through a function. If the random variable $X$ contains sufficient randomness to generate the random variable $Y$, then a coupling from $X$ to $Y$ exists.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "31_chap8_coupling"
+    },
+    {
+        "block_id": "ex_8_1_1",
+        "type": "Example_Proof",
+        "title": "Simulating a Bernoulli Random Variable by Tossing a Die",
+        "content": "\\textbf{Example 8.1.1 (Simulating a Bernoulli Random Variable by Tossing a Die)} \\\\\nWe simulate a Bernoulli distributed random variable $Y$, with distribution $P(Y=0)=2/3$ and $P(Y=1)=1/3$, by tossing a fair die. Suppose $X$ is a random variable that is uniformly distributed on $\\{1,2,3,4,5,6\\}$. We can define $Y$ to be $0$ if $X=1,2,3,4$ and $Y$ to be $1$ if $X=5,6$. This function provides a deterministic coupling from $X$ to $Y$.\n\nTo illustrate the concepts discussed above, we provide an example of two different couplings of Gaussian-distributed random variables below.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "31_chap8_coupling"
+    },
+    {
+        "block_id": "ex_8_1_2",
+        "type": "Example_Proof",
+        "title": "Couplings of Two Gaussian Random Variables",
+        "content": "\\textbf{Example 8.1.2 (Couplings of Two Gaussian Random Variables)} \\\\\nConsider two normally distributed random variables $\\tilde{X}\\sim N(\\mu_1,\\sigma_1^2)$ and $\\tilde{Y}\\sim N(\\mu_2,\\sigma_2^2)$, where $\\sigma_1>0$ and $\\sigma_2>0$. There are several methods for constructing couplings between $\\tilde{X}$ and $\\tilde{Y}$.\n\nThe first method uses a deterministic coupling. We start by constructing a Lebesgue--Stieltjes measure $P$ on $\\mathbb{R}$ using the cumulative distribution function of $\\tilde{X}$ as the Stieltjes measure function. We use the variable $x$ to represent an element in this sample space. By construction, the identity function $X(x)=x$ is a random variable with the same distribution as $\\tilde{X}$.\n\nNext, we define the transformation\n\\begin{equation}\nT(x)=\\frac{\\sigma_2}{\\sigma_1}(x-\\mu_1)+\\mu_2.\n\\tag{8.1}\n\\end{equation}\n\nApplying this transformation to $X$ gives us $Y=T(X)$, which is a Gaussian random variable with the same distribution as $\\tilde{Y}$. We note that in this coupling $X$ and $Y$ are certainly not independent, as one is a function of the other. Indeed, the joint distribution of $X$ and $Y$ is a singular Gaussian distribution.\n\nThe second method uses bivariate Gaussian distribution. We take the unit square $[0,1]\\times [0,1]$ as the sample space $\\Omega$, with the Borel algebra on the unit square as the $\\sigma$-algebra. Generate a random point $p$ uniformly at random from the square, and let $U(p)$ and $V(p)$ denote the $x$- and $y$-coordinates of the point $p$, respectively. The random variables $U$ and $V$ are independent uniform random variables between 0 and 1. Next, we define $X=X(U(p),V(p))$ and $Y=Y(U(p),V(p))$ by the Box--Muller transformation (See Exercise 7.2). The resulting random variables $X\\sim N(\\mu_1,\\sigma_1^2)$ and $Y\\sim N(\\mu_2,\\sigma_2^2)$ are independent and have the same distribution as $\\tilde{X}$ and $\\tilde{Y}$, respectively.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "31_chap8_coupling"
+    },
+    {
+        "block_id": "ex_8_1_3",
+        "type": "Example_Proof",
+        "title": "Deterministic Coupling of Two Continuous Random Variables",
+        "content": "\\textbf{Example 8.1.3 (Deterministic Coupling of Two Continuous Random Variables)} \\\\\nSuppose $\\tilde{X}_1$ and $\\tilde{X}_2$ are real-valued random variables with cdf $F_1(x)$ and $F_2(x)$, respectively. Furthermore, suppose that the two functions $F_1(x)$ and $F_2(x)$ are monotonically increasing functions from 0 to 1. For simplicity, suppose that the inverse functions of $F_1$ and $F_2$ exist. We can construct a coupling between $\\tilde{X}_1$ and $\\tilde{X}_2$ by defining $X_1=F_1^{-1}(U)$ and $X_2=F_2^{-1}(U)$, respectively, where $U$ is a uniform random variable distributed between 0 and 1. (This is a preliminary idea of the Skorohod representation theorem (Theorem 10.8).)\n\nIn what follows we investigate how to relate two couplings. Let $(\\Omega,\\mathcal{H},\\mu)$ and $(\\Omega',\\mathcal{H}',\\mu')$ be couplings of probability measures $P$ and $Q$, defined on the sample spaces $\\mathcal{X}$ and $\\mathcal{Y}$, respectively. We say that a measurable function $g:\\Omega\\to \\Omega'$ is a \\textit{morphism} from the coupling on $\\Omega$ to the coupling on $\\Omega'$ if it satisfies the following commutative diagram:\n\\[\n\\Omega\n\\]\n\\[\n\\downarrow g\n\\]\n\\[\n\\Omega'\n\\]\n\\[\n\\swarrow X' \\qquad \\searrow Y'\n\\]\n\\[\n\\mathcal{X} \\qquad \\qquad \\mathcal{Y}\n\\]\nwith the outer arrows given by $X$ and $Y$. That is, we have $X=X'\\circ g$ and $Y=Y'\\circ g$. The measure $\\mu'$ on $\\Omega'$ is related to $\\mu$ in $\\Omega$ through the relation $\\mu'(E')=\\mu(g^{-1}(E'))$, which holds for all $E'\\in \\mathcal{H}'$.\n\nUsing this notion of morphism, we can define the concept of \\textit{equivalent couplings}. Two couplings $(\\Omega,\\mathcal{H},\\mu)$ and $(\\Omega',\\mathcal{H}',\\mu')$ are said to be equivalent if there exist two morphisms, $g$ from the first coupling to the second and $g'$ from the second to the first, that are inverses of each other up to a null set, meaning that the compositions $g'\\circ g$ and $g\\circ g'$ are equal to the identity map almost everywhere. To be precise, this means that for all $E\\in \\mathcal{H}$, we have $g'(g(E))\\Delta E = N$ and for all $E'\\in \\mathcal{H}'$, we have $g(g'(E'))\\Delta E' = N'$, where $N$ and $N'$ are null sets in $\\mathcal{H}$ and $\\mathcal{H}'$, respectively, and $\\Delta$ is the symmetric difference operator in set theory.\n\nSuppose we have two separate sample spaces $\\mathcal{X}$ and $\\mathcal{Y}$. We want to turn the Cartesian product $\\mathcal{X}\\times \\mathcal{Y}$ into a measurable space by selecting a $\\sigma$-algebra on $\\mathcal{X}\\times \\mathcal{Y}$. There are many ways to do this, but we are interested in the one that makes the two projection functions $\\pi_1(x,y)=x$ from $\\mathcal{X}\\times \\mathcal{Y}$ to $\\mathcal{X}$ and the projection $\\pi_2(x,y)=y$ from $\\mathcal{X}\\times \\mathcal{Y}$ to $\\mathcal{Y}$ measurable. Specifically, we want the inverse image $\\pi_1^{-1}(E_1)=E_1\\times \\mathcal{Y}$ to be measurable for all $E_1\\in \\mathcal{F}$ and the inverse image $\\pi_2^{-1}(E_2)=\\mathcal{X}\\times E_2$ to be measurable for all $E_2\\in \\mathcal{G}$.\n\nThis motivates the definition of measurable rectangles.",
+        "dependencies": [
+            "def_8_1",
+            "def_8_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "31_chap8_coupling"
+    },
+    {
+        "block_id": "def_8_3",
+        "type": "Definition",
+        "title": "Definition",
+        "content": "\\begin{defbox}{8.3}\nLet $(\\mathcal{X},\\mathcal{F})$ and $(\\mathcal{Y},\\mathcal{G})$ be measurable spaces. For any $E_1\\in \\mathcal{F}$ and $E_2\\in \\mathcal{G}$, the Cartesian product $E_1\\times E_2$ is called a \\textit{measurable rectangle}. We use the notation $\\mathcal{F}\\times \\mathcal{G}$ to represent the $\\sigma$-field generated by all the measurable rectangles.\n\nThe $\\sigma$-field $\\mathcal{F}\\times \\mathcal{G}$ is the smallest $\\sigma$-field containing all measurable rectangles. However, not all sets in $\\mathcal{F}\\times \\mathcal{G}$ are of the form $E_1\\times E_2$ with $E_1\\in \\mathcal{F}$ and $E_2\\in \\mathcal{G}$. For example, the countable union of measurable rectangles is also in $\\mathcal{F}\\times \\mathcal{G}$. Thus, there are many sets in $\\mathcal{F}\\times \\mathcal{G}$ that are not themselves measurable rectangles.\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "31_chap8_coupling"
+    },
+    {
+        "block_id": "rem_8_1_transition_4",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "The measurable space $(\\mathcal{X}\\times \\mathcal{Y},\\mathcal{F}\\times \\mathcal{G})$ serves as the basis on which we can build couplings. Furthermore, it can be shown that under certain condition, this construction is universal. The following theorem states that any coupling of $(\\mathcal{X},\\mathcal{F},P)$ and $(\\mathcal{Y},\\mathcal{G},Q)$ can be factored through the product space $(\\mathcal{X}\\times \\mathcal{Y},\\mathcal{F}\\times \\mathcal{G})$.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "31_chap8_coupling"
+    },
+    {
+        "block_id": "thm_8_1",
+        "type": "Theorem_with_Proof",
+        "title": "Theorem",
+        "content": "\\begin{thmbox}{8.1}\nSuppose $(\\mathcal{X},\\mathcal{F})$, $(\\mathcal{Y},\\mathcal{G})$, and $(\\Omega,\\mathcal{H})$ are measurable spaces in which all singletons are measurable. There is a unique measurable map\n\\[\nh:(\\Omega,\\mathcal{H})\\to (\\mathcal{X}\\times \\mathcal{Y},\\mathcal{F}\\times \\mathcal{G}),\n\\]\nwhich yields a morphism from any coupling $(\\Omega,\\mathcal{H},\\mu)$ of $(\\mathcal{X},\\mathcal{F},P)$ and $(\\mathcal{Y},\\mathcal{G},Q)$ to $(\\mathcal{X}\\times \\mathcal{Y},\\mathcal{F}\\times \\mathcal{G},h_{\\#}\\mu)$.\n\\end{thmbox}\n\n\\textit{Proof} We define the function $h:\\Omega\\to \\mathcal{X}\\times \\mathcal{Y}$ for any element $\\omega\\in \\Omega$ as $h(\\omega)=(X(\\omega),Y(\\omega))$. This function is measurable, meaning that for any measurable rectangle $E_1\\times E_2$ in $\\mathcal{X}\\times \\mathcal{Y}$, the inverse image $h^{-1}(E_1\\times E_2)$ is measurable. Specifically, $h^{-1}(E_1\\times E_2)$ can be expressed as the intersection of $X^{-1}(E_1)$ and $Y^{-1}(E_2)$, both of which are $\\mathcal{H}$-measurable sets.\n\nSuppose $(\\Omega,\\mathcal{H},\\mu)$ is a coupling of $(P,Q)$. By definition, $X$ is a measurable map from $\\Omega$ to $\\mathcal{X}$ such that $X_{\\#}\\mu=P$, and $Y$ is a measurable map from $\\Omega$ to $\\mathcal{Y}$ such that $Y_{\\#}\\mu=Q$.\n\\[\n\\Omega\n\\]\n\\[\n\\overset{X}{\\swarrow} \\qquad \\downarrow h \\qquad \\overset{Y}{\\searrow}\n\\]\n\\[\n\\mathcal{X} \\qquad \\xleftarrow{\\pi_1} \\mathcal{X}\\times \\mathcal{Y} \\xrightarrow{\\pi_2} \\mathcal{Y}\n\\]\n\nConsider the push-forward measure $h_{\\#}\\mu$ on $\\mathcal{X}\\times \\mathcal{Y}$. By the definition of the functions $\\pi_1$ and $h$, we have $\\pi_1^{-1}(E_1)=E_1\\times \\mathcal{Y}$ and\n\\[\nh^{-1}(E_1\\times \\mathcal{Y})=X^{-1}(E_1).\n\\]\n\nTherefore, for any $E_1\\in \\mathcal{F}$, we have $(\\pi_1\\circ h)^{-1}(E_1)=X^{-1}(E_1)$, and thus\n\\[\n\\mu((\\pi_1\\circ h)^{-1}(E_1))=\\mu(X^{-1}(E_1))=P(E_1).\n\\]\n\nThe last equality follows from the definition of coupling, which proves that the $(\\mu_1\\circ h)_{\\#}\\mu=P$.\n\nBy a similar argument, we can show that $(\\pi_2\\circ h)_{\\#}\\mu=Q$.\n\nTo show the uniqueness of $h$, we fix an element $x\\in \\mathcal{X}$ and an element $y\\in \\mathcal{Y}$. Since $\\{x\\}$ is a singleton, it is $\\mathcal{F}$-measurable, and similarly, $\\{y\\}$ is $\\mathcal{G}$-measurable. An element $\\omega$ in the intersection of $X^{-1}(\\{x\\})$ and $Y^{-1}(\\{y\\})$ must be mapped to $(x,y)$ in $\\mathcal{X}\\times \\mathcal{Y}$. To see this, we can set $P$ to be the Dirac measure concentrated at $x$ and $Q$ to be the Dirac measure concentrated at $y$ (see Example 3.3.4). The Dirac measure $\\mu$ that is concentrated at $\\omega$ is a coupling of the two Dirac measures $P$ and $Q$. In this case, defining $h(\\omega)$ to be $(x,y)$ is the only way to satisfy the requirements $(\\pi_1\\circ h)_{\\#}\\mu=P$ and $(\\pi_2\\circ h)_{\\#}\\mu=Q$, thereby establishing the uniqueness of the function $h$. \\hfill $\\square$",
+        "dependencies": [
+            "ex_3_3_4"
+        ],
+        "is_renowned": false,
+        "source_plan": "31_chap8_coupling"
+    },
+    {
+        "block_id": "rem_8_1_transition_5",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "As a corollary, we can restrict our attention to couplings defined on the product space without loss of generality. In terms of the product space, coupling of continuous random variables and coupling of discrete random variables can be reformulated as follows.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "31_chap8_coupling"
+    },
+    {
+        "block_id": "def_8_4",
+        "type": "Definition",
+        "title": "Definition",
+        "content": "\\begin{defbox}{8.4}\nFor two continuous random variables $X$ and $Y$ with pdf's $f_X(x)$ and $f_Y(x)$, respectively, a coupling of $X$ and $Y$ is a joint pdf $f_{XY}:\\mathbb{R}^2\\to [0,\\infty)$ such that\n\\[\n\\iint_{\\mathcal{X}\\times \\mathcal{Y}} f_{XY}(x,y)\\, dx\\, dy = 1\n\\]\n\\[\nf_X(x)=\\int_{\\mathcal{Y}} f_{XY}(x,y)\\, dy,\n\\qquad \\text{and} \\qquad\nf_Y(y)=\\int_{\\mathcal{X}} f_{XY}(x,y)\\, dx.\n\\]\n\nSimilarly, for two discrete random variables $X$ and $Y$ with pmf's $p_X(x)$ and $p_Y(y)$, respectively, a coupling of $X$ and $Y$ is a joint pmf $p_{XY}(x,y)$ satisfying analogous properties.\n\\end{defbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "31_chap8_coupling"
+    }
+]

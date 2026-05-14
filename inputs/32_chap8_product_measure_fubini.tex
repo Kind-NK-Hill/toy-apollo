@@ -1,0 +1,124 @@
+\subsection*{8.2 Product Measure and Fubini Theorem}
+
+The product measure is a special coupling in which the random variables $X$ and $Y$ are independent. When $X$ and $Y$ are continuous random variables with given pdf's, we can simply define a coupling using the product of the two pdf's. In general, we can construct the product measure for any two $\sigma$-finite probability spaces $(\mathcal{X}_1,\mathcal{F},P)$ and $(\mathcal{Y},\mathcal{G},Q)$, regardless of whether their distributions are continuous or discrete. The product measure is guaranteed to exist, and its construction is described in detail in standard probability theory textbooks, such as [2, Section 18] or [8, Chapter 8].
+
+\begin{thmbox}{8.2}
+Let $(\Omega_1,\mathcal{F},P)$ and $(\Omega_2,\mathcal{G},Q)$ be $\sigma$-finite measure spaces. Then there exists a unique measure, denoted by $P\times Q$, defined on the product space $(\mathcal{X}\times \mathcal{Y},\mathcal{F}\times \mathcal{G})$, such that
+\[
+(P\times Q)(E_1\times E_2)=P(E_1)Q(E_2)
+\]
+for all $E_1\in \mathcal{F}$ and $E_2\in \mathcal{G}$.
+\end{thmbox}
+
+The proof of this theorem is omitted. A rough idea of the construction is to first define the product pre-measure on the measurable rectangles. Then we apply the measure extension theorem. The uniqueness follows by applying the $\pi$--$\lambda$ theorem.
+
+The utility of the product measure in probability theory is to combine two stochastic experiments into a single experiment, such that any event in the first experiment is independent from any event in the second one.
+
+\textbf{Example 8.2.1 (The Product of a Discrete and a Continuous Distribution)} \\
+Using Theorem 8.2, we are able to construct the product measure of two probability distributions of different types. Suppose $(\mathbb{R},\mathcal{B}(\mathbb{R}),P)$ represents a Poisson distribution with mean $\lambda$, and $(\mathbb{R},\mathcal{B}(\mathbb{R}),Q)$ represents Gaussian distribution with zero mean and unit variance. In this example, the product $\sigma$-algebra $\mathcal{B}(\mathbb{R})\times \mathcal{B}(\mathbb{R})$ is the same as $\mathcal{B}(\mathbb{R}^2)$. Let $P\times Q$ be the product measure. We can calculate the probability of the event $\{n\}\times [a,b]$, where $n$ is a positive integer and $a<b$ are real numbers,
+\[
+(P\times Q)(\{n\}\times [a,b])
+=
+\frac{\lambda^n}{n!}e^{-\lambda}
+\int_a^b \frac{1}{\sqrt{2\pi}}e^{-x^2/2}\, dx.
+\]
+
+The probability in this example is concentrated on $\{0,1,2,\dots\}\times \mathbb{R}$.
+
+Once we have the product measure on the product space, we can compute the Lebesgue integral on it. One useful method for doing so is through iterative integration, which involves integrating with respect to one variable at a time. The Tonelli and Fubini theorems are mathematical tools that enable this approach. Before we state these two theorems, it is helpful to first consider a counter-example that motivates the need for these theorems.
+
+\textbf{Example 8.2.2 (A Counter-Example About Iterated Integrals)} \\
+Consider the double integral
+\[
+\int_0^1\int_0^1 \frac{x^2-y^2}{(x^2+y^2)^2}\, dx\, dy.
+\]
+
+We claim that the two iterated integrals give different results. To see this, we use the fact that for any fixed constant $a$, the function $f(u)=\frac{a^2-u^2}{(a^2+u^2)^2}$ has anti-derivative $\frac{u}{a^2+u^2}+C$, where $C$ is a constant.
+
+Suppose we integrate with respect to $x$ first. To avoid division by zero at the origin, we integrate from $\epsilon$ to 1 in the $y$ direction and take limit as $\epsilon$ tends to zero
+\[
+\lim_{\epsilon\to 0}\int_{\epsilon}^1 \left(\int_0^1 \frac{x^2-y^2}{(x^2+y^2)^2}\, dx\right)\, dy
+=
+\lim_{\epsilon\to 0}\int_{\epsilon}^1 \left[-\frac{x}{x^2+y^2}\right]_{x=0}^1\, dy
+\]
+\[
+=
+\lim_{\epsilon\to 0}\int_{\epsilon}^1 \frac{-1}{1+y^2}\, dy
+=
+-\pi/4.
+\]
+
+However, if we integrate with respect to $y$ first, we will get the answer $\pi/4$.
+
+The reason why the iterated integration in the previous example fails is because the function being integrated is not Lebesgue integrable. When the function to be integrated is nonnegative, the Tonelli theorem provides a condition under which the order integration can be exchanged, with possibility that the integral is infinite.
+
+\begin{thmbox}{8.3 (Tonelli Theorem)}
+If $f:\mathcal{X}\times \mathcal{Y}\to \bar{\mathbb{R}}$ is $(\mathcal{F}\times \mathcal{G})$-measurable and nonnegative and $P$ and $Q$ are $\sigma$-finite measures defined on $\mathcal{X}$ and $\mathcal{Y}$, respectively, then
+\[
+\int_{\mathcal{X}} \int_{\mathcal{Y}} f(x,y)\, dQ(y)\, dP(x)
+=
+\int_{\mathcal{Y}} \int_{\mathcal{X}} f(x,y)\, dP(x)\, dQ(y)
+\]
+\[
+=
+\int_{\mathcal{X}\times \mathcal{Y}} f(x,y)\, d(P\times Q).
+\]
+\end{thmbox}
+
+The first and second integrals in Theorem 8.3 are iterated integrals, while the last integral is an integral with respect to the product measure $P\times Q$. The equality in Theorem 8.3 is understood as follows: If one of the integrals is finite, then all integrals are finite and equal to one another; if one of them is infinite, then all of them are infinite. While we will not provide a proof of the Tonelli theorem here, we give an application of Tonelli theorem to the computation of the expected value of a nonnegative random variable (cf. Exercise 1.10).
+
+\begin{thmbox}{8.4}
+For any nonnegative random variable $Y$, we can compute the expectation $E[Y]$ by
+\[
+\int_0^{\infty} P(Y\ge u)\, du.
+\]
+If the cumulative distribution function is $F_Y$, we have
+\[
+E[Y]=\int_0^{\infty} (1-F_Y(u))\, du.
+\]
+\end{thmbox}
+
+\textit{Proof} We write $\int_0^{\infty} P(Y\ge u)\, du$ as a double integral
+\[
+\int_0^{\infty} P(Y\ge u)\, du
+=
+\int_{[0,\infty)} \int_{\Omega} 1_{\{y\ge u\}}\, dP(y)\, d\lambda(u),
+\]
+where $\lambda$ is the Lebesgue measure on $\mathbb{R}$. By the Tonelli theorem, we obtain
+\[
+\int_0^{\infty} P(Y\ge u)\, du
+=
+\int_{\Omega}\int_{[0,\infty)} 1_{\{y\ge u\}}\, d\lambda(u)\, dP(y)
+=
+\int_{\Omega} y\, dP(y)
+=
+E[Y].
+\]
+\hfill $\square$
+
+If $f$ is not nonnegative, we need to use the more general Fubini theorem to handle integration with product measure.
+
+\begin{thmbox}{8.5 (Fubini Theorem)}
+Let $f$ be a real-valued or complex-valued measurable function defined on the product space $(\mathcal{X}\times \mathcal{Y},\mathcal{F}\times \mathcal{G})$. Let $P$ and $Q$ be $\sigma$-finite measures defined on $\mathcal{X}$ and $\mathcal{Y}$, respectively. If one of the following integrals is finite:
+\[
+\int_{\mathcal{X}} \int_{\mathcal{Y}} |f(x,y)|\, dQ(y)\, dP(x), \qquad
+\int_{\mathcal{Y}} \int_{\mathcal{X}} |f(x,y)|\, dP(x)\, dQ(y),
+\]
+\[
+\int_{\mathcal{X}\times \mathcal{Y}} |f(x,y)|\, d(P\times Q),
+\]
+then $f\in L^1(P\times Q)$ and
+\[
+\int_{\mathcal{X}} \int_{\mathcal{Y}} f(x,y)\, dQ(y)\, dP(x)
+=
+\int_{\mathcal{Y}} \int_{\mathcal{X}} f(x,y)\, dP(x)\, dQ(y)
+\]
+\[
+=
+\int_{\mathcal{X}\times \mathcal{Y}} f(x,y)\, d(P\times Q).
+\]
+\end{thmbox}
+
+The proof of this theorem can be found in textbooks on measure theory, such as [1] and [8].
+
+In a typical application of Fubini theorem, we first take the absolute value of the function $f$ and check if the iterated integral $\int_{\mathcal{X}}\int_{\mathcal{Y}} |f|\, dP\, dQ$ is finite using the Tonelli theorem. If it is finite, then we can apply the Fubini theorem to exchange the order of integration in $\int_{\mathcal{X}}\int_{\mathcal{Y}} f\, dP\, dQ$.

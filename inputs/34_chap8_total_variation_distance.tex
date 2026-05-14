@@ -1,0 +1,200 @@
+\subsection*{8.4 Application: Total Variation Distance}
+
+In statistics and the theory of stochastic processes, it is often important to determine whether two probability distributions are similar to each other and to provide a quantitative measure of the distance between them. This is particularly useful in areas such as hypothesis testing and model selection.
+
+A good distance measure should capture the basic features of a distance, i.e., it is a metric function. Let $\mathcal{M}$ be a collection of probability measures defined on a measurable space. We want a function $d:\mathcal{M}\times \mathcal{M}\to \mathbb{R}$ satisfying the following properties, known as the metric properties:
+\begin{itemize}
+    \item (Nonnegativity) $d(P,Q)\ge 0$, with equality if and only if $P=Q$.
+    \item (Symmetry) $d(P,Q)=d(Q,P)$ for any $P,Q\in \mathcal{M}$.
+    \item (Triangle inequality) $d(P,R)\le d(P,Q)+d(Q,R)$ for any $P,Q,R\in \mathcal{M}$.
+\end{itemize}
+
+There are many distance measures in the probability theory that satisfy the metric properties, and the choice of distance measure depends on the specific problem at hand. For example, the Wasserstein distance mentioned at the end of the last section is indeed a distance function. In this section, we will consider the total variation (TV) distance.
+
+\begin{defbox}{8.5}
+The \textit{total variation distance} of two probability measures $P$ and $Q$ on a common measurable space $(\Omega,\mathcal{F})$ is defined as
+\begin{equation}
+d_{TV}(P,Q)\triangleq \sup_{A\in \mathcal{F}} |P(A)-Q(A)|.
+\tag{8.3}
+\end{equation}
+\end{defbox}
+
+In other words, the total variation distance measures the largest possible difference between the probabilities that the two measures assign to the same event, and it is always bounded between 0 and 1. As we will see later, the total variation distance is closely related to the concept of coupling.
+
+\textbf{Example 8.4.1 (Total Variation Distance Between Two Dirac Measures)} \\
+Let $\mu_x$ denote the Dirac measure on $\mathbb{R}$ that is concentrated at the point $x$, i.e., $\mu_x(A)=1$ if $x\in A$ and $\mu_x(A)=0$ if $x\notin A$ (See Example 3.3.4). For $x\neq y$, the total variation distance between $\mu_x$ and $\mu_y$ is equal to 1. It is because for any measurable set $A$ that contains $x$ but not $y$, we have $\mu_x(A)-\mu_y(A)=1-0=1$.
+
+\textbf{Example 8.4.2 (Total Variation Distance Between Two Bernoulli Distributions)} \\
+Let $\Omega=\{H,T\}$ be a sample space with two outcomes. We can define two probability measures $P$ and $Q$ on $\Omega$ by setting $P(\{H\})=p=1-P(\{T\})$ and setting $Q(\{H\})=q=1-Q(\{T\})$, where $0\le p,q\le 1$. If we take $A=\{H\}$ in (8.3), we obtain $|P(\{H\})-Q(\{H\})|=|p-q|$. Likewise, when we take $A=\{T\}$, we obtain $|P(\{T\})-Q(\{T\})|=|p-q|$. The total variation distance is $|p-q|$.
+
+When $p=q$, the two probability measures $P$ and $Q$ are the same, and their total variation distance is 0. Otherwise, the total variation distance is the absolute difference between the two probabilities $p$ and $q$.
+
+When two probability distributions are both of discrete type and both continuous type, we can compute the total variation distance by the formulas in the following theorem.
+
+\begin{thmbox}{8.6}
+Suppose $P$ and $Q$ are probability measures defined on the set of nonnegative integers $\Omega=\{0,1,2,3,\dots\}$. Then, the total variation distance between $P$ and $Q$ is given by
+\[
+d_{TV}(P,Q)=\frac{1}{2}\sum_{i=0}^{\infty} |P(\{i\})-Q(\{i\})|.
+\]
+
+If probability measures $P$ and $Q$ have piece-wise continuous pdf's $f(x)$ and $g(x)$, respectively, then we have
+\[
+d_{TV}(P,Q)=\frac{1}{2}\int_{-\infty}^{\infty} |f(x)-g(x)|\, dx.
+\]
+\end{thmbox}
+
+\textit{Proof} We only prove the discrete case. We first note that in the definition of total variation distance, we can remove the absolute value in (8.3) without changing the result. This is because if $P(A)<Q(A)$, we can consider the complement $A^c$ and use the fact that
+\[
+|P(A)-Q(A)| = |1-P(A^c)-(1-Q(A^c))| = P(A^c)-Q(A^c).
+\]
+
+Hence, the computation of total variation distance amounts to the maximization of $P(A)-Q(A)$ over all events $A$. We claim that is maximized when $A$ is the event
+\[
+A_+\triangleq \{i\in \Omega : P(\{i\})>Q(\{i\})\}.
+\]
+
+To see this, we let $A_-\triangleq \{i : P(\{i\})<Q(\{i\})\}$, and $A_0=\{i : P(\{i\})=Q(\{i\})\}$. The three events $A_+$, $A_-$, and $A_0$ are disjoint. Hence,
+\[
+P(A_+)+P(A_-)+P(A_0)=1=Q(A_+)+Q(A_-)+Q(A_0).
+\]
+
+By noting $P(A_0)=Q(A_0)$, we obtain
+\[
+|P(A_+)-Q(A_+)| = |P(A_-)-Q(A_-)| = \frac{1}{2}\sum_{i=0}^{\infty} |P(\{i\})-Q(\{i\})|.
+\]
+
+The proof for the continuous case is similar. \hfill $\square$
+
+\textbf{Example 8.4.3 (Total Variation Distance Between Bernoulli and Poisson)} \\
+Let $P$ be a Bernoulli distribution with $P(\{1\})=\lambda$ and $P(\{0\})=1-\lambda$ and $Q$ be a Poisson distribution with mean $\lambda$, where $\lambda$ is a real number between 0 and 1. For $k\ge 0$, $Q(\{k\})=\dfrac{\lambda^k}{k!}e^{-\lambda}$. Applying Theorem 8.6, we obtain
+\[
+d_{TV}(P,Q)
+=
+\frac{1}{2}|1-\lambda-e^{-\lambda}|
++
+\frac{1}{2}|\lambda-\lambda e^{-\lambda}|
++
+\frac{1}{2}\sum_{k=2}^{\infty} \frac{\lambda^k}{k!}e^{-\lambda}.
+\]
+
+The infinite sum on the right-hand side can be simplified to $\frac{1}{2}(1-e^{\lambda}-\lambda e^{-\lambda})$. We thus have
+\[
+d_{TV}(P,Q)
+=
+\frac{1}{2}|1-\lambda-e^{-\lambda}|
++
+\frac{1}{2}|\lambda-\lambda e^{-\lambda}|
++
+\frac{1}{2}(1-e^{\lambda}-\lambda e^{-\lambda}).
+\]
+
+Since $1-\lambda$ is less than or equal to $e^{-\lambda}$ for all $\lambda$, we can simplify this expression as follows:
+\[
+d_{TV}(P,Q)
+=
+\frac{1}{2}\left[e^{-\lambda}+\lambda-1+\lambda-\lambda e^{-\lambda}+1-e^{\lambda}-\lambda e^{-\lambda}\right]
+=
+\lambda(1-e^{-\lambda}).
+\]
+
+In the rest of this section, we assume that the sample space $\mathcal{X}$ is a Polish space, i.e., it is separable and equipped with a complete metric function. To be precise, we assume that the space $\mathcal{X}$ has a countable dense subset, and we can measure the distance between two points in $\mathcal{X}$ using a complete metric. We take the Borel algebra generated by the open sets in $\mathcal{X}$ as the $\sigma$-algebra $\mathcal{F}$. This is a convenient and natural assumption in the study of total variation distance and optimal transport problems in general. A measurable space $(\mathcal{X},\mathcal{F})$ arising in this way is also called a \textit{standard Borel space}. It is worth noting that any discrete space and Euclidean space $\mathbb{R}^d$ are Polish. Hence, discrete random variables and continuous random variables can all be defined on Polish spaces.
+
+It is interesting to construct coupling such that the probability of the event $X=Y$ is as large as possible. This is the diagonal event $\{(\omega,\omega): \omega\in \mathcal{X}\}$ in the product space $\mathcal{X}\times \mathcal{X}$. With the additional assumptions stated in the previous paragraph, we can guarantee that the diagonal event in the product space is measurable, so that the event $\{X=Y\}$ has well-defined probability. The coupling inequality below gives a lower bound on the extent of how much we can make $X$ equal to $Y$.
+
+\begin{thmbox}{8.7 (Coupling Inequality)}
+Given two probability measures $P$ and $Q$ defined on the same measurable space $(\mathcal{X},\mathcal{F})$, any coupling of $(X,Y)$ defined on a probability space $(\Omega,\mathcal{H},\mu)$ satisfies
+\[
+d_{TV}(P,Q)\le \mu(\{X\neq Y\}).
+\]
+\end{thmbox}
+
+\textit{Proof} The proof depends on the following trick. For any subset $A\subseteq \mathcal{X}$ that is $\mathcal{F}$-measurable, we have
+\[
+P(A)-Q(A)=\mu(X\in A)-\mu(Y\in A)
+\]
+\[
+=\mu(X\in A, X=Y)+\mu(X\in A, X\neq Y)
+\]
+\[
+\qquad -\mu(Y\in A, X=Y)-\mu(Y\in A, X\neq Y)
+\]
+\[
+=\mu(X\in A, X\neq Y)-\mu(Y\in A, X\neq Y)
+\]
+\[
+\le \mu(X\in A, X\neq Y).
+\]
+
+Taking supremum over all $A\in \mathcal{F}$ on both sides, we get
+\[
+\sup_{A\in \mathcal{F}} (P(A)-Q(A))
+\le
+\sup_{A\in \mathcal{F}} \mu(X\in A, X\neq Y).
+\]
+
+The last supremum is achieved when $A=\mathcal{X}$. This proves $d_{TV}(P,Q)\le \mu(X\neq Y)$. \hfill $\square$
+
+A coupling $(X,Y)$ that attains the coupling inequality is called a \textit{maximal coupling}. It can be shown that maximal coupling always exists when the measurable space $(\mathcal{X},\mathcal{F})$ is Polish [9, Theorem 4.1].
+
+\textbf{Example 8.4.4 (An Example of Maximal Coupling)} \\
+Suppose $\Omega=\{1,2\}$ and we define two probability measures $P$ and $Q$ on $\mathcal{X}$ by
+\[
+P(\{1\})=1/3,\quad P(\{2\})=2/3,
+\qquad \text{and} \qquad
+Q(\{1\})=3/4,\quad P(\{2\})=1/4.
+\]
+
+The total variation distance between $P$ and $Q$ is $2/3-1/4=5/12$.
+
+The corresponding Kantorovich problem is to minimize $x_{12}+x_{21}$, subject to the constraints
+\[
+x_{11}+x_{12}=1/3,\qquad x_{11}+x_{21}=3/4,
+\]
+\[
+x_{21}+x_{22}=2/3,\qquad x_{12}+x_{22}=1/4,
+\]
+\[
+x_{11},x_{12},x_{21},x_{22}\ge 0.
+\]
+
+We want to take the variables $x_{12}$ and $x_{21}$ to be as small as possible. In other words, we want $x_{11}$ and $x_{22}$ to be as large as possible, while satisfying the constraints. Because all variables are nonnegative, we must have $x_{11}\le 1/3$ and $x_{22}\le 1/4$. If we set $x_{11}=1/3$ and $x_{22}=1/4$, then the other constraints imply that we must have $x_{12}=0$ and $x_{21}=2/3-1/4=5/12$. We can visualize the transport plan as a $2\times 2$ array
+\[
+\begin{bmatrix}
+x_{11} & x_{12}\\
+x_{21} & x_{22}
+\end{bmatrix}
+=
+\begin{bmatrix}
+1/3 & 0\\
+5/12 & 1/4
+\end{bmatrix}.
+\]
+
+This is indeed the optimal solution to the linear program. It agrees with the total variation distance $5/12$ of $P$ and $Q$ and hence is a maximal coupling.
+
+The total variation distance can be interpreted as a solution to the Kantorovich problem with cost function
+\[
+c_0(x,y)=
+\begin{cases}
+1 & \text{if } x\neq y,\\
+0 & \text{if } x=y.
+\end{cases}
+\]
+
+For any coupling $(\mathcal{X}\times \mathcal{X},\mathcal{F}\times \mathcal{F},\mu)$ of $P$ and $Q$, the probability $\mu(\{X\neq Y\})$ can be written as
+\[
+\int_{\mathcal{X}\times \mathcal{X}} c_0(x,y)\, d\mu(x,y).
+\]
+
+Let $\Pi(P,Q)$ denote the set of all probability measures $\mu$ on the product space $(\mathcal{X}\times \mathcal{X},\mathcal{F}\times \mathcal{F})$ such that $X_{\#}\mu=P$ and $Y_{\#}\mu=Q$. The coupling inequality implies that
+\begin{equation}
+d_{TV}(P,Q)
+=
+\inf_{\mu\in \Pi(P,Q)}
+\left\{
+\int_{\mathcal{X}\times \mathcal{X}} c_0(x,y)\, d\mu(x,y)
+\right\}.
+\tag{8.4}
+\end{equation}
+
+The infimum is taken over all probability measures $\mu\in \Pi(P,Q)$ and when the measurable space $(\mathcal{X},\mathcal{F})$ is Polish, it can be achieved by a maximal coupling. The existence of a maximal coupling illustrates the close connection between the total variation distance and coupling.
