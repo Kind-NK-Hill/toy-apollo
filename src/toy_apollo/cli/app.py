@@ -60,7 +60,7 @@ async def process_target(args):
     selected_task_ids: set[str] | None = None
     if args.tasks:
         selected_task_ids = set(args.task_ids)
-        if phase in (3, 4):
+        if phase == 4:
             known_task_ids = {canonicalize_block_id(tid) for tid in ledger.ledger.get("tasks", {}).keys()}
             unknown = sorted(selected_task_ids - known_task_ids)
             if unknown:
@@ -133,8 +133,10 @@ async def process_target(args):
         settings.error_logs_dir.mkdir(parents=True, exist_ok=True)
         settings.formalized_chapters_dir.mkdir(parents=True, exist_ok=True)
         settings.toyapollo_output_dir.mkdir(parents=True, exist_ok=True)
+        if args.phase2_mode in {"soft-pack", "soft-apply"}:
+            settings.phase2_softdep_packs_dir.mkdir(parents=True, exist_ok=True)
         if not selected_task_ids and args.phase2_mode != "review-existing-queue":
-            print("❌ Phase 2 prompt-pack modes require task ids via --tasks.")
+            print("❌ Phase 2 modes require task ids via --tasks.")
             return
         if args.phase2_mode in {"pack", "build-check", "verify", "review-pack", "review-existing", "review-now", "review-fix", "review-apply"} and len(selected_task_ids) != 1:
             print("❌ Phase 2 pack/build-check/verify/review-pack/review-existing/review-now/review-fix/review-apply modes currently support exactly one task at a time.")
@@ -255,6 +257,20 @@ async def process_target(args):
                 else:
                     print(f"❌ Codex semantic review apply did not promote {task_id}.")
                 print(detail)
+            elif args.phase2_mode == "soft-pack":
+                from ..phase2_softdep_pack import write_softdep_pack
+
+                pack_dir = write_softdep_pack(sorted(selected_task_ids), ledger, settings)
+                print(f"📦 Soft dependency pack generated: {pack_dir}")
+            elif args.phase2_mode == "soft-apply":
+                from ..phase2_softdep_pack import apply_softdep_selection
+
+                success, detail, pack_dir = apply_softdep_selection(sorted(selected_task_ids), ledger, settings, args.selection)
+                if success:
+                    print(f"✅ Soft imports applied for batch: {pack_dir.name}")
+                else:
+                    print(f"❌ Soft imports apply failed for batch: {pack_dir.name}")
+                print(detail)
             elif args.phase2_mode == "audit":
                 for task_id in sorted(selected_task_ids):
                     success, detail = audit_completed_task_output(task_id, ledger, settings)
@@ -267,28 +283,7 @@ async def process_target(args):
             print(f"❌ {exc}")
             return
     elif phase == 3:
-        if args.phase3_mode == "soft-pack":
-            from ..phase3_softdep_pack import write_softdep_pack
-
-            settings.phase3_softdep_packs_dir.mkdir(parents=True, exist_ok=True)
-            if not selected_task_ids:
-                print("❌ Phase 3 soft-pack requires at least one problem task via --tasks.")
-                return
-            pack_dir = write_softdep_pack(sorted(selected_task_ids), ledger, settings)
-            print(f"📦 Soft dependency pack generated: {pack_dir}")
-        elif args.phase3_mode == "soft-apply":
-            from ..phase3_softdep_pack import apply_softdep_selection
-
-            settings.phase3_softdep_packs_dir.mkdir(parents=True, exist_ok=True)
-            if not selected_task_ids:
-                print("❌ Phase 3 soft-apply requires at least one problem task via --tasks.")
-                return
-            success, detail, pack_dir = apply_softdep_selection(sorted(selected_task_ids), ledger, settings, args.selection)
-            if success:
-                print(f"✅ Soft imports applied for batch: {pack_dir.name}")
-            else:
-                print(f"❌ Soft imports apply failed for batch: {pack_dir.name}")
-            print(detail)
+        print("❌ Phase 3 soft dependency selection has been merged into Phase 2; use --phase 2 --phase2-mode soft-pack/soft-apply.")
     elif phase == 4:
         # Phase 4 is temporarily disabled.
         print("⚠️ Phase 4 is temporarily disabled. Use manual local verification and update ledger statuses directly.")
@@ -298,15 +293,43 @@ async def process_target(args):
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Toy Apollo Ledger-Driven Pipeline")
-    parser.add_argument("--phase", type=int, choices=[0, 1, 2, 3, 4], required=False, help="0: Ingest, 1: Plan, 2: Local, 3: Problem soft dependency selection, 4: Align")
+    phase2_modes = (
+        "pack",
+        "build-check",
+        "verify",
+        "audit",
+        "review-pack",
+        "review-existing",
+        "review-now",
+        "review-fix",
+        "auto-loop",
+        "review-existing-queue",
+        "review-apply",
+        "soft-pack",
+        "soft-apply",
+    )
+    phase2_single_task_modes = (
+        "pack",
+        "build-check",
+        "verify",
+        "review-pack",
+        "review-existing",
+        "review-now",
+        "review-fix",
+        "auto-loop",
+        "review-apply",
+    )
+    phase2_soft_modes = ("soft-pack", "soft-apply")
+    phase3_migration_message = "Phase 3 soft dependency selection has been merged into Phase 2; use --phase 2 --phase2-mode soft-pack/soft-apply."
+    parser.add_argument("--phase", type=int, choices=[0, 1, 2, 3, 4], required=False, help="0: Ingest, 1: Plan, 2: Local including Problem soft dependency selection, 3: merged into Phase 2, 4: disabled")
     parser.add_argument("--input", type=str, required=False, default="", help="Path for Phase 0 pack and Phase 1 inputs")
     parser.add_argument("--phase0-mode", type=str, choices=["pack", "validate", "apply"], default="pack", dest="phase0_mode", help="Phase 0 mode: pack extracts source materials, validate checks draft_input.tex, apply writes inputs/<stem>.tex")
     parser.add_argument("--page-range", type=str, required=False, default="", dest="page_range", help="Physical PDF page range for --phase 0 --phase0-mode pack, 1-based inclusive, for example 157-160")
     parser.add_argument("--phase0-output", type=str, required=False, default="", dest="phase0_output", help="Output stem for Phase 0 packs and inputs/<stem>.tex, for example chapter9-moments-mgf")
     parser.add_argument("--phase1-mode", type=str, choices=["pack", "apply"], default="pack", dest="phase1_mode", help="Phase 1 mode: pack generates operator prompt packs, apply validates and registers a filled draft_plan.json")
-    parser.add_argument("--tasks", type=str, required=False, default="", help="Comma-separated block_id filter for Phase 2 prompt-pack modes and Phase 3/4")
-    parser.add_argument("--phase2-mode", type=str, choices=["pack", "build-check", "verify", "audit", "review-pack", "review-existing", "review-now", "review-fix", "auto-loop", "review-existing-queue", "review-apply"], default="pack", help="Phase 2 mode: default workflow is pack -> build-check -> review-pack/review-existing -> review-now/review-apply; review-now prepares a Codex handoff request for current/existing/candidate subjects; review-fix activates a semantic-repair build loop from the latest failed review; auto-loop advances the same-session Codex author/reviewer loop state and runtime transitions; review-existing-queue prepares a batch Codex reviewer queue from ToyApollo/Output; verify/audit are optional runner-backed modes")
-    parser.add_argument("--phase3-mode", type=str, choices=["soft-pack", "soft-apply"], default="soft-pack", help="Phase 3 mode: problem soft dependency selection")
+    parser.add_argument("--tasks", type=str, required=False, default="", help="Comma-separated block_id filter for Phase 2 modes")
+    parser.add_argument("--phase2-mode", type=str, choices=phase2_modes, default="pack", help="Phase 2 mode: default workflow is pack -> build-check -> review-pack/review-existing -> review-now/review-apply; soft-pack/soft-apply handle Problem soft dependency selection; review-fix activates a semantic-repair build loop from the latest failed review; auto-loop advances the same-session Codex author/reviewer loop state and runtime transitions; review-existing-queue prepares a batch Codex reviewer queue from ToyApollo/Output; verify/audit are optional runner-backed modes")
+    parser.add_argument("--phase3-mode", type=str, choices=["soft-pack", "soft-apply"], default=None, help=argparse.SUPPRESS)
     parser.add_argument("--candidate", type=str, required=False, default="", help="Optional external Lean file for --phase 2 --phase2-mode build-check/verify; review-pack only accepts ToyApollo/Output/<task>.lean as a compatibility alias for review-existing")
     parser.add_argument("--review-result", type=str, required=False, default="", dest="review_result", help="Filled semantic review result JSON for --phase 2 --phase2-mode review-apply")
     parser.add_argument("--review-subject", type=str, choices=["current", "existing", "candidate"], default="current", dest="review_subject", help="Review subject selector for --phase 2 --phase2-mode review-now/auto-loop")
@@ -315,7 +338,7 @@ def main() -> int:
     parser.add_argument("--max-auto-rounds", type=int, default=6, dest="max_auto_rounds", help="Maximum rounds for --phase 2 --phase2-mode auto-loop")
     parser.add_argument("--nonprogress-limit", type=int, default=2, dest="nonprogress_limit", help="Stop --phase 2 --phase2-mode auto-loop after this many consecutive non-progress failures")
     parser.add_argument("--max-build-attempts-per-round", type=int, default=3, dest="max_build_attempts_per_round", help="Maximum build-check attempts per round for --phase 2 --phase2-mode auto-loop")
-    parser.add_argument("--selection", type=str, required=False, default="", help="Selection JSON for --phase 3 --phase3-mode soft-apply")
+    parser.add_argument("--selection", type=str, required=False, default="", help="Selection JSON for --phase 2 --phase2-mode soft-apply")
     parser.add_argument("--status", action="store_true", help="Show project status summary")
 
     args = parser.parse_args()
@@ -338,12 +361,19 @@ def main() -> int:
             parser.error("--page-range is only used with --phase 0 --phase0-mode pack.")
     if args.task_ids and args.phase == 1:
         parser.error("--tasks is not supported for Phase 1.")
-    phase2_prompt_modes = ("pack", "build-check", "verify", "audit", "review-pack", "review-existing", "review-now", "review-fix", "auto-loop", "review-existing-queue", "review-apply")
-    if args.phase == 2 and args.phase2_mode in phase2_prompt_modes and not args.task_ids:
+    if args.phase3_mode is not None and args.phase != 3:
+        parser.error("--phase3-mode has been merged into --phase2-mode; use --phase 2 --phase2-mode soft-pack/soft-apply.")
+    if args.phase == 2 and args.phase2_mode in phase2_modes and not args.task_ids:
         if args.phase2_mode != "review-existing-queue":
-            parser.error("--phase 2 prompt-pack modes require task ids via --tasks.")
-    if args.phase == 2 and args.phase2_mode in ("pack", "build-check", "verify", "review-pack", "review-existing", "review-now", "review-fix", "auto-loop", "review-apply") and len(args.task_ids) > 1:
+            parser.error("--phase 2 modes require task ids via --tasks.")
+    if args.phase == 2 and args.phase2_mode in phase2_single_task_modes and len(args.task_ids) > 1:
         parser.error("--phase 2 pack/build-check/verify/review-pack/review-existing/review-now/review-fix/auto-loop/review-apply modes support exactly one task at a time.")
+    if args.phase == 2 and args.phase2_mode in phase2_soft_modes:
+        invalid = [task_id for task_id in args.task_ids if not task_id.startswith("prob_")]
+        if invalid:
+            parser.error(f"--phase 2 --phase2-mode {args.phase2_mode} only supports problem tasks: {', '.join(invalid)}")
+    if args.phase == 3:
+        parser.error(phase3_migration_message)
     if args.phase == 2 and args.input:
         parser.error("--input is not used with --phase 2.")
     if args.candidate and not (args.phase == 2 and args.phase2_mode in ("build-check", "verify", "review-pack")):
@@ -363,16 +393,10 @@ def main() -> int:
         and (args.max_auto_rounds != 6 or args.nonprogress_limit != 2 or args.max_build_attempts_per_round != 3)
     ):
         parser.error("--max-auto-rounds/--nonprogress-limit/--max-build-attempts-per-round are only supported with --phase 2 --phase2-mode auto-loop.")
-    if args.phase == 3 and args.phase3_mode in ("soft-pack", "soft-apply") and not args.task_ids:
-        parser.error("--phase 3 soft-pack/soft-apply require at least one task via --tasks.")
-    if args.phase == 3 and args.phase3_mode in ("soft-pack", "soft-apply"):
-        invalid = [task_id for task_id in args.task_ids if not task_id.startswith("prob_")]
-        if invalid:
-            parser.error(f"--phase 3 {args.phase3_mode} only supports problem tasks: {', '.join(invalid)}")
-    if args.phase == 3 and args.phase3_mode == "soft-apply" and not args.selection:
-        parser.error("--selection is required with --phase 3 --phase3-mode soft-apply.")
-    if args.selection and not (args.phase == 3 and args.phase3_mode == "soft-apply"):
-        parser.error("--selection is only supported with --phase 3 --phase3-mode soft-apply.")
+    if args.phase == 2 and args.phase2_mode == "soft-apply" and not args.selection:
+        parser.error("--selection is required with --phase 2 --phase2-mode soft-apply.")
+    if args.selection and not (args.phase == 2 and args.phase2_mode == "soft-apply"):
+        parser.error("--selection is only supported with --phase 2 --phase2-mode soft-apply.")
     if args.task_ids and args.status:
         parser.error("--tasks cannot be combined with --status.")
 

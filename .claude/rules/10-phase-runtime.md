@@ -22,8 +22,8 @@ python .\run_chapter.py --phase 2 --phase2-mode review-existing-queue
 python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks <task_id> --review-result <path>
 python .\run_chapter.py --phase 2 --phase2-mode verify --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode audit --tasks <task_id>
-python .\run_chapter.py --phase 3 --phase3-mode soft-pack --tasks <problem_ids>
-python .\run_chapter.py --phase 3 --phase3-mode soft-apply --tasks <problem_ids> --selection <path>
+python .\run_chapter.py --phase 2 --phase2-mode soft-pack --tasks <problem_ids>
+python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids> --selection <path>
 ```
 
 ## Phase Contract
@@ -64,13 +64,14 @@ python .\run_chapter.py --phase 3 --phase3-mode soft-apply --tasks <problem_ids>
   - `verify` and `audit` remain runner-backed advanced modes
   - `pack` consumes hard deps plus confirmed soft imports and writes `dependency_decision_context.*`
   - `build-check` records undeclared local imports as dependency violations; it does not add them to the ledger
-- Phase 3:
-  - active modes are only `soft-pack` and `soft-apply`
-  - Phase 3 is for problem-oriented soft dependency selection
-  - ordinary failed local tasks remain in Phase 2 review/repair workflows
+  - `soft-pack` and `soft-apply` are the Problem soft-dependency special case
   - `soft-apply` only applies selected soft imports to the ledger and pack artifacts
   - `soft-apply` records the reason for each selected soft import when rationale is available
   - `soft-apply` does not call an external provider and does not perform a Lean acceptance gate
+- Phase 3:
+  - merged into Phase 2
+  - old soft-dependency commands should fail with a migration message
+  - ordinary failed local tasks remain in Phase 2 review/repair workflows
 - Phase 4:
   - CLI branch is currently disabled/no-op
   - do not document it as automated until the code path is restored
@@ -103,8 +104,8 @@ python .\run_chapter.py --phase 3 --phase3-mode soft-apply --tasks <problem_ids>
 - Decision trail source of truth: why a dependency was selected.
 - Trail records live under `dependency_decisions/<task_id>.jsonl`.
 - Phase 1 chooses hard dependencies.
-- Phase 3 `soft-apply` chooses problem soft imports.
-- Phase 2 consumes the declared union and records violations only.
+- Phase 2 `soft-apply` chooses problem soft imports.
+- Phase 2 prompt-pack/build modes consume the declared union and record violations only.
 - Historical archives and old prompt packs are read-only evidence, not current
   dependency authority.
 
@@ -120,9 +121,9 @@ python .\run_chapter.py --phase 3 --phase3-mode soft-apply --tasks <problem_ids>
   - last completed review section: `latest_semantic_review_result_file`
   - compatibility pointer: `latest_verify_result_file`
 
-## Phase 3 Source Of Truth
+## Phase 2 Problem Soft-Dependency Source Of Truth
 
-- Source for active Phase 3 selection: explicit problem task ids passed with `--tasks`.
+- Source for active Problem soft-dependency selection: explicit problem task ids passed with `--tasks`.
 - Selection authority: operator-confirmed selection JSON consumed by `soft-apply`.
 - Ledger authority: `soft_imports` plus `soft_imports_confirmed_at` after `soft-apply`.
 - `plans/unsolved_tasks.json` is legacy audit material, not the default queue driver.
@@ -135,6 +136,6 @@ python .\run_chapter.py --phase 3 --phase3-mode soft-apply --tasks <problem_ids>
 - Use `python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject existing` for existing runnable official output
 - Use `review-pack` and `review-existing` only as prepare-only/compatibility material-generation modes
 - Use `python .\run_chapter.py --phase 2 --phase2-mode review-existing-queue` to build the batch Codex reviewer queue from `ToyApollo/Output`
-- Use `python .\run_chapter.py --phase 3 --phase3-mode soft-apply --tasks <problem_ids> --selection <path>` only to persist selected soft imports
+- Use `python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids> --selection <path>` only to persist selected soft imports
 - Use `lake build ToyApollo.Output.<block_id>` as the Lean-facing health signal
 - Avoid treating `lake build ToyApollo` as the only health signal

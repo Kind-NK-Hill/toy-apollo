@@ -28,7 +28,7 @@ def make_settings(root: Path) -> Settings:
         formalized_chapters_dir=root / "formalized_chapters",
         output_lean_files_dir=root / "output_lean_files",
         phase2_prompt_packs_dir=root / "phase2_prompt_packs",
-        phase3_softdep_packs_dir=root / "phase3_softdep_packs",
+        phase2_softdep_packs_dir=root / "phase2_softdep_packs",
         error_logs_dir=root / "error_logs",
         toyapollo_output_dir=root / "ToyApollo" / "Output",
         aristotle_outbox_dir=root / "aristotle_outbox",
