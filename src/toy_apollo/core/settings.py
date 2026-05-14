@@ -26,8 +26,6 @@ class Settings:
     mathlib_path: Path
     phase0_ingestion_packs_dir: Path | None = None
     phase1_prompt_packs_dir: Path | None = None
-    phase3_execution_batches_dir: Path | None = None
-    phase3_post_harvest_packs_dir: Path | None = None
     dependency_decisions_dir: Path | None = None
 
 
@@ -52,8 +50,6 @@ def get_settings() -> Settings:
         phase2_prompt_packs_dir=artifact_root / "phase2_prompt_packs",
         phase3_softdep_packs_dir=artifact_root / "phase3_softdep_packs",
         phase1_prompt_packs_dir=artifact_root / "phase1_prompt_packs",
-        phase3_execution_batches_dir=artifact_root / "phase3_execution_batches",
-        phase3_post_harvest_packs_dir=artifact_root / "phase3_post_harvest_packs",
         dependency_decisions_dir=artifact_root / "dependency_decisions",
         error_logs_dir=artifact_root / "error_logs",
         toyapollo_output_dir=runtime_root / "ToyApollo" / "Output",

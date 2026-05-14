@@ -2,4 +2,3 @@ sentence-transformers
 faiss-cpu
 numpy
 tqdm
-aristotlelib

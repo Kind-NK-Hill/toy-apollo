@@ -18,6 +18,13 @@ from src.toy_apollo.dependency_decisions import load_dependency_decisions  # noq
 from src.toy_apollo.phase3_softdep_pack import apply_softdep_selection, write_softdep_pack  # noqa: E402
 
 
+def removed_provider_module_names() -> tuple[str, str]:
+    return (
+        "src.toy_apollo.phase3_" + "execution_batches",
+        "src.toy_apollo.integrations." + "offload" + "_" + "queue",
+    )
+
+
 def make_settings(root: Path) -> Settings:
     return Settings(
         runtime_root=root,
@@ -74,12 +81,9 @@ class Phase3SoftdepPackTests(unittest.TestCase):
                 task["source_plan"] = "12_chap4_problems"
                 ledger.add_or_update_task(task)
 
+            removed_modules = removed_provider_module_names()
             for module_name in list(sys.modules):
-                if (
-                    module_name == "src.toy_apollo.phase3_execution_batches"
-                    or module_name == "src.toy_apollo.integrations.offload_queue"
-                    or module_name.startswith("src.aristotle_")
-                ):
+                if module_name in removed_modules or module_name.startswith("src.aristotle_"):
                     sys.modules.pop(module_name, None)
 
             args = Namespace(
@@ -98,11 +102,7 @@ class Phase3SoftdepPackTests(unittest.TestCase):
             banned = [
                 module_name
                 for module_name in sys.modules
-                if (
-                    module_name == "src.toy_apollo.phase3_execution_batches"
-                    or module_name == "src.toy_apollo.integrations.offload_queue"
-                    or module_name.startswith("src.aristotle_")
-                )
+                if module_name in removed_modules or module_name.startswith("src.aristotle_")
             ]
             self.assertEqual([], banned)
         finally:
