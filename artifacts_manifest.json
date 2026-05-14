@@ -31,13 +31,13 @@
       "path": "aristotle_outbox",
       "required": false,
       "regenerable": true,
-      "note": "Phase 3 upload staging artifacts."
+      "note": "Legacy Phase 3 external-provider staging artifacts; not active in the current CLI."
     },
     {
       "path": "aristotle_archives",
       "required": false,
       "regenerable": false,
-      "note": "Cloud return archives from Aristotle."
+      "note": "Legacy external-provider return archives; not active in the current CLI."
     },
     {
       "path": "aristole-example-outputs",

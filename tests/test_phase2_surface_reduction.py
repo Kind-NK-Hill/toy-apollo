@@ -106,6 +106,8 @@ class Phase2SurfaceReductionTests(unittest.TestCase):
 
     def test_prompt_pack_test_file_no_longer_hosts_owned_test_groups(self):
         path = REPO_ROOT / "tests" / "test_phase2_prompt_pack.py"
+        if not path.exists():
+            return
         source = path.read_text(encoding="utf-8")
         banned_markers = [
             "def test_codex_review_apply_",

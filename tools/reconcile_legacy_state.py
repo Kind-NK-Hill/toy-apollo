@@ -28,7 +28,7 @@ except Exception:
 
 LEGACY_ROOT_DEFAULT = Path(r"D:\Grad_Study\Practimum\Formalization\toy-apollo-archive-20260508")
 CURRENT_LEDGER_DEFAULT = Path("project_ledger.json")
-REPORT_DIR_DEFAULT = Path("docs/reorg")
+REPORT_DIR_DEFAULT = Path("reports/legacy_reconcile")
 
 HIGH_STATUS_REQUIRES_EVIDENCE = {
     "HARVESTED",
