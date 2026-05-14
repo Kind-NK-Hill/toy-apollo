@@ -81,6 +81,93 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(args.nonprogress_limit, 3)
         self.assertEqual(args.max_build_attempts_per_round, 4)
 
+    def test_cli_phase2_soft_pack_accepts_problem_batch(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        with patch.object(
+            sys,
+            "argv",
+            [
+                "toy-apollo",
+                "--phase",
+                "2",
+                "--phase2-mode",
+                "soft-pack",
+                "--tasks",
+                "prob_4_2,prob_4_4",
+            ],
+        ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock:
+            code = cli_app.main()
+
+        self.assertEqual(code, 0)
+        process_target_mock.assert_awaited_once()
+        args = process_target_mock.await_args.args[0]
+        self.assertEqual(args.phase, 2)
+        self.assertEqual(args.phase2_mode, "soft-pack")
+        self.assertEqual(args.task_ids, ["prob_4_2", "prob_4_4"])
+
+    def test_cli_phase2_soft_apply_requires_selection(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        with patch.object(
+            sys,
+            "argv",
+            ["toy-apollo", "--phase", "2", "--phase2-mode", "soft-apply", "--tasks", "prob_4_2"],
+        ), self.assertRaises(SystemExit) as caught:
+            cli_app.main()
+        self.assertEqual(caught.exception.code, 2)
+
+    def test_cli_phase2_soft_modes_reject_non_problem_tasks(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        with patch.object(
+            sys,
+            "argv",
+            ["toy-apollo", "--phase", "2", "--phase2-mode", "soft-pack", "--tasks", "thm_4_7"],
+        ), self.assertRaises(SystemExit) as caught:
+            cli_app.main()
+        self.assertEqual(caught.exception.code, 2)
+
+    def test_cli_phase3_soft_modes_are_merged_into_phase2(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        with patch.object(
+            sys,
+            "argv",
+            [
+                "toy-apollo",
+                "--phase",
+                "3",
+                "--phase3-mode",
+                "soft-pack",
+                "--tasks",
+                "prob_4_2",
+            ],
+        ), self.assertRaises(SystemExit) as caught:
+            cli_app.main()
+        self.assertEqual(caught.exception.code, 2)
+
+    def test_cli_phase3_mode_flag_is_not_valid_with_phase2(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        with patch.object(
+            sys,
+            "argv",
+            [
+                "toy-apollo",
+                "--phase",
+                "2",
+                "--phase2-mode",
+                "soft-pack",
+                "--phase3-mode",
+                "soft-pack",
+                "--tasks",
+                "prob_4_2",
+            ],
+        ), self.assertRaises(SystemExit) as caught:
+            cli_app.main()
+        self.assertEqual(caught.exception.code, 2)
+
     def test_cli_review_apply_requires_review_result(self):
         from src.toy_apollo.cli import app as cli_app
 

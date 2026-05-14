@@ -277,7 +277,7 @@ def write_softdep_pack(task_ids: list[str], ledger: LedgerManager, settings) -> 
     materials.sort(key=lambda item: item["block_id"])
 
     batch_id = build_selection_scope_id(task_ids)
-    pack_dir = settings.phase3_softdep_packs_dir / batch_id
+    pack_dir = settings.phase2_softdep_packs_dir / batch_id
     pack_dir.mkdir(parents=True, exist_ok=True)
 
     batch_payload = {
@@ -343,7 +343,7 @@ def apply_softdep_selection(task_ids: list[str], ledger: LedgerManager, settings
         raise ValueError("No valid task ids provided for soft-apply.")
 
     batch_id = build_selection_scope_id(task_ids)
-    pack_dir = settings.phase3_softdep_packs_dir / batch_id
+    pack_dir = settings.phase2_softdep_packs_dir / batch_id
     if not pack_dir.exists():
         raise FileNotFoundError(f"Soft dependency pack does not exist: {pack_dir}")
 
@@ -391,7 +391,7 @@ def apply_softdep_selection(task_ids: list[str], ledger: LedgerManager, settings
                     task_id=task_id,
                     dep_id=dep_id,
                     kind="soft",
-                    phase="phase3_soft_apply",
+                    phase="phase2_soft_apply",
                     criterion="soft_minimal_sufficient",
                     evidence=evidence,
                     source_plan=source_plan,

@@ -3967,7 +3967,7 @@ def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[
     if str(task.get("type", "")).strip().lower() == "problem" and not soft_confirmed:
         raise ValueError(
             f"Problem task {task_id} does not have confirmed soft selection. "
-            "Run --phase 3 --phase3-mode soft-pack/soft-apply first."
+            "Run --phase 2 --phase2-mode soft-pack/soft-apply first."
         )
 
     pack_round = int(current_record.get("pack_round", 0) or 0) + 1

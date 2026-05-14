@@ -1,12 +1,12 @@
-# Phase3 Soft Dependency Workflow
+# Phase 2 Problem Soft Dependency Workflow
 
 ## Purpose
 
-This document is the operator runbook for the current `phase3` surface: batch soft-dependency selection on `Problem` tasks.
+This document is the operator runbook for the Phase 2 Problem soft-dependency special case: batch soft-dependency selection on `Problem` tasks.
 
 The goal is to select chapter-local `def/thm` materials once, persist them to the ledger, and then reuse the same results in:
 
-- `phase 2` prompt-pack problem formalization
+- Phase 2 prompt-pack problem formalization
 - later operator work that explicitly consumes confirmed soft imports
 
 This is an operator-driven workflow. The code only prepares md/json materials; the actual `soft_imports_selection.json` is intended to be produced by the local Codex/GPT-5.4 operator workflow.
@@ -14,7 +14,7 @@ This is an operator-driven workflow. The code only prepares md/json materials; t
 ## Core Rule
 
 `soft imports` are externally selected, but once selected they are mandatory imports.
-The current Phase 3 CLI does not include offload batching or repair modes. A `Problem` task must have `soft_imports_confirmed_at`, even when the confirmed selection is an empty list.
+This Phase 2 special case does not include offload batching or repair modes. A `Problem` task must have `soft_imports_confirmed_at`, even when the confirmed selection is an empty list.
 Having `candidate_snapshot.soft_imports` alone is not enough; confirmation is explicit.
 
 Canonical storage remains:
@@ -25,8 +25,8 @@ Canonical storage remains:
 ## CLI Modes
 
 ```powershell
-python .\run_chapter.py --phase 3 --phase3-mode soft-pack --tasks <problem_ids>
-python .\run_chapter.py --phase 3 --phase3-mode soft-apply --tasks <problem_ids> --selection <path>
+python .\run_chapter.py --phase 2 --phase2-mode soft-pack --tasks <problem_ids>
+python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids> --selection <path>
 ```
 
 Rules:
@@ -40,7 +40,7 @@ Rules:
 
 Each batch gets a directory:
 
-- `phase3_softdep_packs/<batch_id>/`
+- `phase2_softdep_packs/<batch_id>/`
 
 Typical contents:
 
@@ -59,12 +59,12 @@ Typical contents:
 ### Step 1: Generate the batch pack
 
 ```powershell
-python .\run_chapter.py --phase 3 --phase3-mode soft-pack --tasks prob_4_2,prob_4_4
+python .\run_chapter.py --phase 2 --phase2-mode soft-pack --tasks prob_4_2,prob_4_4
 ```
 
 Expected result:
 
-- the batch directory appears under `phase3_softdep_packs/`
+- the batch directory appears under `phase2_softdep_packs/`
 - no external provider call is made
 - no ledger soft imports are changed yet
 
@@ -101,7 +101,7 @@ Example:
 ### Step 4: Apply the selection
 
 ```powershell
-python .\run_chapter.py --phase 3 --phase3-mode soft-apply --tasks prob_4_2,prob_4_4 --selection .\selection.json
+python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks prob_4_2,prob_4_4 --selection .\selection.json
 ```
 
 Expected result:
@@ -116,9 +116,9 @@ Expected result:
 After `soft-apply`, inspect:
 
 - `project_ledger.json`
-- `phase3_softdep_packs/<batch_id>/apply_report.md`
+- `phase2_softdep_packs/<batch_id>/apply_report.md`
 
-The next step is not Phase 3 provider offload. The current local order is:
+The next step is not provider offload. The current local order is:
 
 1. `soft-pack`
 2. operator/Codex writes the selection JSON

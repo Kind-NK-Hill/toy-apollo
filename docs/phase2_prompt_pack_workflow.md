@@ -55,6 +55,8 @@ Relevant CLI modes:
 9. `review-apply`
 10. `verify`
 11. `audit`
+12. `soft-pack`
+13. `soft-apply`
 
 Commands:
 
@@ -77,6 +79,8 @@ python .\run_chapter.py --phase 2 --phase2-mode review-existing-queue --tasks <t
 python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks <task_id> --review-result <path>
 python .\run_chapter.py --phase 2 --phase2-mode verify --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode audit --tasks <task_id>
+python .\run_chapter.py --phase 2 --phase2-mode soft-pack --tasks <problem_id>,<problem_id>
+python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_id>,<problem_id> --selection <path>
 ```
 
 Rules:
@@ -99,6 +103,8 @@ Rules:
 - `nonprogress` is the semantic stop condition for repeated no-op rounds: it means the same semantic failure fingerprint or unchanged candidate content has repeated across rounds, so the current repair strategy is not meaningfully advancing.
 - `review-existing-queue` scans `ToyApollo\Output\*.lean`, prepares reviewer materials for every matching official output, and optionally filters the scan with `--tasks`.
 - `review-apply` requires exactly one task id and `--review-result`.
+- `soft-pack` and `soft-apply` accept one or more `Problem` task ids.
+- `soft-apply` requires `--selection`.
 - `build-check` defaults to `phase2_prompt_packs/<task_id>/draft.lean`.
 - `build-check --candidate <path>` supports an external Lean file and freezes it into `candidate_vN.lean`.
 - `review-pack` without `--candidate` only works from the current build-ready candidate and remains a low-level prepare-only mode.
@@ -563,7 +569,7 @@ Use only when you want runner-backed re-review of the current official output.
   - `COMPLETED`
   - `VERIFYING`
 - fine-grained Phase2 state lives in `pack_candidate_state`
-- `pack_candidate_state = review_rejected` stays in the Phase 2 repair path; it does not trigger Phase 3
+- `pack_candidate_state = review_rejected` stays in the Phase 2 repair path; it does not trigger Problem soft-dependency selection
 
 ## Failure Triage
 

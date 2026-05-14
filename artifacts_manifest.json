@@ -28,6 +28,12 @@
       "note": "Runtime error logs."
     },
     {
+      "path": "phase2_softdep_packs",
+      "required": false,
+      "regenerable": true,
+      "note": "Phase 2 Problem soft-dependency prompt packs."
+    },
+    {
       "path": "aristotle_outbox",
       "required": false,
       "regenerable": true,

@@ -9,7 +9,7 @@
 ## Current Required Secrets
 
 - No current secret is required for Phase 0/1/2 prompt-pack workflows.
-- No current secret is required for Phase 3 soft dependency selection.
+- No current secret is required for Phase 2 Problem soft dependency selection.
 - Retired provider-specific keys are not active required secrets.
 
 Common optional variables:

@@ -42,7 +42,8 @@ Classify important files before proposing Git tracking or cleanup:
   - `phase0_ingestion_packs/`
   - `phase1_prompt_packs/`
   - `phase2_prompt_packs/`
-  - `phase3_softdep_packs/`
+  - `phase2_softdep_packs/`
+  - `phase3_softdep_packs/` (legacy/protected local artifact; not active workflow)
   - `phase3_execution_batches/` (legacy/protected local artifact; not active workflow)
   - `phase3_post_harvest_packs/` (legacy/protected local artifact; not active workflow)
   - `dependency_decisions/`
