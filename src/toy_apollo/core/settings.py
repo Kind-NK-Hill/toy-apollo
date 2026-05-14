@@ -14,7 +14,7 @@ class Settings:
     formalized_chapters_dir: Path
     output_lean_files_dir: Path
     phase2_prompt_packs_dir: Path
-    phase3_softdep_packs_dir: Path
+    phase2_softdep_packs_dir: Path
     error_logs_dir: Path
     toyapollo_output_dir: Path
     aristotle_outbox_dir: Path
@@ -48,7 +48,7 @@ def get_settings() -> Settings:
         formalized_chapters_dir=artifact_root / "formalized_chapters",
         output_lean_files_dir=artifact_root / "output_lean_files",
         phase2_prompt_packs_dir=artifact_root / "phase2_prompt_packs",
-        phase3_softdep_packs_dir=artifact_root / "phase3_softdep_packs",
+        phase2_softdep_packs_dir=artifact_root / "phase2_softdep_packs",
         phase1_prompt_packs_dir=artifact_root / "phase1_prompt_packs",
         dependency_decisions_dir=artifact_root / "dependency_decisions",
         error_logs_dir=artifact_root / "error_logs",

@@ -5,7 +5,8 @@ Toy Apollo 是一个 Lean 4 教材自动形式化流水线，当前执行模型�
 - Phase 0: source PDF/page range -> cleaned `inputs/*.tex`
 - Phase 1: `pack` -> agent/human writes `draft_plan.json` -> `apply` writes `plans/*_plan.json`
 - Phase 2: 本地 formalization 与验证
-- Phase 3: Problem task 的 soft dependency selection（仅 `soft-pack` / `soft-apply`）
+- Phase 2 Problem 特例: soft dependency selection（`soft-pack` / `soft-apply`）
+- Phase 3: merged into Phase 2；旧命令只给迁移提示
 - Phase 4: disabled/no-op；旧自动回收/对齐流程仅作 legacy/manual 参考
 
 注：
@@ -24,8 +25,8 @@ pip install -r requirements.txt
 
 3. 查看当前 secret 要求：
 
-- Phase 0/1/2 prompt-pack workflow 不需要旧的 DeepSeek/Gemini direct-generation key。
-- Phase 3 soft dependency workflow 不需要外部 provider key。
+- Phase 0/1/2 prompt-pack 和 Problem soft dependency workflow 不需要旧的 DeepSeek/Gemini direct-generation key。
+- Phase 2 Problem soft dependency workflow 不需要外部 provider key。
 - 不要把密钥写入代码或提交到 Git 历史。
 - 建议使用系统环境变量，不要在项目根目录放置 `.env` 文件。
 
@@ -54,20 +55,20 @@ python .\run_chapter.py --phase 1 --phase1-mode apply --input .\inputs
 python .\run_chapter.py --phase 2 --phase2-mode pack --tasks ex_1_2_3
 python .\run_chapter.py --phase 2 --phase2-mode build-check --tasks thm_4_7
 python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks thm_4_7 --review-subject candidate
-python .\run_chapter.py --phase 3 --phase3-mode soft-pack --tasks prob_4_2,prob_4_4
-python .\run_chapter.py --phase 3 --phase3-mode soft-apply --tasks prob_4_2,prob_4_4 --selection .\selection.json
+python .\run_chapter.py --phase 2 --phase2-mode soft-pack --tasks prob_4_2,prob_4_4
+python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks prob_4_2,prob_4_4 --selection .\selection.json
 python .\run_chapter.py --status
 ```
 
 `--tasks` 适用范围：
 
-- `--tasks` 用于 Phase 2 prompt-pack/review modes 和 Phase 3 modes。
+- `--tasks` 用于 Phase 2 prompt-pack/review modes 和 Problem soft dependency modes。
 - Phase 0/1 不支持 `--tasks`；Phase 1 apply 的 `--input` 应指向原始 source `.tex` 或 `inputs` 目录，而不是 `draft_plan.json`。
 
-Phase 3 任务过滤示例：
+Problem soft dependency 任务过滤示例：
 
 ```powershell
-python .\run_chapter.py --phase 3 --phase3-mode soft-pack --tasks prob_3_1,prob_3_2
+python .\run_chapter.py --phase 2 --phase2-mode soft-pack --tasks prob_3_1,prob_3_2
 ```
 
 Problem task 的 soft imports 必须先通过 `soft-pack -> soft-apply` 写入 `soft_imports_confirmed_at`，空列表也需要显式确认。
@@ -107,7 +108,7 @@ python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks ex_4_4_3 --re
 
 ## Phase 3/4 边界
 
-Phase 3 当前只保留 Problem soft dependency selection：`soft-pack` / `soft-apply`。旧 provider offload、post-harvest repair、Phase 4 closure 脚本和 runbook 不再作为 tracked operator docs 保留；如需恢复，必须先恢复对应 CLI 代码，再补回文档。
+Phase 3 已并入 Phase 2，作为 Problem soft dependency selection 的特殊处理：`--phase 2 --phase2-mode soft-pack/soft-apply`。旧 provider offload、post-harvest repair、Phase 4 closure 脚本和 runbook 不再作为 tracked operator docs 保留；如需恢复，必须先恢复对应 CLI 代码，再补回文档。
 
 ## 仓库边界
 

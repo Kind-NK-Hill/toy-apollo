@@ -6,7 +6,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
 
 ## Always Do
 
-- Keep the stable entrypoints working: `python run_chapter.py --phase {0,1,2,3}` and `python run_chapter.py --status`; Phase 4 is currently disabled/no-op.
+- Keep the stable entrypoints working: `python run_chapter.py --phase {0,1,2,3}` and `python run_chapter.py --status`; Phase 3 now reports a migration message, and Phase 4 is currently disabled/no-op.
 - Treat `.claude/rules/10-phase-runtime.md` as the phase behavior source of truth before making any phase-routing decision.
 - Prefer active package paths under `src/toy_apollo/*` for new code.
 - Treat `project_ledger.json` as persistent runtime state, not disposable scratch data.
@@ -27,11 +27,11 @@ If this file conflicts with older notes, trust current runtime code and the rule
   - the middle `draft_plan.json` authoring step is not a CLI mode; CLI supports only `--phase1-mode pack` and `--phase1-mode apply`
   - CLI `apply --input` points to the source `.tex` or `inputs/` directory, not to `phase1_prompt_packs/<source>/draft_plan.json`
 - Phase 2:
-  - supported operator modes: `pack`, `build-check`, `review-pack`, `review-existing`, `review-now`, `review-fix`, `auto-loop`, `review-existing-queue`, `review-apply`, `verify`, `audit`
+  - supported operator modes: `pack`, `build-check`, `review-pack`, `review-existing`, `review-now`, `review-fix`, `auto-loop`, `review-existing-queue`, `review-apply`, `verify`, `audit`, `soft-pack`, `soft-apply`
   - default local path is prompt-pack driven, with `build-check` as the normal technical gate, `review-now` as the Codex-facing semantic review entrypoint, `review-fix` as the semantic-repair entrypoint after failed review, and `auto-loop` as the same-session Codex orchestration mode
+  - `soft-pack` and `soft-apply` are the Problem soft-dependency special case inside Phase 2
 - Phase 3:
-  - supported operator modes: `soft-pack`, `soft-apply`
-  - handles problem-oriented soft-dependency selection only
+  - merged into Phase 2; old Phase 3 soft-dependency commands should report the migration path
   - ordinary failed local tasks stay in Phase 2 review/repair workflows
 - Phase 4:
   - CLI branch is currently disabled/no-op
@@ -47,10 +47,10 @@ If this file conflicts with older notes, trust current runtime code and the rule
 ## Recommended Routing
 
 - Problem soft-dependency workflow:
-  - `soft-pack`
+  - `--phase 2 --phase2-mode soft-pack`
   - operator writes the selection JSON
-  - `soft-apply`
-- If the task is about prompt-pack formalization, build failure, or semantic review failure, route through Phase 2 modes, not Phase 3.
+  - `--phase 2 --phase2-mode soft-apply`
+- If the task is about prompt-pack formalization, build failure, semantic review failure, or Problem soft-dependency selection, route through Phase 2 modes, not Phase 3.
 - Phase 2 Codex semantic review workflow:
   - existing official output: `review-now --review-subject existing`
   - current build-ready candidate: `review-now --review-subject candidate`
@@ -103,7 +103,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
 
 - Commit secrets, tokens, or `.env` files.
 - Treat archive notes as runtime truth unless active code implements them.
-- Use `plans/unsolved_tasks.json` as the default Phase 3 source of truth.
+- Use `plans/unsolved_tasks.json` as the default soft-dependency source of truth.
 - Describe `soft-apply` as external-provider execution or as a Lean acceptance gate.
 - Describe removed Phase 3 provider/post-processing tracks as active workflow.
 - Reformat the repository by hand in agent prompts; use dedicated tooling when formatter/linter policy is added.

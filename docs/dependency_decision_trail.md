@@ -49,7 +49,7 @@ Each line is independent and idempotent by `decision_id`.
 
 - `operator_declared_reliance`: already present in `draft_plan.json`.
 - `explicit_text_reference`: injected from text such as `Theorem 7.12`.
-- `soft_minimal_sufficient`: chosen by Phase 3 soft dependency selection.
+- `soft_minimal_sufficient`: chosen by Phase 2 Problem soft dependency selection.
 - `interface_bridge`: needed to connect textbook and Mathlib formulations.
 - `final_union_materialized`: legacy criterion for an old offload dependency manifest.
 - `undeclared_candidate_import`: candidate imported something outside the
@@ -63,7 +63,7 @@ Each line is independent and idempotent by `decision_id`.
 - Phase 1 plans are source-unit scoped.  A source unit is one numbered
   subsection, optionally with chapter intro for the first subsection, or one
   Problems section.  Do not use a whole-chapter plan as dependency authority.
-- Phase 3 `soft-apply` records problem soft imports.
+- Phase 2 `soft-apply` records problem soft imports.
 - Phase 2 consumes the final import union and writes
   `dependency_decision_context.*` into each prompt pack.
 - Phase 2 `build-check` records undeclared local imports as violations.

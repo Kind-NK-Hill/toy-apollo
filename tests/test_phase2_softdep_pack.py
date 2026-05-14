@@ -15,7 +15,7 @@ from src.ledger_manager import LedgerManager  # noqa: E402
 from src.toy_apollo.cli import app as cli_app  # noqa: E402
 from src.toy_apollo.core.settings import Settings  # noqa: E402
 from src.toy_apollo.dependency_decisions import load_dependency_decisions  # noqa: E402
-from src.toy_apollo.phase3_softdep_pack import apply_softdep_selection, write_softdep_pack  # noqa: E402
+from src.toy_apollo.phase2_softdep_pack import apply_softdep_selection, write_softdep_pack  # noqa: E402
 
 
 def removed_provider_module_names() -> tuple[str, str]:
@@ -34,7 +34,7 @@ def make_settings(root: Path) -> Settings:
         formalized_chapters_dir=root / "formalized_chapters",
         output_lean_files_dir=root / "output_lean_files",
         phase2_prompt_packs_dir=root / "phase2_prompt_packs",
-        phase3_softdep_packs_dir=root / "phase3_softdep_packs",
+        phase2_softdep_packs_dir=root / "phase2_softdep_packs",
         error_logs_dir=root / "error_logs",
         toyapollo_output_dir=root / "ToyApollo" / "Output",
         aristotle_outbox_dir=root / "aristotle_outbox",
@@ -48,9 +48,9 @@ def make_settings(root: Path) -> Settings:
     )
 
 
-class Phase3SoftdepPackTests(unittest.TestCase):
-    def test_cli_soft_pack_does_not_import_provider_modules(self):
-        root = REPO_ROOT / "tests" / "_tmp_phase3_softdep_cli_import_boundary"
+class Phase2SoftdepPackTests(unittest.TestCase):
+    def test_phase2_cli_soft_pack_does_not_import_provider_modules(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_softdep_cli_import_boundary"
         try:
             if root.exists():
                 shutil.rmtree(root, ignore_errors=True)
@@ -87,11 +87,11 @@ class Phase3SoftdepPackTests(unittest.TestCase):
                     sys.modules.pop(module_name, None)
 
             args = Namespace(
-                phase=3,
+                phase=2,
                 input="",
                 tasks="prob_4_2",
                 task_ids=["prob_4_2"],
-                phase3_mode="soft-pack",
+                phase2_mode="soft-pack",
                 selection="",
                 batch="",
                 candidate="",
@@ -109,7 +109,7 @@ class Phase3SoftdepPackTests(unittest.TestCase):
             shutil.rmtree(root, ignore_errors=True)
 
     def test_soft_imports_are_not_confirmed_without_soft_apply(self):
-        root = REPO_ROOT / "tests" / "_tmp_phase3_softdep_no_auto_confirm"
+        root = REPO_ROOT / "tests" / "_tmp_phase2_softdep_no_auto_confirm"
         try:
             if root.exists():
                 shutil.rmtree(root, ignore_errors=True)
@@ -138,7 +138,7 @@ class Phase3SoftdepPackTests(unittest.TestCase):
             shutil.rmtree(root, ignore_errors=True)
 
     def test_write_softdep_pack_and_apply_updates_ledger(self):
-        root = REPO_ROOT / "tests" / "_tmp_phase3_softdep_pack"
+        root = REPO_ROOT / "tests" / "_tmp_phase2_softdep_pack"
         try:
             if root.exists():
                 shutil.rmtree(root, ignore_errors=True)
@@ -232,6 +232,7 @@ class Phase3SoftdepPackTests(unittest.TestCase):
             self.assertTrue(ledger.ledger["tasks"]["prob_4_4"]["soft_imports_confirmed_at"])
             prob_4_2_decisions = load_dependency_decisions(settings, "prob_4_2")
             self.assertEqual(prob_4_2_decisions[0]["kind"], "soft")
+            self.assertEqual(prob_4_2_decisions[0]["phase"], "phase2_soft_apply")
             self.assertEqual(prob_4_2_decisions[0]["criterion"], "soft_minimal_sufficient")
             self.assertEqual(
                 prob_4_2_decisions[0]["evidence"],
@@ -243,7 +244,7 @@ class Phase3SoftdepPackTests(unittest.TestCase):
             shutil.rmtree(root, ignore_errors=True)
 
     def test_write_softdep_pack_includes_theorem_statement_and_with_proof_materials(self):
-        root = REPO_ROOT / "tests" / "_tmp_phase3_softdep_theorem_family"
+        root = REPO_ROOT / "tests" / "_tmp_phase2_softdep_theorem_family"
         try:
             if root.exists():
                 shutil.rmtree(root, ignore_errors=True)

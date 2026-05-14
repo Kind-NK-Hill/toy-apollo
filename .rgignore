@@ -11,6 +11,7 @@ src/toy_apollo/backups/
 phase0_ingestion_packs/
 phase1_prompt_packs/
 phase2_prompt_packs/
+phase2_softdep_packs/
 phase3_softdep_packs/
 phase3_execution_batches/
 phase3_post_harvest_packs/
