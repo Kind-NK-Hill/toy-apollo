@@ -1,0 +1,38 @@
+# Default ripgrep noise filter for active-source searches.
+#
+# Search-ignore is not Git-ignore and is not a deletion signal. These paths are
+# preserved locally unless an explicit migration task says otherwise.
+#
+# Use `rg --no-ignore ...` when intentionally auditing archives, generated
+# artifacts, prompt packs, dependency provenance, or historical migration notes.
+
+src/toy_apollo/backups/
+
+docs/reorg/
+docs/superpowers/
+docs/reorg.md
+docs/2026-*-old-*.md
+
+phase0_ingestion_packs/
+phase1_prompt_packs/
+phase2_prompt_packs/
+phase3_softdep_packs/
+phase3_execution_batches/
+phase3_post_harvest_packs/
+
+aristotle_outbox/
+aristotle_archives/
+output_lean_files/
+formalized_chapters/
+reports/
+error_logs*/
+
+# Search-hidden by default because it is provenance-heavy; audit with
+# `rg --no-ignore dependency_decisions/` when dependency decisions are in scope.
+dependency_decisions/
+
+tests/_tmp*/
+plans/legacy/
+inputs/legacy/
+plans/offload_candidates_legacy.json
+project_ledger.backup.json

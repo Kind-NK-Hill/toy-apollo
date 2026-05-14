@@ -1,0 +1,444 @@
+import asyncio
+import json
+import shutil
+import sys
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from src.toy_apollo.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack, write_existing_output_review_pack  # noqa: E402
+from src.toy_apollo.phase2_review_apply import apply_codex_review_result_once  # noqa: E402
+from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E402
+
+
+class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
+    def test_codex_review_apply_valid_pass_promotes_and_marks_completed(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_valid_pass"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_valid_pass"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass")
+
+            def promote_side_effect(*args, **kwargs):
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                output_path.write_text((pack_dir / "candidate_v1.lean").read_text(encoding="utf-8"), encoding="utf-8")
+                return True, "final build ok"
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                side_effect=promote_side_effect,
+            ), patch(
+                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                side_effect=promote_side_effect,
+            ):
+                success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertTrue(success, detail)
+            self.assertTrue(output_path.exists())
+            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "COMPLETED")
+            self.assertEqual(ledger.ledger["tasks"][task_id]["exported_symbols"], [task_id])
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_rejects_basis_drift(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_basis_drift"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_basis_drift"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass")
+            self._append_direct_downstream_consumer(settings.plans_dir, task_id, "thm_4_review_apply_basis_drift_consumer")
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertIn("basis", detail.lower())
+            self.assertFalse(output_path.exists())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_pass_with_empty_mapping_rejects_promotion(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_empty_mapping"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_empty_mapping"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass", claim_mapping=[])
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertIn("claim_mapping", detail)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_pass_with_empty_source_claims_rejects_promotion(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_empty_source_claims"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_empty_source_claims"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass", source_claims=[])
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertIn("source_claims", detail)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_rejects_candidate_hash_mismatch(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_candidate_hash_mismatch"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_candidate_hash_mismatch"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass")
+            review_input = json.loads((pack_dir / "semantic_review_input_v1.json").read_text(encoding="utf-8"))
+            review_input["candidate"]["hash"] = "mismatch"
+            (pack_dir / "semantic_review_input_v1.json").write_text(json.dumps(review_input, indent=2, ensure_ascii=False), encoding="utf-8")
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertIn("candidate hash", detail.lower())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_inconclusive_auto_continues_review_fix(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_inconclusive_continue"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_inconclusive_continue"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+
+            result_path = self._write_codex_review_result(pack_dir, verdict="inconclusive")
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertIn("repair loop continued automatically", detail.lower())
+            task_record = ledger.ledger["tasks"][task_id]
+            self.assertTrue(str(task_record["current_review_repair_request_file"]).endswith("review_repair_request_v1.json"))
+            self.assertTrue(str(task_record["current_review_repair_seed_file"]).endswith("candidate_v1.lean"))
+            self.assertEqual((pack_dir / "draft.lean").read_text(encoding="utf-8"), (pack_dir / "candidate_v1.lean").read_text(encoding="utf-8"))
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_existing_review_apply_pass_clears_stale_auto_loop_state(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_existing_review_apply_pass_clears_auto_loop"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_existing_review_apply_pass_clears_auto_loop"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id, completed=True)
+            with patch("src.toy_apollo.phase2_prompt_pack._run_official_module_build", return_value=(True, "sanity ok")):
+                review_success, review_detail = asyncio.run(
+                    write_existing_output_review_pack(task_id, ledger, settings, force_new_attempt=True)
+                )
+            self.assertTrue(review_success, review_detail)
+            ledger.update_runtime_metadata(
+                task_id,
+                current_auto_loop_enabled=True,
+                current_auto_loop_entry_subject="existing",
+                current_auto_loop_round=2,
+                current_auto_loop_max_rounds=6,
+                current_auto_loop_max_build_attempts_per_round=3,
+                current_auto_loop_nonprogress_limit=2,
+                current_auto_loop_consecutive_nonprogress=1,
+                current_auto_loop_phase="applying",
+                current_auto_loop_status="active",
+                current_auto_loop_stop_reason="",
+                current_auto_loop_last_candidate_hash="stale",
+                current_auto_loop_last_review_fingerprint="stale",
+                current_auto_loop_last_repair_request_file="stale.json",
+            )
+
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass")
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertTrue(success, detail)
+            task_record = ledger.ledger["tasks"][task_id]
+            self.assertFalse(task_record.get("current_auto_loop_enabled"))
+            self.assertEqual(task_record.get("current_auto_loop_status"), "")
+            self.assertEqual(task_record.get("current_auto_loop_phase"), "")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_strict_schema_gate_preserves_active_auto_loop_state(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_auto_loop_strict_schema_gate"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_auto_loop_strict_schema_gate"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
+            self.assertTrue(output_path.exists())
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "build ok"),
+            ):
+                success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
+            self.assertTrue(success, detail)
+
+            ledger.update_runtime_metadata(
+                task_id,
+                current_auto_loop_enabled=True,
+                current_auto_loop_entry_subject="existing",
+                current_auto_loop_round=1,
+                current_auto_loop_max_rounds=2,
+                current_auto_loop_max_build_attempts_per_round=1,
+                current_auto_loop_nonprogress_limit=1,
+                current_auto_loop_consecutive_nonprogress=0,
+                current_auto_loop_phase="reviewing",
+                current_auto_loop_status="active",
+                current_auto_loop_stop_reason="",
+            )
+
+            review_request = json.loads((pack_dir / "semantic_review_request_v1.json").read_text(encoding="utf-8"))
+            result_path = Path(str(review_request["expected_result_file"]))
+            template_path = Path(str(review_request["review_result_template_file"]))
+            stale_result = json.loads(template_path.read_text(encoding="utf-8"))
+            stale_result.pop("spine_alignment", None)
+            result_path.write_text(json.dumps(stale_result, indent=2, ensure_ascii=False), encoding="utf-8")
+
+            outcome = asyncio.run(apply_codex_review_result_once(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(outcome.success)
+            self.assertIn("spine_alignment", outcome.detail.lower())
+            task_record = ledger.ledger["tasks"][task_id]
+            self.assertEqual(task_record["current_review_subject_kind"], "official_output")
+            self.assertEqual(task_record["current_auto_loop_status"], "active")
+            self.assertEqual(task_record["current_auto_loop_phase"], "reviewing")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_invalid_result_does_not_leave_active_auto_loop_state(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_invalid_clears_auto_loop"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_invalid_clears_auto_loop"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            ledger.update_runtime_metadata(
+                task_id,
+                current_auto_loop_enabled=True,
+                current_auto_loop_entry_subject="current",
+                current_auto_loop_round=1,
+                current_auto_loop_max_rounds=6,
+                current_auto_loop_max_build_attempts_per_round=3,
+                current_auto_loop_nonprogress_limit=2,
+                current_auto_loop_consecutive_nonprogress=0,
+                current_auto_loop_phase="applying",
+                current_auto_loop_status="active",
+                current_auto_loop_stop_reason="",
+                current_auto_loop_last_candidate_hash="candidate-hash",
+                current_auto_loop_last_review_fingerprint="review-fingerprint",
+                current_auto_loop_last_repair_request_file="repair.json",
+            )
+            invalid_result = pack_dir / "semantic_review_result_invalid.json"
+            invalid_result.write_text("{not-json", encoding="utf-8")
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(invalid_result)))
+
+            self.assertFalse(success)
+            self.assertTrue(
+                "prompt_version" in detail or "review_input_file" in detail or "review result is not a json object" in detail.lower(),
+                detail,
+            )
+            task_record = ledger.ledger["tasks"][task_id]
+            self.assertEqual(task_record.get("current_auto_loop_status"), "")
+            self.assertEqual(task_record.get("current_auto_loop_phase"), "")
+            self.assertEqual(task_record.get("current_auto_loop_stop_reason"), "")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_invalid_semantic_output_does_not_auto_continue_review_fix(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_invalid_semantic_output"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_invalid_semantic_output"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            self._append_direct_downstream_consumer(settings.plans_dir, task_id, "thm_4_review_apply_invalid_semantic_output_consumer")
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass")
+            payload = json.loads(result_path.read_text(encoding="utf-8"))
+            payload["downstream_adequacy"]["consumers_checked"] = []
+            result_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertNotIn("repair loop continued automatically", detail.lower())
+            self.assertIn("downstream", detail.lower())
+            task_record = ledger.ledger["tasks"][task_id]
+            self.assertEqual(str(task_record.get("current_review_repair_request_file", "") or ""), "")
+            self.assertEqual(str(task_record.get("current_review_repair_seed_file", "") or ""), "")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_fail_generates_repair_request_and_summary(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_fail_generates_repair"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_fail_generates_repair"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(pack_dir, verdict="fail", source_claims=[], claim_mapping=[])
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertIn("repair loop continued automatically", detail.lower())
+            self.assertTrue((pack_dir / "review_repair_request_v1.json").exists())
+            self.assertTrue((pack_dir / "review_repair_summary_v1.md").exists())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_fail_updates_runtime_history_for_repair_loop(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_fail_history"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_fail_history"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(pack_dir, verdict="fail", source_claims=[], claim_mapping=[])
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            history = json.loads((pack_dir / "attempt_history.json").read_text(encoding="utf-8"))
+            latest = history["attempts"][-1]
+            self.assertEqual(latest["stage"], "semantic_review")
+            self.assertEqual(latest["review_verdict"], "fail")
+            self.assertTrue(str(latest["repair_request_file"]).endswith("review_repair_request_v1.json"))
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_fail_does_not_demote_existing_completed_output(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_existing_fail_no_demote"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_existing_fail_no_demote"
+            bad_candidate = f"import Mathlib\n\ntheorem {task_id} : True := by\n  trivial\n"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(
+                root,
+                task_id,
+                candidate_code=bad_candidate,
+                completed=True,
+            )
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(pack_dir, verdict="fail", source_claims=[], claim_mapping=[])
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "COMPLETED")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_fail_does_not_promote_uncompleted_task(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_fail_no_promotion"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_fail_no_promotion"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            result_path = self._write_codex_review_result(pack_dir, verdict="fail", source_claims=[], claim_mapping=[])
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertIn("fail", detail.lower())
+            self.assertFalse(output_path.exists())
+            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "FAILED_LOCAL")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_inconclusive_does_not_promote_uncompleted_task(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_inconclusive_no_promotion"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_inconclusive_no_promotion"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            result_path = self._write_codex_review_result(pack_dir, verdict="inconclusive")
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertIn("inconclusive", detail.lower())
+            self.assertFalse(output_path.exists())
+            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "FAILED_LOCAL")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_review_apply_invalid_does_not_overwrite_existing_semantic_fail_result(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_preserves_failed_result"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_preserves_failed_result"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            result_path = self._write_codex_review_result(pack_dir, verdict="fail", source_claims=[], claim_mapping=[])
+            original_text = result_path.read_text(encoding="utf-8")
+
+            ledger.update_runtime_metadata(task_id, latest_build_ready_candidate_hash="stale-hash")
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertIn("candidate hash changed", detail.lower())
+            self.assertEqual(result_path.read_text(encoding="utf-8"), original_text)
+            persisted = json.loads(result_path.read_text(encoding="utf-8"))
+            self.assertEqual(persisted["verdict"], "fail")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+
+if __name__ == "__main__":
+    unittest.main()

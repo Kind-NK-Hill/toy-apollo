@@ -1,0 +1,653 @@
+from __future__ import annotations
+
+import json
+import shutil
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+from src.block_id_naming import canonicalize_block_id
+
+from .core import LedgerManager, TaskStatus
+from .phase2_pack_shared.artifacts import (
+    find_existing_task_file,
+    latest_review_repair_request_path,
+    latest_review_repair_summary_path,
+    list_versioned_json_files,
+    next_review_repair_attempt,
+    review_repair_request_path,
+    review_repair_summary_path,
+)
+from .phase2_pack_shared.io import read_file_safely, read_json_safely, sha256_text, write_json
+from .phase2_pack_shared.review_basis_parts import dedupe_strings
+from .phase2_pack_shared.runtime_state import auto_loop_attempt_payload, auto_loop_field_defaults
+from .phase2_pack_views import _render_review_repair_summary, refresh_pack_runtime_view, render_semantic_review_report
+from .phase2_review_request import _clear_current_review_metadata, _resolve_review_binding_path, _validate_review_input_freshness
+from .phase2_semantic_review import (
+    SEMANTIC_REVIEW_PROMPT_VERSION,
+    SEMANTIC_REVIEW_RUBRIC_VERSION,
+    latest_semantic_review_artifact_paths,
+    next_semantic_review_artifact_paths,
+    normalize_reviewer_result,
+)
+from .phase2_pack_generation import (
+    hard_check_diagnostic,
+    parse_diagnostics,
+    quarantine_official_outputs,
+    record_semantic_review_attempt,
+    remove_symbols_owned_by_task,
+    review_diagnostics,
+    run_staged_official_build,
+    write_review_compat_summary,
+    ensure_task_registered,
+    resolve_phase2_task,
+)
+
+
+@dataclass
+class ApplyOutcome:
+    success: bool
+    detail: str
+    disposition: str
+    next_action: str = ""
+    repair_ready: dict[str, Any] | None = None
+
+
+def _resolve_codex_review_input_path(result_path: Path, raw_result: Any) -> Path | None:
+    if isinstance(raw_result, dict):
+        raw_input_path = str(raw_result.get("review_input_file", "") or "").strip()
+        if raw_input_path:
+            path = Path(raw_input_path).expanduser()
+            if not path.is_absolute():
+                path = (result_path.parent / path).resolve()
+            return path
+    if result_path.name.startswith("semantic_review_result_v") and result_path.suffix == ".json":
+        version = result_path.stem.removeprefix("semantic_review_result_v")
+        if version.isdigit():
+            return result_path.parent / f"semantic_review_input_v{version}.json"
+    return None
+
+
+def _review_repair_request_path(pack_dir: Path, attempt: int) -> Path:
+    return review_repair_request_path(pack_dir, attempt)
+
+
+def _latest_review_repair_request_path(pack_dir: Path) -> Path:
+    return latest_review_repair_request_path(pack_dir)
+
+
+def _review_repair_summary_path(pack_dir: Path, attempt: int) -> Path:
+    return review_repair_summary_path(pack_dir, attempt)
+
+
+def _latest_review_repair_summary_path(pack_dir: Path) -> Path:
+    return latest_review_repair_summary_path(pack_dir)
+
+
+def _next_review_repair_attempt(pack_dir: Path) -> int:
+    return next_review_repair_attempt(pack_dir)
+
+
+def _sync_current_review_repair_aliases(
+    pack_dir: Path,
+    *,
+    request_path: Path | None = None,
+    summary_path: Path | None = None,
+) -> None:
+    alias_paths = {
+        "request": _latest_review_repair_request_path(pack_dir),
+        "summary": _latest_review_repair_summary_path(pack_dir),
+    }
+    for source, alias in ((request_path, alias_paths["request"]), (summary_path, alias_paths["summary"])):
+        if source is None:
+            continue
+        if alias.exists():
+            alias.unlink()
+        shutil.copyfile(source, alias)
+
+
+def _clear_current_review_repair_metadata(task_id: str, ledger: LedgerManager) -> None:
+    ledger.update_runtime_metadata(
+        task_id,
+        current_review_repair_request_file="",
+        current_review_repair_summary_file="",
+        current_review_repair_seed_file="",
+        current_review_repair_origin_result_file="",
+        current_review_repair_archive_file="",
+    )
+
+
+def _set_current_review_repair_metadata(
+    task_id: str,
+    ledger: LedgerManager,
+    *,
+    request_file: str,
+    summary_file: str,
+    seed_file: str,
+    origin_result_file: str,
+    archive_file: str = "",
+) -> None:
+    ledger.update_runtime_metadata(
+        task_id,
+        current_review_repair_request_file=request_file,
+        current_review_repair_summary_file=summary_file,
+        current_review_repair_seed_file=seed_file,
+        current_review_repair_origin_result_file=origin_result_file,
+        current_review_repair_archive_file=archive_file,
+    )
+
+
+def _invalid_codex_review_result(review_input: dict[str, Any], reason: str, raw_result: Any | None = None) -> dict[str, Any]:
+    raw = {
+        "verdict": "inconclusive",
+        "confidence": "none",
+        "summary": reason,
+        "source_claims": [],
+        "claim_mapping": [],
+        "findings": [{"severity": "error", "category": "review_apply", "message": reason}],
+        "recommended_disposition": "needs_review",
+    }
+    if raw_result is not None:
+        raw["raw_result"] = raw_result
+    result = normalize_reviewer_result(
+        raw,
+        review_input=review_input,
+        runner_metadata={"status": "codex_handoff_invalid", "reason": reason},
+    )
+    result["normalization_reason"] = reason
+    return result
+
+
+def _write_normalized_codex_review_artifacts(
+    pack_dir: Path,
+    review_input: dict[str, Any],
+    normalized_result: dict[str, Any],
+) -> dict[str, Any]:
+    attempt = int(review_input.get("attempt") or 0) or len(list_versioned_json_files(pack_dir, "semantic_review_input"))
+    paths = next_semantic_review_artifact_paths(pack_dir, attempt)
+    latest = latest_semantic_review_artifact_paths(pack_dir)
+    normalized_result = dict(normalized_result)
+    normalized_result["review_input_file"] = str(paths["input"]) if paths["input"].exists() else str(normalized_result.get("review_input_file", ""))
+    normalized_result["review_prompt_file"] = str(paths["prompt"]) if paths["prompt"].exists() else str(normalized_result.get("review_prompt_file", ""))
+    normalized_result["review_result_file"] = str(paths["result"])
+    normalized_result["review_report_file"] = str(paths["report"])
+    write_json(paths["result"], normalized_result)
+    paths["report"].write_text(render_semantic_review_report(normalized_result), encoding="utf-8")
+    for key, path in paths.items():
+        if not path.exists():
+            continue
+        if latest[key].exists():
+            latest[key].unlink()
+        shutil.copyfile(path, latest[key])
+    return normalized_result
+
+
+def _build_review_repair_contract(
+    *,
+    task: dict[str, Any],
+    review_input: dict[str, Any],
+    review_result: dict[str, Any],
+    failed_review_input_file: Path,
+    failed_review_result_file: Path,
+    failed_review_report_file: Path,
+    failed_review_subject_file: Path,
+    next_draft_seed_file: Path,
+    attempt: int,
+    origin_review_mode: str,
+) -> dict[str, Any]:
+    review_basis = review_input.get("review_basis", {}) if isinstance(review_input.get("review_basis", {}), dict) else {}
+    findings = review_result.get("findings", []) if isinstance(review_result.get("findings", []), list) else []
+    downstream = review_result.get("downstream_adequacy", {}) if isinstance(review_result.get("downstream_adequacy", {}), dict) else {}
+    blocking_issues = downstream.get("blocking_issues", []) if isinstance(downstream.get("blocking_issues", []), list) else []
+    forbidden_shortcuts = review_basis.get("forbidden_weakenings", []) if isinstance(review_basis.get("forbidden_weakenings", []), list) else []
+
+    must_fix: list[str] = []
+    summary = str(review_result.get("summary", "") or "").strip()
+    if summary:
+        must_fix.append(summary)
+    normalization_reason = str(review_result.get("normalization_reason", "") or "").strip()
+    if normalization_reason:
+        must_fix.append(normalization_reason)
+    for finding in findings:
+        if isinstance(finding, dict):
+            message = str(finding.get("message", "") or finding.get("summary", "") or "").strip()
+            if message and message not in must_fix:
+                must_fix.append(message)
+    if not must_fix:
+        must_fix.append(f"Resolve semantic review verdict `{review_result.get('verdict', 'inconclusive')}` for {task['block_id']}.")
+
+    must_preserve = dedupe_strings(
+        [
+            f"Preserve the original task statement: {str(task.get('content', '') or '').strip()}",
+            *[
+                f"Preserve allowed abstraction: {item}"
+                for item in review_basis.get("allowed_abstractions", [])
+                if isinstance(item, str) and item.strip()
+            ],
+        ]
+    )
+    downstream_blockers = dedupe_strings(
+        [
+            str(item.get("issue", "") or item.get("summary", "") or "").strip()
+            for item in blocking_issues
+            if isinstance(item, dict)
+        ]
+    )
+    result_text = failed_review_result_file.read_text(encoding="utf-8") if failed_review_result_file.exists() else ""
+    subject_text = failed_review_subject_file.read_text(encoding="utf-8") if failed_review_subject_file.exists() else ""
+    return {
+        "schema_version": "phase2.review_repair.request.v1",
+        "task_id": task["block_id"],
+        "origin_review_mode": origin_review_mode,
+        "origin_review_attempt": int(review_input.get("attempt") or 0) or attempt,
+        "review_subject_kind": str(review_input.get("review_subject_kind", "") or "candidate"),
+        "failed_verdict": str(review_result.get("verdict", "inconclusive") or "inconclusive"),
+        "failed_review_input_file": str(failed_review_input_file),
+        "failed_review_result_file": str(failed_review_result_file),
+        "failed_review_report_file": str(failed_review_report_file),
+        "failed_review_subject_file": str(failed_review_subject_file),
+        "failed_review_subject_hash": str(review_input.get("review_subject_hash", "") or review_input.get("candidate", {}).get("hash", "") or sha256_text(subject_text)),
+        "review_basis_hash": str(review_input.get("review_basis_hash", "") or ""),
+        "review_result_hash": sha256_text(result_text) if result_text else "",
+        "origin_prompt_version": int(review_input.get("prompt_version") or SEMANTIC_REVIEW_PROMPT_VERSION),
+        "origin_rubric_version": int(review_input.get("rubric_version") or SEMANTIC_REVIEW_RUBRIC_VERSION),
+        "origin_result_schema_version": str(review_result.get("schema_version", "") or ""),
+        "source_task_content": str(task.get("content", "") or ""),
+        "must_fix": must_fix,
+        "must_preserve": must_preserve,
+        "forbidden_shortcuts": [item for item in forbidden_shortcuts if isinstance(item, str) and item.strip()],
+        "downstream_blockers": downstream_blockers,
+        "next_draft_seed_file": str(next_draft_seed_file),
+    }
+
+
+def _write_review_repair_artifacts(
+    *,
+    task: dict[str, Any],
+    ledger: LedgerManager,
+    settings,
+    pack_dir: Path,
+    review_input: dict[str, Any],
+    review_result: dict[str, Any],
+    failed_review_input_file: Path,
+    failed_review_result_file: Path,
+    failed_review_report_file: Path,
+    failed_review_subject_file: Path,
+    next_draft_seed_file: Path,
+    origin_review_mode: str,
+) -> dict[str, Any]:
+    attempt = _next_review_repair_attempt(pack_dir)
+    request_path = _review_repair_request_path(pack_dir, attempt)
+    summary_path = _review_repair_summary_path(pack_dir, attempt)
+    request_payload = _build_review_repair_contract(
+        task=task,
+        review_input=review_input,
+        review_result=review_result,
+        failed_review_input_file=failed_review_input_file,
+        failed_review_result_file=failed_review_result_file,
+        failed_review_report_file=failed_review_report_file,
+        failed_review_subject_file=failed_review_subject_file,
+        next_draft_seed_file=next_draft_seed_file,
+        attempt=attempt,
+        origin_review_mode=origin_review_mode,
+    )
+    write_json(request_path, request_payload)
+    summary_path.write_text(_render_review_repair_summary(request_payload), encoding="utf-8")
+    _sync_current_review_repair_aliases(pack_dir, request_path=request_path, summary_path=summary_path)
+    ledger.update_runtime_metadata(
+        task["block_id"],
+        latest_review_repair_request_file=str(request_path),
+        latest_review_repair_summary_file=str(summary_path),
+    )
+    _set_current_review_repair_metadata(
+        task["block_id"],
+        ledger,
+        request_file=str(request_path),
+        summary_file=str(summary_path),
+        seed_file=str(next_draft_seed_file),
+        origin_result_file=str(failed_review_result_file),
+    )
+    return {
+        "request_path": request_path,
+        "summary_path": summary_path,
+        "request_payload": request_payload,
+    }
+
+
+async def apply_codex_review_result_once(
+    task_id: str,
+    ledger: LedgerManager,
+    settings,
+    review_result_arg: str,
+) -> ApplyOutcome:
+    task = ensure_task_registered(resolve_phase2_task(task_id, ledger, settings), ledger)
+    task_id = task["block_id"]
+    apply_original_status = str(ledger.ledger.get("tasks", {}).get(task_id, {}).get("status", ""))
+    pack_dir = settings.phase2_prompt_packs_dir / task_id
+    if not pack_dir.exists():
+        raise FileNotFoundError(f"Phase 2 prompt pack does not exist for review-apply: {task_id}")
+
+    result_path = Path(review_result_arg).expanduser()
+    if not result_path.is_absolute():
+        result_path = (Path.cwd() / result_path).resolve()
+    if not result_path.exists():
+        raise FileNotFoundError(f"Review result file not found: {result_path}")
+    try:
+        raw_result = json.loads(result_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raw_result = {"_json_error": str(exc)}
+
+    review_input_path = _resolve_codex_review_input_path(result_path, raw_result)
+    if review_input_path is None or not review_input_path.exists():
+        review_input = {
+            "task": {"block_id": task_id},
+            "mode": "review-apply",
+            "attempt": len(list_versioned_json_files(pack_dir, "verify_result")) + 1,
+            "prompt_version": SEMANTIC_REVIEW_PROMPT_VERSION,
+            "rubric_version": SEMANTIC_REVIEW_RUBRIC_VERSION,
+            "candidate": {"file": str(result_path), "hash": "", "lean": ""},
+            "reviewer_backend_id": "codex-handoff",
+            "cache_key": "",
+        }
+        normalized_review = _invalid_codex_review_result(review_input, "review_input_file is missing or does not exist", raw_result)
+    else:
+        review_input = read_json_safely(review_input_path, {})
+        if not isinstance(review_input, dict):
+            review_input = {
+                "task": {"block_id": task_id},
+                "mode": "review-apply",
+                "attempt": len(list_versioned_json_files(pack_dir, "verify_result")) + 1,
+                "prompt_version": SEMANTIC_REVIEW_PROMPT_VERSION,
+                "rubric_version": SEMANTIC_REVIEW_RUBRIC_VERSION,
+                "candidate": {"file": str(result_path), "hash": "", "lean": ""},
+                "reviewer_backend_id": "codex-handoff",
+                "cache_key": "",
+            }
+            normalized_review = _invalid_codex_review_result(review_input, "review input JSON is invalid", raw_result)
+        else:
+            normalized_review = normalize_reviewer_result(
+                raw_result,
+                review_input=review_input,
+                runner_metadata={"status": "codex_handoff_applied", "result_file": str(result_path)},
+            )
+    source_plan = str(task.get("source_plan", "unknown") or "unknown")
+    existing_official_output = find_existing_task_file(task_id, source_plan, settings)
+    existing_completed_output = (
+        apply_original_status == TaskStatus.COMPLETED.value
+        and existing_official_output is not None
+        and existing_official_output.exists()
+    )
+
+    review_subject_kind = str(review_input.get("review_subject_kind", "") or "candidate")
+    subject_file_raw = str(review_input.get("review_subject_file", "") or review_input.get("candidate", {}).get("file", result_path))
+    candidate_path = Path(subject_file_raw).expanduser()
+    if not candidate_path.is_absolute():
+        candidate_path = (pack_dir / candidate_path).resolve()
+    candidate_code = read_file_safely(candidate_path) if candidate_path.exists() else str(review_input.get("candidate", {}).get("lean", "") or "")
+    review_subject_hash = str(review_input.get("review_subject_hash", "") or review_input.get("candidate", {}).get("hash", "") or "")
+
+    def finish(
+        *,
+        success: bool,
+        detail_text: str,
+        diagnostics: list[dict[str, Any]],
+        semantic_review: dict[str, Any],
+        disposition: str,
+        state_transition: str,
+        final_build_success: bool = False,
+        final_build_output: str = "",
+        repair_ready: dict[str, Any] | None = None,
+        next_action: str = "",
+    ) -> ApplyOutcome:
+        verify_result_path = write_review_compat_summary(
+            task_id=task_id,
+            ledger=ledger,
+            task=task,
+            settings=settings,
+            pack_dir=pack_dir,
+            mode="review-apply",
+            candidate_path=candidate_path,
+            candidate_code=candidate_code,
+            detail_text=detail_text,
+            diagnostics=diagnostics,
+            disposition=disposition,
+            semantic_review=semantic_review,
+            final_build_success=final_build_success,
+            final_build_output=final_build_output,
+            success=success,
+            state_transition=state_transition,
+        )
+        record_semantic_review_attempt(
+            pack_dir=pack_dir,
+            task_id=task_id,
+            candidate_path=candidate_path,
+            candidate_code=candidate_code,
+            verify_result_path=verify_result_path,
+            semantic_review=semantic_review,
+            disposition=disposition,
+            review_subject_kind=review_subject_kind,
+            success=success,
+            repair_ready=repair_ready,
+            auto_loop_metadata=auto_loop_attempt_payload(ledger.ledger.get("tasks", {}).get(task_id, {})),
+        )
+        if success:
+            _clear_current_review_metadata(task_id, ledger)
+            _clear_current_review_repair_metadata(task_id, ledger)
+            ledger.update_runtime_metadata(task_id, **auto_loop_field_defaults())
+        elif disposition.endswith("_invalid_no_promotion"):
+            if review_subject_kind != "official_output":
+                ledger.update_runtime_metadata(task_id, **auto_loop_field_defaults())
+        elif repair_ready is not None:
+            _clear_current_review_metadata(task_id, ledger)
+            _set_current_review_repair_metadata(
+                task_id,
+                ledger,
+                request_file=str(repair_ready.get("request_path", "")),
+                summary_file=str(repair_ready.get("summary_path", "")),
+                seed_file=str(repair_ready.get("request_payload", {}).get("next_draft_seed_file", "") or ""),
+                origin_result_file=str(repair_ready.get("request_payload", {}).get("failed_review_result_file", "") or ""),
+            )
+        else:
+            _clear_current_review_metadata(task_id, ledger)
+        if review_subject_kind == "candidate":
+            if success:
+                ledger.update_runtime_metadata(
+                    task_id,
+                    pack_candidate_state="draft",
+                    latest_build_ready_candidate_kind="",
+                    latest_build_ready_candidate_file="",
+                    latest_build_ready_candidate_hash="",
+                )
+            elif disposition.endswith("_invalid_no_promotion") or disposition.endswith("_fail_no_promotion") or disposition.endswith("_inconclusive_no_promotion"):
+                ledger.update_runtime_metadata(task_id, pack_candidate_state="review_rejected")
+            if success:
+                ledger.update_status(task_id, TaskStatus.COMPLETED)
+            elif existing_completed_output:
+                ledger.update_status(task_id, TaskStatus.COMPLETED)
+            else:
+                ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=detail_text)
+        else:
+            if success:
+                ledger.update_status(task_id, TaskStatus.COMPLETED)
+            elif disposition == "official_output_review_fail":
+                ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=detail_text)
+            elif apply_original_status:
+                try:
+                    ledger.update_status(task_id, TaskStatus(apply_original_status))
+                except ValueError:
+                    pass
+        refresh_pack_runtime_view(task, ledger, settings, pack_dir)
+        return ApplyOutcome(success=success, detail=detail_text, disposition=disposition, next_action=next_action, repair_ready=repair_ready)
+
+    validation_error = ""
+    input_task_id = canonicalize_block_id(str(review_input.get("task", {}).get("block_id", "") or ""))
+    if input_task_id != task_id:
+        validation_error = f"review input task id mismatch: expected {task_id}, got {input_task_id}"
+    result_task_id = canonicalize_block_id(str(raw_result.get("task_id", "") if isinstance(raw_result, dict) else ""))
+    if not validation_error and result_task_id and result_task_id != task_id:
+        validation_error = f"review result task id mismatch: expected {task_id}, got {result_task_id}"
+    if not validation_error and int(review_input.get("prompt_version") or 0) != SEMANTIC_REVIEW_PROMPT_VERSION:
+        validation_error = "review input prompt_version does not match current semantic review prompt version"
+    if not validation_error and int(review_input.get("rubric_version") or 0) != SEMANTIC_REVIEW_RUBRIC_VERSION:
+        validation_error = "review input rubric_version does not match current semantic review rubric version"
+    if isinstance(raw_result, dict):
+        if not validation_error and int(raw_result.get("prompt_version") or 0) != SEMANTIC_REVIEW_PROMPT_VERSION:
+            validation_error = "review result prompt_version does not match current semantic review prompt version"
+        if not validation_error and int(raw_result.get("rubric_version") or 0) != SEMANTIC_REVIEW_RUBRIC_VERSION:
+            validation_error = "review result rubric_version does not match current semantic review rubric version"
+        expected_candidate_hash = str(review_input.get("candidate", {}).get("hash", "") or "")
+        result_candidate_hash = str(raw_result.get("candidate_hash", "") or "")
+        if not validation_error and result_candidate_hash != expected_candidate_hash:
+            validation_error = "review result candidate hash does not match semantic review input candidate hash"
+    elif not validation_error:
+        validation_error = "review result is not a JSON object"
+    if not validation_error:
+        validation_error, freshness = _validate_review_input_freshness(
+            task=task,
+            ledger=ledger,
+            settings=settings,
+            pack_dir=pack_dir,
+            review_input=review_input,
+        )
+        if not validation_error:
+            review_subject_kind = str(freshness.get("review_subject_kind", review_subject_kind))
+            candidate_path = Path(str(freshness.get("subject_file_path", candidate_path)))
+            candidate_code = str(freshness.get("candidate_code", candidate_code))
+            review_subject_hash = str(freshness.get("current_review_subject_hash", review_subject_hash))
+
+    if validation_error:
+        normalized_review = _invalid_codex_review_result(review_input, validation_error, raw_result)
+        normalized_review = dict(normalized_review)
+        if review_input_path is not None and review_input_path.exists():
+            normalized_review["review_input_file"] = str(review_input_path)
+        review_prompt_file = str(review_input.get("review_prompt_file", "") or normalized_review.get("review_prompt_file", "") or "").strip()
+        if review_prompt_file:
+            normalized_review["review_prompt_file"] = str(_resolve_review_binding_path(review_prompt_file, pack_dir=pack_dir))
+        review_report_file = str(review_input.get("review_report_file", "") or normalized_review.get("review_report_file", "") or "").strip()
+        if review_report_file:
+            normalized_review["review_report_file"] = str(_resolve_review_binding_path(review_report_file, pack_dir=pack_dir))
+        review_context_file = str(review_input.get("review_context_file", "") or normalized_review.get("review_context_file", "") or "").strip()
+        if review_context_file:
+            normalized_review["review_context_file"] = str(_resolve_review_binding_path(review_context_file, pack_dir=pack_dir))
+        normalized_review["review_result_file"] = str(result_path)
+    else:
+        normalized_review = _write_normalized_codex_review_artifacts(pack_dir, review_input, normalized_review)
+    verdict = str(normalized_review.get("verdict", "inconclusive"))
+    cache_class = str(normalized_review.get("cache_class", "semantic_verdict") or "semantic_verdict").strip().lower()
+    detail = str(normalized_review.get("normalization_reason", "") or normalized_review.get("summary", "") or f"Codex review verdict: {verdict}")
+    if validation_error or cache_class != "semantic_verdict":
+        invalid_reason = validation_error or detail or "invalid reviewer output"
+        diagnostics = hard_check_diagnostic("semantic_review_invalid", invalid_reason)
+        return finish(
+            success=False,
+            detail_text=invalid_reason,
+            diagnostics=diagnostics,
+            semantic_review=normalized_review,
+            disposition="codex_review_invalid_no_promotion",
+            state_transition="none" if (existing_completed_output or review_subject_kind == "official_output") else "review_apply_to_failed_local",
+        )
+    if verdict != "pass":
+        diagnostics = review_diagnostics(normalized_review)
+        if review_subject_kind == "official_output":
+            disposition = "official_output_review_fail" if verdict == "fail" else "official_output_review_inconclusive"
+        else:
+            disposition = "codex_review_fail_no_promotion" if verdict == "fail" else "codex_review_inconclusive_no_promotion"
+        repair_seed_path = candidate_path
+        if review_subject_kind == "official_output" and verdict == "fail":
+            ledger.update_runtime_metadata(task_id, output_hash=None, exported_symbols=[], last_align_error="")
+            remove_symbols_owned_by_task(task_id, ledger)
+            quarantine_dir = quarantine_official_outputs(
+                task_id=task_id,
+                source_plan=source_plan,
+                ledger=ledger,
+                settings=settings,
+                pack_dir=pack_dir,
+                reason=detail,
+                result_path=result_path,
+            )
+            quarantine_manifest = read_json_safely(quarantine_dir / "quarantine_manifest.json", {})
+            if isinstance(quarantine_manifest, dict):
+                files = quarantine_manifest.get("files", [])
+                if isinstance(files, list):
+                    for item in files:
+                        if isinstance(item, dict) and Path(str(item.get("quarantine_path", ""))).name == f"{task_id}.lean":
+                            repair_seed_path = Path(str(item.get("quarantine_path", "")))
+                            break
+                    else:
+                        if files and isinstance(files[0], dict):
+                            repair_seed_path = Path(str(files[0].get("quarantine_path", "")))
+        repair_ready = _write_review_repair_artifacts(
+            task=task,
+            ledger=ledger,
+            settings=settings,
+            pack_dir=pack_dir,
+            review_input=review_input,
+            review_result=normalized_review,
+            failed_review_input_file=Path(str(normalized_review.get("review_input_file", review_input_path or ""))),
+            failed_review_result_file=Path(str(normalized_review.get("review_result_file", result_path))),
+            failed_review_report_file=Path(str(normalized_review.get("review_report_file", pack_dir / "semantic_review_report.json"))),
+            failed_review_subject_file=candidate_path,
+            next_draft_seed_file=repair_seed_path,
+            origin_review_mode="review-apply",
+        )
+        return finish(
+            success=False,
+            detail_text=detail,
+            diagnostics=diagnostics,
+            semantic_review=normalized_review,
+            disposition=disposition,
+            state_transition="none" if (existing_completed_output or review_subject_kind == "official_output") else "review_apply_to_failed_local",
+            repair_ready=repair_ready,
+            next_action="review_fix",
+        )
+    if review_subject_kind == "official_output":
+        ledger.register_success(task_id, candidate_code, ledger._hash_text(candidate_code))
+        return finish(
+            success=True,
+            detail_text="Semantic review passed for the existing runnable official output.",
+            diagnostics=[],
+            semantic_review=normalized_review,
+            disposition="official_output_review_pass",
+            state_transition="none",
+            final_build_success=True,
+            final_build_output="Existing official output was already validated before review.",
+        )
+
+    final_success, final_output = run_staged_official_build(
+        task_id, source_plan, settings, pack_dir, candidate_code,
+        attempt=int(review_input.get("attempt") or 0) or 1, mode="review-apply", restore_on_success=False,
+    )
+    if not final_success:
+        diagnostics = parse_diagnostics(final_output, "final_build_failed", "final_build")
+        return finish(
+            success=False,
+            detail_text=final_output or f"lake build ToyApollo.Output.{task_id} failed after Codex review pass.",
+            diagnostics=diagnostics,
+            semantic_review=normalized_review,
+            disposition="codex_review_apply_final_build_failed",
+            state_transition="none" if existing_completed_output else "review_apply_to_failed_local",
+            final_build_success=False,
+            final_build_output=final_output,
+        )
+
+    ledger.register_success(task_id, candidate_code, ledger._hash_text(candidate_code))
+    return finish(
+        success=True,
+        detail_text="Codex semantic review passed; candidate promoted and final build succeeded.",
+        diagnostics=[],
+        semantic_review=normalized_review,
+        disposition="codex_review_pass_promoted",
+        state_transition="completed",
+        final_build_success=True,
+        final_build_output=final_output,
+    )
+
+
+async def apply_codex_review_result(
+    task_id: str,
+    ledger: LedgerManager,
+    settings,
+    review_result_arg: str,
+) -> tuple[bool, str]:
+    outcome = await apply_codex_review_result_once(task_id, ledger, settings, review_result_arg)
+    return outcome.success, outcome.detail

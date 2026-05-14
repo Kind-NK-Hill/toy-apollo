@@ -1,0 +1,281 @@
+import asyncio
+import hashlib
+import json
+import shutil
+import sys
+from pathlib import Path
+from unittest.mock import AsyncMock, patch
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from src.ledger_manager import LedgerManager, TaskStatus  # noqa: E402
+from src.toy_apollo.core.settings import Settings  # noqa: E402
+from src.toy_apollo.phase2_prompt_pack import build_check_prompt_pack_candidate, write_prompt_pack  # noqa: E402
+from src.toy_apollo.phase2_semantic_review import (  # noqa: E402
+    SEMANTIC_REVIEW_PROMPT_VERSION,
+    SEMANTIC_REVIEW_RUBRIC_VERSION,
+)
+
+
+class Phase2ReviewTestSupport:
+    def _make_settings(self, root: Path, plans_dir: Path) -> Settings:
+        return Settings(
+            runtime_root=root,
+            artifact_root=root,
+            plans_dir=plans_dir,
+            reports_dir=root / "reports",
+            formalized_chapters_dir=root / "formalized_chapters",
+            output_lean_files_dir=root / "output_lean_files",
+            phase2_prompt_packs_dir=root / "phase2_prompt_packs",
+            phase3_softdep_packs_dir=root / "phase3_softdep_packs",
+            error_logs_dir=root / "error_logs",
+            toyapollo_output_dir=root / "ToyApollo" / "Output",
+            aristotle_outbox_dir=root / "aristotle_outbox",
+            aristotle_archives_dir=root / "aristotle_archives",
+            mathlib_index_file=root / "mathlib_index.faiss",
+            mathlib_corpus_file=root / "mathlib_corpus.json",
+            project_ledger_file=root / "project_ledger.json",
+            lab_notebook_file=root / "lab_notebook.json",
+            mathlib_path=root / ".lake" / "packages" / "mathlib" / "Mathlib",
+        )
+
+    def _fake_reviewer_env(self, root: Path, verdict: str = "pass") -> dict[str, str]:
+        script = root / f"fake_reviewer_{verdict}.py"
+        source_claims = [{"claim": "source claim", "status": "covered"}] if verdict == "pass" else []
+        claim_mapping = [{"claim": "source claim", "lean": "target declaration"}] if verdict == "pass" else []
+        interface_contract = {
+            "status": "covered" if verdict == "pass" else "violated",
+            "summary": f"fake reviewer interface {verdict}",
+            "mismatches": [],
+        }
+        forbidden_weakenings = [{"status": "not_present", "summary": "fake reviewer weakening check"}] if verdict == "pass" else []
+        payload = {
+            "verdict": verdict,
+            "confidence": "high" if verdict == "pass" else "medium",
+            "summary": f"fake reviewer {verdict}",
+            "source_claims": source_claims,
+            "claim_mapping": claim_mapping,
+            "spine_alignment": {
+                "status": "covered" if verdict == "pass" else "violated",
+                "summary": f"fake reviewer spine {verdict}",
+                "obligations_checked": [{"source_obligation": "source claim", "lean_landing": "target declaration", "status": "covered"}]
+                if verdict == "pass"
+                else [],
+                "missing_obligations": [],
+                "shortcut_assessment": "faithful_abstraction" if verdict == "pass" else "unclear",
+            },
+            "interface_contract": interface_contract,
+            "downstream_adequacy": {
+                "status": "covered" if verdict == "pass" else "violated",
+                "summary": f"fake reviewer downstream {verdict}",
+                "consumers_checked": [],
+                "blocking_issues": [],
+            },
+            "forbidden_weakenings": forbidden_weakenings,
+            "findings": [] if verdict == "pass" else [{"severity": "error", "category": "faithfulness", "message": f"fake {verdict}"}],
+            "recommended_disposition": "promote" if verdict == "pass" else "revise",
+        }
+        script.write_text(
+            "import hashlib, json, sys\n"
+            "input_path = sys.argv[sys.argv.index('--input') + 1]\n"
+            "result = sys.argv[sys.argv.index('--result') + 1]\n"
+            "review_input = json.loads(open(input_path, 'r', encoding='utf-8').read())\n"
+            "consumers = []\n"
+            "review_basis = review_input.get('review_basis', {})\n"
+            "if isinstance(review_basis, dict):\n"
+            "    raw_consumers = review_basis.get('direct_downstream_consumers', [])\n"
+            "    if isinstance(raw_consumers, list):\n"
+            "        for item in raw_consumers:\n"
+            "            if isinstance(item, dict) and item.get('block_id'):\n"
+            "                consumers.append({\n"
+            "                    'block_id': item.get('block_id'),\n"
+            "                    'relation': item.get('relation', ''),\n"
+            "                    'status': 'covered',\n"
+            "                    'evidence': 'fake reviewer coverage',\n"
+            "                })\n"
+            f"payload = {repr(payload)}\n"
+            "payload.update({\n"
+            "    'task_id': review_input.get('task', {}).get('block_id', ''),\n"
+            "    'candidate_hash': review_input.get('candidate', {}).get('hash', ''),\n"
+            "    'prompt_version': review_input.get('prompt_version'),\n"
+            "    'rubric_version': review_input.get('rubric_version'),\n"
+            "    'review_input_hash': hashlib.sha256(json.dumps(review_input, ensure_ascii=False, sort_keys=True, separators=(\",\", \":\")).encode('utf-8')).hexdigest(),\n"
+            "    'review_input_file': input_path,\n"
+            "})\n"
+            f"if {verdict == 'pass'!r}:\n"
+            "    payload['downstream_adequacy']['consumers_checked'] = consumers\n"
+            "open(result, 'w', encoding='utf-8').write(json.dumps(payload, ensure_ascii=False))\n",
+            encoding="utf-8",
+        )
+        return {
+            "TOY_APOLLO_PHASE2_REVIEWER_ARGV_JSON": json.dumps(
+                [sys.executable, str(script), "--input", "{input}", "--result", "{result}"],
+                ensure_ascii=False,
+            ),
+            "TOY_APOLLO_PHASE2_REVIEWER_BACKEND_ID": f"fake/{verdict}",
+        }
+
+    def _setup_trivial_phase2_task(
+        self,
+        root: Path,
+        task_id: str,
+        *,
+        candidate_code: str | None = None,
+        completed: bool = False,
+    ):
+        plans_dir = root / "plans"
+        plans_dir.mkdir(parents=True, exist_ok=True)
+        (plans_dir / "08_chap4_measurable_functions_plan.json").write_text(
+            f"""
+[
+  {{
+    "block_id": "{task_id}",
+    "type": "Theorem",
+    "title": "Codex Review Handoff",
+    "content": "Show a trivial theorem.",
+    "dependencies": []
+  }}
+]
+            """.strip(),
+            encoding="utf-8",
+        )
+        ledger = LedgerManager(ledger_path=str(root / "project_ledger.json"))
+        ledger.add_or_update_task(
+            {
+                "block_id": task_id,
+                "type": "Theorem",
+                "title": "Codex Review Handoff",
+                "content": "Show a trivial theorem.",
+                "source_plan": "08_chap4_measurable_functions",
+                "dependencies": [],
+            }
+        )
+        settings = self._make_settings(root, plans_dir)
+        official_code = f"import Mathlib\n\ntheorem {task_id} : True := by\n  trivial\n"
+        output_path = settings.toyapollo_output_dir / f"{task_id}.lean"
+        if completed:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(official_code, encoding="utf-8")
+            ledger.register_success(task_id, official_code, ledger._hash_text(official_code))
+        pack_dir = write_prompt_pack(task_id, ledger, settings)
+        if completed:
+            ledger.update_status(task_id, TaskStatus.COMPLETED)
+        (pack_dir / "draft.lean").write_text(candidate_code or official_code, encoding="utf-8")
+        return ledger, settings, pack_dir, output_path
+
+    def _append_direct_downstream_consumer(self, plans_dir: Path, dependency_id: str, consumer_id: str) -> None:
+        plan_path = plans_dir / "09_chap4_composition_plan.json"
+        tasks = []
+        if plan_path.exists():
+            tasks = json.loads(plan_path.read_text(encoding="utf-8"))
+        tasks.append(
+            {
+                "block_id": consumer_id,
+                "type": "Theorem",
+                "title": f"Consumer {consumer_id}",
+                "content": "Consume an upstream theorem.",
+                "dependencies": [dependency_id],
+            }
+        )
+        plan_path.write_text(json.dumps(tasks, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    def _write_codex_review_result(
+        self,
+        pack_dir: Path,
+        *,
+        verdict: str,
+        source_claims: list[dict] | None = None,
+        claim_mapping: list[dict] | None = None,
+        candidate_hash: str | None = None,
+    ) -> Path:
+        request_path = pack_dir / "semantic_review_request.json"
+        if request_path.exists():
+            review_request = json.loads(request_path.read_text(encoding="utf-8"))
+            review_input_path = Path(str(review_request["review_input_file"]))
+            result_path = Path(str(review_request["expected_result_file"]))
+        else:
+            review_input_path = pack_dir / "semantic_review_input_v1.json"
+            result_path = pack_dir / "semantic_review_result_v1.json"
+        review_input = json.loads(review_input_path.read_text(encoding="utf-8"))
+        direct_consumers = review_input.get("review_basis", {}).get("direct_downstream_consumers", [])
+        consumers_checked = []
+        if verdict == "pass" and isinstance(direct_consumers, list):
+            for consumer in direct_consumers:
+                if isinstance(consumer, dict) and consumer.get("block_id"):
+                    consumers_checked.append(
+                        {
+                            "block_id": consumer["block_id"],
+                            "relation": consumer.get("relation", ""),
+                            "status": "covered",
+                            "evidence": "manual reviewer coverage",
+                        }
+                    )
+        result_path.write_text(
+            json.dumps(
+                {
+                    "task_id": review_input["task"]["block_id"],
+                    "review_input_hash": hashlib.sha256(
+                        json.dumps(review_input, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                    ).hexdigest(),
+                    "candidate_hash": candidate_hash if candidate_hash is not None else review_input["candidate"]["hash"],
+                    "prompt_version": SEMANTIC_REVIEW_PROMPT_VERSION,
+                    "rubric_version": SEMANTIC_REVIEW_RUBRIC_VERSION,
+                    "review_input_file": str(review_input_path),
+                    "verdict": verdict,
+                    "confidence": "high",
+                    "summary": f"manual codex review {verdict}",
+                    "source_claims": source_claims if source_claims is not None else [{"claim": "source claim"}],
+                    "claim_mapping": claim_mapping
+                    if claim_mapping is not None
+                    else [{"source_claim": "source claim", "lean_declaration": review_input["task"]["block_id"]}],
+                    "spine_alignment": {
+                        "status": "covered" if verdict == "pass" else "violated",
+                        "summary": f"manual spine {verdict}",
+                        "obligations_checked": (
+                            [{"source_obligation": "source claim", "lean_landing": review_input["task"]["block_id"], "status": "covered"}]
+                            if verdict == "pass"
+                            else []
+                        ),
+                        "missing_obligations": [],
+                        "shortcut_assessment": "faithful_abstraction" if verdict == "pass" else "unclear",
+                    },
+                    "interface_contract": {
+                        "status": "covered" if verdict == "pass" else "violated",
+                        "summary": f"manual interface {verdict}",
+                        "mismatches": [],
+                    },
+                    "downstream_adequacy": {
+                        "status": "covered" if verdict == "pass" else "violated",
+                        "summary": f"manual downstream {verdict}",
+                        "consumers_checked": consumers_checked,
+                        "blocking_issues": [],
+                    },
+                    "forbidden_weakenings": [{"status": "not_present", "summary": "manual weakening check"}] if verdict == "pass" else [],
+                    "findings": [],
+                    "recommended_disposition": "promote" if verdict == "pass" else "revise",
+                },
+                indent=2,
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+        return result_path
+
+    def _run_successful_build_check(self, task_id: str, ledger: LedgerManager, settings):
+        with patch(
+            "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+            new=AsyncMock(return_value=(True, "repl ok")),
+        ), patch(
+            "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+            new=AsyncMock(return_value=(True, "temp build ok")),
+        ), patch(
+            "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+            return_value=(True, "final build ok"),
+        ):
+            return asyncio.run(build_check_prompt_pack_candidate(task_id, ledger, settings))
+
+    def _clean_root(self, root: Path) -> None:
+        if root.exists():
+            shutil.rmtree(root, ignore_errors=True)

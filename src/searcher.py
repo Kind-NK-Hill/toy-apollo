@@ -5,22 +5,18 @@ import re
 import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
-from google import genai
-from google.genai import types
 from src.indexer import MathlibIndexer
-from src.config import MATHLIB_PATH, MODEL_NAME
-
-RERANKER_MODEL = MODEL_NAME # Use the one from config
+from src.config import MATHLIB_PATH
 
 class MathlibSearcher:
     """
     Searcher (SOTA Vector RAG Edition)
-    Combines FAISS-based vector search with Gemini reranking for precise theorem recall.
+    Combines FAISS-based vector search with local lexical scoring.
     """
     def __init__(self, lib_root_dir=MATHLIB_PATH, api_key=None, local_output_dir="output_lean_files"):
         self.root_dir = lib_root_dir
         self.local_dir = local_output_dir 
-        self.client = genai.Client(api_key=api_key)
+        self.api_key = api_key
         
         # Initialize Indexer
         self.indexer = MathlibIndexer()
@@ -146,9 +142,8 @@ class MathlibSearcher:
         # Sort by boosted score
         candidate_data.sort(key=lambda x: x['score'], reverse=True)
 
-        # 4. Technical-Aware Gemini Reranking
         if rerank and candidate_data:
-            return self._rerank(candidate_data, query_description, technical_query, top_k)
+            print("   ℹ️ [Searcher] LLM reranking disabled; using local ranking.")
         
         return candidate_data[:top_k]
 
@@ -177,56 +172,6 @@ class MathlibSearcher:
                                 break
                 except: pass
         return local_candidates
-
-    def _rerank(self, candidate_data, query_description, technical_query, top_k):
-        print(f"   🤖 [Reranker] Refine search via {RERANKER_MODEL}...")
-        
-        # Prepare technical context for Reranker
-        keywords_str = ", ".join(technical_query.get("keywords", []))
-        aliases_str = ", ".join(technical_query.get("aliases", []))
-        signatures_str = ", ".join(technical_query.get("signatures", []))
-        
-        rerank_prompt = f"""
-        You are a Mathlib expert assistant. 
-        
-        USER INTENT: "{query_description}"
-        TECHNICAL PROBES:
-        - Exact Error Identifiers: {keywords_str}
-        - Potential Aliases: {aliases_str}
-        - Speculative Signatures: {signatures_str}
-        
-        CRITICAL RULES:
-        1. Prioritize theorems that match the "Exact Error Identifiers" PERFECTLY, including primes (') and numeric suffixes.
-        2. Lean 4 uses specific naming conventions (e.g., tsum_geometric_of_lt_one vs tsum_geometric_of_lt_1). Choose the one that actually exists in the candidates.
-        3. If multiple candidates exist, choose the one with the correct level of abstraction.
-        
-        CANDIDATES:
-        """
-        for i, cand in enumerate(candidate_data[:20]): # Only rerank top 20
-            rerank_prompt += f"\n[ID: {i}] File: {cand['import']}\nContent:\n{cand['content'][:800]}...\n"
-        
-        rerank_prompt += f"""
-        TASK:
-        Select the top {top_k} IDs. 
-        Return ONLY the IDs as a comma-separated list.
-        """
-        
-        try:
-            response = self.client.models.generate_content(
-                model=RERANKER_MODEL,
-                contents=rerank_prompt
-            )
-            indices = re.findall(r'\d+', response.text)
-            selected = [int(idx) for idx in indices if 0 <= int(idx) < len(candidate_data)]
-            
-            final_results = []
-            for idx in selected[:top_k]:
-                final_results.append(candidate_data[idx])
-            
-            return final_results if final_results else candidate_data[:top_k]
-        except Exception as e:
-            print(f"   ⚠️ [Reranker] Reranking failed: {e}")
-            return candidate_data[:top_k]
 
     def _fallback_keyword_search(self, keywords, query_description, top_k):
         # Extremely simplified keyword search as fallback
