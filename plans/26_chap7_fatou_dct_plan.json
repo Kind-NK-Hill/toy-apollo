@@ -1,0 +1,133 @@
+[
+    {
+        "block_id": "rem_7_2_fatou_dct_intro",
+        "type": "Remark",
+        "title": "Section Header",
+        "content": "\\subsection*{7.2 Fatou's Lemma and Dominated Convergence Theorem}\n\nFrom now on we will only require that the conditions about a random variable in a theorem are satisfied almost everywhere. This will make the theorems more general. In fact, the monotone convergence theorem (Theorem 6.4) remains to be true if the conditions in this theorem are satisfied almost everywhere.\n\nThe Fatou lemma below only assumes that the sequence of measurable functions is nonnegative, without assuming that the sequence is monotonically increasing, and hence the assumption is much more relaxed than that in the monotone convergence theorem. However, the conclusion is also weaker.",
+        "dependencies": [],
+        "is_renowned": true,
+        "source_plan": "26_chap7_fatou_dct"
+    },
+    {
+        "block_id": "rem_7_2_transition_1",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "\\subsection*{7.2 Fatou's Lemma and Dominated Convergence Theorem}\n\nFrom now on we will only require that the conditions about a random variable in a theorem are satisfied almost everywhere. This will make the theorems more general. In fact, the monotone convergence theorem (Theorem 6.4) remains to be true if the conditions in this theorem are satisfied almost everywhere.\n\nThe Fatou lemma below only assumes that the sequence of measurable functions is nonnegative, without assuming that the sequence is monotonically increasing, and hence the assumption is much more relaxed than that in the monotone convergence theorem. However, the conclusion is also weaker.",
+        "dependencies": [],
+        "is_renowned": true,
+        "source_plan": "26_chap7_fatou_dct"
+    },
+    {
+        "block_id": "thm_7_3",
+        "type": "Theorem_with_Proof",
+        "title": "Fatou's Lemma",
+        "content": "\\begin{thmbox}{7.3 (Fatou's Lemma)}\nLet $X_n$, $n=1,2,3,\\dots$, be a sequence of measurable functions defined on a measure space $(\\Omega,\\mathcal{F},\\mu)$, such that each of them is nonnegative almost everywhere. Then\n\\[\n\\int \\liminf_{n\\to\\infty} X_n\\, d\\mu \\le \\liminf_{n\\to\\infty} \\int X_n\\, d\\mu.\n\\]\n\\end{thmbox}\n\n\\textit{Proof} The function $\\liminf_{n\\to\\infty} X_n(\\omega)$ is well defined and is nonnegative almost everywhere. To be precise, we can assume that each $X_n$ is nonnegative on a measurable set $E_n$ with $\\mu(E_n^c)=0$, for $n=1,2,3,\\dots$. Then, we can consider the intersection $E=\\cap_{n=1}^{\\infty} E_n$, which is measurable and satisfies $X_n(\\omega)\\ge 0$ for all $n$ and all $\\omega$ in this set. Moreover, the complement of the set $E$ has measure zero.\n\nFor $n\\ge 1$, define\n\\[\nY_n(\\omega)\\triangleq \\inf_{k\\ge n} X_k(\\omega).\n\\]\nThe sequence $Y_1 \\le Y_2 \\le Y_3 \\le \\cdots$ is non-decreasing and is converging pointwise on the set $E$. By the monotone convergence theorem (Theorem 6.4),\n\\[\n\\int_E Y_n\\, d\\mu \\nearrow \\int_E \\lim_n Y_n\\, d\\mu = \\int_E \\liminf_n X_n\\, d\\mu.\n\\]\n\nTherefore\n\\begin{equation}\n\\sup_n \\int_E Y_n\\, d\\mu = \\int_E \\liminf_n X_n\\, d\\mu.\n\\tag{7.1}\n\\end{equation}\n\nWe then use the definition of $Y_n=\\inf_{k\\ge n} X_k$ to see that $X_k\\ge Y_n$ on $E$ for all $k\\ge n$. Hence, by the monotonic property of integral, we get\n\\[\n\\int_E X_k\\, d\\mu \\ge \\int_E Y_n\\, d\\mu \\qquad \\text{for all } k\\ge n.\n\\]\n\nCombining with the fact that $\\mu(E^c)=0$, we obtain\n\\[\n\\sup_n \\left( \\inf_{k\\ge n} \\int_{\\Omega} X_k\\, d\\mu \\right) \\ge \\int_{\\Omega} \\liminf_n X_n\\, d\\mu.\n\\]\n\nThis proves the inequality in Fatou's lemma. \\hfill $\\square$",
+        "dependencies": [
+            "thm_6_4"
+        ],
+        "is_renowned": true,
+        "source_plan": "26_chap7_fatou_dct"
+    },
+    {
+        "block_id": "ex_7_2_1",
+        "type": "Example_Proof",
+        "title": "An Example That Illustrates Fatou's Lemma",
+        "content": "\\textbf{Example 7.2.1 (An Example That Illustrates Fatou's Lemma)} \\\\\nWe give an example to help us remember the direction of the inequality in Fatou's lemma. Consider an example with sample space $\\Omega=\\mathbb{R}$ with the Lebesgue measure on $\\mathbb{R}$. For $n\\ge 1$, let $X_n$ be the simple function $n1_{[0,1/n]}$. The integral of $X_n$ over $\\mathbb{R}$ is equal to $1$ for all $n$. Therefore $\\liminf_n \\int X_n\\, d\\mu = 1$.\n\nHowever for each nonzero $\\omega \\in \\mathbb{R}$, $\\liminf_n X_n(\\omega)=0$, and at the point $\\omega=0$, the liminf is equal to $\\infty$. Thus, we see that $X(\\omega)=\\limsup_n X_n(\\omega)$ is equal to\n\\[\nX(\\omega)=\n\\begin{cases}\n0 & \\text{if } \\omega \\neq 0,\\\\\n\\infty & \\text{if } \\omega = 0.\n\\end{cases}\n\\]\n\nThis yields $\\int X\\, d\\mu = 0$. Informally, Fatou's lemma says that the integral becomes larger if we pull the liminf operator outside of the integral sign.\n\nThe next example demonstrates the importance of understanding the conditions under which the limit and integral can be interchanged.",
+        "dependencies": [],
+        "is_renowned": true,
+        "source_plan": "26_chap7_fatou_dct"
+    },
+    {
+        "block_id": "ex_7_2_2",
+        "type": "Example_Proof",
+        "title": "Limit of Riemann Integrable Functions May Not Be Integrable",
+        "content": "\\textbf{Example 7.2.2 (Limit of Riemann Integrable Functions May Not Be Integrable)} \\\\\nWe can construct a sequence of functions on $\\mathbb{R}$ by enumerating the rational numbers between $[0,1]$. Since the rational numbers are countable, we can list them as $r_1,r_2,r_3,\\dots$. For $i=1,2,3,\\dots$, we let\n\\[\nf_i(x)=\\sum_{k=1}^{i} 1_{\\{r_k\\}}(x)\n\\]\nbe the sum of indicator functions. Each $f_i$ is Riemann integrable on $[0,1]$, and its integral over this interval is equal to $0$.\n\nHowever, the sequence of functions $(f_i)_{i=1}^{\\infty}$ converges pointwise to the indicator function $1_{\\mathbb{Q}\\cap [0,1]}(x)$, which is not Riemann integrable on $[0,1]$. This means that we have a sequence of Riemann integrable functions whose integrals converge to $0$, but the limit of the functions is not even Riemann integrable.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "26_chap7_fatou_dct"
+    },
+    {
+        "block_id": "thm_7_4",
+        "type": "Theorem_with_Proof",
+        "title": "Dominated Convergence Theorem",
+        "content": "\\begin{thmbox}{7.4 (Dominated Convergence Theorem)}\nFor $n=1,2,3,\\dots$, let $X_n(\\omega)$ be $\\bar{\\mathbb{R}}$-valued measurable functions defined on a measure space $(\\Omega,\\mathcal{F},\\mu)$, converging almost everywhere to $X(\\omega)$,\n\\[\nX_n \\to X \\quad \\text{a.e.}\n\\]\n\nIf there exists a nonnegative integrable function $Y$ such that $|X_n|\\le Y$ a.e. for all $n$, then\n\n(1) $X$ is Lebesgue integrable, i.e., $X\\in L^1(\\mu)$, and\n\n(2)\n\\[\n\\lim_{n\\to\\infty} \\int X_n\\, d\\mu = \\int X\\, d\\mu = \\int \\lim_{n\\to\\infty} X_n\\, d\\mu.\n\\]\n\\end{thmbox}\n\n\\textit{Proof} By the assumption that $|X_n|\\le Y$ a.e., we can find for each $n$ a measurable set $E_n$ such that $\\mu(E_n^c)=0$ and $|X_n(\\omega)|\\le Y(\\omega)$ for all $\\omega \\in E_n$. Also, we can find a measurable set $E_0$ such that $\\mu(E_0^c)=0$ and $X_n(\\omega)\\to X(\\omega)$ for all $\\omega \\in E_0$. For $\\omega$ in the set $E\\triangleq \\cap_{n\\ge 0} E_n$, we have $|X_n(\\omega)|\\le Y(\\omega)$ and $X_n(\\omega)\\to X(\\omega)$.\n\nWe next observe that $X_n$ is integrable for all $n$, since $\\int |X_n| \\le \\int Y < \\infty$.\n\nAlthough we do not know the value of $X(\\omega)$ for $\\omega \\in E_0^c$, we may set $X(\\omega)$ to $0$ for $\\omega \\in E_0^c$ without loss of generality. Since $X_n(\\omega)$ converges to $X(\\omega)$ for all $\\omega \\in E_0$ by assumption, the function $X$ is a measurable function. (See the remark at the end of Section 7.1)\n\nConsider the difference $|X_n-X|$. By applying the triangle inequality for real numbers, we have\n\\[\n|X_n(\\omega)-X(\\omega)| \\le |X_n(\\omega)|+|X(\\omega)| \\le 2Y(\\omega)\n\\]\nfor each $\\omega \\in E$. Hence $2Y-|X_n-X|\\ge 0$ almost everywhere. By Fatou's lemma,\n\\begin{equation}\n\\int \\liminf_n (2Y-|X_n-X|) \\le \\liminf_n \\int (2Y-|X_n-X|).\n\\tag{7.2}\n\\end{equation}\n\nSince $|X_n-X|\\to 0$ as $n\\to\\infty$, the left-hand side equals $\\int 2Y$, and the right-hand side becomes\n\\[\n\\liminf_n \\left( \\int 2Y + \\int -|X_n-X| \\right)\n=\n\\int 2Y - \\limsup_n \\int |X_n-X|.\n\\]\n\nIn the last step, we have pulled out the constant $\\int 2Y$, which does not depend on $n$, and change liminf to limsup. Because $\\int 2Y$ is finite, we can subtract it from both sides of (7.2) to obtain\n\\[\n0 \\ge \\limsup_n \\int |X_n-X|.\n\\]\n\nThe limsup of a sequence of nonnegative real numbers $\\int |X_n-X|$ should be nonnegative. Hence, $\\limsup_n \\int |X_n-X|=0$, and this is possible only when $\\int |X_n-X|$ is actually converging to $0$,\n\\begin{equation}\n\\lim_{n\\to\\infty} \\int |X_n-X| = 0.\n\\tag{7.3}\n\\end{equation}\n\nBy the triangle inequality for real numbers and monotonic property for integrals,\n\\[\n\\int |X| = \\int |X-X_n+X_n| \\le \\int |X-X_n| + \\int |X_n|,\n\\]\nwhich holds for any positive integer $n$. By (7.3), for any arbitrarily small $\\epsilon>0$, we can choose a sufficiently large $n$ such that $\\int |X-X_n|<\\epsilon$. We then use the assumption that $|X_n|\\le Y$ to see that $\\int |X| \\le \\epsilon + \\int |Y| < \\infty$. Therefore, by Theorem 6.6, $X$ is integrable. This proves (1).\n\nWe apply the triangle inequality (Theorem 7.1) to get\n\\[\n\\left|\\int X_n - X\\, d\\mu\\right| \\le \\int |X_n-X|\\, d\\mu.\n\\]\n\nBecause $\\int |X_n-X|\\, d\\mu \\to 0$ as $n\\to\\infty$, we have $|\\int X_n - X\\, d\\mu|\\to 0$ as $n\\to\\infty$. This is the same as saying that $\\int X_n\\, d\\mu \\to \\int X\\, d\\mu$ as $n\\to\\infty$. This proves the equalities in (2) and completes the proof of the dominated convergence theorem. \\hfill $\\square$",
+        "dependencies": [
+            "thm_6_6",
+            "thm_7_1"
+        ],
+        "is_renowned": true,
+        "source_plan": "26_chap7_fatou_dct"
+    },
+    {
+        "block_id": "rem_7_2_transition_2",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "We highlight the intermediate step in (7.3) that is important by itself.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "26_chap7_fatou_dct"
+    },
+    {
+        "block_id": "thm_7_5",
+        "type": "Theorem_Statement",
+        "title": "$L^1$ Convergence",
+        "content": "\\begin{thmbox}{7.5 ($L^1$ Convergence)}\nWith the conditions in Theorem 7.4, we have\n\\[\n\\int |X_n-X|\\, d\\mu \\to 0, \\qquad \\text{as } n\\to\\infty.\n\\]\n\\end{thmbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "26_chap7_fatou_dct"
+    },
+    {
+        "block_id": "rem_7_2_transition_3",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "In fact, we have shown that the convergence of the $L^1$ norm of $X_n-X$ to zero is sufficient to derive the conclusions of the dominated convergence theorem.",
+        "dependencies": [],
+        "is_renowned": true,
+        "source_plan": "26_chap7_fatou_dct"
+    },
+    {
+        "block_id": "ex_7_2_3",
+        "type": "Example_Proof",
+        "title": "A Counterexample to the Dominated Convergence Theorem",
+        "content": "\\textbf{Example 7.2.3 (A Counterexample to the Dominated Convergence Theorem)} \\\\\nThe assumption that $|X_n|\\le Y$ in the dominated convergence theorem cannot be relaxed. For $n=1,2,3,\\dots$, consider the indicator function $1_{[n,n+1]}(x)$ defined on the real number line. We put the Borel algebra and the Lebesgue measure $\\mu$ on the sample space $\\mathbb{R}$. There is no integrable function $Y$ that can dominate all the $X_n$'s. The conclusion in the dominated convergence theorem fails because, although the functions $X_n$ converge pointwise to the zero function, we have\n\\[\n\\lim_{n\\to\\infty} \\int_{\\mathbb{R}} X_n\\, d\\mu = 1 \\neq 0 = \\int_{\\mathbb{R}} \\lim_{n\\to\\infty} X_n\\, d\\mu.\n\\]\n\nThe dominated convergence theorem can be extended readily to the complex case.",
+        "dependencies": [],
+        "is_renowned": true,
+        "source_plan": "26_chap7_fatou_dct"
+    },
+    {
+        "block_id": "thm_7_6",
+        "type": "Theorem_Statement",
+        "title": "Complex DCT, Sequential Version",
+        "content": "\\begin{thmbox}{7.6 (Complex DCT, Sequential Version)}\nLet $X_n$ be complex-valued random variables, for $n=1,2,3,\\dots$, defined on a measure space $(\\Omega,\\mathcal{F},\\mu)$. Suppose $(X_n)_{n\\ge 1}$ converges to $X$ almost everywhere for all $n$, and there exists an integrable function $Y$ such that $|X_n|\\le Y$ almost everywhere for all $n$. Then $X\\in L^1(\\mu)$ and\n\\[\n\\lim_{n\\to\\infty} \\int X_n\\, d\\mu = \\int \\lim_{n\\to\\infty} X_n\\, d\\mu.\n\\]\n\\end{thmbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "26_chap7_fatou_dct"
+    },
+    {
+        "block_id": "rem_7_2_transition_4",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "The proof follows the same steps as in the proof of Theorem 7.4. We just need to apply the real version of DCT to the real parts and imaginary parts.\n\nAnother useful form of DCT is for random variables indexed by a continuous variable. One takes limit as the index variable approaches certain limit.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "26_chap7_fatou_dct"
+    },
+    {
+        "block_id": "thm_7_7",
+        "type": "Theorem_Statement",
+        "title": "Complex DCT, Limit Version",
+        "content": "\\begin{thmbox}{7.7 (Complex DCT, Limit Version)}\nLet $X_h$ be complex-valued measurable functions defined on a measure space $(\\Omega,\\mathcal{F},\\mu)$, indexed by a real variable $h$ in some interval. Suppose $\\lim_{h\\to h_0} X_h(\\omega)$ converges almost everywhere for some $h_0$, and assume that there exists a real-valued integrable function $Y$ such that $|X_h|\\le Y$ for all $h$ in the interval. Then the limit function\n\\[\nX(\\omega)\\triangleq \\lim_{h\\to h_0} X_h(\\omega)\n\\]\nis integrable and\n\\[\n\\lim_{h\\to h_0} \\int X_h\\, d\\mu = \\int \\lim_{h\\to h_0} X_h\\, d\\mu.\n\\]\n\\end{thmbox}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "26_chap7_fatou_dct"
+    },
+    {
+        "block_id": "rem_7_2_transition_5",
+        "type": "Remark",
+        "title": "Remark",
+        "content": "The proof of Theorem 7.7 can be reduced to the sequential version of DCT by constructing a sequence of random variables converging to $X$. The full proof is omitted here.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "26_chap7_fatou_dct"
+    }
+]

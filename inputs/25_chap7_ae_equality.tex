@@ -1,0 +1,108 @@
+\section*{Properties of Lebesgue Integral and Convergence Theorems}
+
+The Lebesgue integral is known for its superior convergence properties when compared to the Riemann integral. In this chapter, we prove two fundamental convergence theorems related to the Lebesgue integral: the Fatou lemma and the dominated convergence theorem. These properties are not only important in probability theory but also have significant applications in asymptotic analysis for statistics and stochastic processes. However, the Lebesgue integral's more abstract definition makes it impractical to evaluate directly. In the second half of this chapter, we will establish a connection between the Lebesgue integral and the Riemann integral, enabling us to utilize our knowledge of calculus to evaluate a Lebesgue integral more easily.
+
+\subsection*{7.1 Almost-Everywhere Equality}
+
+The $L^1$ norm measures the size of a random variable. We define the $L^1$ norm of a random variable $X$ as the integral $\int |X|\, d\mu$, and we write the $L^1$ norm of an integral function $X$ as $\|X\|_1$. The class of integrable function is precisely the class of functions with finite $L^1$ norm.
+
+The first property is the triangle inequality for integrals, which we will state for both real-valued and complex-valued functions.
+
+\begin{thmbox}{7.1 (Triangle Inequality for Real Integral and Complex Integral)}
+\[
+\left|\int X\, d\mu\right| \le \int |X|\, d\mu \quad \text{for } X \in L^1(\mu).
+\]
+\end{thmbox}
+
+\textit{Proof} When $X$ is $\bar{\mathbb{R}}$-valued, we can prove the inequality easily by using the fact $|X| = X^+ + X^-$,
+\[
+\left|\int X\right|
+=
+\left|\int X^+ - \int X^-\right|
+\le
+\int X^+ + \int X^-
+=
+\int |X|.
+\]
+
+A little bit more work is required when $X$ is a complex measurable function. We write $X$ as $U+iV$, where $U$ and $V$ are real-valued functions. If $\int X = 0$, then the inequality is trivially true. Suppose $\int X \neq 0$ and $\int X$ in polar form is $re^{i\theta}$.
+
+Let $\alpha = e^{-i\theta}$. Geometrically, multiplying $\alpha$ and $\int X$ means rotating the point in the complex plane corresponding to $\int X$ by an angle of $-\theta$. Using the properties that the product $\alpha\int X$ is a positive real number and $|\alpha|=1$, we get
+\[
+\left|\int X\right|
+=
+|\alpha|\cdot \left|\int X\right|
+=
+\left|\alpha \int X\right|
+=
+\left|\int \alpha X\right|
+=
+\int \alpha X
+=
+\operatorname{Re}\left(\int \alpha X\right)
+=
+\int \operatorname{Re}(\alpha X).
+\]
+
+Since $\operatorname{Re}(z)\le |z|$ for any complex number $z$, by monotonic property for real integral, we obtain
+\[
+\left|\int X\right|
+\le
+\int |\alpha X|
+=
+\int |\alpha||X|
+=
+\int |X|.
+\]
+\hfill $\square$
+
+The triangle inequality implies that the $L^1$ norm satisfies two of the defining properties of a norm function, which are
+\[
+\|X+Y\|_1 \le \|X\|_1 + \|Y\|_1
+\]
+\[
+\|\alpha X\|_1 = |\alpha|\cdot \|X\|_1 \qquad \text{for any scalar } \alpha.
+\]
+
+While a function with zero $L^1$ norm does not necessarily have to be the zero function in general, we can characterize such functions as described in the following theorem.
+
+\begin{thmbox}{7.2 (Measurable Functions with Zero Norm)}
+Suppose $X$ is a real-valued or complex-valued measurable function defined on a measure space $(\Omega,\mathcal{F},\mu)$. Then, the following are equivalent:
+\begin{enumerate}[label=\arabic*.]
+    \item $\int_{\Omega} |X|\, d\mu = 0$.
+    \item $X$ is equal to $0$ almost everywhere, i.e., there exists a measurable set $A$ with $\mu(A)=0$ such that $X(\omega)=0$ for all $\omega \in A^c$.
+\end{enumerate}
+\end{thmbox}
+
+\textit{Proof} Suppose $X=0$ almost everywhere. Let $A$ be the set mentioned in the theorem. We have
+\[
+\int |X| = \int_{A^c} |X| + \int_A |X|.
+\]
+
+The first term is zero because $X(\omega)=0$ for all $\omega \in A^c$. To show that the second term is zero, we consider nonnegative simple function $f$ that is pointwise smaller than the function $|X|1_A$. We can write $f(\omega)$ as $\sum_{i=1}^{n} a_i 1_{E_i}(\omega)$, where $E_i$ is a measurable set inside the set $A$. Since $A$ has measure $0$, all sets $E_i$'s have measure zero, and hence the integral of $f$ is zero. Because it holds for all simple functions $0\le f\le |X|1_A$, the Lebesgue integral of $|X|$ over $A$ is zero.
+
+Conversely, suppose $\int |X|=0$. For each positive integer $n$, we let $E_n$ denote the event $\{\omega : |X(\omega)|\ge 1/n\}$. The event $E_n$ has measure zero, because
+\[
+0 = \int |X|\, d\mu \ge \int_{E_n} |X|\, d\mu \ge \int_{E_n} (1/n)\, d\mu \ge (1/n)\mu(E_n),
+\]
+which is possible only if $\mu(E_n)=0$. We can take the set $A$ in the theorem to be the union $\cup_n E_n$, which has measure zero. Then $X(\omega)=0$ for all $\omega \in A^c$. \hfill $\square$
+
+This theorem says that the integration operator cannot distinguish two functions that differ on a set with measure zero. This motivates us to define an equivalence relation on the set of integrable functions.
+
+\begin{defbox}{7.1}
+Consider two integrable functions $f$ and $g$ defined on the same measure space $(\Omega,\mathcal{F},\mu)$. We say that $f$ and $g$ are \textit{equal everywhere} if $f(\omega)=g(\omega)$ for all $\omega \in \Omega$. We say that $f$ and $g$ are \textit{equal almost everywhere} if there exists an $\mathcal{F}$-measurable set $A$ with $\mu(A)=0$ such that $f(\omega)=g(\omega)$ for all $\omega$ in $A^c$. We say that two integrable functions are \textit{equivalent} if they are equal almost everywhere. When the measure space is a probability space, we also say that random variables $X$ and $Y$ are equal, \textit{almost surely}, or \textit{with probability 1}, simply a.e., a.s., or w.p.1, if they are equal almost everywhere.
+\end{defbox}
+
+As a concrete example, consider a standard Gaussian random variable $X(\omega)$, and define random variable $Y(\omega)$ to be equal to $10^{100}$ if $X(\omega)$ is an integer, but is the same as $X(\omega)$ otherwise. If we observe the values of $X$ and $Y$ in practice, they will be equal with probability 1. This is because any difference between $X$ and $Y$ can only occur on a null set, which has probability zero.
+
+The notion of equivalence of random variables depends on the probability measure. It is possible for two random variables to be equivalent under one probability measure but not equivalent under another probability measure. Therefore, when discussing whether two random variables are equal almost surely, we must always specify the underlying probability measure.
+
+In some textbooks, a random variable is defined as a class of equivalent measurable functions, rather than a function itself. In this approach, a measurable function in an equivalence class is called a \textit{version} of the random variable, and the $L^1$ norm is truly a norm defined on the equivalence classes. That is, if $\int |X|\, d\mu = 0$, then $X$ must belong to the equivalence class of measurable functions that contains the zero function.
+
+However, in this book we will not adopt this interpretation and will instead define a random variable as a measurable function defined on a probability space. Hence, the function $\int |X|\, d\mu$ is only a semi-norm on the space of integrable functions.
+
+This is a matter of convention, and both approaches have their advantages and disadvantages. Defining a random variable as a class of equivalent measurable functions is more convenient mathematically, as we do not need to write the term ``a.e.'' everywhere in the text. However, for the purposes of this book, we will regard a random variable as a measurable function, which is more intuitive and simpler to understand.
+
+\begin{remarkbox}{7.1}
+In view of the fact that Lebesgue integral cannot distinguish two functions that are equal almost everywhere, we can further extend the notion of Lebesgue integral. Given a function $f$, which may or may not be measurable, we say that it is \textit{integrable} if it is equal a.e. to a function $g$ that is measurable and integrable, and we define the integral of $f$ as the same as the Lebesgue integral of $g$. This extension is useful to compute the integral for function that is integrable outside a set of measure zero, and is not well defined inside.
+\end{remarkbox}

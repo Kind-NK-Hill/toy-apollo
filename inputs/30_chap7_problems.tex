@@ -1,0 +1,79 @@
+\subsection*{Problems}
+
+\textbf{7.1.} Compute the mean and variance of the random variable specified by cdf
+\[
+F(x)=
+\begin{cases}
+0 & \text{if } x<0,\\
+x/3 & \text{if } 0\le x<1,\\
+2/3 & \text{if } 1\le x<2,\\
+1 & \text{if } 2\le x.
+\end{cases}
+\]
+
+\textbf{7.2 (Box--Muller Transform).} To generate standard normal random variables, one can use a transformation involving two independent uniform random variables $U$ and $V$, each of which takes values between 0 and 1. Specifically, generate a pair of random variables $(X,Y)$ according to
+\[
+X=\sqrt{-2\log U}\cos(2\pi V),
+\]
+\[
+Y=\sqrt{-2\log U}\sin(2\pi V).
+\]
+
+Show that this transformation induces the joint Gaussian distribution with mean 0 and covariance matrix $I_{2\times 2}$.
+
+\textbf{7.3.} Let $f:[a,b]\to \mathbb{R}$ be a bounded function, $\alpha(x)$ a Stieltjes measure function on $[a,b]$, and $\mu$ the Lebesgue--Stieltjes measure induced by $\alpha(x)$. Assume $\mu(\{a\})=0$. Prove the following:
+\begin{enumerate}[label=(\alph*)]
+    \item $f$ is Riemann--Stieltjes integrable on $[a,b]$ if and only if $f$ is continuous $\mu$-almost everywhere.
+    \item If $f$ is Riemann--Stieltjes integrable, then $f$ is integrable with respect to the completion $\bar{\mu}$ of $\mu$, and $\int_a^b f\, d\alpha = \int_{[a,b]} f\, d\bar{\mu}$.
+\end{enumerate}
+
+\textbf{7.4.} Let $X$ be an integrable function on a measure space $(\Omega,\mathcal{F},\mu)$. Show that for any $\epsilon$, there exists a set $E\in \mathcal{F}$ with $\mu(E)<\infty$ such that
+\[
+\left|\int_{E^c} X\, d\mu\right|<\epsilon.
+\]
+
+\textbf{7.5.} Let $(X_i)_{i=1}^{\infty}$ be a sequence of nonnegative measurable functions defined on a common measure space $(\Omega,\mathcal{F},\mu)$, such that $\int X_n\, d\mu < K$ for a finite constant $K$. Suppose that $(X_i)_{i=1}^{\infty}$ converges almost everywhere to a limit function $X$. Prove that $X$ is integrable and $\int X\, d\mu \le K$. (Hint: Apply Fatou's lemma.)
+
+\textbf{7.6 (Scheff\'e Lemma).} Suppose $f_n$'s are nonnegative measurable functions that converge to $f$ almost everywhere as $n\to\infty$. Assume that $\int f_n\, d\mu \to \int f\, d\mu < \infty$.
+\begin{enumerate}[label=(\alph*)]
+    \item Show that $(f_k-f)^-$ is bounded by $f$, and hence, by the dominated convergence theorem, $\int (f_n-f)^- \to 0$.
+    \item Show that $\int |f_n-f|\to 0$. (Hint: Write $|f_n-f|$ as $(f_n-f)+2(f_n-f)^-$.)
+\end{enumerate}
+
+\textbf{7.7.} Let $f_1,f_2,f_3,\dots$ be measurable functions defined on a measure space $(\Omega,\mathcal{F},\mu)$. Assume that $\sum_{k=1}^{\infty} \int |f_k|\, d\mu$ is finite.
+\begin{enumerate}[label=(\alph*)]
+    \item Show that $\sum_{k=1}^{\infty} f_k(\omega)$ converges to a finite limit $\mu$-almost everywhere.
+    \item Use part (a) to derive the following result:
+    \[
+    \int \left(\sum_{k=1}^{\infty} f_k\right)\, d\mu
+    =
+    \sum_{k=1}^{\infty} \int f_k\, d\mu.
+    \]
+\end{enumerate}
+
+\textbf{7.8.} Let $(\Omega,\mathcal{F},\mu)$ be a measure space, and consider a real-valued function
+\[
+f:\Omega\times [a,b]\to \mathbb{R}
+\]
+satisfying the following conditions:
+\begin{enumerate}[label=\arabic*.]
+    \item For any $x\in [a,b]$, the function $f(\omega,x)$ is Borel measurable and integrable with respect to $\mu$.
+    \item There exists a set $E\in \mathcal{F}$ with $\mu(E)=0$ such that for any $\omega \in E^c$, the derivative of the function $f(\omega,x)$ with respect to $x$ exists and is equal to $f'(\omega,x)$.
+    \item There exists a function $g\in L^1(\mu)$ such that $|f'(\omega,x)|\le g$ for $\mu$-almost every $\omega$ and for all $x\in [a,b]$.
+\end{enumerate}
+
+Prove that $f'(\omega,x)$ is integrable for any fixed $x\in [a,b]$, and
+\[
+\frac{d}{dx}\int_{\Omega} f(\omega,x)\, d\mu(\omega)
+=
+\int_{\Omega} f'(\omega,x)\, d\mu(\omega).
+\]
+
+\textbf{7.9.} Let $(f_n)_{n\ge 1}$, $(g_n)_{n\ge 1}$, and $(h_n)_{n\ge 1}$ be sequences of integrable functions, satisfying the conditions:
+\begin{enumerate}[label=\arabic*.]
+    \item $f_n \to f$, $g_n \to g$, and $h_n \to h$.
+    \item $f_n \le g_n \le h_n$, for all $n$.
+    \item $\int f_n \to \int f < \infty$ and $\int h_n \to \int h < \infty$.
+\end{enumerate}
+
+Prove that $\int g$ is finite and $\int g_n \to \int g$.
