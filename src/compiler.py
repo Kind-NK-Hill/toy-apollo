@@ -7,6 +7,8 @@ from typing import Dict, Any, Optional, List, Tuple
 from pathlib import Path
 from src.config import PROJECT_ROOT
 
+DEFAULT_REPL_TIMEOUT_SECONDS = 300
+
 class LeanREPL:
     """
     Windows-compatible Lean 4 REPL interface.
@@ -16,6 +18,36 @@ class LeanREPL:
         self.project_dir = Path(project_dir).resolve()
         self.temp_dir = self.project_dir / ".repl_tmp"
         self.temp_dir.mkdir(exist_ok=True)
+        self.timeout_seconds = self._load_timeout_seconds()
+
+    @staticmethod
+    def _load_timeout_seconds() -> int:
+        raw = os.getenv("TOY_APOLLO_REPL_TIMEOUT_SECONDS", "").strip()
+        if not raw:
+            return DEFAULT_REPL_TIMEOUT_SECONDS
+        try:
+            timeout = int(raw)
+        except ValueError:
+            return DEFAULT_REPL_TIMEOUT_SECONDS
+        return timeout if timeout > 0 else DEFAULT_REPL_TIMEOUT_SECONDS
+
+    def _cleanup_process_tree(self, process: subprocess.Popen[str]) -> str:
+        if os.name == "nt":
+            result = subprocess.run(
+                ["taskkill", "/T", "/F", "/PID", str(process.pid)],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            if result.returncode == 0:
+                return "terminated process tree via taskkill."
+            cleanup_detail = (result.stderr or result.stdout or "").strip()
+            if cleanup_detail:
+                return f"taskkill reported exit code {result.returncode}: {cleanup_detail}"
+            return f"taskkill reported exit code {result.returncode}."
+
+        process.kill()
+        return "terminated process via kill()."
 
     def _run_oneshot(self, query: Dict[str, Any]) -> Dict[str, Any]:
         """Runs a single REPL query via file redirection."""
@@ -26,32 +58,54 @@ class LeanREPL:
         with open(input_file, "w", encoding="utf-8") as f:
             json.dump(query, f)
             
+        stdout = ""
+        stderr = ""
         try:
             # Command: lake exe repl < input.json
             # IMPORTANT: Must run from project root so lake can find lakefile.toml
-            result = subprocess.run(
-                f"lake exe repl < {input_filename}",
-                capture_output=True,
+            command = f"lake exe repl < {input_filename}"
+            process = subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 text=True,
                 shell=True,
                 cwd=str(self.project_dir),
-                timeout=60
             )
-            
-            if result.stdout:
+
+            try:
+                stdout, stderr = process.communicate(timeout=self.timeout_seconds)
+            except subprocess.TimeoutExpired:
+                cleanup_detail = self._cleanup_process_tree(process)
+                try:
+                    stdout, stderr = process.communicate(timeout=10)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    stdout, stderr = process.communicate()
+                    cleanup_detail = cleanup_detail.rstrip(".") + "; forced final process kill()."
+                return {
+                    "error": (
+                        f"Command '{command}' timed out after {self.timeout_seconds} seconds; "
+                        f"cleanup: {cleanup_detail}"
+                    ),
+                    "stdout": stdout,
+                    "stderr": stderr,
+                }
+
+            if stdout:
                 # REPL may output multiple JSON objects if there are multiple commands
                 # We take the last one or combine them. 
                 # For a single "cmd" query, it should be one object.
                 try:
-                    return json.loads(result.stdout)
+                    return json.loads(stdout)
                 except json.JSONDecodeError:
                     # Fallback: maybe multiple JSONs?
-                    lines = result.stdout.strip().split('\n')
+                    lines = stdout.strip().split('\n')
                     return json.loads(lines[-1])
             else:
-                return {"error": "REPL produced no output", "stderr": result.stderr}
+                return {"error": "REPL produced no output", "stderr": stderr}
         except json.JSONDecodeError:
-            return {"error": "Failed to parse REPL output", "raw": result.stdout}
+            return {"error": "Failed to parse REPL output", "raw": stdout}
         except Exception as e:
             return {"error": str(e)}
         finally:
@@ -100,6 +154,10 @@ class LeanREPL:
             "messages": messages
         }
 
+    def run_command(self, code: str) -> Dict[str, Any]:
+        """Runs an arbitrary REPL command and returns the raw response payload."""
+        return self._run_oneshot({"cmd": code})
+
 class LeanCompiler:
     """
     Updated Compiler that uses both 'lake build' and REPL feedback.
@@ -120,6 +178,9 @@ class LeanCompiler:
 
     def get_repl(self) -> LeanREPL:
         return self._repl
+
+    def run_repl_command(self, code: str) -> Dict[str, Any]:
+        return self._repl.run_command(code)
 
     def reset_workspace(self):
         """Removes temporary validation file and legacy target file."""
@@ -177,3 +238,19 @@ class LeanCompiler:
             # Return actual error messages joined by newlines
             error_msg = "\n".join(result['errors'])
             return False, error_msg
+
+    def build_module(self, module_name: str) -> Tuple[bool, str]:
+        result = subprocess.run(
+            ["lake", "build", module_name],
+            capture_output=True,
+            text=True,
+            shell=True,
+            cwd=self.root_dir
+        )
+        full_output = (result.stdout or "") + "\n" + (result.stderr or "")
+        return result.returncode == 0, full_output
+
+    async def build_module_async(self, module_name: str) -> Tuple[bool, str]:
+        import asyncio
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.build_module, module_name)
