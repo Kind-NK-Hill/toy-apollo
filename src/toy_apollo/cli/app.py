@@ -1,247 +1,640 @@
+from __future__ import annotations
+
 import argparse
 import asyncio
 import glob
-import json
 import os
-import shutil
-import subprocess
 from pathlib import Path
+from typing import Iterable
 
-from ..core import LedgerManager, TaskStatus, get_settings
-from ..integrations import AristotleDirectOffloader, AristotlePhase3Manager
-from ..pipeline import (
-    AutoFormalizationPipeline,
-    TextbookOrchestrator,
-    TextbookParser,
+from src.block_id_naming import (
+    canonicalize_block_id,
 )
+from ..core.settings import get_settings
 
-
-def get_task_content(task_id: str, plans_dir: Path) -> str:
-    for plan_file in plans_dir.glob("*.json"):
-        try:
-            with open(plan_file, "r", encoding="utf-8") as f:
-                tasks = json.load(f)
-            for task in tasks:
-                if task.get("block_id") == task_id:
-                    return task.get("content", "No content found.")
-        except Exception:
+def parse_task_ids(raw: str) -> list[str]:
+    seen: set[str] = set()
+    task_ids: list[str] = []
+    for part in raw.split(","):
+        tid = canonicalize_block_id(part.strip())
+        if not tid:
             continue
-    return "Task statement not found."
+        if tid not in seen:
+            seen.add(tid)
+            task_ids.append(tid)
+    return task_ids
 
 
-def step1_generate_plan(input_file, current_idx, total_files, ledger: LedgerManager, plans_dir: Path):
-    print(f"🚀 [Phase 1] Generating plan for File {current_idx}/{total_files}: '{os.path.basename(input_file)}'...")
-    if not os.path.exists(input_file):
-        print(f"❌ Input file '{input_file}' not found.")
-        return []
+def _filter_ids(ids: Iterable[str], selected_task_ids: set[str] | None) -> list[str]:
+    if selected_task_ids is None:
+        return list(ids)
+    return [item for item in ids if item in selected_task_ids]
 
-    with open(input_file, "r", encoding="utf-8") as f:
-        latex_source = f.read()
-
-    base_name = os.path.splitext(os.path.basename(input_file))[0]
-    plans_dir.mkdir(parents=True, exist_ok=True)
-    plan_file = plans_dir / f"{base_name}_plan.json"
-
-    parser = TextbookParser()
-    task_queue = parser.parse_chapter(latex_source)
-    if not task_queue:
-        print(f"❌ Failed to parse textbook: {input_file}")
-        return []
-
-    for task in task_queue:
-        task["source_plan"] = base_name
-        ledger.add_or_update_task(task)
-
-    with open(plan_file, "w", encoding="utf-8") as f:
-        json.dump(task_queue, f, indent=4, ensure_ascii=False)
-
-    print(f"✅ Plan successfully saved to '{plan_file}'.")
-    return [task["block_id"] for task in task_queue]
-
-
-async def step2_execute_plan(plan_file, current_idx, total_files, ledger: LedgerManager, reports_dir: Path, output_dir: Path, error_logs_dir: Path, formalized_dir: Path):
-    print(f"🚀 [Phase 2] Executing Plan {current_idx}/{total_files}: '{os.path.basename(plan_file)}'...")
-    if not os.path.exists(plan_file):
-        print(f"❌ Plan file '{plan_file}' not found.")
-        return
-
-    with open(plan_file, "r", encoding="utf-8") as f:
-        task_queue = json.load(f)
-
-    base_name = os.path.splitext(os.path.basename(plan_file))[0].replace("_plan", "")
-    reports_dir.mkdir(parents=True, exist_ok=True)
-    report_name = reports_dir / f"{base_name}_report.md"
-
-    orchestrator = TextbookOrchestrator(
-        report_filename=str(report_name),
-        output_dir=str(output_dir),
-        error_logs_dir=str(error_logs_dir),
-        max_depth=2,
-        ledger=ledger,
+async def step3_aristotle_offload(
+    ledger: LedgerManager,
+    plans_dir: Path,
+    selected_task_ids: set[str] | None = None,
+    *,
+    explicit_task_ids: list[str] | None = None,
+):
+    from ..core import TaskStatus
+    from ..integrations import (
+        AristotleDirectOffloader,
+        AristotlePhase3Manager,
+        export_legacy_candidates,
+        resolve_offload_candidates_for_task_ids,
+        resolve_offload_candidates_from_ledger,
     )
 
-    final_document = await orchestrator.process_task_queue(task_queue)
-    if final_document:
-        formalized_dir.mkdir(parents=True, exist_ok=True)
-        output_file = formalized_dir / f"{base_name}_Formalized.lean"
-        with open(output_file, "w", encoding="utf-8") as f:
-            f.write(final_document)
-        print(f"\n🎉 Finished processing {base_name}! Document saved to {output_file}")
+    if explicit_task_ids is not None:
+        candidates, missing_ids = resolve_offload_candidates_for_task_ids(
+            ledger,
+            plans_dir=plans_dir,
+            task_ids=explicit_task_ids,
+        )
+    else:
+        candidates, missing_ids = resolve_offload_candidates_from_ledger(ledger, plans_dir=plans_dir)
+        if selected_task_ids is not None:
+            missing_ids = _filter_ids(missing_ids, selected_task_ids)
+            candidates = [c for c in candidates if c["block_id"] in selected_task_ids]
 
-
-async def step3_aristotle_offload(ledger: LedgerManager):
-    failed_tasks = ledger.get_tasks_by_status([TaskStatus.FAILED_LOCAL])
-    if not failed_tasks:
-        print("✅ No tasks marked as FAILED_LOCAL in ledger. Nothing to offload.")
+    if missing_ids:
+        for missing_task_id in missing_ids:
+            ledger.increment_attempt(missing_task_id, "phase3_attempts")
+            ledger.update_runtime_metadata(missing_task_id, last_offload_error="missing_candidate_context")
+        print(
+            f"⚠️ [Phase 3] Skipping {len(missing_ids)} FAILED_LOCAL tasks: "
+            f"missing in plans/*.json -> {', '.join(missing_ids)}"
+        )
+    if not candidates:
+        print("✅ No valid FAILED_LOCAL candidates resolved from ledger. Nothing to offload.")
         return
 
-    print(f"🚀 [Phase 3] Initiating Aristotle Offload for {len(failed_tasks)} tasks...")
-    offloader = AristotleDirectOffloader()
-    manager = AristotlePhase3Manager()
+    ready_candidates = []
+    missing_soft_selection: list[str] = []
+    for candidate in candidates:
+        task_id = candidate["block_id"]
+        task_type = str(candidate.get("type", "")).strip().lower()
+        confirmed_at = str(candidate.get("soft_imports_confirmed_at", "") or "").strip()
+        current_record = ledger.ledger.get("tasks", {}).get(task_id, {})
+        existing_project_id = str(current_record.get("cloud_project_id") or "").strip()
+        is_existing_submission = candidate.get("status") == TaskStatus.OFFLOADED.value and bool(existing_project_id)
+        if task_type == "problem" and not confirmed_at and not is_existing_submission:
+            missing_soft_selection.append(task_id)
+            continue
+        ready_candidates.append(candidate)
 
-    for task in failed_tasks:
-        task_id = task["block_id"]
-        print(f"\n📦 Offloading: {task_id}")
-        await offloader.prepare_package(task_id)
-        staging_dir = offloader.outbox_root / task_id
-        if staging_dir.exists():
-            ledger.update_status(task_id, TaskStatus.OFFLOADED)
-            success = await manager.run_offload(task_id, str(staging_dir))
+    if missing_soft_selection:
+        for task_id in missing_soft_selection:
+            ledger.increment_attempt(task_id, "phase3_attempts")
+            ledger.update_status(
+                task_id,
+                TaskStatus.FAILED_LOCAL,
+                error="missing_soft_imports_selection",
+            )
+            ledger.update_runtime_metadata(
+                task_id,
+                last_offload_error=(
+                    "missing_soft_imports_selection: run --phase 3 --phase3-mode "
+                    "soft-pack/soft-apply before offload"
+                ),
+            )
+        print(
+            f"⚠️ [Phase 3] Skipping {len(missing_soft_selection)} problem tasks without confirmed soft imports: "
+            f"{', '.join(missing_soft_selection)}. Run soft-pack -> soft-apply before offload."
+        )
+
+    candidates = ready_candidates
+    if not candidates:
+        print("✅ No Phase 3 candidates are ready for Aristotle offload.")
+        return
+
+    legacy_export_file = plans_dir / "offload_candidates_legacy.json"
+    export_legacy_candidates(candidates, legacy_export_file)
+    print(f"📝 [Phase 3] Exported legacy candidate snapshot: {legacy_export_file}")
+
+    print(f"🚀 [Phase 3] Initiating Aristotle Offload for {len(candidates)} tasks...")
+    offloader = AristotleDirectOffloader()
+
+    manager = AristotlePhase3Manager()
+    harvest_queue: list[tuple[str, str]] = []
+
+    for candidate in candidates:
+        task_id = candidate["block_id"]
+        ledger.increment_attempt(task_id, "phase3_attempts")
+        ledger.update_runtime_metadata(task_id, last_offload_error="")
+        current_record = ledger.ledger.get("tasks", {}).get(task_id, {})
+        existing_project_id = str(current_record.get("cloud_project_id") or "").strip()
+        if candidate.get("status") == TaskStatus.OFFLOADED.value and existing_project_id:
+            print(f"\n📦 Reusing existing Aristotle submission for {task_id}: {existing_project_id}")
+            harvest_queue.append((task_id, existing_project_id))
+            continue
+
+        print(f"\n📦 Submitting: {task_id}")
+        try:
+            await offloader.prepare_package(candidate)
+            staging_dir = offloader.outbox_root / task_id
+            if staging_dir.exists():
+                result = await manager.submit_offload(task_id, str(staging_dir))
+                if isinstance(result, dict):
+                    success = bool(result.get("success"))
+                    cloud_project_id = str(result.get("cloud_project_id") or "")
+                    offload_error = str(result.get("error") or "")
+                else:
+                    success = bool(result)
+                    cloud_project_id = ""
+                    offload_error = ""
+
+                if success and cloud_project_id:
+                    print(f"   ✅ Task {task_id} successfully submitted to Aristotle.")
+                    ledger.update_status(task_id, TaskStatus.OFFLOADED)
+                    ledger.mark_offloaded(task_id)
+                    ledger.update_runtime_metadata(task_id, cloud_project_id=cloud_project_id, last_offload_error="")
+                    harvest_queue.append((task_id, cloud_project_id))
+                elif success:
+                    print(f"   ❌ Task {task_id} submission returned without a cloud project id.")
+                    error_msg = "missing_cloud_project_id"
+                    ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=error_msg)
+                    ledger.update_runtime_metadata(task_id, last_offload_error=error_msg)
+                else:
+                    print(f"   ❌ Task {task_id} failed during Aristotle submission.")
+                    error_msg = offload_error or "Aristotle Cloud Failure"
+                    ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=error_msg)
+                    ledger.update_runtime_metadata(
+                        task_id,
+                        last_offload_error=error_msg,
+                        cloud_project_id=cloud_project_id,
+                    )
+            else:
+                print(f"   ⚠️ Staging directory not found for {task_id}.")
+                error_msg = f"staging_dir_not_found:{task_id}"
+                ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=error_msg)
+                ledger.update_runtime_metadata(task_id, last_offload_error=error_msg)
+        except Exception as e:
+            print(f"   ❌ Submission failed for {task_id}: {e}")
+            ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=str(e))
+            ledger.update_runtime_metadata(task_id, last_offload_error=str(e))
+
+    for task_id, cloud_project_id in harvest_queue:
+        print(f"\n🌾 Harvesting: {task_id}")
+        try:
+            result = await manager.harvest_offload(task_id, cloud_project_id)
+            if isinstance(result, dict):
+                success = bool(result.get("success"))
+                offload_error = str(result.get("error") or "")
+            else:
+                success = bool(result)
+                offload_error = ""
+
             if success:
                 print(f"   ✅ Task {task_id} successfully solved and harvested.")
                 ledger.update_status(task_id, TaskStatus.HARVESTED)
+                ledger.mark_harvested(task_id, cloud_project_id=cloud_project_id)
+                ledger.update_runtime_metadata(task_id, last_offload_error="")
             else:
-                print(f"   ❌ Task {task_id} failed in Aristotle cloud.")
-                ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error="Aristotle Cloud Failure")
-        else:
-            print(f"   ⚠️ Staging directory not found for {task_id}.")
-
-
-async def step4_align_results(ledger: LedgerManager, error_logs_dir: Path, output_dir: Path, toyapollo_output: Path, plans_dir: Path):
-    harvested_tasks = ledger.get_tasks_by_status([TaskStatus.HARVESTED, TaskStatus.ALIGNING])
-    if not harvested_tasks:
-        print("✅ No tasks in HARVESTED state to align.")
-        return
-
-    print(f"🚀 [Phase 4] Aligning {len(harvested_tasks)} Aristotle results...")
-    alignment_logs = error_logs_dir / "alignment"
-    pipeline = AutoFormalizationPipeline(error_logs_dir=str(alignment_logs))
-
-    for task in harvested_tasks:
-        task_id = task["block_id"]
-        ledger.update_status(task_id, TaskStatus.ALIGNING)
-
-        local_path = toyapollo_output / f"{task_id}.lean"
-        if not local_path.exists():
-            local_path = output_dir / "general" / f"{task_id}.lean"
-
-        if local_path.exists():
-            print(f"\n🔧 Aligning {task_id}...")
-            with open(local_path, "r", encoding="utf-8") as f:
-                raw_code = f.read()
-
-            task_content = get_task_content(task_id, plans_dir=plans_dir)
-            fixed_code = await pipeline.align_aristotle_result(task_id, raw_code, task_content)
-
-            with open(local_path, "w", encoding="utf-8") as f:
-                f.write(fixed_code)
-
-            toy_path = toyapollo_output / f"{task_id}.lean"
-            toy_path.parent.mkdir(parents=True, exist_ok=True)
-            if str(local_path) != str(toy_path):
-                shutil.copy(local_path, toy_path)
-
-            print(f"   ⚙️ Final verification for {task_id}...")
-            module_name = f"ToyApollo.Output.{task_id}"
-            proc = subprocess.run(f"lake build {module_name}", shell=True, capture_output=True, text=True)
-            if proc.returncode == 0:
-                print(f"   ✨ {task_id} is now COMPLETED.")
-                ledger.register_success(task_id, fixed_code, ledger._hash_text(fixed_code))
-            else:
-                print(f"   ⚠️ {task_id} still has compilation errors.")
-                ledger.update_status(task_id, TaskStatus.ALIGNING, error=proc.stderr)
-        else:
-            print(f"   ❓ Local file for {task_id} not found.")
+                print(f"   ❌ Task {task_id} failed during Aristotle harvest.")
+                error_msg = offload_error or "Aristotle Cloud Failure"
+                ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=error_msg)
+                ledger.update_runtime_metadata(
+                    task_id,
+                    last_offload_error=error_msg,
+                    cloud_project_id=cloud_project_id,
+                )
+        except Exception as e:
+            print(f"   ❌ Harvest failed for {task_id}: {e}")
+            ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=str(e))
+            ledger.update_runtime_metadata(
+                task_id,
+                last_offload_error=str(e),
+                cloud_project_id=cloud_project_id,
+            )
 
 
 async def process_target(args):
     settings = get_settings()
-    settings.project_ledger_file.parent.mkdir(parents=True, exist_ok=True)
-
-    ledger = LedgerManager(ledger_path=str(settings.project_ledger_file))
+    if getattr(settings, "dependency_decisions_dir", None) is not None:
+        settings.dependency_decisions_dir.mkdir(parents=True, exist_ok=True)
     phase = args.phase
     target_path = args.input
 
+    if phase == 0:
+        from ..phase0_ingestion_pack import (
+            apply_phase0_pack,
+            validate_phase0_pack,
+            write_phase0_pack,
+        )
+
+        if settings.phase0_ingestion_packs_dir is not None:
+            settings.phase0_ingestion_packs_dir.mkdir(parents=True, exist_ok=True)
+        if args.phase0_mode == "pack":
+            pack_dir = write_phase0_pack(Path(target_path), args.page_range, args.phase0_output, settings)
+            print(f"📦 Phase 0 ingestion pack generated: {pack_dir}")
+        elif args.phase0_mode == "validate":
+            success, detail, _report = validate_phase0_pack(args.phase0_output, settings)
+            print(("✅ " if success else "❌ ") + detail)
+        elif args.phase0_mode == "apply":
+            success, detail, target_input = apply_phase0_pack(args.phase0_output, settings)
+            print(("✅ " if success else "❌ ") + detail)
+            if success:
+                print(f"📝 Input written: {target_input}")
+        return
+
+    from ..core import LedgerManager
+
+    settings.project_ledger_file.parent.mkdir(parents=True, exist_ok=True)
+    ledger = LedgerManager(ledger_path=str(settings.project_ledger_file))
+    selected_task_ids: set[str] | None = None
+    if args.tasks:
+        selected_task_ids = set(args.task_ids)
+        if phase in (3, 4):
+            known_task_ids = {canonicalize_block_id(tid) for tid in ledger.ledger.get("tasks", {}).keys()}
+            unknown = sorted(selected_task_ids - known_task_ids)
+            if unknown:
+                print(f"⚠️ [Task Filter] Unknown task ids ignored: {', '.join(unknown)}")
+            selected_task_ids = selected_task_ids & known_task_ids
+            if not selected_task_ids:
+                print("⚠️ [Task Filter] No valid task ids remain after validation.")
+
     if phase == 1:
+        from ..phase1_prompt_pack import (
+            apply_phase1_pack,
+            write_phase1_pack,
+        )
+
         settings.plans_dir.mkdir(parents=True, exist_ok=True)
-        found_ids = []
-        if os.path.isdir(target_path):
-            tex_files = sorted(glob.glob(os.path.join(target_path, "*.tex")))
-            for idx, file_path in enumerate(tex_files, 1):
-                found_ids.extend(
-                    step1_generate_plan(file_path, idx, len(tex_files), ledger, plans_dir=settings.plans_dir)
-                )
-        else:
-            found_ids.extend(step1_generate_plan(target_path, 1, 1, ledger, plans_dir=settings.plans_dir))
-        ledger.mark_orphans(found_ids)
+        settings.phase1_prompt_packs_dir.mkdir(parents=True, exist_ok=True)
+        phase1_mode = getattr(args, "phase1_mode", "pack")
+        if phase1_mode == "pack":
+            if os.path.isdir(target_path):
+                tex_files = sorted(glob.glob(os.path.join(target_path, "*.tex")))
+                for file_path in tex_files:
+                    write_phase1_pack(Path(file_path), settings)
+            else:
+                write_phase1_pack(Path(target_path), settings)
+        elif phase1_mode == "apply":
+            found_ids = []
+            if os.path.isdir(target_path):
+                tex_files = sorted(glob.glob(os.path.join(target_path, "*.tex")))
+                for file_path in tex_files:
+                    success, detail, ids = apply_phase1_pack(Path(file_path), ledger, settings)
+                    if success:
+                        found_ids.extend(ids)
+                        source_plan = os.path.splitext(os.path.basename(file_path))[0]
+                        ledger.mark_orphans(ids, source_plan=source_plan)
+                    else:
+                        print(f"❌ {detail}")
+            else:
+                success, detail, ids = apply_phase1_pack(Path(target_path), ledger, settings)
+                if success:
+                    found_ids.extend(ids)
+                    source_plan = os.path.splitext(os.path.basename(target_path))[0]
+                    ledger.mark_orphans(ids, source_plan=source_plan)
+                else:
+                    print(f"❌ {detail}")
     elif phase == 2:
+        from ..phase2_prompt_pack import (
+            audit_completed_task_output,
+            build_check_prompt_pack_candidate,
+            ensure_task_registered,
+            is_remark_task,
+            mark_remark_completed_without_pack,
+            repair_packed_remark_tasks,
+            resolve_phase2_task,
+            verify_prompt_pack_candidate,
+            write_codex_review_pack,
+            write_existing_output_review_queue,
+            write_existing_output_review_pack,
+            write_prompt_pack,
+        )
+        from ..phase2_review_apply import apply_codex_review_result
+        from ..phase2_review_loop import (
+            run_codex_auto_loop,
+            run_codex_review_fix,
+            run_codex_review_now,
+        )
+
         settings.reports_dir.mkdir(parents=True, exist_ok=True)
         settings.output_lean_files_dir.mkdir(parents=True, exist_ok=True)
+        settings.phase2_prompt_packs_dir.mkdir(parents=True, exist_ok=True)
         settings.error_logs_dir.mkdir(parents=True, exist_ok=True)
         settings.formalized_chapters_dir.mkdir(parents=True, exist_ok=True)
         settings.toyapollo_output_dir.mkdir(parents=True, exist_ok=True)
-        if os.path.isdir(target_path):
-            json_files = sorted(glob.glob(os.path.join(target_path, "*.json")))
-            for idx, file_path in enumerate(json_files, 1):
-                await step2_execute_plan(
-                    file_path,
-                    idx,
-                    len(json_files),
+        if not selected_task_ids and args.phase2_mode != "review-existing-queue":
+            print("❌ Phase 2 prompt-pack modes require task ids via --tasks.")
+            return
+        if args.phase2_mode in {"pack", "build-check", "verify", "review-pack", "review-existing", "review-now", "review-fix", "review-apply"} and len(selected_task_ids) != 1:
+            print("❌ Phase 2 pack/build-check/verify/review-pack/review-existing/review-now/review-fix/review-apply modes currently support exactly one task at a time.")
+            return
+        try:
+            if args.phase2_mode == "pack":
+                task_id = next(iter(selected_task_ids))
+                repaired_remarks = repair_packed_remark_tasks(
                     ledger,
-                    reports_dir=settings.reports_dir,
-                    output_dir=settings.output_lean_files_dir,
-                    error_logs_dir=settings.error_logs_dir,
-                    formalized_dir=settings.formalized_chapters_dir,
+                    settings,
+                    source_plan_prefixes=("13_", "14_", "15_"),
+                    delete_pack_dirs=True,
                 )
-        else:
-            await step2_execute_plan(
-                target_path,
-                1,
-                1,
-                ledger,
-                reports_dir=settings.reports_dir,
-                output_dir=settings.output_lean_files_dir,
-                error_logs_dir=settings.error_logs_dir,
-                formalized_dir=settings.formalized_chapters_dir,
-            )
+                if repaired_remarks:
+                    print(f"🧹 Repaired packed remark tasks: {', '.join(repaired_remarks)}")
+
+                task = resolve_phase2_task(task_id, ledger, settings)
+                task = ensure_task_registered(task, ledger)
+                if is_remark_task(task):
+                    mark_remark_completed_without_pack(
+                        task_id,
+                        ledger,
+                        settings,
+                        delete_pack_dir=True,
+                    )
+                    print(f"⏭️ Skipped Remark task {task_id}; marked COMPLETED without formalization.")
+                else:
+                    pack_dir = write_prompt_pack(task_id, ledger, settings, task=task)
+                    print(f"📦 Prompt pack generated: {pack_dir}")
+            elif args.phase2_mode == "build-check":
+                task_id = next(iter(selected_task_ids))
+                success, detail = await build_check_prompt_pack_candidate(task_id, ledger, settings, args.candidate)
+                if success:
+                    print(f"🛠️ Build check passed for {task_id}.")
+                else:
+                    print(f"❌ Build check failed for {task_id}.")
+                print(detail)
+            elif args.phase2_mode == "verify":
+                task_id = next(iter(selected_task_ids))
+                success, detail = await verify_prompt_pack_candidate(task_id, ledger, settings, args.candidate)
+                if success:
+                    print(f"✅ Candidate verified and promoted for {task_id}.")
+                else:
+                    print(f"❌ Candidate verification failed for {task_id}.")
+                    print(detail)
+            elif args.phase2_mode == "review-pack":
+                task_id = next(iter(selected_task_ids))
+                success, detail = await write_codex_review_pack(task_id, ledger, settings, args.candidate)
+                if success:
+                    print(f"📦 Codex semantic review pack generated for {task_id}.")
+                else:
+                    print(f"❌ Codex semantic review pack generation failed for {task_id}.")
+                print(detail)
+            elif args.phase2_mode == "review-existing":
+                task_id = next(iter(selected_task_ids))
+                success, detail = await write_existing_output_review_pack(task_id, ledger, settings)
+                if success:
+                    print(f"📦 Existing output semantic review pack generated for {task_id}.")
+                else:
+                    print(f"❌ Existing output semantic review pack generation failed for {task_id}.")
+                print(detail)
+            elif args.phase2_mode == "review-now":
+                task_id = next(iter(selected_task_ids))
+                success, detail = await run_codex_review_now(
+                    task_id,
+                    ledger,
+                    settings,
+                    review_subject=args.review_subject,
+                    auto_apply_pass=args.auto_apply_pass,
+                )
+                if success:
+                    print(f"🧠 Codex review request ready; reviewer step required now for {task_id}.")
+                else:
+                    print(f"❌ Codex review request could not be prepared for {task_id}.")
+                print(detail)
+            elif args.phase2_mode == "review-fix":
+                task_id = next(iter(selected_task_ids))
+                success, detail = await run_codex_review_fix(
+                    task_id,
+                    ledger,
+                    settings,
+                    abandon_current_repair=args.abandon_current_repair,
+                )
+                if success:
+                    print(f"🩹 Review repair loop prepared for {task_id}.")
+                else:
+                    print(f"❌ Review repair loop could not be prepared for {task_id}.")
+                print(detail)
+            elif args.phase2_mode == "auto-loop":
+                task_id = next(iter(selected_task_ids))
+                success, detail = await run_codex_auto_loop(
+                    task_id,
+                    ledger,
+                    settings,
+                    review_subject=args.review_subject,
+                    max_auto_rounds=args.max_auto_rounds,
+                    nonprogress_limit=args.nonprogress_limit,
+                    max_build_attempts_per_round=args.max_build_attempts_per_round,
+                )
+                if success:
+                    print(f"🔁 Codex auto-loop advanced for {task_id}; continue this same-session step now.")
+                else:
+                    print(f"❌ Codex auto-loop stopped for {task_id}.")
+                print(detail)
+            elif args.phase2_mode == "review-existing-queue":
+                queue_task_ids = sorted(selected_task_ids) if selected_task_ids is not None else []
+                success, detail = await write_existing_output_review_queue(queue_task_ids, ledger, settings)
+                if success:
+                    print("📚 Existing output semantic review queue prepared.")
+                else:
+                    print("❌ Existing output semantic review queue preparation failed.")
+                print(detail)
+            elif args.phase2_mode == "review-apply":
+                task_id = next(iter(selected_task_ids))
+                success, detail = await apply_codex_review_result(task_id, ledger, settings, args.review_result)
+                if success:
+                    print(f"✅ Codex semantic review applied and promoted for {task_id}.")
+                else:
+                    print(f"❌ Codex semantic review apply did not promote {task_id}.")
+                print(detail)
+            elif args.phase2_mode == "audit":
+                for task_id in sorted(selected_task_ids):
+                    success, detail = audit_completed_task_output(task_id, ledger, settings)
+                    if success:
+                        print(f"✅ Semantic audit passed for {task_id}.")
+                    else:
+                        print(f"🧨 Semantic audit demoted {task_id} to FAILED_LOCAL.")
+                        print(detail)
+        except FileNotFoundError as exc:
+            print(f"❌ {exc}")
+            return
     elif phase == 3:
-        await step3_aristotle_offload(ledger)
-    elif phase == 4:
-        settings.error_logs_dir.mkdir(parents=True, exist_ok=True)
-        settings.output_lean_files_dir.mkdir(parents=True, exist_ok=True)
-        settings.toyapollo_output_dir.mkdir(parents=True, exist_ok=True)
-        await step4_align_results(
-            ledger,
-            error_logs_dir=settings.error_logs_dir,
-            output_dir=settings.output_lean_files_dir,
-            toyapollo_output=settings.toyapollo_output_dir,
-            plans_dir=settings.plans_dir,
+        from ..phase3_execution_batches import task_ids_for_batch, write_execution_batch_plan
+        from ..phase3_post_harvest_pack import (
+            verify_repair_candidate,
+            write_repair_pack,
         )
+        from ..phase3_softdep_pack import (
+            apply_softdep_selection,
+            write_softdep_pack,
+        )
+
+        settings.phase3_softdep_packs_dir.mkdir(parents=True, exist_ok=True)
+        if settings.phase3_execution_batches_dir is not None:
+            settings.phase3_execution_batches_dir.mkdir(parents=True, exist_ok=True)
+        if settings.phase3_post_harvest_packs_dir is not None:
+            settings.phase3_post_harvest_packs_dir.mkdir(parents=True, exist_ok=True)
+        if args.phase3_mode == "offload":
+            await step3_aristotle_offload(ledger, plans_dir=settings.plans_dir, selected_task_ids=selected_task_ids)
+        elif args.phase3_mode == "soft-pack":
+            if not selected_task_ids:
+                print("❌ Phase 3 soft-pack requires at least one problem task via --tasks.")
+                return
+            pack_dir = write_softdep_pack(sorted(selected_task_ids), ledger, settings)
+            print(f"📦 Soft dependency pack generated: {pack_dir}")
+        elif args.phase3_mode == "soft-apply":
+            if not selected_task_ids:
+                print("❌ Phase 3 soft-apply requires at least one problem task via --tasks.")
+                return
+            success, detail, pack_dir = apply_softdep_selection(sorted(selected_task_ids), ledger, settings, args.selection)
+            if success:
+                print(f"✅ Soft imports applied for batch: {pack_dir.name}")
+            else:
+                print(f"❌ Soft imports apply failed for batch: {pack_dir.name}")
+            print(detail)
+        elif args.phase3_mode == "plan-batches":
+            if not selected_task_ids:
+                print("❌ Phase 3 plan-batches requires at least one problem task via --tasks.")
+                return
+            plan_dir = write_execution_batch_plan(sorted(selected_task_ids), ledger, settings)
+            print(f"🧭 Execution batch plan generated: {plan_dir}")
+        elif args.phase3_mode == "offload-batch":
+            if not args.batch:
+                print("❌ Phase 3 offload-batch requires --batch.")
+                return
+            plan_dir, batch_task_ids, batch_id = task_ids_for_batch(args.batch, settings)
+            print(f"📦 Offloading execution batch {batch_id} from {plan_dir.name}...")
+            await step3_aristotle_offload(
+                ledger,
+                plans_dir=settings.plans_dir,
+                explicit_task_ids=batch_task_ids,
+            )
+        elif args.phase3_mode == "repair-pack":
+            if not selected_task_ids:
+                print("❌ Phase 3 repair-pack requires exactly one valid task id via --tasks.")
+                return
+            if len(selected_task_ids) != 1:
+                print("❌ Phase 3 repair-pack currently supports exactly one task at a time.")
+                return
+            task_id = next(iter(selected_task_ids))
+            pack_dir = write_repair_pack(task_id, ledger, settings)
+            print(f"🩹 Post-harvest repair pack generated: {pack_dir}")
+        elif args.phase3_mode == "repair-verify":
+            if not selected_task_ids:
+                print("❌ Phase 3 repair-verify requires exactly one valid task id via --tasks.")
+                return
+            if len(selected_task_ids) != 1:
+                print("❌ Phase 3 repair-verify currently supports exactly one task at a time.")
+                return
+            task_id = next(iter(selected_task_ids))
+            success, detail = await verify_repair_candidate(task_id, ledger, settings, args.candidate)
+            if success:
+                print(f"✅ Post-harvest candidate verified and promoted for {task_id}.")
+            else:
+                print(f"❌ Post-harvest candidate verification failed for {task_id}.")
+                print(detail)
+    elif phase == 4:
+        # Phase 4 is temporarily disabled.
+        print("⚠️ Phase 4 is temporarily disabled. Use manual local verification and update ledger statuses directly.")
     elif args.status:
         ledger.print_status_summary()
-
-    ledger.save()
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Toy Apollo Ledger-Driven Pipeline")
-    parser.add_argument("--phase", type=int, choices=[1, 2, 3, 4], required=False, help="1: Plan, 2: Local, 3: Aristotle, 4: Align")
-    parser.add_argument("--input", type=str, required=False, default="", help="Path for Phase 1 & 2")
+    parser.add_argument("--phase", type=int, choices=[0, 1, 2, 3, 4], required=False, help="0: Ingest, 1: Plan, 2: Local, 3: Aristotle, 4: Align")
+    parser.add_argument("--input", type=str, required=False, default="", help="Path for Phase 0 pack and Phase 1 inputs")
+    parser.add_argument("--phase0-mode", type=str, choices=["pack", "validate", "apply"], default="pack", dest="phase0_mode", help="Phase 0 mode: pack extracts source materials, validate checks draft_input.tex, apply writes inputs/<stem>.tex")
+    parser.add_argument("--page-range", type=str, required=False, default="", dest="page_range", help="Physical PDF page range for --phase 0 --phase0-mode pack, 1-based inclusive, for example 157-160")
+    parser.add_argument("--phase0-output", type=str, required=False, default="", dest="phase0_output", help="Output stem for Phase 0 packs and inputs/<stem>.tex, for example chapter9-moments-mgf")
+    parser.add_argument("--phase1-mode", type=str, choices=["pack", "apply"], default="pack", dest="phase1_mode", help="Phase 1 mode: pack generates operator prompt packs, apply validates and registers a filled draft_plan.json")
+    parser.add_argument("--tasks", type=str, required=False, default="", help="Comma-separated block_id filter for Phase 2 prompt-pack modes and Phase 3/4")
+    parser.add_argument("--phase2-mode", type=str, choices=["pack", "build-check", "verify", "audit", "review-pack", "review-existing", "review-now", "review-fix", "auto-loop", "review-existing-queue", "review-apply"], default="pack", help="Phase 2 mode: default workflow is pack -> build-check -> review-pack/review-existing -> review-now/review-apply; review-now prepares a Codex handoff request for current/existing/candidate subjects; review-fix activates a semantic-repair build loop from the latest failed review; auto-loop advances the same-session Codex author/reviewer loop state and runtime transitions; review-existing-queue prepares a batch Codex reviewer queue from ToyApollo/Output; verify/audit are optional runner-backed modes")
+    parser.add_argument("--phase3-mode", type=str, choices=["offload", "soft-pack", "soft-apply", "plan-batches", "offload-batch", "repair-pack", "repair-verify"], default="offload", help="Phase 3 mode: Aristotle offload, soft dependency selection, execution batch planning, post-harvest repair, or offload by planned batch")
+    parser.add_argument("--candidate", type=str, required=False, default="", help="Optional external Lean file for --phase 2 --phase2-mode build-check/verify; review-pack only accepts ToyApollo/Output/<task>.lean as a compatibility alias for review-existing; also supported by --phase 3 --phase3-mode repair-verify")
+    parser.add_argument("--review-result", type=str, required=False, default="", dest="review_result", help="Filled semantic review result JSON for --phase 2 --phase2-mode review-apply")
+    parser.add_argument("--review-subject", type=str, choices=["current", "existing", "candidate"], default="current", dest="review_subject", help="Review subject selector for --phase 2 --phase2-mode review-now/auto-loop")
+    parser.add_argument("--auto-apply-pass", action="store_true", dest="auto_apply_pass", help="Agent-side hint for --phase 2 --phase2-mode review-now: after the Codex reviewer writes a pass result, continue with review-apply")
+    parser.add_argument("--abandon-current-repair", action="store_true", dest="abandon_current_repair", help="With --phase 2 --phase2-mode review-fix, abandon the active repair cycle without changing draft.lean")
+    parser.add_argument("--max-auto-rounds", type=int, default=6, dest="max_auto_rounds", help="Maximum rounds for --phase 2 --phase2-mode auto-loop")
+    parser.add_argument("--nonprogress-limit", type=int, default=2, dest="nonprogress_limit", help="Stop --phase 2 --phase2-mode auto-loop after this many consecutive non-progress failures")
+    parser.add_argument("--max-build-attempts-per-round", type=int, default=3, dest="max_build_attempts_per_round", help="Maximum build-check attempts per round for --phase 2 --phase2-mode auto-loop")
+    parser.add_argument("--selection", type=str, required=False, default="", help="Selection JSON for --phase 3 --phase3-mode soft-apply")
+    parser.add_argument("--batch", type=str, required=False, default="", help="Execution batch id for --phase 3 --phase3-mode offload-batch")
     parser.add_argument("--status", action="store_true", help="Show project status summary")
 
     args = parser.parse_args()
-    if not args.phase and not args.status:
+    args.task_ids = parse_task_ids(args.tasks)
+    if args.tasks and not args.task_ids:
+        parser.error("--tasks was provided but no valid task id was parsed.")
+    if args.phase == 0:
+        if args.tasks:
+            parser.error("--tasks is not supported for Phase 0.")
+        if not args.phase0_output:
+            parser.error("--phase0-output is required with --phase 0.")
+        if args.phase0_mode == "pack":
+            if not args.input:
+                parser.error("--input is required with --phase 0 --phase0-mode pack.")
+            if not args.page_range:
+                parser.error("--page-range is required with --phase 0 --phase0-mode pack.")
+        elif args.input:
+            parser.error("--input is only used with --phase 0 --phase0-mode pack.")
+        if args.page_range and args.phase0_mode != "pack":
+            parser.error("--page-range is only used with --phase 0 --phase0-mode pack.")
+    if args.task_ids and args.phase == 1:
+        parser.error("--tasks is not supported for Phase 1.")
+    phase2_prompt_modes = ("pack", "build-check", "verify", "audit", "review-pack", "review-existing", "review-now", "review-fix", "auto-loop", "review-existing-queue", "review-apply")
+    if args.phase == 2 and args.phase2_mode in phase2_prompt_modes and not args.task_ids:
+        if args.phase2_mode != "review-existing-queue":
+            parser.error("--phase 2 prompt-pack modes require task ids via --tasks.")
+    if args.phase == 2 and args.phase2_mode in ("pack", "build-check", "verify", "review-pack", "review-existing", "review-now", "review-fix", "auto-loop", "review-apply") and len(args.task_ids) > 1:
+        parser.error("--phase 2 pack/build-check/verify/review-pack/review-existing/review-now/review-fix/auto-loop/review-apply modes support exactly one task at a time.")
+    if args.phase == 2 and args.input:
+        parser.error("--input is not used with --phase 2.")
+    if args.candidate and not (
+        (args.phase == 2 and args.phase2_mode in ("build-check", "verify", "review-pack"))
+        or (args.phase == 3 and args.phase3_mode == "repair-verify")
+    ):
+        parser.error("--candidate is only supported with --phase 2 --phase2-mode build-check/verify/review-pack or --phase 3 --phase3-mode repair-verify.")
+    if args.phase == 2 and args.phase2_mode == "review-apply" and not args.review_result:
+        parser.error("--review-result is required with --phase 2 --phase2-mode review-apply.")
+    if args.review_result and not (args.phase == 2 and args.phase2_mode == "review-apply"):
+        parser.error("--review-result is only supported with --phase 2 --phase2-mode review-apply.")
+    if args.review_subject != "current" and not (args.phase == 2 and args.phase2_mode in ("review-now", "auto-loop")):
+        parser.error("--review-subject is only supported with --phase 2 --phase2-mode review-now/auto-loop.")
+    if args.auto_apply_pass and not (args.phase == 2 and args.phase2_mode == "review-now"):
+        parser.error("--auto-apply-pass is only supported with --phase 2 --phase2-mode review-now.")
+    if args.abandon_current_repair and not (args.phase == 2 and args.phase2_mode == "review-fix"):
+        parser.error("--abandon-current-repair is only supported with --phase 2 --phase2-mode review-fix.")
+    if (
+        args.phase2_mode != "auto-loop"
+        and (args.max_auto_rounds != 6 or args.nonprogress_limit != 2 or args.max_build_attempts_per_round != 3)
+    ):
+        parser.error("--max-auto-rounds/--nonprogress-limit/--max-build-attempts-per-round are only supported with --phase 2 --phase2-mode auto-loop.")
+    if args.phase == 3 and args.phase3_mode in ("soft-pack", "soft-apply", "plan-batches") and not args.task_ids:
+        parser.error("--phase 3 soft-pack/soft-apply/plan-batches require at least one task via --tasks.")
+    if args.phase == 3 and args.phase3_mode in ("soft-pack", "soft-apply", "plan-batches"):
+        invalid = [task_id for task_id in args.task_ids if not task_id.startswith("prob_")]
+        if invalid:
+            parser.error(f"--phase 3 {args.phase3_mode} only supports problem tasks: {', '.join(invalid)}")
+    if args.phase == 3 and args.phase3_mode in ("repair-pack", "repair-verify") and not args.task_ids:
+        parser.error("--phase 3 repair-pack/repair-verify require exactly one task via --tasks.")
+    if args.phase == 3 and args.phase3_mode in ("repair-pack", "repair-verify") and len(args.task_ids) > 1:
+        parser.error("--phase 3 repair-pack/repair-verify support exactly one task at a time.")
+    if args.phase == 3 and args.phase3_mode == "soft-apply" and not args.selection:
+        parser.error("--selection is required with --phase 3 --phase3-mode soft-apply.")
+    if args.selection and not (args.phase == 3 and args.phase3_mode == "soft-apply"):
+        parser.error("--selection is only supported with --phase 3 --phase3-mode soft-apply.")
+    if args.phase == 3 and args.phase3_mode == "offload-batch" and not args.batch:
+        parser.error("--batch is required with --phase 3 --phase3-mode offload-batch.")
+    if args.batch and not (args.phase == 3 and args.phase3_mode == "offload-batch"):
+        parser.error("--batch is only supported with --phase 3 --phase3-mode offload-batch.")
+    if args.task_ids and args.status:
+        parser.error("--tasks cannot be combined with --status.")
+    if args.batch and args.task_ids:
+        parser.error("--batch cannot be combined with --tasks.")
+
+    if args.phase is None and not args.status:
         parser.print_help()
         return 0
+
     asyncio.run(process_target(args))
     return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
