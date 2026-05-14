@@ -1,0 +1,21 @@
+\subsection*{Problems}
+\begin{enumerate}
+\item Let $X$ and $Y$ be continuous random variables with joint pdf $f_{XY}(x,y)$. Prove that if $f_{XY}(x,y)$ factorizes as a product $g(x) h(y)$ of a function $g(x)$ of $x$ and a function $h(y)$ of $y$, then $X$ and $Y$ are independent.
+\item Prove that in any probability space $(\Omega, \mathcal{F}, P)$, the empty set is independent of any event in the $\sigma$-algebra $\mathcal{F}$.
+\item Suppose $A_1,A_2,A_3,A_4$ are four events in a probability space, and they satisfy
+\[
+P(A_1\cap A_2\cap A_3\cap A_4) = P(A_1) P(A_2) P(A_3) P(A_4).
+\]
+Can we deduce that $A_1,A_2,A_3$, and $A_4$ are mutually independent?
+\item By giving a counter-example, show that the independence assumption in the second Borel--Cantelli lemma cannot be relaxed.
+\item Show that the independence of two random variables depends on the choice of probability measure. Give an example of measurable space $(\Omega, \mathcal{F})$, two random variables $X(\omega)$ and $Y(\omega)$, and two probability measures $P$ and $Q$, such that $X$ and $Y$ are independent with probability measure $P$ but are dependent with probability measure $Q$.
+\item Suppose we perform a sequence of infinitely many experiments. For $k=1,2,3,\dots$, the outcome of the $k$-th experiment is successful with probability $k^{-\alpha}$, where $\alpha$ is a constant strictly between $0$ and $1$, but is not successful with probability $1-k^{-\alpha}$. Assume that the experiments are independent of each other. Calculate the probability that we have $n$ consecutive successful experimental outcomes infinitely often, where $n$ is a positive integer.
+\item (Inverse Transform Method). Let $U_1,U_2,\dots$ be a sequence of independent random variables uniformly distributed between 0 and 1. Given a Stieltjes measure function $F(x)$ that is continuous and strictly monotonically increasing, such that the inverse function $F^{-1}$ is well-defined, show that $F^{-1}(U_i)$, for $i\ge 1$, is a sequence of i.i.d. random variable with cdf $F(x)$. (For Stieltjes measure function that is not continuous or not strictly monotonic, see the proof of Theorem 10.8 or [4, Theorem 1.2.2].)
+\item Let $Z$ be a standard normal random variable, and let $C$ be the outcome of a fair coin that is independent of $Z$. We define the random point $(X,Y)$ as follows: If the outcome of the coin is head, then $(X,Y)=(Z,0)$, and if the outcome is tails, then $(X,Y)=(0,Z)$.
+\begin{enumerate}
+\item Show that $X$ and $Y$ are identically distributed but not independent.
+\item Derive the joint cumulative distribution function $F_{XY}(x,y)$ of $X$ and $Y$.
+\item Derive the joint cumulative distribution function $F_{XZ}(x,z)$ of $X$ and $Z$.
+\end{enumerate}
+\item Let $(\Omega, \mathcal{F}, P)$ denote a probability space and let $\mathcal{G}$ and $\mathcal{H}$ be two independent sub-$\sigma$-algebras of $\mathcal{F}$. Prove that any random variable $X$ that is measurable with respect to both $\mathcal{G}$ and $\mathcal{H}$ is a constant with probability 1, i.e., there exists a constant $c$ such that $P(X=c)=1$.
+\end{enumerate}

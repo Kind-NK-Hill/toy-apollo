@@ -1,0 +1,76 @@
+\subsection*{5.4 Borel--Cantelli Lemmas}
+
+We use the notation $P(A_i\ i.o.)$ to represent the probability that event $A_i$ happens for infinitely many indices $i$. The short-hand notation ``i.o.'' stands for ``infinitely often.''
+
+\begin{thmbox}{5.8 (Borel--Cantelli (BC) Lemma 1)}
+If $A_i$ are events in a probability space $(\Omega,\mathcal{F},P)$, for $i \ge 1$, satisfying $\sum_{i=1}^{\infty} P(A_i)<\infty$, then
+\[
+P(\limsup_i A_i)=P(A_i\ i.o.)=0.
+\]
+\end{thmbox}
+
+\textit{Proof} We can write the limsup of $A_i$'s as an intersection
+\[
+\limsup_i A_i=\bigcap_{k=1}^{\infty} E_k,
+\]
+where $E_k$ is the event $E_k \triangleq \cup_{j=k}^{\infty} A_j$. Since $E_1 \supseteq E_2 \supseteq E_3 \supseteq \cdots$ is a decreasing sequence of events, by the upper semi-continuity of measure, it suffices to prove that the probability $P(E_k)$ approaches $0$ as $k \to \infty$.
+
+Since the probability measure $P$ satisfies the $\sigma$-subadditivity property (Definition 3.8), we get
+\[
+P(E_k)=P\left(\cup_{j=k}^{\infty} A_j\right)\le \sum_{j=k}^{\infty} P(A_j).
+\]
+
+Since $\sum_{j=1}^{\infty} P(A_j)$ is a convergence series, the limit $\lim_{k \to \infty} \sum_{j=k}^{\infty} P(A_j)$ must be zero. This implies $P(E_k) \searrow 0$ as $k \to \infty$. \hfill $\square$
+
+\textbf{Example 5.4.1 (Illustration of the First BC Lemma)} \\
+Consider a random experiment of tossing a fair coin repeatedly an infinite number of times. Let $A_i$ be the event that there is a run of $i$ heads starting from position $i$, for $i=1,2,3,\ldots$. Since $\sum_{i=1}^{\infty} P(A_i)=\sum_{i=1}^{\infty} 2^{-i}<\infty$, we have $P(A_i\ \text{i.o.})=0$.
+
+Note that the events $A_i$ in the previous example are \textit{not} independent, but we can apply the first BC lemma as there is no assumption of independence in this lemma.
+
+In the second Borel--Cantelli lemma, the assumption of independence is essential.
+
+\begin{thmbox}{5.9 (Borel--Cantelli (BC) Lemma 2)}
+If $(A_i)_{i=1}^{\infty}$ is a sequence of independent events in a probability space $(\Omega,\mathcal{F},P)$ such that $\sum_{i=1}^{\infty} P(A_i)=\infty$, then
+\[
+P(\limsup_i A_i)=P(A_i\ i.o.)=1.
+\]
+\end{thmbox}
+
+\textit{Proof} Consider the complement of the event $\limsup_i A_i$
+\[
+(\limsup_i A_i)^c=\left(\bigcap_{k=1}^{\infty}\bigcup_{j=k}^{\infty} A_j\right)^c=\bigcup_{k=1}^{\infty}\bigcap_{j=k}^{\infty} A_j^c.
+\]
+
+We want to show that $P\left(\cup_{k=1}^{\infty}\cap_{j=k}^{\infty} A_j^c\right)=0$. It suffices to prove that $P\left(\cap_{j=k}^{\infty} A_j^c\right)=0$ for all $k$.
+
+We use the inequality $1-x \le e^{-x}$, which holds for all $x \in \mathbb{R}$. For any $k$, consider an integer $m$ larger than $k$
+\[
+P\left(\bigcap_{j=k}^{m} A_j^c\right)=\prod_{j=k}^{m} P(A_j^c)=\prod_{j=k}^{m} (1-P(A_j)) \le \prod_{j=k}^{m} e^{-P(A_j)}=e^{-\sum_{j=k}^{m} P(A_j)}.
+\]
+
+In the first equality above, we use the property that $A_k^c,\ldots,A_m^c$ are independent events (Theorem 5.6). Since $\sum_{i=1}^{\infty} P(A_i)$ is a divergent series, we have $\sum_{j=k}^{m} P(A_j) \to \infty$ as $m \to \infty$. Therefore, using continuity from above, we obtain $P\left(\cap_{j=k}^{\infty} A_j^c\right)=0$. Since it is true for all $k$, we prove $P\left(\cup_{k=1}^{\infty}\cap_{j=k}^{\infty} A_j^c\right)=0$. \hfill $\square$
+
+\textbf{Example 5.4.2 (Monkey Randomly Typing on a Keyboard)} \\
+Let $\mathcal{A}$ be an alphabet set of finite size, and let $w=a_1a_2 \cdots a_n$ be a particular word of length $n$, where $a_i \in \mathcal{A}$ for all $i$. If we randomly generate an infinite string $(X_i)_{i=1}^{\infty}$ where $X_i$'s are independent and uniformly chosen from $\mathcal{A}$, then with probability $1$, the word $w$ appears at least once in the infinite string in $n$ consecutive positions.
+
+To see this, we can divide the infinite string into infinitely many non-overlapping sub-strings of length $n$. The first sub-string is from position $1$ to $n$, the second sub-string is from position $n+1$ to $2n$, and so on. For $k=1,2,3,\ldots$, let $A_k$ be the event that the $k$-th sub-string is exactly equal to the chosen string $w$. These events are independent because there is no overlap between the sub-strings. Although the probability $P(A_k)$ is a very small number, it is still strictly positive. Hence, by the second Borel--Cantelli lemma, with probability $1$, infinitely many such sub-strings are equal to $w$.
+···
+This example is often presented vividly by taking the word $w$ to be a Shakespeare novel and imagining a monkey randomly typing on a keyboard one character at a time. The Borel--Cantelli lemma states that given infinite time, the monkey will reproduce the entire volume of the Shakespeare novel, with probability $1$.
+
+Combining the two Borel--Cantelli lemmas, we have the following zero--one law.
+
+\begin{thmbox}{5.10 (Borel's Zero--One Law)}
+Suppose $(A_i)_{i=1}^{\infty}$ is a sequence of independent events in a probability space $(\Omega,\mathcal{F},P)$. Then
+\[
+P(A_i\ \text{i.o.})=
+\begin{cases}
+1 & \text{if } \sum_{i=1}^{\infty} P(A_i)=\infty,\\
+0 & \text{if } \sum_{i=1}^{\infty} P(A_i)<\infty.
+\end{cases}
+\]
+\end{thmbox}
+
+\textbf{Example 5.4.3 (Infinite Sequence of Independent Random Bits)} \\
+Let $s$ be a positive real number. We generate an infinite sequence of independent bits as follows. For $n=1,2,3,\ldots$, the $n$-th bit is equal to $1$ with probability $1/n^s$ and is equal to $0$ with probability $1-1/n^s$. If $\sum_{n=1}^{\infty} 1/n^s$ is finite, then with probability $1$, there are finitely many $1$'s in the generated bit stream. On the other hand, if $\sum_{n=1}^{\infty} 1/n^s$ diverges, then with probability $1$ there are infinitely many $1$'s.
+
+This example exhibits a phase transition at $s=1$. We have infinitely many $1$'s almost surely when $s \le 1$, but finitely many $1$'s almost surely when $s>1$.
