@@ -1,9 +1,9 @@
 import os
 from src.toy_apollo.core.settings import get_settings
 
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyB1n0Fsi3spJPpW6CfdwVgNYE5ctTXOJQM")
-MODEL_NAME = os.getenv("MODEL_NAME", "gemini-3-flash-preview")
-ARCHITECT_MODEL_NAME = os.getenv("ARCHITECT_MODEL_NAME", "gemini-3-pro-preview")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "").strip()
+MODEL_NAME = os.getenv("MODEL_NAME", "").strip()
+ARCHITECT_MODEL_NAME = os.getenv("ARCHITECT_MODEL_NAME", "").strip()
 
 _settings = get_settings()
 PROJECT_ROOT = str(_settings.runtime_root)
@@ -18,4 +18,5 @@ LAB_NOTEBOOK_PATH = str(_settings.lab_notebook_file)
 MAX_FAST_RETRIES = 15
 MAX_DEEP_RETRIES = 5
 
-ARISTOTLE_API_KEY = os.getenv("ARISTOTLE_API_KEY", "arstl_hGIO9g0I2m-fR6645_3S6AeQCiTFIogRFaYzvf4Bbm0")
+ARISTOTLE_API_KEY = os.getenv("ARISTOTLE_API_KEY", "").strip()
+
