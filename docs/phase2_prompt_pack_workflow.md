@@ -173,6 +173,129 @@ The source proof spine record should identify:
 4. the Lean landing place for each obligation, or the concrete missing landing
    place if blocked
 
+## Existing Output Dependency Scan
+
+Before inventing a new helper obligation for a proof-bearing task, scan the
+available local outputs and metadata:
+
+- `ToyApollo/Output/<task_id>.lean`
+- `project_ledger.json`
+- `dependency_decisions/<task_id>.jsonl`
+- the relevant `plans/*.json`
+- Mathlib or previously imported local helpers
+
+Textbook references are not always a complete implementation dependency list.
+If an already completed output task discharges an obligation, or provides the
+right variant of a referenced theorem, add it to the task dependency metadata
+and record the decision before authoring or review continues. If the output file
+exists but the ledger entry is missing, treat that as a metadata repair: check
+the output builds, register it in the ledger, and surface the file/declarations
+in review context instead of marking the dependency as simply unknown.
+
+A complex candidate must not introduce a new black-box field, assumption, or
+wrapper for an obligation that is already available as a local output task. It
+may still introduce a named bridge only when the bridge is genuinely narrower
+than the existing theorem and the decomposition plan explains how the existing
+output is used.
+
+### Bridge Classification
+
+Use bridge lemmas only for interface mismatch, not for missing mathematics.
+
+Valid interface bridges include:
+
+- rewriting between textbook notation and the exported Lean interface
+- moving between `intervalIntegral` and a restricted product-measure integral
+  before applying a Fubini theorem
+- adapting an already proved dominated-convergence theorem to the exact filter
+  shape needed by the task, such as a real cutoff parameter `T -> atTop`
+- converting an existing law-level theorem to the random-variable notation used
+  in the source text
+
+Invalid bridge use includes:
+
+- assuming a source theorem's main conclusion under a new name
+- hiding Dirichlet, sine-kernel, Fourier-inversion, or other substantive
+  analytic proof obligations behind a bridge predicate
+- replacing a missing pointwise limit, domination bound, or indicator-integral
+  identification by a theorem-level hypothesis on the exported task theorem
+
+When a proof step has both parts, split them: the bridge should expose the
+interface landing place, while the mathematical lemma must still be proved or
+recorded as the actual blocker.
+
+## Complex Task Decomposition Gate
+
+For normal proof-bearing tasks, the source proof spine record described above is
+enough. For complex tasks, Phase 2 must run an explicit
+decompose-then-reconstruct step before authoring, semantic review, or
+hard-failure classification.
+
+A task is `complex` if any of the following is true:
+
+1. it is a `Theorem_with_Proof` or proof-bearing `Problem` whose source proof
+   contains two or more nontrivial obligations
+2. the source proof uses limits, dominated convergence, Fubini/Tonelli,
+   Fourier/characteristic-function inversion, push-forward measures,
+   independence factorization, matrix positive-semidefinite arguments,
+   endpoint/atom corrections, case splits, or change of variables
+3. it has three or more hard dependencies, or a cross-chapter hard dependency
+4. it exports a theorem/definition that direct downstream tasks must consume
+5. two semantic review failures or three same-kind build failures show that the
+   task cannot be advanced as a one-piece proof
+
+A task is `normal` only when the proof obligation is a direct definition,
+wrapper, calculation, or one-step reuse of a known local/Mathlib result, and the
+reviewer can identify the source obligation and its Lean landing place without a
+helper chain.
+
+Complex tasks require a task-local decomposition artifact before serious
+authoring starts. Until tooling generates this automatically, use
+`phase2_prompt_packs/<task_id>/decomposition_plan.md` or
+`decomposition_plan.json`. The artifact must contain:
+
+- source TeX file/span inspected
+- complexity class and reasons
+- source proof obligations in textbook order
+- Lean landing plan for each obligation
+- reconstruction target showing how the obligations assemble into the exported
+  task theorem or definition
+- current blocker log, if any
+- review checklist mapping each source obligation to expected Lean evidence
+
+For a complex task, semantic review must fail if the reviewer cannot map the
+candidate back to the decomposition artifact. A candidate may compress proof
+details with Mathlib or local helper lemmas, but it must not skip an obligation
+that appears in the decomposition plan.
+
+### Complex Retry Budget
+
+After a complex task has been previously hard-stopped without sufficient
+decomposition evidence, a renewed attempt must continue until either the task is
+completed or the renewed attempt records at least 15 substantive build/review
+failures. Do not declare a new `hard_failure` before that threshold.
+
+For this budget, a substantive failure is:
+
+- a `build-check` failure after a meaningful candidate edit
+- a failed or inconclusive semantic review of a build-ready candidate
+- a `review-apply` rejection caused by semantic or freshness evidence
+
+Pure setup failures, missing reviewer configuration, stale request refreshes, or
+dependency-failed skips do not count. A long-running build or review that is
+manually aborted or times out without a canonical `build_result_vM.json`,
+`semantic_review_result_vM.json`, or `review-apply` result is a mechanism
+blocker, not a substantive failure. Record it in the task-local blocker log and
+continue with a smaller diagnostic check or an adjusted timeout strategy.
+Repeating the identical candidate or identical failure fingerprint counts only
+once until the author changes the decomposition plan, helper structure, search
+strategy, or Lean candidate.
+
+If the runtime or documentation allows a complex task to stop before this
+budget without completion, explicit user interruption, or a documented external
+mechanism blocker, treat that as a workflow defect: patch the Markdown/runbook
+rule first, then resume the task.
+
 ## Hard Failure Admission
 
 `hard_failure` is a last-resort semantic stop reason. It is not a shortcut around
@@ -183,15 +306,21 @@ Only classify a task as `hard_failure` when all of the following are true:
 1. the original TeX statement and proof/solution span has been inspected when it
    exists
 2. the source proof spine has been decomposed into concrete obligations
-3. local outputs and Mathlib have been searched for the relevant obligations
-4. at least the critical blocking obligation has been attempted as a candidate,
+3. if the task is complex, the task-local decomposition artifact exists and has
+   been used in the renewed authoring/review loop
+4. local outputs, dependency metadata, and Mathlib have been searched for the
+   relevant obligations, and existing output-task matches have been reused or
+   explicitly ruled out
+5. at least the critical blocking obligation has been attempted as a candidate,
    helper lemma, or explicit Lean target, or there is a documented reason why
    even stating that obligation faithfully requires missing infrastructure
-5. the blocker is a genuine missing foundation/API or incompatible source
+6. the blocker is a genuine missing foundation/API or incompatible source
    requirement, not merely proof length or first-attempt difficulty
-6. continuing by adding theorem-level assumptions, wrapper theorems, placeholder
+7. continuing by adding theorem-level assumptions, wrapper theorems, placeholder
    definitions, or black-box substitutions would erase the source proof spine
    and fail semantic review
+8. for a renewed complex task attempt after an under-evidenced hard stop, the
+   15-failure complex retry budget has been exhausted
 
 Do not use `hard_failure` when the correct next step is to decompose a large
 proof into helper lemmas. Do not use `hard_failure` for repeated build failures
@@ -408,6 +537,13 @@ It summarizes:
 - last completed semantic review state
 - compatibility state
 - stale build-ready warnings
+
+If a dependency is absent from `project_ledger.json` but an official output file
+exists under `ToyApollo/Output/<task_id>.lean`, the review context must not leave
+that dependency as a bare `UNKNOWN`. It must surface the fallback output file and
+top-level declarations, and the reviewer should treat this as a ledger metadata
+repair signal rather than as evidence that the mathematical dependency is
+missing.
 
 ### `draft.lean`
 

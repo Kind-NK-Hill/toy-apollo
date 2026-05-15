@@ -34,6 +34,44 @@ When writing a candidate, prefer this order:
 4. a short theorem/proof specialized to the task
 5. only then a custom definition or proof
 
+## Normal vs Complex Tasks
+
+Before authoring a proof-bearing task, classify it as `normal` or `complex`.
+
+Use `complex` if the source proof has multiple obligations, substantial
+dependencies, or a proof spine that depends on limits, DCT, Fubini/Tonelli,
+Fourier or characteristic-function inversion, push-forward measures,
+independence factorization, matrix PSD arguments, endpoint/atom corrections,
+case splits, or change of variables. Also use `complex` when a task has three
+or more hard dependencies, a cross-chapter hard dependency, direct downstream
+consumers, or repeated build/review failures showing that a one-piece proof is
+not working.
+
+Use `normal` only when the task is a direct definition, wrapper, calculation, or
+one-step theorem reuse and a reviewer can identify the source obligation and
+Lean landing place without a helper chain.
+
+For a `complex` task, write or update
+`phase2_prompt_packs/<task_id>/decomposition_plan.md` before serious candidate
+editing. The candidate should then be built as a reconstruction of that plan:
+helper declarations discharge listed obligations, and the exported declaration
+assembles those obligations into the textbook claim. Do not start with a broad
+wrapper theorem that assumes away the hard obligations.
+
+Before creating new helper obligations in that decomposition, scan
+`ToyApollo/Output`, the live ledger, dependency decisions, the relevant plan
+file, and Mathlib for existing declarations that already cover the source proof
+step. If such an output exists, use it or add it as a hard dependency before
+continuing. A missing ledger record for an existing, buildable output is a
+metadata repair, not evidence that the dependency is unavailable.
+
+Use bridge lemmas for interface mismatch only. Examples of valid bridges are
+notation conversion, interval-integral/product-measure conversion, and adapting
+an existing theorem to the exact filter shape required by the task. Do not use a
+bridge predicate to assume substantive source mathematics such as Dirichlet
+integral convergence, sine-kernel pointwise limits, domination bounds, or the
+main theorem conclusion.
+
 ## Definitions
 
 For `Definition` tasks:
@@ -85,6 +123,14 @@ Before classifying a proof-heavy theorem as blocked, write down the source proof
 spine from the original TeX and identify which step has no faithful Lean landing
 place. A long proof, a missing one-shot Mathlib theorem, or an inconvenient first
 draft is not by itself a hard failure.
+
+For complex proof-heavy theorems, the source proof spine note must be upgraded
+to a decomposition/reconstruction plan. If the task was previously hard-stopped
+without such a plan, keep working until completion or 15 substantive
+build/review failures in the renewed attempt. Identical candidate or identical
+failure repetitions do not count again until the plan or candidate changes.
+Do not count a candidate as source-faithful if it replaces an existing local
+output theorem with a fresh black-box assumption or bridge.
 
 ## Examples
 
@@ -206,6 +252,7 @@ Check:
 5. has the current draft already passed `build-check`?
 6. if the source TeX contains a substantial proof or construction, does the candidate still reflect that proof spine rather than hiding it behind placeholders or theorem-specific assumptions?
 7. for proof-bearing tasks, did you inspect the original `inputs/<source>.tex` span rather than only `task.json` or `context.md`?
+8. if this is complex, does `decomposition_plan.md` exist and does the candidate reconstruct its obligations?
 
 ## Reference Cases
 

@@ -2681,6 +2681,54 @@ def _sha256_json(payload: Any) -> str:
     return _sha256_text(json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
 
 
+def _dependency_review_metadata(
+    dep_id: str,
+    dep_record: dict[str, Any] | None,
+    settings,
+) -> dict[str, Any]:
+    dep_id = canonicalize_block_id(dep_id)
+    record = dep_record if isinstance(dep_record, dict) else {}
+    source_plan = str(record.get("source_plan", "unknown") or "unknown")
+    dep_file = find_existing_task_file(dep_id, source_plan, settings)
+    exported_symbols = record.get("exported_symbols", [])
+    if not isinstance(exported_symbols, list):
+        exported_symbols = []
+
+    if record:
+        return {
+            "title": str(record.get("title", "") or "(untitled)"),
+            "status": str(record.get("status", "UNKNOWN") or "UNKNOWN"),
+            "source_plan": source_plan,
+            "file": str(dep_file or ""),
+            "exported_symbols": exported_symbols,
+            "ledger_missing": False,
+        }
+
+    inferred_source_plan = source_plan
+    inferred_exports: list[str] = []
+    if dep_file:
+        dep_code = _read_file_safely(dep_file)
+        source_match = re.search(r"(?m)^\s*SOURCE PLAN:\s*(?P<source>.+?)\s*$", dep_code)
+        if source_match:
+            inferred_source_plan = source_match.group("source").strip() or source_plan
+        for match in re.finditer(
+            r"(?m)^\s*(?:noncomputable\s+)?(?:theorem|lemma|def)\s+([A-Za-z0-9_']+)\b",
+            dep_code,
+        ):
+            inferred_exports.append(match.group(1))
+            if len(inferred_exports) >= 8:
+                break
+
+    return {
+        "title": "(ledger entry missing; output file present)" if dep_file else "(untitled)",
+        "status": "OUTPUT_PRESENT_LEDGER_MISSING" if dep_file else "UNKNOWN",
+        "source_plan": inferred_source_plan,
+        "file": str(dep_file or ""),
+        "exported_symbols": inferred_exports,
+        "ledger_missing": not bool(record),
+    }
+
+
 
 
 def build_semantic_review_context_markdown(task: dict[str, Any], ledger: LedgerManager, settings, pack_dir: Path) -> str:
@@ -2722,10 +2770,16 @@ def build_semantic_review_context_markdown(task: dict[str, Any], ledger: LedgerM
             for dep in deps:
                 dep_id = canonicalize_block_id(dep)
                 dep_record = ledger.ledger.get("tasks", {}).get(dep_id, {})
-                dep_title = str(dep_record.get("title", "") or "(untitled)")
-                dep_status = str(dep_record.get("status", "UNKNOWN") or "UNKNOWN")
-                dep_source_plan = str(dep_record.get("source_plan", "unknown") or "unknown")
-                lines.append(f"- `{dep_id}` from `{dep_source_plan}` / `{dep_status}`: {dep_title}")
+                dep_meta = _dependency_review_metadata(dep_id, dep_record, settings)
+                lines.append(
+                    f"- `{dep_id}` from `{dep_meta['source_plan']}` / `{dep_meta['status']}`: {dep_meta['title']}"
+                )
+                if dep_meta["ledger_missing"] and dep_meta["file"]:
+                    lines.append(f"  - Fallback output file: `{dep_meta['file']}`")
+                if dep_meta["ledger_missing"] and dep_meta["exported_symbols"]:
+                    lines.append(
+                        f"  - Fallback declarations: `{', '.join(str(item) for item in dep_meta['exported_symbols'])}`"
+                    )
     lines.extend(["", "## Direct Downstream Consumers", ""])
     if not downstream:
         lines.append("- No direct downstream consumers were found in current plans.")

@@ -123,6 +123,7 @@
         "dependencies": [
             "def_9_3",
             "thm_7_6",
+            "thm_7_7",
             "thm_8_5",
             "thm_9_4"
         ],

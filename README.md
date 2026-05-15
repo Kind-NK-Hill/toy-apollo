@@ -103,6 +103,7 @@ python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks ex_4_4_3 --re
 - 新路径强制依赖本地 Mathlib grounding 与本地验证
 - 对带证明或解答的任务，必须回到 `inputs/<source>.tex` 检查原始证明主线；prompt pack 中的复制文本只是镜像。
 - `hard_failure` 是最后手段，必须有原始 TeX proof-spine 拆解和具体 blocker 记录，不能用来代替大证明的分解工作。
+- 复杂证明任务必须先写 task-local decomposition/reconstruction plan；拆新 obligation 前要先查 `ToyApollo/Output`、ledger、dependency decisions、plans 和 Mathlib，已有输出要复用或修元数据；under-evidenced hard stop 后重试时，完成前或累计 15 次 substantive build/review failure 前不能再次 hard-failure。
 
 权威 runbook 见：
 

@@ -74,3 +74,25 @@ available, source proof-spine decomposition, search/attempt evidence for the
 blocking obligation, and a task-local hard-failure note or equivalent artifact.
 Do not treat "large proof", "needs decomposition", or "no one-shot theorem was
 found" as `hard_failure`.
+
+For complex tasks, the reviewer must also check the task-local
+`decomposition_plan.md` or `decomposition_plan.json` when present. A semantic
+pass requires the candidate to reconstruct the listed obligations; compiling a
+weaker wrapper or assuming the difficult obligations is a fail.
+The reviewer should also verify that the candidate/decomposition has searched
+and reused existing `ToyApollo/Output` declarations before accepting a new
+black-box obligation for a source proof step.
+Bridge lemmas are acceptable only when they resolve an interface mismatch
+between the source proof and an existing theorem. They are not acceptable when
+they merely rename an unproved analytic obligation or the task's main theorem.
+
+If a complex task is being retried after an under-evidenced hard stop, the loop
+must not accept another `hard_failure` until the renewed attempt has either
+completed or accumulated 15 substantive build/review failures. Count failed
+`build-check`, failed/inconclusive semantic review, and semantic/freshness
+`review-apply` rejection after meaningful candidate or plan changes. Do not
+count pure setup/configuration failures, dependency-failed skips, or repeated
+identical failure fingerprints without a changed strategy. A timed-out or
+manually aborted build/review with no canonical result file is a mechanism
+blocker, not a counted failure; record it, narrow the diagnostic check, and then
+resume the renewed attempt.
