@@ -16,6 +16,89 @@ from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E4
 
 
 class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
+    def _write_single_open_obligation(self, pack_dir: Path, task_id: str) -> None:
+        (pack_dir / "proof_obligations.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": "phase2.proof_obligations.v1",
+                    "task_id": task_id,
+                    "classification": {
+                        "requires_decomposition": True,
+                        "reason": "test complex proof",
+                        "evidence": ["proof has independently reviewable intermediate obligations"],
+                    },
+                    "obligations": [
+                        {
+                            "id": "source_step",
+                            "title": "Source proof step",
+                            "kind": "source_step",
+                            "source_ref": "test source proof",
+                            "depends_on": [],
+                            "lean_landing": "",
+                            "status": "open",
+                            "review_status": "unreviewed",
+                            "blocking": True,
+                            "scaffold_hypotheses": [],
+                            "notes": "Must be discharged before semantic pass.",
+                        }
+                    ],
+                    "scaffold_hypotheses": [],
+                    "review_history": [],
+                },
+                indent=2,
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+
+    def _write_two_open_obligations(self, pack_dir: Path, task_id: str) -> None:
+        obligations = []
+        for obligation_id in ["covered_step", "missing_step"]:
+            obligations.append(
+                {
+                    "id": obligation_id,
+                    "title": obligation_id.replace("_", " ").title(),
+                    "kind": "source_step",
+                    "source_ref": "test source proof",
+                    "depends_on": [],
+                    "lean_landing": "",
+                    "status": "open",
+                    "review_status": "unreviewed",
+                    "blocking": True,
+                    "scaffold_hypotheses": [
+                        {
+                            "name": f"{obligation_id}_scaffold",
+                            "category": "proof_obligation",
+                            "obligation_id": obligation_id,
+                            "discharge_plan": "replace scaffold by reviewed Lean evidence",
+                            "status": "open",
+                        }
+                    ]
+                    if obligation_id == "covered_step"
+                    else [],
+                    "notes": "Must be discharged before semantic pass.",
+                }
+            )
+        (pack_dir / "proof_obligations.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": "phase2.proof_obligations.v1",
+                    "task_id": task_id,
+                    "classification": {
+                        "requires_decomposition": True,
+                        "reason": "test complex proof",
+                        "evidence": ["proof has independently reviewable intermediate obligations"],
+                    },
+                    "obligations": obligations,
+                    "scaffold_hypotheses": [],
+                    "review_history": [],
+                },
+                indent=2,
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+
     def test_codex_review_apply_valid_pass_promotes_and_marks_completed(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_valid_pass"
         try:
@@ -46,6 +129,114 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertTrue(output_path.exists())
             self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "COMPLETED")
             self.assertEqual(ledger.ledger["tasks"][task_id]["exported_symbols"], [task_id])
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_pass_requires_proof_obligation_coverage(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_obligation_partial_pass"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_obligation_partial_pass"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            self._write_single_open_obligation(pack_dir, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="pass",
+                obligation_review={
+                    "status": "partial",
+                    "summary": "source_step is not discharged",
+                    "items": [{"obligation_id": "source_step", "status": "partial", "evidence": "missing Lean landing"}],
+                    "open_blockers": [{"obligation_id": "source_step", "issue": "missing Lean landing"}],
+                    "scaffold_assessment": [],
+                },
+            )
+
+            with patch(
+                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                return_value=(True, "final build ok"),
+            ):
+                success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertIn("obligation", detail.lower())
+            self.assertFalse(output_path.exists())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_fail_carries_proof_obligation_blockers_into_repair_request(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_obligation_repair"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_obligation_repair"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            self._write_single_open_obligation(pack_dir, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="fail",
+                obligation_review={
+                    "status": "violated",
+                    "summary": "source_step is missing",
+                    "items": [{"obligation_id": "source_step", "status": "missing", "evidence": "no Lean landing"}],
+                    "open_blockers": [{"obligation_id": "source_step", "issue": "prove the source proof step"}],
+                    "scaffold_assessment": [],
+                },
+            )
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertIn("source_step", json.dumps(json.loads((pack_dir / "review_repair_request_v1.json").read_text(encoding="utf-8"))))
+            repair_request = json.loads((pack_dir / "review_repair_request_v1.json").read_text(encoding="utf-8"))
+            self.assertEqual(repair_request["proof_obligation_blockers"][0]["obligation_id"], "source_step")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_fail_marks_covered_obligations_as_proved(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_obligation_partial_progress"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_obligation_partial_progress"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            self._write_two_open_obligations(pack_dir, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="fail",
+                obligation_review={
+                    "status": "partial",
+                    "summary": "covered_step is proved, missing_step still blocks promotion",
+                    "items": [
+                        {"obligation_id": "covered_step", "status": "covered", "evidence": "covered by local theorem"},
+                        {"obligation_id": "missing_step", "status": "missing", "evidence": "no Lean landing"},
+                    ],
+                    "open_blockers": [{"obligation_id": "missing_step", "issue": "finish the remaining source step"}],
+                    "scaffold_assessment": [],
+                },
+            )
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success, detail)
+            updated = json.loads((pack_dir / "proof_obligations.json").read_text(encoding="utf-8"))
+            by_id = {item["id"]: item for item in updated["obligations"]}
+            self.assertEqual(by_id["covered_step"]["status"], "proved")
+            self.assertEqual(by_id["covered_step"]["review_status"], "accepted")
+            self.assertEqual(by_id["covered_step"]["scaffold_hypotheses"][0]["status"], "discharged")
+            self.assertEqual(by_id["missing_step"]["status"], "blocked")
+            repair_request = json.loads((pack_dir / "review_repair_request_v1.json").read_text(encoding="utf-8"))
+            self.assertEqual(repair_request["proof_obligation_summary"]["open_blocking_ids"], ["missing_step"])
+            self.assertEqual(repair_request["proof_obligation_blockers"][0]["obligation_id"], "missing_step")
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

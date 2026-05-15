@@ -31,6 +31,9 @@
             "def_9_3",
             "thm_9_3"
         ],
+        "soft_imports": [
+            "gamma_beta_bridge"
+        ],
         "is_renowned": false,
         "source_plan": "chapter9-problems"
     },

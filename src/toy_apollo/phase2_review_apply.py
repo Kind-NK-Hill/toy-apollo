@@ -22,6 +22,12 @@ from .phase2_pack_shared.io import read_file_safely, read_json_safely, sha256_te
 from .phase2_pack_shared.review_basis_parts import dedupe_strings
 from .phase2_pack_shared.runtime_state import auto_loop_attempt_payload, auto_loop_field_defaults
 from .phase2_pack_views import _render_review_repair_summary, refresh_pack_runtime_view, render_semantic_review_report
+from .phase2_proof_obligations import (
+    apply_obligation_review,
+    extract_obligation_review_blockers,
+    proof_obligation_path,
+    summarize_proof_obligations,
+)
 from .phase2_review_request import _clear_current_review_metadata, _resolve_review_binding_path, _validate_review_input_freshness
 from .phase2_semantic_review import (
     SEMANTIC_REVIEW_PROMPT_VERSION,
@@ -200,6 +206,21 @@ def _build_review_repair_contract(
     downstream = review_result.get("downstream_adequacy", {}) if isinstance(review_result.get("downstream_adequacy", {}), dict) else {}
     blocking_issues = downstream.get("blocking_issues", []) if isinstance(downstream.get("blocking_issues", []), list) else []
     forbidden_shortcuts = review_basis.get("forbidden_weakenings", []) if isinstance(review_basis.get("forbidden_weakenings", []), list) else []
+    proof_obligations = review_basis.get("proof_obligations", {}) if isinstance(review_basis.get("proof_obligations", {}), dict) else {}
+    proof_obligations_file = str(review_basis.get("proof_obligations_file", "") or "").strip()
+    if proof_obligations_file:
+        current_proof_obligations = read_json_safely(Path(proof_obligations_file), {})
+        if isinstance(current_proof_obligations, dict):
+            proof_obligations = current_proof_obligations
+    proof_obligation_summary = (
+        review_basis.get("proof_obligation_summary", {})
+        if isinstance(review_basis.get("proof_obligation_summary", {}), dict)
+        else summarize_proof_obligations(proof_obligations) if proof_obligations else {}
+    )
+    if proof_obligations:
+        proof_obligation_summary = summarize_proof_obligations(proof_obligations)
+    proof_obligation_blockers = extract_obligation_review_blockers(review_result)
+    obligation_review = review_result.get("obligation_review", {}) if isinstance(review_result.get("obligation_review", {}), dict) else {}
 
     must_fix: list[str] = []
     summary = str(review_result.get("summary", "") or "").strip()
@@ -213,6 +234,12 @@ def _build_review_repair_contract(
             message = str(finding.get("message", "") or finding.get("summary", "") or "").strip()
             if message and message not in must_fix:
                 must_fix.append(message)
+    for blocker in proof_obligation_blockers:
+        obligation_id = str(blocker.get("obligation_id", "") or "(unassigned)").strip()
+        issue = str(blocker.get("issue", "") or "").strip()
+        message = f"Proof obligation `{obligation_id}`: {issue or 'unresolved blocker'}"
+        if message not in must_fix:
+            must_fix.append(message)
     if not must_fix:
         must_fix.append(f"Resolve semantic review verdict `{review_result.get('verdict', 'inconclusive')}` for {task['block_id']}.")
 
@@ -256,6 +283,11 @@ def _build_review_repair_contract(
         "must_fix": must_fix,
         "must_preserve": must_preserve,
         "forbidden_shortcuts": [item for item in forbidden_shortcuts if isinstance(item, str) and item.strip()],
+        "proof_obligations_file": proof_obligations_file,
+        "proof_obligation_summary": proof_obligation_summary,
+        "proof_obligation_blockers": proof_obligation_blockers,
+        "obligation_review": obligation_review,
+        "scaffold_hypotheses": proof_obligations.get("scaffold_hypotheses", []) if isinstance(proof_obligations, dict) else [],
         "downstream_blockers": downstream_blockers,
         "next_draft_seed_file": str(next_draft_seed_file),
     }
@@ -532,6 +564,13 @@ async def apply_codex_review_result_once(
         normalized_review["review_result_file"] = str(result_path)
     else:
         normalized_review = _write_normalized_codex_review_artifacts(pack_dir, review_input, normalized_review)
+        updated_obligations = apply_obligation_review(pack_dir, normalized_review)
+        if updated_obligations:
+            ledger.update_runtime_metadata(
+                task_id,
+                proof_obligations_file=str(proof_obligation_path(pack_dir)),
+                proof_obligation_summary=summarize_proof_obligations(updated_obligations),
+            )
     verdict = str(normalized_review.get("verdict", "inconclusive"))
     cache_class = str(normalized_review.get("cache_class", "semantic_verdict") or "semantic_verdict").strip().lower()
     detail = str(normalized_review.get("normalization_reason", "") or normalized_review.get("summary", "") or f"Codex review verdict: {verdict}")

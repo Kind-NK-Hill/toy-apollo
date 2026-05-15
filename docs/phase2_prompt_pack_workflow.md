@@ -231,42 +231,53 @@ enough. For complex tasks, Phase 2 must run an explicit
 decompose-then-reconstruct step before authoring, semantic review, or
 hard-failure classification.
 
-A task is `complex` if any of the following is true:
+A task is `complex` when the source-to-Lean path has independently reviewable
+work that would be hidden by a single wrapper theorem. Treat this as a
+structural judgment, not as a whitelist of named theorems. A task is complex if
+any of the following is true:
 
-1. it is a `Theorem_with_Proof` or proof-bearing `Problem` whose source proof
-   contains two or more nontrivial obligations
-2. the source proof uses limits, dominated convergence, Fubini/Tonelli,
-   Fourier/characteristic-function inversion, push-forward measures,
-   independence factorization, matrix positive-semidefinite arguments,
-   endpoint/atom corrections, case splits, or change of variables
-3. it has three or more hard dependencies, or a cross-chapter hard dependency
-4. it exports a theorem/definition that direct downstream tasks must consume
-5. two semantic review failures or three same-kind build failures show that the
-   task cannot be advanced as a one-piece proof
+1. the source proof contains two or more nontrivial obligations
+2. the proof must pass through a construction, reduction, limiting passage,
+   algebraic transformation, case split, approximation, interface conversion,
+   or other intermediate operation before the final statement follows
+3. the Lean implementation needs multiple helper lemmas whose correctness should
+   be reviewed independently before final assembly
+4. existing local or Mathlib results almost match but require bridge/interface
+   obligations before they can support the textbook claim
+5. it has substantial hard dependencies, a cross-chapter hard dependency, or
+   direct downstream consumers that rely on the exact exported interface
+6. repeated build/review attempts show semantic non-progress rather than a small
+   local syntax, import, or type error
 
 A task is `normal` only when the proof obligation is a direct definition,
 wrapper, calculation, or one-step reuse of a known local/Mathlib result, and the
 reviewer can identify the source obligation and its Lean landing place without a
 helper chain.
 
-Complex tasks require a task-local decomposition artifact before serious
-authoring starts. Until tooling generates this automatically, use
-`phase2_prompt_packs/<task_id>/decomposition_plan.md` or
-`decomposition_plan.json`. The artifact must contain:
+Every prompt pack contains
+`phase2_prompt_packs/<task_id>/proof_obligations.json`. For normal tasks this
+may remain empty. For complex tasks it is the machine-readable decomposition
+artifact and must contain:
 
 - source TeX file/span inspected
 - complexity class and reasons
-- source proof obligations in textbook order
-- Lean landing plan for each obligation
-- reconstruction target showing how the obligations assemble into the exported
-  task theorem or definition
-- current blocker log, if any
-- review checklist mapping each source obligation to expected Lean evidence
+- source proof obligation nodes in textbook order
+- dependencies between obligation nodes
+- Lean landing plan and status for each obligation
+- scaffold hypotheses, classified as `interface_bridge`, `proof_obligation`,
+  `external_theorem_gap`, or `forbidden_shortcut`
+- reconstruction target showing how proved obligations assemble into the
+  exported task theorem or definition
+- current blocker/review history
+
+`decomposition_plan.md` is still allowed as a human-readable companion, but it
+does not replace `proof_obligations.json`. Keep both synchronized when both
+exist.
 
 For a complex task, semantic review must fail if the reviewer cannot map the
-candidate back to the decomposition artifact. A candidate may compress proof
-details with Mathlib or local helper lemmas, but it must not skip an obligation
-that appears in the decomposition plan.
+candidate back to `proof_obligations.json`. A candidate may compress proof
+details with Mathlib or local helper lemmas, but it must not skip a blocking
+obligation or leave a scaffold hypothesis without a discharge plan.
 
 ### Complex Retry Budget
 
@@ -306,8 +317,8 @@ Only classify a task as `hard_failure` when all of the following are true:
 1. the original TeX statement and proof/solution span has been inspected when it
    exists
 2. the source proof spine has been decomposed into concrete obligations
-3. if the task is complex, the task-local decomposition artifact exists and has
-   been used in the renewed authoring/review loop
+3. if the task is complex, `proof_obligations.json` contains concrete
+   obligation nodes and has been used in the renewed authoring/review loop
 4. local outputs, dependency metadata, and Mathlib have been searched for the
    relevant obligations, and existing output-task matches have been reused or
    explicitly ruled out
@@ -331,7 +342,7 @@ Every `hard_failure` must leave a task-local `hard_failure_note.md` or equivalen
 review artifact containing:
 
 - source TeX span inspected
-- source proof spine / obligations
+- source proof spine / `proof_obligations.json` obligations
 - resources searched
 - specific blocking obligation
 - why the faithful path is beyond the current local workflow
@@ -592,13 +603,22 @@ The reviewer gate writes:
 
 - `semantic_review_input_vM.json`
 - `semantic_review_prompt_vM.md`
+- `semantic_review_context_vM.md`
 - `semantic_review_result_template_vM.json`
 - `semantic_review_result_vM.json`
 - `semantic_review_report_vM.md`
 
+The review basis includes `proof_obligations.json` and its summary. Reviewer
+results must fill `obligation_review`; a `pass` requires every blocking
+obligation to be covered or explicitly not applicable, and must have no open
+scaffold blocker.
+
 The reviewer verdict is `pass`, `fail`, or `inconclusive`.
 
-A valid `pass` must include non-empty source claims and claim mappings from the source task to the Lean declaration.
+A valid `pass` must include non-empty source claims, claim mappings from the
+source task to the Lean declaration, covered spine alignment, covered proof
+obligations, covered interface/downstream adequacy, and explicit forbidden
+weakening judgments.
 
 Invalid results such as task-id mismatch, hash mismatch, prompt/rubric version mismatch, missing input linkage, or invalid JSON/schema are normalized into a recorded invalid review result and handled as rejection for candidate review.
 
@@ -614,6 +634,7 @@ Expected result:
 
 - the task directory exists under `phase2_prompt_packs/`
 - `draft.lean` exists
+- `proof_obligations.json` exists
 - build/review runtime metadata is refreshed
 - if there is no active official output, ledger state becomes `PACKED`
 - if there is an active official output, ledger state remains `COMPLETED`
@@ -623,10 +644,11 @@ Expected result:
 Read in this order:
 
 1. `failure_summary.md`
-2. `search_manifest.json`
-3. `context.md`
-4. `imports.lean`
-5. `target_stub.lean`
+2. `proof_obligations.json`
+3. `search_manifest.json`
+4. `context.md`
+5. `imports.lean`
+6. `target_stub.lean`
 
 ### Step 3: Edit `draft.lean`
 
@@ -754,6 +776,7 @@ python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks <task_id> -
 - rubric version
 - review schema
 - review input binding
+- proof obligation coverage and scaffold assessment
 - candidate subject against the current build-ready pointer
 - official-output subject against the current official output hash
 
@@ -762,7 +785,7 @@ The reviewer should start from `semantic_review_result_template_vM.json` and kee
 Behavior:
 
 - candidate `pass`: promote to official output, run final staged build, then mark `COMPLETED`
-- candidate `fail`, `inconclusive`, or invalid: do not promote; mark `review_rejected`; preserve existing official output if one exists
+- candidate `fail`, `inconclusive`, or invalid: do not promote; mark `review_rejected`; preserve existing official output if one exists; for semantic fail/inconclusive, generate a repair request that carries proof-obligation blockers
 - official-output `pass`: reconcile and keep `COMPLETED`
 - official-output `fail`: quarantine and demote to `FAILED_LOCAL`
 - official-output `inconclusive` or invalid: record the review without quarantining or changing output

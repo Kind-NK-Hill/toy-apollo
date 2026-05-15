@@ -95,12 +95,21 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertTrue((pack_dir / "semantic_review_request.json").exists())
             self.assertTrue((pack_dir / "semantic_review_input.json").exists())
             self.assertTrue((pack_dir / "semantic_review_prompt.md").exists())
+            self.assertTrue((pack_dir / "proof_obligations.json").exists())
             self.assertFalse(output_path.exists())
+
+            obligation_ledger = json.loads((pack_dir / "proof_obligations.json").read_text(encoding="utf-8"))
+            self.assertEqual(obligation_ledger["schema_version"], "phase2.proof_obligations.v1")
+            self.assertEqual(obligation_ledger["task_id"], task_id)
 
             review_input = json.loads((pack_dir / "semantic_review_input_v1.json").read_text(encoding="utf-8"))
             self.assertEqual(review_input["mode"], "review-pack")
             self.assertEqual(review_input["prompt_version"], SEMANTIC_REVIEW_PROMPT_VERSION)
             self.assertEqual(review_input["rubric_version"], SEMANTIC_REVIEW_RUBRIC_VERSION)
+            self.assertEqual(review_input["review_basis"]["proof_obligations"]["task_id"], task_id)
+
+            review_context = (pack_dir / "semantic_review_context_v1.md").read_text(encoding="utf-8")
+            self.assertIn("Proof Obligation Ledger", review_context)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

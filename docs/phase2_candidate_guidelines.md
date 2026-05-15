@@ -37,40 +37,60 @@ When writing a candidate, prefer this order:
 ## Normal vs Complex Tasks
 
 Before authoring a proof-bearing task, classify it as `normal` or `complex`.
+This is a structural classification, not a list of favored theorem names.
 
-Use `complex` if the source proof has multiple obligations, substantial
-dependencies, or a proof spine that depends on limits, DCT, Fubini/Tonelli,
-Fourier or characteristic-function inversion, push-forward measures,
-independence factorization, matrix PSD arguments, endpoint/atom corrections,
-case splits, or change of variables. Also use `complex` when a task has three
-or more hard dependencies, a cross-chapter hard dependency, direct downstream
-consumers, or repeated build/review failures showing that a one-piece proof is
-not working.
+Use `complex` when a one-piece proof would hide independent work that a reviewer
+should be able to inspect separately. Common structural triggers are:
+
+- the source proof has two or more nontrivial intermediate obligations
+- the exported statement needs a chain of local helper lemmas before assembly
+- existing local or Mathlib results almost match but require interface
+  conversion before they can support the textbook claim
+- the task has substantial hard dependencies or direct downstream consumers that
+  will rely on the exact exported interface
+- the source-to-Lean gap involves a construction, reduction, limiting passage,
+  algebraic transformation, case split, or other proof operation that cannot be
+  justified by pointing to a single existing theorem
+- previous build/review attempts show repeated semantic non-progress rather than
+  a small local syntax or type error
 
 Use `normal` only when the task is a direct definition, wrapper, calculation, or
 one-step theorem reuse and a reviewer can identify the source obligation and
 Lean landing place without a helper chain.
 
-For a `complex` task, write or update
-`phase2_prompt_packs/<task_id>/decomposition_plan.md` before serious candidate
-editing. The candidate should then be built as a reconstruction of that plan:
-helper declarations discharge listed obligations, and the exported declaration
-assembles those obligations into the textbook claim. Do not start with a broad
-wrapper theorem that assumes away the hard obligations.
+Every prompt pack has `phase2_prompt_packs/<task_id>/proof_obligations.json`.
+For a `complex` task this file is the task-local proof-obligation ledger. Split
+the source proof into obligation nodes, give each node a source reference,
+dependencies, expected Lean landing place, and status, then build the candidate
+as a reconstruction of those nodes. The exported declaration should assemble
+proved obligations into the textbook claim; it must not assume the hard
+obligations as theorem-level hypotheses.
 
-Before creating new helper obligations in that decomposition, scan
-`ToyApollo/Output`, the live ledger, dependency decisions, the relevant plan
-file, and Mathlib for existing declarations that already cover the source proof
-step. If such an output exists, use it or add it as a hard dependency before
-continuing. A missing ledger record for an existing, buildable output is a
-metadata repair, not evidence that the dependency is unavailable.
+`decomposition_plan.md` may still be used as a human-readable narrative, but the
+machine-checked review basis is `proof_obligations.json`. Keep both in sync when
+both exist.
 
-Use bridge lemmas for interface mismatch only. Examples of valid bridges are
-notation conversion, interval-integral/product-measure conversion, and adapting
-an existing theorem to the exact filter shape required by the task. Do not use a
-bridge predicate to assume substantive source mathematics such as Dirichlet
-integral convergence, sine-kernel pointwise limits, domination bounds, or the
-main theorem conclusion.
+Before creating new helper obligations, scan `ToyApollo/Output`, the live
+ledger, dependency decisions, the relevant plan file, and Mathlib for existing
+declarations that already cover the source proof step. If such an output exists,
+use it or add it as a hard dependency before continuing. A missing ledger record
+for an existing, buildable output is a metadata repair, not evidence that the
+dependency is unavailable.
+
+Scaffold hypotheses must be classified precisely:
+
+- `interface_bridge`: allowed temporarily only for representation or notation
+  mismatch, and it must point to the obligation it helps discharge
+- `proof_obligation`: a real source step that must become a ledger node and be
+  proved or blocked explicitly
+- `external_theorem_gap`: a possible local/Mathlib dependency that must be
+  searched and either reused, imported, or ruled out
+- `forbidden_shortcut`: an assumption of the main conclusion, a theorem-specific
+  black box, or a hypothesis that erases a source proof step; this cannot pass
+  semantic review
+
+Use bridge lemmas for interface mismatch only. Do not use a bridge predicate to
+assume substantive source mathematics or the main theorem conclusion.
 
 ## Definitions
 
@@ -252,7 +272,7 @@ Check:
 5. has the current draft already passed `build-check`?
 6. if the source TeX contains a substantial proof or construction, does the candidate still reflect that proof spine rather than hiding it behind placeholders or theorem-specific assumptions?
 7. for proof-bearing tasks, did you inspect the original `inputs/<source>.tex` span rather than only `task.json` or `context.md`?
-8. if this is complex, does `decomposition_plan.md` exist and does the candidate reconstruct its obligations?
+8. if this is complex, does `proof_obligations.json` contain concrete obligation nodes and does the candidate reconstruct them?
 
 ## Reference Cases
 
