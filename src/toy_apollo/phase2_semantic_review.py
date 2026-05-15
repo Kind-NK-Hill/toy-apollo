@@ -13,9 +13,14 @@ from typing import Any
 
 from src.block_id_naming import canonicalize_block_id
 
+from .phase2_proof_obligations import (
+    validate_obligation_review_for_pass,
+    validate_obligation_review_shape,
+)
 
-SEMANTIC_REVIEW_PROMPT_VERSION = 4
-SEMANTIC_REVIEW_RUBRIC_VERSION = 4
+
+SEMANTIC_REVIEW_PROMPT_VERSION = 5
+SEMANTIC_REVIEW_RUBRIC_VERSION = 5
 SEMANTIC_REVIEW_REQUIRED_FIELDS = {
     "verdict",
     "confidence",
@@ -23,6 +28,7 @@ SEMANTIC_REVIEW_REQUIRED_FIELDS = {
     "source_claims",
     "claim_mapping",
     "spine_alignment",
+    "obligation_review",
     "interface_contract",
     "downstream_adequacy",
     "forbidden_weakenings",
@@ -207,8 +213,9 @@ def build_semantic_review_input(
             "Map each source claim to the Lean candidate's declaration, assumptions, and conclusion.",
             "Fail or mark inconclusive if a claim is missing, weakened, converted into an assumption, or hidden behind a placeholder.",
             "When the source TeX contains an essential proof, construction, partition argument, or contradiction argument, preserve that proof spine at an appropriate abstraction level instead of replacing it with a theorem-specific wrapper.",
+            "When proof_obligations are present in the review basis, judge each blocking obligation explicitly in obligation_review.items.",
             "Read the full semantic review context markdown before judging the candidate.",
-            "Do not accept a pass verdict without non-empty source_claims, claim_mapping, interface_contract, downstream_adequacy, and forbidden_weakenings.",
+            "Do not accept a pass verdict without non-empty source_claims, claim_mapping, obligation_review, interface_contract, downstream_adequacy, and forbidden_weakenings.",
             "A theorem that cannot honestly support its direct downstream consumers does not pass semantic review.",
             "Fail any theorem whose direct downstream textbook consumer would need a fresh theorem-level hypothesis that is absent from the source downstream task.",
             "For definitions, fail if divergence or undefinedness is hidden behind an arbitrary fallback value such as `0`, `default`, or an unconditional witness.",
@@ -260,11 +267,12 @@ def render_semantic_review_prompt(review_input: dict[str, Any]) -> str:
             "Return JSON only, written to the result path supplied by the runner.",
             "Use the generated result template as the starting JSON payload.",
             "Keep these binding fields unchanged: task_id, mode, attempt, prompt_version, rubric_version, review_input_file, review_prompt_file, expected_result_file, candidate_hash.",
-            "Fill these semantic review fields: verdict, confidence, summary, source_claims, claim_mapping, spine_alignment, interface_contract, downstream_adequacy, forbidden_weakenings, findings, recommended_disposition.",
+            "Fill these semantic review fields: verdict, confidence, summary, source_claims, claim_mapping, spine_alignment, obligation_review, interface_contract, downstream_adequacy, forbidden_weakenings, findings, recommended_disposition.",
             "Allowed verdict values: pass, fail, inconclusive.",
             "A pass requires non-empty source_claims and claim_mapping that explicitly connect source claims to Lean declarations, assumptions, and conclusions.",
-            "A pass also requires spine_alignment.status = covered with non-empty obligations_checked, plus interface_contract.status = covered and downstream_adequacy.status = covered.",
+            "A pass also requires spine_alignment.status = covered with non-empty obligations_checked, obligation_review.status = covered with every blocking proof obligation covered or not_applicable, plus interface_contract.status = covered and downstream_adequacy.status = covered.",
             "If the source text relies on a proof, construction, reduction, bridge lemma, case split, contradiction, partition argument, or other intermediate obligation, a pass must explain in spine_alignment.obligations_checked where that source spine lands in Lean.",
+            "If the review context lists proof_obligations, obligation_review.items must cite each obligation_id, status, and Lean evidence; open blockers or scaffold hypotheses without a discharge plan rule out pass.",
             "If the reviewer cannot point to the Lean landing place of the source spine and can only describe a shortcut or black-box replacement, the verdict must be fail or inconclusive rather than pass.",
             "When the review basis lists direct downstream consumers, a pass must include one consumers_checked entry per consumer with status covered/not_applicable and no blocking_issues.",
             "Every forbidden weakening listed in the context must be judged explicitly in forbidden_weakenings.",
@@ -276,7 +284,7 @@ def render_semantic_review_prompt(review_input: dict[str, Any]) -> str:
 
 def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_metadata: dict[str, Any]) -> dict[str, Any]:
     base = {
-        "schema_version": "phase2.semantic_review.result.v4",
+        "schema_version": "phase2.semantic_review.result.v5",
         "task_id": review_input.get("task", {}).get("block_id", ""),
         "mode": review_input.get("mode", ""),
         "attempt": review_input.get("attempt"),
@@ -382,6 +390,9 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
             raw=raw,
             cache_class="operational_failure",
         )
+    obligation_shape_error = validate_obligation_review_shape(result)
+    if obligation_shape_error:
+        return _inconclusive_result(base, obligation_shape_error, raw=raw, cache_class="operational_failure")
     for field in ("interface_contract", "downstream_adequacy"):
         if not isinstance(result.get(field), dict):
             return _inconclusive_result(base, f"reviewer field {field} must be an object", raw=raw, cache_class="operational_failure")
@@ -419,6 +430,9 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
             raw=raw,
             cache_class="operational_failure",
         )
+    obligation_pass_error = validate_obligation_review_for_pass(review_input, result) if verdict == "pass" else ""
+    if obligation_pass_error:
+        return _inconclusive_result(base, obligation_pass_error, raw=raw, cache_class="operational_failure")
     if verdict == "pass":
         invalid_fw = [
             item for item in result["forbidden_weakenings"]
@@ -519,6 +533,20 @@ def _inconclusive_result(
         "summary": reason,
         "source_claims": [],
         "claim_mapping": [],
+        "spine_alignment": {
+            "status": "unclear",
+            "summary": reason,
+            "obligations_checked": [],
+            "missing_obligations": [],
+            "shortcut_assessment": "unclear",
+        },
+        "obligation_review": {
+            "status": "unclear",
+            "summary": reason,
+            "items": [],
+            "open_blockers": [],
+            "scaffold_assessment": [],
+        },
         "interface_contract": {
             "status": "unclear",
             "summary": reason,
@@ -684,7 +712,7 @@ def _run_or_inconclusive(
 
 def _base_for_runner_failure(review_input: dict[str, Any], metadata: dict[str, Any]) -> dict[str, Any]:
     return {
-        "schema_version": "phase2.semantic_review.result.v4",
+        "schema_version": "phase2.semantic_review.result.v5",
         "task_id": review_input.get("task", {}).get("block_id", ""),
         "mode": review_input.get("mode", ""),
         "attempt": review_input.get("attempt"),
@@ -721,6 +749,7 @@ def render_semantic_review_report(result: dict[str, Any]) -> str:
     findings = result.get("findings", [])
     interface_contract = result.get("interface_contract", {})
     downstream_adequacy = result.get("downstream_adequacy", {})
+    obligation_review = result.get("obligation_review", {})
     forbidden_weakenings = result.get("forbidden_weakenings", [])
     lines = [
         f"# Semantic Review Report for {result.get('task_id', '')}",
@@ -738,6 +767,11 @@ def render_semantic_review_report(result: dict[str, Any]) -> str:
         "",
         f"- Status: `{interface_contract.get('status', 'unclear')}`",
         f"- Summary: {str(interface_contract.get('summary', '')).strip() or '(no summary)'}",
+        "",
+        "## Proof Obligations",
+        "",
+        f"- Status: `{obligation_review.get('status', 'unclear') if isinstance(obligation_review, dict) else 'unclear'}`",
+        f"- Summary: {str(obligation_review.get('summary', '') if isinstance(obligation_review, dict) else '').strip() or '(no summary)'}",
         "",
         "## Downstream Adequacy",
         "",

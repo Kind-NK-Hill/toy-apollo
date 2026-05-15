@@ -51,6 +51,13 @@ class Phase2ReviewTestSupport:
             "mismatches": [],
         }
         forbidden_weakenings = [{"status": "not_present", "summary": "fake reviewer weakening check"}] if verdict == "pass" else []
+        obligation_review = {
+            "status": "covered" if verdict == "pass" else "violated",
+            "summary": f"fake reviewer obligation review {verdict}",
+            "items": [],
+            "open_blockers": [] if verdict == "pass" else [{"obligation_id": "source_claim", "issue": f"fake {verdict} blocker"}],
+            "scaffold_assessment": [],
+        }
         payload = {
             "verdict": verdict,
             "confidence": "high" if verdict == "pass" else "medium",
@@ -66,6 +73,7 @@ class Phase2ReviewTestSupport:
                 "missing_obligations": [],
                 "shortcut_assessment": "faithful_abstraction" if verdict == "pass" else "unclear",
             },
+            "obligation_review": obligation_review,
             "interface_contract": interface_contract,
             "downstream_adequacy": {
                 "status": "covered" if verdict == "pass" else "violated",
@@ -189,6 +197,7 @@ class Phase2ReviewTestSupport:
         source_claims: list[dict] | None = None,
         claim_mapping: list[dict] | None = None,
         candidate_hash: str | None = None,
+        obligation_review: dict | None = None,
     ) -> Path:
         request_path = pack_dir / "semantic_review_request.json"
         if request_path.exists():
@@ -240,6 +249,17 @@ class Phase2ReviewTestSupport:
                         ),
                         "missing_obligations": [],
                         "shortcut_assessment": "faithful_abstraction" if verdict == "pass" else "unclear",
+                    },
+                    "obligation_review": obligation_review
+                    if obligation_review is not None
+                    else {
+                        "status": "covered" if verdict == "pass" else "violated",
+                        "summary": f"manual obligation review {verdict}",
+                        "items": [],
+                        "open_blockers": []
+                        if verdict == "pass"
+                        else [{"obligation_id": "source_claim", "issue": f"manual {verdict} blocker"}],
+                        "scaffold_assessment": [],
                     },
                     "interface_contract": {
                         "status": "covered" if verdict == "pass" else "violated",

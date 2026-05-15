@@ -26,6 +26,11 @@ from .phase2_semantic_review import (
     SEMANTIC_REVIEW_RUBRIC_VERSION,
     latest_semantic_review_context_path,
 )
+from .phase2_proof_obligations import (
+    PROOF_OBLIGATIONS_FILE_NAME,
+    ensure_proof_obligations_file,
+    summarize_proof_obligations,
+)
 
 
 def _review_request_path(pack_dir: Path, attempt: int) -> Path:
@@ -209,6 +214,13 @@ def build_semantic_review_basis(
     review_subject_hash: str = "",
 ) -> dict[str, Any]:
     task_id = task["block_id"]
+    pack_dir = settings.phase2_prompt_packs_dir / task_id
+    current_record = ledger.ledger.get("tasks", {}).get(task_id, {})
+    proof_obligations = ensure_proof_obligations_file(
+        pack_dir,
+        task,
+        current_record=current_record if isinstance(current_record, dict) else {},
+    )
     downstream = sorted(
         _collect_direct_downstream_consumers(task_id, settings),
         key=lambda item: (
@@ -233,6 +245,9 @@ def build_semantic_review_basis(
         "review_subject_hash": str(review_subject_hash or ""),
         "direct_downstream_consumers": downstream,
         "spine_review_contract": review_spine_contract(task),
+        "proof_obligations_file": str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME),
+        "proof_obligations": proof_obligations,
+        "proof_obligation_summary": summarize_proof_obligations(proof_obligations),
         "allowed_abstractions": review_allowed_abstractions(task),
         "forbidden_weakenings": review_forbidden_weakenings(task),
         "historical_shortcut_risks": review_history_risks(task_id),

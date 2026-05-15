@@ -12,6 +12,7 @@ from .phase2_pack_shared.artifacts import (
     ATTEMPT_HISTORY_FILE_NAME,
     DRAFT_FILE_NAME,
     FAILURE_SUMMARY_FILE_NAME,
+    PROOF_OBLIGATIONS_FILE_NAME,
     REVIEW_REPAIR_REQUEST_PREFIX,
     REVIEW_REPAIR_SUMMARY_PREFIX,
     SEARCH_MANIFEST_FILE_NAME,
@@ -42,6 +43,11 @@ from .phase2_pack_shared.runtime_state import (
     auto_loop_state_from_record,
     count_consecutive_primary_failures,
     recommended_action_for_kind,
+)
+from .phase2_proof_obligations import (
+    ensure_proof_obligations_file,
+    render_proof_obligations_markdown,
+    summarize_proof_obligations,
 )
 from .phase2_review_request import _latest_review_request_path, _collect_direct_downstream_consumers
 from .phase2_semantic_review import (
@@ -572,6 +578,12 @@ def build_semantic_review_context_markdown(task: dict[str, Any], ledger: LedgerM
     lines.append("- Pass evidence requirements:")
     for item in spine_contract["pass_evidence_requirements"]:
         lines.append(f"  - {item}")
+    proof_obligations = ensure_proof_obligations_file(
+        pack_dir,
+        task,
+        current_record=current_record if isinstance(current_record, dict) else {},
+    )
+    lines.extend(["", render_proof_obligations_markdown(proof_obligations, path=pack_dir / PROOF_OBLIGATIONS_FILE_NAME).rstrip()])
     lines.extend(["", "## Allowed Abstraction Layer", ""])
     for item in review_allowed_abstractions(task):
         lines.append(f"- {item}")
@@ -635,6 +647,14 @@ def _render_review_repair_summary(
         lines.extend(["", "## Forbidden Shortcuts", ""])
         for item in forbidden_shortcuts:
             lines.append(f"- {item}")
+    proof_obligation_blockers = repair_request.get("proof_obligation_blockers", [])
+    if proof_obligation_blockers:
+        lines.extend(["", "## Proof Obligation Blockers", ""])
+        for item in proof_obligation_blockers:
+            if isinstance(item, dict):
+                lines.append(f"- `{item.get('obligation_id', '') or '(unassigned)'}`: {item.get('issue', '')}")
+            else:
+                lines.append(f"- {item}")
     downstream_blockers = repair_request.get("downstream_blockers", [])
     if downstream_blockers:
         lines.extend(["", "## Downstream Blockers", ""])
@@ -841,6 +861,9 @@ def refresh_pack_runtime_view(task: dict[str, Any], ledger: LedgerManager, setti
     metadata["latest_verify_result_file"] = str(current_record.get("latest_verify_result_file", "") or select_latest_verify_result(pack_dir) or "")
     metadata["draft_file"] = str(pack_dir / DRAFT_FILE_NAME)
     metadata["intent_contract_file"] = str(intent_contract_path(pack_dir))
+    proof_obligations = ensure_proof_obligations_file(pack_dir, task, current_record=current_record)
+    metadata["proof_obligations_file"] = str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME)
+    metadata["proof_obligation_summary"] = summarize_proof_obligations(proof_obligations)
     metadata["search_manifest_file"] = str(pack_dir / SEARCH_MANIFEST_FILE_NAME)
     metadata["attempt_history_file"] = str(pack_dir / ATTEMPT_HISTORY_FILE_NAME)
     metadata["failure_summary_file"] = str(pack_dir / FAILURE_SUMMARY_FILE_NAME)
