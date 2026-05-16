@@ -117,6 +117,8 @@ Rules:
 
 This rule applies only to chapter-wide or task-set goals. It does not change the
 single-task `pack -> build-check -> review-now -> review-apply` contract.
+For the durable batch checklist, status schema, and dry-run summary helper, see
+`docs/phase2_batch_controller.md`.
 
 If a task reaches a hard stop during a task-set run, for example
 `hard_failure`, `nonprogress`, `max_rounds`, or `build_budget_exhausted`, treat

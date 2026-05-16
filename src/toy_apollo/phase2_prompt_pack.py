@@ -153,6 +153,7 @@ CHAPTER5_SOURCE_PREFIXES = (
 
 DRAFT_FILE_NAME = "draft.lean"
 SEARCH_MANIFEST_FILE_NAME = "search_manifest.json"
+DEFAULT_DEPENDENCY_SYMBOL_CHECK_LIMIT = 0
 DEPENDENCY_DECISION_CONTEXT_JSON = "dependency_decision_context.json"
 DEPENDENCY_DECISION_CONTEXT_MD = "dependency_decision_context.md"
 ATTEMPT_HISTORY_FILE_NAME = "attempt_history.json"
@@ -2079,6 +2080,13 @@ def _collect_local_dependency_entries(
     soft_imports = canonicalize_id_list(task.get("soft_imports", []))
     final_union = canonicalize_id_list(hard_deps + soft_imports)
     entries: list[dict[str, Any]] = []
+    try:
+        symbol_check_limit = max(
+            0,
+            int(os.getenv("TOY_APOLLO_DEP_SYMBOL_CHECK_LIMIT", str(DEFAULT_DEPENDENCY_SYMBOL_CHECK_LIMIT))),
+        )
+    except ValueError:
+        symbol_check_limit = DEFAULT_DEPENDENCY_SYMBOL_CHECK_LIMIT
     for dep in final_union:
         dep_id = canonicalize_block_id(dep)
         dep_record = ledger.ledger.get("tasks", {}).get(dep_id, {})
@@ -2086,8 +2094,9 @@ def _collect_local_dependency_entries(
         import_path = f"ToyApollo.Output.{dep_id}"
         exported = dep_record.get("exported_symbols", [])
         symbols = exported if exported else [dep_id]
+        skipped_symbol_count = max(0, len(symbols) - symbol_check_limit)
         snippet = _read_file_safely(dep_file)[:600].strip() if dep_file else ""
-        for symbol in symbols:
+        for symbol in symbols[:symbol_check_limit]:
             check_success, check_output = _run_check_with_import(compiler, import_path, symbol, search_stats=search_stats)
             entries.append(
                 _build_search_manifest_entry(
@@ -2103,6 +2112,27 @@ def _collect_local_dependency_entries(
                     check_output=check_output,
                     status="verified" if check_success else "rejected",
                     reason="dependency_export" if exported else "dependency_module",
+                )
+            )
+        if skipped_symbol_count:
+            entries.append(
+                _build_search_manifest_entry(
+                    term=dep_id,
+                    source_kind="local_dependency",
+                    import_path=import_path,
+                    symbol="",
+                    file_path=str(dep_file) if dep_file else "",
+                    line=None,
+                    snippet=snippet,
+                    source_line="",
+                    check_success=False,
+                    check_output=(
+                        f"Skipped {skipped_symbol_count} exported dependency symbols during pack generation "
+                        f"after checking the first {symbol_check_limit}; set "
+                        "TOY_APOLLO_DEP_SYMBOL_CHECK_LIMIT to override."
+                    ),
+                    status="unverified",
+                    reason="dependency_symbol_check_budget",
                 )
             )
     return entries

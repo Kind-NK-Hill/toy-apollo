@@ -285,6 +285,49 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_process_target_auto_loop_rejects_multiple_tasks(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        root = REPO_ROOT / "tests" / "_tmp_phase2_cli_auto_loop_multi_guard"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_cli_auto_loop_multi_guard"
+            ledger, settings, _, _ = self._setup_trivial_phase2_task(root, task_id)
+            args = argparse.Namespace(
+                phase=2,
+                input="",
+                tasks=f"{task_id},thm_4_cli_auto_loop_other",
+                task_ids=[task_id, "thm_4_cli_auto_loop_other"],
+                phase2_mode="auto-loop",
+                phase3_mode="soft-pack",
+                candidate="",
+                review_result="",
+                review_subject="current",
+                auto_apply_pass=False,
+                abandon_current_repair=False,
+                max_auto_rounds=6,
+                nonprogress_limit=2,
+                max_build_attempts_per_round=3,
+                selection="",
+                batch="",
+                status=False,
+            )
+            with patch.object(cli_app, "get_settings", return_value=settings), patch(
+                "src.toy_apollo.core.LedgerManager",
+                return_value=ledger,
+            ), patch(
+                "src.toy_apollo.phase2_review_loop.run_codex_auto_loop",
+                new=AsyncMock(return_value=(True, "should not run")),
+            ) as auto_loop_mock, patch("builtins.print") as print_mock:
+                asyncio.run(cli_app.process_target(args))
+
+            auto_loop_mock.assert_not_awaited()
+            printed = " ".join(" ".join(str(item) for item in call.args) for call in print_mock.call_args_list)
+            self.assertIn("exactly one task", printed.lower())
+            self.assertIn("auto-loop", printed.lower())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
 
 if __name__ == "__main__":
     unittest.main()

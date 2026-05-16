@@ -27,6 +27,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
   - the middle `draft_plan.json` authoring step is not a CLI mode; CLI supports only `--phase1-mode pack` and `--phase1-mode apply`
   - CLI `apply --input` points to the source `.tex` or `inputs/` directory, not to `phase1_prompt_packs/<source>/draft_plan.json`
 - Phase 2:
+  - before any authoring, review, repair, hard-failure decision, or chapter/task-set batch, use the repo skill `.agents/skills/toy-apollo-phase2-entrypoint/SKILL.md`; if the Codex skill system has not auto-loaded it, read that file manually and follow its entry report before task-specific work
   - supported operator modes: `pack`, `build-check`, `review-pack`, `review-existing`, `review-now`, `review-fix`, `auto-loop`, `review-existing-queue`, `review-apply`, `verify`, `audit`, `soft-pack`, `soft-apply`
   - default local path is prompt-pack driven, with `build-check` as the normal technical gate, `review-now` as the Codex-facing semantic review entrypoint, `review-fix` as the semantic-repair entrypoint after failed review, and `auto-loop` as the same-session Codex orchestration mode
   - `soft-pack` and `soft-apply` are the Problem soft-dependency special case inside Phase 2
@@ -51,6 +52,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
   - operator writes the selection JSON
   - `--phase 2 --phase2-mode soft-apply`
 - If the task is about prompt-pack formalization, build failure, semantic review failure, or Problem soft-dependency selection, route through Phase 2 modes, not Phase 3.
+- The Phase 2 entry skill is a routing checklist, not a second policy source; it points agents back to this contract and the Phase 2 docs before execution.
 - Phase 2 Codex semantic review workflow:
   - existing official output: `review-now --review-subject existing`
   - current build-ready candidate: `review-now --review-subject candidate`
