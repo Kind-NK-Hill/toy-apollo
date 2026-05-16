@@ -138,8 +138,8 @@ async def process_target(args):
         if not selected_task_ids and args.phase2_mode != "review-existing-queue":
             print("❌ Phase 2 modes require task ids via --tasks.")
             return
-        if args.phase2_mode in {"pack", "build-check", "verify", "review-pack", "review-existing", "review-now", "review-fix", "review-apply"} and len(selected_task_ids) != 1:
-            print("❌ Phase 2 pack/build-check/verify/review-pack/review-existing/review-now/review-fix/review-apply modes currently support exactly one task at a time.")
+        if args.phase2_mode in {"pack", "build-check", "verify", "review-pack", "review-existing", "review-now", "review-fix", "auto-loop", "review-apply"} and len(selected_task_ids) != 1:
+            print("❌ Phase 2 pack/build-check/verify/review-pack/review-existing/review-now/review-fix/auto-loop/review-apply modes currently support exactly one task at a time.")
             return
         try:
             if args.phase2_mode == "pack":
