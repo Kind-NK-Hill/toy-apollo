@@ -74,6 +74,38 @@ class DependencyDecisionTests(unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_records_translation_and_proof_debt_support_decisions(self):
+        root = REPO_ROOT / "tests" / "_tmp_dependency_decisions_translation_names"
+        try:
+            shutil.rmtree(root, ignore_errors=True)
+            settings = make_settings(root)
+
+            translation = DependencyDecision(
+                task_id="thm_10_8",
+                dep_id="def_10_4",
+                kind="translation",
+                phase="phase2_pack",
+                criterion="interface_translation",
+                evidence="Connects textbook convergence-in-distribution notation to the exported Lean interface.",
+            )
+            proof_debt = DependencyDecision(
+                task_id="thm_10_8",
+                dep_id="skorokhod_quantile_support",
+                kind="proof_debt_support",
+                phase="phase2_pack",
+                criterion="proof_debt_support",
+                evidence="Explicit support assumption for the generalized quantile construction.",
+            )
+
+            record_dependency_decision(settings, translation)
+            record_dependency_decision(settings, proof_debt)
+
+            loaded = load_dependency_decisions(settings, "thm_10_8")
+            self.assertEqual([item["kind"] for item in loaded], ["translation", "proof_debt_support"])
+            self.assertEqual([item["criterion"] for item in loaded], ["interface_translation", "proof_debt_support"])
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_invalid_kind_and_criterion_are_rejected(self):
         root = REPO_ROOT / "tests" / "_tmp_dependency_decisions_invalid"
         try:
@@ -99,6 +131,28 @@ class DependencyDecisionTests(unittest.TestCase):
                         kind="hard",
                         phase="phase1_apply",
                         criterion="nearby_text",
+                    ),
+                )
+            with self.assertRaises(ValueError):
+                record_dependency_decision(
+                    settings,
+                    DependencyDecision(
+                        task_id="thm_9_1",
+                        dep_id="thm_7_12",
+                        kind="bridge",
+                        phase="phase1_apply",
+                        criterion="interface_translation",
+                    ),
+                )
+            with self.assertRaises(ValueError):
+                record_dependency_decision(
+                    settings,
+                    DependencyDecision(
+                        task_id="thm_9_1",
+                        dep_id="thm_7_12",
+                        kind="translation",
+                        phase="phase1_apply",
+                        criterion="interface_bridge",
                     ),
                 )
         finally:

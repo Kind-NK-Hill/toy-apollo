@@ -17,7 +17,8 @@ PLACEHOLDER_OBLIGATION_ID = "source_proof_spine"
 OBLIGATION_KINDS = {
     "source_step",
     "analytic_lemma",
-    "bridge",
+    "translation",
+    "proof_debt_support",
     "interface_conversion",
     "assembly",
     "scaffold_elimination",
@@ -29,7 +30,13 @@ OBLIGATION_REVIEW_STATUSES = {"unreviewed", "accepted", "rejected", "needs_revie
 REVIEW_ITEM_STATUSES = {"covered", "partial", "missing", "violated", "unclear", "not_applicable"}
 PASSING_REVIEW_ITEM_STATUSES = {"covered", "not_applicable"}
 PASSING_OBLIGATION_STATUSES = {"proved", "obsolete"}
-SCAFFOLD_CATEGORIES = {"interface_bridge", "proof_obligation", "external_theorem_gap", "forbidden_shortcut"}
+SCAFFOLD_CATEGORIES = {
+    "interface_translation",
+    "proof_debt_support",
+    "proof_obligation",
+    "external_theorem_gap",
+    "forbidden_shortcut",
+}
 
 
 def utc_stamp() -> str:

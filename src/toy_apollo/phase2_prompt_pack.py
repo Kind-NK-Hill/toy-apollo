@@ -2630,7 +2630,7 @@ def _review_forbidden_weakenings(task: dict[str, Any]) -> list[str]:
     if task_id == "thm_7_8":
         weakenings.extend(
             [
-                "禁止把有限区间 LS↔RS bridge 弱化成纯 measure-side interval integral 等式，却无法支撑 thm_7_9 的 improper RS 主线。",
+                "禁止把有限区间 LS↔RS interface translation 弱化成纯 measure-side interval integral 等式，却无法支撑 thm_7_9 的 improper RS 主线。",
                 "禁止把端点无原子条件扩张为教材外的结构性假设。",
                 "禁止让 direct downstream 在 `[-n,n]` 截断调用时额外补充新的端点原子假设；如果做不到无新增假设实例化，则 thm_7_8 不得通过。",
             ]
@@ -2639,7 +2639,7 @@ def _review_forbidden_weakenings(task: dict[str, Any]) -> list[str]:
         weakenings.extend(
             [
                 "禁止绕开 def_1_4 的 improper RS 定义，直接用 measure-side shortcut 代替教材主线。",
-                "禁止把 finite-interval bridge 缩成局部可用版本，再在 thm_7_9 中偷偷补 theorem-level 新假设。",
+                "禁止把 finite-interval interface translation 缩成局部可用版本，再在 thm_7_9 中偷偷补 theorem-level 新假设。",
             ]
         )
     elif task_id == "thm_7_12":
@@ -2678,7 +2678,7 @@ def _review_history_risks(task_id: str) -> list[str]:
             "历史版本曾用 `else 0` 作为 divergence fallback，导致定义在语义上掩盖了“积分不存在”。",
         ],
         "thm_7_8": [
-            "历史版本只给出有限区间上的局部 measure-side bridge，review 通过后仍不足以支撑 thm_7_9。",
+            "历史版本只给出有限区间上的局部 measure-side translation，review 通过后仍不足以支撑 thm_7_9。",
             "历史版本要求额外端点无原子条件，导致 thm_7_9 的 `[-n,n]` 截断主线无法无新增假设复用。",
         ],
         "thm_7_12": [
