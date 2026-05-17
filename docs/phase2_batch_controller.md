@@ -50,6 +50,9 @@ Allowed controller statuses:
   inside this batch.
 - `MECHANISM_BLOCKER`: external or local mechanism prevents canonical progress,
   such as missing reviewer config or repeated timeout without a canonical result.
+- `NEEDS_DECOMPOSITION`: complex proof task still has only the generated
+  `source_proof_spine` placeholder or otherwise lacks concrete proof-obligation
+  nodes. This is nonterminal and must not propagate dependency-failed skips.
 - `USER_INTERRUPTED`: the user explicitly stopped or paused the batch.
 
 A batch is terminal only when every task in scope has one of:
@@ -62,6 +65,16 @@ If a root task reaches `FAILED_LOCAL` with stop reason `hard_failure`,
 `nonprogress`, `max_rounds`, or `build_budget_exhausted`, mark every direct or
 transitive uncompleted hard dependent in the current batch as
 `DEPENDENCY_FAILED`.
+
+For `hard_failure`, this propagation is allowed only after the failed root has
+exhausted one Phase 2 failure streak counter: `phase2_build_fail_counter >= 15`
+or `phase2_review_fail_counter >= 15`. A root that says `FAILED_LOCAL` before
+either counter reaches 15 must be normalized back to `NONTERMINAL` by the
+controller and must not block downstream tasks.
+
+Do not apply this propagation when the root task's `proof_obligation_summary`
+sets `needs_concrete_decomposition=true`; that state is `NEEDS_DECOMPOSITION`,
+not a failed root.
 
 Do not stop the batch after this propagation. Continue every remaining
 independent `NONTERMINAL` task whose hard dependencies have not failed.
@@ -78,42 +91,34 @@ The batch summary must distinguish:
 ## Complex Retry Budget
 
 For a complex task retried after an under-evidenced hard stop, a renewed attempt
-must not be stopped again as `hard_failure` until either it completes or records
-15 substantive failures.
+must not be stopped again as `hard_failure` until either it completes or one of
+these counters reaches 15:
 
-Count only:
+- `phase2_build_fail_counter`: consecutive failed `build-check` attempts before
+  semantic review. Failed build-check increments it; successful build-check
+  resets it to `0`.
+- `phase2_review_fail_counter`: failed or inconclusive semantic reviews of
+  build-ready candidates. Failed/inconclusive review increments it; semantic
+  pass completes the task.
 
-- `build_check_failure` after a meaningful candidate, decomposition, plan, or
-  strategy change
-- `semantic_review_fail` or `semantic_review_inconclusive` for a build-ready
-  candidate
-- `review_apply_rejection` caused by semantic or freshness evidence
+Do not add build failures and review failures together. A task reaches
+`FAILED_LOCAL` only when `phase2_build_fail_counter >= 15` or
+`phase2_review_fail_counter >= 15`.
 
-Do not count:
-
-- missing reviewer configuration
-- stale refresh that only regenerates review material
-- dependency-failed skip
-- timeout or manual abort without a canonical result file
-- setup failure
-- repeated identical failure fingerprint without a changed candidate,
-  decomposition plan, helper structure, or search strategy
-
-Record counted and skipped attempts in `failure_events`:
+Record the live counters in each batch task:
 
 ```json
 {
-  "kind": "build_check_failure",
-  "candidate_changed": true,
-  "canonical_result": true,
-  "failure_fingerprint": "unknown_identifier: foo",
-  "candidate_hash": "sha256-or-short-id",
-  "strategy_key": "rewrite-helper-chain-v2"
+  "task_id": "thm_10_8",
+  "status": "NONTERMINAL",
+  "phase2_build_fail_counter": 0,
+  "phase2_review_fail_counter": 3
 }
 ```
 
-For `review_apply_rejection`, set `rejection_class` to `semantic` or
-`freshness` when it should count.
+Missing reviewer configuration, stale review refresh, dependency-failed skip,
+setup failure, timeout, or manual abort without a canonical result file does not
+increment either counter.
 
 ## Pre-Final Guard
 
@@ -122,8 +127,8 @@ Before a controller agent ends the turn or reports the batch as finished:
 1. Run the status helper against the batch JSON.
 2. Confirm every row is terminal.
 3. Confirm every `DEPENDENCY_FAILED` row names a failed hard dependency.
-4. Confirm every complex retry hard failure has at least 15 substantive
-   failures.
+4. Confirm every `hard_failure` has either `phase2_build_fail_counter >= 15` or
+   `phase2_review_fail_counter >= 15`.
 5. Confirm no `current_auto_loop_status = active` task lacks a documented stop
    reason in ledger metadata.
 
@@ -145,7 +150,7 @@ Program-enforced today:
   and mirrors them into prompt-pack metadata.
 - `review-apply` is the only Codex semantic-review landing step.
 - The batch status helper computes dependency-failed propagation, terminal
-  coverage, and conservative 15-failure budget counts from the batch JSON.
+  coverage, and the two Phase 2 failure streak counters from the batch JSON.
 
 Checklist-enforced today:
 

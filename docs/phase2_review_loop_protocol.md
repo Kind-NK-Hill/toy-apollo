@@ -88,11 +88,17 @@ they merely rename an unproved analytic obligation or the task's main theorem.
 
 If a complex task is being retried after an under-evidenced hard stop, the loop
 must not accept another `hard_failure` until the renewed attempt has either
-completed or accumulated 15 substantive build/review failures. Count failed
-`build-check`, failed/inconclusive semantic review, and semantic/freshness
-`review-apply` rejection after meaningful candidate or plan changes. Do not
-count pure setup/configuration failures, dependency-failed skips, or repeated
-identical failure fingerprints without a changed strategy. A timed-out or
-manually aborted build/review with no canonical result file is a mechanism
-blocker, not a counted failure; record it, narrow the diagnostic check, and then
+completed or one of the two hard-coded counters reaches 15:
+
+- `phase2_build_fail_counter >= 15`: consecutive failed `build-check` attempts
+  before semantic review. A successful `build-check` resets this counter to `0`.
+- `phase2_review_fail_counter >= 15`: failed or inconclusive semantic reviews
+  of build-ready candidates. A successful build makes review eligible; it does
+  not itself increment the review counter.
+
+Build failures and review failures are not additive. The task fails only when
+one counter independently reaches 15. Pure setup/configuration failures,
+dependency-failed skips, stale review refreshes, and timed-out or manually
+aborted build/review attempts with no canonical result file do not increment
+either counter; record those as mechanism blockers or continuation work and
 resume the renewed attempt.

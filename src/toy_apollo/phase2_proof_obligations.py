@@ -12,6 +12,7 @@ from .phase2_pack_shared.io import read_json_safely, write_json
 
 PROOF_OBLIGATIONS_FILE_NAME = "proof_obligations.json"
 PROOF_OBLIGATIONS_SCHEMA_VERSION = "phase2.proof_obligations.v1"
+PLACEHOLDER_OBLIGATION_ID = "source_proof_spine"
 
 OBLIGATION_KINDS = {
     "source_step",
@@ -98,7 +99,7 @@ def default_proof_obligations(task: dict[str, Any], current_record: dict[str, An
     if classification["requires_decomposition"]:
         obligations.append(
             {
-                "id": "source_proof_spine",
+                "id": PLACEHOLDER_OBLIGATION_ID,
                 "title": "Source proof spine",
                 "kind": "source_step",
                 "source_ref": "Original task text; replace this placeholder with precise source spans.",
@@ -188,6 +189,7 @@ def summarize_proof_obligations(payload: dict[str, Any]) -> dict[str, Any]:
     ]
     classification = payload.get("classification", {}) if isinstance(payload.get("classification", {}), dict) else {}
     scaffolds = payload.get("scaffold_hypotheses", []) if isinstance(payload.get("scaffold_hypotheses", []), list) else []
+    placeholder_ids = placeholder_obligation_ids(payload)
     return {
         "schema_version": PROOF_OBLIGATIONS_SCHEMA_VERSION,
         "task_id": str(payload.get("task_id", "") or ""),
@@ -197,7 +199,39 @@ def summarize_proof_obligations(payload: dict[str, Any]) -> dict[str, Any]:
         "review_status_counts": dict(review_counts),
         "open_blocking_ids": open_blocking_ids,
         "scaffold_hypothesis_count": len(scaffolds),
+        "placeholder_obligation_ids": placeholder_ids,
+        "needs_concrete_decomposition": needs_concrete_decomposition(payload),
     }
+
+
+def is_placeholder_obligation(item: dict[str, Any]) -> bool:
+    obligation_id = str(item.get("id", "") or "").strip()
+    if obligation_id != PLACEHOLDER_OBLIGATION_ID:
+        return False
+    source_ref = str(item.get("source_ref", "") or "").lower()
+    notes = str(item.get("notes", "") or "").lower()
+    lean_landing = str(item.get("lean_landing", "") or "").strip()
+    return "placeholder" in source_ref or "placeholder" in notes or not lean_landing
+
+
+def placeholder_obligation_ids(payload: dict[str, Any]) -> list[str]:
+    obligations = payload.get("obligations", []) if isinstance(payload.get("obligations", []), list) else []
+    ids: list[str] = []
+    for item in obligations:
+        if isinstance(item, dict) and is_placeholder_obligation(item):
+            obligation_id = str(item.get("id", "") or "").strip()
+            if obligation_id:
+                ids.append(obligation_id)
+    return ids
+
+
+def needs_concrete_decomposition(payload: dict[str, Any]) -> bool:
+    classification = payload.get("classification", {}) if isinstance(payload.get("classification", {}), dict) else {}
+    if not bool(classification.get("requires_decomposition", False)):
+        return False
+    obligations = payload.get("obligations", []) if isinstance(payload.get("obligations", []), list) else []
+    concrete = [item for item in obligations if isinstance(item, dict) and not is_placeholder_obligation(item)]
+    return not concrete or bool(placeholder_obligation_ids(payload))
 
 
 def render_proof_obligations_markdown(payload: dict[str, Any], *, path: Path | None = None) -> str:
@@ -208,9 +242,16 @@ def render_proof_obligations_markdown(payload: dict[str, Any], *, path: Path | N
         "",
         f"- File: `{path}`" if path is not None else "- File: `(not recorded)`",
         f"- Requires decomposition: `{summary['requires_decomposition']}`",
+        f"- Needs concrete decomposition: `{summary['needs_concrete_decomposition']}`",
         f"- Classification: {classification.get('reason', '(none)')}",
         f"- Open blocking obligations: `{', '.join(summary['open_blocking_ids']) if summary['open_blocking_ids'] else '(none)'}`",
     ]
+    if summary["placeholder_obligation_ids"]:
+        lines.append(
+            "- Placeholder obligations: `"
+            + ", ".join(summary["placeholder_obligation_ids"])
+            + "` (not a valid completed decomposition)"
+        )
     evidence = classification.get("evidence", []) if isinstance(classification.get("evidence", []), list) else []
     if evidence:
         lines.append("- Classification evidence:")
@@ -283,6 +324,8 @@ def validate_obligation_review_for_pass(review_input: dict[str, Any], result: di
         return "invalid reviewer output: pass verdict cannot include obligation_review.open_blockers"
     review_basis = review_input.get("review_basis", {}) if isinstance(review_input.get("review_basis", {}), dict) else {}
     payload = review_basis.get("proof_obligations", {}) if isinstance(review_basis.get("proof_obligations", {}), dict) else {}
+    if needs_concrete_decomposition(payload):
+        return "invalid reviewer output: complex tasks require concrete proof_obligations.json nodes before semantic pass"
     obligations = payload.get("obligations", []) if isinstance(payload.get("obligations", []), list) else []
     required_ids = [
         str(item.get("id", "") or "")

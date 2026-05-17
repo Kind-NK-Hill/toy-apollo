@@ -22,6 +22,7 @@ from .phase2_pack_shared.io import read_file_safely, read_json_safely, sha256_te
 from .phase2_pack_shared.review_basis_parts import dedupe_strings
 from .phase2_pack_shared.runtime_state import auto_loop_attempt_payload, auto_loop_field_defaults
 from .phase2_pack_views import _render_review_repair_summary, refresh_pack_runtime_view, render_semantic_review_report
+from .phase2_failure_budget import phase2_failure_counters_from_history
 from .phase2_proof_obligations import (
     apply_obligation_review,
     extract_obligation_review_blockers,
@@ -449,7 +450,7 @@ async def apply_codex_review_result_once(
             success=success,
             state_transition=state_transition,
         )
-        record_semantic_review_attempt(
+        history = record_semantic_review_attempt(
             pack_dir=pack_dir,
             task_id=task_id,
             candidate_path=candidate_path,
@@ -461,6 +462,12 @@ async def apply_codex_review_result_once(
             success=success,
             repair_ready=repair_ready,
             auto_loop_metadata=auto_loop_attempt_payload(ledger.ledger.get("tasks", {}).get(task_id, {})),
+        )
+        failure_counters = phase2_failure_counters_from_history(history)
+        ledger.update_runtime_metadata(
+            task_id,
+            phase2_build_fail_counter=failure_counters.build_fail_counter,
+            phase2_review_fail_counter=failure_counters.review_fail_counter,
         )
         if success:
             _clear_current_review_metadata(task_id, ledger)
@@ -496,8 +503,10 @@ async def apply_codex_review_result_once(
                 ledger.update_status(task_id, TaskStatus.COMPLETED)
             elif existing_completed_output:
                 ledger.update_status(task_id, TaskStatus.COMPLETED)
-            else:
+            elif failure_counters.review_fail_counter >= failure_counters.limit:
                 ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=detail_text)
+            else:
+                ledger.update_status(task_id, TaskStatus.PACKED)
         else:
             if success:
                 ledger.update_status(task_id, TaskStatus.COMPLETED)

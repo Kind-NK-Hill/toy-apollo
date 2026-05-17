@@ -272,6 +272,11 @@ artifact and must contain:
   exported task theorem or definition
 - current blocker/review history
 
+The generated `source_proof_spine` entry is only an unresolved placeholder.
+While it remains, or while no concrete source-step nodes exist, the task is in
+`needs_concrete_decomposition` state and may not be admitted as `hard_failure`,
+`MECHANISM_BLOCKER`, or a root for dependency-failed downstream skips.
+
 `decomposition_plan.md` is still allowed as a human-readable companion, but it
 does not replace `proof_obligations.json`. Keep both synchronized when both
 exist.
@@ -284,25 +289,38 @@ obligation or leave a scaffold hypothesis without a discharge plan.
 ### Complex Retry Budget
 
 After a complex task has been previously hard-stopped without sufficient
-decomposition evidence, a renewed attempt must continue until either the task is
-completed or the renewed attempt records at least 15 substantive build/review
-failures. Do not declare a new `hard_failure` before that threshold.
+decomposition evidence, a renewed attempt must continue until the task is
+completed, explicitly interrupted by the user, blocked by a documented mechanism
+failure, or one of the two Phase 2 failure streak counters reaches 15.
 
-For this budget, a substantive failure is:
+The counters are independent and hard-coded:
 
-- a `build-check` failure after a meaningful candidate edit
-- a failed or inconclusive semantic review of a build-ready candidate
-- a `review-apply` rejection caused by semantic or freshness evidence
+- `phase2_build_fail_counter`: consecutive failed `build-check` attempts before
+  semantic review. Each failed build attempt increments this counter. A
+  successful `build-check` resets it to `0`.
+- `phase2_review_fail_counter`: failed or inconclusive semantic reviews of
+  build-ready candidates. A successful `build-check` does not increment this
+  counter; it only makes the next review eligible to count. A failed or
+  inconclusive candidate review increments it by `1`. A semantic pass completes
+  the task and resets the live failure path.
+
+A task may enter `FAILED_LOCAL` only when:
+
+- `phase2_build_fail_counter >= 15`, or
+- `phase2_review_fail_counter >= 15`.
+
+Build failures and review failures must not be mixed into one shared total. For
+example, 14 build failures followed by a successful build and one review failure
+is not 15 failures; it is `build=0`, `review=1`, so the task remains
+nonterminal.
 
 Pure setup failures, missing reviewer configuration, stale request refreshes, or
-dependency-failed skips do not count. A long-running build or review that is
-manually aborted or times out without a canonical `build_result_vM.json`,
-`semantic_review_result_vM.json`, or `review-apply` result is a mechanism
-blocker, not a substantive failure. Record it in the task-local blocker log and
-continue with a smaller diagnostic check or an adjusted timeout strategy.
-Repeating the identical candidate or identical failure fingerprint counts only
-once until the author changes the decomposition plan, helper structure, search
-strategy, or Lean candidate.
+dependency-failed skips do not increment either counter. A long-running build or
+review that is manually aborted or times out without a canonical
+`build_result_vM.json`, `semantic_review_result_vM.json`, or `review-apply`
+result is a mechanism blocker, not a counted failure. Record it in the
+task-local blocker log and continue with a smaller diagnostic check or an
+adjusted timeout strategy.
 
 If the runtime or documentation allows a complex task to stop before this
 budget without completion, explicit user interruption, or a documented external
@@ -332,8 +350,8 @@ Only classify a task as `hard_failure` when all of the following are true:
 7. continuing by adding theorem-level assumptions, wrapper theorems, placeholder
    definitions, or black-box substitutions would erase the source proof spine
    and fail semantic review
-8. for a renewed complex task attempt after an under-evidenced hard stop, the
-   15-failure complex retry budget has been exhausted
+8. for a renewed complex task attempt after an under-evidenced hard stop, either
+   `phase2_build_fail_counter >= 15` or `phase2_review_fail_counter >= 15`
 
 Do not use `hard_failure` when the correct next step is to decompose a large
 proof into helper lemmas. Do not use `hard_failure` for repeated build failures

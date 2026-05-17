@@ -66,6 +66,10 @@ as a reconstruction of those nodes. The exported declaration should assemble
 proved obligations into the textbook claim; it must not assume the hard
 obligations as theorem-level hypotheses.
 
+The generated `source_proof_spine` node is an unresolved placeholder, not a
+completed decomposition. Replace it with concrete source-step nodes before
+requesting semantic pass or declaring any terminal blocker.
+
 `decomposition_plan.md` may still be used as a human-readable narrative, but the
 machine-checked review basis is `proof_obligations.json`. Keep both in sync when
 both exist.
@@ -146,9 +150,12 @@ draft is not by itself a hard failure.
 
 For complex proof-heavy theorems, the source proof spine note must be upgraded
 to a decomposition/reconstruction plan. If the task was previously hard-stopped
-without such a plan, keep working until completion or 15 substantive
-build/review failures in the renewed attempt. Identical candidate or identical
-failure repetitions do not count again until the plan or candidate changes.
+without such a plan, keep working until completion, explicit user interruption,
+a documented mechanism blocker, or one of the two Phase 2 counters reaches 15:
+`phase2_build_fail_counter` for consecutive failed `build-check` attempts, or
+`phase2_review_fail_counter` for failed/inconclusive reviews of build-ready
+candidates. Build failures and review failures do not add together; the task
+fails only when one counter independently reaches 15.
 Do not count a candidate as source-faithful if it replaces an existing local
 output theorem with a fresh black-box assumption or bridge.
 

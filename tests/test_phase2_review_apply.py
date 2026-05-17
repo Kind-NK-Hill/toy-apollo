@@ -99,6 +99,31 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             encoding="utf-8",
         )
 
+    def _seed_review_failures(self, pack_dir: Path, task_id: str, count: int) -> None:
+        (pack_dir / "attempt_history.json").write_text(
+            json.dumps(
+                {
+                    "task_id": task_id,
+                    "attempts": [
+                        {
+                            "attempt": index + 1,
+                            "candidate_file": str(pack_dir / f"candidate_seed_{index + 1}.lean"),
+                            "candidate_hash": f"review-fail-{index + 1}",
+                            "success": False,
+                            "primary_failure_kind": "semantic_review_fail",
+                            "stage": "semantic_review",
+                            "review_verdict": "fail",
+                            "disposition": "codex_review_fail_no_promotion",
+                        }
+                        for index in range(count)
+                    ],
+                },
+                indent=2,
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+
     def test_codex_review_apply_valid_pass_promotes_and_marks_completed(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_valid_pass"
         try:
@@ -163,6 +188,63 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
 
             self.assertFalse(success)
             self.assertIn("obligation", detail.lower())
+            self.assertFalse(output_path.exists())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_pass_rejects_placeholder_decomposition(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_placeholder_decomposition"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_placeholder_decomposition"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            (pack_dir / "proof_obligations.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": "phase2.proof_obligations.v1",
+                        "task_id": task_id,
+                        "classification": {
+                            "requires_decomposition": True,
+                            "reason": "test complex proof",
+                            "evidence": ["proof has independently reviewable intermediate obligations"],
+                        },
+                        "obligations": [
+                            {
+                                "id": "source_proof_spine",
+                                "title": "Source proof spine",
+                                "kind": "source_step",
+                                "source_ref": "Original task text; replace this placeholder with precise source spans.",
+                                "depends_on": [],
+                                "lean_landing": "",
+                                "status": "open",
+                                "review_status": "unreviewed",
+                                "blocking": True,
+                                "scaffold_hypotheses": [],
+                                "notes": "Complex tasks must split this placeholder into concrete proof obligations before semantic pass.",
+                            }
+                        ],
+                        "scaffold_hypotheses": [],
+                        "review_history": [],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass")
+
+            with patch(
+                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                return_value=(True, "final build ok"),
+            ):
+                success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertIn("concrete proof_obligations", detail)
             self.assertFalse(output_path.exists())
         finally:
             shutil.rmtree(root, ignore_errors=True)
@@ -583,7 +665,31 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertFalse(success)
             self.assertIn("fail", detail.lower())
             self.assertFalse(output_path.exists())
+            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "PACKED")
+            self.assertEqual(ledger.ledger["tasks"][task_id]["pack_candidate_state"], "review_rejected")
+            self.assertEqual(ledger.ledger["tasks"][task_id]["phase2_review_fail_counter"], 1)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_fails_only_after_15_review_failures(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_fails_after_15_review_failures"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_fails_after_15_review_failures"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            self._seed_review_failures(pack_dir, task_id, 14)
+            asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            result_path = self._write_codex_review_result(pack_dir, verdict="fail", source_claims=[], claim_mapping=[])
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertIn("fail", detail.lower())
+            self.assertFalse(output_path.exists())
             self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "FAILED_LOCAL")
+            self.assertEqual(ledger.ledger["tasks"][task_id]["phase2_review_fail_counter"], 15)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -603,7 +709,9 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertFalse(success)
             self.assertIn("inconclusive", detail.lower())
             self.assertFalse(output_path.exists())
-            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "FAILED_LOCAL")
+            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "PACKED")
+            self.assertEqual(ledger.ledger["tasks"][task_id]["pack_candidate_state"], "review_rejected")
+            self.assertEqual(ledger.ledger["tasks"][task_id]["phase2_review_fail_counter"], 1)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
