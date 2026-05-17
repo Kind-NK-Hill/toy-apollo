@@ -12,6 +12,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from src.toy_apollo.phase2_pack_generation import (  # noqa: E402
+    build_check_prompt_pack_candidate,
     write_codex_review_pack,
     write_existing_output_review_pack,
     write_existing_output_review_queue,
@@ -25,6 +26,30 @@ from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E4
 
 
 class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
+    def _seed_build_failures(self, pack_dir: Path, task_id: str, count: int) -> None:
+        (pack_dir / "attempt_history.json").write_text(
+            json.dumps(
+                {
+                    "task_id": task_id,
+                    "attempts": [
+                        {
+                            "attempt": index + 1,
+                            "candidate_file": str(pack_dir / f"candidate_seed_{index + 1}.lean"),
+                            "candidate_hash": f"build-fail-{index + 1}",
+                            "success": False,
+                            "primary_failure_kind": "repl_failed",
+                            "stage": "build",
+                            "disposition": "build_check_temp_build_failed",
+                        }
+                        for index in range(count)
+                    ],
+                },
+                indent=2,
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+
     def test_write_prompt_pack_creates_intent_contract_file(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_intent_contract"
         try:
@@ -110,6 +135,76 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
 
             review_context = (pack_dir / "semantic_review_context_v1.md").read_text(encoding="utf-8")
             self.assertIn("Proof Obligation Ledger", review_context)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_build_check_failure_before_15_keeps_task_packed(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_build_fail_before_15"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_pack_generation_build_fail_before_15"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                new=AsyncMock(return_value=(False, "repl failed")),
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                new=AsyncMock(return_value=(False, "temp build failed")),
+            ):
+                success, detail = asyncio.run(build_check_prompt_pack_candidate(task_id, ledger, settings))
+
+            self.assertFalse(success)
+            self.assertIn("repl failed", detail.lower())
+            task = ledger.ledger["tasks"][task_id]
+            self.assertEqual(task["status"], "PACKED")
+            self.assertEqual(task["pack_candidate_state"], "build_failed")
+            self.assertEqual(task["phase2_build_fail_counter"], 1)
+            self.assertEqual(task["phase2_review_fail_counter"], 0)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_build_check_failure_fails_only_after_15_consecutive_build_failures(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_build_fail_after_15"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_pack_generation_build_fail_after_15"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            self._seed_build_failures(pack_dir, task_id, 14)
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                new=AsyncMock(return_value=(False, "repl failed")),
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                new=AsyncMock(return_value=(False, "temp build failed")),
+            ):
+                success, detail = asyncio.run(build_check_prompt_pack_candidate(task_id, ledger, settings))
+
+            self.assertFalse(success)
+            self.assertIn("repl failed", detail.lower())
+            task = ledger.ledger["tasks"][task_id]
+            self.assertEqual(task["status"], "FAILED_LOCAL")
+            self.assertEqual(task["phase2_build_fail_counter"], 15)
+            self.assertEqual(task["phase2_review_fail_counter"], 0)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_successful_build_check_resets_build_failure_counter(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_build_success_resets_counter"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_pack_generation_build_success_resets_counter"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            self._seed_build_failures(pack_dir, task_id, 14)
+
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+
+            self.assertTrue(build_success, build_detail)
+            task = ledger.ledger["tasks"][task_id]
+            self.assertEqual(task["status"], "PACKED")
+            self.assertEqual(task["pack_candidate_state"], "build_ready")
+            self.assertEqual(task["phase2_build_fail_counter"], 0)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

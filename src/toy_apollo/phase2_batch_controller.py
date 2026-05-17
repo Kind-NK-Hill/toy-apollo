@@ -8,6 +8,12 @@ from pathlib import Path
 from typing import Any
 
 from src.block_id_naming import canonicalize_block_id, canonicalize_id_list
+from src.toy_apollo.phase2_failure_budget import (
+    PHASE2_FAILURE_STREAK_LIMIT,
+    Phase2FailureCounters,
+    phase2_failure_counters_from_task,
+)
+from src.toy_apollo.phase2_proof_obligations import needs_concrete_decomposition as proof_obligations_need_concrete
 
 
 COMPLETED = "COMPLETED"
@@ -15,6 +21,7 @@ FAILED_LOCAL = "FAILED_LOCAL"
 DEPENDENCY_FAILED = "DEPENDENCY_FAILED"
 MECHANISM_BLOCKER = "MECHANISM_BLOCKER"
 USER_INTERRUPTED = "USER_INTERRUPTED"
+NEEDS_DECOMPOSITION = "NEEDS_DECOMPOSITION"
 NONTERMINAL = "NONTERMINAL"
 
 TERMINAL_STATUSES = {
@@ -37,7 +44,7 @@ SUBSTANTIVE_FAILURE_KINDS = {
     "review_apply_rejection",
 }
 REVIEW_APPLY_COUNTED_CLASSES = {"semantic", "freshness"}
-COMPLEX_RETRY_BUDGET = 15
+COMPLEX_RETRY_BUDGET = PHASE2_FAILURE_STREAK_LIMIT
 
 
 @dataclass(frozen=True)
@@ -57,6 +64,8 @@ class BatchTaskRow:
     dependencies: tuple[str, ...] = ()
     failed_dependency: str = ""
     substantive_failures: int = 0
+    build_fail_streak: int = 0
+    review_fail_streak: int = 0
     retry_budget_required: int = COMPLEX_RETRY_BUDGET
     retry_budget_exhausted: bool = False
     terminal: bool = False
@@ -118,8 +127,13 @@ def analyze_batch_state(payload: dict[str, Any]) -> BatchReport:
         stop_reason = str(raw_task.get("stop_reason", "") or "").strip()
         dependencies = tuple(canonicalize_id_list(raw_task.get("dependencies", [])))
         failed_dependency = _first_failed_transitive_dependency(task_id, task_map, hard_failed_roots)
+        counters = phase2_failure_counters_from_task(raw_task)
 
         status = declared_status
+        if _task_needs_concrete_decomposition(raw_task) and declared_status != COMPLETED:
+            status = NEEDS_DECOMPOSITION
+        elif _early_hard_failure_before_budget(declared_status, stop_reason, counters):
+            status = NONTERMINAL
         if failed_dependency and declared_status not in {COMPLETED, FAILED_LOCAL, MECHANISM_BLOCKER, USER_INTERRUPTED}:
             status = DEPENDENCY_FAILED
 
@@ -130,6 +144,7 @@ def analyze_batch_state(payload: dict[str, Any]) -> BatchReport:
             stop_reason=stop_reason,
             raw_task=raw_task,
             budget=budget,
+            counters=counters,
             failed_dependency=failed_dependency,
         )
         next_action = _next_action(status=status, issue=issue, failed_dependency=failed_dependency)
@@ -142,8 +157,10 @@ def analyze_batch_state(payload: dict[str, Any]) -> BatchReport:
                 dependencies=dependencies,
                 failed_dependency=failed_dependency,
                 substantive_failures=budget.counted,
+                build_fail_streak=counters.build_fail_counter,
+                review_fail_streak=counters.review_fail_counter,
                 retry_budget_required=budget.required,
-                retry_budget_exhausted=budget.exhausted,
+                retry_budget_exhausted=counters.exhausted,
                 terminal=status in TERMINAL_STATUSES,
                 issue=issue,
                 next_action=next_action,
@@ -244,6 +261,8 @@ def main(argv: list[str] | None = None) -> int:
                     "stop_reason": row.stop_reason,
                     "failed_dependency": row.failed_dependency,
                     "substantive_failures": row.substantive_failures,
+                    "build_fail_streak": row.build_fail_streak,
+                    "review_fail_streak": row.review_fail_streak,
                     "retry_budget_required": row.retry_budget_required,
                     "retry_budget_exhausted": row.retry_budget_exhausted,
                     "terminal": row.terminal,
@@ -273,11 +292,14 @@ def _normalize_status(raw: Any) -> str:
         "DEPENDENCY FAILED": DEPENDENCY_FAILED,
         "MECHANISM_BLOCKER": MECHANISM_BLOCKER,
         "MECHANISM-BLOCKER": MECHANISM_BLOCKER,
+        "NEEDS_DECOMPOSITION": NEEDS_DECOMPOSITION,
+        "NEEDS-DECOMPOSITION": NEEDS_DECOMPOSITION,
+        "NEEDS DECOMPOSITION": NEEDS_DECOMPOSITION,
         "USER_INTERRUPTED": USER_INTERRUPTED,
         "USER-INTERRUPTED": USER_INTERRUPTED,
     }
     status = aliases.get(status, status)
-    if status in TERMINAL_STATUSES or status == NONTERMINAL:
+    if status in TERMINAL_STATUSES or status in {NONTERMINAL, NEEDS_DECOMPOSITION}:
         return status
     return NONTERMINAL
 
@@ -287,7 +309,12 @@ def _hard_failed_roots(task_map: dict[str, dict[str, Any]]) -> set[str]:
     for task_id, raw_task in task_map.items():
         status = _normalize_status(raw_task.get("status"))
         stop_reason = str(raw_task.get("stop_reason", "") or "").strip()
-        if status == FAILED_LOCAL and stop_reason in ROOT_DEPENDENCY_FAILURE_REASONS:
+        if (
+            status == FAILED_LOCAL
+            and stop_reason in ROOT_DEPENDENCY_FAILURE_REASONS
+            and not _task_needs_concrete_decomposition(raw_task)
+            and phase2_failure_counters_from_task(raw_task).exhausted
+        ):
             roots.add(task_id)
     return roots
 
@@ -319,14 +346,20 @@ def _row_issue(
     stop_reason: str,
     raw_task: dict[str, Any],
     budget: FailureBudget,
+    counters: Phase2FailureCounters,
     failed_dependency: str,
 ) -> str:
     if failed_dependency and status != DEPENDENCY_FAILED:
         return f"depends on failed root {failed_dependency} but is not dependency-failed"
     if status == DEPENDENCY_FAILED and not failed_dependency:
         return "dependency-failed without a failed hard dependency in this batch"
-    if status == FAILED_LOCAL and _is_complex_retry(raw_task) and stop_reason == "hard_failure" and not budget.exhausted:
-        return f"complex hard_failure before 15 substantive failures ({budget.counted}/{budget.required})"
+    if status == NEEDS_DECOMPOSITION:
+        return "requires concrete proof-obligation decomposition before blocker/failure admission"
+    if _early_hard_failure_before_budget(_normalize_status(raw_task.get("status")), stop_reason, counters):
+        return (
+            "hard_failure before build/review failure streak reaches 15 "
+            f"(build={counters.build_fail_counter}/{counters.limit}, review={counters.review_fail_counter}/{counters.limit})"
+        )
     if status == NONTERMINAL:
         return "nonterminal"
     return ""
@@ -343,9 +376,23 @@ def _next_action(*, status: str, issue: str, failed_dependency: str) -> str:
         return "resolve mechanism blocker or record user decision"
     if status == USER_INTERRUPTED:
         return "resume only on explicit user direction"
+    if status == NEEDS_DECOMPOSITION:
+        return "split proof_obligations into concrete source nodes"
     if issue:
         return "continue or repair before final summary"
     return "continue independent task"
+
+
+def _task_needs_concrete_decomposition(raw_task: dict[str, Any]) -> bool:
+    if bool(raw_task.get("needs_concrete_decomposition")) or bool(raw_task.get("needs_decomposition")):
+        return True
+    summary = raw_task.get("proof_obligation_summary")
+    if isinstance(summary, dict) and bool(summary.get("needs_concrete_decomposition")):
+        return True
+    obligations = raw_task.get("proof_obligations")
+    if isinstance(obligations, dict):
+        return proof_obligations_need_concrete(obligations)
+    return False
 
 
 def _is_complex_retry(raw_task: dict[str, Any]) -> bool:
@@ -354,6 +401,10 @@ def _is_complex_retry(raw_task: dict[str, Any]) -> bool:
     if bool(raw_task.get("renewed_complex_retry")):
         return True
     return bool(raw_task.get("complex")) and bool(raw_task.get("under_evidenced_hard_stop"))
+
+
+def _early_hard_failure_before_budget(status: str, stop_reason: str, counters: Phase2FailureCounters) -> bool:
+    return status == FAILED_LOCAL and stop_reason == "hard_failure" and not counters.exhausted
 
 
 def _skip_failure_event_reason(event: dict[str, Any]) -> str:

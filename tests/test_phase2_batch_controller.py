@@ -12,6 +12,7 @@ if str(REPO_ROOT) not in sys.path:
 from src.toy_apollo.phase2_batch_controller import (  # noqa: E402
     DEPENDENCY_FAILED,
     FAILED_LOCAL,
+    NEEDS_DECOMPOSITION,
     NONTERMINAL,
     analyze_batch_state,
     count_substantive_failures,
@@ -28,6 +29,7 @@ class Phase2BatchControllerTests(unittest.TestCase):
                         "task_id": "def_4_root",
                         "status": FAILED_LOCAL,
                         "stop_reason": "hard_failure",
+                        "build_fail_counter": 15,
                     },
                     {
                         "task_id": "thm_4_direct",
@@ -128,9 +130,69 @@ class Phase2BatchControllerTests(unittest.TestCase):
         )
 
         row = report.rows[0]
-        self.assertEqual(row.substantive_failures, 14)
-        self.assertIn("before 15 substantive failures", row.issue)
-        self.assertTrue(row.terminal)
+        self.assertEqual(row.build_fail_streak, 14)
+        self.assertEqual(row.status, NONTERMINAL)
+        self.assertFalse(row.terminal)
+        self.assertIn("before build/review failure streak reaches 15", row.issue)
+
+    def test_hard_failure_before_streak_budget_does_not_skip_downstream(self):
+        report = analyze_batch_state(
+            {
+                "batch_id": "early-hard-failure",
+                "tasks": [
+                    {
+                        "task_id": "thm_10_8",
+                        "status": FAILED_LOCAL,
+                        "stop_reason": "hard_failure",
+                        "build_fail_counter": 14,
+                        "review_fail_counter": 0,
+                    },
+                    {
+                        "task_id": "thm_10_9",
+                        "status": NONTERMINAL,
+                        "dependencies": ["thm_10_8"],
+                    },
+                ],
+            }
+        )
+
+        rows = {row.task_id: row for row in report.rows}
+        self.assertEqual(rows["thm_10_8"].status, NONTERMINAL)
+        self.assertFalse(rows["thm_10_8"].terminal)
+        self.assertIn("before build/review failure streak reaches 15", rows["thm_10_8"].issue)
+        self.assertEqual(rows["thm_10_9"].status, NONTERMINAL)
+        self.assertEqual(rows["thm_10_9"].failed_dependency, "")
+
+    def test_placeholder_decomposition_is_nonterminal_and_does_not_skip_downstream(self):
+        report = analyze_batch_state(
+            {
+                "batch_id": "placeholder-decomposition",
+                "tasks": [
+                    {
+                        "task_id": "thm_10_8",
+                        "status": FAILED_LOCAL,
+                        "stop_reason": "hard_failure",
+                        "proof_obligation_summary": {
+                            "requires_decomposition": True,
+                            "open_blocking_ids": ["source_proof_spine"],
+                            "needs_concrete_decomposition": True,
+                        },
+                    },
+                    {
+                        "task_id": "thm_10_9",
+                        "status": NONTERMINAL,
+                        "dependencies": ["thm_10_8"],
+                    },
+                ],
+            }
+        )
+
+        rows = {row.task_id: row for row in report.rows}
+        self.assertEqual(rows["thm_10_8"].status, NEEDS_DECOMPOSITION)
+        self.assertFalse(rows["thm_10_8"].terminal)
+        self.assertIn("concrete proof-obligation decomposition", rows["thm_10_8"].issue)
+        self.assertEqual(rows["thm_10_9"].status, NONTERMINAL)
+        self.assertEqual(rows["thm_10_9"].failed_dependency, "")
 
     def test_dependency_failed_without_failed_root_is_flagged(self):
         report = analyze_batch_state(

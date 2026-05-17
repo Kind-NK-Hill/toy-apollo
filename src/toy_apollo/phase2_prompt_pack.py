@@ -17,6 +17,7 @@ from src.compiler import LeanCompiler
 
 from .core import LedgerManager, TaskStatus
 from .dependency_decisions import DependencyDecision, load_dependency_decisions, record_dependency_decision
+from .phase2_failure_budget import phase2_failure_counters_from_history
 from .phase2_semantic_review import (
     SEMANTIC_REVIEW_PROMPT_VERSION,
     SEMANTIC_REVIEW_RUBRIC_VERSION,
@@ -4674,11 +4675,14 @@ async def build_check_prompt_pack_candidate(
         build_result["build_result_file"] = str(build_result_path)
         _write_json(build_result_path, build_result)
         history = _append_attempt_history(pack_dir, task_id, build_result, stage="build")
+        failure_counters = phase2_failure_counters_from_history(history)
         (pack_dir / FAILURE_SUMMARY_FILE_NAME).write_text(build_failure_summary_markdown(task_id, history), encoding="utf-8")
         build_feedback_path.write_text("" if success else detail_text, encoding="utf-8")
 
         runtime_updates: dict[str, Any] = {
             "build_attempts": attempt,
+            "phase2_build_fail_counter": failure_counters.build_fail_counter,
+            "phase2_review_fail_counter": failure_counters.review_fail_counter,
             "latest_candidate_file": str(snapshot_path),
             "latest_build_result_file": str(build_result_path),
             "latest_build_candidate_kind": candidate_kind,
@@ -4716,8 +4720,10 @@ async def build_check_prompt_pack_candidate(
                 ledger.update_status(task_id, TaskStatus.PACKED)
         elif existing_completed_output:
             ledger.update_status(task_id, TaskStatus.COMPLETED)
-        else:
+        elif failure_counters.build_fail_counter >= failure_counters.limit:
             ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=detail_text)
+        else:
+            ledger.update_status(task_id, TaskStatus.PACKED)
         _refresh_pack_runtime_view(task, ledger, settings, pack_dir)
         _append_build_report(pack_dir, build_result, detail_text if detail_text else "build-check succeeded")
         return success, detail_text
