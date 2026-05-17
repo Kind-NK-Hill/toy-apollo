@@ -83,8 +83,11 @@ dependency is unavailable.
 
 Scaffold hypotheses must be classified precisely:
 
-- `interface_bridge`: allowed temporarily only for representation or notation
-  mismatch, and it must point to the obligation it helps discharge
+- `interface_translation`: allowed temporarily only for representation or
+  notation mismatch, and it must point to the obligation it helps discharge
+- `proof_debt_support`: an explicit, auditable support assumption for reusable
+  mathematics not yet available locally or in Mathlib; it must name the source
+  obligation it supports and must not be reported as a fully closed proof
 - `proof_obligation`: a real source step that must become a ledger node and be
   proved or blocked explicitly
 - `external_theorem_gap`: a possible local/Mathlib dependency that must be
@@ -93,8 +96,11 @@ Scaffold hypotheses must be classified precisely:
   black box, or a hypothesis that erases a source proof step; this cannot pass
   semantic review
 
-Use bridge lemmas for interface mismatch only. Do not use a bridge predicate to
-assume substantive source mathematics or the main theorem conclusion.
+Use `interface_translation` lemmas for interface mismatch only. Do not use a
+translation predicate to assume substantive source mathematics or the main
+theorem conclusion. If the project explicitly accepts temporary support
+assumptions, classify them as `proof_debt_support` instead and keep them
+auditable.
 
 ## Definitions
 
@@ -157,7 +163,7 @@ a documented mechanism blocker, or one of the two Phase 2 counters reaches 15:
 candidates. Build failures and review failures do not add together; the task
 fails only when one counter independently reaches 15.
 Do not count a candidate as source-faithful if it replaces an existing local
-output theorem with a fresh black-box assumption or bridge.
+output theorem with a fresh black-box assumption or translation.
 
 ## Examples
 

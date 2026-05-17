@@ -49,7 +49,7 @@ It is also not "always keep using the textbook definition forever".
 
 The policy is:
 
-> first textbook, then bridge, then Mathlib.
+> first textbook, then interface translation, then Mathlib.
 
 ## What We Found Locally
 
@@ -57,7 +57,7 @@ The current Chapter 1-8 output is mostly close to this practice:
 
 - many theorem statements and proofs use standard Mathlib forms
 - project definitions are introduced when useful
-- bridge files or translation lemmas are used when the two ways must meet
+- interface translation lemmas are used when the two ways must meet
 
 Examples of standard Mathlib forms already used in built output:
 
@@ -76,7 +76,7 @@ Examples of project definitions already present:
 - `improperRSIntegral`
 - `totalVariationDistance`
 
-Examples of existing bridge or core files:
+Examples of existing legacy proof-debt support or core files:
 
 - `rs_stieltjes_bridge`
 - `cantor_distribution_bridge`
@@ -133,7 +133,8 @@ definition or a theorem stated with that definition.
 When a common notation does become a Lean dependency, record the reason in the
 dependency decision trail.  The record should say whether the import was needed
 because of an explicit text reference, a theorem stated with the project
-definition, or a bridge between the textbook interface and Mathlib.
+definition, or an interface translation between the textbook interface and
+Mathlib.
 
 ## Chapter 9 Guidance
 

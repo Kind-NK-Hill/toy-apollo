@@ -82,9 +82,11 @@ weaker wrapper or assuming the difficult obligations is a fail.
 The reviewer should also verify that the candidate/decomposition has searched
 and reused existing `ToyApollo/Output` declarations before accepting a new
 black-box obligation for a source proof step.
-Bridge lemmas are acceptable only when they resolve an interface mismatch
-between the source proof and an existing theorem. They are not acceptable when
-they merely rename an unproved analytic obligation or the task's main theorem.
+Interface-translation lemmas are acceptable only when they resolve an interface
+mismatch between the source proof and an existing theorem. They are not
+acceptable when they merely rename an unproved analytic obligation or the
+task's main theorem. Explicit proof-debt support must be classified separately
+as `proof_debt_support`, not as an interface translation.
 
 If a complex task is being retried after an under-evidenced hard stop, the loop
 must not accept another `hard_failure` until the renewed attempt has either

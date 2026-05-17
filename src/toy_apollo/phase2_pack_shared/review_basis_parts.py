@@ -26,7 +26,7 @@ def review_spine_contract(task: dict[str, Any]) -> dict[str, Any]:
         ),
         "acceptable_abstraction": [
             "You may compress local proof detail or reuse Mathlib lemmas.",
-            "You may not replace a source-side bridge, construction chain, contradiction spine, partition argument, or other intermediate obligation with an opaque shortcut that leaves the source burden unaccounted for.",
+            "You may not replace a source-side interface translation, proof-debt support item, construction chain, contradiction spine, partition argument, or other intermediate obligation with an opaque shortcut that leaves the source burden unaccounted for.",
         ],
         "automatic_fail_patterns": [
             "A source-side obligation is moved into a new theorem-level assumption.",
@@ -82,13 +82,13 @@ def review_forbidden_weakenings(task: dict[str, Any]) -> list[str]:
         weakenings.extend(
             [
                 "禁止把教材中基于 partition 与 mean value theorem 的 Riemann--Stieltjes sum 主线整体压扁成 `withDensity` / `restrict` shortcut，然后仅以“proof spine compression”名义通过 review。",
-                "禁止把 closed-interval (`Icc`) 结论偷换成只在 `Ioc` / density-restrict bridge 上成立的局部版本。",
+                "禁止把 closed-interval (`Icc`) 结论偷换成只在 `Ioc` / density-restrict translation 上成立的局部版本。",
             ]
         )
     elif task_id == "thm_7_8":
         weakenings.extend(
             [
-                "禁止把有限区间 LS↔RS bridge 弱化成纯 measure-side interval integral 等式，却无法支撑 thm_7_9 的 improper RS 主线。",
+                "禁止把有限区间 LS↔RS interface translation 弱化成纯 measure-side interval integral 等式，却无法支撑 thm_7_9 的 improper RS 主线。",
                 "禁止把端点无原子条件扩张为教材外的结构性假设。",
                 "禁止让 direct downstream 在 `[-n,n]` 截断调用时额外补充新的端点原子假设；如果做不到无新增假设实例化，则 thm_7_8 不得通过。",
             ]
@@ -97,7 +97,7 @@ def review_forbidden_weakenings(task: dict[str, Any]) -> list[str]:
         weakenings.extend(
             [
                 "禁止绕开 def_1_4 的 improper RS 定义，直接用 measure-side shortcut 代替教材主线。",
-                "禁止把 finite-interval bridge 缩成局部可用版本，再在 thm_7_9 中偷偷补 theorem-level 新假设。",
+                "禁止把 finite-interval interface translation 缩成局部可用版本，再在 thm_7_9 中偷偷补 theorem-level 新假设。",
             ]
         )
     elif task_id == "thm_7_12":
@@ -129,8 +129,8 @@ def review_forbidden_weakenings(task: dict[str, Any]) -> list[str]:
 def review_history_risks(task_id: str) -> list[str]:
     risks: dict[str, list[str]] = {
         "thm_1_4": [
-            "历史风险是把教材的 partition + mean value theorem -> Stieltjes sum bridge 换成 `restrict (Ioc a b)` / `withDensity` shortcut，若 reviewer 不追问桥接义务，容易误判为等价压缩。",
-            "历史风险是依赖 singleton-zero 与 `Icc -> Ioc` bridge 补丁来收尾，使 closed-interval 结论看似成立，但教材主线里的桥接对象已被抽空。",
+            "历史风险是把教材的 partition + mean value theorem -> Stieltjes sum interface translation 换成 `restrict (Ioc a b)` / `withDensity` shortcut，若 reviewer 不追问转换义务，容易误判为等价压缩。",
+            "历史风险是依赖 singleton-zero 与 `Icc -> Ioc` translation 补丁来收尾，使 closed-interval 结论看似成立，但教材主线里的转换对象已被抽空。",
         ],
         "def_1_2": [
             "历史版本把 RS integrability 退化成 `Nonempty` witness 壳，下游无法从中抽取可复用接口。",
@@ -140,7 +140,7 @@ def review_history_risks(task_id: str) -> list[str]:
             "历史版本曾用 `else 0` 作为 divergence fallback，导致定义在语义上掩盖了“积分不存在”。",
         ],
         "thm_7_8": [
-            "历史版本只给出有限区间上的局部 measure-side bridge，review 通过后仍不足以支撑 thm_7_9。",
+            "历史版本只给出有限区间上的局部 measure-side translation，review 通过后仍不足以支撑 thm_7_9。",
             "历史版本要求额外端点无原子条件，导致 thm_7_9 的 `[-n,n]` 截断主线无法无新增假设复用。",
         ],
         "thm_7_12": [
@@ -160,8 +160,8 @@ def review_downstream_checklist(task_id: str) -> list[str]:
     checks: dict[str, list[str]] = {
         "thm_1_4": [
             "必须检查教材 proof spine 中的 partition / mean value theorem / Riemann--Stieltjes sum rewrite 是否被真实 discharge；若 reviewer 只能看到 density-side shortcut 而找不到这些桥接义务的落点，verdict 必须为 fail。",
-            "必须检查 `Icc` textbook statement 不是靠 `Icc -> Ioc` + singleton-zero patching 偷换出来的局部 measure bridge；若核心论证只在 `Ioc` restrict/density 层成立，verdict 必须为 fail。",
-            "必须检查 thm_7_12 能直接消费 thm_1_4 而不新增假设；若 downstream 需要补 density bridge、endpoint 处理或其他教材外 theorem-level 新增假设，verdict 必须为 fail。",
+            "必须检查 `Icc` textbook statement 不是靠 `Icc -> Ioc` + singleton-zero patching 偷换出来的局部 measure translation；若核心论证只在 `Ioc` restrict/density 层成立，verdict 必须为 fail。",
+            "必须检查 thm_7_12 能直接消费 thm_1_4 而不新增假设；若 downstream 需要补 density translation、endpoint 处理或其他教材外 theorem-level 新增假设，verdict 必须为 fail。",
         ],
         "thm_7_8": [
             "必须检查 thm_7_9 能否在每个截断区间 `[-n,n]` 上直接实例化 thm_7_8，而不新增教材外 theorem-level 假设。",

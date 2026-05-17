@@ -40,7 +40,10 @@ Each line is independent and idempotent by `decision_id`.
 
 - `hard`: selected as a true task dependency.
 - `soft`: selected as a problem-support import.
-- `bridge`: selected to connect a textbook interface to a Mathlib interface.
+- `translation`: selected to connect a textbook interface to a Mathlib interface.
+- `proof_debt_support`: selected as an explicit support-assumption dependency
+  for reusable mathematics that is not yet proved locally or available in
+  Mathlib.
 - `materialized`: legacy audit kind for old external offload manifests; not emitted by the current CLI.
 - `violation`: observed as an undeclared candidate import.
 - `legacy_inferred`: inferred from old artifacts without changing them.
@@ -50,7 +53,9 @@ Each line is independent and idempotent by `decision_id`.
 - `operator_declared_reliance`: already present in `draft_plan.json`.
 - `explicit_text_reference`: injected from text such as `Theorem 7.12`.
 - `soft_minimal_sufficient`: chosen by Phase 2 Problem soft dependency selection.
-- `interface_bridge`: needed to connect textbook and Mathlib formulations.
+- `interface_translation`: needed to connect textbook and Mathlib formulations.
+- `proof_debt_support`: needed to expose accepted support assumptions without
+  confusing them with closed interface translations.
 - `final_union_materialized`: legacy criterion for an old offload dependency manifest.
 - `undeclared_candidate_import`: candidate imported something outside the
   declared hard/soft union.

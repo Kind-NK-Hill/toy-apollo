@@ -170,8 +170,8 @@ The source proof spine record should identify:
 
 1. the exact original TeX file and line/span inspected
 2. the main source-side claims and intermediate obligations
-3. the construction, partition, reduction, case split, contradiction, or bridge
-   steps used by the textbook proof
+3. the construction, partition, reduction, case split, contradiction, or
+   translation/support steps used by the textbook proof
 4. the Lean landing place for each obligation, or the concrete missing landing
    place if blocked
 
@@ -196,15 +196,16 @@ in review context instead of marking the dependency as simply unknown.
 
 A complex candidate must not introduce a new black-box field, assumption, or
 wrapper for an obligation that is already available as a local output task. It
-may still introduce a named bridge only when the bridge is genuinely narrower
-than the existing theorem and the decomposition plan explains how the existing
-output is used.
+may still introduce a named translation lemma only when the translation is
+genuinely narrower than the existing theorem and the decomposition plan explains
+how the existing output is used.
 
-### Bridge Classification
+### Translation and Proof-Debt Support Classification
 
-Use bridge lemmas only for interface mismatch, not for missing mathematics.
+Use `interface_translation` lemmas only for interface mismatch, not for missing
+mathematics.
 
-Valid interface bridges include:
+Valid interface translations include:
 
 - rewriting between textbook notation and the exported Lean interface
 - moving between `intervalIntegral` and a restricted product-measure integral
@@ -214,17 +215,24 @@ Valid interface bridges include:
 - converting an existing law-level theorem to the random-variable notation used
   in the source text
 
-Invalid bridge use includes:
+Invalid translation use includes:
 
 - assuming a source theorem's main conclusion under a new name
 - hiding Dirichlet, sine-kernel, Fourier-inversion, or other substantive
-  analytic proof obligations behind a bridge predicate
+  analytic proof obligations behind a translation predicate
 - replacing a missing pointwise limit, domination bound, or indicator-integral
   identification by a theorem-level hypothesis on the exported task theorem
 
-When a proof step has both parts, split them: the bridge should expose the
-interface landing place, while the mathematical lemma must still be proved or
-recorded as the actual blocker.
+When a proof step has both parts, split them: the `interface_translation` should
+expose the interface landing place, while the mathematical lemma must still be
+proved or recorded as the actual blocker.
+
+Use `proof_debt_support` only for explicit, auditable support assumptions that
+stand in for reusable mathematics not yet available in local output or Mathlib.
+This is an archive-style exception, not a Tao-style interface translation. A
+`proof_debt_support` item must name the source proof obligation it supports, the
+tasks that depend on it, and the future prove-or-replace path. It must not be
+reported as a fully closed proof.
 
 ## Complex Task Decomposition Gate
 
@@ -244,8 +252,8 @@ any of the following is true:
    or other intermediate operation before the final statement follows
 3. the Lean implementation needs multiple helper lemmas whose correctness should
    be reviewed independently before final assembly
-4. existing local or Mathlib results almost match but require bridge/interface
-   obligations before they can support the textbook claim
+4. existing local or Mathlib results almost match but require
+   translation/interface obligations before they can support the textbook claim
 5. it has substantial hard dependencies, a cross-chapter hard dependency, or
    direct downstream consumers that rely on the exact exported interface
 6. repeated build/review attempts show semantic non-progress rather than a small
@@ -266,8 +274,9 @@ artifact and must contain:
 - source proof obligation nodes in textbook order
 - dependencies between obligation nodes
 - Lean landing plan and status for each obligation
-- scaffold hypotheses, classified as `interface_bridge`, `proof_obligation`,
-  `external_theorem_gap`, or `forbidden_shortcut`
+- scaffold hypotheses, classified as `interface_translation`,
+  `proof_debt_support`, `proof_obligation`, `external_theorem_gap`, or
+  `forbidden_shortcut`
 - reconstruction target showing how proved obligations assemble into the
   exported task theorem or definition
 - current blocker/review history
