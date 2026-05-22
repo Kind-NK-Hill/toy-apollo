@@ -1,0 +1,65 @@
+[
+    {
+        "block_id": "intro_10_5",
+        "type": "Remark",
+        "title": "Continuous Mapping Theorem",
+        "content": "\\subsection*{10.5 Application: Continuous Mapping Theorem}\n\nIn this section we prove two continuous mapping theorems--one for almost sure convergence and one for convergence in probability. The two theorems say that almost sure convergence and convergence in probability are preserved by continuous functions.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter10-continuous-mapping"
+    },
+    {
+        "block_id": "thm_10_11",
+        "type": "Theorem_with_Proof",
+        "title": "Continuous Mapping Theorem",
+        "content": "\\begin{thmbox}{10.11}\nLet $(\\Omega,\\mathcal{F},P)$ be a probability space, let $V$ be a $d$-dimensional random vector, and let $(V_n)_{n=1}^{\\infty}$ be a sequence of $d$-dimensional random vectors. Suppose $f:\\mathbb{R}^d\\to\\mathbb{R}^m$ is a function that is continuous on a set $S_f\\subseteq\\mathbb{R}^d$ with $P(V\\in S_f)=1$. Then:\n\\begin{enumerate}\n\\item $V_n\\xrightarrow{\\mathrm{a.s.}}V$ implies $f(V_n)\\xrightarrow{\\mathrm{a.s.}}f(V)$.\n\\item $V_n\\xrightarrow{P}V$ implies $f(V_n)\\xrightarrow{P}f(V)$.\n\\end{enumerate}\n\\end{thmbox}\n\n\\textit{Proof}\nWe let $f_k$ be the $k$-th component of the function $f$, for $k=1,2,\\ldots,m$.\n\nFor part (a), by Theorem 10.10, it is sufficient to show that for each component function $f_k$ of $f$, we have\n\\[\nf_k(V_n)\\xrightarrow{\\mathrm{a.s.}}f_k(V).\n\\]\nFrom the hypotheses in the theorem, there exists a set $B$ with probability $1$ such that $V_n(\\omega)\\to V(\\omega)$ for all $\\omega\\in B$. Let $A$ be the pre-image $V^{-1}(S_f)$. The set $A$ has probability $1$ by assumption. Hence, in $A\\cap B$, we have\n\\[\n\\lim_{n\\to\\infty}V_n(\\omega)=V(\\omega),\n\\]\nand\n\\[\n\\lim_{n\\to\\infty}f_k(V_n(\\omega))=f_k(V(\\omega)),\n\\]\nby the continuity of $f_k$. Therefore $f_k(V_n)$ converges to $f_k(V)$ for all $\\omega$ in $A\\cap B$, which has probability $1$.\n\nFor part (b), by Theorem 10.10, it is sufficient to show that for each component function $f_k$ of $f$, we have $f_k(V_n)$ converging to $f_k(V)$ in probability. In the following we fix an index $k$.\n\nLet $\\delta$ and $\\epsilon$ be positive real numbers. Consider the set\n\\[\nA_{\\delta,\\epsilon}\\coloneqq\n\\{v\\in\\mathbb{R}^d:\\exists w\\in\\mathbb{R}^d\n\\text{ such that }\\lVert w-v\\rVert<\\delta\n\\text{ and }\n\\lVert f_k(w)-f_k(v)\\rVert>\\epsilon\\}.\n\\]\nFor each vector $v$ that is not in $A_{\\delta,\\epsilon}$, we cannot find any vector $w$ that satisfies $\\lVert w-v\\rVert<\\delta$ and $\\lVert f_k(w)-f_k(v)\\rVert>\\epsilon$ simultaneously. In set notation, we can express it as\n\\[\n\\{\\omega:\\lVert f_k(V_n(\\omega))-f_k(V(\\omega))\\rVert>\\epsilon\\}\n\\subseteq\n\\{\\omega:V(\\omega)\\in A_{\\delta,\\epsilon}\\}\n\\cup\n\\{\\omega:\\lVert V_n(\\omega)-V(\\omega)\\rVert\\geq\\delta\\}.\n\\]\nTake $\\delta=1/j$ for positive integer $j$. By the continuity of $f$, and hence of the component function $f_k$, the set $A_{1/j,\\epsilon}\\cap S_f$ decreases to $\\emptyset$ as $j$ tends to infinity. By the upper semi-continuous property of measure, we obtain\n\\[\nP(\\{\\omega:V(\\omega)\\in A_{1/j,\\epsilon}\\})\n=\nP(\\{\\omega:V(\\omega)\\in A_{1/j,\\epsilon}\\cap S_f\\})\n\\to 0\n\\]\nas $j\\to\\infty$.\n\nFor an arbitrarily small $\\epsilon_1>0$, we can find a sufficiently large $M$ such that\n\\[\nP(\\{\\omega:V(\\omega)\\in A_{1/\\ell,\\epsilon}\\})\\leq \\epsilon_1/2\n\\]\nfor all $\\ell\\geq M$.\n\nSince it is assumed that $V_n\\to V$ in probability, we can find a sufficiently large $N$ such that\n\\[\nP(\\{\\lVert V_\\ell(\\omega)-V(\\omega)\\rVert\\geq\\delta\\})\\leq \\epsilon_1/2\n\\]\nfor all $\\ell\\geq N$. This yields\n\\[\nP(\\{\\lVert f_k(V_\\ell(\\omega))-f_k(V(\\omega))\\rVert>\\epsilon\\})\n\\leq \\epsilon_1/2+\\epsilon_1/2=\\epsilon_1\n\\]\nfor all $\\ell\\geq \\max(M,N)$. As $\\epsilon_1$ is arbitrary, the probability\n\\[\nP(\\lVert f_k(V_\\ell)-f_k(V)\\rVert>\\epsilon)\n\\]\nconverges to $0$ as $\\ell\\to\\infty$.\n\\hfill $\\square$",
+        "dependencies": [
+            "thm_10_10",
+            "def_10_1",
+            "def_10_2",
+            "def_10_6"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-continuous-mapping"
+    },
+    {
+        "block_id": "thm_10_12",
+        "type": "Theorem_with_Proof",
+        "title": "Algebraic Operations Preserve a.s. and Probability Convergence",
+        "content": "\\begin{thmbox}{10.12}\n\\begin{enumerate}\n\\item Suppose $X_n\\xrightarrow{\\mathrm{a.s.}}X$ and $Y_n\\xrightarrow{\\mathrm{a.s.}}Y$. Then:\n\\begin{enumerate}\n\\item $X_n+Y_n\\xrightarrow{\\mathrm{a.s.}}X+Y$.\n\\item $X_nY_n\\xrightarrow{\\mathrm{a.s.}}XY$.\n\\item $\\alpha X_n\\xrightarrow{\\mathrm{a.s.}}\\alpha X$ for any constant $\\alpha$.\n\\item $X_n/Y_n\\xrightarrow{\\mathrm{a.s.}}X/Y$ provided that $Y_n$ and $Y$ are nonzero with probability $1$.\n\\end{enumerate}\n\\item If $X_n\\xrightarrow{P}X$ and $Y_n\\xrightarrow{P}Y$, then (a) to (d) above hold with ``a.s.'' replaced by ``$P$''.\n\\end{enumerate}\n\\end{thmbox}\n\n\\textit{Proof}\nWe prove part (a) for convergence in probability only. The proofs of the others are similar. Since $X_n$ and $Y_n$ are both converging to $X$ and $Y$, respectively, in probability, the random vector $(X_n,Y_n)$ converges to the random vector $(X,Y)$ in probability. We apply Theorem 10.11 with the continuous function $f(x,y)=x+y$ (cf. the proof of Theorem 4.6).\n\\hfill $\\square$",
+        "dependencies": [
+            "thm_10_11",
+            "thm_10_10",
+            "thm_4_6",
+            "def_10_1",
+            "def_10_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-continuous-mapping"
+    },
+    {
+        "block_id": "rem_10_5_slutsky_extension",
+        "type": "Remark",
+        "title": "Slutsky Extension Note",
+        "content": "Exercise 10.10 gives a partial extension of this theorem.",
+        "dependencies": [
+            "prob_10_10",
+            "thm_10_12"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-continuous-mapping"
+    },
+    {
+        "block_id": "ex_10_5_1",
+        "type": "Example_Proof",
+        "title": "Consistent Estimator",
+        "content": "\\textbf{Example 10.5.1 (Consistent Estimator)} \\\\\nGiven $n$ i.i.d. samples $X_1,X_2,\\ldots,X_n$ drawn from a probability distribution with fixed but unknown parameter $\\theta$, we estimate $\\theta$ by a function\n\\[\n\\widehat{\\theta}_n(X_1,\\ldots,X_n)\n\\]\nof the samples. The estimator $\\widehat{\\theta}_n$ is called strongly consistent if $\\widehat{\\theta}_n(X_1,\\ldots,X_n)$ converges to $\\theta$ a.s. and is called weakly consistent if it converges to $\\theta$ in probability.\n\nSuppose a consistent estimator, either strongly or weakly, of the variance of the distribution is available. If we want to estimate the standard deviation, a natural solution is to take the square root of the estimated variance. The continuous mapping theorem guarantees that the resulting estimate is consistent.",
+        "dependencies": [
+            "thm_10_11",
+            "def_10_1",
+            "def_10_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-continuous-mapping"
+    }
+]

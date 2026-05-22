@@ -11,7 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.ledger_manager import LedgerManager  # noqa: E402
+from src.ledger_manager import LedgerManager, TaskStatus  # noqa: E402
 from src.toy_apollo.cli import app as cli_app  # noqa: E402
 from src.toy_apollo.core.settings import Settings  # noqa: E402
 from src.toy_apollo.dependency_decisions import load_dependency_decisions  # noqa: E402
@@ -240,6 +240,105 @@ class Phase2SoftdepPackTests(unittest.TestCase):
             )
             prob_4_4_decisions = load_dependency_decisions(settings, "prob_4_4")
             self.assertIn("Selected in soft_imports_selection.json", {d["evidence"] for d in prob_4_4_decisions})
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_write_softdep_pack_excludes_material_with_proof_debt(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_softdep_excludes_proof_debt"
+        try:
+            if root.exists():
+                shutil.rmtree(root, ignore_errors=True)
+            settings = make_settings(root)
+            settings.plans_dir.mkdir(parents=True, exist_ok=True)
+            plan_payload = [
+                {
+                    "block_id": "thm_4_7",
+                    "type": "Theorem",
+                    "title": "Debt-bearing theorem",
+                    "content": "Theorem with accepted proof debt.",
+                },
+                {
+                    "block_id": "def_4_3_sup_inf",
+                    "type": "Definition",
+                    "title": "sup and inf",
+                    "content": "Clean definition.",
+                },
+                {
+                    "block_id": "prob_4_2",
+                    "type": "Problem",
+                    "title": "abs measurable",
+                    "content": "Show |f| is measurable.",
+                    "dependencies": [],
+                },
+            ]
+            (settings.plans_dir / "12_chap4_problems_plan.json").write_text(
+                json.dumps(plan_payload, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            ledger = LedgerManager(ledger_path=str(settings.project_ledger_file))
+            for task in plan_payload:
+                task = dict(task)
+                task["source_plan"] = "12_chap4_problems"
+                ledger.add_or_update_task(task)
+            ledger.update_status("thm_4_7", TaskStatus.COMPLETED_WITH_PROOF_DEBT)
+            ledger.update_runtime_metadata(
+                "thm_4_7",
+                proof_obligation_summary={"status_counts": {"proved": 2, "accepted_as_proof_debt": 1}},
+            )
+
+            pack_dir = write_softdep_pack(["prob_4_2"], ledger, settings)
+
+            allowed = json.loads((pack_dir / "allowed_material_ids.json").read_text(encoding="utf-8"))
+            blocked = json.loads((pack_dir / "blocked_material_ids.json").read_text(encoding="utf-8"))
+            self.assertNotIn("thm_4_7", allowed)
+            self.assertIn("def_4_3_sup_inf", allowed)
+            self.assertIn("thm_4_7", blocked)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_soft_apply_rejects_selection_when_material_became_proof_debt(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_softdep_rejects_stale_proof_debt"
+        try:
+            if root.exists():
+                shutil.rmtree(root, ignore_errors=True)
+            settings = make_settings(root)
+            settings.plans_dir.mkdir(parents=True, exist_ok=True)
+            plan_payload = [
+                {
+                    "block_id": "thm_4_7",
+                    "type": "Theorem",
+                    "title": "measurable limsup liminf",
+                    "content": "Measurability theorem.",
+                },
+                {
+                    "block_id": "prob_4_2",
+                    "type": "Problem",
+                    "title": "abs measurable",
+                    "content": "Show |f| is measurable.",
+                    "dependencies": [],
+                },
+            ]
+            (settings.plans_dir / "12_chap4_problems_plan.json").write_text(
+                json.dumps(plan_payload, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            ledger = LedgerManager(ledger_path=str(settings.project_ledger_file))
+            for task in plan_payload:
+                task = dict(task)
+                task["source_plan"] = "12_chap4_problems"
+                ledger.add_or_update_task(task)
+            pack_dir = write_softdep_pack(["prob_4_2"], ledger, settings)
+            ledger.update_status("thm_4_7", TaskStatus.COMPLETED_WITH_PROOF_DEBT)
+            ledger.update_runtime_metadata(
+                "thm_4_7",
+                proof_obligation_summary={"status_counts": {"proved": 2, "accepted_as_proof_debt": 1}},
+            )
+            selection_path = root / "selection.json"
+            selection_path.write_text(json.dumps({"prob_4_2": ["thm_4_7"]}, indent=2), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "thm_4_7.*proof debt"):
+                apply_softdep_selection(["prob_4_2"], ledger, settings, str(selection_path))
+            self.assertTrue((pack_dir / "allowed_material_ids.json").exists())
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

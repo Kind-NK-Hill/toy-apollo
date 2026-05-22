@@ -28,8 +28,8 @@ If this file conflicts with older notes, trust current runtime code and the rule
   - CLI `apply --input` points to the source `.tex` or `inputs/` directory, not to `phase1_prompt_packs/<source>/draft_plan.json`
 - Phase 2:
   - before any authoring, review, repair, hard-failure decision, or chapter/task-set batch, use the repo skill `.agents/skills/toy-apollo-phase2-entrypoint/SKILL.md`; if the Codex skill system has not auto-loaded it, read that file manually and follow its entry report before task-specific work
-  - supported operator modes: `pack`, `build-check`, `review-pack`, `review-existing`, `review-now`, `review-fix`, `auto-loop`, `review-existing-queue`, `review-apply`, `verify`, `audit`, `soft-pack`, `soft-apply`
-  - default local path is prompt-pack driven, with `build-check` as the normal technical gate, `review-now` as the Codex-facing semantic review entrypoint, `review-fix` as the semantic-repair entrypoint after failed review, and `auto-loop` as the same-session Codex orchestration mode
+  - supported operator modes: `pack`, `build-check`, `review-pack`, `review-existing`, `review-now`, `review-fix`, `debt-fix`, `auto-loop`, `review-existing-queue`, `review-apply`, `verify`, `audit`, `soft-pack`, `soft-apply`
+  - default local path is prompt-pack driven, with `build-check` as the normal technical gate, `review-now` as the Codex-facing semantic review entrypoint, `review-fix` as the semantic-repair entrypoint after failed review, `debt-fix` as the accepted-proof-debt repair entrypoint, and `auto-loop` as the same-session Codex orchestration mode
   - `soft-pack` and `soft-apply` are the Problem soft-dependency special case inside Phase 2
 - Phase 3:
   - merged into Phase 2; old Phase 3 soft-dependency commands should report the migration path
@@ -57,6 +57,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
   - existing official output: `review-now --review-subject existing`
   - current build-ready candidate: `review-now --review-subject candidate`
   - failed review follow-up: `review-fix -> edit draft.lean -> build-check -> review-now --review-subject candidate`
+  - accepted proof-debt follow-up: `debt-fix -> review-fix -> edit draft.lean -> build-check -> review-now --review-subject candidate -> review-apply`
   - same-session orchestration: `auto-loop`
   - detailed same-session loop semantics: `docs/phase2_review_loop_protocol.md`
   - `review-pack` / `review-existing` are low-level prepare-only modes and should not be presented as the preferred Codex operator path.
@@ -81,12 +82,16 @@ If this file conflicts with older notes, trust current runtime code and the rule
 - `nonprogress` is a semantic stop reason, not a generic build stop.
 - Only stop the same-session loop on `completed`, `freshness_error`, `hard_failure`, `nonprogress`, `max_rounds`, `build_budget_exhausted`, or explicit user interruption.
 - For proof-bearing tasks, inspect the original `inputs/<source>.tex` proof or solution span before authoring, reviewing, or declaring a blocker; prompt-pack mirrors are not a substitute for the source file.
+- For proof-debt repair, keep the textbook proof spine as the primary route. Use Mathlib as a formal substrate for atomic facts and APIs, not as a high-level shortcut that erases source proof steps unless the local Lean wrapper explicitly maps that theorem back to the textbook step.
 - Treat `hard_failure` as a last-resort semantic stop: it requires source proof-spine decomposition, resource search/attempt evidence for the blocking obligation, and a task-local hard-failure note. Proof length or missing one-shot library theorem is not enough.
 - Complex proof tasks require a task-local `decomposition_plan.md` or `decomposition_plan.json` before serious authoring/review. If a complex task is retried after an under-evidenced hard stop, do not declare another `hard_failure` before completion or 15 substantive build/review failures in the renewed attempt.
-- Before inventing a new proof obligation for a complex task, check `ToyApollo/Output`, the ledger, dependency decisions, plans, and Mathlib for existing task outputs; repair missing metadata and reuse existing outputs before adding new black-box bridges.
+- Before inventing a new proof obligation for a complex task, check `ToyApollo/Output`, the ledger, dependency decisions, plans, and Mathlib for existing task outputs; include older textbook tasks, definition files, and bridge/foundation files that may already encode the needed idea. Repair missing metadata and reuse existing outputs before adding new black-box bridges.
+- Before building a new foundation/API for proof debt, run a similarity scan across existing `ToyApollo/Output` foundation files, older chapter outputs, bridge files, and downstream tasks. Prefer extending or factoring a shared source-aligned foundation over creating theorem-local wheels. Good models include the `thm_9_5` split into Fubini, Dirichlet, kernel, and final assembly layers.
+- Large accepted proof debt should be discharged by staged foundation files and internal source-spine assembly, not by keeping support structures as public theorem parameters. A public theorem is clean only when the support/source-spine package is constructed internally from proved lemmas or eliminated.
 - Timed-out or manually aborted build/review runs without a canonical result file are mechanism blockers, not substantive failures toward the complex retry budget; record them and continue with a narrower diagnostic.
 - When the user asks to review an existing chapter, section, or ordered task set, interpret that as a same-session self-driving existing-output batch review unless the user explicitly asks for prepare-only behavior.
 - In chapter-wide or task-set Phase 2 goals, a hard-stopped task makes its hard-dependency downstream tasks dependency-failed for that goal; mark/skip those blocked tasks and continue with independent tasks instead of stopping the whole goal.
+- `COMPLETED_WITH_PROOF_DEBT` is terminal only for the debt-bearing task. Do not consume it as a clean hard or selected soft dependency; downstream tasks are `DEPENDENCY_PROOF_DEBT` until `debt-fix` discharges the accepted debt and the blocker lands cleanly.
 - In that existing-output batch mode:
   - use `review_subject=existing`, not `current`
   - process tasks in deterministic `block_id` order

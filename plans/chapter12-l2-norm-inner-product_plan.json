@@ -1,0 +1,115 @@
+[
+    {
+        "block_id": "intro_12",
+        "type": "Remark",
+        "title": "Techniques from Hilbert Space Theory",
+        "content": "\\section*{Techniques from Hilbert Space Theory}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter12-l2-norm-inner-product"
+    },
+    {
+        "block_id": "intro_12_1",
+        "type": "Remark",
+        "title": "L2-Norm and Inner Product Space",
+        "content": "\\subsection*{12.1 L2-Norm and Inner Product Space}\n\nThis chapter presents a geometric perspective on random variables by viewing them\n\nas vectors in a vector space. Although this vector space has infinite dimension\n\nin general, this viewpoint offers insights into the behavior of random variables.\n\nAssuming that all random variables in the vector space have finite second moments,\n\nwe can define an inner product that resembles the dot product in a finite-dimensional\n\nEuclidean space. This inner product allows us to define notions such as orthogonal-\n\nity and the analog of the triangle inequality in this infinite-dimensional vector space.\n\nTo study random variables form this geometric perspective, we borrow tech-\n\nniques from Hilbert space theory. We can define the projection operator, which\n\nmaps a random variable to a subspace, and prove the Orthogonality Principle in\n\nthe context of probability theory. These tools are then applied to the derivation of\n\nstatistical estimators that minimize mean-squared error.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter12-l2-norm-inner-product"
+    },
+    {
+        "block_id": "def_12_1",
+        "type": "Definition",
+        "title": "12.1",
+        "content": "\\begin{defbox}{12.1}\n\\end{defbox}\n\nGiven a measure space (\\Omega, \\mathcal{F},\\mu ), we denote the set of all \\mathcal{F}-measurable\n\nfunctions X with finite second moment by L2(\\mu)More generally, for any\n\npositive integer p, we define Lp (\\mu) as the set of all \\mathcal{F}-measurable functions\n\nwith finite\n\n\\int\n\n\\vertX\\vertp d\\mu.\n\nIn this chapter, we will focus on the study of L2(P) for a probability measure P .\n\nWe note that any square-integrable random variable necessarily has a finite mean,\n\nimplying that L2(P) is a subset of L1(P) Using Cauchy-Schwarz inequality\n\n(Theorem 11.1), we can define an inner product for two square-integrable random\n\nvariables.",
+        "dependencies": [
+            "thm_11_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter12-l2-norm-inner-product"
+    },
+    {
+        "block_id": "def_12_2",
+        "type": "Definition",
+        "title": "12.2",
+        "content": "\\begin{defbox}{12.2}\n\\end{defbox}\n\nLet (\\Omega, \\mathcal{F},P) be a probability space. We define the inner product of two real-\n\nvalued random variables in L2(P) by\n\n\\langleX, Y\\rangle\\coloneqqE[XY ].\n\nWe define the L2-norm of X by\n\nX2 \\coloneqq\n\n\\sqrt\n\n\\langleX, X\\rangle=\n\n\\sqrt\n\nE[X2].\n\nTwo random variables X and Y are said to be orthogonal if \\langleX, Y\\rangle= 0. We will\n\nsometime write Xwithout the subscript 2 to simplify notation.\n\nThis notion of orthogonality is analogous to the concept of perpendicularity in\n\nEuclidean geometry. When random variables X and Y have zero mean, then they\n\nare orthogonal iff they are uncorrelated.\n\nComplex Inner Product For complex random variables, the inner product is\n\ndefined as E [X*Y], where X* denotes the complex conjugate of X.",
+        "dependencies": [
+            "def_7_3",
+            "def_12_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter12-l2-norm-inner-product"
+    },
+    {
+        "block_id": "ex_12_1_1",
+        "type": "Example_Proof",
+        "title": "Example 12.1.1 (A Finite Inner Product Space)",
+        "content": "\\textbf{Example 12.1.1 (A Finite Inner Product Space)} \\\\\n\nConsider a finite probability space with sample space \\Omega ={ a, b, c}The \\sigma-algebra is the discrete\n\n\\sigma-algebra P(\\Omega) , and the probability measure is given by P({a}) = pa , P({b}) = pb, P({c}) =\n\npc,w h e r e pa , pb,a n d pc are nonnegative real numbers that sum to 1.\n\nWe can specify a random variable X by giving its value at the three points in \\Omega , which can be\n\nrepresented as a vector (X(a), X(b), X(c))Conversely, any three-dimensional vector (x1,x 2,x 3)\n\nis associated to a random variable X by defining X(a) \\coloneqqx1, X(b) \\coloneqqx2,a n d X(c) \\coloneqqx3. Thus,\n\nthe random variables in this probability space have a one-to-one correspondence with the vectors\n\nin a three-dimensional vector space over R.\n\nThe inner product between two random variables X and Y , which are represented by vectors\n\n(x1,x 2,x 3) and (y1,y 2,y 3), respectively, is computed as\n\n\\langleX, Y\\rangle= pax1y1 + pbx2y2 + pcx3y3.\n\nThe second moment of a random variable X is thus equal to pax2\n\n1 + pbx2\n\n2 + pbx2\n\n3 .",
+        "dependencies": [
+            "def_12_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter12-l2-norm-inner-product"
+    },
+    {
+        "block_id": "ex_12_1_2",
+        "type": "Example_Proof",
+        "title": "Example 12.1.2 (A Complex Hilbert Space of Infinite Dimension)",
+        "content": "\\textbf{Example 12.1.2 (A Complex Hilbert Space of Infinite Dimension)} \\\\\n\nLet \\Omega ={ 1, 2, 3,... } be the sample space, and the power set P(\\Omega) be the \\sigma-algebra. Consider a\n\nprobability measure P defined on \\Omega by\n\nP({k}) \\coloneqq 1\n\n2k\n\nfor k \\geq 1. A random variable X can be identified with an infinite complex sequence\n\nX (x1,x 2,x 3,... ) ,\n\nwhere xk are complex numbers for k = 1, 2, 3,... .\n\nThe random variable X belongs to L 2(P) if and only if the series \\sum\\infty\n\nk=1 \\vertxk\\vert2/2k is convergent.\n\nIf we are given another random variable Y , whose values at 1 , 2, 3, 4,.are y 1,y 2,y 3,y 4,... ,t h e\n\ninner product between X and Y is given by\n\n\\langleX, Y\\rangle=\n\n\\infty\\sum\n\nk=1\n\nx*\n\nk yk/2k.\n\nHere, x *\n\nk denotes the complex conjugate of x k .\n\nThe followings are other basic properties of inner product.",
+        "dependencies": [
+            "def_12_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter12-l2-norm-inner-product"
+    },
+    {
+        "block_id": "thm_12_1",
+        "type": "Theorem_Statement",
+        "title": "12.1",
+        "content": "\\begin{thmbox}{12.1}\n\\end{thmbox}\n\nLet\\langle\\cdot,\\cdot\\ranglebe an inner product over a field K , where K is either R or C :\n\nFo r X, Y1,Y 2 \\in L2(P) and \\alpha, \\beta \\in K,\n\n\\langleX, \\alphaY1 +\\betaY 2\\rangle= \\alpha\\langleX, Y1\\rangle+\\beta\\langleX, Y2\\rangle.\n\nFor real inner product, we have\\langleX, Y\\rangle=\\langle Y, X\\ranglefor X, Y \\inL 2(P) .\n\nFor complex inner product, we have\\langleX, Y\\rangle=\\langle Y, X\\rangle* for X, Y \\in L2(P) .\n\nFo r X \\in L2(P) and \\alpha \\inK ,\\alphaX2 =\\vert \\alpha\\vert\\cdot X2.\n\nThe triangle inequality for L 2 norm is called the Minkowski inequality.",
+        "dependencies": [
+            "def_12_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter12-l2-norm-inner-product"
+    },
+    {
+        "block_id": "thm_12_2",
+        "type": "Theorem_with_Proof",
+        "title": "12.2 (Minkowski Inequality)",
+        "content": "\\begin{thmbox}{12.2 (Minkowski Inequality)}\n\\end{thmbox}\n\nFor any two random variables X and Y in L 2(P) ,\n\nX+ Y 2 \\leq X2 + Y2.\n\n\\textit{Proof} We give a proof for complex-valued random variables. Using the Cauchy-\n\nSchwarz inequality (Theorem 11.1),\n\nX+ Y 2\n\n2 \\leqE [\\vertX\\vert2]+ 2R e(E[X*Y])+ E [\\vertY\\vert 2]\n\n\\leqE [\\vertX\\vert2]+ 2\n\n\\sqrt\n\nE[\\vertX\\vert2]E[\\vertY\\vert 2]+ E[\\vertY\\vert 2]\n\n=( X2 + Y2)2.\n\nTaking the square roots of both sides yields the Minkowski inequality. \\hfill $\\square$\n\nSimilar to the case of L1 norm, a random vector with zero L2 norm is equivalent\n\nto the zero function but need not be equal to the zero function. We continue with the\n\nconvention that two random variables that are equal almost everywhere are regarded\n\nas the same random variable. With this caveat, we have shown that L2(P) is a\n\nnormed vector space.\n\nUsing the Minkowski inequality, we can see that the L2 norm defines a metric\n\non the space L2(P) , by regarding X - Y2 as the distance between two random\n\nvariables. Moreover, we can prove that the space of random variables in L2(P) is\n\ncomplete with respect to the norm induced by inner product. It is a consequence of\n\nthe Riesz-Fischer theorem.",
+        "dependencies": [
+            "thm_11_1",
+            "thm_12_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter12-l2-norm-inner-product"
+    },
+    {
+        "block_id": "def_12_3",
+        "type": "Definition",
+        "title": "12.3",
+        "content": "\\begin{defbox}{12.3}\n\\end{defbox}\n\nA sequence of vectors (un)\\infty\n\nn=1 in a vector space V with a norm function \\cdot is\n\ncalled a Cauchy sequence if given any \\epsilon> 0, there exists an integer N such that\n\num - un\\leq \\epsilon for all m, n \\geq N. We say that a sequence of vectors (un)\\infty\n\nn=1 is\n\nconvergent if there exists a vector u0 \\in V such that for any given \\epsilon> 0, there is\n\nan integer N such that un - u0\\leq \\epsilonfor all n \\geq N .\n\nA normed vector space V is said to be complete if every Cauchy sequence in V is\n\nconvergent. A Hilbert space is a (real or complex) vector space that is complete\n\nwith respect to the norm induced by the inner product.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter12-l2-norm-inner-product"
+    },
+    {
+        "block_id": "thm_12_3",
+        "type": "Theorem_with_Proof",
+        "title": "12.3 (Riesz-Fischer)",
+        "content": "\\begin{thmbox}{12.3 (Riesz-Fischer)}\n\\end{thmbox}\n\nLet (\\Omega, \\mathcal{F},P) be a probability space. The space L2(P) is a complete vector\n\nspace with respect to the L2 norm.\n\n\\textit{Proof} Suppose we have a Cauchy sequence f1, f2, f3,.in L2(P) To prove\n\nthat the sequence converges in mean square, we need to find a candidate function\n\nand show that it is indeed the limit. Our first step is to show that there exists a\n\nsubsequence that converges almost surely.\n\nBy the definition of Cauchy sequence, we can find a sequence of integers n1 <\n\nn2 <n 3 < \\cdot\\cdot\\cdot such that fnk+1 - fnk 2 \\leq 1/2k for k = 1, 2, 3,... We claim that\n\nthe limit limk\\to\\infty fnk () exists almost everywhere.\n\nWe write fnk () as\n\nfnk () = fn1 () +\n\nk- 1\\sum\n\ni=1\n\n(fni+1() - fni ())\n\nand apply the result established in Problem 7.7, which implies that the limit of\n\nfnk () exists almost everywhere if\n\n\\int\n\n\\vertfn1\\vertdP +\n\n\\infty\\sum\n\ni=1\n\n\\int\n\n\\vertfni+1 -f ni \\vertdP (12.1)\n\nis finite.\n\nTo show that it is finite, we use Jensen inequality to obtain\n\n\\int\n\n\\vertfni+1 -f ni \\vertdP \\leq\n\n( \\int\n\n\\vertfni+1 -f ni \\vert2 dP\n\n) 1/2\n\n= fni+1 -f ni 2\n\nfor all i Our choice of the indices n i 's ensures thatfni+1 -fni 2 \\leq1 /2i Therefore,\n\nthe sum in (12.1) is finite. By applying the result from Problem 7.7, there exists an\n\nevent E with probability 1 such that f nk () converges for all \\in E. We can define\n\na candidate function as follows:\n\nf( )\\coloneqq\n\n{\n\nlimk\\to\\infty fnk ()for \\in E,\n\n0 otherwise .\n\nIf is not in E ,t h e v a l u eo f f( ) is arbitrary. We set the value of f( ) to be 0 for\n\n\\in Ec. This convention ensures that f( ) is measurable.\n\nLet\\epsilon> 0 be an arbitrarily small real number. By the choice of the sequence n j ,\n\nthere is a sufficiently large integer m such thatfnj - fnk 2\n\n2 \\leq\\epsilon for all j, k \\geq m.\n\nWe fix k \\geq m and let j \\to\\infty Then, by applying Fatou's lemma (Theorem 7.3), we\n\nhave\n\n\\int\n\nE\n\nlim\n\nj\\to\\infty\n\n\\vertfnj -f nk \\vert2 dP\\leq lim\n\nj\\to\\infty\n\n\\int\n\nE\n\n\\vertfnj -f nk \\vert2 dP\\leq \\epsilon.\n\nSince f nj () \\to f( ) for \\in E, we get f - fnk 2\n\n2 =\n\n\\int\n\n\\vertf - fnk \\vert2 dP \\leq\\epsilonfor\n\nall k \\geq m. Therefore, the subsequence (f nk )k\\geq 1 converges to f in mean square.\n\nTo show that the original sequence (f n)\\infty\n\nn=1 also converges to f in mean square,\n\nwe write\n\nfn -f 2 <fn -f n\\ell2 + fn\\ell -f 2,\n\nand take limit as n and\\ell approach infinity. Since (f n)n\\geq1 is a Cauchy sequence,\n\nthe termfn -f n\\ell2 tends to zero. Furthermore, from the previous paragraph, we\n\nknow thatfn\\ell -f2 tends to zero as well. This proves thatfn -f2 can be made\n\narbitrarily small for all sufficiently large integer n , and thus (f n)n\\geq1 converges to f\n\nin mean square. Because the L 2 norm is a continuous function (Exercise 12.2), the\n\nL2 norm of f is finite. This proves that f \\in L2(P) \\hfill $\\square$",
+        "dependencies": [
+            "thm_7_3",
+            "prob_7_7"
+        ],
+        "soft_imports": [
+            "def_12_2",
+            "def_12_3",
+            "thm_12_1",
+            "thm_12_2"
+        ],
+        "is_renowned": true,
+        "source_plan": "chapter12-l2-norm-inner-product"
+    }
+]

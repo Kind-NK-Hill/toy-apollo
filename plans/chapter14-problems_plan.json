@@ -1,0 +1,122 @@
+[
+    {
+        "block_id": "prob_14_1",
+        "type": "Problem",
+        "title": "Problem 14.1",
+        "content": "\\textbf{14.1.} Continue with the probabilistic model of Polya's urn in Problem 13.11F o r\n\ni = 1 ,2,3,... ,l e tXi and Yi , respectively, be numbers of white and black balls\n\ndrawn in the first i steps. They satisfy Xi \\geq 0, Yi \\geq 0, and Xi + Yi = i for all i:\n\n(a) Show that, for k = 1,2,3,... ,i, the probability of Xi = k is\n\nP(Xi =k) =\n\n( i\n\nk\n\n) w(w+ 1 )\\cdot\\cdot\\cdot (w+ k - 1 )b(b+ 1 )\\cdot\\cdot\\cdot (b+ i - k - 1 )\n\n(b+ w)(b + w + 1 )\\cdot\\cdot\\cdot (b+ w + i - 1 ) .\n\n(b) Hence, show that Xi/i converges in distribution to Beta(w, b).\n\n(Hint: Use Stirling's approximation and ( x + a)/ (x +b) xa-b.)",
+        "dependencies": [
+            "prob_13_11"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter14-problems"
+    },
+    {
+        "block_id": "prob_14_2",
+        "type": "Problem",
+        "title": "Problem 14.2",
+        "content": "\\textbf{14.2.} For n = 1 , 2, 3,... ,l e t Xn denote a random variable with distribution\n\n( n \\alpha , \\beta)Prove that\n\n1\\sqrt n\\alpha\\beta\n\n(\n\nXn -n\\alpha\\beta\n\n) D\n\n-\\to N( 0,1).",
+    "dependencies": [
+      "prob_9_3"
+    ],
+        "is_renowned": false,
+        "source_plan": "chapter14-problems"
+    },
+    {
+        "block_id": "prob_14_3",
+        "type": "Problem",
+        "title": "Problem 14.3",
+        "content": "\\textbf{14.3.} Let Xn be the random variable distributed according to the Gaussian distribu-\n\ntion N( 0,n ),f o r n = 1, 2,3,... Show that this sequence of random variables fails\n\nto satisfy all four conditions in Levy's continuity theorem.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter14-problems"
+    },
+    {
+        "block_id": "prob_14_4",
+        "type": "Problem",
+        "title": "Problem 14.4",
+        "content": "\\textbf{14.4.} For n = 1, 2, 3,... ,l e t Xn be a Gaussian random variable with distribution\n\nN( 0,1/n)Show that Xn converges in distribution, and find the limit distribution.",
+        "dependencies": [
+            "prob_14_3"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter14-problems"
+    },
+    {
+        "block_id": "prob_14_5",
+        "type": "Problem",
+        "title": "Problem 14.5",
+        "content": "\\textbf{14.5.} Take Z as the sample space with the discrete topology \\mathcal{F}= 2Z. Prove that\n\na sequence of probability measures converges weakly if and only if it converges in\n\ntotal variation distance.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter14-problems"
+    },
+    {
+        "block_id": "prob_14_6",
+        "type": "Problem",
+        "title": "Problem 14.6",
+        "content": "\\textbf{14.6.} Given an arbitrary sequence of random variables (Xn)\\infty\n\nn=1. Show that we can\n\nfind positive constants cn,f o rn \\geq1, such that cnXn converges weakly to 0.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter14-problems"
+    },
+    {
+        "block_id": "prob_14_7",
+        "type": "Problem",
+        "title": "Problem 14.7",
+        "content": "\\textbf{14.7.} Let (Xn)\\infty\n\nn=1 and (Yn)\\infty\n\nn=1 be two sequences of random variables such that\n\nXn and Yn are independent random variables defined on the same probability space.\n\nShow that if Xn\n\nD\n\n\\to X and Yn\n\nD\n\n\\to Y , then Xn +Yn converges to X+Y in distribution\n\n(cf. Problem 10.10). (Hint: Apply Levy's continuity theorem.)",
+        "dependencies": [
+            "prob_10_10"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter14-problems"
+    },
+    {
+        "block_id": "prob_14_8",
+        "type": "Problem",
+        "title": "Problem 14.8",
+        "content": "\\textbf{14.8.} Let (X n)\\infty\n\nn=1 be a sequence of random variables satisfying the following\n\nproperties:\n\n(i) For all n , the moment generating function mXn (t) of Xn is defined for t \\in\n\n[-\\delta, \\delta].\n\n(ii) For all t \\in[ - \\delta, \\delta], the moment generating functions mXn (t) converge to the\n\nmoment generating function mX(t) of random variable X:\n\n(a) Prove that the sequence (Xn)n\\geq1 is tight.\n\n(b) Prove that Xn converges to X in distribution.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter14-problems"
+    },
+    {
+        "block_id": "prob_14_9",
+        "type": "Problem",
+        "title": "Problem 14.9",
+        "content": "\\textbf{14.9.} (Continuous mapping theorem for convergence in distribution) Let Xn be a\n\nsequence of random variables converging to X in distribution. Let f : R \\to R be a\n\nfunction that is continuous at the set Sf \\subseteq R. Show that if P(X \\in Sf ) = 1, then\n\nf( Xn)\n\nL\n\n-\\to f( X) . (Hint: Apply Levy's continuity theorem.)",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter14-problems"
+    },
+    {
+        "block_id": "prob_14_10",
+        "type": "Problem",
+        "title": "Problem 14.10",
+        "content": "\\textbf{14.10.} Consider a sequence of random variables (X n)\\infty\n\nn=1 that is uniformly\n\nbounded, ie., there exists a constant c such that \\vertXn\\vert\\leq c as. for all n Let X\n\nbe a random variable that is also bounded with probability 1. Prove that Xn\n\nD\n\n\\to X\n\nif and only if lim n\\to\\infty E[Xk\n\nn]= E[X] for all k \\geq 1. (Hint: Use the result in\n\nProblem 14.8.)",
+        "dependencies": [
+            "prob_14_8"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter14-problems"
+    },
+    {
+        "block_id": "prob_14_11",
+        "type": "Problem",
+        "title": "Problem 14.11",
+        "content": "\\textbf{14.11.} Generalize Example 14.4.3 to the case when m/n approaches a fixed\n\nconstant r,f o r0 <r < 1.",
+        "dependencies": [
+            "ex_14_4_3"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter14-problems"
+    },
+    {
+        "block_id": "prob_14_12",
+        "type": "Problem",
+        "title": "Problem 14.12",
+        "content": "\\textbf{14.12.} (Uniform integrability) A sequence of random variables (Xn)\\infty\n\nn=1 is said to\n\nbe uniformly integrable if for every \\epsilon> 0, there is a sufficiently large M such that\n\nE[Xn1\\vertXn\\vert\\geqM]\\leq \\epsilonfor all n. Prove the followings:\n\n(a) A uniformly integrable sequence of random variables is tight.\n\n(b) If a sequence of random variables is uniformly integrable and is converging in\n\nprobability, then it is converging in the mean.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter14-problems"
+    }
+]

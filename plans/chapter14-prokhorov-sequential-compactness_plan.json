@@ -1,0 +1,48 @@
+[
+    {
+        "block_id": "intro_14_3",
+        "type": "Remark",
+        "title": "Prokhorov Theorem and Sequential Compactness",
+        "content": "\\subsection*{14.3 Prokhorov Theorem and Sequential Compactness}\n\nIn the previous two sections, we proved that Condition 1 implies Condition 2, and\n\nCondition 3 implies Condition 4 in Levy's continuity theorem. The reason why Con-\n\ndition 2 implies Condition 3 is characteristic function's continuity (Theorem 9.3)It\n\nremains to prove that Condition 1 follows from Condition 4. The final step requires\n\nthe Prokhorov theorem, which we state without proof as follows.",
+        "dependencies": [
+            "thm_9_3"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter14-prokhorov-sequential-compactness"
+    },
+    {
+        "block_id": "thm_14_6",
+        "type": "Theorem_Statement",
+        "title": "14.6 (Prokhorov)",
+        "content": "\\begin{thmbox}{14.6 (Prokhorov)}\n\\end{thmbox}\n\nIf.(Fn)\\infty\n\nn=1 is a sequence of tight cumulative distribution functions, then there\n\nexists a subsequence converging in distribution to the cumulative distribution\n\nof a probability measure.\n\nThe Prokhorov theorem is analogous to the Bolzano-Weierstrass theorem. In\n\nreal analysis, a subset S in Rn is said to be sequentially compact if any infinite\n\nsequence in S has a convergent subsequence that converges to an element in SThe\n\nProkhorov theorem says that the space of tight distributions with topology defined\n\nby weak convergence is sequentially compact. For a proof of this theorem, see [ 4,\n\nThm 3.2.12 and 3.2.13].\n\nWe now complete the proof of Levy's theorem. Consider a sequence .(Pn)n\\geq1 of\n\nprobability measure that is a tight, and let.(Fn)n\\geq1 be the corresponding cumulative\n\ndistribution functions. In Levy's continuity theorem, the characteristic function\n\n\\phin(t) of Pn is assumed to converge pointwise, with the limit function denoted by\n\n\\phi(n).\n\nBy the Prokhorov theorem, there exists a subsequence .(an)n\\geq1 of N such that\n\nFan(x) converges pointwise to the cumulative distribution function F(x) of a\n\nprobability measure P at every continuity point of F(x) Using Theorem 14.3\n\nand the equivalence of weak convergence and convergence in distribution, we can\n\nshow that the characteristic functions\\phian (t) converge pointwise to the characteristic\n\nfunction of P. Since we assume that limn\\to\\infty \\phian(t)= \\phi(t) , we can conclude that\n\n\\phi(t) is the characteristic function of P.\n\nWe now demonstrate that the entire sequence .(Pn)n\\geq1 of probability measures\n\nweakly converges to PLeth(x) be a bounded and continuous function. We must\n\nshow that\n\nlimn\\to\\infty\n\n\\int\n\nR\n\nh(x) dPn(x)=\n\n\\int\n\nR\n\nf (x) dP(x).\n\nTo prove this, we use the following fact from real analysis:\n\nGiven a numerical sequence .(\\alphan)n\\geq1, if every subsequence of .(\\alphan)n\\geq1 contains\n\na further subsequence that is convergent to \\beta, then the original sequence .(\\alphan)n\\geq1 is\n\nconvergent to \\beta.\n\nLet i1, i2,i 3,.be a subsequence of N. We consider the subsequence\n\n( \\int\n\nh(x) dPij (x)\n\n)\n\nj\\geq 1\n\n(14.8)\n\nSince any subsequence of a tight sequence is tight, the sequence of probability\n\nmeasures .(Pij )j\\geq 1 is tight. By Prokhorov theorem, there exists a sub-subsequence\n\nijk , where j1 <j 2 <j 3 <\\cdot\\cdot\\cdot , such that Fijk (x) converges pointwise to\n\nthe distribution function G(x) of a probability measure Q at every continuity\n\npoint of G(x)By Theorem 14.3, the characteristic functions associated to this\n\nsub-subsequence converge to the characteristic function of Q , which is also the\n\ncharacteristic function of P due to the assumption that limk\\to\\infty \\phiijk (t)= \\phi(t) .\n\nBy the inversion formula in Theorem 9.5, Q and P have the same distribution.\n\nHence,\n\n( \\int\n\nh(x) dPijk (x)\n\n)\n\nk\\geq 1\n\nis a sub-subsequence of (14.8) converging to\n\nlim\n\nk\\to\\infty\n\n\\int\n\nh(x) dPijk (x)=\n\n\\int\n\nh(x) dQ(x)=\n\n\\int\n\nh(x) dP(x).\n\nTherefore,.\n\n\\int\n\nhdP n converges to.\n\n\\int\n\nhdP asn\\to\\infty , and this completes the proof of\n\nLevy's continuity theorem.\n\nWe illustrate Levy's continuity theorem with two classic examples. The first\n\nexample involves discrete random variables converging to another discrete random\n\nvariable, while the second example involves discrete random variables converging\n\nto a continuous random variable.",
+        "dependencies": [
+            "def_14_3",
+            "thm_14_3",
+            "thm_9_5"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter14-prokhorov-sequential-compactness"
+    },
+    {
+        "block_id": "ex_14_3_1",
+        "type": "Example_Proof",
+        "title": "Example 14.3.1 (Binomial Converging to Poisson)",
+        "content": "\\textbf{Example 14.3.1 (Binomial Converging to Poisson)} \\\\\n\nLet Xn be a random variable with binomial distribution Bin(n, pn) with pn =\\lambda/n ,f o rafi x e d\n\npositive constant. \\lambda. The characteristic function of. Xn is\n\n\\phiXn (t)= ( 1- p n +p neit )n.\n\nIf we taken\\to\\infty ,\n\nlimn\\to\\infty \\phiXn (t)= limn\\to\\infty\n\n(\n\n1- \\lambda\n\nn(1- e it )\n\n) n\n\n=e \\lambda(eit -1),\n\nwhich is the characteristic function of a Poisson random variable. By Theorem 14.1,Xn converges\n\nto a Poisson random variable with mean. \\lambda in distribution.",
+        "dependencies": [
+            "thm_14_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter14-prokhorov-sequential-compactness"
+    },
+    {
+        "block_id": "ex_14_3_2",
+        "type": "Example_Proof",
+        "title": "Example 14.3.2 (Geometric Converging to Exponential)",
+        "content": "\\textbf{Example 14.3.2 (Geometric Converging to Exponential)} \\\\\n\nLet \\lambda be a positive constant and Xn be geometrically distributed with success probability pn =\n\n\\lambda/n,f o rn= 1 ,2,3,.The characteristic function of. Xn is\n\n\\phiXn (t)= pneit\n\n(1- ( 1- p n)eit ).\n\nLetYn =X n/n. We can check that\\phiYn (t)= \\phi Xn (t/n) converges pointwise asn\\to\\infty ,\n\nlimn\\to\\infty \\phiYn (t)= limn\\to\\infty\n\neit/n \\lambda/n\n\n1- ( 1- \\lambda/n)e it/n = \\lambda\n\n\\lambda- it .\n\nBy Theorem 14.1, we have weak convergenceYn\n\nD\n\n-\\to Exp (\\lambda).",
+        "dependencies": [
+            "thm_14_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter14-prokhorov-sequential-compactness"
+    }
+]

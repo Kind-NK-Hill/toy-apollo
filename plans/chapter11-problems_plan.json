@@ -1,0 +1,92 @@
+[
+    {
+        "block_id": "prob_11_1",
+        "type": "Problem",
+        "title": "Problem 11.1",
+        "content": "\\textbf{11.1.} Suppose r< s. Show that if E[\\vertX\\verts] is finite, then E[\\vertX\\vertr] is also finite.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter11-problems"
+    },
+    {
+        "block_id": "prob_11_2",
+        "type": "Problem",
+        "title": "Problem 11.2",
+        "content": "\\textbf{11.2.} (Cantelli inequality) Let X be a random variable with finite variance, and let\n\na \\geq 0. Show that\n\nP(X - E[X]\\geq a) \\leq Va r(X)\n\nVa r(X) + a2 .",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter11-problems"
+    },
+    {
+        "block_id": "prob_11_3",
+        "type": "Problem",
+        "title": "Problem 11.3",
+        "content": "\\textbf{11.3.} Let X1,X 2,...,X n be iid. random variables uniformly distributed between\n\n0 and 1. Show that the sequence of random variables\n\nYn \\coloneqq X1 + X2 +\\cdot\\cdot\\cdot+ Xn\n\nX2\n\n1 + X2\n\n2 +\\cdot\\cdot\\cdot+ X2n\n\nconverges to a constant in probability as n \\to\\infty .",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter11-problems"
+    },
+    {
+        "block_id": "prob_11_4",
+        "type": "Problem",
+        "title": "Problem 11.4",
+        "content": "\\textbf{11.4.} Let (Xn)n\\geq1 be iid. random variables with pdf f( x) = 2x- 31[1,\\infty )(x).\n\nApply Khinchin's weak law to show that (X 1 + X2 +\\cdot\\cdot\\cdot+ Xn)/n\n\nP\n\n\\to 2.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter11-problems"
+    },
+    {
+        "block_id": "prob_11_5",
+        "type": "Problem",
+        "title": "Problem 11.5",
+        "content": "\\textbf{11.5.} Suppose that Xk ,f o r k = 1, 2, 3,... , are independent random variables with\n\nzero mean and variance V ar (Xk) \\leq c\n\n\\sqrt\n\nk for some positive constant c. Prove that\n\nXn/n converges almost surely to zero as n \\to\\infty .",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter11-problems"
+    },
+    {
+        "block_id": "prob_11_6",
+        "type": "Problem",
+        "title": "Problem 11.6",
+        "content": "\\textbf{11.6.} Suppose (Xk)\\infty\n\nk=1 is a sequence of iid. random variables with zero mean, and\n\nsuppose the random variables are uniformly bounded, ie., there is a constant c such\n\nthat P( \\vertXk\\vert <c ) = 1 for all kLet Sn = X1 +\\cdot\\cdot\\cdot+ Xn. Prove that Sn/n3/4 as.\n\n-\\to 0\n\nas n \\to\\infty .\n\n(Hint: Show that E[S6\n\nn] is upper bounded by cn3 for some constant c.)",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter11-problems"
+    },
+    {
+        "block_id": "prob_11_7",
+        "type": "Problem",
+        "title": "Problem 11.7",
+        "content": "\\textbf{11.7.} Let (Xi)\\infty\n\ni=1 be a sequence of random variables that may be correlated.\n\nSuppose E [Xi]= \\mu and V ar(Xi) \\leq K for all i. Show that if there exists a sequence\n\nof real numbers (a\\tau)\\tau\\geq1 such that (i) a\\tau \\in[ 0, 1] for all \\tau, (ii) a\\tau decreases to 0 as\n\n\\tau increases, and (iii) Cov (Xi,Xi+\\tau) \\leq a\\tau\n\n\\sqrt\n\nVa r(Xi) Va r(Xi+\\tau) for all i and \\tau> 0,\n\nthen (Xi)\\infty\n\ni=1 converges in probability to \\mu.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter11-problems"
+    },
+    {
+        "block_id": "prob_11_8",
+        "type": "Problem",
+        "title": "Problem 11.8",
+        "content": "\\textbf{11.8.} Define a first-order autocorrelation process by X0 = 0 and Xi = \\rhoXi- 1 + Ni\n\nfor i \\geq 1, where \\rho is a constant with \\vert\\rho\\vert < 1 and Ni is a Gaussian random variable\n\nN( 0,\\sigma 2)Assume that the random variables Ni 's are independent. Show that\n\n(X1 + X2 +\\cdot\\cdot\\cdot+ Xi)/i converges to 0 in probability as i \\to\\infty .",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter11-problems"
+    },
+    {
+        "block_id": "prob_11_9",
+        "type": "Problem",
+        "title": "Problem 11.9",
+        "content": "\\textbf{11.9.} Consider the experiment of throwing k distinct balls into n distinct boxes.\n\nAssume the locations of the balls are independent and uniformly chosen among\n\n{1, 2,...,n }We consider an asymptotic scenario in which k and n increase\n\nsimultaneously with k/n \\to a, for some positive constant aLet Xn denote the\n\nnumber of empty boxes when the number of boxes is n Prove that X n/n \\to e-a in\n\nquadratic mean, and hence in probability as n \\to\\infty .",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter11-problems"
+    },
+    {
+        "block_id": "prob_11_10",
+        "type": "Problem",
+        "title": "Problem 11.10",
+        "content": "\\textbf{11.10.} Prove Glivenko-Cantelli theorem under a simplifying assumption that the\n\nlimit cdf F(x) is continuous.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter11-problems"
+    }
+]

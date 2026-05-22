@@ -1,0 +1,141 @@
+[
+    {
+        "block_id": "intro_13_6",
+        "type": "Remark",
+        "title": "Application: Martingale and Stopping Time",
+        "content": "\\subsection*{13.6 Application: Martingale and Stopping Time}\n\nThe term \"martingale\" originated from French, where it referred to a half belt used\n\nto secure a horse or dog's neck. In probability theory, a martingale is a stochastic\n\nprocess that models a fair game in which the expected gain of a gambler is zero,\n\nassuming that the gambler can only make decisions in a causal manner. This\n\nprobability model has found wide applications in finance.\n\nWe encode the information available from the history in the form of a filtration.\n\n(cf. Example 2.2.1)",
+        "dependencies": [
+            "ex_2_2_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter13-martingale-stopping-time"
+    },
+    {
+        "block_id": "def_13_6",
+        "type": "Definition",
+        "title": "13.6",
+        "content": "\\begin{defbox}{13.6}\n\\end{defbox}\n\nA filtration is a sequence of increasing \\sigma-subfields in \\mathcal{F}, denoted as .(\\mathcal{F}n)\\infty\n\nn=0,\n\nsuch that\n\n\\mathcal{F}0 \\subseteq \\mathcal{F}1 \\subseteq \\mathcal{F}2 \\subseteq\\cdot\\cdot\\cdot .\n\nA sequence of random variables .(Xn)\\infty\n\nn=0 is said to be adapted to filtration\n\n(\\mathcal{F}n)\\infty\n\nn=0 if. Xn is\\mathcal{F}n-measurable for all n.\n\nAnother way to describe a filtration is to regard the index n as representing\n\ndiscrete time. At each time n, the filtration captures the information available up\n\nto that point in time. Typically, the first \\sigma-field \\mathcal{F}0 in the filtration is the trivial\n\n\\sigma-field.{\\emptyset,\\Omega }, ie., at time n = 0, only the trivial events \\emptyset and. \\Omega are measurable.\n\nThe defining property of a filtration is that if something is measurable at time n,\n\nthen it continues to be measurable at any future time n' >n As time advances, we\n\nhave more available information, and the \\sigma-algebras in the filtration become larger.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter13-martingale-stopping-time"
+    },
+    {
+        "block_id": "ex_13_6_1",
+        "type": "Example_Proof",
+        "title": "Example 13.6.1 (Natural Filtration)",
+        "content": "\\textbf{Example 13.6.1 (Natural Filtration)} \\\\\n\nSuppose Y1,Y 2,.is a sequence of random variables defined on probability space .(\\Omega, \\mathcal{F},P) .\n\nLet \\mathcal{F}0 \\coloneqq {\\emptyset,\\Omega } and \\mathcal{F}n \\coloneqq \\sigma(Y1,Y 2,...,Y n),f o r n = 1, 2, 3,... The n .(\\mathcal{F}n)n\\geq0 is a\n\nfiltration. If fn(y1,...,y n) is any \\mathcal{B}(Rn)-measurable function defined on Rn, then the sequence\n\n(fn(Y1,...,Y n))\\infty\n\ni=1 is adapted to .(\\mathcal{F}n)n\\geq0. This means that fn(Y1,Y 2,...,Y n) depends only on\n\nthe information available up to and including time n. This filtration is called the natural filtration\n\nfor the sequence .(Yi)i\\geq1.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter13-martingale-stopping-time"
+    },
+    {
+        "block_id": "def_13_7",
+        "type": "Definition",
+        "title": "13.7",
+        "content": "\\begin{defbox}{13.7}\n\\end{defbox}\n\nA sequence of random variables .(Xn)\\infty\n\nn=0 is a martingale relative to filtration\n\n(\\mathcal{F}n)\\infty\n\nn=0 if it satisfies the following three conditions:\n\n1. E[\\vertXn\\vert] < \\infty for all n, ie.,Xn \\in L1(P) .\n\n2. .(Xn)\\infty\n\nn=0 is adapted to .(\\mathcal{F}n)\\infty\n\nn=0.\n\n3. E[Xn+1\\vert\\mathcal{F}n]= Xn as. forn \\geq 0.\n\nThe third condition captures the idea that the expected value of the next\n\nobservation, given the current and all past observations, is equal to the current\n\nobservation.\n\nWhen the filtration is defined by a sequence of random variables .(Yn)n\\geq0, then\n\nrandom variable Xn is a measurable function of .(Y0,Y 1,...,Y n) (Theorem 12.6).\n\nWe can express the last condition in Definition 13.7 as E[Xn+1\\vertY0,Y 1,...,Y n]=\n\nXn.\n\nMartingale can be used to model a variety of stochastic processes, including a\n\nbetting system, where Xn represents the amount of money in the gambler's pocket\n\nat time n The essence of a martingale is that, regardless of the betting strategy\n\nadopted, the expected value of Xn+1 in the next step, given the history up to time\n\nn, is always equal to the current value Xn. In other words, a martingale represents a\n\nfair game.",
+        "dependencies": [
+            "thm_12_6"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter13-martingale-stopping-time"
+    },
+    {
+        "block_id": "thm_13_15",
+        "type": "Theorem_with_Proof",
+        "title": "13.15",
+        "content": "\\begin{thmbox}{13.15}\n\\end{thmbox}\n\nIn Definition 13.7, we can replace the third condition by\n\nE[Xm\\vert\\mathcal{F}n]= Xn as. for allm \\geq n. (13.18)\n\n\\textit{Proof} To show that (13.18) implies the third condition in Definition 13.7, we can\n\ntake m= n + 1 To prove the reverse direction, suppose m\\geq n + 1 B yt h e\n\ntower property (Theorem 13.8), we have E[Xm\\vert\\mathcal{F}n]= E[E[Xm\\vert\\mathcal{F}m- 1]\\vert\\mathcal{F}n]=\n\nE[Xm- 1\\vert\\mathcal{F}n] as. Repeating this argument, we obtain E[Xm\\vert\\mathcal{F}n] = \\cdot\\cdot\\cdot =\n\nE[Xn+1\\vert\\mathcal{F}n]= Xn as. \\hfill $\\square$\n\nIn a martingale, the unconditioned expectation E[Xn] remains constant for all n .",
+        "dependencies": [
+            "thm_13_8",
+            "def_13_7"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter13-martingale-stopping-time"
+    },
+    {
+        "block_id": "thm_13_16",
+        "type": "Theorem_with_Proof",
+        "title": "13.16",
+        "content": "\\begin{thmbox}{13.16}\n\\end{thmbox}\n\nIf.(Xn)\\infty\n\nn=0 is a martingale relative to some filtration .(\\mathcal{F}n)\\infty\n\nn=0, then. E[Xn]=\n\nE[X0] for alln\\geq 1 .\n\n\\textit{Proof} Take expectation on both sides of (13.18)\\hfill $\\square$",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter13-martingale-stopping-time"
+    },
+    {
+        "block_id": "ex_13_6_2",
+        "type": "Example_Proof",
+        "title": "Example 13.6.2 (Random Walk as Martingale)",
+        "content": "\\textbf{Example 13.6.2 (Random Walk as Martingale)} \\\\\n\nConsider a sequence.(Yn)n\\geq1 of iid. random variables with zero mean, and define the partial sums\n\nSn \\coloneqqY 1+Y2+\\cdot\\cdot\\cdot+ Yn forn\\geq 1 ,w i t hS0 \\coloneqq0 Let\\mathcal{F}n \\coloneqq\\sigma(Y 1,...,Y n) be the natural filtration for\n\nthe sequence.(Yn)n\\geq1 and set\\mathcal{F}0 \\coloneqq{\\emptyset ,\\Omega }It can be verified that S0,S 1,S 2,.form a martingale\n\nrelative to the filtration .(\\mathcal{F}n)n\\geq0.\n\nTo see this, we first note that Sn is a function of Y1,Y 2,...,Y n and is thus \\mathcal{F}n-measurable.\n\nMoreover, since. Yn has zero mean, we have\n\nE[Sn+1\\vert\\mathcal{F}n]= E[Y1 + Y2 +\\cdot\\cdot\\cdot+ Yn\\vert\\mathcal{F}n]+ E[Yn+1\\vert\\mathcal{F}n]\n\n=E [Y1 + Y2 +\\cdot\\cdot\\cdot+ Yn\\vert\\mathcal{F}n]+ E[Yn+1]\n\n=Y 1 + Y2 +\\cdot\\cdot\\cdot+ Yn + 0 = Sn,\n\nwhere the last equality follows from the independence ofYn+1 from. \\mathcal{F}n and the zero mean ofYn+1.\n\nFinally, since\\vertSn\\vert\\leq \\sumn\n\ni=1 \\vertYi\\vert,we haveE[\\vertSn\\vert] \\leq \\sumn\n\ni=1 E[\\vertYi\\vert] < \\infty for each n.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter13-martingale-stopping-time"
+    },
+    {
+        "block_id": "ex_13_6_3",
+        "type": "Example_Proof",
+        "title": "Example 13.6.3 (Doob's Martingale)",
+        "content": "\\textbf{Example 13.6.3 (Doob's Martingale)} \\\\\n\nSupposeY1,Y 2,.is a sequence of random variables, and let X be an integrable random variable\n\ndefined on the same probability space. Define the natural filtration .(\\mathcal{F}n)n\\geq0 by \\mathcal{F}0 ={ \\emptyset,\\Omega } and\n\n\\mathcal{F}n = \\sigma(Y1,...,Y n),f o rn \\geq 1LetZi \\coloneqqE[X\\vert\\mathcal{F}i],f o ri = 0, 1, 2,... .\n\nWe note that Zn = E[X\\vert\\mathcal{F}n] is \\mathcal{F}n-measurable by the definition of conditional expectation.\n\nBy the triangle inequality of conditioned expectation, we have\n\nE[\\vertZn\\vert] = E[\\vertE[X\\vert\\mathcal{F}n]\\vert] \\leq E[E[\\vertX\\vert\\vert\\mathcal{F}n]] = E[\\vertX\\vert] < \\infty .\n\nFinally, forn \\geq 1, we can apply the tower property to obtain\n\nE[Zn\\vert\\mathcal{F}n- 1]= E[E[X\\vert\\mathcal{F}n]\\vert\\mathcal{F}n- 1]= E[X\\vert\\mathcal{F}n- 1]= Zn- 1.\n\nIt proves that the sequence .(Zn)\\infty\n\nn=0 is a martingale sequence relative to .(\\mathcal{F}n)n\\geq0.\n\nThe stopping time T is a device that terminates a martingale. It is a random\n\nvariable such that the event .{T( )= n} can be determined by the information up to\n\ntime n. For example, a constant T is always a stopping time, but the first time that\n\na gambling loses ten times in a row is not, since it depends on future outcomes that\n\nare not known at time n.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter13-martingale-stopping-time"
+    },
+    {
+        "block_id": "def_13_8",
+        "type": "Definition",
+        "title": "13.8",
+        "content": "\\begin{defbox}{13.8}\n\\end{defbox}\n\nGiven a filtration.(\\mathcal{F}n)\\infty\n\nn=0 and a random variable\n\nT : \\Omega \\to{ 0, 1, 2,..., }\\cup{ \\infty }\n\ndefined on .(\\Omega, \\mathcal{F},P) , we say that T is a stopping time relative to the filtration\n\n(\\mathcal{F}n)\\infty\n\nn=0 if the event.{T \\leq n} is\\mathcal{F}n-measurable for all n.\n\nIf.(Xn)\\infty\n\nn=0 is a sequence of random variables and T is a stopping time relative\n\nto.(\\sigma(X0,...,X n))n\\geq0, we define a random variable XT by\n\nXT () \\coloneqqXT( )().\n\nThe random variable XT represents the value of the sequence .(Xn)n\\geq0 at the\n\nstopping time T , which is the time at which the martingale is terminated. Formally,\n\nfor each \\in \\Omega , we define XT () \\coloneqqXT( )(), where T( )is the time at which\n\nthe stopping rule is applied to the realization . .",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter13-martingale-stopping-time"
+    },
+    {
+        "block_id": "ex_13_6_4",
+        "type": "Example_Proof",
+        "title": "Example 13.6.4 (Example of Stopping Time)",
+        "content": "\\textbf{Example 13.6.4 (Example of Stopping Time)} \\\\\n\nLet.(Xn)\\infty\n\nn=0 be a sequence of random variables and let .(\\mathcal{F}n)\\infty\n\nn=0 be the filtration defined by \\mathcal{F}n =\n\n\\sigma(X0,X 1,...,X n)Define a random variable T as the first time n that the values of Xn exceed\n\n100. Mathematically, we write\n\nT( )=\n\n{\n\nmin{n : Xn() \\geq 100} if Xn() \\geq 100 for some n\n\n\\infty otherwise.\n\nWhen the sequence.(Xn())n\\geq1 never exceeds the threshold 100, we define T( )to be infinity for\n\nthis realization. The random variable T is a stopping time relative to filtration .(\\mathcal{F}n)\\infty\n\nn=0 because\n\nthe event.{ : T( )\\leq n} can be written as the union of .{ : Xi() \\geq 100},f o ri = 0, 1,...,n ,\n\nwhich are all\\mathcal{F}n-measurable.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter13-martingale-stopping-time"
+    },
+    {
+        "block_id": "def_13_9",
+        "type": "Definition",
+        "title": "13.9",
+        "content": "\\begin{defbox}{13.9}\n\\end{defbox}\n\nGiven a martingale .(Xn)n\\geq0 and a stopping time T ,a stopped process . (XT\n\nn )n\\geq0\n\nis obtained from .(Xn)n\\geq0 by forcing the values with indices larger than T to be\n\nXT That is, XT\n\nn () \\coloneqqXT n().\n\nFor allm \\geq T , the random variable. XT\n\nm stops updating and is equal to XT In the\n\ndefinition, we used the notation a b \\coloneqqmin(a, b).",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter13-martingale-stopping-time"
+    },
+    {
+        "block_id": "thm_13_17",
+        "type": "Theorem_with_Proof",
+        "title": "13.17",
+        "content": "\\begin{thmbox}{13.17}\n\\end{thmbox}\n\nThe stopped process .(XT\n\nn )n\\geq0 is a martingale relative to the filtration\n\n(\\mathcal{F}n)n\\geq0, andE[XT\n\nn ]= E[X0] for alln \\geq 0.\n\n\\textit{Proof} The expectationE[XT\n\nn ] is less than or equal to maxk E[Xk], with maximum\n\ntaken over k = 0, 1,...,n Since E[Xk] is finite for all k, the maximum is also\n\nfinite.\n\nFor n \\geq 0,t h e n-th random variable XT\n\nn in the stopped process is a function of\n\nX0,X 1,...,X n and T Since T is a stopping time, XT\n\nn is\\mathcal{F}n-measurable.\n\nWe write XT\n\nn+1 as XT\n\nn + (Xn+1 - Xn)1{T> n}The conditional expectation of\n\nXT\n\nn+1 given. \\mathcal{F}n is\n\nE[XT\n\nn+1\\vert\\mathcal{F}n]= XT\n\nn + 1{T> n}E[Xn+1 - Xn\\vert\\mathcal{F}n]= XT\n\nn + 1{T> n} \\cdot 0 = XT\n\nn .\n\nThis proves that XT\n\nn is a martingale relative to .(\\mathcal{F}n)n\\geq0.\n\nBecause.(XT\n\nn )n\\geq1 is a martingale, the last statement about the expectation. E[XT\n\nn ]\n\nfollows from Theorem 13.16. \\hfill $\\square$\n\nIn contrast to the previous theorem, we are not just interested in the expected\n\nvalue of the stopped process at a particular time, but also interested in the expected\n\nvalue of the martingale sequence when it stops. The following theorem is called\n\nthe martingale stopping theorem, which is also known as Doob's optional stopping\n\ntheorem. Under the gambling scenario, the first condition in the theorem means\n\nthat a gambler has to leave the casino within a fixed duration. The second one\n\nrequires that the game must end when the gambler lose all of his fortune or win\n\na predetermined amount of money. The third one models the scenario in which the\n\nincrements are uniformly bounded.",
+        "dependencies": [
+            "thm_13_16"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter13-martingale-stopping-time"
+    },
+    {
+        "block_id": "thm_13_18",
+        "type": "Theorem_with_Proof",
+        "title": "13.18 (Martingale Stopping Theorem)",
+        "content": "\\begin{thmbox}{13.18 (Martingale Stopping Theorem)}\n\\end{thmbox}\n\nLet .(Xn)\\infty\n\nn=0 be a martingale and T be a stopping time relative to filtration\n\n(\\mathcal{F}n)\\infty\n\nn=0. Then\n\nE[XT ]= E[X0]\n\nif one of the following thee conditions hold:\n\n(i) T is bounded by a constant C almost surely.\n\n(ii) T is almost surely finite, and there exists a constant K such that \\vertXn\\vert\\leq K\n\nfor all n .\n\n(iii) E[T] < \\infty , and there exists a constant c such that \\vertXn -X n- 1\\vert\\leq c for\n\nall n .\n\n\\textit{Proof} Under conditions (i), (ii), or (iii), the stopping time T is finite with\n\nprobability 1. Therefore, XT is well-defined almost surely and XT n \\to X T as.\n\nasn\\to\\infty .\n\n(i) The martingale is stopped before time C as. We have XT =X C as. Hence,\n\nE[XT ]= E[XC]= E[X0].\n\n(ii) Since \\vertXT n\\vert is bounded by a constant for all n , by applying the dominated\n\nconvergence theorem, we obtain\n\nlimn\\to\\infty E[XT n]= E[Xlimn(T n)]= E[XT ].\n\nIn the second equality, we have used the assumption that T is finite as. and\n\nthus limn(T n) = T as. From Theorem 13.17, we know that E[XT n]=\n\nE[XT\n\nn ]= E[X0] for all n Therefore,E[XT ]= E[X0].\n\n(iii) SupposeE[T] is finite, and there exists a constant c such that. \\vertXn -Xn- 1\\vert\\leq c\n\nfor all n We writeXT n as a telescoping sum\n\nXT n =X 0 +\n\nT n\\sum\n\nk=1\n\n(Xk -X k- 1).\n\nThe number of terms is random but is no larger than n with probability 1.\n\nHence, we are dealing with finitely many additions in the calculation of XT n.\n\nUsing the bounded difference assumption, we obtain\n\n\\vertXT n\\vert\\leq\\vert X0\\vert+\n\nT n\\sum\n\nk=1\n\n\\vertXk -X k- 1\\vert\\leq\\vert X0\\vert+ c\\cdot (T n) \\leq\\vert X0\\vert+ cT.\n\nThe right-hand side is integrable because both X0 and T are integrable. By\n\nthe dominated convergence theorem, we conclude that limn\\to\\infty E[XT n]=\n\nE[XT ]Since E[XT n]= E[X0] for all n by Theorem 13.17, we obtain\n\nE[XT ]= E[X0]\\hfill $\\square$\n\nThe next example is commonly known as the ABRACADABRA problem [ 10].",
+        "dependencies": [
+            "thm_13_17"
+        ],
+        "is_renowned": true,
+        "source_plan": "chapter13-martingale-stopping-time"
+    },
+    {
+        "block_id": "ex_13_6_5",
+        "type": "Example_Proof",
+        "title": "Example 13.6.5 (Martingale Patterns and Gambling Team)",
+        "content": "\\textbf{Example 13.6.5 (Martingale Patterns and Gambling Team)} \\\\\n\nSuppose a monkey type randomly on a keyboard with only three keys: a, b, and c. Two players\n\nbet on whether the pattern \"abab\" or \"aabb\" will appear first in the resulting random string. We\n\nanalyze who will win this game by computing the expected waiting time until we see each pattern.\n\nWe solve the prolem by introducing a casino. At each round, a random letter is drawn. A person\n\ncan bet m on the random outcome. He/she will receive 3 m if the guess is correct, but will lose all\n\nof the bet otherwise. This makes it a fair game.\n\nWe first consider the pattern \"abab\"We introduce a team of gamblers, who enter the game\n\none at a time. Gambler i bets $1 at time i that the i -th letter is the character \"a\"This gambler will\n\nreceive $3 if the letter \"a\" is drawn at time i but will leave otherwise. Then he will bet $3 to bet\n\nthe next drawn letter is \"b\"He will receive $9 if the letter at time i+ 1 is indeed \"b\" but will leave\n\notherwise. The gambler will then bet $27 at time i+ 2 for the letter \"a\" and $81 at time i+ 3 for\n\nt h el e t t e r\" b \" H ew i l ll e a v e t h eg a m ew h e n e v e rh el o s e s .\n\nAssume that there are infinitely many potential gamblers waiting outside, and at each time, a\n\nnew gambler enters the game. We stop the game when a gambler has just won four times in a row.\n\nThis forms a stopped martingale satisfying the third condition in Theorem 13.18. Suppose the game\n\nis stopped at time T At this time, exactly two gamblers are still in the game. The gambler who\n\nentered at timeT- 1 wins $9. - $1 = $8, and the one who entered at time T- 3 wins $81. - $1=$80.\n\nAll other gamblers lose $1. By Theorem 13.18, the expected gain of the whole gambling team is 0,\n\n0= E [X0]= E[XT ]= E[(T- 2 )(- $1)+ ( $81- $1 )+ ( $9- $1 )]= $90- $ E[T] .\n\nTherefore, the expected waiting time for the string \"abab\" is 90.\n\nIf we change the pattern to \"aabb\", only one gambler is in the game when we first see the\n\npattern. A similar calculation shows that the expected waiting time is 81.\n\n0= E [X0]= E[XT ]= E[(T- 1 )(- $1)+ $81 - $1 ]= $81- $ E[T] .\n\nWe simulate this experiment by the following Python program.\n\nfrom random import choice\n\nA = ['a','b','c'] # alphabet = {a,b,c}\n\ndef monkey(alphabet,pattern):\n\nrandom_string = \"\" # initialize to empty string\n\nwhile True:\n\nrandom_string += choice(alphabet) # randomly draw a character\n\nif random_string[-len(pattern):] == pattern:\n\nbreak # break if we see the pattern at the end\n\nreturn len(random_string) # return the length of the random string\n\nn = 10000 # run the experiment n times\n\nwaiting_time1 = sum([monkey(A,'abab') for _ in range(n)])/n\n\nwaiting_time2 = sum([monkey(A,'aabb') for _ in range(n)])/n\n\nprint(f\"Average waiting time for pattern abab = {waiting_time1}\")\n\nprint(f\"Average waiting time for pattern aabb = {waiting_time2}\")\n\nThe function monkey generates a random string that ends with the given pattern and returns\n\nthe length of the random string. We run 10,000 experiments for each of the two patterns \"abab\"\n\nand \"aabb\" and compute the average length of the random string. Note that the only difference\n\nbetween the two experiments is the ending patterns. A sample output of the program is\n\nAverage waiting time for pattern abab = 89.1899\n\nAverage waiting time for pattern aabb = 81.2196\n\nThe simulation results are in accordance with the theoretic analysis.",
+        "dependencies": [
+            "thm_13_18"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter13-martingale-stopping-time"
+    }
+]

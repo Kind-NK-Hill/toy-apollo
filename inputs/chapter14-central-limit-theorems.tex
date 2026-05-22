@@ -1,0 +1,491 @@
+\subsection*{14.4 Central Limit Theorems}
+
+We use Levy's continuity theorem to prove a basic version of central limit theorem,
+
+which assumes iid. random variables and finite variance.
+
+\begin{thmbox}{14.7 (Lindeberg-Levy Central Limit Theorem)}
+\end{thmbox}
+
+Let .(Xk)\infty
+
+k=1 be a sequence of iid. random variables with finite mean
+
+E[X1]= \mu and finite variance Var(X1)= \sigma 2. Then
+
+\sumn
+
+k=1 Xk -n\mu
+
+\sigma\sqrt n converges in distribution toN( 0,1).
+
+Sketch of Proof We may assume \mu= 0 by re-defining X1 :=X 1 -\mu Let. Sn \coloneqq
+
+X1 +X 2 +\cdot\cdot\cdot+ Xn.
+
+Step 1. [ 4, Theorem 3.3.20] Since. X1 has variance. \sigma2, the characteristic function
+
+of X1 is
+
+\phiX1 (t)= 1 - \sigma2t2
+
+2 +o(t 2),
+
+where o(t2) refers to a function h(t) such that limt\to 0 h(t)
+
+t2 =0 .
+
+Step 2. Because the random variables Xk's are assumed to be independent, the
+
+characteristic function of Sn
+
+\sigma\sqrt n is
+
+(
+
+1- t2
+
+2n +o
+
+( 1
+
+n
+
+)) n
+
+It can be written as .
+
+(
+
+1+ cn
+
+n
+
+) n
+
+, where cn be the constant defined by
+
+cn
+
+n =- t2
+
+2n +o
+
+( 1
+
+n
+
+)
+
+Step 3. [ 4, Theorem 3.4.2] If c1, c2, c3,.are complex numbers with
+
+limn\to\infty cn =c , then
+
+limn\to\infty (1+ c n/n)n =e c.
+
+Step 4. Because cn \to- t2
+
+2 +o( 1), we get limn\to\infty cn =- t2/2. The charac-
+
+teristic function of Sn
+
+\sigma\sqrt n approaches e-t2/2 as n\to\infty Since e-t2/2 is a continuous
+
+function, by Levy's continuity theorem, Sn
+
+\sigma\sqrt n converges to the distribution whose
+
+characteristic function is e-t2/2.
+
+Step 5. Steps 1-4 hold for any iid. sequence with finite mean and variance.
+
+In particular, it is true if the random variables are iid. standard Gaussian random
+
+variables. We use the fact that the sum of Gaussian random variables are Gaussian.
+
+When Steps 1 and 4 are applied to iid. standard Gaussian random variables, the
+
+random variables Sn
+
+\sigma\sqrt n have standard Gaussian distribution for all n and hence must
+
+converge in distribution to N( 0,1)The characteristic function of N( 0,1) must be
+
+equal to e-t2/2. By the uniqueness of characteristic function, Sn
+
+\sigma\sqrt n converges in
+
+distribution to N( 0,1)\hfill $\square$
+
+Based on the central limit theorem, we have the following approximations of
+
+binomial and Poisson distributions using normal distribution.
+
+\textbf{Example 14.4.1 (Normal Approximation of Binomial Distribution)} \\
+
+Suppose Xn's are iid. Bernoulli random variables with success probability p The mean and
+
+variance of. Xn are p andp(1- p), respectively. The sumSn =X 1 +X2 +\cdot\cdot\cdot+ Xn has distribution
+
+Binom(n, p)By the central limit theorem,
+
+Sn -np\sqrt np(1- p)
+
+D
+
+-\to N( 0,1).
+
+\textbf{Example 14.4.2 (Normal Approximation of Poisson Distribution)} \\
+
+We use the fact that the sum of n iid. Poisson random variables with mean 1 is a Poisson random
+
+variable with mean nLet. Sn denote a Poisson random variable with mean n. Since the variance
+
+of a Poisson random variable with mean 1 is 1, we can apply the central limit theorem to get
+
+(Sn -n)/ \sqrt n
+
+D
+
+-\to N( 0,1).
+
+While the Lindeberg-Levy central limit theorem is a useful result, it is limited
+
+in that it requires the random variables to be iid. However, it is possible to relax
+
+the iid. assumption and still obtain similar results. In the followings, we will state
+
+a central limit theorem for triangular array.
+
+For each positive integer n ,l e t kn be a positive integer and let Xn1,
+
+Xn2,...,X n,kn be independent random variables defined on a common probability
+
+space. We can represent these random variables as a collection of rows, where the
+
+n-th row contains kn random variables.
+
+X11,X 12,...,X 1,k1
+
+X21,X 22,X 23,...,X 2,k2
+
+X31,X 32,X 33,X 34,...,X 3,k3
+
+..
+
+Note that the probability spaces may be different for different rows.
+
+Suppose that the expectations of all random variables are zero, for notational
+
+simplicity, and let the variance of Xn,i be \sigma2
+
+ni ,f o rn\geq 1 and .1\leq i \leq n W el e t
+
+Sn be the sum of the kn random variables in the n-th row, and s2
+
+n = \sumkn
+
+i=1 \sigma2
+
+ni ,f o r
+
+n\geq 1 , be the variance of Sn. We assume that s2
+
+n \to\infty as n\to\infty .
+
+\begin{thmbox}{14.8 (Central Limit Theorem for Triangular Array)}
+\end{thmbox}
+
+With the notation above, we have
+
+Xn1 +X n2 +\cdot\cdot\cdot+ Xn,kn
+
+sn
+
+D
+
+-\to N( 0,1)
+
+if one of the following conditions hold:
+
+(Lindeberg condition) For all\epsilon> 0,
+
+s2n
+
+kn\sum
+
+i=1
+
+E[X2
+
+n,i 1{\vertXn,i\vert\geq\epsilonsn}}]\to 0as n \to\infty .
+
+(Lyapunov condition) There exists\delta> 0 such that
+
+s2+\deltan
+
+n\sum
+
+i=1
+
+E[\vertXn,i\vert2+\delta]\to 0as n \to\infty .
+
+In the Lindeberg condition, the expectation is the integral
+
+\int
+
+{\vertx\vert\geq\epsilonsn}
+
+x2 d\mun,i(x),
+
+integrating the function x2 in the range \vertx\vert\geq \epsilonsn with respect to the measure
+
+\mun,i induced by Xn,i Intuitively, this means that the tail of each Xk must decrease
+
+fast enough so that the sum of the tail parts of the variances does not contribute
+
+significantly to the overall variance of Sn. We remark that for independent random
+
+variables, the conditions in the Lindeberg-Levy central limit theorem imply the
+
+Lindeberg condition.
+
+On the other hand, the Lyapunov condition is a stronger condition than the
+
+Lindeberg condition. Specifically, the Lyapunov condition requires that the tail
+
+probability of each random variable Xk decays sufficient fast so that certain power
+
+law holds. This condition is useful in some situations where the Lindeberg condition
+
+is difficult to check.
+
+The proof is beyond the scope of this book. We refer the readers to [ 2] and [4].
+
+Instead of going through the proof, we give an example and demonstrate how to
+
+apply this theorem.
+
+\textbf{Example 14.4.3 (Asymptotic Normality in Coupon Collection Problem)} \\
+
+In the coupon collection problem, we consider the random experiment that repeatedly and
+
+independently draws one out of n different coupons, where n is a fixed parameter. LetTn,m denote
+
+the first time that exactly m distinct coupons have been collected. This random variable is the sum
+
+of m independent geometric-distributed random variables,
+
+Tn,m =X n,0 +X n,1 +X n,2 +\cdot\cdot\cdot+ Xn,m-1.
+
+The success probability of random variableXn,i is. 1- i
+
+n ,a n dXn,0 is equal to 1 with probability 1.
+
+For i\geq 1 ,Xn,i counts the number of additional coupons needed to be drawn in order to get a new
+
+one after i distinct coupons have been collected.
+
+The pmf of the random variableXn,i is given by
+
+P(Xn,i =j) = ( 1- p n,i)j- 1pn,i
+
+for j\geq 1 ,w h e r epn,i \coloneqq1 - i/n is the probability of success. By using the moment generating
+
+function,
+
+E[eXn,it ]= pn,iet
+
+1- ( 1- p n,i)et ,
+
+we can compute the mean and variance ofXn,i as
+
+E[Xn,i]= 1
+
+pni
+
+,Var (X 2
+
+n,i)= 1- p n,i
+
+p2
+
+n,i
+
+Additionally, the centered fourth moment ofXn,i is given by
+
+E[(Xn,i -E [Xn,i])4]= 1
+
+p4
+
+n,i
+
+(1- p n,i)(p2
+
+n,i -9 pn,i +9 ).
+
+Suppose we increase n and m simultaneously such that the ratio m/n approaches 1/2. For
+
+instance, we may take m= (n+ 1 )/2. We are interested in the asymptotic distribution of the
+
+random variableTn,(n+1)/2.
+
+We can write the random variables Xn,i ,f o rn\geq 2 and .0\leq i \leq (n+ 1 )/2, as a triangular
+
+array. The random variables in each row are independent, but not identically distributed. Hence,
+
+we cannot apply Theorem 14.7. Instead, we will apply Theorem 14.8, with\delta= 2 in the Lyapunov
+
+condition. We obtain the following upper bound for the sum of fourth moments,
+
+s4n
+
+(n+1)/2\sum
+
+i=0
+
+E[(Xn,i -E [Xn,i])4])]= 1
+
+s4n
+
+(n+1)/2\sum
+
+i=0
+
+p4
+
+n,i
+
+(1- p n,i)(p2
+
+n,i -9 pn,i +9 )
+
+\leq 1
+
+s4n
+
+(n+1)/2\sum
+
+i=0
+
+p4
+
+n,i
+
+= 9
+
+s4n
+
+(n+1)/2\sum
+
+i=0
+
+(1- i/n) 4 .
+
+We approximate the sum by a Riemann integral,
+
+s4n
+
+(n+1)/2\sum
+
+i=0
+
+E[(Xn,i -E [Xn,i])4])]\leq 9n
+
+s4n
+
+\int 1/2
+
+(1- x) 4 dx. (14.9)
+
+Because
+
+s2
+
+n =
+
+(n+1)/2\sum
+
+i=0
+
+i/n
+
+(1- i/n) 2 n
+
+\int 1/2
+
+(1- x) 2 dx= n( 1- log (2)),
+
+we see that right-hand side of (14.9) approaches 0 as n approaches infinity. This verifies the
+
+Lyapunov condition. By using approximations by Riemann integral, we can show that the mean of
+
+E[Tn,(n+1)/2]\to nlog 2. We apply Theorem 14.8 to conclude that, as n approaches infinity,
+
+Tn,(n+1)/2-n log 2\sqrt
+
+n(1- log 2)
+
+D
+
+-\to N( 0,1).
+
+We implement the coupon collection problem using the following Python program and
+
+generate the histogram of the number of coupons we draw until we obtainn/2 distinct coupons out
+
+of n coupons.
+
+from random import randint
+
+from numpy import log, sqrt
+
+import matplotlibpyplot as plt
+
+def coupon_collection(n,m):
+
+L = [] # intitialize to empty list
+
+while True:
+
+Lappend(randint(1,n)) # generate a new coupon
+
+if len(set(L)) >= m:
+
+break # break if we have m distinct coupons
+
+return(len(L))
+
+n = 100 # there are n types of coupons
+
+m = 50 # stop when m distinct coupons are collected
+
+K = 50000 # repeat the experiment K times
+
+T = [coupon_collection(n,m) for j in range(K)] # generate data
+
+m u=n *log(2)
+
+sigma2 = n *(1-log(2))
+
+x_min , x_max = (50,100) # range of plots
+
+bins = [i for i in range(x_min,x_max)] # histogram bins
+
+plthist(T,bins=bins) # plot histogram
+
+X = [x for x in range(x_min,x_max)]
+
+Y = [K/sqrt(2 *pi*sigma2)*exp(-(x-mu)**2/(2*sigma2)) for x in X]
+
+pltplot(X,Y, 'k-')
+
+pltxlabel('Number of coupons drawn until we get 50 out of 100 coupons')
+
+We plot the histograms for n= 100 and n= 1000 The figures also show the probability
+
+density function of the limiting Gaussian distribution as a reference. The simulation results confirm
+
+that the probability distribution of the number of draws until obtainingn/2 distinct coupons is well
+
+approximated by a Gaussian distribution.

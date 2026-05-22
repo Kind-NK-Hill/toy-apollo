@@ -1,0 +1,203 @@
+\subsection*{11.4 Application: Data Compression}
+
+Let A ={ a1,a 2,...,a m} denote an alphabet of size m. Suppose we generate
+
+a string of length n, with each character drawn independently according to a
+
+probability distribution P(ai) = pi , where pi 's are nonnegative real numbers
+
+summing to 1. There are totally mn combinations. We may associate each string
+
+with an integer between 1 and mnU s i n g log2(mn) bits, we can store and recover
+
+the random string with no decoding error.
+
+However, if we allow an arbitrarily small error in decoding, we can significantly
+
+reduce the number of bits. It turns out there exists a set S\subset A n with probability
+
+Pr(S)\geq 1 - \epsilon and \vertS\vert\ll mn. We only encode the strings in the set S The strings
+
+not in S are not encoded, or encoded arbitrarily. The decoding error is thus less than
+
+or equal to \epsilon. We will show that \epsiloncan be made arbitrarily small as the block length
+
+n increases, with the cardinality of the set S roughly equal to .2nH(P) , where H(P)
+
+denotes the entropy of the distribution P ,
+
+H(P) \coloneqq-
+
+m\sum
+
+i=1
+
+pi log2 pi.
+
+To realize this idea, we fix a parameter \delta> 0 and define a set S\delta,n of strings by
+
+S\delta,n\coloneqq{ (x1,x 2,...,x n)\inA n :2 -n(H(P) +\delta) \leq
+
+n
+
+k=1
+
+p(xk)\leq 2 -n(H(P) -\delta)}.
+
+We claim that for any fixed \delta> 0,t h e s e t S\delta,n has probability arbitrarily close to 1
+
+asn\to\infty We denote the random string of length n by. X, and for k= 1 ,2,...,n ,
+
+let Xk be the k -th letter in X. Define a new random variable Uk =- log2 P(Xk),
+
+where P(Xk) is equal to pi if Xk =i For simplicity, we may assume pi >0 for
+
+all i , so that log2 pi is well-defined. The expectation of Uk is precisely equal to the
+
+entropy H(P) of distribution P By the weak law of large numbers, for any fixed
+
+\delta> 0,we have
+
+limn\to\infty Pr
+
+( \vert\vert\vert 1
+
+n
+
+n\sum
+
+k=1
+
+Uk -H(P)
+
+\vert\vert\vert \leq\delta
+
+)
+
+=1 .
+
+But
+
+\vert\vert\vert 1
+
+n
+
+n\sum
+
+k=1
+
+Uk -H(P)
+
+\vert\vert\vert \leq\delta 2 n(H(P) -\delta) \leq2 U1+U2+\cdot\cdot\cdot+Un \leq2 n(H(P) +\delta)
+
+2 -n(H(P) +\delta) \leqP(X 1)P(X 2)\cdot\cdot\cdot P(Xn)\leq 2 -n(H(P) -\delta).
+
+The random string X belongs toS\delta,n if and only if .
+
+\vert\vert\vert 1
+
+n
+
+\sumn
+
+k=1 Uk -H(P)
+
+\vert\vert\vert \leq\deltaT h i s
+
+shows that the probability of the set of strings S\delta,n approaches 1 asn\to\infty , for any
+
+fixed \delta> 0. To estimate the cardinality of S\delta,n, we note that all random strings in
+
+S\delta,n have probability at least .2-n(H(P) +\delta)There are at most .2n(H(P) +\delta) strings in
+
+S\delta,n. We can represent them using at most n(H(P) + \delta) bits.
+
+To design the data compression scheme with decoded error no more than \epsilon,w e
+
+first fix a small \delta> 0 and find a sufficiently large block length n such that Pr(X\in
+
+S\delta,n)> 1 - \epsilon. Because we only encode the strings in S\delta,n,it takes H(P) + \deltabits
+
+per symbol. The saving is particularly significant if H(P) \ll log2(m).
+
+The result demonstrated in this example is the forward part of Shannon's theorem
+
+on data compression. This is one of the first major results in information theory [ 3].
+
+We demonstrate the idea of this data compression with finite block length n.
+
+Suppose that alphabet is A ={ a,b,c }The data source generates symbols a, b,
+
+and c independently, according to the distribution P(a) = 2/3, P(b) = 2/9 and
+
+P(c) = 1/9. We group the random symbols into groups of size n = 11 and use
+
+B bits to encode each group. Only the .2B - 1 strings of length n with the largest
+
+probabilities are encoded. If the random string is not among these .2B - 1 selected
+
+ones, we use a special number, such as . 2B , to signify that a decoding error has
+
+occurred.
+
+The probability of error is calculated by the following Python program.
+
+Python Program for Demonstrating Data Compression
+
+# Compute the success decoding probability of
+
+# data compression with fixed block length
+
+from numpy import prod
+
+from itertools import product
+
+n = 11 # block length
+
+prob_dist= {'a':2/3, 'b':2/9, 'c':1/9}
+
+B=1 6
+
+A = [x for x in prob_dist] # list of letters
+
+D={}
+
+for t in product(A,repeat = n):
+
+s = ''join(t)
+
+D[s] = prod([prob_dist[x] for x in t])
+
+# sum the largest 2 **B-1 probabilities
+
+list_of_prob = list(Dvalues())
+
+list_of_probsort(reverse = True)
+
+prob_success = sum(list_of_prob[0:(2 **B-1)])
+
+print(f"{B} bits per block")
+
+print(f"P(successful decoding) = {prob_success}")
+
+The table below shows the probabilities of successful decoding for a different
+
+number of bits per block. The probabilities are obtained by running the Python
+
+program forB = 8, 9,..., 16.
+
+No. of bits per block 8 9 10 11 12 13 14 15 16
+
+P (successful decoding) 0.245 0.327 0.428 0.533 0.650 0.765 0.864 0.939 0.983
+
+We observe that the value of .11 \cdot H(P) = 11(1.22) 13.475, where H(P)
+
+1.22 is entropy of the probability distribution P The table shows that there is a
+
+significant increase in the probability of successful decoding when the number of
+
+bits per block is slightly above the threshold value, ie., for B= 14 or higher.
+
+In general, as the block length n approaches infinity, there is an abrupt increase
+
+in success probability when the number of bits per block is .1.22n.

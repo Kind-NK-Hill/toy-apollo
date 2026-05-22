@@ -6,7 +6,7 @@ workflow. It gives the current agent, a resumed agent, or a later agent a
 durable checklist that can be checked without rerunning theorem work.
 
 Use this controller when the scope contains more than one task. Phase 2 runtime
-modes such as `pack`, `build-check`, `review-now`, `review-fix`,
+modes such as `pack`, `build-check`, `review-now`, `review-fix`, `debt-fix`,
 `auto-loop`, and `review-apply` remain single-task operations. The controller
 therefore schedules and records task-set state; it does not run an unattended
 theorem-proving daemon.
@@ -44,10 +44,13 @@ Allowed controller statuses:
 
 - `NONTERMINAL`: not terminal; the controller must keep working if no user
   interruption or mechanism blocker stops the session.
-- `COMPLETED`: task landed through the required workflow.
+- `COMPLETED`: task landed through the required workflow with no accepted proof debt.
+- `COMPLETED_WITH_PROOF_DEBT`: task landed through the required workflow, but accepted explicit proof-debt support remains.
 - `FAILED_LOCAL`: root hard-stopped task. Record `stop_reason`.
 - `DEPENDENCY_FAILED`: downstream task skipped because a hard dependency failed
   inside this batch.
+- `DEPENDENCY_PROOF_DEBT`: downstream task skipped because a direct or
+  transitive hard dependency still has accepted proof debt.
 - `MECHANISM_BLOCKER`: external or local mechanism prevents canonical progress,
   such as missing reviewer config or repeated timeout without a canonical result.
 - `NEEDS_DECOMPOSITION`: complex proof task still has only the generated
@@ -56,7 +59,8 @@ Allowed controller statuses:
 - `USER_INTERRUPTED`: the user explicitly stopped or paused the batch.
 
 A batch is terminal only when every task in scope has one of:
-`COMPLETED`, `FAILED_LOCAL`, `DEPENDENCY_FAILED`, `MECHANISM_BLOCKER`, or
+`COMPLETED`, `COMPLETED_WITH_PROOF_DEBT`, `FAILED_LOCAL`,
+`DEPENDENCY_FAILED`, `DEPENDENCY_PROOF_DEBT`, `MECHANISM_BLOCKER`, or
 `USER_INTERRUPTED`.
 
 ## Dependency-Failed Rule
@@ -79,11 +83,34 @@ not a failed root.
 Do not stop the batch after this propagation. Continue every remaining
 independent `NONTERMINAL` task whose hard dependencies have not failed.
 
+## Proof-Debt Dependency Rule
+
+`COMPLETED_WITH_PROOF_DEBT` is terminal for the debt-bearing task itself, but it
+is not a clean dependency. Every uncompleted direct or transitive hard dependent
+must be marked `DEPENDENCY_PROOF_DEBT` and skipped until the blocker is repaired
+through `debt-fix -> review-fix -> build-check -> review-now -> review-apply`.
+
+The same rule applies to legacy tasks whose ledger status is still `COMPLETED`
+but whose `proof_obligation_summary.status_counts.accepted_as_proof_debt` is
+positive. The controller must normalize those rows to
+`COMPLETED_WITH_PROOF_DEBT` for reporting and downstream blocking.
+
+Accepted debt can also be promoted into first-class ledger children with
+`--phase 2 --phase2-mode promote-obligations`. Each child has type
+`Phase2ObligationTask`, records `parent_task_id`, `obligation_id`, and
+`target_task_id`, and is processed by the same Phase2 loop as any other task.
+The child owns its own attempt history and 15-attempt build/review failure
+streaks; the parent remains the official output owner. Completed children stay
+in the ledger as closed historical subtasks so later decomposition changes can
+supersede them without losing audit history.
+
 The batch summary must distinguish:
 
 - `COMPLETED` tasks
+- `COMPLETED_WITH_PROOF_DEBT` tasks
 - root `FAILED_LOCAL` tasks grouped by `stop_reason`
 - `DEPENDENCY_FAILED` tasks grouped by failed hard dependency
+- `DEPENDENCY_PROOF_DEBT` tasks grouped by proof-debt hard dependency
 - `MECHANISM_BLOCKER` tasks
 - `USER_INTERRUPTED` tasks
 - any remaining `NONTERMINAL` tasks
@@ -127,9 +154,10 @@ Before a controller agent ends the turn or reports the batch as finished:
 1. Run the status helper against the batch JSON.
 2. Confirm every row is terminal.
 3. Confirm every `DEPENDENCY_FAILED` row names a failed hard dependency.
-4. Confirm every `hard_failure` has either `phase2_build_fail_counter >= 15` or
+4. Confirm every `DEPENDENCY_PROOF_DEBT` row names a proof-debt hard dependency.
+5. Confirm every `hard_failure` has either `phase2_build_fail_counter >= 15` or
    `phase2_review_fail_counter >= 15`.
-5. Confirm no `current_auto_loop_status = active` task lacks a documented stop
+6. Confirm no `current_auto_loop_status = active` task lacks a documented stop
    reason in ledger metadata.
 
 Helper command:
@@ -149,8 +177,14 @@ Program-enforced today:
 - `auto-loop` records live phase/status/stop fields in ledger runtime metadata
   and mirrors them into prompt-pack metadata.
 - `review-apply` is the only Codex semantic-review landing step.
+- `debt-fix` creates a single-task repair request for accepted proof debt; it is
+  the repair path for proof-debt blockers.
 - The batch status helper computes dependency-failed propagation, terminal
-  coverage, and the two Phase 2 failure streak counters from the batch JSON.
+  coverage, proof-debt dependency blocking, and the two Phase 2 failure streak
+  counters from the batch JSON.
+- Phase 2 prompt-pack, build-check, review, auto-loop, and soft-dependency
+  entrypoints refuse downstream work that would consume a hard or selected soft
+  dependency carrying accepted proof debt.
 
 Checklist-enforced today:
 

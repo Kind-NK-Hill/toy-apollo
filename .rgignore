@@ -22,6 +22,7 @@ output_lean_files/
 formalized_chapters/
 reports/
 error_logs*/
+docs/archive/
 
 # Search-hidden by default because it is provenance-heavy; audit with
 # `rg --no-ignore dependency_decisions/` when dependency decisions are in scope.

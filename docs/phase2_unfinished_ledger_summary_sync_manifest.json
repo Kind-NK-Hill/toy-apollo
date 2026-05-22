@@ -1,0 +1,168 @@
+{
+  "applied_at": "2026-05-22T00:05:11.512627Z",
+  "changed_task_count": 10,
+  "status_changed_task_count": 0,
+  "changed_tasks": {
+    "obl_thm_14_5_averaged_kernel_identity": {
+      "proof_obligations_file": "phase2_prompt_packs/obl_thm_14_5_averaged_kernel_identity/proof_obligations.json",
+      "old_status": "FAILED_LOCAL",
+      "new_status": "FAILED_LOCAL",
+      "old_open_blocking_ids": [
+        "averaged_kernel_identity"
+      ],
+      "new_open_blocking_ids": [],
+      "old_status_counts": {
+        "open": 1
+      },
+      "new_status_counts": {
+        "proved": 1
+      },
+      "status_changed": false
+    },
+    "obl_thm_14_5_characteristic_at_zero": {
+      "proof_obligations_file": "phase2_prompt_packs/obl_thm_14_5_characteristic_at_zero/proof_obligations.json",
+      "old_status": "FAILED_LOCAL",
+      "new_status": "FAILED_LOCAL",
+      "old_open_blocking_ids": [
+        "characteristic_at_zero"
+      ],
+      "new_open_blocking_ids": [],
+      "old_status_counts": {
+        "open": 1
+      },
+      "new_status_counts": {
+        "proved": 1
+      },
+      "status_changed": false
+    },
+    "obl_thm_14_5_continuity_small_u_bound": {
+      "proof_obligations_file": "phase2_prompt_packs/obl_thm_14_5_continuity_small_u_bound/proof_obligations.json",
+      "old_status": "FAILED_LOCAL",
+      "new_status": "FAILED_LOCAL",
+      "old_open_blocking_ids": [
+        "continuity_small_u_bound"
+      ],
+      "new_open_blocking_ids": [],
+      "old_status_counts": {
+        "open": 1
+      },
+      "new_status_counts": {
+        "proved": 1
+      },
+      "status_changed": false
+    },
+    "obl_thm_14_5_dominated_convergence_bound": {
+      "proof_obligations_file": "phase2_prompt_packs/obl_thm_14_5_dominated_convergence_bound/proof_obligations.json",
+      "old_status": "FAILED_LOCAL",
+      "new_status": "FAILED_LOCAL",
+      "old_open_blocking_ids": [
+        "dominated_convergence_bound"
+      ],
+      "new_open_blocking_ids": [],
+      "old_status_counts": {
+        "open": 1
+      },
+      "new_status_counts": {
+        "proved": 1
+      },
+      "status_changed": false
+    },
+    "obl_thm_14_5_finite_prefix_tail_bound": {
+      "proof_obligations_file": "phase2_prompt_packs/obl_thm_14_5_finite_prefix_tail_bound/proof_obligations.json",
+      "old_status": "FAILED_LOCAL",
+      "new_status": "FAILED_LOCAL",
+      "old_open_blocking_ids": [
+        "finite_prefix_tail_bound"
+      ],
+      "new_open_blocking_ids": [],
+      "old_status_counts": {
+        "open": 1
+      },
+      "new_status_counts": {
+        "proved": 1
+      },
+      "status_changed": false
+    },
+    "obl_thm_14_5_fubini_identity": {
+      "proof_obligations_file": "phase2_prompt_packs/obl_thm_14_5_fubini_identity/proof_obligations.json",
+      "old_status": "FAILED_LOCAL",
+      "new_status": "FAILED_LOCAL",
+      "old_open_blocking_ids": [
+        "fubini_identity"
+      ],
+      "new_open_blocking_ids": [],
+      "old_status_counts": {
+        "open": 1
+      },
+      "new_status_counts": {
+        "proved": 1
+      },
+      "status_changed": false
+    },
+    "obl_thm_14_5_inner_integral_identity": {
+      "proof_obligations_file": "phase2_prompt_packs/obl_thm_14_5_inner_integral_identity/proof_obligations.json",
+      "old_status": "FAILED_LOCAL",
+      "new_status": "FAILED_LOCAL",
+      "old_open_blocking_ids": [
+        "inner_integral_identity"
+      ],
+      "new_open_blocking_ids": [],
+      "old_status_counts": {
+        "open": 1
+      },
+      "new_status_counts": {
+        "proved": 1
+      },
+      "status_changed": false
+    },
+    "obl_thm_14_5_kernel_tail_lower_bound": {
+      "proof_obligations_file": "phase2_prompt_packs/obl_thm_14_5_kernel_tail_lower_bound/proof_obligations.json",
+      "old_status": "FAILED_LOCAL",
+      "new_status": "FAILED_LOCAL",
+      "old_open_blocking_ids": [
+        "kernel_tail_lower_bound"
+      ],
+      "new_open_blocking_ids": [],
+      "old_status_counts": {
+        "open": 1
+      },
+      "new_status_counts": {
+        "proved": 1
+      },
+      "status_changed": false
+    },
+    "obl_thm_14_5_tail_bound_by_averaged_characteristic": {
+      "proof_obligations_file": "phase2_prompt_packs/obl_thm_14_5_tail_bound_by_averaged_characteristic/proof_obligations.json",
+      "old_status": "FAILED_LOCAL",
+      "new_status": "FAILED_LOCAL",
+      "old_open_blocking_ids": [
+        "tail_bound_by_averaged_characteristic"
+      ],
+      "new_open_blocking_ids": [],
+      "old_status_counts": {
+        "open": 1
+      },
+      "new_status_counts": {
+        "proved": 1
+      },
+      "status_changed": false
+    },
+    "obl_thm_14_5_uniform_tail_bound": {
+      "proof_obligations_file": "phase2_prompt_packs/obl_thm_14_5_uniform_tail_bound/proof_obligations.json",
+      "old_status": "FAILED_LOCAL",
+      "new_status": "FAILED_LOCAL",
+      "old_open_blocking_ids": [
+        "uniform_tail_bound"
+      ],
+      "new_open_blocking_ids": [],
+      "old_status_counts": {
+        "open": 1
+      },
+      "new_status_counts": {
+        "proved": 1
+      },
+      "status_changed": false
+    }
+  },
+  "skipped_tasks": {}
+}

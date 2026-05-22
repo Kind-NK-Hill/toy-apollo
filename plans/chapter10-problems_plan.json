@@ -1,0 +1,128 @@
+[
+    {
+        "block_id": "prob_10_1",
+        "type": "Problem",
+        "title": "Almost Sure Convergence Tail Characterization",
+        "content": "\\textbf{10.1.} Prove that a sequence of random variables $(X_k)_{k\\geq 1}$ converges to $X$ a.s. if and only if for each $\\epsilon>0$,\n\\[\n\\lim_{n\\to\\infty}P(\\lvert X_k-X\\rvert\\leq \\epsilon\\text{ for all }k\\geq n)=1.\n\\]",
+        "dependencies": [
+            "def_10_1",
+            "thm_10_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-problems"
+    },
+    {
+        "block_id": "prob_10_2",
+        "type": "Problem",
+        "title": "Bernoulli Convergence in Probability and Almost Surely",
+        "content": "\\textbf{10.2.} For $n\\geq 1$, let $X_n$ be independent Bernoulli random variable with distribution\n\\[\n\\operatorname{Pr}(X_n=1)=p_n\n\\qquad\\text{and}\\qquad\n\\operatorname{Pr}(X_n=0)=1-p_n,\n\\]\nwhere $p_n$ is a real number between $0$ and $1$.\n\\begin{enumerate}\n\\item Show that $(X_n)_{n\\geq 1}$ converges to $0$ in probability if and only if $\\lim_{n\\to\\infty}p_n=0$.\n\\item Show that $(X_n)_{n\\geq 1}$ converges to $0$ a.s. if and only if $\\sum_{n=1}^{\\infty}p_n$ is finite.\n\\end{enumerate}",
+        "dependencies": [
+            "def_10_1",
+            "def_10_2",
+            "thm_5_8",
+            "thm_5_9"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-problems"
+    },
+    {
+        "block_id": "prob_10_3",
+        "type": "Problem",
+        "title": "Distribution Convergence to a Constant Implies Probability Convergence",
+        "content": "\\textbf{10.3.} Prove that if a sequence of random variables $(X_k)_{k\\geq 1}$ converges in distribution to $X$ that satisfies $P(X=c)=1$ for some constant $c$, then $X_k\\to X$ in probability.",
+        "dependencies": [
+            "def_10_2",
+            "def_10_4",
+            "thm_10_7"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-problems"
+    },
+    {
+        "block_id": "prob_10_4",
+        "type": "Problem",
+        "title": "Convergence in Probability After Deterministic Centering",
+        "content": "\\textbf{10.4.} Suppose $(X_n)_{n=1}^{\\infty}$ is a sequence of random variables and $(a_n)_{n=1}^{\\infty}$ is a sequence of real numbers such that $X_n-a_n\\xrightarrow{P}0$ and $\\lim_{n\\to\\infty}a_n=c$. Deduce that $X_n\\xrightarrow{P}c$.",
+        "dependencies": [
+            "def_10_2",
+            "thm_10_12"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-problems"
+    },
+    {
+        "block_id": "prob_10_5",
+        "type": "Problem",
+        "title": "Dominated Probability Convergence Implies Mean Convergence",
+        "content": "\\textbf{10.5.} Suppose $X_n\\to 0$ in probability. Show that if $\\lvert X_n\\rvert\\leq Y$ for an integrable random variable $Y$ for all $n$, then $X_n\\to 0$ in the mean.",
+        "dependencies": [
+            "def_10_2",
+            "def_10_3",
+            "thm_7_5"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-problems"
+    },
+    {
+        "block_id": "prob_10_6",
+        "type": "Problem",
+        "title": "Distribution Convergence on a Countable Space",
+        "content": "\\textbf{10.6.} Suppose the sample space $\\Omega$ is a countable set. Prove that $\\mu_n\\xrightarrow{D}\\mu$ if and only if $\\mu_n(\\{x\\})\\to\\mu(\\{x\\})$ as $n\\to\\infty$ for all $x\\in\\Omega$.",
+        "dependencies": [
+            "def_10_4"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-problems"
+    },
+    {
+        "block_id": "prob_10_7",
+        "type": "Problem",
+        "title": "Rare Perturbations of a Discrete Random Variable",
+        "content": "\\textbf{10.7.} Let $X$ be a discrete random variable with distribution\n\\[\nP(X=-1)=P(X=1)=\\frac{1}{2},\n\\]\nand let $(U_n)_{n\\geq 1}$ be a sequence of i.i.d. random variables uniformly distributed between $0$ and $1$. Assume that $X$ and $(U_n)_{n\\geq 1}$ are independent. For $n=1,2,\\ldots$, define\n\\[\nY_n=\n\\begin{cases}\nX, & U_n\\geq 1/n^2,\\\\\n\\pi n, & U_n<1/n^2.\n\\end{cases}\n\\]\nDetermine whether $(Y_n)_{n\\geq 1}$ converges to $X$ (i) in probability, (ii) almost surely, (iii) in mean square.",
+        "dependencies": [
+            "def_10_1",
+            "def_10_2",
+            "def_10_3",
+            "thm_5_8",
+            "thm_5_9"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-problems"
+    },
+    {
+        "block_id": "prob_10_8",
+        "type": "Problem",
+        "title": "Discrete Variables Converging in Distribution",
+        "content": "\\textbf{10.8.} For each $n=1,2,3,\\ldots$, let $X_n$ denote a discrete random variable whose value is uniformly distributed on\n\\[\n\\{k^2/n^2:k=1,2,\\ldots,n\\}.\n\\]\nProve that the random variables $X_n$'s converge in distribution, and find the distribution in the limit.",
+        "dependencies": [
+            "def_10_4"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-problems"
+    },
+    {
+        "block_id": "prob_10_9",
+        "type": "Problem",
+        "title": "Scaled Geometric Variables Converge to Exponential",
+        "content": "\\textbf{10.9.} Let $X_n$ be geometrically distributed random variable with pmf\n\\[\nP(X_n=k)=\\frac{1}{n}\\left(1-\\frac{1}{n}\\right)^{k-1},\n\\qquad k=1,2,3,\\ldots.\n\\]\nShow that $X_n/n$ converges to the exponential distribution with mean $1$ in distribution.",
+        "dependencies": [
+            "def_10_4"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-problems"
+    },
+    {
+        "block_id": "prob_10_10",
+        "type": "Problem",
+        "title": "Slutsky Theorem",
+        "content": "\\textbf{10.10.} (Slutsky Theorem) Suppose $X_n\\xrightarrow{D}X$ and $Y_n\\xrightarrow{D}c$ for some constant $c$. Assume that $X_n$ and $Y_n$ are defined on the same probability space for each $n$. Prove:\n\\begin{enumerate}\n\\item $X_n+Y_n\\xrightarrow{D}X+c$.\n\\item $X_nY_n\\xrightarrow{D}cX$.\n\\end{enumerate}\nHint: Use Exercise 10.3 and proceed as in the proof of Theorem 10.7.",
+        "dependencies": [
+            "prob_10_3",
+            "thm_10_7",
+            "thm_10_12",
+            "def_10_4"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-problems"
+    }
+]

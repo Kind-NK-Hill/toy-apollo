@@ -1,0 +1,47 @@
+[
+    {
+        "block_id": "prob_12_1",
+        "type": "Problem",
+        "title": "Problem 12.1",
+        "content": "\\textbf{12.1.} Derive the parallelogram lawu+ v2\n\n2 + u- v2\n\n2 =2 u2\n\n2 + 2v2\n\n2, which\n\nholds for any vectors u and v in a Hilbert space with L 2 norm\\cdot 2.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter12-problems"
+    },
+    {
+        "block_id": "prob_12_2",
+        "type": "Problem",
+        "title": "Problem 12.2",
+        "content": "\\textbf{12.2.} Consider an inner product space with induced L 2 norm denoted by\\cdot 2.\n\n(a) Prove the continuity of the L 2 norm, that is, if (X k)k\\geq 1 is a sequence in the\n\ninner product space such that Xk - X2 \\to 0f o r s o m e X as n \\to\\infty , then\n\nlimn\\to\\infty Xk2 = X2.\n\n(b) Let (X k)k\\geq 1 be a Cauchy sequence. Show that the L 2 norms of the sequence are\n\nbounded, ie., there exists a real number M such thatXk2 \\leqM for all k .\n\n(c) Suppose the Cauchy (X k)k\\geq 1 in part (b) converges to X in L 2 norm. Prove that\n\nX2 is finite.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter12-problems"
+    },
+    {
+        "block_id": "prob_12_3",
+        "type": "Problem",
+        "title": "Problem 12.3",
+        "content": "\\textbf{12.3.} Denote the pdf of the exponential distribution with mean 1 by\n\nf( x) =\n\n{\n\ne-x if x> 0\n\n0 otherwise.\n\nDefine an inner product \\langleg, h\\rangle\\coloneqq\n\n\\int\\infty\n\n0 g(x)h(x)f (x) dx for two functions g(x) and\n\nh(x)Compute the projection of the square function g(x) = x2 onto the subspace\n\nthat consists of constant functions.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter12-problems"
+    },
+    {
+        "block_id": "prob_12_4",
+        "type": "Problem",
+        "title": "Problem 12.4",
+        "content": "\\textbf{12.4.} Consider a finite sample space \\Omega ={ a, b, c, d, e} with a uniform probability\n\nmeasure. Define two random variables X and Y by\n\na b c d e\n\nX() 1 2 1 2 3\n\nY() 1 2 3 4 5\n\n(a) Derive the MMSE estimator of Y as a function of X.\n\n(b) Derive the MMSE estimator of X as a function of Y .",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter12-problems"
+    },
+    {
+        "block_id": "prob_12_5",
+        "type": "Problem",
+        "title": "Problem 12.5",
+        "content": "\\textbf{12.5.} We model the temperature in a forest by a random variable X. Suppose that\n\nthe mean \\mu and the variance \\sigma2\n\n0 are known. The temperature is measured by a\n\nsensor. The output of the sensor Y 1 = X + N1 is corrupted by Gaussian noise\n\nN1 N( 0,\\sigma 2\n\n1 )Assume that N1 and X are independent, and the variance \\sigma2\n\n1 is\n\nknown.\n\n(a) We can estimate X by \\alpha(Y1 - \\mu)+\\mu. Find the optimal choice of constant \\alpha that\n\nminimizes the mean-squared error E[(X - \\mu - \\alpha(Y1 - \\mu))2].\n\n(b) We install another temperature sensor. The measurement of the second sensor is\n\nY2 = X + N2, where N2 N(0,\\sigma 2\n\n2 )Assume X, N1, and N2 are independent,\n\nand the variance \\sigma 2\n\n2 is known. Find the optimal values of \\alpha and \\beta that minimize\n\nE[(X - \\mu - \\alpha(Y1 - \\mu) - \\beta(Y2 - \\mu))2].",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter12-problems"
+    }
+]

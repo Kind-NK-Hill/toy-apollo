@@ -1,0 +1,179 @@
+{
+  "generated_at": "2026-05-22T00:29:09.946953Z",
+  "scope": {
+    "start_chapter": 9,
+    "end_chapter": 14,
+    "include_tasks": [
+      "thm_6_7__lemma_1"
+    ],
+    "check_build": true,
+    "only_tasks": [
+      "thm_6_7__lemma_1"
+    ],
+    "only_buckets": []
+  },
+  "summary": {
+    "unfinished_or_verify_count": 1,
+    "blocking_unfinished_count": 0,
+    "verification_only_count": 1,
+    "orphan_output_count": 10,
+    "reason_counts": {
+      "critical_ch6_bridge_verify": 1
+    },
+    "bucket_counts": {
+      "critical_bridge_verification": 1
+    },
+    "build_status_counts": {
+      "ok": 1
+    },
+    "status_counts": {
+      "COMPLETED": 1
+    },
+    "chapter_counts": {
+      "6": 1
+    },
+    "open_obligation_kind_counts": {},
+    "open_interface_obligation_count": 0,
+    "structural_field_landing_count": 0,
+    "theorem_wrapper_structural_count": 0,
+    "empty_landing_count": 0,
+    "ledger_only_child_obligation_count": 0,
+    "clean_debt_error_task_count": 7
+  },
+  "items": [
+    {
+      "task_id": "thm_6_7__lemma_1",
+      "chapter": 6,
+      "status": "COMPLETED",
+      "file": "ToyApollo/Output/thm_6_7__lemma_1.lean",
+      "output_exists": true,
+      "open_blocking_ids": [],
+      "open_obligation_details": [],
+      "accepted_proof_debt_count": 0,
+      "reasons": [
+        "critical_ch6_bridge_verify"
+      ],
+      "action_bucket": "critical_bridge_verification",
+      "next_action": "Build-check the Chapter 6 bridge and keep it in the report as a critical dependency, even though it is already completed.",
+      "build": {
+        "checked": true,
+        "status": "ok",
+        "exit_code": 0,
+        "stderr_tail": "",
+        "stdout_tail": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\ToyApollo\\Output\\thm_6_7__lemma_1.lean:31:8: warning: The declaration 'thm_6_7__lemma_1' contains '__', which does not follow the mathlib naming conventions. Consider using single underscores instead.\n\nNote: This linter can be disabled with `set_option linter.style.nameCheck false`\n"
+      }
+    }
+  ],
+  "repair_batches": [
+    {
+      "bucket": "critical_bridge_verification",
+      "count": 1,
+      "task_ids": [
+        "thm_6_7__lemma_1"
+      ],
+      "next_action": "Build-check the Chapter 6 bridge and keep it in the report as a critical dependency, even though it is already completed."
+    }
+  ],
+  "orphan_outputs": [
+    {
+      "task_id": "thm_9_5_dirichlet",
+      "chapter": 9,
+      "file": "ToyApollo/Output/thm_9_5_dirichlet.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_9_5_fubini",
+      "chapter": 9,
+      "file": "ToyApollo/Output/thm_9_5_fubini.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_9_5_kernel",
+      "chapter": 9,
+      "file": "ToyApollo/Output/thm_9_5_kernel.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "prob_10_10_distribution_bridge",
+      "chapter": 10,
+      "file": "ToyApollo/Output/prob_10_10_distribution_bridge.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_10_8_inverse_comparison",
+      "chapter": 10,
+      "file": "ToyApollo/Output/thm_10_8_inverse_comparison.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_10_8_quantile_convergence",
+      "chapter": 10,
+      "file": "ToyApollo/Output/thm_10_8_quantile_convergence.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_10_8_quantile_defs",
+      "chapter": 10,
+      "file": "ToyApollo/Output/thm_10_8_quantile_defs.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_10_8_quantile_law",
+      "chapter": 10,
+      "file": "ToyApollo/Output/thm_10_8_quantile_law.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_10_8_quantile_space",
+      "chapter": 10,
+      "file": "ToyApollo/Output/thm_10_8_quantile_space.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_14_4_dominating_measure",
+      "chapter": 14,
+      "file": "ToyApollo/Output/thm_14_4_dominating_measure.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    }
+  ]
+}

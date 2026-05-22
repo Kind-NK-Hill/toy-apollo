@@ -8,19 +8,24 @@ from typing import Any
 
 from src.block_id_naming import canonicalize_block_id
 
-from .core import LedgerManager
+from .core import LedgerManager, TaskStatus
 from .phase2_pack_shared.artifacts import (
     AUTO_LOOP_PHASES,
     AUTO_LOOP_STATUSES,
     AUTO_LOOP_STOP_REASONS,
     DRAFT_FILE_NAME,
+    find_existing_task_file,
     latest_review_repair_request_path,
     list_versioned_json_files,
     load_attempt_history,
+    next_review_repair_attempt,
     next_pre_repair_draft_path,
+    review_repair_request_path,
+    review_repair_summary_path,
     select_latest_verify_result,
+    select_latest_official_snapshot,
 )
-from .phase2_pack_shared.io import read_file_safely, read_json_safely, sha256_text
+from .phase2_pack_shared.io import read_file_safely, read_json_safely, sha256_json, sha256_text, write_json
 from .phase2_pack_shared.runtime_state import (
     append_review_repair_summary_note,
     auto_loop_attempt_payload as _shared_auto_loop_attempt_payload,
@@ -40,11 +45,14 @@ from .phase2_review_apply import (
     apply_codex_review_result_once,
 )
 from .phase2_review_request import _load_current_codex_review_request, _resolve_review_binding_path
+from .phase2_review_request import _clear_current_review_metadata
 from .phase2_semantic_review import SEMANTIC_REVIEW_PROMPT_VERSION, SEMANTIC_REVIEW_RUBRIC_VERSION
+from .phase2_proof_obligations import proof_obligation_path, summarize_proof_obligations
 from .phase2_pack_generation import (
     backfill_semantic_repair_history_from_request,
     build_check_prompt_pack_candidate as run_build_check_cycle,
     ensure_task_registered,
+    hard_dependency_proof_debt_blocker_message,
     resolve_phase2_task,
     write_codex_review_pack as prepare_candidate_review,
     write_existing_output_review_pack as prepare_existing_review,
@@ -530,6 +538,271 @@ def _load_current_review_repair_request(
     }
 
 
+def _accepted_proof_debt_obligations(proof_obligations: dict[str, Any]) -> list[dict[str, Any]]:
+    debts: list[dict[str, Any]] = []
+    raw_obligations = proof_obligations.get("obligations", [])
+    if not isinstance(raw_obligations, list):
+        return debts
+    for item in raw_obligations:
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("status", "") or "").strip().lower() != "accepted_as_proof_debt":
+            continue
+        debts.append(item)
+    return debts
+
+
+def _debt_fix_blocker(obligation: dict[str, Any]) -> dict[str, str]:
+    obligation_id = str(obligation.get("id", "") or obligation.get("obligation_id", "") or "").strip()
+    title = str(obligation.get("title", "") or obligation_id or "accepted proof debt").strip()
+    kind = str(obligation.get("kind", "") or "").strip()
+    landing = str(obligation.get("lean_landing", "") or "").strip()
+    alignment = _source_output_alignment_message(obligation)
+    issue_parts = [f"discharge accepted proof debt `{title}`"]
+    if kind:
+        issue_parts.append(f"kind={kind}")
+    if landing:
+        issue_parts.append(f"Lean landing: {landing}")
+    if alignment:
+        issue_parts.append(alignment)
+    return {"obligation_id": obligation_id, "issue": "; ".join(issue_parts)}
+
+
+def _source_output_alignment_message(obligation: dict[str, Any]) -> str:
+    alignment = obligation.get("source_output_alignment", {})
+    if not isinstance(alignment, dict) or not alignment:
+        return ""
+    audit_class = str(alignment.get("audit_class", "") or "unclassified").strip()
+    family = str(alignment.get("family", "") or "unclassified").strip()
+    next_action = str(alignment.get("next_action", "") or "").strip()
+    existing = alignment.get("existing_local_declarations", [])
+    missing = alignment.get("missing_landing_names", [])
+    parts = [f"source-output alignment={audit_class}/{family}"]
+    if isinstance(existing, list) and existing:
+        names = [
+            str(item.get("name", "") or "")
+            for item in existing
+            if isinstance(item, dict) and str(item.get("name", "") or "")
+        ]
+        if names:
+            parts.append("existing local declarations: " + ", ".join(names))
+    if isinstance(missing, list) and missing:
+        parts.append("missing landing names: " + ", ".join(str(name) for name in missing))
+    if next_action:
+        parts.append("next action: " + next_action)
+    return "; ".join(parts)
+
+
+def _debt_fix_must_fix_items(debt_obligations: list[dict[str, Any]]) -> list[str]:
+    must_fix: list[str] = []
+    for obligation in debt_obligations:
+        obligation_id = str(obligation.get("id", "") or obligation.get("obligation_id", "") or "").strip()
+        title = str(obligation.get("title", "") or obligation_id or "accepted proof debt").strip()
+        kind = str(obligation.get("kind", "") or "").strip()
+        landing = str(obligation.get("lean_landing", "") or "").strip()
+        alignment = _source_output_alignment_message(obligation)
+        message = f"Discharge accepted proof debt `{obligation_id or title}`: {title}."
+        if kind and kind != "proof_debt_support":
+            message += f" This is a legacy `{kind}` item carrying `accepted_as_proof_debt`; either prove it directly or reclassify the remaining support precisely."
+        if landing:
+            message += f" Replace or remove the debt landing `{landing}` with proved Lean evidence."
+        if alignment:
+            message += f" Use the recorded {alignment}."
+        must_fix.append(message)
+        for scaffold in obligation.get("scaffold_hypotheses", []) if isinstance(obligation.get("scaffold_hypotheses", []), list) else []:
+            if not isinstance(scaffold, dict):
+                continue
+            discharge_plan = str(scaffold.get("discharge_plan", "") or "").strip()
+            name = str(scaffold.get("name", "") or "").strip()
+            if discharge_plan:
+                label = f" `{name}`" if name else ""
+                must_fix.append(f"Follow the recorded discharge plan for{label}: {discharge_plan}")
+    return must_fix or ["Discharge accepted proof debt and rerun the normal build/review/apply loop."]
+
+
+def _debt_fix_seed_file(task: dict[str, Any], ledger: LedgerManager, settings, pack_dir: Path) -> Path | None:
+    task_id = task["block_id"]
+    source_plan = str(task.get("source_plan", "") or ledger.ledger.get("tasks", {}).get(task_id, {}).get("source_plan", "") or "")
+    output_path = find_existing_task_file(task_id, source_plan, settings)
+    if output_path is not None and output_path.exists():
+        return output_path
+    latest_snapshot = select_latest_official_snapshot(pack_dir)
+    if latest_snapshot is not None and latest_snapshot.exists():
+        return latest_snapshot
+    return None
+
+
+async def run_codex_debt_fix(task_id: str, ledger: LedgerManager, settings) -> tuple[bool, str]:
+    task = ensure_task_registered(resolve_phase2_task(task_id, ledger, settings), ledger)
+    task_id = task["block_id"]
+    proof_debt_blocker = hard_dependency_proof_debt_blocker_message(task, ledger)
+    if proof_debt_blocker:
+        return False, proof_debt_blocker
+    pack_dir = settings.phase2_prompt_packs_dir / task_id
+    if not pack_dir.exists():
+        return False, f"Phase 2 prompt pack does not exist for debt-fix: {task_id}"
+
+    obligations_path = proof_obligation_path(pack_dir)
+    proof_obligations = read_json_safely(obligations_path, {})
+    if not isinstance(proof_obligations, dict):
+        return False, f"Proof obligations JSON is missing or invalid for debt-fix: {obligations_path}"
+
+    debt_obligations = _accepted_proof_debt_obligations(proof_obligations)
+    if not debt_obligations:
+        refresh_pack_runtime_view(task, ledger, settings, pack_dir)
+        return True, f"No accepted proof debt found for {task_id}; no debt-fix repair cycle was created."
+
+    seed_path = _debt_fix_seed_file(task, ledger, settings, pack_dir)
+    if seed_path is None:
+        return False, f"No official output or official snapshot is available to seed debt-fix for {task_id}."
+
+    seed_text = read_file_safely(seed_path)
+    if not seed_text:
+        return False, f"Debt-fix seed file is empty or unreadable: {seed_path}"
+
+    attempt = next_review_repair_attempt(pack_dir)
+    input_path = pack_dir / f"proof_debt_repair_input_v{attempt}.json"
+    result_path = pack_dir / f"proof_debt_repair_result_v{attempt}.json"
+    report_path = pack_dir / f"proof_debt_repair_report_v{attempt}.md"
+    request_path = review_repair_request_path(pack_dir, attempt)
+    summary_path = review_repair_summary_path(pack_dir, attempt)
+
+    proof_summary = summarize_proof_obligations(proof_obligations)
+    review_basis = {
+        "proof_obligations_file": str(obligations_path),
+        "proof_obligations": proof_obligations,
+        "proof_obligation_summary": proof_summary,
+        "forbidden_weakenings": [
+            "Do not leave an accepted proof-debt support parameter or scaffold as the final discharge.",
+            "Do not hide the deferred mathematics behind an interface_translation.",
+        ],
+    }
+    review_basis_hash = sha256_json(review_basis)
+    seed_hash = sha256_text(seed_text)
+    review_input = {
+        "schema_version": "phase2.proof_debt_repair.input.v1",
+        "task": task,
+        "attempt": attempt,
+        "prompt_version": SEMANTIC_REVIEW_PROMPT_VERSION,
+        "rubric_version": SEMANTIC_REVIEW_RUBRIC_VERSION,
+        "review_subject_kind": "official_output",
+        "review_subject_file": str(seed_path),
+        "review_subject_hash": seed_hash,
+        "candidate": {"file": str(seed_path), "hash": seed_hash, "lean": seed_text},
+        "review_basis": review_basis,
+        "review_basis_hash": review_basis_hash,
+    }
+    review_input["review_input_hash"] = sha256_json(review_input)
+    blockers = [_debt_fix_blocker(item) for item in debt_obligations]
+    review_result = {
+        "schema_version": "phase2.semantic_review.result.v3",
+        "task_id": task_id,
+        "verdict": "inconclusive",
+        "confidence": "high",
+        "summary": "Accepted proof debt remains and has been converted into a debt-fix repair cycle.",
+        "candidate_hash": seed_hash,
+        "prompt_version": SEMANTIC_REVIEW_PROMPT_VERSION,
+        "rubric_version": SEMANTIC_REVIEW_RUBRIC_VERSION,
+        "review_input_hash": review_input["review_input_hash"],
+        "review_input_file": str(input_path),
+        "obligation_review": {
+            "status": "partial",
+            "summary": "Accepted proof-debt obligations must be discharged before this task can be cleanly completed.",
+            "items": [
+                {
+                    "obligation_id": str(item.get("id", "") or item.get("obligation_id", "") or ""),
+                    "status": "missing",
+                    "evidence": "The prior pass accepted this item as explicit proof debt; debt-fix requires a real discharge.",
+                }
+                for item in debt_obligations
+            ],
+            "open_blockers": blockers,
+            "scaffold_assessment": [],
+        },
+        "findings": [
+            {
+                "severity": "warning",
+                "category": "proof_debt",
+                "message": "Accepted proof debt is visible and must be replaced by proved Lean evidence for clean completion.",
+            }
+        ],
+        "recommended_disposition": "revise",
+    }
+    write_json(input_path, review_input)
+    write_json(result_path, review_result)
+    report_path.write_text(
+        "\n".join(
+            [
+                f"# Proof Debt Repair Report for {task_id}",
+                "",
+                "Accepted proof debt remains. This synthetic repair report exists only to bind the normal review-fix workflow to a debt-discharge cycle.",
+                "",
+                "## Debt Items",
+                "",
+                *[f"- `{item.get('id', '')}`: {item.get('title', '') or item.get('source_ref', '')}" for item in debt_obligations],
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    result_hash = sha256_text(result_path.read_text(encoding="utf-8"))
+    request_payload = {
+        "schema_version": "phase2.review_repair.request.v1",
+        "task_id": task_id,
+        "repair_trigger": "proof_debt",
+        "origin_review_mode": "debt-fix",
+        "origin_review_attempt": attempt,
+        "review_subject_kind": "official_output",
+        "failed_verdict": "inconclusive",
+        "failed_review_input_file": str(input_path),
+        "failed_review_result_file": str(result_path),
+        "failed_review_report_file": str(report_path),
+        "failed_review_subject_file": str(seed_path),
+        "failed_review_subject_hash": seed_hash,
+        "review_basis_hash": review_basis_hash,
+        "review_result_hash": result_hash,
+        "origin_prompt_version": SEMANTIC_REVIEW_PROMPT_VERSION,
+        "origin_rubric_version": SEMANTIC_REVIEW_RUBRIC_VERSION,
+        "origin_result_schema_version": "phase2.semantic_review.result.v3",
+        "source_task_content": str(task.get("content", "") or ""),
+        "must_fix": _debt_fix_must_fix_items(debt_obligations),
+        "must_preserve": [f"Preserve the original task statement: {str(task.get('content', '') or '').strip()}"],
+        "forbidden_shortcuts": review_basis["forbidden_weakenings"],
+        "proof_obligations_file": str(obligations_path),
+        "proof_obligation_summary": proof_summary,
+        "proof_obligation_blockers": blockers,
+        "obligation_review": review_result["obligation_review"],
+        "scaffold_hypotheses": proof_obligations.get("scaffold_hypotheses", []) if isinstance(proof_obligations, dict) else [],
+        "downstream_blockers": [],
+        "next_draft_seed_file": str(seed_path),
+    }
+    write_json(request_path, request_payload)
+    summary_path.write_text(_render_review_repair_summary(request_payload), encoding="utf-8")
+    _sync_current_review_repair_aliases(pack_dir, request_path=request_path, summary_path=summary_path)
+    _clear_current_review_metadata(task_id, ledger)
+    ledger.update_runtime_metadata(
+        task_id,
+        proof_obligations_file=str(obligations_path),
+        proof_obligation_summary=proof_summary,
+        latest_review_repair_request_file=str(request_path),
+        latest_review_repair_summary_file=str(summary_path),
+    )
+    current_status = str(ledger.ledger.get("tasks", {}).get(task_id, {}).get("status", "") or "")
+    if current_status == TaskStatus.COMPLETED.value:
+        ledger.update_status(task_id, TaskStatus.COMPLETED_WITH_PROOF_DEBT)
+    _set_current_review_repair_metadata(
+        task_id,
+        ledger,
+        request_file=str(request_path),
+        summary_file=str(summary_path),
+        seed_file=str(seed_path),
+        origin_result_file=str(result_path),
+    )
+    refresh_pack_runtime_view(task, ledger, settings, pack_dir)
+    return True, f"Debt-fix repair cycle prepared for {task_id}: {request_path}"
+
+
 async def apply_codex_review_result_with_continuation(
     task_id: str,
     ledger: LedgerManager,
@@ -555,6 +828,9 @@ async def run_codex_review_now(
 ) -> tuple[bool, str]:
     task = ensure_task_registered(resolve_phase2_task(task_id, ledger, settings), ledger)
     task_id = task["block_id"]
+    proof_debt_blocker = hard_dependency_proof_debt_blocker_message(task, ledger)
+    if proof_debt_blocker:
+        return False, proof_debt_blocker
     pack_dir = settings.phase2_prompt_packs_dir / task_id
     if not pack_dir.exists():
         pack_dir = prepare_prompt_dir(task_id, ledger, settings, task=task)
@@ -621,6 +897,9 @@ async def run_codex_review_fix(
 ) -> tuple[bool, str]:
     task = ensure_task_registered(resolve_phase2_task(task_id, ledger, settings), ledger)
     task_id = task["block_id"]
+    proof_debt_blocker = hard_dependency_proof_debt_blocker_message(task, ledger)
+    if proof_debt_blocker:
+        return False, proof_debt_blocker
     pack_dir = settings.phase2_prompt_packs_dir / task_id
     if not pack_dir.exists():
         return False, f"Phase 2 prompt pack does not exist for review-fix: {task_id}"
@@ -716,6 +995,9 @@ async def run_codex_auto_loop(
 ) -> tuple[bool, str]:
     task = ensure_task_registered(resolve_phase2_task(task_id, ledger, settings), ledger)
     task_id = task["block_id"]
+    proof_debt_blocker = hard_dependency_proof_debt_blocker_message(task, ledger)
+    if proof_debt_blocker:
+        return False, proof_debt_blocker
     pack_dir = settings.phase2_prompt_packs_dir / task_id
     if not pack_dir.exists():
         pack_dir = prepare_prompt_dir(task_id, ledger, settings, task=task)

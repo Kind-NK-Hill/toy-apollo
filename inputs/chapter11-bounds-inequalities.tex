@@ -1,0 +1,184 @@
+\section*{Laws of Large Numbers}
+
+\subsection*{11.1 Some Useful Bounds and Inequalities}
+
+11Laws of Large Numbers
+
+The laws of large numbers give operational meaning to the expectation of a random
+
+variable. If we generate independent realizations of a random variable and compute
+
+their mean, the weak law of large numbers states that the sample mean converges
+
+to the expected value in probability as we increase the number of samples. In
+
+this chapter, we present two versions of the weak law of large numbers. The first
+
+one assumes that the random variables have finite variance, while the second one
+
+assumes that the mean is finite.
+
+The weak law has numerous applications. We discuss two sample applications:
+
+Monte Carlo integration and data compression. Monte Carlo integration is a simple
+
+but effective method for approximating integral in high dimensions, which arises
+
+in financial computations. Data compression is a topic in information theory. The
+
+fundamental result by Shannon on data compression is based on the weak law of
+
+large numbers. We end this chapter with a version of the strong law of large number
+
+that assumes the fourth moments of the random variables are finite.
+
+The first inequality is the complex version of Cauchy-Schwarz inequality. In the
+
+next theorem,X* denote the complex conjugate of X .
+
+\begin{thmbox}{11.1 (Cauchy-Schwarz Inequality)}
+\end{thmbox}
+
+For complex-valued random variables X and Y in L2, the expectation
+
+E[X*Y] is well-defined, and
+
+\vertE[X*Y]\vert \leq
+
+\sqrt
+
+E[\vertX\vert2]E[\vertY\vert 2] (11.1)
+
+holds, with equality holding iff X and Y are scalar multiple of each other with
+
+probability 1. When X and Y are real, E[X*Y] is simplified to E[XY ].
+
+\textit{Proof} Let X and Y be complex-valued random variables such that both E[\vertX\vert2]
+
+and E[\vertY\vert2] are finite. We first show that \vertX*Y\vert is integrable. Let A1 be the subset
+
+of \Omega in which \vertX()\vert > \vertY()\vert, and A2 be the subset in which \vertX()\vert\leq\vert Y()\vert.
+
+Then, we have
+
+E[\vertX*Y\vert] =
+
+\int
+
+A1
+
+\vertX*Y\vert+
+
+\int
+
+A2
+
+\vertX*Y\vert\leq
+
+\int
+
+A1
+
+\vertX\vert2 +
+
+\int
+
+A2
+
+\vertY\vert2 \leq E[\vertX\vert2]+ E[\vertY\vert2].
+
+This shows that .
+
+\int
+
+\vertX*Y\vert is finite, and hence, X*Y is integrable.
+
+If E[\vertX\vert2]= 0, then X = 0 almost surely, and hence, X*Y = 0 almost surely.
+
+Both sides of (11.1) are equal to zero. Suppose E[\vertX\vert2] > 0. Define a function
+
+f( z )\coloneqqE[\vertzX + Y\vert2] with z being a complex variable. We can expand it as
+
+f( z )= E[(zX +Y)*(zX +Y)]=\vert z\vert2E[\vertX\vert2]+ z*E[X*Y]+ zE[XY *]+ E[\vertY\vert2].
+
+By completing square, we obtain
+
+f( z )= E[\vertX\vert2]\cdot
+
+\vert\vert\vertz+ E[X*Y]
+
+E[\vertX\vert2]
+
+\vert\vert\vert
+
+- \vertE[X*Y]\vert2
+
+E[\vertX\vert2] +E [\vertY\vert 2].
+
+Since f( z )\geq 0 for all z, the constant term on the right must be nonnegative. This
+
+yields the Cauchy-Schwarz inequality.
+
+When equality holds, then f( z0) = 0 for a particular choice of z0. This implies
+
+thatE[\vertz0X + Y\vert2]= 0, and hence, Y =- z0X almost surely. \hfill $\square$
+
+Note that the proof of Theorem 11.1 does not rely on the assumption that the
+
+underlying measure space is a probability space. The Cauchy-Schwarz inequality
+
+can be derived for a general measure, as long as X and Y are square integrable.
+
+\begin{thmbox}{11.2 (Chebyshev Inequality)}
+\end{thmbox}
+
+If the variance of a real-valued random variable X is finite, then for any
+
+\epsilon> 0,
+
+P(\vertX - E[X]\vert \geq \epsilon)\leq Va r(X)
+
+\epsilon2 .
+
+\textit{Proof} The indicator function .1{\vertX-E[X]\vert\geq\epsilon}() satisfies
+
+1{\vertX-E[X]\vert\geq\epsilon}()\leq (X() - E [X])2/\epsilon2 for all \in \Omega.
+
+Taking the expectation of both sides, we obtain
+
+P( \vertX- E [X]\vert \geq\epsilon)= E [1{\vertX-E[X]\vert\geq\epsilon}] \leq E[(X- E [X])2]
+
+\epsilon2 = Va r(X)
+
+\epsilon2 .
+
+\hfill $\square$
+
+The next result is called Jensen inequality .
+
+\begin{thmbox}{11.3 (Jensen Inequality)}
+\end{thmbox}
+
+Suppose \phi is a convex function and X is a real-valued random variable with
+
+finite mean. Then E[\phi(X)]\geq \phi(E[X]).
+
+\textit{Proof} By the convexity of \phi, at each point x* in the domain of \phi, we can draw a
+
+straight line that touches the graph of \phi at one point, ie., it passes through the point
+
+(x*,\phi( x*)) and lies beneath the graph of \phi(x).
+
+We pick x* =E [X], which is finite by assumption. Let g(x)= ax + b be a
+
+linear function such that g(E[X])= \phi(E [X]) andg(x)\leq \phi(x) for all x I f \phi is not
+
+differentiable at x* =E [X], there could be more than one choice of coefficients a
+
+and b In this case, we just pick one arbitrarily.
+
+By applying the monotonic property of integral, we obtain
+
+E[\phi(X)]\geq E[g(X)]= aE[X]+ bE[1]= aE[X]+ b= \phi(E [X]).
+
+Note that we have used E[1]= 1 in the second last equality. \hfill $\square$

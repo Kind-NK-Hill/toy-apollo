@@ -1,0 +1,437 @@
+# Phase2 Unfinished Task Audit
+
+- Generated at: `2026-05-21T10:35:03.755823Z`
+- Scope: chapters `1`-`14`
+- Extra included tasks: `thm_6_7__lemma_1`
+- Task filter: `(none)`
+- Bucket filter: `(none)`
+- Build checked: `False`
+- Unfinished or verify count: `28`
+- Orphan output count: `280`
+
+## Reason Counts
+
+- `completed_with_proof_debt`: 1
+- `critical_ch6_bridge_verify`: 1
+- `ledger_status:COMPLETED_WITH_PROOF_DEBT`: 1
+- `ledger_status:FAILED_LOCAL`: 25
+- `open_obligations`: 25
+- `public_surface_error`: 13
+
+## Open Obligation Kinds
+
+- `proof_debt_support`: 60
+- `interface-name matches`: 2
+- `ledger-only child obligations`: 60
+
+## Repair Batches
+
+- `critical_bridge_verification` (1): `thm_6_7__lemma_1`
+  - action: Build-check the Chapter 6 bridge and keep it in the report as a critical dependency, even though it is already completed.
+- `public_surface_and_obligations` (12): `prob_11_10, prob_11_6, prob_11_7, prob_11_8, prob_11_9, thm_11_7, ex_13_5_1, thm_13_14, prob_14_5, prob_14_6, thm_14_5, thm_14_6`
+  - action: First remove public Support/Spine parameters, then close the named proof obligations with theorem-level landings.
+- `public_surface_cleanup` (1): `thm_13_13`
+  - action: Remove public Support/Spine parameters or make support-consuming helpers private; no open obligation is recorded.
+- `obligation_resolution` (13): `prob_11_4, ex_14_4_3, prob_14_1, prob_14_10, prob_14_11, prob_14_12, prob_14_2, prob_14_3, prob_14_4, prob_14_7, prob_14_8, prob_14_9, thm_14_7`
+  - action: Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields.
+- `allowed_beyond_book_hygiene` (1): `thm_14_8`
+  - action: Keep only the documented thm_14_8 beyond-book exception and make inherited uses explicit.
+
+## Tasks
+
+- `thm_6_7__lemma_1` ch6 `COMPLETED` `ToyApollo/Output/thm_6_7__lemma_1.lean` `critical_bridge_verification`: `critical_ch6_bridge_verify`
+- `prob_11_10` ch11 `FAILED_LOCAL` `ToyApollo/Output/prob_11_10.lean` `public_surface_and_obligations`: `ledger_status:FAILED_LOCAL`, `open_obligations`, `public_surface_error`
+  - open: `continuous_grid_uniformization`
+  - obligation `continuous_grid_uniformization` `proof_debt_support`: status `open`, landing `(none)`, child `obl_prob_11_10_continuous_grid_uniformization` `COMPLETED` output `False`
+- `prob_11_4` ch11 `FAILED_LOCAL` `ToyApollo/Output/prob_11_4.lean` `obligation_resolution`: `ledger_status:FAILED_LOCAL`, `open_obligations`
+  - open: `density_mean_interface`
+  - obligation `density_mean_interface` `proof_debt_support` interface: status `open`, landing `(none)`, child `obl_prob_11_4_density_mean_interface` `COMPLETED` output `False`
+- `prob_11_6` ch11 `FAILED_LOCAL` `ToyApollo/Output/prob_11_6.lean` `public_surface_and_obligations`: `ledger_status:FAILED_LOCAL`, `open_obligations`, `public_surface_error`
+  - open: `sixth_moment_support`
+  - obligation `sixth_moment_support` `proof_debt_support`: status `open`, landing `(none)`, child `obl_prob_11_6_sixth_moment_support` `COMPLETED` output `False`
+- `prob_11_7` ch11 `FAILED_LOCAL` `ToyApollo/Output/prob_11_7.lean` `public_surface_and_obligations`: `ledger_status:FAILED_LOCAL`, `open_obligations`, `public_surface_error`
+  - open: `variance_decay_support`
+  - obligation `variance_decay_support` `proof_debt_support`: status `open`, landing `(none)`, child `obl_prob_11_7_variance_decay_support` `COMPLETED` output `False`
+- `prob_11_8` ch11 `FAILED_LOCAL` `ToyApollo/Output/prob_11_8.lean` `public_surface_and_obligations`: `ledger_status:FAILED_LOCAL`, `open_obligations`, `public_surface_error`
+  - open: `covariance_decay_support`
+  - obligation `covariance_decay_support` `proof_debt_support`: status `open`, landing `(none)`, child `obl_prob_11_8_covariance_decay_support` `COMPLETED` output `False`
+- `prob_11_9` ch11 `FAILED_LOCAL` `ToyApollo/Output/prob_11_9.lean` `public_surface_and_obligations`: `ledger_status:FAILED_LOCAL`, `open_obligations`, `public_surface_error`
+  - open: `occupancy_moment_calculation`
+  - obligation `occupancy_moment_calculation` `proof_debt_support`: status `open`, landing `(none)`, child `obl_prob_11_9_occupancy_moment_calculation` `COMPLETED` output `False`
+- `thm_11_7` ch11 `FAILED_LOCAL` `ToyApollo/Output/thm_11_7.lean` `public_surface_and_obligations`: `ledger_status:FAILED_LOCAL`, `open_obligations`, `public_surface_error`
+  - open: `fourth_moment_expansion_tail_bound`
+  - obligation `fourth_moment_expansion_tail_bound` `proof_debt_support`: status `open`, landing `h_tail_summability_support : thm_11_7_tailSummabilitySupport P X mu`, child `obl_thm_11_7_fourth_moment_expansion_tail_bound` `COMPLETED` output `False`
+- `ex_13_5_1` ch13 `FAILED_LOCAL` `ToyApollo/Output/ex_13_5_1.lean` `public_surface_and_obligations`: `ledger_status:FAILED_LOCAL`, `open_obligations`, `public_surface_error`
+  - open: `rectangle_area, pi_lambda_extension`
+  - obligation `rectangle_area` `proof_debt_support`: status `open`, landing `ex_13_5_1_rectangle; ex_13_5_1_rectangleAreaSupport`, child `obl_ex_13_5_1_rectangle_area` `COMPLETED` output `False`
+  - obligation `pi_lambda_extension` `proof_debt_support`: status `open`, landing `ex_13_5_1_xCylinder; ex_13_5_1_sigmaXMeasurableSet; ex_13_5_1_piLambdaExtensionSupport`, child `obl_ex_13_5_1_pi_lambda_extension` `COMPLETED` output `False`
+- `thm_13_13` ch13 `COMPLETED` `ToyApollo/Output/thm_13_13.lean` `public_surface_cleanup`: `public_surface_error`
+- `thm_13_14` ch13 `FAILED_LOCAL` `ToyApollo/Output/thm_13_14.lean` `public_surface_and_obligations`: `ledger_status:FAILED_LOCAL`, `open_obligations`, `public_surface_error`
+  - open: `interval_fubini_calculation, pi_lambda_extension`
+  - obligation `interval_fubini_calculation` `proof_debt_support`: status `open`, landing `thm_13_14_closedIntervalCylinder; thm_13_14_intervalFubiniSupport`, child `obl_thm_13_14_interval_fubini_calculation` `COMPLETED` output `False`
+  - obligation `pi_lambda_extension` `proof_debt_support`: status `open`, landing `thm_13_14_verticalCylinder; thm_13_14_sigmaYMeasurableSet; thm_13_14_piLambdaExtensionSupport`, child `obl_thm_13_14_pi_lambda_extension` `COMPLETED` output `False`
+- `ex_14_4_3` ch14 `FAILED_LOCAL` `ToyApollo/Output/ex_14_4_3.lean` `obligation_resolution`: `ledger_status:FAILED_LOCAL`, `open_obligations`
+  - open: `lyapunov_fourth_moment_bound`
+  - obligation `lyapunov_fourth_moment_bound` `proof_debt_support`: status `open`, landing `ex_14_4_3_LyapunovVerification`, child `obl_ex_14_4_3_lyapunov_fourth_moment_bound` `COMPLETED` output `False`
+- `prob_14_1` ch14 `FAILED_LOCAL` `ToyApollo/Output/prob_14_1.lean` `obligation_resolution`: `ledger_status:FAILED_LOCAL`, `open_obligations`
+  - open: `obligation_1, obligation_2, obligation_3, obligation_4, obligation_5`
+  - obligation `obligation_1` `proof_debt_support`: status `open`, landing `prob_14_1_PolyaUrnBetaSetup.polya_white_count_mass / prob_14_1_white_count_mass`, child `obl_prob_14_1_obligation_1` `COMPLETED` output `False`
+  - obligation `obligation_2` `proof_debt_support`: status `open`, landing `prob_14_1_PolyaUrnBetaSetup.fraction_law_from_count / prob_14_1_white_fraction_mass`, child `obl_prob_14_1_obligation_2` `COMPLETED` output `False`
+  - obligation `obligation_3` `proof_debt_support` interface: status `open`, landing `prob_14_1_BetaLawData`, child `obl_prob_14_1_obligation_3` `COMPLETED` output `False`
+  - obligation `obligation_4` `proof_debt_support`: status `open`, landing `prob_14_1_PolyaUrnBetaSetup.stirling_cdf_convergence / prob_14_1_stirling_beta_cdf_convergence`, child `obl_prob_14_1_obligation_4` `COMPLETED` output `False`
+  - obligation `obligation_5` `proof_debt_support`: status `open`, landing `prob_14_1_PolyaUrnBetaSetup.cdf_convergence_to_weak / prob_14_1_white_fraction_converges_to_beta`, child `obl_prob_14_1_obligation_5` `COMPLETED` output `False`
+- `prob_14_10` ch14 `FAILED_LOCAL` `ToyApollo/Output/prob_14_10.lean` `obligation_resolution`: `ledger_status:FAILED_LOCAL`, `open_obligations`
+  - open: `obligation_3, obligation_4`
+  - obligation `obligation_3` `proof_debt_support`: status `open`, landing `prob_14_10_BoundedMomentSetup.weak_to_moment_convergence / prob_14_10_distribution_to_moments`, child `obl_prob_14_10_obligation_3` `COMPLETED` output `False`
+  - obligation `obligation_4` `proof_debt_support`: status `open`, landing `prob_14_10_BoundedMomentSetup.moments_to_mgf_setup`, child `obl_prob_14_10_obligation_4` `COMPLETED` output `False`
+- `prob_14_11` ch14 `FAILED_LOCAL` `ToyApollo/Output/prob_14_11.lean` `obligation_resolution`: `ledger_status:FAILED_LOCAL`, `open_obligations`
+  - open: `obligation_2, obligation_3, obligation_4`
+  - obligation `obligation_2` `proof_debt_support`: status `open`, landing `prob_14_11_CouponRatioTriangularArraySetup.theoremSetup / source_rows_are_independent / source_coupon_collection_law_is_stage_sum`, child `obl_prob_14_11_obligation_2` `COMPLETED` output `False`
+  - obligation `obligation_3` `proof_debt_support`: status `open`, landing `prob_14_11_asymptoticMeanScale / prob_14_11_asymptoticVarianceScale / mean_asymptotic / variance_asymptotic`, child `obl_prob_14_11_obligation_3` `COMPLETED` output `False`
+  - obligation `obligation_4` `proof_debt_support`: status `open`, landing `prob_14_11_CouponRatioTriangularArraySetup.generalized_lyapunov_condition`, child `obl_prob_14_11_obligation_4` `COMPLETED` output `False`
+- `prob_14_12` ch14 `FAILED_LOCAL` `ToyApollo/Output/prob_14_12.lean` `obligation_resolution`: `ledger_status:FAILED_LOCAL`, `open_obligations`
+  - open: `obligation_2, obligation_3, obligation_5`
+  - obligation `obligation_2` `proof_debt_support`: status `open`, landing `['prob_14_12_TightnessSetup.variable_ui_to_law_ui']`, child `obl_prob_14_12_obligation_2` `COMPLETED` output `False`
+  - obligation `obligation_3` `proof_debt_support`: status `open`, landing `['prob_14_12_TightnessSetup.markov_tail_uniform_integrability_to_tightness', 'prob_14_12_uniformIntegrable_tight']`, child `obl_prob_14_12_obligation_3` `COMPLETED` output `False`
+  - obligation `obligation_5` `proof_debt_support`: status `open`, landing `['prob_14_12_MeanConvergenceSetup.uniform_integrability_probability_to_mean', 'prob_14_12_uniformIntegrable_probability_to_mean']`, child `obl_prob_14_12_obligation_5` `COMPLETED` output `False`
+- `prob_14_2` ch14 `FAILED_LOCAL` `ToyApollo/Output/prob_14_2.lean` `obligation_resolution`: `ledger_status:FAILED_LOCAL`, `open_obligations`
+  - open: `gamma_sum_representation`
+  - obligation `gamma_sum_representation` `proof_debt_support`: status `open`, landing `prob_14_2_gammaScaleCharacteristic; prob_14_2_iidGammaSumRepresentation; prob_14_2_gamma_pair_sum_density; prob_14_2_GammaCLTSetup.gamma_as_iid_sum`, child `obl_prob_14_2_gamma_sum_representation` `COMPLETED` output `False`
+- `prob_14_3` ch14 `FAILED_LOCAL` `ToyApollo/Output/prob_14_3.lean` `obligation_resolution`: `ledger_status:FAILED_LOCAL`, `open_obligations`
+  - open: `obligation_2, obligation_4`
+  - obligation `obligation_2` `proof_debt_support`: status `open`, landing `prob_14_3_GaussianVarianceEscapeSetup.gaussian_characteristic_limit`, child `obl_prob_14_3_obligation_2` `COMPLETED` output `False`
+  - obligation `obligation_4` `proof_debt_support`: status `open`, landing `prob_14_3_GaussianVarianceEscapeSetup.tight_to_weak_by_levy`, child `obl_prob_14_3_obligation_4` `COMPLETED` output `False`
+- `prob_14_4` ch14 `FAILED_LOCAL` `ToyApollo/Output/prob_14_4.lean` `obligation_resolution`: `ledger_status:FAILED_LOCAL`, `open_obligations`
+  - open: `obligation_2`
+  - obligation `obligation_2` `proof_debt_support`: status `open`, landing `prob_14_4_ShrinkingGaussianSetup.gaussian_characteristic_limit`, child `obl_prob_14_4_obligation_2` `COMPLETED` output `False`
+- `prob_14_5` ch14 `FAILED_LOCAL` `ToyApollo/Output/prob_14_5.lean` `public_surface_and_obligations`: `ledger_status:FAILED_LOCAL`, `open_obligations`, `public_surface_error`
+  - open: `obligation_3, obligation_4, obligation_5`
+  - obligation `obligation_3` `proof_debt_support`: status `open`, landing `prob_14_5_totalVariation_to_weak`, child `obl_prob_14_5_obligation_3` `COMPLETED` output `False`
+  - obligation `obligation_4` `proof_debt_support`: status `open`, landing `prob_14_5_DiscreteTotalVariationSupport.weak_to_singleton_masses`, child `obl_prob_14_5_obligation_4` `COMPLETED` output `False`
+  - obligation `obligation_5` `proof_debt_support`: status `open`, landing `prob_14_5_DiscreteTotalVariationSupport.singleton_masses_to_totalVariation`, child `obl_prob_14_5_obligation_5` `COMPLETED` output `False`
+- `prob_14_6` ch14 `FAILED_LOCAL` `ToyApollo/Output/prob_14_6.lean` `public_surface_and_obligations`: `ledger_status:FAILED_LOCAL`, `open_obligations`, `public_surface_error`
+  - open: `obligation_1, obligation_2, obligation_3`
+  - obligation `obligation_1` `proof_debt_support`: status `open`, landing `prob_14_6_PositiveScalingSupport.scales / scales_positive / scaled_converges_in_probability_to_zero`, child `obl_prob_14_6_obligation_1` `COMPLETED` output `False`
+  - obligation `obligation_2` `proof_debt_support`: status `open`, landing `prob_14_6_PositiveScalingSupport.scaled_measurable`, child `obl_prob_14_6_obligation_2` `COMPLETED` output `False`
+  - obligation `obligation_3` `proof_debt_support`: status `open`, landing `prob_14_6_PositiveScalingSupport.convergence_in_probability_to_weak_zero`, child `obl_prob_14_6_obligation_3` `COMPLETED` output `False`
+- `prob_14_7` ch14 `FAILED_LOCAL` `ToyApollo/Output/prob_14_7.lean` `obligation_resolution`: `ledger_status:FAILED_LOCAL`, `open_obligations`
+  - open: `obligation_1, obligation_2, obligation_3`
+  - obligation `obligation_1` `proof_debt_support`: status `open`, landing `prob_14_7_IndependentSumSetup.Xn_to_X_characteristic / Yn_to_Y_characteristic`, child `obl_prob_14_7_obligation_1` `COMPLETED` output `False`
+  - obligation `obligation_2` `proof_debt_support`: status `open`, landing `prob_14_7_IndependentSumSetup.independent_sum_characteristic`, child `obl_prob_14_7_obligation_2` `COMPLETED` output `False`
+  - obligation `obligation_3` `proof_debt_support`: status `open`, landing `prob_14_7_IndependentSumSetup.target_sum_characteristic`, child `obl_prob_14_7_obligation_3` `COMPLETED` output `False`
+- `prob_14_8` ch14 `FAILED_LOCAL` `ToyApollo/Output/prob_14_8.lean` `obligation_resolution`: `ledger_status:FAILED_LOCAL`, `open_obligations`
+  - open: `obligation_3, obligation_4`
+  - obligation `obligation_3` `proof_debt_support`: status `open`, landing `prob_14_8_MgfConvergenceSetup.exponential_tail_bound_from_mgf / prob_14_8_tight`, child `obl_prob_14_8_obligation_3` `COMPLETED` output `False`
+  - obligation `obligation_4` `proof_debt_support`: status `open`, landing `prob_14_8_MgfConvergenceSetup.mgf_to_characteristic_convergence / prob_14_8_characteristic_convergence`, child `obl_prob_14_8_obligation_4` `COMPLETED` output `False`
+- `prob_14_9` ch14 `FAILED_LOCAL` `ToyApollo/Output/prob_14_9.lean` `obligation_resolution`: `ledger_status:FAILED_LOCAL`, `open_obligations`
+  - open: `obligation_3, obligation_4`
+  - obligation `obligation_3` `proof_debt_support`: status `open`, landing `prob_14_9_ContinuousMappingSetup.mapped_laws_are_pushforwards / mapped_target_is_pushforward`, child `obl_prob_14_9_obligation_3` `COMPLETED` output `False`
+  - obligation `obligation_4` `proof_debt_support`: status `open`, landing `prob_14_9_ContinuousMappingSetup.levy_characteristic_convergence / prob_14_9_mapped_characteristic_convergence`, child `obl_prob_14_9_obligation_4` `COMPLETED` output `False`
+- `thm_14_5` ch14 `FAILED_LOCAL` `ToyApollo/Output/thm_14_5.lean` `public_surface_and_obligations`: `ledger_status:FAILED_LOCAL`, `open_obligations`, `public_surface_error`
+  - open: `characteristic_at_zero, fubini_identity, inner_integral_identity, averaged_kernel_identity, kernel_tail_lower_bound, tail_bound_by_averaged_characteristic, continuity_small_u_bound, dominated_convergence_bound, finite_prefix_tail_bound, uniform_tail_bound`
+  - obligation `characteristic_at_zero` `proof_debt_support`: status `open`, landing `thm_14_5_SourceProofSpine.characteristic_at_zero`, child `obl_thm_14_5_characteristic_at_zero` `COMPLETED` output `False`
+  - obligation `fubini_identity` `proof_debt_support`: status `open`, landing `thm_14_5_SourceProofSpine.fubini_identity`, child `obl_thm_14_5_fubini_identity` `COMPLETED` output `False`
+  - obligation `inner_integral_identity` `proof_debt_support`: status `open`, landing `thm_14_5_SourceProofSpine.inner_integral_identity`, child `obl_thm_14_5_inner_integral_identity` `COMPLETED` output `False`
+  - obligation `averaged_kernel_identity` `proof_debt_support`: status `open`, landing `thm_14_5_SourceProofSpine.averaged_kernel_identity`, child `obl_thm_14_5_averaged_kernel_identity` `COMPLETED` output `False`
+  - obligation `kernel_tail_lower_bound` `proof_debt_support`: status `open`, landing `thm_14_5_SourceProofSpine.kernel_tail_lower_bound`, child `obl_thm_14_5_kernel_tail_lower_bound` `COMPLETED` output `False`
+  - obligation `tail_bound_by_averaged_characteristic` `proof_debt_support`: status `open`, landing `thm_14_5_SourceProofSpine.tail_bound_by_averaged_characteristic`, child `obl_thm_14_5_tail_bound_by_averaged_characteristic` `COMPLETED` output `False`
+  - obligation `continuity_small_u_bound` `proof_debt_support`: status `open`, landing `thm_14_5_SourceProofSpine.continuity_small_u_bound`, child `obl_thm_14_5_continuity_small_u_bound` `COMPLETED` output `False`
+  - obligation `dominated_convergence_bound` `proof_debt_support`: status `open`, landing `thm_14_5_SourceProofSpine.dominated_convergence_bound`, child `obl_thm_14_5_dominated_convergence_bound` `COMPLETED` output `False`
+  - obligation `finite_prefix_tail_bound` `proof_debt_support`: status `open`, landing `thm_14_5_SourceProofSpine.finite_prefix_tail_bound`, child `obl_thm_14_5_finite_prefix_tail_bound` `COMPLETED` output `False`
+  - obligation `uniform_tail_bound` `proof_debt_support`: status `open`, landing `thm_14_5_SourceProofSpine.uniform_tail_bound`, child `obl_thm_14_5_uniform_tail_bound` `COMPLETED` output `False`
+- `thm_14_6` ch14 `FAILED_LOCAL` `ToyApollo/Output/thm_14_6.lean` `public_surface_and_obligations`: `ledger_status:FAILED_LOCAL`, `open_obligations`, `public_surface_error`
+  - open: `theorem_14_3_characteristic_limit, subsequence_characteristic_limit, inversion_formula_identification, subsubsequence_test_integral_limit, real_analysis_subsequence_principle`
+  - obligation `theorem_14_3_characteristic_limit` `proof_debt_support`: status `open`, landing `thm_14_6_LevyCompletionSpine.theorem_14_3_characteristic_limit`, child `obl_thm_14_6_theorem_14_3_characteristic_limit` `COMPLETED` output `False`
+  - obligation `subsequence_characteristic_limit` `proof_debt_support`: status `open`, landing `thm_14_6_LevyCompletionSpine.subsequence_inherits_characteristic_limit`, child `obl_thm_14_6_subsequence_characteristic_limit` `COMPLETED` output `False`
+  - obligation `inversion_formula_identification` `proof_debt_support`: status `open`, landing `thm_14_6_LevyCompletionSpine.inversion_formula_identifies_limit`, child `obl_thm_14_6_inversion_formula_identification` `COMPLETED` output `False`
+  - obligation `subsubsequence_test_integral_limit` `proof_debt_support`: status `open`, landing `thm_14_6_everySubsequenceHasSubsubsequenceLimit; thm_14_6_LevyCompletionSpine.subsubsequence_test_integral_limit`, child `obl_thm_14_6_subsubsequence_test_integral_limit` `COMPLETED` output `False`
+  - obligation `real_analysis_subsequence_principle` `proof_debt_support`: status `open`, landing `thm_14_6_LevyCompletionSpine.real_analysis_subsequence_principle`, child `obl_thm_14_6_real_analysis_subsequence_principle` `COMPLETED` output `False`
+- `thm_14_7` ch14 `FAILED_LOCAL` `ToyApollo/Output/thm_14_7.lean` `obligation_resolution`: `ledger_status:FAILED_LOCAL`, `open_obligations`
+  - open: `center_and_standardize, quadratic_characteristic_expansion, independent_sum_characteristic`
+  - obligation `center_and_standardize` `proof_debt_support`: status `open`, landing `thm_14_7_LindebergLevySetup.mean, thm_14_7_LindebergLevySetup.sigma, thm_14_7_LindebergLevySetup.standardizedLaws`, child `obl_thm_14_7_center_and_standardize` `COMPLETED` output `False`
+  - obligation `quadratic_characteristic_expansion` `proof_debt_support`: status `open`, landing `thm_14_7_quadraticCharacteristicExpansion, thm_14_7_LindebergLevySetup.quadratic_expansion`, child `obl_thm_14_7_quadratic_characteristic_expansion` `COMPLETED` output `False`
+  - obligation `independent_sum_characteristic` `proof_debt_support`: status `open`, landing `thm_14_7_LindebergLevySetup.c, thm_14_7_LindebergLevySetup.c_definition`, child `obl_thm_14_7_independent_sum_characteristic` `COMPLETED` output `False`
+- `thm_14_8` ch14 `COMPLETED_WITH_PROOF_DEBT` `ToyApollo/Output/thm_14_8.lean` `allowed_beyond_book_hygiene`: `ledger_status:COMPLETED_WITH_PROOF_DEBT`, `completed_with_proof_debt`
+
+## Orphan Output Files
+
+- `def_1_1` ch1 `ToyApollo/Output/def_1_1.lean`: `missing_ledger_entry`
+- `def_1_2` ch1 `ToyApollo/Output/def_1_2.lean`: `missing_ledger_entry`
+- `def_1_3` ch1 `ToyApollo/Output/def_1_3.lean`: `missing_ledger_entry`
+- `def_1_4` ch1 `ToyApollo/Output/def_1_4.lean`: `missing_ledger_entry`
+- `ex_1_2_1` ch1 `ToyApollo/Output/ex_1_2_1.lean`: `missing_ledger_entry`
+- `ex_1_2_2` ch1 `ToyApollo/Output/ex_1_2_2.lean`: `missing_ledger_entry`
+- `ex_1_2_3` ch1 `ToyApollo/Output/ex_1_2_3.lean`: `missing_ledger_entry`
+- `ex_1_3_1` ch1 `ToyApollo/Output/ex_1_3_1.lean`: `missing_ledger_entry`
+- `ex_1_3_2` ch1 `ToyApollo/Output/ex_1_3_2.lean`: `missing_ledger_entry`
+- `prob_1_1` ch1 `ToyApollo/Output/prob_1_1.lean`: `missing_ledger_entry`
+- `prob_1_10` ch1 `ToyApollo/Output/prob_1_10.lean`: `missing_ledger_entry`
+- `prob_1_2` ch1 `ToyApollo/Output/prob_1_2.lean`: `missing_ledger_entry`
+- `prob_1_3` ch1 `ToyApollo/Output/prob_1_3.lean`: `missing_ledger_entry`
+- `prob_1_4` ch1 `ToyApollo/Output/prob_1_4.lean`: `missing_ledger_entry`
+- `prob_1_5` ch1 `ToyApollo/Output/prob_1_5.lean`: `missing_ledger_entry`
+- `prob_1_6` ch1 `ToyApollo/Output/prob_1_6.lean`: `missing_ledger_entry`
+- `prob_1_7` ch1 `ToyApollo/Output/prob_1_7.lean`: `missing_ledger_entry`
+- `prob_1_8` ch1 `ToyApollo/Output/prob_1_8.lean`: `missing_ledger_entry`
+- `prob_1_9` ch1 `ToyApollo/Output/prob_1_9.lean`: `missing_ledger_entry`
+- `thm_1_1` ch1 `ToyApollo/Output/thm_1_1.lean`: `missing_ledger_entry`
+- `thm_1_2` ch1 `ToyApollo/Output/thm_1_2.lean`: `missing_ledger_entry`
+- `thm_1_3` ch1 `ToyApollo/Output/thm_1_3.lean`: `missing_ledger_entry`
+- `thm_1_4` ch1 `ToyApollo/Output/thm_1_4.lean`: `missing_ledger_entry`
+- `def_2_1` ch2 `ToyApollo/Output/def_2_1.lean`: `missing_ledger_entry`
+- `def_2_2` ch2 `ToyApollo/Output/def_2_2.lean`: `missing_ledger_entry`
+- `def_2_3` ch2 `ToyApollo/Output/def_2_3.lean`: `missing_ledger_entry`
+- `def_2_4` ch2 `ToyApollo/Output/def_2_4.lean`: `missing_ledger_entry`
+- `def_2_5` ch2 `ToyApollo/Output/def_2_5.lean`: `missing_ledger_entry`
+- `def_2_6` ch2 `ToyApollo/Output/def_2_6.lean`: `missing_ledger_entry`
+- `def_2_7` ch2 `ToyApollo/Output/def_2_7.lean`: `missing_ledger_entry`
+- `def_2_8` ch2 `ToyApollo/Output/def_2_8.lean`: `missing_ledger_entry`
+- `ex_2_1_1` ch2 `ToyApollo/Output/ex_2_1_1.lean`: `missing_ledger_entry`
+- `ex_2_1_2` ch2 `ToyApollo/Output/ex_2_1_2.lean`: `missing_ledger_entry`
+- `ex_2_2_1` ch2 `ToyApollo/Output/ex_2_2_1.lean`: `missing_ledger_entry`
+- `ex_2_2_2` ch2 `ToyApollo/Output/ex_2_2_2.lean`: `missing_ledger_entry`
+- `ex_2_3_1` ch2 `ToyApollo/Output/ex_2_3_1.lean`: `missing_ledger_entry`
+- `ex_2_3_2` ch2 `ToyApollo/Output/ex_2_3_2.lean`: `missing_ledger_entry`
+- `ex_2_4_1` ch2 `ToyApollo/Output/ex_2_4_1.lean`: `missing_ledger_entry`
+- `prob_2_1` ch2 `ToyApollo/Output/prob_2_1.lean`: `missing_ledger_entry`
+- `prob_2_10` ch2 `ToyApollo/Output/prob_2_10.lean`: `missing_ledger_entry`
+- `prob_2_11` ch2 `ToyApollo/Output/prob_2_11.lean`: `missing_ledger_entry`
+- `prob_2_12` ch2 `ToyApollo/Output/prob_2_12.lean`: `missing_ledger_entry`
+- `prob_2_2` ch2 `ToyApollo/Output/prob_2_2.lean`: `missing_ledger_entry`
+- `prob_2_3` ch2 `ToyApollo/Output/prob_2_3.lean`: `missing_ledger_entry`
+- `prob_2_4` ch2 `ToyApollo/Output/prob_2_4.lean`: `missing_ledger_entry`
+- `prob_2_5` ch2 `ToyApollo/Output/prob_2_5.lean`: `missing_ledger_entry`
+- `prob_2_6` ch2 `ToyApollo/Output/prob_2_6.lean`: `missing_ledger_entry`
+- `prob_2_7` ch2 `ToyApollo/Output/prob_2_7.lean`: `missing_ledger_entry`
+- `prob_2_8` ch2 `ToyApollo/Output/prob_2_8.lean`: `missing_ledger_entry`
+- `prob_2_9` ch2 `ToyApollo/Output/prob_2_9.lean`: `missing_ledger_entry`
+- `thm_2_1` ch2 `ToyApollo/Output/thm_2_1.lean`: `missing_ledger_entry`
+- `thm_2_2` ch2 `ToyApollo/Output/thm_2_2.lean`: `missing_ledger_entry`
+- `thm_2_3` ch2 `ToyApollo/Output/thm_2_3.lean`: `missing_ledger_entry`
+- `thm_2_4` ch2 `ToyApollo/Output/thm_2_4.lean`: `missing_ledger_entry`
+- `thm_2_5` ch2 `ToyApollo/Output/thm_2_5.lean`: `missing_ledger_entry`
+- `thm_2_6` ch2 `ToyApollo/Output/thm_2_6.lean`: `missing_ledger_entry`
+- `thm_2_7` ch2 `ToyApollo/Output/thm_2_7.lean`: `missing_ledger_entry`
+- `thm_2_8` ch2 `ToyApollo/Output/thm_2_8.lean`: `missing_ledger_entry`
+- `thm_2_9` ch2 `ToyApollo/Output/thm_2_9.lean`: `missing_ledger_entry`
+- `def_3_1` ch3 `ToyApollo/Output/def_3_1.lean`: `missing_ledger_entry`
+- `def_3_10` ch3 `ToyApollo/Output/def_3_10.lean`: `missing_ledger_entry`
+- `def_3_2` ch3 `ToyApollo/Output/def_3_2.lean`: `missing_ledger_entry`
+- `def_3_3` ch3 `ToyApollo/Output/def_3_3.lean`: `missing_ledger_entry`
+- `def_3_4` ch3 `ToyApollo/Output/def_3_4.lean`: `missing_ledger_entry`
+- `def_3_5` ch3 `ToyApollo/Output/def_3_5.lean`: `missing_ledger_entry`
+- `def_3_6` ch3 `ToyApollo/Output/def_3_6.lean`: `missing_ledger_entry`
+- `def_3_7` ch3 `ToyApollo/Output/def_3_7.lean`: `missing_ledger_entry`
+- `def_3_8` ch3 `ToyApollo/Output/def_3_8.lean`: `missing_ledger_entry`
+- `def_3_9` ch3 `ToyApollo/Output/def_3_9.lean`: `missing_ledger_entry`
+- `ex_3_1_1` ch3 `ToyApollo/Output/ex_3_1_1.lean`: `missing_ledger_entry`
+- `ex_3_1_2` ch3 `ToyApollo/Output/ex_3_1_2.lean`: `missing_ledger_entry`
+- `ex_3_1_3` ch3 `ToyApollo/Output/ex_3_1_3.lean`: `missing_ledger_entry`
+- `ex_3_1_4` ch3 `ToyApollo/Output/ex_3_1_4.lean`: `missing_ledger_entry`
+- `ex_3_2_1` ch3 `ToyApollo/Output/ex_3_2_1.lean`: `missing_ledger_entry`
+- `ex_3_3_1` ch3 `ToyApollo/Output/ex_3_3_1.lean`: `missing_ledger_entry`
+- `ex_3_3_2` ch3 `ToyApollo/Output/ex_3_3_2.lean`: `missing_ledger_entry`
+- `ex_3_3_3` ch3 `ToyApollo/Output/ex_3_3_3.lean`: `missing_ledger_entry`
+- `ex_3_3_4` ch3 `ToyApollo/Output/ex_3_3_4.lean`: `missing_ledger_entry`
+- `ex_3_3_5` ch3 `ToyApollo/Output/ex_3_3_5.lean`: `missing_ledger_entry`
+- `ex_3_3_6` ch3 `ToyApollo/Output/ex_3_3_6.lean`: `missing_ledger_entry`
+- `prob_3_1` ch3 `ToyApollo/Output/prob_3_1.lean`: `missing_ledger_entry`
+- `prob_3_2` ch3 `ToyApollo/Output/prob_3_2.lean`: `missing_ledger_entry`
+- `prob_3_3` ch3 `ToyApollo/Output/prob_3_3.lean`: `missing_ledger_entry`
+- `prob_3_4` ch3 `ToyApollo/Output/prob_3_4.lean`: `missing_ledger_entry`
+- `prob_3_5` ch3 `ToyApollo/Output/prob_3_5.lean`: `missing_ledger_entry`
+- `prob_3_6` ch3 `ToyApollo/Output/prob_3_6.lean`: `missing_ledger_entry`
+- `prob_3_7` ch3 `ToyApollo/Output/prob_3_7.lean`: `missing_ledger_entry`
+- `prob_3_8` ch3 `ToyApollo/Output/prob_3_8.lean`: `missing_ledger_entry`
+- `prob_3_9` ch3 `ToyApollo/Output/prob_3_9.lean`: `missing_ledger_entry`
+- `thm_3_1` ch3 `ToyApollo/Output/thm_3_1.lean`: `missing_ledger_entry`
+- `thm_3_2` ch3 `ToyApollo/Output/thm_3_2.lean`: `missing_ledger_entry`
+- `thm_3_3` ch3 `ToyApollo/Output/thm_3_3.lean`: `missing_ledger_entry`
+- `thm_3_4` ch3 `ToyApollo/Output/thm_3_4.lean`: `missing_ledger_entry`
+- `thm_3_5` ch3 `ToyApollo/Output/thm_3_5.lean`: `missing_ledger_entry`
+- `thm_3_6` ch3 `ToyApollo/Output/thm_3_6.lean`: `missing_ledger_entry`
+- `thm_3_7` ch3 `ToyApollo/Output/thm_3_7.lean`: `missing_ledger_entry`
+- `thm_3_8` ch3 `ToyApollo/Output/thm_3_8.lean`: `missing_ledger_entry`
+- `thm_3_9` ch3 `ToyApollo/Output/thm_3_9.lean`: `missing_ledger_entry`
+- `def_4_1` ch4 `ToyApollo/Output/def_4_1.lean`: `missing_ledger_entry`
+- `def_4_2` ch4 `ToyApollo/Output/def_4_2.lean`: `missing_ledger_entry`
+- `def_4_2_inverse_image` ch4 `ToyApollo/Output/def_4_2_inverse_image.lean`: `missing_ledger_entry`
+- `def_4_3_limsup_liminf` ch4 `ToyApollo/Output/def_4_3_limsup_liminf.lean`: `missing_ledger_entry`
+- `def_4_3_sup_inf` ch4 `ToyApollo/Output/def_4_3_sup_inf.lean`: `missing_ledger_entry`
+- `def_4_4_complex_number` ch4 `ToyApollo/Output/def_4_4_complex_number.lean`: `missing_ledger_entry`
+- `def_4_4_complex_operations` ch4 `ToyApollo/Output/def_4_4_complex_operations.lean`: `missing_ledger_entry`
+- `def_4_4_complex_random_variable` ch4 `ToyApollo/Output/def_4_4_complex_random_variable.lean`: `missing_ledger_entry`
+- `def_4_4_polar_form` ch4 `ToyApollo/Output/def_4_4_polar_form.lean`: `missing_ledger_entry`
+- `ex_4_1_1` ch4 `ToyApollo/Output/ex_4_1_1.lean`: `missing_ledger_entry`
+- `ex_4_1_2` ch4 `ToyApollo/Output/ex_4_1_2.lean`: `missing_ledger_entry`
+- `ex_4_1_indicator_examples` ch4 `ToyApollo/Output/ex_4_1_indicator_examples.lean`: `missing_ledger_entry`
+- `ex_4_2_lebesgue_borel` ch4 `ToyApollo/Output/ex_4_2_lebesgue_borel.lean`: `missing_ledger_entry`
+- `ex_4_3_1` ch4 `ToyApollo/Output/ex_4_3_1.lean`: `missing_ledger_entry`
+- `ex_4_3_2` ch4 `ToyApollo/Output/ex_4_3_2.lean`: `missing_ledger_entry`
+- `ex_4_4_1` ch4 `ToyApollo/Output/ex_4_4_1.lean`: `missing_ledger_entry`
+- `ex_4_4_2` ch4 `ToyApollo/Output/ex_4_4_2.lean`: `missing_ledger_entry`
+- `ex_4_4_3` ch4 `ToyApollo/Output/ex_4_4_3.lean`: `missing_ledger_entry`
+- `prob_4_1` ch4 `ToyApollo/Output/prob_4_1.lean`: `missing_ledger_entry`
+- `prob_4_10` ch4 `ToyApollo/Output/prob_4_10.lean`: `missing_ledger_entry`
+- `prob_4_11` ch4 `ToyApollo/Output/prob_4_11.lean`: `missing_ledger_entry`
+- `prob_4_12` ch4 `ToyApollo/Output/prob_4_12.lean`: `missing_ledger_entry`
+- `prob_4_13` ch4 `ToyApollo/Output/prob_4_13.lean`: `missing_ledger_entry`
+- `prob_4_2` ch4 `ToyApollo/Output/prob_4_2.lean`: `missing_ledger_entry`
+- `prob_4_3` ch4 `ToyApollo/Output/prob_4_3.lean`: `missing_ledger_entry`
+- `prob_4_4` ch4 `ToyApollo/Output/prob_4_4.lean`: `missing_ledger_entry`
+- `prob_4_5` ch4 `ToyApollo/Output/prob_4_5.lean`: `missing_ledger_entry`
+- `prob_4_6` ch4 `ToyApollo/Output/prob_4_6.lean`: `missing_ledger_entry`
+- `prob_4_7` ch4 `ToyApollo/Output/prob_4_7.lean`: `missing_ledger_entry`
+- `prob_4_8` ch4 `ToyApollo/Output/prob_4_8.lean`: `missing_ledger_entry`
+- `prob_4_9` ch4 `ToyApollo/Output/prob_4_9.lean`: `missing_ledger_entry`
+- `thm_4_1` ch4 `ToyApollo/Output/thm_4_1.lean`: `missing_ledger_entry`
+- `thm_4_2` ch4 `ToyApollo/Output/thm_4_2.lean`: `missing_ledger_entry`
+- `thm_4_3` ch4 `ToyApollo/Output/thm_4_3.lean`: `missing_ledger_entry`
+- `thm_4_4` ch4 `ToyApollo/Output/thm_4_4.lean`: `missing_ledger_entry`
+- `thm_4_5` ch4 `ToyApollo/Output/thm_4_5.lean`: `missing_ledger_entry`
+- `thm_4_6` ch4 `ToyApollo/Output/thm_4_6.lean`: `missing_ledger_entry`
+- `thm_4_7` ch4 `ToyApollo/Output/thm_4_7.lean`: `missing_ledger_entry`
+- `thm_4_8` ch4 `ToyApollo/Output/thm_4_8.lean`: `missing_ledger_entry`
+- `def_5_1` ch5 `ToyApollo/Output/def_5_1.lean`: `missing_ledger_entry`
+- `def_5_10` ch5 `ToyApollo/Output/def_5_10.lean`: `missing_ledger_entry`
+- `def_5_2` ch5 `ToyApollo/Output/def_5_2.lean`: `missing_ledger_entry`
+- `def_5_3` ch5 `ToyApollo/Output/def_5_3.lean`: `missing_ledger_entry`
+- `def_5_4` ch5 `ToyApollo/Output/def_5_4.lean`: `missing_ledger_entry`
+- `def_5_5` ch5 `ToyApollo/Output/def_5_5.lean`: `missing_ledger_entry`
+- `def_5_6` ch5 `ToyApollo/Output/def_5_6.lean`: `missing_ledger_entry`
+- `def_5_7` ch5 `ToyApollo/Output/def_5_7.lean`: `missing_ledger_entry`
+- `def_5_8` ch5 `ToyApollo/Output/def_5_8.lean`: `missing_ledger_entry`
+- `def_5_9` ch5 `ToyApollo/Output/def_5_9.lean`: `missing_ledger_entry`
+- `ex_5_1_1` ch5 `ToyApollo/Output/ex_5_1_1.lean`: `missing_ledger_entry`
+- `ex_5_2_1` ch5 `ToyApollo/Output/ex_5_2_1.lean`: `missing_ledger_entry`
+- `ex_5_2_2` ch5 `ToyApollo/Output/ex_5_2_2.lean`: `missing_ledger_entry`
+- `ex_5_3_1` ch5 `ToyApollo/Output/ex_5_3_1.lean`: `missing_ledger_entry`
+- `ex_5_4_1` ch5 `ToyApollo/Output/ex_5_4_1.lean`: `missing_ledger_entry`
+- `ex_5_4_2` ch5 `ToyApollo/Output/ex_5_4_2.lean`: `missing_ledger_entry`
+- `ex_5_4_3` ch5 `ToyApollo/Output/ex_5_4_3.lean`: `missing_ledger_entry`
+- `prob_5_1` ch5 `ToyApollo/Output/prob_5_1.lean`: `missing_ledger_entry`
+- `prob_5_2` ch5 `ToyApollo/Output/prob_5_2.lean`: `missing_ledger_entry`
+- `prob_5_3` ch5 `ToyApollo/Output/prob_5_3.lean`: `missing_ledger_entry`
+- `prob_5_4` ch5 `ToyApollo/Output/prob_5_4.lean`: `missing_ledger_entry`
+- `prob_5_5` ch5 `ToyApollo/Output/prob_5_5.lean`: `missing_ledger_entry`
+- `prob_5_6` ch5 `ToyApollo/Output/prob_5_6.lean`: `missing_ledger_entry`
+- `prob_5_7` ch5 `ToyApollo/Output/prob_5_7.lean`: `missing_ledger_entry`
+- `prob_5_8` ch5 `ToyApollo/Output/prob_5_8.lean`: `missing_ledger_entry`
+- `prob_5_9` ch5 `ToyApollo/Output/prob_5_9.lean`: `missing_ledger_entry`
+- `thm_5_1` ch5 `ToyApollo/Output/thm_5_1.lean`: `missing_ledger_entry`
+- `thm_5_10` ch5 `ToyApollo/Output/thm_5_10.lean`: `missing_ledger_entry`
+- `thm_5_11` ch5 `ToyApollo/Output/thm_5_11.lean`: `missing_ledger_entry`
+- `thm_5_2` ch5 `ToyApollo/Output/thm_5_2.lean`: `missing_ledger_entry`
+- `thm_5_3` ch5 `ToyApollo/Output/thm_5_3.lean`: `missing_ledger_entry`
+- `thm_5_4` ch5 `ToyApollo/Output/thm_5_4.lean`: `missing_ledger_entry`
+- `thm_5_5` ch5 `ToyApollo/Output/thm_5_5.lean`: `missing_ledger_entry`
+- `thm_5_6` ch5 `ToyApollo/Output/thm_5_6.lean`: `missing_ledger_entry`
+- `thm_5_7` ch5 `ToyApollo/Output/thm_5_7.lean`: `missing_ledger_entry`
+- `thm_5_8` ch5 `ToyApollo/Output/thm_5_8.lean`: `missing_ledger_entry`
+- `thm_5_9` ch5 `ToyApollo/Output/thm_5_9.lean`: `missing_ledger_entry`
+- `def_6_1` ch6 `ToyApollo/Output/def_6_1.lean`: `missing_ledger_entry`
+- `def_6_2` ch6 `ToyApollo/Output/def_6_2.lean`: `missing_ledger_entry`
+- `def_6_3` ch6 `ToyApollo/Output/def_6_3.lean`: `missing_ledger_entry`
+- `def_6_4` ch6 `ToyApollo/Output/def_6_4.lean`: `missing_ledger_entry`
+- `def_6_5` ch6 `ToyApollo/Output/def_6_5.lean`: `missing_ledger_entry`
+- `def_6_6` ch6 `ToyApollo/Output/def_6_6.lean`: `missing_ledger_entry`
+- `def_6_7` ch6 `ToyApollo/Output/def_6_7.lean`: `missing_ledger_entry`
+- `ex_6_1_1` ch6 `ToyApollo/Output/ex_6_1_1.lean`: `missing_ledger_entry`
+- `ex_6_1_2` ch6 `ToyApollo/Output/ex_6_1_2.lean`: `missing_ledger_entry`
+- `ex_6_3_1` ch6 `ToyApollo/Output/ex_6_3_1.lean`: `missing_ledger_entry`
+- `ex_6_3_1_harmonic` ch6 `ToyApollo/Output/ex_6_3_1_harmonic.lean`: `missing_ledger_entry`
+- `ex_6_3_2` ch6 `ToyApollo/Output/ex_6_3_2.lean`: `missing_ledger_entry`
+- `ex_6_4_1` ch6 `ToyApollo/Output/ex_6_4_1.lean`: `missing_ledger_entry`
+- `ex_6_4_2` ch6 `ToyApollo/Output/ex_6_4_2.lean`: `missing_ledger_entry`
+- `ex_6_5_1` ch6 `ToyApollo/Output/ex_6_5_1.lean`: `missing_ledger_entry`
+- `ex_6_5_2` ch6 `ToyApollo/Output/ex_6_5_2.lean`: `missing_ledger_entry`
+- `prob_6_1` ch6 `ToyApollo/Output/prob_6_1.lean`: `missing_ledger_entry`
+- `prob_6_10` ch6 `ToyApollo/Output/prob_6_10.lean`: `missing_ledger_entry`
+- `prob_6_2` ch6 `ToyApollo/Output/prob_6_2.lean`: `missing_ledger_entry`
+- `prob_6_3` ch6 `ToyApollo/Output/prob_6_3.lean`: `missing_ledger_entry`
+- `prob_6_4` ch6 `ToyApollo/Output/prob_6_4.lean`: `missing_ledger_entry`
+- `prob_6_5` ch6 `ToyApollo/Output/prob_6_5.lean`: `missing_ledger_entry`
+- `prob_6_6` ch6 `ToyApollo/Output/prob_6_6.lean`: `missing_ledger_entry`
+- `prob_6_7` ch6 `ToyApollo/Output/prob_6_7.lean`: `missing_ledger_entry`
+- `prob_6_8` ch6 `ToyApollo/Output/prob_6_8.lean`: `missing_ledger_entry`
+- `prob_6_9` ch6 `ToyApollo/Output/prob_6_9.lean`: `missing_ledger_entry`
+- `thm_6_1` ch6 `ToyApollo/Output/thm_6_1.lean`: `missing_ledger_entry`
+- `thm_6_2` ch6 `ToyApollo/Output/thm_6_2.lean`: `missing_ledger_entry`
+- `thm_6_3` ch6 `ToyApollo/Output/thm_6_3.lean`: `missing_ledger_entry`
+- `thm_6_4` ch6 `ToyApollo/Output/thm_6_4.lean`: `missing_ledger_entry`
+- `thm_6_5` ch6 `ToyApollo/Output/thm_6_5.lean`: `missing_ledger_entry`
+- `thm_6_6` ch6 `ToyApollo/Output/thm_6_6.lean`: `missing_ledger_entry`
+- `thm_6_7` ch6 `ToyApollo/Output/thm_6_7.lean`: `missing_ledger_entry`
+- `def_7_1` ch7 `ToyApollo/Output/def_7_1.lean`: `missing_ledger_entry`
+- `def_7_2` ch7 `ToyApollo/Output/def_7_2.lean`: `missing_ledger_entry`
+- `def_7_3` ch7 `ToyApollo/Output/def_7_3.lean`: `missing_ledger_entry`
+- `ex_7_2_1` ch7 `ToyApollo/Output/ex_7_2_1.lean`: `missing_ledger_entry`
+- `ex_7_2_2` ch7 `ToyApollo/Output/ex_7_2_2.lean`: `missing_ledger_entry`
+- `ex_7_2_3` ch7 `ToyApollo/Output/ex_7_2_3.lean`: `missing_ledger_entry`
+- `ex_7_3_1` ch7 `ToyApollo/Output/ex_7_3_1.lean`: `missing_ledger_entry`
+- `ex_7_3_2` ch7 `ToyApollo/Output/ex_7_3_2.lean`: `missing_ledger_entry`
+- `ex_7_4_1_rayleigh_distribution` ch7 `ToyApollo/Output/ex_7_4_1_rayleigh_distribution.lean`: `missing_ledger_entry`
+- `ex_7_4_1_variance_of_a_random_variable` ch7 `ToyApollo/Output/ex_7_4_1_variance_of_a_random_variable.lean`: `missing_ledger_entry`
+- `ex_7_4_2` ch7 `ToyApollo/Output/ex_7_4_2.lean`: `missing_ledger_entry`
+- `ex_7_5_1` ch7 `ToyApollo/Output/ex_7_5_1.lean`: `missing_ledger_entry`
+- `prob_7_1` ch7 `ToyApollo/Output/prob_7_1.lean`: `missing_ledger_entry`
+- `prob_7_2` ch7 `ToyApollo/Output/prob_7_2.lean`: `missing_ledger_entry`
+- `prob_7_3` ch7 `ToyApollo/Output/prob_7_3.lean`: `missing_ledger_entry`
+- `prob_7_4` ch7 `ToyApollo/Output/prob_7_4.lean`: `missing_ledger_entry`
+- `prob_7_5` ch7 `ToyApollo/Output/prob_7_5.lean`: `missing_ledger_entry`
+- `prob_7_6` ch7 `ToyApollo/Output/prob_7_6.lean`: `missing_ledger_entry`
+- `prob_7_7` ch7 `ToyApollo/Output/prob_7_7.lean`: `missing_ledger_entry`
+- `prob_7_8` ch7 `ToyApollo/Output/prob_7_8.lean`: `missing_ledger_entry`
+- `prob_7_9` ch7 `ToyApollo/Output/prob_7_9.lean`: `missing_ledger_entry`
+- `thm_7_1` ch7 `ToyApollo/Output/thm_7_1.lean`: `missing_ledger_entry`
+- `thm_7_10` ch7 `ToyApollo/Output/thm_7_10.lean`: `missing_ledger_entry`
+- `thm_7_11` ch7 `ToyApollo/Output/thm_7_11.lean`: `missing_ledger_entry`
+- `thm_7_12` ch7 `ToyApollo/Output/thm_7_12.lean`: `missing_ledger_entry`
+- `thm_7_13` ch7 `ToyApollo/Output/thm_7_13.lean`: `missing_ledger_entry`
+- `thm_7_2` ch7 `ToyApollo/Output/thm_7_2.lean`: `missing_ledger_entry`
+- `thm_7_3` ch7 `ToyApollo/Output/thm_7_3.lean`: `missing_ledger_entry`
+- `thm_7_4` ch7 `ToyApollo/Output/thm_7_4.lean`: `missing_ledger_entry`
+- `thm_7_5` ch7 `ToyApollo/Output/thm_7_5.lean`: `missing_ledger_entry`
+- `thm_7_8` ch7 `ToyApollo/Output/thm_7_8.lean`: `missing_ledger_entry`
+- `thm_7_9` ch7 `ToyApollo/Output/thm_7_9.lean`: `missing_ledger_entry`
+- `def_8_1` ch8 `ToyApollo/Output/def_8_1.lean`: `missing_ledger_entry`
+- `def_8_2` ch8 `ToyApollo/Output/def_8_2.lean`: `missing_ledger_entry`
+- `def_8_3` ch8 `ToyApollo/Output/def_8_3.lean`: `missing_ledger_entry`
+- `def_8_4` ch8 `ToyApollo/Output/def_8_4.lean`: `missing_ledger_entry`
+- `def_8_5` ch8 `ToyApollo/Output/def_8_5.lean`: `missing_ledger_entry`
+- `ex_8_1_1` ch8 `ToyApollo/Output/ex_8_1_1.lean`: `missing_ledger_entry`
+- `ex_8_1_2` ch8 `ToyApollo/Output/ex_8_1_2.lean`: `missing_ledger_entry`
+- `ex_8_1_3` ch8 `ToyApollo/Output/ex_8_1_3.lean`: `missing_ledger_entry`
+- `ex_8_2_1` ch8 `ToyApollo/Output/ex_8_2_1.lean`: `missing_ledger_entry`
+- `ex_8_2_2` ch8 `ToyApollo/Output/ex_8_2_2.lean`: `missing_ledger_entry`
+- `ex_8_3_1` ch8 `ToyApollo/Output/ex_8_3_1.lean`: `missing_ledger_entry`
+- `ex_8_3_2` ch8 `ToyApollo/Output/ex_8_3_2.lean`: `missing_ledger_entry`
+- `ex_8_3_3` ch8 `ToyApollo/Output/ex_8_3_3.lean`: `missing_ledger_entry`
+- `ex_8_3_4` ch8 `ToyApollo/Output/ex_8_3_4.lean`: `missing_ledger_entry`
+- `ex_8_4_1` ch8 `ToyApollo/Output/ex_8_4_1.lean`: `missing_ledger_entry`
+- `ex_8_4_2` ch8 `ToyApollo/Output/ex_8_4_2.lean`: `missing_ledger_entry`
+- `ex_8_4_3` ch8 `ToyApollo/Output/ex_8_4_3.lean`: `missing_ledger_entry`
+- `ex_8_4_4` ch8 `ToyApollo/Output/ex_8_4_4.lean`: `missing_ledger_entry`
+- `prob_8_1` ch8 `ToyApollo/Output/prob_8_1.lean`: `missing_ledger_entry`
+- `prob_8_2` ch8 `ToyApollo/Output/prob_8_2.lean`: `missing_ledger_entry`
+- `prob_8_3` ch8 `ToyApollo/Output/prob_8_3.lean`: `missing_ledger_entry`
+- `prob_8_4` ch8 `ToyApollo/Output/prob_8_4.lean`: `missing_ledger_entry`
+- `prob_8_5` ch8 `ToyApollo/Output/prob_8_5.lean`: `missing_ledger_entry`
+- `prob_8_6` ch8 `ToyApollo/Output/prob_8_6.lean`: `missing_ledger_entry`
+- `prob_8_7` ch8 `ToyApollo/Output/prob_8_7.lean`: `missing_ledger_entry`
+- `thm_8_1` ch8 `ToyApollo/Output/thm_8_1.lean`: `missing_ledger_entry`
+- `thm_8_2` ch8 `ToyApollo/Output/thm_8_2.lean`: `missing_ledger_entry`
+- `thm_8_3` ch8 `ToyApollo/Output/thm_8_3.lean`: `missing_ledger_entry`
+- `thm_8_4` ch8 `ToyApollo/Output/thm_8_4.lean`: `missing_ledger_entry`
+- `thm_8_6` ch8 `ToyApollo/Output/thm_8_6.lean`: `missing_ledger_entry`
+- `thm_8_7` ch8 `ToyApollo/Output/thm_8_7.lean`: `missing_ledger_entry`
+- `thm_9_5_dirichlet` ch9 `ToyApollo/Output/thm_9_5_dirichlet.lean`: `missing_ledger_entry`
+- `thm_9_5_fubini` ch9 `ToyApollo/Output/thm_9_5_fubini.lean`: `missing_ledger_entry`
+- `thm_9_5_kernel` ch9 `ToyApollo/Output/thm_9_5_kernel.lean`: `missing_ledger_entry`
+- `prob_10_10_distribution_bridge` ch10 `ToyApollo/Output/prob_10_10_distribution_bridge.lean`: `missing_ledger_entry`
+- `thm_10_8_inverse_comparison` ch10 `ToyApollo/Output/thm_10_8_inverse_comparison.lean`: `missing_ledger_entry`
+- `thm_10_8_quantile_convergence` ch10 `ToyApollo/Output/thm_10_8_quantile_convergence.lean`: `missing_ledger_entry`
+- `thm_10_8_quantile_defs` ch10 `ToyApollo/Output/thm_10_8_quantile_defs.lean`: `missing_ledger_entry`
+- `thm_10_8_quantile_law` ch10 `ToyApollo/Output/thm_10_8_quantile_law.lean`: `missing_ledger_entry`
+- `thm_10_8_quantile_space` ch10 `ToyApollo/Output/thm_10_8_quantile_space.lean`: `missing_ledger_entry`
+- `thm_14_4_dominating_measure` ch14 `ToyApollo/Output/thm_14_4_dominating_measure.lean`: `missing_ledger_entry`

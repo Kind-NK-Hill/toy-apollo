@@ -1,0 +1,214 @@
+\subsection*{14.3 Prokhorov Theorem and Sequential Compactness}
+
+In the previous two sections, we proved that Condition 1 implies Condition 2, and
+
+Condition 3 implies Condition 4 in Levy's continuity theorem. The reason why Con-
+
+dition 2 implies Condition 3 is characteristic function's continuity (Theorem 9.3)It
+
+remains to prove that Condition 1 follows from Condition 4. The final step requires
+
+the Prokhorov theorem, which we state without proof as follows.
+
+\begin{thmbox}{14.6 (Prokhorov)}
+\end{thmbox}
+
+If.(Fn)\infty
+
+n=1 is a sequence of tight cumulative distribution functions, then there
+
+exists a subsequence converging in distribution to the cumulative distribution
+
+of a probability measure.
+
+The Prokhorov theorem is analogous to the Bolzano-Weierstrass theorem. In
+
+real analysis, a subset S in Rn is said to be sequentially compact if any infinite
+
+sequence in S has a convergent subsequence that converges to an element in SThe
+
+Prokhorov theorem says that the space of tight distributions with topology defined
+
+by weak convergence is sequentially compact. For a proof of this theorem, see [ 4,
+
+Thm 3.2.12 and 3.2.13].
+
+We now complete the proof of Levy's theorem. Consider a sequence .(Pn)n\geq1 of
+
+probability measure that is a tight, and let.(Fn)n\geq1 be the corresponding cumulative
+
+distribution functions. In Levy's continuity theorem, the characteristic function
+
+\phin(t) of Pn is assumed to converge pointwise, with the limit function denoted by
+
+\phi(n).
+
+By the Prokhorov theorem, there exists a subsequence .(an)n\geq1 of N such that
+
+Fan(x) converges pointwise to the cumulative distribution function F(x) of a
+
+probability measure P at every continuity point of F(x) Using Theorem 14.3
+
+and the equivalence of weak convergence and convergence in distribution, we can
+
+show that the characteristic functions\phian (t) converge pointwise to the characteristic
+
+function of P. Since we assume that limn\to\infty \phian(t)= \phi(t) , we can conclude that
+
+\phi(t) is the characteristic function of P.
+
+We now demonstrate that the entire sequence .(Pn)n\geq1 of probability measures
+
+weakly converges to PLeth(x) be a bounded and continuous function. We must
+
+show that
+
+limn\to\infty
+
+\int
+
+R
+
+h(x) dPn(x)=
+
+\int
+
+R
+
+f (x) dP(x).
+
+To prove this, we use the following fact from real analysis:
+
+Given a numerical sequence .(\alphan)n\geq1, if every subsequence of .(\alphan)n\geq1 contains
+
+a further subsequence that is convergent to \beta, then the original sequence .(\alphan)n\geq1 is
+
+convergent to \beta.
+
+Let i1, i2,i 3,.be a subsequence of N. We consider the subsequence
+
+( \int
+
+h(x) dPij (x)
+
+)
+
+j\geq 1
+
+(14.8)
+
+Since any subsequence of a tight sequence is tight, the sequence of probability
+
+measures .(Pij )j\geq 1 is tight. By Prokhorov theorem, there exists a sub-subsequence
+
+ijk , where j1 <j 2 <j 3 <\cdot\cdot\cdot , such that Fijk (x) converges pointwise to
+
+the distribution function G(x) of a probability measure Q at every continuity
+
+point of G(x)By Theorem 14.3, the characteristic functions associated to this
+
+sub-subsequence converge to the characteristic function of Q , which is also the
+
+characteristic function of P due to the assumption that limk\to\infty \phiijk (t)= \phi(t) .
+
+By the inversion formula in Theorem 9.5, Q and P have the same distribution.
+
+Hence,
+
+( \int
+
+h(x) dPijk (x)
+
+)
+
+k\geq 1
+
+is a sub-subsequence of (14.8) converging to
+
+lim
+
+k\to\infty
+
+\int
+
+h(x) dPijk (x)=
+
+\int
+
+h(x) dQ(x)=
+
+\int
+
+h(x) dP(x).
+
+Therefore,.
+
+\int
+
+hdP n converges to.
+
+\int
+
+hdP asn\to\infty , and this completes the proof of
+
+Levy's continuity theorem.
+
+We illustrate Levy's continuity theorem with two classic examples. The first
+
+example involves discrete random variables converging to another discrete random
+
+variable, while the second example involves discrete random variables converging
+
+to a continuous random variable.
+
+\textbf{Example 14.3.1 (Binomial Converging to Poisson)} \\
+
+Let Xn be a random variable with binomial distribution Bin(n, pn) with pn =\lambda/n ,f o rafi x e d
+
+positive constant. \lambda. The characteristic function of. Xn is
+
+\phiXn (t)= ( 1- p n +p neit )n.
+
+If we taken\to\infty ,
+
+limn\to\infty \phiXn (t)= limn\to\infty
+
+(
+
+1- \lambda
+
+n(1- e it )
+
+) n
+
+=e \lambda(eit -1),
+
+which is the characteristic function of a Poisson random variable. By Theorem 14.1,Xn converges
+
+to a Poisson random variable with mean. \lambda in distribution.
+
+\textbf{Example 14.3.2 (Geometric Converging to Exponential)} \\
+
+Let \lambda be a positive constant and Xn be geometrically distributed with success probability pn =
+
+\lambda/n,f o rn= 1 ,2,3,.The characteristic function of. Xn is
+
+\phiXn (t)= pneit
+
+(1- ( 1- p n)eit ).
+
+LetYn =X n/n. We can check that\phiYn (t)= \phi Xn (t/n) converges pointwise asn\to\infty ,
+
+limn\to\infty \phiYn (t)= limn\to\infty
+
+eit/n \lambda/n
+
+1- ( 1- \lambda/n)e it/n = \lambda
+
+\lambda- it .
+
+By Theorem 14.1, we have weak convergenceYn
+
+D
+
+-\to Exp (\lambda).

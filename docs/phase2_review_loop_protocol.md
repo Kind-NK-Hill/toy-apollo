@@ -6,6 +6,7 @@ This document carries the expanded runtime/operator protocol for the Phase 2 Cod
 
 - `review-now` prepares or refreshes the current Codex review request for `current`, `existing`, or `candidate`.
 - `review-fix` validates the active review-repair contract and seeds `draft.lean` from the bound failed-review subject.
+- `debt-fix` creates a review-repair contract for accepted proof debt and then hands off to the normal `review-fix` authoring path.
 - `auto-loop` advances same-session review/apply/repair/build runtime state, but the current Codex agent still performs authoring and reviewer work.
 
 ## Hard Invariants
@@ -29,9 +30,45 @@ This document carries the expanded runtime/operator protocol for the Phase 2 Cod
 ## Strict Reviewer Contract Upgrades
 
 - Prompt, rubric, template, and review-basis upgrades may invalidate older semantic review artifacts through freshness gates.
-- This does not change `review-now`, `review-apply`, `review-fix`, or `auto-loop` semantics.
+- This does not change `review-now`, `review-apply`, `review-fix`, `debt-fix`, or `auto-loop` semantics.
 - When strict reviewer evidence is missing or stale, the correct recovery is to regenerate a fresh request and redo the reviewer step, not to weaken apply-time validation.
 - Invalid reviewer output is not a normal completion point; current review subject metadata and same-session auto-loop state should remain available so the same session can continue with a corrected reviewer result.
+
+## Accepted Proof-Debt Repair
+
+`COMPLETED_WITH_PROOF_DEBT` is a completed-but-not-clean state. It should not
+be consumed as an ordinary completed dependency. Downstream hard dependents are
+blocked as `DEPENDENCY_PROOF_DEBT` until the debt-bearing task is repaired, and
+normal `pack`, `build-check`, `review-now`, `auto-loop`, and soft-dependency
+selection entrypoints must refuse work that would carry that debt forward.
+
+Use `debt-fix` when either condition holds:
+
+- the task status is `COMPLETED_WITH_PROOF_DEBT`
+- the task is an older `COMPLETED` task but `proof_obligations.json` or the
+  ledger proof-obligation summary records `accepted_as_proof_debt`
+
+`debt-fix` does not prove anything by itself. It creates a normal
+`review_repair_request_vM.json` with `repair_trigger = proof_debt`, clears any
+active review request, and seeds the next `review-fix` cycle from the official
+output or latest official snapshot. After that, use the standard
+`review-fix -> build-check -> review-now --review-subject candidate ->
+review-apply` loop.
+
+For large proof debt, the repair loop is only the contract and state machine.
+The authoring step must build the missing foundation explicitly. Before creating
+a new foundation/API:
+
+- keep the textbook proof spine as the controlling decomposition;
+- scan existing `ToyApollo/Output` foundation files, older textbook task files,
+  bridge files, ledger decisions, Mathlib APIs, and downstream debt tasks for
+  similar source-aligned bridges;
+- use Mathlib as the formal substrate for atomic facts and APIs, not as a
+  black-box replacement for the source proof;
+- prefer a shared foundation file over repeated theorem-local support objects;
+- use the `thm_9_5` style when applicable: focused foundation layers first,
+  final theorem assembly last, and no public source-spine/support parameter in
+  the clean theorem.
 
 ## Existing-Output Batch Requests
 
@@ -86,7 +123,10 @@ Interface-translation lemmas are acceptable only when they resolve an interface
 mismatch between the source proof and an existing theorem. They are not
 acceptable when they merely rename an unproved analytic obligation or the
 task's main theorem. Explicit proof-debt support must be classified separately
-as `proof_debt_support`, not as an interface translation.
+as `proof_debt_support`, not as an interface translation. If review accepts
+that support for a task, record the obligation status as
+`accepted_as_proof_debt`; this is an auditable debt marker, not a claim that the
+underlying theorem has been proved.
 
 If a complex task is being retried after an under-evidenced hard stop, the loop
 must not accept another `hard_failure` until the renewed attempt has either

@@ -1,0 +1,550 @@
+\subsection*{12.4 Application. MMSE Estimation}
+
+The minimum mean-squared error (MMSE) criterion is a widely used approach for
+
+optimal linear filtering in signal processing. The Orthogonality Principle provides a
+
+powerful tool for deriving the linear MMSE estimator. For more details, readers can
+
+refer to textbooks on estimation theory, such as [ 5]In this section, we will present
+
+some examples of linear and nonlinear MMSE estimation.
+
+12.4.1 Linear MMSE Estimator
+
+Suppose Y , X1,X2,...,X n are inL2(P) We want to find a1,a 2,...,a n such that
+
+the mean-squared error
+
+Y-
+
+n\sum
+
+i=1
+
+aiXi2
+
+is minimized.
+
+Let W be the space consisting of all linear combinations .
+
+\sumn
+
+i=1 aiXi One can
+
+check that this is a closed subspace. By the Orthogonality Principle in Theorem12.5,
+
+we can solve for ai from
+
+\langleY-
+
+n\sum
+
+j= 1
+
+aj Xj ,Xi\rangle= 0,for i = 1 ,2,...,n .
+
+This amounts to solving a system of linear equations:
+
+E[X1X1]E [X1X2]\cdot\cdot\cdot E[X1Xn]
+
+E[X2X1]E [X2X2]\cdot\cdot\cdot E[X2Xn]
+
+..
+
+.. ... ...
+
+E[XnX1]E [XnX2]\cdot\cdot\cdot E[XnXn]
+
+a1
+
+a2
+
+..
+
+an
+
+=
+
+E[X1Y]
+
+E[X2Y]
+
+..
+
+E[XnY]
+
+When the matrix on the left is nonsingular, we can solve for ai 's. We remark that
+
+whenX1,...,X n have zero mean, this matrix is the same as the covariance matrix.
+
+\textbf{Example 12.4.1 (Linear MMSE Estimator with Two Input Random Variables)} \\
+
+When n= 2 , the problem is to find a1 and a2 that minimize Y- a 1X1 -a 2X22. The optimal
+
+solution is given by the following system of linear equations:
+
+[
+
+E[X2
+
+1]E [X1X2]
+
+E[X1X2]E [X2
+
+2]
+
+][
+
+a1
+
+a2
+
+]
+
+=
+
+[
+
+E[X1Y]
+
+E[X2Y]
+
+]
+
+The matrix on the left is positive semi-definite by the Cauchy-Schwarz inequality. The determinant
+
+is positive if and only if X1 and. X2 are linearly independent.
+
+We can use this system of linear equations to solve the linear regression problem in Example12.2.3,
+
+by substituting the expectation E[X2
+
+1] by . 1
+
+n
+
+\sumn
+
+i=1 x2
+
+i , the inner product E[X1X2] by . 1
+
+n
+
+\sumn
+
+i=1 xi ,
+
+etc. By solving
+
+[ 1
+
+n
+
+\sumn
+
+i=1 x2
+
+i
+
+n
+
+\sumn
+
+i=1 xi
+
+n
+
+\sumn
+
+i=1 xi 1
+
+][
+
+a
+
+b
+
+]
+
+=
+
+[ 1
+
+n
+
+\sumn
+
+i=1 xiyi
+
+n
+
+\sumn
+
+i=1 yi
+
+]
+
+,
+
+we recover the answer to the least square problem:
+
+a= n \sum
+
+i xiyi - \sum
+
+i xi
+
+\sum
+
+i yi
+
+n \sum
+
+i x2 -( \sum
+
+i xi)2 ,
+
+b=
+
+\sum
+
+i yi -a \sum
+
+i xi
+
+n .
+
+\textbf{Example 12.4.2 (Scaling Factor for Linear MMSE Estimate)} \\
+
+Suppose we want to estimate a random variable X , which is observed with some additive noise N .
+
+The observed random variable is Y= cX + N ,w h e r e c is a nonzero constant. We suppose that X
+
+has mean \mu and variance \sigma2
+
+X , N has zero mean and variance \sigma2
+
+N ,a n d X and N are independent.
+
+We also suppose that the parameters c ,\mu,\sigma2
+
+X ,a n d. \sigma2
+
+N are known, andc/=0 .
+
+An unbiased estimate of X is simplyX= Y/c , if we can measure the random variable Y H o w e v e r ,
+
+if we want to minimize the mean-squared error, the optimal constant k that minimizes the mean-
+
+squared errorkY- X 2 can be computed by differentiating
+
+k2E[Y 2]- 2kE[XY]+ E[X2]
+
+with respect to k The optimal value scaling coefficient is
+
+k* = E[XY]
+
+E[Y 2] = c\sigma2
+
+X
+
+c2\sigma2
+
+X +\sigma 2
+
+N
+
+The linear MMSE estimate of X is then given by
+
+XMMSE = c2\sigma2
+
+X
+
+c2\sigma2
+
+X +\sigma 2
+
+N
+
+\cdot Y
+
+c .
+
+We multiply the unbiased estimateY/c by the scaling factor.
+
+c2\sigma2
+
+X
+
+c2\sigma2
+
+X+\sigma2
+
+N
+
+to obtain the MMSE estimate,
+
+which is a linear function of the observed variable Y .
+
+12.4.2 Nonlinear MMSE Estimation
+
+In general, given Y , X1, X2,...,X n \inL 2(P) , the problem of nonlinear MMSE
+
+estimation is to find a measurable function g(x1,x 2,...,x n) such that
+
+Y- g(X 1,X 2,...,X n)2
+
+is minimized. We formulate the problem in terms of \sigma-algebra.
+
+Recall that \sigma(X1,X 2,...,X n) denotes the smallest \sigma-algebra of \mathcal{F} such that
+
+X1,...,X n are measurable. A function g(x1,x 2,...,x n) mapping from. Rn to. R is
+
+measurable with respect to \sigma(X1,X 2,...,X n) iff
+
+g- 1(B)\in \sigma(X 1,X 2,...,X n)for all B \in \mathcal{B} (R).
+
+The next theorem characterizes the random variables that can be written as a
+
+measurable function of X1 to. Xn.
+
+\begin{thmbox}{12.6 (Functions Measurable with Respect to\sigma( X))}
+\end{thmbox}
+
+X()= (X 1(), X2(), . . . , Xn())
+
+Consider an \mathcal{F}-measurable vector function X()=
+
+(X1(), X2(), . . . , Xn()) defined on a measurable space .(\Omega,\mathcal{F})A n
+
+\mathcal{F}-measurable function Y() can be written as Y= g(X 1,X 2,...,X n) for
+
+a .(\mathcal{B}(Rn),\mathcal{B}(R))-measurable function g if and only if Y is measurable with
+
+respect to\sigma( X).
+
+\textit{Proof} ( . ) Suppose that X is \mathcal{F}-measurable from \Omega to Rn, and g is
+
+(\mathcal{B}(Rn),\mathcal{B}(R))-measurable function from Rn to R. Consider the composite
+
+function Y= g X Given any Borel set B\in \mathcal{B} (R), the inverse image g- 1(B) is
+
+\mathcal{B}(Rn)-measurable. Since the vector function X is.(\sigma(X),\mathcal{B}(Rn))-measurable, the
+
+inverse imageY- 1(B)= X - 1(g- 1(B)) is in\sigma( X).
+
+(. ) Suppose that Y is an \mathcal{F}-measurable function that is also \sigma( X)-measurable.
+
+By definition, we have Y- 1(B)\in \sigma( X) for all Borel sets B in. R.
+
+When Y is an indicator function .1A() for some A\in \mathcal{F} , the inverse image
+
+Y- 1({1})= A must be in \sigma( X) by the assumption that Y is \sigma( X)-measurable.
+
+Hence,A= X - 1(B) for someB\in \mathcal{B} (Rn)We can set
+
+g(x1,x 2,...,x n)=
+
+{
+
+1i f (x1,x 2,...,x n)\in B,
+
+0 otherwise .
+
+Then g is Borel measurable, and Y() =g( X()) for all\in \Omega .
+
+Next, suppose Y is a simple function in the form .
+
+\summ
+
+i=1 ai 1Ai ,f o r s o m eAi \in\mathcal{F}.
+
+We can find Borel measurable function gi such that
+
+Y() =
+
+m\sum
+
+i=1
+
+aigi(X1(), . . . , Xn()).
+
+The rest of the proof is to extend it to nonnegative measurable functions and real-
+
+valued measurable functions. It is the standard machinery of Lebesgue integral and
+
+the detail is omitted. \hfill $\square$
+
+In nonlinear MMSE estimation, we define W to be the set of all random variables
+
+on .(\Omega,\mathcal{F},P) that are measurable with respect to the \sigma-algebra \sigma( X) and have
+
+finite second moment. We denote this set by L2(\Omega, \sigma(X), P), where P denotes the
+
+restriction of the original probability measure to the sub- \sigma-algebra\sigma( X)Note that
+
+L2(\Omega, \sigma(X), P) is a closed subspace of the space of all square-integrable random
+
+variables on.(\Omega,\mathcal{F},P) .
+
+The optimization problem can now be stated as
+
+min
+
+g(x1,...,xn)
+
+Y- g(X 1,X 2,...,X n)2
+
+with the minimum taken over all functions g: R n \to R such that. g(X1,...,X n)\in
+
+L2(\Omega, \sigma(X), P)We project Y onto the closed subspace L2(\Omega, \sigma(X), P)B y
+
+Theorem 12.4, a solution exists and any two solutions are equal almost surely. By
+
+the Orthogonal Principle, the solution is characterized by
+
+E[ YZ ]= E[YZ ]for all Z \in L 2(\Omega, \sigma(X), P). (12.5)
+
+Indeed, the condition in (12.5) can be written in several equivalent forms,
+
+\langleY- Y,Z \rangle= 0 for all Z \in L 2(\Omega, \sigma(X), P)
+
+E [(Y- Y)Z ]= 0 for all Z \in L 2(\Omega, \sigma(X), P)
+
+E [YZ ]= E[ YZ ]for all Z \in L 2(\Omega, \sigma(X), P)
+
+E[Yh( X)]= E[ Yh( X)] for all \mathcal{B}(Rn )-measurable h(x) st. h(X) \in L2(P).
+
+We illustrate this idea in the following example.
+
+\textbf{Example 12.4.3 (An Example of Nonlinear MMSE Estimation)} \\
+
+Consider a sample space .{a,b,c,d } and define a uniform distribution on the four sample points.
+
+Define two random variables using the table
+
+a b c d
+
+X(. ) 1 1 2 2
+
+Y(. ) 1 2 3 4
+
+We want to find the nonlinear MMSE estimator of Y given X. Since the probability space is finite,
+
+all functions defined on this probability space are measurable and have finite second moments. The
+
+problem is equivalent to finding a function g(x) that minimizesY - g(X)2.
+
+The\sigma-algebra generated by X contains four sets \emptyset,\Omega ,.{a,b },a n d.{c,d }The MMSE estimator of
+
+Y given X is a function of X and is in the form
+
+Y() =
+
+{
+
+\alphaif = a or = b
+
+\betaif = c or = d.
+
+The optimal values of \alpha and \beta can be determined using calculus. The objective function that we
+
+are going to minimize is a multi-variable quadratic function,
+
+4(1- \alpha) 2 + 1
+
+4(2- \alpha) 2 + 1
+
+4(3- \beta) 2 + 1
+
+4(4- \beta) 2.
+
+The solution can be derived by partially differentiating the objective function with respect to \alpha and
+
+\beta and solving a system of linear equations.
+
+In the followings, we can obtain the answer using the Orthogonal Principle. The MMSE estimator
+
+Y satisfies the following property:
+
+E[YZ ]= E[ YZ ] for all \sigma(X)-measurable functions Z.
+
+We first considerZ = 1{a,b}Applying (12.5),we get
+
+E[Y 1{a,b}]= 1
+
+4 + 2
+
+4 +0 + 0 ,
+
+E[ Y1{a,b}]= \alphaE[1{a,b}]= \alpha
+
+( 1
+
+4 + 1
+
+)
+
+The second line follows from the fact that Y is constant on the event .{a,b }Equating the above
+
+two values yields\alpha = 1.5.
+
+We next consider the function Z = 1{c,d}We have
+
+E[Y 1{c,d}]= 0 + 0 + 3
+
+4 + 4
+
+4,
+
+E[ Y1{c,d}]= \betaE[1{c,d}]= \beta
+
+( 1
+
+4 + 1
+
+)
+
+This gives\beta= 3 .5.
+
+The optimal function g(x) that minimizes mean-squared error Y- g(X) 2 is
+
+g(x)=
+
+{
+
+1.5i f x= 1 ,
+
+3.5i f x= 2 .
+
+We implement this example using Python.
+
+from random import choice
+
+Omega = ['a','b','c','d'] # sample space
+
+Y = {'a':1, 'b':2, 'c':3, 'd':4} # represent Y by a dictionary
+
+omega= choice(Omega) # pick a sample uniformly
+
+X=1i f (Y[omega] <= 2) else 2 # X equals 1 if Y=1, 2 if Y=2
+
+Y_hat = 1.5 if X==1 else 3.5 # estimate random variable Y by X
+
+print(f"Y={Y[omega]}, X={X}, Y_hat={Y_hat}")
+
+In the program, we denote the estimate of Y by Y_hat , which is a function of X A sample output
+
+of this program is:
+
+Y=4, X=2, Y_hat=3.5
+
+The conditional expectation operator in L2(P) generally provides the nonlin-
+
+ear minimum mean-squared error estimation. Specifically, the function g(x) that
+
+minimizes the mean-squared error E[(Y- g(X)) 2] is given by the conditional
+
+expectationg(x)= E [Y\vertX= x ].

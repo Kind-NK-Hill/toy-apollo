@@ -1,0 +1,54 @@
+[
+    {
+        "block_id": "intro_11_2",
+        "type": "Remark",
+        "title": "Weak Law of Large Numbers",
+        "content": "\\subsection*{11.2 Weak Law of Large Numbers}\n\nIn the followings, we consider a sequence of independent random variables X1,X2,\n\nX3,.defined on a common probability space .(\\Omega,\\mathcal{F},P) F o r n\\geq 1 , denote the\n\nsum of the first n random variables by\n\nSn \\coloneqqX 1 +X 2 +\\cdot\\cdot\\cdot+ Xn.\n\nWe recall the following basic property of variance for pairwise uncorrelated\n\nrandom variables (see Definition 7.3).",
+        "dependencies": [
+            "def_7_3"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter11-weak-law-large-numbers"
+    },
+    {
+        "block_id": "thm_11_4",
+        "type": "Theorem_with_Proof",
+        "title": "11.4",
+        "content": "\\begin{thmbox}{11.4}\n\\end{thmbox}\n\nIfX1,X 2,...,X n are pairwise uncorrelated, then\n\nVa r(X1 + X2 +\\cdot\\cdot\\cdot+ Xn) =\n\nn\\sum\n\ni=1\n\nVa r(Xi).\n\n\\textit{Proof} Without loss of generality, suppose the random variables X1,...,X n have\n\nzero mean. (We can consider the centered random variable Yn = Xn - E[Xn]\n\notherwise.)\n\nUsing the definition of variance and the linearity of expectation, we have\n\nVa r(X1 + X2 +\\cdot\\cdot\\cdot+ Xn) = E\n\n[\n\nX2\n\n1 + X2\n\n2 +\\cdot\\cdot\\cdot+ X2\n\nn + 2\n\n\\sum\n\ni<j\n\nXiXj\n\n]\n\n=\n\nn\\sum\n\ni=1\n\nE[X2\n\ni ].\n\nThe assumption of pairwise uncorrelatedness guarantees that the cross-terms\n\nE[XiXj ] are zero for i /=j Therefore, we have\n\nVa r(X1 + X2 +\\cdot\\cdot\\cdot+ Xn) =\n\nn\\sum\n\ni=1\n\nE[X2\n\ni ]=\n\nn\\sum\n\ni=1\n\nVa r(Xi).\n\n\\hfill $\\square$\n\nWe will present two versions of weak law of large numbers. The first one\n\nassumes that the random variables are pairwise uncorrelated with the same mean\n\nand variance. Note that the random variables need not be identically distributed, and\n\nthey need not be independent.",
+        "dependencies": [
+            "def_7_3",
+            "def_9_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter11-weak-law-large-numbers"
+    },
+    {
+        "block_id": "thm_11_5",
+        "type": "Theorem_with_Proof",
+        "title": "11.5 (Weak Law of Large Numbers (L2 Version))",
+        "content": "\\begin{thmbox}{11.5 (Weak Law of Large Numbers (L2 Version))}\n\\end{thmbox}\n\nLet .(Xi)\\infty\n\ni=1 be a sequence of pairwise uncorrelated random variables with\n\ncommon mean E[Xi]= \\mu and variance Va r(Xi) = \\sigma2 for all i. Then\n\nSn/n\n\nP\n\n-\\to \\mu.\n\n\\textit{Proof} The proof is an application of Chebyshev inequality (Theorem 11.2).\n\nFix any \\epsilon> 0 and integer n. Using the fact that Sn/n is an average of pairwise\n\nuncorrelated random variables with common mean \\mu,we have\n\nP\n\n(\\vert\\vertSn\n\nn -\\mu\n\n\\vert\\vert >\\epsilon\n\n)\n\n=P\n\n(\\vert\\vertSn -n\\mu\n\n\\vert\\vert >n \\epsilon\n\n)\n\n\\leq Va r(Sn)\n\nn2\\epsilon2 = 1\n\nn2\\epsilon2\n\nn\\sum\n\ni=1\n\nVa r(Xi).\n\nThe last equality follows from Theorem 11.4.\n\nUsing Theorem 11.4, we know that .\n\n\\sumn\n\ni=1 Va r(Xi)= n\\sigma 2. Therefore, we have\n\nP\n\n( \\vert\\vert\\vertSn\n\nn -\\mu\n\n\\vert\\vert\\vert >\\epsilon\n\n)\n\n\\leq n\\sigma2\n\nn2\\epsilon2 = \\sigma2\n\nn\\epsilon2 .\n\nAsn\\to\\infty , the right-hand side approaches zero, which implies thatSn/n converges\n\nin probability to \\mu. This completes the proof. \\hfill $\\square$\n\nThe assumption of finite second moment can be relaxed to finite mean, but at the\n\ncost of strengthening the uncorrelated assumption to independence.",
+        "dependencies": [
+            "def_7_3",
+            "def_9_1",
+            "def_10_2",
+            "thm_11_2",
+            "thm_11_4"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter11-weak-law-large-numbers"
+    },
+    {
+        "block_id": "thm_11_6",
+        "type": "Theorem_Statement",
+        "title": "11.6 (Weak Law of Large Numbers (L1 Version))",
+        "content": "\\begin{thmbox}{11.6 (Weak Law of Large Numbers (L1 Version))}\n\\end{thmbox}\n\nSuppose .(Xi)\\infty\n\ni=1 is a sequence of iid. random variables with finite mean \\mu.\n\nThenSn/n\n\nP\n\n-\\to \\mu .\n\nTheorem 11.5, also known as Khinchin's weak law of large numbers, has a\n\ndetailed proof in [4, Theorem 2.2.14]In the following two sections, we will discuss\n\ntwo applications of this theorem instead of going through the proof.",
+        "dependencies": [
+            "def_5_10",
+            "thm_10_2",
+            "thm_11_5",
+            "thm_2_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter11-weak-law-large-numbers"
+    }
+]

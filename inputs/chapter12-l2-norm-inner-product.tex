@@ -1,0 +1,385 @@
+\section*{Techniques from Hilbert Space Theory}
+
+\subsection*{12.1 L2-Norm and Inner Product Space}
+
+This chapter presents a geometric perspective on random variables by viewing them
+
+as vectors in a vector space. Although this vector space has infinite dimension
+
+in general, this viewpoint offers insights into the behavior of random variables.
+
+Assuming that all random variables in the vector space have finite second moments,
+
+we can define an inner product that resembles the dot product in a finite-dimensional
+
+Euclidean space. This inner product allows us to define notions such as orthogonal-
+
+ity and the analog of the triangle inequality in this infinite-dimensional vector space.
+
+To study random variables form this geometric perspective, we borrow tech-
+
+niques from Hilbert space theory. We can define the projection operator, which
+
+maps a random variable to a subspace, and prove the Orthogonality Principle in
+
+the context of probability theory. These tools are then applied to the derivation of
+
+statistical estimators that minimize mean-squared error.
+
+\begin{defbox}{12.1}
+\end{defbox}
+
+Given a measure space (\Omega, \mathcal{F},\mu ), we denote the set of all \mathcal{F}-measurable
+
+functions X with finite second moment by L2(\mu)More generally, for any
+
+positive integer p, we define Lp (\mu) as the set of all \mathcal{F}-measurable functions
+
+with finite
+
+\int
+
+\vertX\vertp d\mu.
+
+In this chapter, we will focus on the study of L2(P) for a probability measure P .
+
+We note that any square-integrable random variable necessarily has a finite mean,
+
+implying that L2(P) is a subset of L1(P) Using Cauchy-Schwarz inequality
+
+(Theorem 11.1), we can define an inner product for two square-integrable random
+
+variables.
+
+\begin{defbox}{12.2}
+\end{defbox}
+
+Let (\Omega, \mathcal{F},P) be a probability space. We define the inner product of two real-
+
+valued random variables in L2(P) by
+
+\langleX, Y\rangle\coloneqqE[XY ].
+
+We define the L2-norm of X by
+
+X2 \coloneqq
+
+\sqrt
+
+\langleX, X\rangle=
+
+\sqrt
+
+E[X2].
+
+Two random variables X and Y are said to be orthogonal if \langleX, Y\rangle= 0. We will
+
+sometime write Xwithout the subscript 2 to simplify notation.
+
+This notion of orthogonality is analogous to the concept of perpendicularity in
+
+Euclidean geometry. When random variables X and Y have zero mean, then they
+
+are orthogonal iff they are uncorrelated.
+
+Complex Inner Product For complex random variables, the inner product is
+
+defined as E [X*Y], where X* denotes the complex conjugate of X.
+
+\textbf{Example 12.1.1 (A Finite Inner Product Space)} \\
+
+Consider a finite probability space with sample space \Omega ={ a, b, c}The \sigma-algebra is the discrete
+
+\sigma-algebra P(\Omega) , and the probability measure is given by P({a}) = pa , P({b}) = pb, P({c}) =
+
+pc,w h e r e pa , pb,a n d pc are nonnegative real numbers that sum to 1.
+
+We can specify a random variable X by giving its value at the three points in \Omega , which can be
+
+represented as a vector (X(a), X(b), X(c))Conversely, any three-dimensional vector (x1,x 2,x 3)
+
+is associated to a random variable X by defining X(a) \coloneqqx1, X(b) \coloneqqx2,a n d X(c) \coloneqqx3. Thus,
+
+the random variables in this probability space have a one-to-one correspondence with the vectors
+
+in a three-dimensional vector space over R.
+
+The inner product between two random variables X and Y , which are represented by vectors
+
+(x1,x 2,x 3) and (y1,y 2,y 3), respectively, is computed as
+
+\langleX, Y\rangle= pax1y1 + pbx2y2 + pcx3y3.
+
+The second moment of a random variable X is thus equal to pax2
+
+1 + pbx2
+
+2 + pbx2
+
+3 .
+
+\textbf{Example 12.1.2 (A Complex Hilbert Space of Infinite Dimension)} \\
+
+Let \Omega ={ 1, 2, 3,... } be the sample space, and the power set P(\Omega) be the \sigma-algebra. Consider a
+
+probability measure P defined on \Omega by
+
+P({k}) \coloneqq 1
+
+2k
+
+for k \geq 1. A random variable X can be identified with an infinite complex sequence
+
+X (x1,x 2,x 3,... ) ,
+
+where xk are complex numbers for k = 1, 2, 3,... .
+
+The random variable X belongs to L 2(P) if and only if the series \sum\infty
+
+k=1 \vertxk\vert2/2k is convergent.
+
+If we are given another random variable Y , whose values at 1 , 2, 3, 4,.are y 1,y 2,y 3,y 4,... ,t h e
+
+inner product between X and Y is given by
+
+\langleX, Y\rangle=
+
+\infty\sum
+
+k=1
+
+x*
+
+k yk/2k.
+
+Here, x *
+
+k denotes the complex conjugate of x k .
+
+The followings are other basic properties of inner product.
+
+\begin{thmbox}{12.1}
+\end{thmbox}
+
+Let\langle\cdot,\cdot\ranglebe an inner product over a field K , where K is either R or C :
+
+Fo r X, Y1,Y 2 \in L2(P) and \alpha, \beta \in K,
+
+\langleX, \alphaY1 +\betaY 2\rangle= \alpha\langleX, Y1\rangle+\beta\langleX, Y2\rangle.
+
+For real inner product, we have\langleX, Y\rangle=\langle Y, X\ranglefor X, Y \inL 2(P) .
+
+For complex inner product, we have\langleX, Y\rangle=\langle Y, X\rangle* for X, Y \in L2(P) .
+
+Fo r X \in L2(P) and \alpha \inK ,\alphaX2 =\vert \alpha\vert\cdot X2.
+
+The triangle inequality for L 2 norm is called the Minkowski inequality.
+
+\begin{thmbox}{12.2 (Minkowski Inequality)}
+\end{thmbox}
+
+For any two random variables X and Y in L 2(P) ,
+
+X+ Y 2 \leq X2 + Y2.
+
+\textit{Proof} We give a proof for complex-valued random variables. Using the Cauchy-
+
+Schwarz inequality (Theorem 11.1),
+
+X+ Y 2
+
+2 \leqE [\vertX\vert2]+ 2R e(E[X*Y])+ E [\vertY\vert 2]
+
+\leqE [\vertX\vert2]+ 2
+
+\sqrt
+
+E[\vertX\vert2]E[\vertY\vert 2]+ E[\vertY\vert 2]
+
+=( X2 + Y2)2.
+
+Taking the square roots of both sides yields the Minkowski inequality. \hfill $\square$
+
+Similar to the case of L1 norm, a random vector with zero L2 norm is equivalent
+
+to the zero function but need not be equal to the zero function. We continue with the
+
+convention that two random variables that are equal almost everywhere are regarded
+
+as the same random variable. With this caveat, we have shown that L2(P) is a
+
+normed vector space.
+
+Using the Minkowski inequality, we can see that the L2 norm defines a metric
+
+on the space L2(P) , by regarding X - Y2 as the distance between two random
+
+variables. Moreover, we can prove that the space of random variables in L2(P) is
+
+complete with respect to the norm induced by inner product. It is a consequence of
+
+the Riesz-Fischer theorem.
+
+\begin{defbox}{12.3}
+\end{defbox}
+
+A sequence of vectors (un)\infty
+
+n=1 in a vector space V with a norm function \cdot is
+
+called a Cauchy sequence if given any \epsilon> 0, there exists an integer N such that
+
+um - un\leq \epsilon for all m, n \geq N. We say that a sequence of vectors (un)\infty
+
+n=1 is
+
+convergent if there exists a vector u0 \in V such that for any given \epsilon> 0, there is
+
+an integer N such that un - u0\leq \epsilonfor all n \geq N .
+
+A normed vector space V is said to be complete if every Cauchy sequence in V is
+
+convergent. A Hilbert space is a (real or complex) vector space that is complete
+
+with respect to the norm induced by the inner product.
+
+\begin{thmbox}{12.3 (Riesz-Fischer)}
+\end{thmbox}
+
+Let (\Omega, \mathcal{F},P) be a probability space. The space L2(P) is a complete vector
+
+space with respect to the L2 norm.
+
+\textit{Proof} Suppose we have a Cauchy sequence f1, f2, f3,.in L2(P) To prove
+
+that the sequence converges in mean square, we need to find a candidate function
+
+and show that it is indeed the limit. Our first step is to show that there exists a
+
+subsequence that converges almost surely.
+
+By the definition of Cauchy sequence, we can find a sequence of integers n1 <
+
+n2 <n 3 < \cdot\cdot\cdot such that fnk+1 - fnk 2 \leq 1/2k for k = 1, 2, 3,... We claim that
+
+the limit limk\to\infty fnk () exists almost everywhere.
+
+We write fnk () as
+
+fnk () = fn1 () +
+
+k- 1\sum
+
+i=1
+
+(fni+1() - fni ())
+
+and apply the result established in Problem 7.7, which implies that the limit of
+
+fnk () exists almost everywhere if
+
+\int
+
+\vertfn1\vertdP +
+
+\infty\sum
+
+i=1
+
+\int
+
+\vertfni+1 -f ni \vertdP (12.1)
+
+is finite.
+
+To show that it is finite, we use Jensen inequality to obtain
+
+\int
+
+\vertfni+1 -f ni \vertdP \leq
+
+( \int
+
+\vertfni+1 -f ni \vert2 dP
+
+) 1/2
+
+= fni+1 -f ni 2
+
+for all i Our choice of the indices n i 's ensures thatfni+1 -fni 2 \leq1 /2i Therefore,
+
+the sum in (12.1) is finite. By applying the result from Problem 7.7, there exists an
+
+event E with probability 1 such that f nk () converges for all \in E. We can define
+
+a candidate function as follows:
+
+f( )\coloneqq
+
+{
+
+limk\to\infty fnk ()for \in E,
+
+0 otherwise .
+
+If is not in E ,t h e v a l u eo f f( ) is arbitrary. We set the value of f( ) to be 0 for
+
+\in Ec. This convention ensures that f( ) is measurable.
+
+Let\epsilon> 0 be an arbitrarily small real number. By the choice of the sequence n j ,
+
+there is a sufficiently large integer m such thatfnj - fnk 2
+
+2 \leq\epsilon for all j, k \geq m.
+
+We fix k \geq m and let j \to\infty Then, by applying Fatou's lemma (Theorem 7.3), we
+
+have
+
+\int
+
+E
+
+lim
+
+j\to\infty
+
+\vertfnj -f nk \vert2 dP\leq lim
+
+j\to\infty
+
+\int
+
+E
+
+\vertfnj -f nk \vert2 dP\leq \epsilon.
+
+Since f nj () \to f( ) for \in E, we get f - fnk 2
+
+2 =
+
+\int
+
+\vertf - fnk \vert2 dP \leq\epsilonfor
+
+all k \geq m. Therefore, the subsequence (f nk )k\geq 1 converges to f in mean square.
+
+To show that the original sequence (f n)\infty
+
+n=1 also converges to f in mean square,
+
+we write
+
+fn -f 2 <fn -f n\ell2 + fn\ell -f 2,
+
+and take limit as n and\ell approach infinity. Since (f n)n\geq1 is a Cauchy sequence,
+
+the termfn -f n\ell2 tends to zero. Furthermore, from the previous paragraph, we
+
+know thatfn\ell -f2 tends to zero as well. This proves thatfn -f2 can be made
+
+arbitrarily small for all sufficiently large integer n , and thus (f n)n\geq1 converges to f
+
+in mean square. Because the L 2 norm is a continuous function (Exercise 12.2), the
+
+L2 norm of f is finite. This proves that f \in L2(P) \hfill $\square$

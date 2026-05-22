@@ -1,0 +1,215 @@
+\subsection*{11.3 Application: Monte Carlo Integration}
+
+Suppose we have a multi-variable function g(x1,x 2,...,x d) with d variables,
+
+where each variable takes a value between 0 and 1. Our goal is to evaluate the
+
+integral
+
+\int 1
+
+\int 1
+
+\cdot\cdot\cdot
+
+\int 1
+
+g(x1,x 2,...,x d)dx 1dx2 \cdot\cdot\cdot dxd, (11.2)
+
+which is a d -fold integration over the unit hypercube. A direct method that
+
+approximates this integral by a Riemann sum involves selecting m points along
+
+each dimension and computing the sum
+
+md
+
+m- 1\sum
+
+j1=0
+
+m- 1\sum
+
+j2=0
+
+\cdot\cdot\cdot
+
+m- 1\sum
+
+jd=0
+
+g
+
+( j1
+
+m, j2
+
+m,..., jd
+
+m
+
+)
+
+However, this method requires evaluating the function at md points, which can
+
+be computationally infeasible when d is large. This is known as the "curse of
+
+dimensionality", where even a small number of sample points per dimension can
+
+result in an exponential increase in the total number of function evaluations required.
+
+To overcome this limitation, we can use Monte Carlo integration, which involves
+
+randomly sampling points from the domain of the hypercube .[0,1]d , and taking
+
+the average of the function values at the random points. To estimate the integral
+
+using n sample points, we generate independent uniform random variables Xi1 ,
+
+Xi2,...,X id between 0 and 1, for i= 1 ,2,...,n We then compute the estimator
+
+In \coloneqq 1
+
+n
+
+n\sum
+
+i=1
+
+g(Xi1,Xi2,...,X id ). (11.3)
+
+The n terms in this estimator are independent, and its expected value is given by
+
+E[In]= 1
+
+n
+
+n\sum
+
+i=1
+
+E[g(Xi1,Xi2,...,X id )]= E[g(X11,X 12,...,X 1d)],
+
+which is equal to the multi-variable integral in (11.2)If the integral in (11.2) is
+
+finite, then by Khinchin's weak law of large numbers, the estimator In converges in
+
+probability to its expected value E[In] asn\to\infty .
+
+The convergence rate of the Monte Carlo estimator is independent of the
+
+dimensionality of the problem. To see why, suppose that the function g to be
+
+integrated is bounded by a constant C in absolute value, and suppose the error
+
+tolerance is. \epsilon. Let the true value of the integral be I*Because the variance is finite,
+
+by the. L2 version of the weak law of large numbers, we have
+
+P
+
+( \vert\vert\vertIn -I *
+
+\vert\vert\vert >\epsilon
+
+)
+
+\leq Va r(g(X 11,...,X 1d))
+
+n\epsilon2 \leq C2
+
+n\epsilon2 .
+
+If we want the probability P( \vertIn -I *\vert>\epsilon ) to be less than, say, 0.01, we need
+
+to take at least C2/(0.01\epsilon2) samples. The bound increases inversely proportional
+
+to. \epsilon2. This error estimate does not depend on the number of variables and is valid in
+
+any dimension. This means that the convergence rate of the Monte Carlo estimator
+
+is the same for one-dimensional problems as it is for high-dimensional problems.
+
+However, the variance of the estimator can still be high for functions with large
+
+fluctuations, requiring the evaluation of the function on many sample points to
+
+achieve a certain level of accuracy.
+
+We illustrate the convergence speed of Monte Carlo integration with the follow-
+
+ing example.
+
+Python Program for Monte Carlo Integration We demonstrate the Monte Carlo
+
+method by evaluating the integral
+
+\int M
+
+-M
+
+\int M
+
+-M
+
+\int M
+
+-M
+
+\int M
+
+-M
+
+x2y2z2w2 dxdydzdw
+
+with four variables. The integral is separable, with exact value (2M3/3)4W e
+
+can implement the Monte Carlo integration method using the following Python
+
+program:
+
+from random import uniform
+
+n = 100000 # number of sample points
+
+f = lambda u: (u[0] *u[1]*u[2]*u[3])**2 # function to be integrated
+
+M = 2 # range of the integration
+
+s=0
+
+for i in range(n):
+
+random_point = [uniform(-M,M) for j in range(4)]
+
+s += f(random_point) # evaluate function f
+
+print("Integral = ", (2 *M)**4*s/n)
+
+We set M = 2. The exact value of the integral is 809.086. The Python function
+
+uniform(-M,M) generates a float-type number uniformly between -M and MW e
+
+run the program with n = 100, 103, 104, 105, and 10 6. The approximate values
+
+produced by the program are shown in the table below.
+
+n 100 1000 10000 100000 1000000
+
+In 724.062 822.986 796.259 812.225 807.883
+
+When n is large, it is close to the exact value 809.086.
+
+Quasi-Random Monte Carlo
+
+Another method for numerical evaluation of multi-variable is to use quasi-random point set instead
+
+of pseudo-random numbers. Quasi-random point sets are sequence of points that are evenly spread
+
+in the hypercube .[0, 1]d but are not statistically the same as uniformly random points. These
+
+sequences are also called "low-discrepancy sequences"If we use quasi-random point sets in Monte
+
+Carlo integration, the estimate can converge to the true value of the integral faster than random
+
+points, especially in high-dimensional problems.

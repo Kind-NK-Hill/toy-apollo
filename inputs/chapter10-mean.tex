@@ -1,0 +1,67 @@
+\subsection*{10.2 Convergence in the Mean}
+
+\begin{defbox}{10.3}
+For $r\geq 1$, $(X_n)_{n\geq 1}$ is said to converge to $X$ in the $r$-th mean (or in the $L^r$ norm) if
+\[
+\mathbb{E}[\lvert X_n-X\rvert^r]\to 0
+\]
+as $n\to\infty$.
+
+When $r=1$, we say that $X_n$ converges to $X$ in the mean. When $r=2$, we say that $X_n$ converges to $X$ in mean square or in quadratic mean. Other notation for mean square convergence includes
+\[
+X_n\xrightarrow{\mathrm{m.s.}}X
+\qquad\text{and}\qquad
+\operatorname{l.i.m.} X_n=X.
+\]
+\end{defbox}
+
+From Theorem 7.5, we see that whenever the dominated convergence theorem can be applied, the sequence of random variables converges in the mean with $r=1$. Convergence in the mean and convergence almost surely do not have a direct relationship with each other. As the next two examples show, convergence in the mean does not imply almost sure convergence and vice versa.
+
+\textbf{Example 10.2.1 (Almost Sure Convergence But Not in the Mean)} \\
+Let $\Omega=[0,1]$, and let $P$ be the Lebesgue measure on $[0,1]$. For $n=1,2,3,\ldots$, define
+\[
+X_n(\omega)\coloneqq n\cdot \mathbf{1}_{[0,1/n]}(\omega).
+\]
+The sequence of random variables $(X_n)_{n\geq 1}$ does not converge to $0$ in the mean, because
+\[
+\mathbb{E}[X_n-0]=\int_{[0,1/n]}n\,dP=1
+\]
+for all $n$. However, the sequence converges to $0$ a.s., because for each $\omega>0$, the sequence $(X_n(\omega))_{n\geq 1}$ will eventually be equal to $0$.
+
+\textbf{Example 10.2.2 (Convergence in the Mean But Not Almost Surely)} \\
+Consider the probability space as in the previous example. Define a sequence of events $A_k$, for $k\geq 1$, by
+\[
+A_1\coloneqq \Omega,
+\]
+\[
+A_2\coloneqq [0,1/2],\quad A_3\coloneqq [1/2,1],
+\]
+\[
+A_4\coloneqq [0,1/4],\quad A_5\coloneqq [1/4,1/2],\quad
+A_6\coloneqq [1/2,3/4],\quad A_7\coloneqq [3/4,1],
+\]
+and so on. For $2^k\leq i\leq 2^{k+1}-1$, the union of the $A_i$'s equals the whole sample space $[0,1]$, and $P(A_i)=1/2^k$.
+
+For $k\geq 1$, let $X_k$ be the indicator function $\mathbf{1}_{A_k}$. The sequence $(X_k)_{k\geq 1}$ does not converge to $0$ a.s., because for each $\omega$, $X_k(\omega)=1$ for infinitely many $k$. On the other hand, the $X_k$'s converge to $0$ in the mean.
+
+However, we can show that convergence in the mean is stronger than convergence in probability.
+
+\begin{thmbox}{10.5}
+Convergence in $L^r$ norm implies convergence in probability.
+\end{thmbox}
+
+\textit{Proof}
+Suppose $(X_n)_{n\geq 1}$ converges to $X$ in the $r$-th mean for some positive number $r$, i.e.,
+\[
+\mathbb{E}[\lvert X_n-X\rvert^r]\to 0
+\]
+as $n\to\infty$. For any $\epsilon>0$, we apply the Markov inequality to obtain
+\[
+P(\lvert X_n-X\rvert>\epsilon)
+=P(\lvert X_n-X\rvert^r>\epsilon^r)
+\leq
+\frac{\mathbb{E}[\lvert X_n-X\rvert^r]}{\epsilon^r}
+\to 0
+\]
+as $n\to\infty$. This proves that the sequence $(X_n)_{n=1}^{\infty}$ is converging to $X$ in probability.
+\hfill $\square$

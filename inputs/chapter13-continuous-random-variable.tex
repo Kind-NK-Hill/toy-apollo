@@ -1,0 +1,302 @@
+\subsection*{13.5 Conditional Expectation Given a Continuous Random Variable}
+
+Variable
+
+While the process of deriving the formula for computing conditional expectation in
+
+the continuous case is similar to that in the discrete case, it is more complex due to
+
+the presence of events with probability zero.
+
+\begin{thmbox}{13.14}
+\end{thmbox}
+
+Suppose .(R2,\mathcal{B}(R2), P) is a probability space on R2, and X and Y denote
+
+the x - and y -coordinates, respectively. Let g(x) denote a Borel function in
+
+L1(P) .
+
+Suppose the joint probability density function of X and Y is denoted by
+
+fXY (x, y), ie., for any Borel set B in\mathcal{B}(R2), we have
+
+P(B) =
+
+\int
+
+B
+
+fXY (x,y)d\lambda(x,y),
+
+where. \lambda is the Lebesgue measure on R2. Then, we have
+
+E[g(X)\vertY]=
+
+\int
+
+R
+
+g(x)fX\vertY (x\verty) d\lambda(x), (13.13)
+
+where
+
+fX\vertY (x\verty)\coloneqq fXY (x, y)
+
+fY (y)
+
+and
+
+fY (y)\coloneqq
+
+\int
+
+R
+
+fXY (x, y) d\lambda(x). (13.14)
+
+In particular , if X is integrable, we can compute the conditional expecta-
+
+tionE[X\vertY] by
+
+E[X\vertY]=
+
+\int
+
+R
+
+xfX\vertY (x, y) d\lambda(y).
+
+We may assumefY (y)/=0 for simplicity so that we do not need to worry about
+
+division by zero. We note that the conditional expectation E[g(X)\vertY] in (13.13) is
+
+a\sigma(Y) -measurable function and hence is a function of y .
+
+\textit{Proof} Let h(y)=
+
+\int
+
+R g(x)fX\vertY (x\verty)d\lambda(x) be the candidate function for the
+
+conditional expectation. Our goal is to prove that, for any \sigma(Y) -measurable set B ,
+
+the following equation holds:
+
+\int
+
+B
+
+g(x)dP(x,y) =
+
+\int
+
+B
+
+h(y) dP(x, y). (13.15)
+
+Consider a special type of \sigma(Y) -measurable set of the form B= R \times[ a,b] for
+
+some a<b Assuming we can apply Fubini's theorem to evaluate the integrals by
+
+iterated integration, we will show that Eq. (13.15) holds for this type of set. When
+
+B is of the form R\times[ a,b], we can express the right-hand side of (13.15) as
+
+\int
+
+[a,b]
+
+\int
+
+R
+
+h(y)fXY (x, y) d\lambda(x)d\lambda(y)=
+
+\int
+
+[a,b]
+
+h(y)
+
+\int
+
+R
+
+fXY (x, y) d\lambda(x)d\lambda(y)
+
+=
+
+\int
+
+[a,b]
+
+h(y)fY (y) d\lambda(y)
+
+=
+
+\int
+
+[a,b]
+
+\int
+
+R
+
+g(x)fXY (x, y) d\lambda(x)d\lambda(y).
+
+The last line is the same as the left-hand side of (13.15).
+
+We can justify the application of Fubini's theorem by assuming that \vertg(x)\vert is
+
+integrable, as
+
+\int
+
+R\times[a,b]
+
+\vertg(x)\vertfXY (x,y)d\lambda(x,y) \leq
+
+\int
+
+R\timesR
+
+\vertg(x)\vertfXY (x,y)d\lambda(x,y) < \infty .
+
+We obtain the following equation for all closed intervals I in R:
+
+E[g(X) 1R\timesI ]= E[h(Y) 1R\timesI ]. (13.16)
+
+We can extend (13.16) to all Borel sets B\in \mathcal{B} (R) by appealing to the \pi-\lambda
+
+theorem. First, we observe that the collection of all closed intervals in R form a
+
+\pi-system P. Next, we consider the collection L consisting of subsets S of \Omega that
+
+satisfies
+
+E[g(X) 1R\timesS]= E[h(Y) 1R\timesS].
+
+By what we have proved above, we know that P\subset L We can prove that L is
+
+indeed a \lambda-system, which implies that L contains all Borel sets in R. Therefore,
+
+(13.16) holds for all Borel sets B\in \mathcal{B} (R).
+
+Consequently, we have E[g(X) 1C]= E[h(Y) 1C] for all \sigma(Y) -measurable
+
+sets C This implies that h(Y) is indeed a version of the conditional expectation
+
+E[g(X)\vertY] , as it satisfies the defining properties of the conditional expectation. \hfill $\square$
+
+The second part of the theorem establishes the equivalence between the measure-
+
+theoretic definition of conditional expectation and the definition typically presented
+
+in a first course of probability for continuous random variables. By establishing this
+
+equivalence, we demonstrate that the abstract definition of conditional expectation
+
+generalizes the familiar notion from introductory probability theory.
+
+While the classical approach to conditional expectation is well-suited for dealing
+
+with continuous or discrete random variables, it is not capable of handling the case
+
+where we wish to compute the conditional expectation of a discrete random variable
+
+given a continuous random variable, or vice versa. In such cases, the measure-
+
+theoretic definition provides a more general and rigorous framework for defining
+
+conditional expectation.
+
+\textbf{Example 13.5.1 (Conditional Probability Given a Continuous Random Variable)} \\
+
+Consider a point .(X, Y) chosen uniformly at random in the interior of a unit square with vertices
+
+(0,0),.(0,1),.(1,1),a n d.(1,0)Let Z be a binary random variable defined by
+
+Z\coloneqq
+
+{
+
+1i f Y<X
+
+0i f Y\geq X.
+
+We want to find E[Z\vertX]Note that X is uniformly distributed between 0 and 1, while Z is a
+
+Bernoulli random variable.
+
+Let A be the event .{Y<X }The random variable Z is the same as the indicator function . 1A,
+
+and E[Z\vertX] is the conditional probability P(A \vertX)From the geometry of the problem, we can
+
+make a guess that P(A \vertX)= X Indeed, we will show that
+
+\int
+
+B
+
+ZdP =
+
+\int
+
+B
+
+XdP (13.17)
+
+holds for all \sigma(X)-measurable sets B .
+
+ConsiderB=[ a,b]\times[ 0,1],w h i c h i s\sigma(X)-measurable. We have
+
+\int
+
+[a,b]\times[0,1]
+
+ZdP =
+
+\int
+
+[a,b]\times[0,1]
+
+1A dP= b2 -a 2
+
+2 .
+
+This is the area of a trapezoid with vertices .(a,0),.(b,0),.(b, b),a n d.(a, a).
+
+On the other hand, we have
+
+\int
+
+B
+
+XdP =
+
+\int b
+
+a
+
+\int 1
+
+xd y dx=
+
+\int b
+
+a
+
+xdx = b2 -a 2
+
+2 .
+
+Hence, (13.17) holds for all set B that can be written as a rectangle .[a,b ]\times[ 0,1] for somea<b .
+
+Using the\pi-\lambda theorem, we can extend this to all sets B that can be written as a Cartesian product
+
+B= C \times[ 0,1],w h e r e C is Borel set in R. Finally, we note that X is\sigma(X)-measurable. Therefore,
+
+X is a version of the conditional expectation E[1A\vertX], which is equal to P(A \vertX) by the definition
+
+of conditional expectation. This proves that E[Z\vertX]= P(A \vertX)= X .

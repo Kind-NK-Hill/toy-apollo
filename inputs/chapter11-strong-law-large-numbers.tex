@@ -1,0 +1,271 @@
+\subsection*{11.5 Strong Law of Large Numbers}
+
+If we assume that the fourth moments of the random variables are bounded, we have
+
+an easy proof of the strong law of large number.
+
+\begin{thmbox}{11.7 (4th-moment Strong Law of Large Numbers)}
+\end{thmbox}
+
+Suppose Xi ,f o r i\geq 1 , are independent random variables with mean \mu and
+
+E[X4
+
+i ]\leq c< \infty for all i Then Sn
+
+n \to \mu almost surely.
+
+\textit{Proof} Without loss of generality, we assume that \mu= 0 . (We can consider Yi =
+
+Xi -\mu if the mean of Xi is not zero.)
+
+The expectation of S4
+
+n can be expanded as
+
+E[S4
+
+n]= E[(X1 +X 2 +\cdot\cdot\cdot+ Xn)4]
+
+=E
+
+[ n\sum
+
+i=1
+
+X4
+
+i +3
+
+\sum
+
+i/=j
+
+X2
+
+i X2
+
+j +4
+
+\sum
+
+i/=j
+
+XiX3
+
+j
+
++6
+
+\sum
+
+i,j,k
+
+i,j,kdistinct
+
+XiXj X2
+
+k +
+
+\sum
+
+i,j,k,\ell
+
+i,j,k,\elldistinct
+
+XiXj XkX\ell
+
+]
+
+We analyze the terms one by one. For distinct indices i , j , k , and \ell,we have
+
+E[XiXj XkX\ell]= E[XiXj X2
+
+k]= E[XiX3
+
+j ]= 0,
+
+by the assumption that X1,...,X n are independent. The fourth-power terms are
+
+bounded byE[\sumn
+
+i=1 X4
+
+i ]\leq nc becauseE[X4
+
+i ]\leq c.
+
+Fori/=j , by Cauchy-Schwarz inequality,
+
+E[X2
+
+i X2
+
+j ]\leq
+
+\sqrt
+
+E[X4
+
+i ]E[X4
+
+j ]\leq \sqrt c\cdot c = c.
+
+Hence,
+
+3E
+
+[ \sum
+
+i/=j
+
+X2
+
+i X2
+
+j
+
+]
+
+\leq3 n(n- 1 )c
+
+This givesE[S4
+
+n]\leq nc+ 3 n(n- 1 )c. We now fix any \epsilon> 0,
+
+P
+
+( \vertSn\vert
+
+n >\epsilon
+
+)
+
+=P(S 4
+
+n >n 4\epsilon4)\leq nc+ 3 n(n- 1 )c
+
+n4\epsilon4 \leq 3n2c+ nc - 3 nc
+
+n4\epsilon4 \leq 3c
+
+n2\epsilon4 .
+
+Because
+
+\infty\sum
+
+n=1
+
+P
+
+( \vertSn\vert
+
+n >\epsilon
+
+)
+
+\leq
+
+\infty\sum
+
+n=1
+
+3c
+
+n2\epsilon4 <\infty ,
+
+we can apply the first Borel-Cantelli lemma (Theorem 5.8) to conclude that the
+
+event .{\vertSn\vert/n > \epsilon io. } has probability 0. Therefore, by Theorem 10.1, Sn/n
+
+converges to 0 almost surely. \hfill $\square$
+
+Note that Theorem 11.7 does not assume that the random variables Xi are
+
+identically distributed, but it requires that the 4th moments are uniformly bounded.
+
+We state below a stronger version the strong law that assumes finite mean and
+
+pairwise independence.
+
+\begin{thmbox}{11.8}
+\end{thmbox}
+
+Suppose Xi ,f o r i\geq 1 , are pairwise independent and identically distributed
+
+random variables with finite mean \mu. ThenSn/n
+
+as.
+
+\to \mu asn\to\infty .
+
+A proof of this theorem by Etemadi can be found in [ 4, Thm 2.4.1].
+
+\textbf{Example 11.5.1 (Estimation of Cumulative Distribution Function)} \\
+
+Consider the problem of estimating the cdf F(x) = Pr (X\leq x) of a random variable X by
+
+generating iid. samples Xn from the cdf F for n\geq 1 We can estimate F(x) by the empirical
+
+distribution
+
+Fn(x)\coloneqq 1
+
+n
+
+n\sum
+
+k=1
+
+1[Xk,\infty )(x).
+
+The indicator function .1[Xk,\infty )(x) is equal to 1 if x\geq X k and is 0 otherwise. The function Fn first
+
+counts the number of samples that is less than or equal to x , and then divides it by n Because it
+
+depends on the random samples, the estimate Fn(x) is a random variable. By the strong law of
+
+large numbers,Fn(x) converges to the correct value F(x) with probability 1.
+
+This result is strengthened in the Glivenko-Cantelli theorem, which states that the convergence is
+
+uniform in x ,
+
+sup
+
+x\inR
+
+\vert Fn(x)- F(x) \vert
+
+as.
+
+-\to 0 .
+
+The Glivenko-Cantelli theorem is informally known as "the fundamental theorem of statistics".
+
+\textbf{Example 11.5.2 (Normal Numbers)} \\
+
+A real number is said to be normal in base 10 if the frequency of each digit 0 through 9 in its
+
+decimal expansion is asymptotically equal. If a number has multiple decimal expansions, such as
+
+0.1 = 0.09999... , we choose the one that does not end in infinitely many trailing 0's. The strong
+
+law of large numbers implies that, with probability 1, a randomly chosen number in the interval
+
+[0, 1] is normal in base 10.
+
+We can generalize this notion of normality to other bases. A real number is said to be normal if
+
+it is normal in base b all for all integer b \geq 2 simultaneously. By the strong law of large numbers,
+
+for any integer b \geq 2, there exists a set Ab in .[0, 1] with P(Ab) = 1 such that all numbers in Ab
+
+are normal in base b. Taking the intersection of countably events with probability 1, we deduce
+
+that a number in .[0, 1] is normal almost surely. This proves the existence of normal numbers.
+
+However, the argument in the previous paragraph is non-constructive. It is a non-trivial task to
+
+explicitly construct a normal number or prove that a given number is normal.

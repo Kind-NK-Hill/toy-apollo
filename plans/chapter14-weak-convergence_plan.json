@@ -1,0 +1,102 @@
+[
+    {
+        "block_id": "intro_14",
+        "type": "Remark",
+        "title": "Levy's Continuity Theorem and Central Limit Theorem",
+        "content": "\\section*{Levy's Continuity Theorem and Central Limit Theorem}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter14-weak-convergence"
+    },
+    {
+        "block_id": "intro_14_1",
+        "type": "Remark",
+        "title": "Weak Convergence",
+        "content": "\\subsection*{14.1 Weak Convergence}\n\n14Levy's Continuity Theorem and Central Limit\n\nTheorem\n\nThe characteristic function of a random variable is a powerful tool that encapsulates\n\nall the information about its probability distribution. Levy's continuity theorem\n\nestablishes the equivalence between pointwise convergence of characteristic func-\n\ntions and convergence in distribution. This theorem offers a convenient way to\n\ndetermine whether a sequence of random variables converges in distribution, and\n\nserves as a tool for proving the central limit theorem.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter14-weak-convergence"
+    },
+    {
+        "block_id": "thm_14_1",
+        "type": "Theorem_Statement",
+        "title": "14.1 (Levy's Continuity Theorem)",
+        "content": "\\begin{thmbox}{14.1 (Levy's Continuity Theorem)}\n\\end{thmbox}\n\nLet .(Xn)\\infty\n\nn=1 be a sequence of real-valued random variables. Let Pn denote\n\nthe probability measure induced by Xn on R, and \\phin(t) be the characteristic\n\nfunction of Xn,f o r n\\geq 1 Suppose the characteristic functions converge\n\npointwise to some function \\phi(t).\n\nThen the followings are equivalent:\n\n1. Xn converges weakly to some random variable X as n tends to infinity.\n\n2. \\phi(t) is the characteristic function of a random variable.\n\n3. \\phi(t) is continuous at t= 0 .\n\n4. The sequence of probability measures .(Pn)\\infty\n\nn=1 is tight.\n\nIn the first section in this chapter, we define the notion of weak convergence,\n\nwhich is equivalent to convergence in distribution. We also prove that convergence\n\nin total variation implies convergence in distribution. Then, we introduce the notion\n\nof tightness of measures and Prokhorov theorem. In the last section, we use the\n\ncontinuity theorem to prove a version of central limit theorem that assumes iid.\n\nrandom variables with finite variance. In the last section, we will state a central\n\nlimit theorem for triangular array and illustrate it through an example.\n\nSuppose we can only obtain information about a probability distribution P through\n\nsome measurements of the form .\n\n\\int\n\nhdP , where h(x) is a \"test function\"If we\n\nhave a sequence of probability distributions Pn's, it would be desirable if, for each\n\ntest function h(x), the sequence of measurements .\n\n\\int\n\nhdP n converges as n tends to\n\ninfinity. This motivates the concept of weak convergence, which allows us to study\n\nthe convergence of probability distributions based on their behavior with respect to\n\ntest functions.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter14-weak-convergence"
+    },
+    {
+        "block_id": "def_14_1",
+        "type": "Definition",
+        "title": "14.1",
+        "content": "\\begin{defbox}{14.1}\n\\end{defbox}\n\nLet. Pn,f o rn \\geq 1, be probability measures and P be another probability measure\n\ndefined on sample space RI f\n\nlimn\\to\\infty\n\n\\int\n\nR\n\nh(x) dPn(x) =\n\n\\int\n\nR\n\nh(x) dP(x)\n\nfor all bounded and continuous function h(x), then we say that Pn converges\n\nweakly to P The notation for weak convergence is\n\nPn\n\nW\n\n\\to P or Pn P.\n\nWe often apply this definition with the probability measures are the push-forward\n\nmeasures of some random variables. By using the change-of-variable formula\n\n(Theorem 7.11), we can formulate weak convergence for a sequence of random\n\nvariables as follows.",
+        "dependencies": [
+            "thm_7_11"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter14-weak-convergence"
+    },
+    {
+        "block_id": "def_14_2",
+        "type": "Definition",
+        "title": "14.2",
+        "content": "\\begin{defbox}{14.2}\n\\end{defbox}\n\nSuppose X1, X2, X3 ... , is a sequence of random variables, and X is a random\n\nvariable. We say that .(Xn)\\infty\n\nn=1 converges weakly to X if the image measures of\n\nXn's converge weakly to the image measure of X, ie.,\n\nlimn\\to\\infty E[h(Xn)]= E[h(X)]\n\nfor all continuous and bounded functions h.\n\nThe next theorem establishes the equivalence of weak convergence and conver-\n\ngence in distribution. Weak convergence is an elegant definition, and it is more\n\nconvenient for proofs. However, checking the condition for weak convergence can\n\nbe challenging, as it involves considering infinitely many potential test functions. In\n\ncontrast, the definition of convergence in distribution is often more practical to use\n\nin calculations.",
+        "dependencies": [
+            "def_14_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter14-weak-convergence"
+    },
+    {
+        "block_id": "thm_14_2",
+        "type": "Theorem_with_Proof",
+        "title": "14.2 (Weak Convergence and Convergence in Distribution)",
+        "content": "\\begin{thmbox}{14.2 (Weak Convergence and Convergence in Distribution)}\n\\end{thmbox}\n\nSuppose .(Xn)\\infty\n\nn=1 is a sequence of random variables, and X be another\n\nrandom variable. Denote the cumulative distribution function of. Xn byFn(x),\n\nforn \\geq 1, and the cumulative distribution function of X byF(x) We have\n\nXn\n\nW\n\n\\to X if and only if Fn\n\nD\n\n\\to F.\n\n\\textit{Proof} (. ) Suppose F(x) is continuous at x = a, ie., P({a}) = 0. The idea of\n\nproof is to approximate an indicator function by piece-wise linear function. Define\n\na piece-wise linear function g by\n\ng(x) =\n\n1i f x<a - \\epsilon,\n\n\\epsilon(a - x) if a - \\epsilon\\leq x \\leq a,\n\n0i f x>a .\n\nThe function g is linearly decreasing from 1 to 0 in the interval .[a - \\epsilon,a] and is\n\ncontinuous and bounded. We have\n\n1(-\\infty ,a-\\epsilon](x) \\leq g(x) \\leq 1(-\\infty ,a](x).\n\nSubstitute x by X and Xn in the above inequalities, and take expectation to get\n\nF(a - \\epsilon)\\leq E[g(X)]= limn\\to\\infty E[g(Xn)]\\leq lim infn\\to\\infty Fn(a). (14.1)\n\nThe last inequality in (14.1) follows from E[g(Xn)]\\leq Fn(a) for all n.\n\nSimilarly, consider the function h(x) = g(x - \\epsilon)The function h(x) satisfies\n\n1(-\\infty ,a](x) \\leq h(x) \\leq 1(-\\infty ,a+\\epsilon](x)\n\nand is continuous and bounded. We thus obtain\n\nlim sup\n\nn\\to\\infty\n\nFn(a) \\leq limn\\to\\infty E[h(Xn)]= E[h(X)]\\leq F(a + \\epsilon). (14.2)\n\nPutting (14.1) and (14.2) together, we get\n\nF(a - \\epsilon)\\leq lim infn\\to\\infty Fn(a) \\leq lim sup\n\nn\\to\\infty\n\nFn(a) \\leq F(a + \\epsilon).\n\nSince F(x) is continuous at x = a, the limit of .(Fn(a))n\\geq1 exists and equals F(a) .\n\n(. ) We apply Skorokhod representation theorem (Theorem 10.8), and let\n\n(Yn)n\\geq1 be a sequence of random variables defined on the same probability space,\n\nsuch that Yn and Xn have the same distribution and Yn's converge almost surely to\n\na random variable Y that has the same distribution as X.\n\nLeth(y) be a continuous and bounded function on. R. Because h is continuous, by\n\nthe continuous mapping theorem (Theorem 10.11),h(Yn) converges toh(Y) almost\n\nsurely. Since h(Yn) is bounded, we can apply the dominated convergence theorem\n\nto obtain\n\nlimn\\to\\infty E[h(Xn)]= limn\\to\\infty E[h(Yn)]= E[limn\\to\\infty h(Yn)]= E[h(Y)]= E[h(X)].\n\nBecause it holds for any continuous and bounded function h(x), this proves that Xn\n\nconverges weakly to X. \\hfill $\\square$\n\nWe can now prove that Condition 1 implies Condition 2 in Theorem 14.1.",
+        "dependencies": [
+            "def_10_4",
+            "def_14_2",
+            "thm_10_8",
+            "thm_10_11",
+            "thm_14_1"
+        ],
+        "is_renowned": true,
+        "source_plan": "chapter14-weak-convergence"
+    },
+    {
+        "block_id": "thm_14_3",
+        "type": "Theorem_with_Proof",
+        "title": "14.3",
+        "content": "\\begin{thmbox}{14.3}\n\\end{thmbox}\n\nIfXn\n\nW\n\n-\\to X , then\\phiXn (t) converges pointwise to\\phiX(t) for all t .\n\n\\textit{Proof} The real and imaginary parts of eitx are cos(tx) and sin(tx) , which are con-\n\ntinuous and bounded. Therefore E[cos(tXn)]\\to E[cos(tX)] and E[sin(tXn)]\\to\n\nE[sin(tX)] as n approaches infinity. Therefore E[eitXn ] converges to E[eitX ] as\n\nn\\to\\infty \\hfill $\\square$",
+        "dependencies": [
+            "def_14_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter14-weak-convergence"
+    },
+    {
+        "block_id": "rem_14_1_total_variation_bridge",
+        "type": "Remark",
+        "title": "Total Variation Bridge to Theorem 10.6",
+        "content": "Using the equivalent conditions in Theorem 14.2, we can show that convergence\n\nin total variation implies weak convergence and thus complete the proof of\n\nTheorem 10.6.",
+        "dependencies": [
+            "thm_14_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter14-weak-convergence"
+    },
+    {
+        "block_id": "thm_14_4",
+        "type": "Theorem_with_Proof",
+        "title": "14.4",
+        "content": "\\begin{thmbox}{14.4}\n\\end{thmbox}\n\nIf probability measures \\mun,f o r n= 1 ,2,3,... , defined on the measurable\n\nspace .(R,\\mathcal{B}(R)) converge in total variation distance, then they converge\n\nweakly.\n\n\\textit{Proof} Suppose that .(\\mun)\\infty\n\nn=1 converges in total variation to. \\mu, ie.,dTV (\\mun,\\mu )\\to 0\n\nas n\\to\\infty For any fixed index n, define a measure \\nun \\coloneqq(\\mu n +\\mu)/ 2We have\n\n\\mun \\ll \\nun and \\mu\\ll \\nun. By applying Radon-Nikodym theorem (Theorem 13.5), we\n\ncan represent \\mun by density fn, and \\mu by density f, relative to the measure \\nun.\n\nLeth: R \\to R denote a bounded and continuous function, andhmax be an upper\n\nbound of h(x) over all x. By triangle inequality (Theorem 7.1), we get\n\n\\vert\\vert\\vert\n\n\\int\n\nR\n\nh(x) d\\mun(x) -\n\n\\int\n\nR\n\nh(x) d\\mu(x)\n\n\\vert\\vert\\vert =\n\n\\vert\\vert\\vert\n\n\\int\n\nR\n\nh(x)fn(x)d\\nun(x)\n\n-\n\n\\int\n\nR\n\nh(x)f(x)d\\nu n(x)\n\n\\vert\\vert\\vert\n\n\\leq hmax\n\n\\int\n\nR\n\n\\vertfn(x) - f( x)\\vert d\\nun(x).\n\nThe proof of Theorem 8.6 can be adapted to probability measures that are absolutely\n\ncontinuous with respect to any probability measure. Indeed, we can use similar\n\nargument to prove that\n\ndTV (\\mun,\\mu )= 1\n\n\\int\n\nR\n\n\\vertfn(x) - f( x)\\vert d\\nun(x),\n\nwhich yields\n\n\\vert\\vert\\vert\n\n\\int\n\nR\n\nh(x) d\\mun(x) -\n\n\\int\n\nR\n\nh(x) d\\mu(x)\n\n\\vert\\vert\\vert \\leq 2hmaxdTV (\\mun,\\mu ) .\n\nSince dTV (\\mun,\\mu )converges to 0, we also have .\n\n\\int\n\nhd\\mu n \\to\n\n\\int\n\nhd\\mu as n \\to\\infty .\n\nThe function h(x) can be any continuous and bounded function in the previous\n\nparagraphs. This proves that probability measure \\mun converges weakly to \\mu. \\hfill $\\square$\n\nWe note that the converse of Theorem 14.4 does not hold in general. This is\n\nbecause the total variation distance between a discrete distribution and a continuous\n\ndistribution is always equal to 1. For instance, the total variation distance between\n\na binomial distribution and a normal distribution is equal to 1. However, there\n\nexist examples where binomial distribution converges in distribution to the normal\n\ndistribution, despite having a total variation distance of 1 between them. (see\n\nexample 10.3.1)",
+        "dependencies": [
+            "thm_14_2",
+            "thm_13_5",
+            "thm_7_1",
+            "thm_8_6"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter14-weak-convergence"
+    }
+]

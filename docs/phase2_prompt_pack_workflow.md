@@ -23,6 +23,7 @@ For a new candidate:
 6. inspect the reviewer verdict and generated `semantic_review_result_vM.json`
 7. run `review-apply` only when you want to land the review result
 8. if review fails or is inconclusive, run `review-fix`, repair `draft.lean`, then return to `build-check`
+9. if the task lands as `COMPLETED_WITH_PROOF_DEBT`, or an older completed task has `accepted_as_proof_debt` in `proof_obligations.json`, run `debt-fix`, then `review-fix`, repair `draft.lean`, and return to `build-check`
 
 For an existing runnable official output:
 
@@ -50,13 +51,14 @@ Relevant CLI modes:
 4. `review-existing`
 5. `review-now`
 6. `review-fix`
-7. `auto-loop`
-8. `review-existing-queue`
-9. `review-apply`
-10. `verify`
-11. `audit`
-12. `soft-pack`
-13. `soft-apply`
+7. `debt-fix`
+8. `auto-loop`
+9. `review-existing-queue`
+10. `review-apply`
+11. `verify`
+12. `audit`
+13. `soft-pack`
+14. `soft-apply`
 
 Commands:
 
@@ -72,6 +74,7 @@ python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --r
 python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject current --auto-apply-pass
 python .\run_chapter.py --phase 2 --phase2-mode review-fix --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode review-fix --tasks <task_id> --abandon-current-repair
+python .\run_chapter.py --phase 2 --phase2-mode debt-fix --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode auto-loop --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode auto-loop --tasks <task_id> --review-subject candidate --max-auto-rounds 6 --nonprogress-limit 2 --max-build-attempts-per-round 3
 python .\run_chapter.py --phase 2 --phase2-mode review-existing-queue
@@ -95,6 +98,29 @@ Rules:
 - `review-now --review-subject current` reuses the latest review request only if the runtime freshness preflight succeeds; otherwise it instructs the operator to prepare a fresh request.
 - `review-fix` requires exactly one task id and only works when there is an active `review_repair_request_vM.json`.
 - `review-fix` does not run `build-check` automatically; it seeds `draft.lean` for the next authoring pass and refreshes the repair-mode operator context.
+- `debt-fix` requires exactly one task id and works only when `proof_obligations.json` contains `accepted_as_proof_debt`.
+  It creates a normal `review_repair_request_vM.json` with `repair_trigger = proof_debt`,
+  seeds from the official output or latest official snapshot, and then the normal
+  `review-fix -> build-check -> review-now --review-subject candidate -> review-apply`
+  loop discharges the debt.
+  It also recognizes older tasks whose ledger status is still `COMPLETED` but whose proof-obligation summary already records accepted debt.
+- `promote-obligations` turns blocking `proof_obligations.json` entries into
+  first-class `Phase2ObligationTask` ledger children. With no `--tasks` filter it
+  scans all existing Phase 2 packs; with `--tasks` it only promotes the selected
+  parent tasks. These children keep their own pack directory and ordinary
+  Phase2 counters, but their output owner is the parent task, for example
+  `ToyApollo.Output.thm_10_8`.
+- An obligation child uses the normal loop:
+  `pack -> build-check -> review-pack/review-apply`. Its build/review failures
+  count against the child task's `phase2_build_fail_counter` and
+  `phase2_review_fail_counter`, with the same hard limit of 15. When review
+  passes, the parent `proof_obligations.json` entry is marked `proved`; the child
+  task remains in the ledger as a closed historical subtask rather than being
+  deleted.
+- `COMPLETED_WITH_PROOF_DEBT` is not a clean dependency. Ordinary `pack`,
+  `build-check`, `review-now`, `auto-loop`, and `soft-apply` refuse downstream
+  work that would consume a hard dependency or selected soft import carrying
+  accepted proof debt.
 - `auto-loop` requires exactly one task id and is a same-session Codex composite action, not a standalone unattended runtime.
 - `auto-loop` persists live loop state in ledger runtime metadata; pack files only mirror that state.
 - `auto-loop` can automatically advance runtime-side transitions (`review-now`, `review-apply`, `review-fix`, `build-check`), but the current Codex agent still performs the authoring edit and reviewer JSON write.
@@ -115,8 +141,9 @@ Rules:
 
 ## Multi-Task Dependency Blocking
 
-This rule applies only to chapter-wide or task-set goals. It does not change the
-single-task `pack -> build-check -> review-now -> review-apply` contract.
+This rule applies to both chapter-wide/task-set goals and single-task entrypoint
+preflights. It does not change the internal `pack -> build-check -> review-now
+-> review-apply` contract for a task whose hard dependencies are clean.
 For the durable batch checklist, status schema, and dry-run summary helper, see
 `docs/phase2_batch_controller.md`.
 
@@ -129,15 +156,26 @@ than attempted as an ordinary task.
 Dependency failure is not a task-set stop condition. After marking the direct or
 transitive blocked dependents, continue with remaining tasks whose hard
 dependencies are not failed. A chapter/task-set goal stops only when every task
-in scope is terminal: `COMPLETED` or `FAILED_LOCAL`.
+in scope is terminal.
+
+Accepted proof debt is a separate blocker. A task with
+`COMPLETED_WITH_PROOF_DEBT`, or a legacy `COMPLETED` task whose proof-obligation
+summary contains `accepted_as_proof_debt`, is terminal for itself but must not be
+used as a clean upstream dependency. Direct and transitive hard dependents are
+`DEPENDENCY_PROOF_DEBT` until the blocker is repaired with `debt-fix` and lands
+cleanly. Soft-dependency packs exclude debt-bearing materials, and `soft-apply`
+rejects a stale selection if a chosen material became debt-bearing after pack
+generation.
 
 Chapter/task-set summaries must distinguish terminal state from success. Do not
 describe a task set as "passed" or "completed" merely because every task is
 terminal. Report at least:
 
 - semantic-pass/completed tasks
+- completed-with-proof-debt tasks
 - root `FAILED_LOCAL` tasks, grouped by stop reason
 - dependency-failed tasks, grouped by failed hard dependency
+- dependency-proof-debt tasks, grouped by proof-debt hard dependency
 - any remaining nonterminal tasks
 
 If one root failure blocks downstream tasks, include a root-failure audit summary
@@ -181,6 +219,10 @@ Before inventing a new helper obligation for a proof-bearing task, scan the
 available local outputs and metadata:
 
 - `ToyApollo/Output/<task_id>.lean`
+- older textbook outputs under `ToyApollo/Output/*.lean`, not only the current
+  task or current chapter
+- local bridge/foundation files under `ToyApollo/Output`, including renamed
+  helper variants and files imported by downstream tasks
 - `project_ledger.json`
 - `dependency_decisions/<task_id>.jsonl`
 - the relevant `plans/*.json`
@@ -229,10 +271,15 @@ proved or recorded as the actual blocker.
 
 Use `proof_debt_support` only for explicit, auditable support assumptions that
 stand in for reusable mathematics not yet available in local output or Mathlib.
-This is an archive-style exception, not a Tao-style interface translation. A
-`proof_debt_support` item must name the source proof obligation it supports, the
-tasks that depend on it, and the future prove-or-replace path. It must not be
-reported as a fully closed proof.
+This is an archive-style exception, not a Tao-style interface translation and
+not the default mode for normal tasks. A `proof_debt_support` item must name the
+source proof obligation it supports, the tasks that depend on it, and the future
+prove-or-replace path. It must not be reported as a fully closed proof.
+
+If review accepts this exception, use obligation/review item status
+`accepted_as_proof_debt`. That status is passing only because the support
+assumption is explicit, named, and auditable; it is not equivalent to `proved`
+and should remain visible until replaced by a real local theorem.
 
 ## Complex Task Decomposition Gate
 
@@ -264,10 +311,13 @@ wrapper, calculation, or one-step reuse of a known local/Mathlib result, and the
 reviewer can identify the source obligation and its Lean landing place without a
 helper chain.
 
-Every prompt pack contains
+Existing prompt packs may contain
 `phase2_prompt_packs/<task_id>/proof_obligations.json`. For normal tasks this
-may remain empty. For complex tasks it is the machine-readable decomposition
-artifact and must contain:
+file is lightweight review metadata and should not force the task into a debt
+workflow. Normal tasks stay on the older Phase2 path: build, semantic review of
+source claims, proof spine, interface contract, and downstream adequacy. For
+complex tasks it is the machine-readable decomposition artifact and must
+contain:
 
 - source TeX file/span inspected
 - complexity class and reasons
@@ -432,6 +482,28 @@ Reviewer priority rule:
 
 `statement preserved + downstream usable` is still insufficient if the reviewer cannot show where the source-side spine lands in Lean.
 
+For Chapter 10 and later, clean completion also requires the public proof-debt
+surface gate. This gate applies to every official task output file, not only
+files whose source task type is `Theorem_with_Proof`:
+
+- Run `python .\tools\audit_phase2_clean_debt_surface.py --write-report
+  --fail-on-errors` before claiming the Chapter 10-14 proof-debt surface is
+  clean.
+- A public declaration may not require a theorem-level `Support` or `Spine`
+  proof package as an input unless it is the explicit beyond-book exception.
+- A theorem/lemma that proves and returns a `Support` or `Spine` package is
+  allowed; it is review surface, not an error by itself.
+- A helper theorem that consumes a support package only for final assembly
+  should be kept internal/private unless downstream users genuinely need that
+  conditional theorem.
+- `proof_debt_support/status=proved` must land on an actual theorem/lemma that
+  proves the source step. Landing on a structure field, support predicate, or
+  no named declaration is not proof.
+- The only standing exception is `thm_14_8_ProofBeyondBook`, because the source
+  explicitly places that proof beyond the book. Direct downstream use of this
+  exception must remain visible as inherited beyond-book dependence, not as an
+  ordinary cleared proof obligation.
+
 Inputs and reviewer-facing files:
 
 - `candidate_vN.lean` for new candidate review
@@ -466,6 +538,37 @@ Responsibility split:
   - runtime validates the active `review_repair_request_vM.json`
   - runtime safely seeds `draft.lean` from the failed review subject
   - the current Codex agent edits `draft.lean`, runs `build-check`, and re-enters `review-now --review-subject candidate`
+- `debt-fix` is the accepted-proof-debt repair entrypoint:
+  - runtime reads `proof_obligations.json` for `accepted_as_proof_debt`
+  - runtime writes a normal repair request with `repair_trigger = proof_debt`
+  - runtime marks legacy clean-completed debt tasks as `COMPLETED_WITH_PROOF_DEBT`
+  - the current Codex agent then continues through `review-fix`, `build-check`,
+    `review-now --review-subject candidate`, and `review-apply`
+  - for large foundation debt, this loop prepares the repair contract; the
+    current Codex agent must still build the missing Lean foundation instead of
+    expecting the runtime to synthesize it automatically
+- Proof-debt repair should follow the textbook proof spine first. Mathlib is
+  the formal substrate for low-level facts, measure/topology APIs, and
+  source-aligned already-proved results; it should not replace the textbook
+  proof with an unrelated high-level shortcut. If a Mathlib theorem discharges
+  a source step, record the source-step mapping explicitly in the local wrapper
+  or obligation evidence.
+
+Foundation-debt authoring rule:
+
+- Before adding a new theorem-local support object, scan existing foundation
+  files, older `ToyApollo/Output` textbook task files, existing bridge files,
+  ledger decisions, Mathlib APIs, and nearby downstream tasks for reusable
+  structure. The scan is for reusable primitives and source-aligned bridges,
+  not permission to bypass the textbook proof spine. The goal is to avoid
+  rebuilding the same wheel under different theorem names.
+- If the source proof is large, follow the `thm_9_5` pattern: split reusable
+  ingredients into focused foundation files, keep any source-spine package
+  internal, and remove it from the public theorem once its fields can be
+  constructed from proved lemmas.
+- If several debt tasks share the same missing bridge, make a shared foundation
+  first and then return to the individual task files. Do not patch each task
+  with separate opaque support structures.
 
 Exit condition:
 
@@ -639,8 +742,8 @@ The reviewer gate writes:
 
 The review basis includes `proof_obligations.json` and its summary. Reviewer
 results must fill `obligation_review`; a `pass` requires every blocking
-obligation to be covered or explicitly not applicable, and must have no open
-scaffold blocker.
+obligation to be covered, explicitly not applicable, or explicitly
+`accepted_as_proof_debt`, and must have no open scaffold blocker.
 
 The reviewer verdict is `pass`, `fail`, or `inconclusive`.
 
@@ -810,12 +913,23 @@ python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks <task_id> -
 - official-output subject against the current official output hash
 
 The reviewer should start from `semantic_review_result_template_vM.json` and keep the binding fields unchanged.
+Do not run `review-apply` without an explicit `--review-result` path; use the
+`expected_result_file` recorded in the current `semantic_review_request_vM.json`.
+
+The template includes `reviewer_schema_hints`; use them when filling a pass
+result. The strict pass shape is:
+
+- `spine_alignment.status`, `obligation_review.status`, `interface_contract.status`, and `downstream_adequacy.status` use `covered`, `partial`, `missing`, `violated`, or `unclear`
+- `obligation_review.items[*].status` additionally allows `not_applicable` and `accepted_as_proof_debt`
+- if direct downstream consumers are listed, `downstream_adequacy.consumers_checked` must contain one object per consumer:
+  `{"block_id": "<direct downstream block_id>", "status": "covered|not_applicable|blocked", "evidence": "..."}`
+- `forbidden_weakenings[*].status` uses `not_present`, `present`, or `not_applicable`, and a pass cannot mark a forbidden weakening as `present`
 
 Behavior:
 
-- candidate `pass`: promote to official output, run final staged build, then mark `COMPLETED`
+- candidate `pass`: promote to official output, run final staged build, then mark `COMPLETED`, or `COMPLETED_WITH_PROOF_DEBT` when accepted proof-debt support remains
 - candidate `fail`, `inconclusive`, or invalid: do not promote; mark `review_rejected`; preserve existing official output if one exists; for semantic fail/inconclusive, generate a repair request that carries proof-obligation blockers
-- official-output `pass`: reconcile and keep `COMPLETED`
+- official-output `pass`: reconcile and keep `COMPLETED`, or `COMPLETED_WITH_PROOF_DEBT` when accepted proof-debt support remains
 - official-output `fail`: quarantine and demote to `FAILED_LOCAL`
 - official-output `inconclusive` or invalid: record the review without quarantining or changing output
 
@@ -850,7 +964,11 @@ Use only when you want runner-backed re-review of the current official output.
   - `PACKED`
   - `FAILED_LOCAL`
   - `COMPLETED`
+  - `COMPLETED_WITH_PROOF_DEBT`
   - `VERIFYING`
+- A historical `COMPLETED` task whose `proof_obligation_summary.status_counts.accepted_as_proof_debt > 0`
+  should be treated as debt-bearing by `debt-fix`; running `debt-fix` reconciles
+  it to `COMPLETED_WITH_PROOF_DEBT` before repair continues.
 - fine-grained Phase2 state lives in `pack_candidate_state`
 - `pack_candidate_state = review_rejected` stays in the Phase 2 repair path; it does not trigger Problem soft-dependency selection
 

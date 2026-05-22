@@ -1,0 +1,172 @@
+[
+    {
+        "block_id": "intro_10",
+        "type": "Remark",
+        "title": "Modes of Convergence",
+        "content": "\\section*{Modes of Convergence}\n\nTo estimate an unknown parameter, we can draw independent samples and obtain an estimator from the samples. A fundamental question is whether the estimates will converge to the intended value if we increase the number of samples. There are several ways to define convergence of random variables. A useful notion of convergence is almost sure (a.s.) convergence, in which the random variables are required to converge to a limit with probability $1$.\n\nAnother important convergence concept is convergence in the $r$-th mean, where $r$ is a constant larger than or equal to $1$. When $r=1$, we usually call it convergence in the mean, or $L^1$ convergence. We have seen in the proof of the dominated convergence theorem that, under the conditions in the dominated convergence theorem, the sequence of random variables indeed converges in $L^1$. When $r=2$, this is commonly called mean square convergence, or convergence in quadratic mean. It has numerous applications in estimation and filtering.\n\nConvergence in probability is a weaker notion of convergence compared to a.s. convergence and convergence in the mean. This is the mode of convergence in the weak law of large numbers. The most relaxed mode of convergence is convergence in distribution, which is the basis of the central limit theorem. The total variation distance also defines a convergence concept that is useful in large deviation theory.\n\nAt the end of this chapter we derive the continuous mapping theorem for a.s. convergence and convergence in probability.",
+        "dependencies": [],
+        "is_renowned": true,
+        "source_plan": "chapter10-almost-sure-probability"
+    },
+    {
+        "block_id": "intro_10_1",
+        "type": "Remark",
+        "title": "Convergence Almost Surely and Convergence in Probability",
+        "content": "\\subsection*{10.1 Convergence Almost Surely and Convergence in Probability}\n\nIn this section, we discuss the first two fundamental notions of convergence: almost sure convergence and convergence in probability.",
+        "dependencies": [
+            "intro_10"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-almost-sure-probability"
+    },
+    {
+        "block_id": "def_10_1",
+        "type": "Definition",
+        "title": "Sure and Almost Sure Convergence",
+        "content": "\\begin{defbox}{10.1}\nA sequence of random variables $(X_n)_{n\\geq 1}$ defined on a probability space $(\\Omega,\\mathcal{F},P)$ is said to converge to $X$ surely if\n\\[\n\\lim_{n\\to\\infty} X_n(\\omega)=X(\\omega)\n\\]\nfor all $\\omega\\in\\Omega$.\n\nA sequence of random variables $(X_n)_{n\\geq 1}$ is said to converge to $X$ almost surely if there exists an event $E$ with $P(E)=1$ such that\n\\[\n\\lim_{n\\to\\infty} X_n(\\omega)=X(\\omega)\n\\]\nfor $\\omega$ in $E$. In this case, we write $X_n\\xrightarrow{\\mathrm{a.s.}}X$ or $X_n\\to X$ with probability $1$.\n\\end{defbox}",
+        "dependencies": [
+            "intro_10_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-almost-sure-probability"
+    },
+    {
+        "block_id": "def_10_2",
+        "type": "Definition",
+        "title": "Convergence in Probability",
+        "content": "\\begin{defbox}{10.2}\nA sequence of random variables $(X_n)_{n\\geq 1}$ is said to converge to $X$ in probability if for any $\\epsilon>0$,\n\\[\nP(\\lvert X_n-X\\rvert>\\epsilon)\\to 0\n\\]\nas $n\\to\\infty$. In this case, we write $X_n\\xrightarrow{P}X$ or $X_n\\to X$ in probability.\n\\end{defbox}",
+        "dependencies": [
+            "intro_10_1",
+            "def_10_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-almost-sure-probability"
+    },
+    {
+        "block_id": "rem_10_1_comparison",
+        "type": "Remark",
+        "title": "Pointwise and Probability Convergence",
+        "content": "Almost sure convergence is concerned with the pointwise convergence of random variables. Convergence in probability is about the convergence of a sequence of probabilities. The next example illustrates the difference between a.s. convergence and convergence in probability.",
+        "dependencies": [
+            "def_10_1",
+            "def_10_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-almost-sure-probability"
+    },
+    {
+        "block_id": "ex_10_1_1",
+        "type": "Example_Proof",
+        "title": "Convergence in Probability But Not a.s.",
+        "content": "\\textbf{Example 10.1.1 (An Example of Convergence in Probability But Not a.s.)} \\\\\nLet $X_n$ be a sequence of independent binary random variables, with probability distribution specified by\n\\[\nP(X_n=1)=\\frac{1}{n}, \\qquad P(X_n=0)=1-\\frac{1}{n}.\n\\]\nThis sequence converges to $0$ in probability. However, by the Borel--Cantelli lemma (Theorem 5.9), $X_n$ is equal to $1$ infinitely often with probability $1$. Hence, with probability $1$, it does not converge to $0$.",
+        "dependencies": [
+            "def_10_1",
+            "def_10_2",
+            "thm_5_9"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-almost-sure-probability"
+    },
+    {
+        "block_id": "rem_10_1_characterization",
+        "type": "Remark",
+        "title": "Characterization of Almost Sure Convergence",
+        "content": "We now establish a result that relates almost sure convergence to convergence in probability. To this end, we use the following characterization of a.s. convergence.",
+        "dependencies": [
+            "def_10_1",
+            "def_10_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-almost-sure-probability"
+    },
+    {
+        "block_id": "thm_10_1",
+        "type": "Theorem_with_Proof",
+        "title": "Characterization of Almost Sure Convergence",
+        "content": "\\begin{thmbox}{10.1}\n\\[\nX_n\\xrightarrow{\\mathrm{a.s.}}X\n\\quad\\Longleftrightarrow\\quad\n\\forall \\epsilon>0,\\; P(\\lvert X_n-X\\rvert>\\epsilon\\ \\mathrm{i.o.})=0.\n\\]\n\\end{thmbox}\n\n\\textit{Proof}\nSuppose $X_n\\xrightarrow{\\mathrm{a.s.}}X$, and let $E$ denote the event that $X_n(\\omega)\\to X(\\omega)$. By assumption, we have $P(E)=1$.\n\nFix $\\epsilon>0$. If the sequence $(X_n(\\omega))_{n\\geq 1}$ converges to $X(\\omega)$, there exists a sufficiently large integer $N$ such that $\\lvert X_n(\\omega)-X(\\omega)\\rvert\\leq\\epsilon$ for all $n\\geq N$. Hence, if $\\omega$ is an outcome in $\\Omega$ such that $\\lvert X_n(\\omega)-X(\\omega)\\rvert>\\epsilon$ for infinitely many $n$, we must have $\\omega\\in E^c$. Since $P(E^c)=0$, we obtain\n\\[\nP(\\lvert X_n-X\\rvert>\\epsilon\\ \\mathrm{i.o.})=0\n\\]\nas desired.\n\nConversely, suppose $P(\\lvert X_n-X\\rvert>\\epsilon\\ \\mathrm{i.o.})=0$ for all $\\epsilon>0$. By the definition of convergence of sequences, we have\n\\[\nX_n(\\omega)\\to X(\\omega)\n\\quad\\Longleftrightarrow\\quad\n\\forall k\\in\\mathbb{N},\\; \\lvert X_n(\\omega)-X(\\omega)\\rvert\\leq \\frac{1}{k}\n\\text{ for all sufficiently large }n.\n\\]\nHence, the event that the sequence $(X_n(\\omega))_{n\\geq 1}$ fails to converge to $X(\\omega)$ is contained in the countable union\n\\[\n\\bigcup_{k=1}^{\\infty}\n\\left\\{\\omega:\\lvert X_n(\\omega)-X(\\omega)\\rvert>\\frac{1}{k}\\ \\mathrm{i.o.}\\right\\}.\n\\]\nSince all the events on the right are null sets, we have $P(X_n\\not\\to X)=0$.\n\\hfill $\\square$",
+        "dependencies": [
+            "def_10_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-almost-sure-probability"
+    },
+    {
+        "block_id": "rem_10_1_limsup",
+        "type": "Remark",
+        "title": "Limsup Tail Formulation",
+        "content": "The event $\\{\\omega:\\lvert X_n(\\omega)-X(\\omega)\\rvert>\\epsilon\\ \\mathrm{i.o.}\\}$ in the last theorem can be written in terms of limsup:\n\\[\n\\{\\omega:\\lvert X_n(\\omega)-X(\\omega)\\rvert>\\epsilon\\ \\mathrm{i.o.}\\}\n=\n\\bigcap_{n=1}^{\\infty}\\bigcup_{m\\geq n}\n\\{\\omega:\\lvert X_m(\\omega)-X(\\omega)\\rvert>\\epsilon\\}.\n\\]\nBy using the semi-continuity property of probability measure, we can alternately express Theorem 10.1 as\n\\[\nX_n\\xrightarrow{\\mathrm{a.s.}}X\n\\quad\\Longleftrightarrow\\quad\n\\forall \\epsilon>0,\\;\n\\lim_{n\\to\\infty}P\\left(\n\\bigcup_{m\\geq n}\n\\{\\omega:\\lvert X_m(\\omega)-X(\\omega)\\rvert>\\epsilon\\}\n\\right)=0.\n\\tag{10.1}\n\\]\nThis equation is useful to check almost sure convergence, as it allows us to focus on the behavior of the tails of the sequence.",
+        "dependencies": [
+            "thm_10_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-almost-sure-probability"
+    },
+    {
+        "block_id": "rem_10_1_as_implies_prob_intro",
+        "type": "Remark",
+        "title": "Almost Sure Convergence Implies Convergence in Probability",
+        "content": "Using (10.1), one can readily derive the next theorem.",
+        "dependencies": [
+            "thm_10_1",
+            "def_10_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-almost-sure-probability"
+    },
+    {
+        "block_id": "thm_10_2",
+        "type": "Theorem_with_Proof",
+        "title": "Almost Sure Convergence Implies Convergence in Probability",
+        "content": "\\begin{thmbox}{10.2}\nIf $X_n\\xrightarrow{\\mathrm{a.s.}}X$, then $X_n\\xrightarrow{P}X$.\n\\end{thmbox}\n\n\\textit{Proof}\nAssume $(X_n)_{n\\geq 1}$ converges to $X$ almost surely. By (10.1), we obtain, for all $\\epsilon>0$,\n\\[\n0=\\lim_{n\\to\\infty}P\\left(\\bigcup_{m=n}^{\\infty}\\{\\lvert X_m-X\\rvert>\\epsilon\\}\\right)\n\\geq\n\\lim_{n\\to\\infty}P(\\{\\lvert X_n-X\\rvert>\\epsilon\\}).\n\\]\nWe have inequality in the last step because the event becomes a smaller set. Thus,\n\\[\n\\lim_{n\\to\\infty}P(\\{\\lvert X_n-X\\rvert>\\epsilon\\})=0.\n\\]\nBecause it holds for any $\\epsilon>0$, we have convergence in probability.\n\\hfill $\\square$",
+        "dependencies": [
+            "thm_10_1",
+            "def_10_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-almost-sure-probability"
+    },
+    {
+        "block_id": "rem_10_1_markov_intro",
+        "type": "Remark",
+        "title": "Markov Inequality Intro",
+        "content": "We need the Markov inequality to prove the next theorem.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter10-almost-sure-probability"
+    },
+    {
+        "block_id": "thm_10_3",
+        "type": "Theorem_with_Proof",
+        "title": "Markov Inequality",
+        "content": "\\begin{thmbox}{10.3 (Markov Inequality)}\nIf $X$ is a nonnegative random variable with finite expectation, then for any $\\epsilon>0$, we have\n\\[\nP(X\\geq \\epsilon)\\leq \\frac{\\mathbb{E}[X]}{\\epsilon}.\n\\]\n\\end{thmbox}\n\n\\textit{Proof}\nThe indicator function $\\mathbf{1}_{[\\epsilon,\\infty)}(x)$ is less than or equal to the linear function $g(x)=x/\\epsilon$ for all $x\\geq 0$. By the monotonic property of integral, we obtain\n\\[\nP(X\\geq \\epsilon)=\\mathbb{E}[\\mathbf{1}_{[\\epsilon,\\infty)}(X)]\n\\leq \\mathbb{E}[X/\\epsilon].\n\\]\nBy linearity of expectation, we obtain $\\mathbb{E}[X/\\epsilon]=\\mathbb{E}[X]/\\epsilon$, and thus proving the Markov inequality.\n\\hfill $\\square$",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter10-almost-sure-probability"
+    },
+    {
+        "block_id": "rem_10_1_summable_means_intro",
+        "type": "Remark",
+        "title": "Summable Means and Almost Sure Convergence",
+        "content": "The next theorem shows that if the means of a sequence of nonnegative random variables converge to $0$ sufficiently fast, then the sequence must converge to $0$ almost surely. The proof illustrates how to use Theorem 10.1 together with the Borel--Cantelli lemma to establish almost sure convergence.",
+        "dependencies": [
+            "thm_10_1",
+            "thm_10_3",
+            "thm_5_8"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-almost-sure-probability"
+    },
+    {
+        "block_id": "thm_10_4",
+        "type": "Theorem_with_Proof",
+        "title": "Summable Expectations Imply Almost Sure Convergence to Zero",
+        "content": "\\begin{thmbox}{10.4}\nSuppose $(X_n)_{n=1}^{\\infty}$ is a sequence of nonnegative random variables. If\n\\[\n\\sum_{n=1}^{\\infty}\\mathbb{E}[X_n]<\\infty,\n\\]\nthen the sequence $(X_n)_{n=1}^{\\infty}$ converges to $0$ almost surely.\n\\end{thmbox}\n\n\\textit{Proof}\nFix a positive real number $\\epsilon$. By Markov inequality, we have\n\\[\n\\sum_{n=1}^{\\infty}P(X_n>\\epsilon)\n\\leq\n\\sum_{n=1}^{\\infty}\\frac{\\mathbb{E}[X_n]}{\\epsilon}.\n\\]\nSince $\\sum_{n=1}^{\\infty}\\mathbb{E}[X_n]$ is finite, the summation on the left-hand side is also finite. By the Borel--Cantelli lemma (Theorem 5.8), we have $P(X_n>\\epsilon\\ \\mathrm{i.o.})=0$. Since this holds for all $\\epsilon>0$, we can apply Theorem 10.1 and conclude that $X_n\\xrightarrow{\\mathrm{a.s.}}0$. Note that we need not assume independence in this proof.\n\\hfill $\\square$",
+        "dependencies": [
+            "thm_10_1",
+            "thm_10_3",
+            "thm_5_8"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter10-almost-sure-probability"
+    }
+]

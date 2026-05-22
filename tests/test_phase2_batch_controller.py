@@ -10,7 +10,9 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from src.toy_apollo.phase2_batch_controller import (  # noqa: E402
+    COMPLETED_WITH_PROOF_DEBT,
     DEPENDENCY_FAILED,
+    DEPENDENCY_PROOF_DEBT,
     FAILED_LOCAL,
     NEEDS_DECOMPOSITION,
     NONTERMINAL,
@@ -103,6 +105,64 @@ class Phase2BatchControllerTests(unittest.TestCase):
 
         self.assertEqual(budget.counted, 3)
         self.assertFalse(budget.exhausted)
+
+    def test_completed_with_proof_debt_blocks_dependents_until_debt_fix(self):
+        report = analyze_batch_state(
+            {
+                "batch_id": "with-debt",
+                "tasks": [
+                    {
+                        "task_id": "thm_11_7",
+                        "status": COMPLETED_WITH_PROOF_DEBT,
+                        "proof_obligation_summary": {
+                            "status_counts": {"proved": 5, "accepted_as_proof_debt": 1},
+                            "needs_concrete_decomposition": False,
+                        },
+                    },
+                    {
+                        "task_id": "prob_11_6",
+                        "status": NONTERMINAL,
+                        "dependencies": ["thm_11_7"],
+                    },
+                ],
+            }
+        )
+
+        rows = {row.task_id: row for row in report.rows}
+        self.assertEqual(rows["thm_11_7"].status, COMPLETED_WITH_PROOF_DEBT)
+        self.assertTrue(rows["thm_11_7"].terminal)
+        self.assertEqual(rows["thm_11_7"].next_action, "run debt-fix")
+        self.assertEqual(rows["prob_11_6"].status, DEPENDENCY_PROOF_DEBT)
+        self.assertEqual(rows["prob_11_6"].proof_debt_dependency, "thm_11_7")
+        self.assertTrue(rows["prob_11_6"].terminal)
+        self.assertEqual(rows["prob_11_6"].failed_dependency, "")
+
+    def test_legacy_completed_task_with_accepted_proof_debt_blocks_dependents(self):
+        report = analyze_batch_state(
+            {
+                "batch_id": "legacy-debt",
+                "tasks": [
+                    {
+                        "task_id": "thm_10_8",
+                        "status": "COMPLETED",
+                        "proof_obligation_summary": {
+                            "status_counts": {"proved": 4, "accepted_as_proof_debt": 3},
+                            "needs_concrete_decomposition": False,
+                        },
+                    },
+                    {
+                        "task_id": "prob_10_10",
+                        "status": NONTERMINAL,
+                        "dependencies": ["thm_10_8"],
+                    },
+                ],
+            }
+        )
+
+        rows = {row.task_id: row for row in report.rows}
+        self.assertEqual(rows["thm_10_8"].status, COMPLETED_WITH_PROOF_DEBT)
+        self.assertEqual(rows["prob_10_10"].status, DEPENDENCY_PROOF_DEBT)
+        self.assertEqual(rows["prob_10_10"].proof_debt_dependency, "thm_10_8")
 
     def test_complex_hard_failure_before_retry_budget_is_flagged(self):
         report = analyze_batch_state(

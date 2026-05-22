@@ -1,0 +1,398 @@
+{
+  "generated_at": "2026-05-22T00:34:53.826948Z",
+  "scope": {
+    "start_chapter": 9,
+    "end_chapter": 14,
+    "include_tasks": [
+      "thm_6_7__lemma_1"
+    ],
+    "check_build": true,
+    "build_timeout_seconds": 240,
+    "only_tasks": [
+      "prob_14_1",
+      "prob_14_10",
+      "prob_14_8"
+    ],
+    "only_buckets": []
+  },
+  "summary": {
+    "unfinished_or_verify_count": 3,
+    "blocking_unfinished_count": 3,
+    "verification_only_count": 0,
+    "orphan_output_count": 10,
+    "reason_counts": {
+      "ledger_status:FAILED_LOCAL": 3,
+      "open_obligations": 3
+    },
+    "bucket_counts": {
+      "obligation_resolution": 3
+    },
+    "build_status_counts": {
+      "ok": 3
+    },
+    "status_counts": {
+      "FAILED_LOCAL": 3
+    },
+    "chapter_counts": {
+      "14": 3
+    },
+    "open_obligation_kind_counts": {
+      "proof_debt_support": 4
+    },
+    "open_interface_obligation_count": 0,
+    "structural_field_landing_count": 4,
+    "theorem_wrapper_structural_count": 3,
+    "empty_landing_count": 0,
+    "ledger_only_child_obligation_count": 4,
+    "clean_debt_error_task_count": 7
+  },
+  "items": [
+    {
+      "task_id": "prob_14_1",
+      "chapter": 14,
+      "status": "FAILED_LOCAL",
+      "file": "ToyApollo/Output/prob_14_1.lean",
+      "output_exists": true,
+      "open_blocking_ids": [
+        "obligation_1",
+        "obligation_4"
+      ],
+      "open_obligation_details": [
+        {
+          "id": "obligation_1",
+          "name": "finite_polya_white_count_mass_formula",
+          "title": "finite Polya urn count formula",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "prob_14_1_PolyaUrnBetaSetup.polya_white_count_mass / prob_14_1_white_count_mass",
+          "landing_analysis": {
+            "names": [
+              "prob_14_1_PolyaUrnBetaSetup.polya_white_count_mass",
+              "prob_14_1_white_count_mass"
+            ],
+            "known_declarations": [
+              {
+                "name": "prob_14_1_PolyaUrnBetaSetup",
+                "kind": "structure"
+              },
+              {
+                "name": "prob_14_1_white_count_mass",
+                "kind": "theorem"
+              }
+            ],
+            "theorem_or_lemma": [
+              "prob_14_1_white_count_mass"
+            ],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [
+              "prob_14_1_PolyaUrnBetaSetup.polya_white_count_mass"
+            ],
+            "missing_names": [],
+            "has_theorem_or_lemma": true,
+            "problem": "theorem_wrapper_over_structure_field"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_prob_14_1_obligation_1",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        },
+        {
+          "id": "obligation_4",
+          "name": "stirling_asymptotic_cdf_convergence",
+          "title": "Stirling to Beta CDF convergence",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "prob_14_1_PolyaUrnBetaSetup.stirling_cdf_convergence / prob_14_1_stirling_beta_cdf_convergence",
+          "landing_analysis": {
+            "names": [
+              "prob_14_1_PolyaUrnBetaSetup.stirling_cdf_convergence",
+              "prob_14_1_stirling_beta_cdf_convergence"
+            ],
+            "known_declarations": [
+              {
+                "name": "prob_14_1_PolyaUrnBetaSetup",
+                "kind": "structure"
+              },
+              {
+                "name": "prob_14_1_stirling_beta_cdf_convergence",
+                "kind": "theorem"
+              }
+            ],
+            "theorem_or_lemma": [
+              "prob_14_1_stirling_beta_cdf_convergence"
+            ],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [
+              "prob_14_1_PolyaUrnBetaSetup.stirling_cdf_convergence"
+            ],
+            "missing_names": [],
+            "has_theorem_or_lemma": true,
+            "problem": "theorem_wrapper_over_structure_field"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_prob_14_1_obligation_4",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        }
+      ],
+      "accepted_proof_debt_count": 0,
+      "reasons": [
+        "ledger_status:FAILED_LOCAL",
+        "open_obligations"
+      ],
+      "action_bucket": "obligation_resolution",
+      "next_action": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields.",
+      "build": {
+        "checked": true,
+        "status": "ok",
+        "exit_code": 0,
+        "stderr_tail": "",
+        "stdout_tail": ""
+      }
+    },
+    {
+      "task_id": "prob_14_10",
+      "chapter": 14,
+      "status": "FAILED_LOCAL",
+      "file": "ToyApollo/Output/prob_14_10.lean",
+      "output_exists": true,
+      "open_blocking_ids": [
+        "obligation_4"
+      ],
+      "open_obligation_details": [
+        {
+          "id": "obligation_4",
+          "name": "moments_to_mgf_convergence",
+          "title": "moments to MGF convergence",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "prob_14_10_BoundedMomentSetup.moments_to_mgf_setup",
+          "landing_analysis": {
+            "names": [
+              "prob_14_10_BoundedMomentSetup.moments_to_mgf_setup"
+            ],
+            "known_declarations": [
+              {
+                "name": "prob_14_10_BoundedMomentSetup",
+                "kind": "structure"
+              }
+            ],
+            "theorem_or_lemma": [],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [
+              "prob_14_10_BoundedMomentSetup.moments_to_mgf_setup"
+            ],
+            "missing_names": [],
+            "has_theorem_or_lemma": false,
+            "problem": "structure_field_landing"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_prob_14_10_obligation_4",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        }
+      ],
+      "accepted_proof_debt_count": 0,
+      "reasons": [
+        "ledger_status:FAILED_LOCAL",
+        "open_obligations"
+      ],
+      "action_bucket": "obligation_resolution",
+      "next_action": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields.",
+      "build": {
+        "checked": true,
+        "status": "ok",
+        "exit_code": 0,
+        "stderr_tail": "",
+        "stdout_tail": ""
+      }
+    },
+    {
+      "task_id": "prob_14_8",
+      "chapter": 14,
+      "status": "FAILED_LOCAL",
+      "file": "ToyApollo/Output/prob_14_8.lean",
+      "output_exists": true,
+      "open_blocking_ids": [
+        "obligation_4"
+      ],
+      "open_obligation_details": [
+        {
+          "id": "obligation_4",
+          "name": "mgf_convergence_gives_characteristic_convergence",
+          "title": "MGF to characteristic convergence",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "prob_14_8_MgfConvergenceSetup.mgf_to_characteristic_convergence / prob_14_8_characteristic_convergence",
+          "landing_analysis": {
+            "names": [
+              "prob_14_8_MgfConvergenceSetup.mgf_to_characteristic_convergence",
+              "prob_14_8_characteristic_convergence"
+            ],
+            "known_declarations": [
+              {
+                "name": "prob_14_8_MgfConvergenceSetup",
+                "kind": "structure"
+              },
+              {
+                "name": "prob_14_8_characteristic_convergence",
+                "kind": "theorem"
+              }
+            ],
+            "theorem_or_lemma": [
+              "prob_14_8_characteristic_convergence"
+            ],
+            "projection_wrapper_theorems": [
+              {
+                "name": "prob_14_8_characteristic_convergence",
+                "projection": "S.mgf_to_characteristic_convergence"
+              }
+            ],
+            "structure_fields": [
+              "prob_14_8_MgfConvergenceSetup.mgf_to_characteristic_convergence"
+            ],
+            "missing_names": [],
+            "has_theorem_or_lemma": false,
+            "problem": "theorem_wrapper_over_structure_field"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_prob_14_8_obligation_4",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        }
+      ],
+      "accepted_proof_debt_count": 0,
+      "reasons": [
+        "ledger_status:FAILED_LOCAL",
+        "open_obligations"
+      ],
+      "action_bucket": "obligation_resolution",
+      "next_action": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields.",
+      "build": {
+        "checked": true,
+        "status": "ok",
+        "exit_code": 0,
+        "stderr_tail": "",
+        "stdout_tail": ""
+      }
+    }
+  ],
+  "repair_batches": [
+    {
+      "bucket": "obligation_resolution",
+      "count": 3,
+      "task_ids": [
+        "prob_14_1",
+        "prob_14_10",
+        "prob_14_8"
+      ],
+      "next_action": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields."
+    }
+  ],
+  "orphan_outputs": [
+    {
+      "task_id": "thm_9_5_dirichlet",
+      "chapter": 9,
+      "file": "ToyApollo/Output/thm_9_5_dirichlet.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_9_5_fubini",
+      "chapter": 9,
+      "file": "ToyApollo/Output/thm_9_5_fubini.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_9_5_kernel",
+      "chapter": 9,
+      "file": "ToyApollo/Output/thm_9_5_kernel.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "prob_10_10_distribution_bridge",
+      "chapter": 10,
+      "file": "ToyApollo/Output/prob_10_10_distribution_bridge.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_10_8_inverse_comparison",
+      "chapter": 10,
+      "file": "ToyApollo/Output/thm_10_8_inverse_comparison.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_10_8_quantile_convergence",
+      "chapter": 10,
+      "file": "ToyApollo/Output/thm_10_8_quantile_convergence.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_10_8_quantile_defs",
+      "chapter": 10,
+      "file": "ToyApollo/Output/thm_10_8_quantile_defs.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_10_8_quantile_law",
+      "chapter": 10,
+      "file": "ToyApollo/Output/thm_10_8_quantile_law.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_10_8_quantile_space",
+      "chapter": 10,
+      "file": "ToyApollo/Output/thm_10_8_quantile_space.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_14_4_dominating_measure",
+      "chapter": 14,
+      "file": "ToyApollo/Output/thm_14_4_dominating_measure.lean",
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    }
+  ]
+}

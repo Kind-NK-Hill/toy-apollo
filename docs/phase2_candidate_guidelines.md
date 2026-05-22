@@ -58,13 +58,33 @@ Use `normal` only when the task is a direct definition, wrapper, calculation, or
 one-step theorem reuse and a reviewer can identify the source obligation and
 Lean landing place without a helper chain.
 
-Every prompt pack has `phase2_prompt_packs/<task_id>/proof_obligations.json`.
-For a `complex` task this file is the task-local proof-obligation ledger. Split
-the source proof into obligation nodes, give each node a source reference,
-dependencies, expected Lean landing place, and status, then build the candidate
-as a reconstruction of those nodes. The exported declaration should assemble
-proved obligations into the textbook claim; it must not assume the hard
-obligations as theorem-level hypotheses.
+Normal tasks should stay on the older Phase2 path: buildable Lean plus semantic
+review of source claims, proof spine, interface contract, and downstream
+adequacy. If an existing normal prompt pack already has
+`phase2_prompt_packs/<task_id>/proof_obligations.json`, treat it as lightweight
+metadata, not as a reason to introduce proof-debt scaffolding.
+
+For a `complex` task, `proof_obligations.json` is the task-local
+proof-obligation ledger. Split the source proof into obligation nodes, give each
+node a source reference, dependencies, expected Lean landing place, and status,
+then build the candidate as a reconstruction of those nodes. The exported
+declaration should assemble proved obligations into the textbook claim; it must
+not assume the hard obligations as theorem-level hypotheses.
+
+This public-surface rule applies to all official task outputs, not only theorem
+source blocks. Examples, problems, and definition-adjacent proof artifacts must
+satisfy the same discipline when they export a theorem or task-facing helper.
+For Chapter 10 and later, the only permitted standing proof-debt exception is
+`thm_14_8_ProofBeyondBook`, because the source explicitly declares that proof
+beyond the book. Ordinary `Support` and `Spine` packages must be replaced by
+theorem-level evidence and internally assembled before a task is called clean.
+
+A theorem or lemma that proves and returns a `Support`/`Spine` package is
+allowed, and may be a useful internal assembly step. A public declaration must
+not require such a package as a parameter unless it is the explicit
+`thm_14_8_ProofBeyondBook` exception. A helper that consumes a support package
+only to assemble the final task theorem should usually be `private` unless it is
+a genuine reusable theorem whose premises are part of the textbook interface.
 
 The generated `source_proof_spine` node is an unresolved placeholder, not a
 completed decomposition. Replace it with concrete source-step nodes before
@@ -76,10 +96,12 @@ both exist.
 
 Before creating new helper obligations, scan `ToyApollo/Output`, the live
 ledger, dependency decisions, the relevant plan file, and Mathlib for existing
-declarations that already cover the source proof step. If such an output exists,
-use it or add it as a hard dependency before continuing. A missing ledger record
-for an existing, buildable output is a metadata repair, not evidence that the
-dependency is unavailable.
+declarations that already cover the source proof step. The output scan must
+include older textbook tasks outside the current chapter, definition files,
+bridge/foundation files, renamed helper variants, and files imported by
+downstream tasks. If such an output exists, use it or add it as a hard
+dependency before continuing. A missing ledger record for an existing, buildable
+output is a metadata repair, not evidence that the dependency is unavailable.
 
 Scaffold hypotheses must be classified precisely:
 
@@ -100,7 +122,18 @@ Use `interface_translation` lemmas for interface mismatch only. Do not use a
 translation predicate to assume substantive source mathematics or the main
 theorem conclusion. If the project explicitly accepts temporary support
 assumptions, classify them as `proof_debt_support` instead and keep them
-auditable.
+auditable. This is an exceptional cleanup mechanism, not the default authoring
+mode for normal tasks. When review intentionally accepts such an item, record
+the proof obligation status as `accepted_as_proof_debt`; this means the file is
+buildable and the debt is explicit, not that the underlying reusable mathematics
+has been fully proved. A task with accepted proof debt is not a clean upstream
+dependency: downstream hard dependents and selected soft imports must wait
+until `debt-fix` discharges the debt and the task lands without
+`accepted_as_proof_debt`.
+Do not mark a `proof_debt_support` item as `proved` merely because the candidate
+defines a support structure or a source-spine field. The landing for `proved`
+must be a theorem/lemma proving the source obligation, not a field projection
+such as `SomeSourceSpine.some_field`.
 
 ## Definitions
 

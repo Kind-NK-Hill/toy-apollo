@@ -1,0 +1,219 @@
+\subsection*{10.3 Convergence in Distribution and in Total Variation}
+
+\begin{defbox}{10.4 (Convergence in Distribution)}
+Let $(F_n)_{n=1}^{\infty}$ be a sequence of cumulative distribution functions, and let $F$ be another cumulative distribution function. We say that $(F_n)_{n=1}^{\infty}$ converges in distribution, or in law, if
+\[
+\lim_{n\to\infty}F_n(x)=F(x)
+\]
+at every continuity point of $F(x)$. We use the notation
+\[
+F_n\xrightarrow{D}F
+\qquad\text{or}\qquad
+F_n\xrightarrow{L}F
+\]
+for convergence in distribution.
+
+Given a sequence of probability measures $\mu_n$'s and another probability measure $\mu$, all defined on the real number line, we say that $(\mu_n)_{n=1}^{\infty}$ converges to $\mu$ in distribution if the corresponding Stieltjes measure functions
+\[
+F_n(x)=\mu_n((-\infty,x])
+\qquad\text{and}\qquad
+F(x)=\mu((-\infty,x])
+\]
+converge in distribution.
+
+A sequence of random variables $X_n$'s, for $n=1,2,3,\ldots$, is said to be converging to a random variable $X$ in distribution, or in law, if the cumulative distribution functions of the $X_n$'s converge to the cumulative distribution function of $X$ in distribution.
+\end{defbox}
+
+\begin{defbox}{10.5 (Convergence in Total Variation)}
+A sequence of probability measures $(P_n)_{n=1}^{\infty}$ defined on a common measurable space is said to converge in total variation to a probability measure $P$ if
+\[
+d_{\mathrm{TV}}(P_n,P)\to 0
+\]
+as $n\to\infty$.
+
+A sequence of random variables $(X_n)_{n\geq 1}$ is said to be convergent in total variation if the corresponding image measures on the measure space $(\mathbb{R},\mathcal{B}(\mathbb{R}))$ converge in total variation.
+\end{defbox}
+
+There is an important difference between these two modes of convergence. In convergence in total variation distance, the probability measures must be defined on the same probability space, while in convergence in distribution, the probability measures may be defined on different probability spaces. In general, convergence in total variation implies convergence in distribution.
+
+\begin{thmbox}{10.6}
+If a sequence of probability distributions converges in total variation, then it converges in distribution.
+\end{thmbox}
+
+We defer the proof to Chap. 14 after the introduction to weak convergence (see Theorem 14.4).
+
+In the definition of convergence in distribution, we do not need to consider the discontinuity points of the target cdf $F(x)$. To see why, consider a sequence of positive real numbers $x_1,x_2,x_3,\ldots$ converging to $0$ from the right. Let
+\[
+F_n(x)=\mathbf{1}_{[x_n,\infty)}(x)
+\]
+be the cumulative distribution function of the Dirac measure that concentrates at the point $x_n$, for $n\geq 1$. We naturally regard this sequence of probability distributions as converging to the Dirac measure that concentrates at $x=0$. We can check that $F_n(0)=0$ for all $n$, hence
+\[
+\lim_{n\to\infty}F_n(x)=\mathbf{1}_{(0,\infty)}(x).
+\]
+The limit is not a Stieltjes measure function as it is not continuous from the right at $x=0$. However, the target cdf is $F(x)=\mathbf{1}_{[0,\infty)}(x)$, whose value at $x=0$ is different from the limit $\lim_{n\to\infty}F_n(x)$. Because the discontinuity point $x=0$ is neglected in the definition of convergence in distribution, we do have $F_n(x)\to F(x)$ in distribution.
+
+\textbf{Example 10.3.1 (Empirical Distribution)} \\
+Suppose we are given $n$ data points $a_1,a_2,\ldots,a_n$, obtained from a sampling process. To investigate the distribution of the data points, we can consider the empirical distribution defined by the cumulative distribution function
+\[
+F_n(x)\coloneqq \frac{1}{n}\sum_{k=1}^{n}\mathbf{1}_{[a_k,\infty)}(x).
+\]
+The graph of $F_n(x)$ is a staircase graph in which each step has size $1/n$, and the steps occur at the points $a_1,a_2,\ldots,a_n$.
+
+Suppose that data points are $\{1/n,2/n,\ldots,n/n\}$, where $n$ is a positive integer. The cdf of the empirical distribution can be written as
+\[
+F_n(x)=
+\begin{cases}
+0, & x<0,\\
+\frac{1}{n}\lfloor xn\rfloor, & 0\leq x\leq 1,\\
+1, & x>1.
+\end{cases}
+\]
+For any $x\in[0,1]$, we can check that
+\[
+\lim_{n\to\infty}F_n(x)=\lim_{n\to\infty}\frac{1}{n}\lfloor xn\rfloor=x.
+\]
+Therefore,
+\[
+\lim_{n\to\infty}F_n(x)=
+\begin{cases}
+0, & x<0,\\
+x, & 0\leq x\leq 1,\\
+1, & x>1,
+\end{cases}
+\]
+which is the cdf of the uniform distribution between $0$ and $1$.
+
+However, we do not have convergence in total variation in this example. Let $\mu_n$ be the Lebesgue--Stieltjes measure associated to $F_n(x)$, for $n\geq 1$, and let $\mu$ be the Lebesgue--Stieltjes measure associated to $F(x)$. If we take $A_n$ to be the discrete set $\{1/n,2/n,\ldots,n/n\}$, then
+\[
+\lvert \mu_n(A_n)-\mu(A_n)\rvert=1
+\]
+for all $n\geq 1$.
+
+The last example is an example of convergence in distribution but not convergence in total variation.
+
+The cumulative distribution function is used in the definition of convergence in distribution. However, in practice, we can also check convergence in distribution using probability density function, as demonstrated in the following example.
+
+\textbf{Example 10.3.2 (Convergence of Pdf's Implies Convergence in Total Variation)} \\
+Suppose $(X_n)_{n\geq 1}$ is a sequence of continuous random variables with corresponding probability density functions $f_n(x)$. Suppose the $f_n(x)$'s converge to a probability density function $f(x)$, for almost all $x$ relative to the Lebesgue measure on $\mathbb{R}$. By the Scheffe lemma (Exercise 7.6), we have
+\[
+\int \lvert f_n-f\rvert\to 0
+\]
+as $n\to\infty$, which implies convergence in total variation. Since convergence in total variation implies convergence in distribution in general, we can conclude that the sequence of random variables $X_n$ converges in distribution.
+
+In particular, suppose $\mu_n\to\mu$ and $\sigma_n^2\to\sigma^2$. Then the probability density functions of the Gaussian distribution with mean $\mu_n$ and variance $\sigma_n^2$ converge pointwise to the probability density functions of the Gaussian distribution with mean $\mu$ and variance $\sigma^2$, as $n\to\infty$. By the arguments in the previous paragraph, we conclude that
+\[
+N(\mu_n,\sigma_n^2)\xrightarrow{D}N(\mu,\sigma^2).
+\]
+
+The relationship between convergence in probability and convergence in distribution is given by the following example and theorem, which together say that convergence in probability is strictly stronger than convergence in distribution.
+
+\textbf{Example 10.3.3 (Convergence in Distribution But Not in Probability)} \\
+Consider two independent random variables $X$ and $Y$. Each of them is distributed according to $\operatorname{Ber}(1/2)$. Define $X_n$ to be equal to $X$ for all $n\geq 1$. We trivially have $X_n$ converging to $Y$ in distribution, because all distributions are identical. However, $X_n$ does not converge to $Y$ in probability, because
+\[
+P(\lvert X_n-Y\rvert=1)=\frac{1}{2}
+\]
+for all $n$. Hence, $P(\lvert X_n-Y\rvert\geq 0.99)=1/2$ for all $n$, and the sequence does not converge to $Y$ in probability.
+
+\begin{thmbox}{10.7}
+Suppose $X_n$, for $n\geq 1$, is a sequence of random variables converging to $X$ in probability. Then $X_n$ converges to $X$ in distribution.
+\end{thmbox}
+
+\textit{Proof}
+Let $F_n(x)$ be the cumulative distribution function of $X_n$, for $n\geq 1$, and let $F(x)$ be the cumulative distribution function of $X$. Suppose that for each $\delta>0$, we have
+\[
+\lim_{n\to\infty}P(\lvert X_n-X\rvert\geq\delta)=0.
+\]
+We want to prove
+\[
+\lim_{n\to\infty}P(X_n\leq a)=P(X\leq a),
+\]
+for each $a$ such that $F(x)$ is continuous at $x=a$.
+
+Suppose $\delta>0$ and a constant $a$ is given. The key of the proof is the following inequalities:
+\[
+P(X_n\leq a)\leq P(X\leq a+\delta)+P(\lvert X_n-X\rvert>\delta),
+\tag{10.2}
+\]
+\[
+P(X\leq a-\delta)\leq P(X_n\leq a)+P(\lvert X_n-X\rvert>\delta).
+\tag{10.3}
+\]
+To see the first inequality, note that if $X_n\leq a$ and the difference between $X_n$ and $X$ is less than or equal to $\delta$, then we must have $X\leq a+\delta$. This yields (10.2). The second inequality (10.3) can be derived similarly.
+
+Taking $n$ approaching infinity and using the assumption that $X_n$ converges to $X$ in probability, we have
+\[
+\limsup_{n\to\infty}P(X_n\leq a)\leq P(X\leq a+\delta)
+\]
+and
+\[
+P(X\leq a-\delta)\leq \liminf_{n\to\infty}P(X_n\leq a)
+\]
+for each $\delta>0$. By taking $\delta\to 0$, we get
+\[
+P(X<a)\leq \liminf_{n\to\infty}P(X_n\leq a)
+\leq \limsup_{n\to\infty}P(X_n\leq a)
+\leq P(X\leq a).
+\]
+If $F(x)$ is continuous at $x=a$, then all of the inequalities above are equality, and hence
+\[
+\lim_{n\to\infty}P(X_n\leq a)=P(X\leq a).
+\]
+\hfill $\square$
+
+There is a partial converse to Theorem 10.7: if $X_n$ converges in distribution to a constant $c$, then $X_n$ converges in probability to the same constant.
+
+We conclude this section with Skorokhod's representation theorem, which provides a relationship between convergence in distribution and almost sure convergence.
+
+\begin{thmbox}{10.8 (Skorokhod's Representation Theorem)}
+If $X_n\xrightarrow{D}X$, then we can construct random variables $Y$ and $Y_n$, for $n\geq 1$, on a common probability space, such that $Y_n\xrightarrow{\mathrm{a.s.}}Y$, $Y_n$ has the same distribution as $X_n$ for all $n$, and $Y$ has the same distribution as $X$.
+\end{thmbox}
+
+\textit{Proof}
+We need to construct random variables $Y_n$'s and $Y$, defined on a common probability space, so that (i) $Y_n(\omega)$'s converge to $Y(\omega)$ almost surely, (ii) $Y_n$ and $X_n$ are identically distributed for all $n$, and (iii) $Y$ and $X$ are identically distributed. The proof is an application of coupling argument.
+
+To construct $Y_n$ and $Y$, we take the probability space $([0,1],\mathcal{B}([0,1]),\lambda)$, where $\lambda$ represents the Lebesgue measure on $[0,1]$, as the common probability space. Using the distribution function $F_n(x)$, we define a function $Y_n:[0,1]\to\mathbb{R}$, for $n=1,2,3,\ldots$, by
+\[
+Y_n(\omega)\coloneqq \sup\{y:F_n(y)<\omega\},
+\tag{10.4}
+\]
+and define
+\[
+Y(\omega)\coloneqq \sup\{y:F(y)<\omega\}.
+\tag{10.5}
+\]
+We take the supremums in the definitions of $Y_n$ and $Y$ to handle the potential discontinuities of the distribution functions $F_n$ and $F$. If $F_n$ and $F$ are continuous and one-to-one such that the inverses $F_n^{-1}$ and $F^{-1}$ exist, then we can simply define $Y_n$ and $Y$ by the inverse functions.
+
+One can verify that
+\[
+\{\omega:Y_n(\omega)\leq y\}=\{\omega:\omega\leq F_n(y)\}
+\qquad\text{and}\qquad
+\{\omega:Y(\omega)\leq y\}=\{\omega:\omega\leq F(y)\}.
+\]
+These calculations show that $F_n(y)$ is the cdf of $Y_n$, and $F(y)$ is the cdf of $Y$. Hence, $Y_n$ and $X_n$ are identically distributed for all $n$, and the random variables $X$ and $Y$ are also identically distributed.
+
+To show that $Y_n(\omega)\to Y(\omega)$ for all $\omega\in(0,1)$, we further define
+\[
+Y_n^+(\omega)\coloneqq \inf\{y:F_n(y)>\omega\}
+\quad\text{for }n\geq 1,
+\]
+and
+\[
+Y^+(\omega)\coloneqq \inf\{y:F(y)>\omega\}.
+\]
+By construction, we have $Y_n\leq Y_n^+$ and $Y\leq Y^+$. But $Y_n$ and $Y_n^+$ are equal almost surely for all $n$, and $Y$ and $Y^+$ are also equal almost surely.
+
+We fix $\omega$ in $(0,1)$. Take a continuity point $y_0$ of $F(y)$ such that $y_0>Y^+(\omega)$. Then $F(y_0)>\omega$, and for all sufficiently large $n$, we have $F_n(y_0)>\omega$. From the definition of $Y_n^+$, we have $Y_n^+(\omega)<y_0$ for all sufficiently large $n$. Hence,
+\[
+\limsup_n Y_n^+(\omega)\leq y_0.
+\]
+Because $F$ has at most countably many discontinuity points (see Exercise 3.5), we can take a sequence $(y_i)_{i=1}^{\infty}$ such that $F$ is continuous at $y_i$ for all $i$, and $y_i\downarrow Y^+(\omega)$. This gives
+\[
+\limsup_n Y_n^+(\omega)\leq Y^+(\omega).
+\]
+Similarly, we can prove that $\liminf_n Y_n(\omega)\geq Y(\omega)$. For each $\omega$, we have the inequalities
+\[
+Y(\omega)\leq \liminf_n Y_n(\omega)
+\leq \limsup_n Y_n^+(\omega)\leq Y^+(\omega).
+\]
+Since $Y$ and $Y^+$ are equal almost surely, $Y_n^+$ converges to $Y$ almost surely. Therefore, we have $Y_n(\omega)\to Y(\omega)$ for $\omega$ in a subset of $(0,1)$ with probability $1$.
+\hfill $\square$

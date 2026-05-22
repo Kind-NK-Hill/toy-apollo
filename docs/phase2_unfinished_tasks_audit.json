@@ -1,0 +1,1120 @@
+{
+  "generated_at": "2026-05-22T00:36:27.085156Z",
+  "scope": {
+    "start_chapter": 9,
+    "end_chapter": 14,
+    "include_tasks": [
+      "thm_6_7__lemma_1"
+    ],
+    "check_build": false,
+    "build_timeout_seconds": 120,
+    "only_tasks": [],
+    "only_buckets": []
+  },
+  "summary": {
+    "unfinished_or_verify_count": 14,
+    "blocking_unfinished_count": 13,
+    "verification_only_count": 1,
+    "orphan_output_count": 10,
+    "reason_counts": {
+      "completed_with_proof_debt": 1,
+      "critical_ch6_bridge_verify": 1,
+      "ledger_status:COMPLETED_WITH_PROOF_DEBT": 1,
+      "ledger_status:FAILED_LOCAL": 12,
+      "open_obligations": 12,
+      "public_surface_error": 7
+    },
+    "bucket_counts": {
+      "allowed_beyond_book_hygiene": 1,
+      "critical_bridge_verification": 1,
+      "obligation_resolution": 5,
+      "public_surface_and_obligations": 7
+    },
+    "build_status_counts": {},
+    "status_counts": {
+      "COMPLETED": 1,
+      "COMPLETED_WITH_PROOF_DEBT": 1,
+      "FAILED_LOCAL": 12
+    },
+    "chapter_counts": {
+      "6": 1,
+      "11": 5,
+      "13": 1,
+      "14": 7
+    },
+    "open_obligation_kind_counts": {
+      "proof_debt_support": 18
+    },
+    "open_interface_obligation_count": 0,
+    "structural_field_landing_count": 9,
+    "theorem_wrapper_structural_count": 3,
+    "empty_landing_count": 5,
+    "ledger_only_child_obligation_count": 18,
+    "clean_debt_error_task_count": 7
+  },
+  "items": [
+    {
+      "task_id": "thm_6_7__lemma_1",
+      "chapter": 6,
+      "status": "COMPLETED",
+      "file": "ToyApollo/Output/thm_6_7__lemma_1.lean",
+      "output_exists": true,
+      "open_blocking_ids": [],
+      "open_obligation_details": [],
+      "accepted_proof_debt_count": 0,
+      "reasons": [
+        "critical_ch6_bridge_verify"
+      ],
+      "action_bucket": "critical_bridge_verification",
+      "next_action": "Build-check the Chapter 6 bridge and keep it in the report as a critical dependency, even though it is already completed.",
+      "build": null
+    },
+    {
+      "task_id": "prob_11_10",
+      "chapter": 11,
+      "status": "FAILED_LOCAL",
+      "file": "ToyApollo/Output/prob_11_10.lean",
+      "output_exists": true,
+      "open_blocking_ids": [
+        "continuous_grid_uniformization"
+      ],
+      "open_obligation_details": [
+        {
+          "id": "continuous_grid_uniformization",
+          "name": "",
+          "title": "continuous_grid_uniformization",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "",
+          "landing_analysis": {
+            "names": [],
+            "known_declarations": [],
+            "theorem_or_lemma": [],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [],
+            "missing_names": [],
+            "has_theorem_or_lemma": false,
+            "problem": "empty_landing"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_prob_11_10_continuous_grid_uniformization",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        }
+      ],
+      "accepted_proof_debt_count": 0,
+      "reasons": [
+        "ledger_status:FAILED_LOCAL",
+        "open_obligations",
+        "public_surface_error"
+      ],
+      "action_bucket": "public_surface_and_obligations",
+      "next_action": "First remove public Support/Spine parameters, then close the named proof obligations with theorem-level landings.",
+      "build": null
+    },
+    {
+      "task_id": "prob_11_6",
+      "chapter": 11,
+      "status": "FAILED_LOCAL",
+      "file": "ToyApollo/Output/prob_11_6.lean",
+      "output_exists": true,
+      "open_blocking_ids": [
+        "sixth_moment_support"
+      ],
+      "open_obligation_details": [
+        {
+          "id": "sixth_moment_support",
+          "name": "",
+          "title": "sixth_moment_support",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "",
+          "landing_analysis": {
+            "names": [],
+            "known_declarations": [],
+            "theorem_or_lemma": [],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [],
+            "missing_names": [],
+            "has_theorem_or_lemma": false,
+            "problem": "empty_landing"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_prob_11_6_sixth_moment_support",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        }
+      ],
+      "accepted_proof_debt_count": 0,
+      "reasons": [
+        "ledger_status:FAILED_LOCAL",
+        "open_obligations",
+        "public_surface_error"
+      ],
+      "action_bucket": "public_surface_and_obligations",
+      "next_action": "First remove public Support/Spine parameters, then close the named proof obligations with theorem-level landings.",
+      "build": null
+    },
+    {
+      "task_id": "prob_11_8",
+      "chapter": 11,
+      "status": "FAILED_LOCAL",
+      "file": "ToyApollo/Output/prob_11_8.lean",
+      "output_exists": true,
+      "open_blocking_ids": [
+        "covariance_decay_support"
+      ],
+      "open_obligation_details": [
+        {
+          "id": "covariance_decay_support",
+          "name": "",
+          "title": "covariance_decay_support",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "",
+          "landing_analysis": {
+            "names": [],
+            "known_declarations": [],
+            "theorem_or_lemma": [],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [],
+            "missing_names": [],
+            "has_theorem_or_lemma": false,
+            "problem": "empty_landing"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_prob_11_8_covariance_decay_support",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        }
+      ],
+      "accepted_proof_debt_count": 0,
+      "reasons": [
+        "ledger_status:FAILED_LOCAL",
+        "open_obligations",
+        "public_surface_error"
+      ],
+      "action_bucket": "public_surface_and_obligations",
+      "next_action": "First remove public Support/Spine parameters, then close the named proof obligations with theorem-level landings.",
+      "build": null
+    },
+    {
+      "task_id": "prob_11_9",
+      "chapter": 11,
+      "status": "FAILED_LOCAL",
+      "file": "ToyApollo/Output/prob_11_9.lean",
+      "output_exists": true,
+      "open_blocking_ids": [
+        "occupancy_moment_calculation"
+      ],
+      "open_obligation_details": [
+        {
+          "id": "occupancy_moment_calculation",
+          "name": "",
+          "title": "occupancy_moment_calculation",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "",
+          "landing_analysis": {
+            "names": [],
+            "known_declarations": [],
+            "theorem_or_lemma": [],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [],
+            "missing_names": [],
+            "has_theorem_or_lemma": false,
+            "problem": "empty_landing"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_prob_11_9_occupancy_moment_calculation",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        }
+      ],
+      "accepted_proof_debt_count": 0,
+      "reasons": [
+        "ledger_status:FAILED_LOCAL",
+        "open_obligations",
+        "public_surface_error"
+      ],
+      "action_bucket": "public_surface_and_obligations",
+      "next_action": "First remove public Support/Spine parameters, then close the named proof obligations with theorem-level landings.",
+      "build": null
+    },
+    {
+      "task_id": "thm_11_7",
+      "chapter": 11,
+      "status": "FAILED_LOCAL",
+      "file": "ToyApollo/Output/thm_11_7.lean",
+      "output_exists": true,
+      "open_blocking_ids": [
+        "fourth_moment_expansion_tail_bound"
+      ],
+      "open_obligation_details": [
+        {
+          "id": "fourth_moment_expansion_tail_bound",
+          "name": "",
+          "title": "Fourth-moment expansion and summable tail bound",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "",
+          "landing_analysis": {
+            "names": [],
+            "known_declarations": [],
+            "theorem_or_lemma": [],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [],
+            "missing_names": [],
+            "has_theorem_or_lemma": false,
+            "problem": "empty_landing"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_thm_11_7_fourth_moment_expansion_tail_bound",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        }
+      ],
+      "accepted_proof_debt_count": 0,
+      "reasons": [
+        "ledger_status:FAILED_LOCAL",
+        "open_obligations",
+        "public_surface_error"
+      ],
+      "action_bucket": "public_surface_and_obligations",
+      "next_action": "First remove public Support/Spine parameters, then close the named proof obligations with theorem-level landings.",
+      "build": null
+    },
+    {
+      "task_id": "thm_13_14",
+      "chapter": 13,
+      "status": "FAILED_LOCAL",
+      "file": "ToyApollo/Output/thm_13_14.lean",
+      "output_exists": true,
+      "open_blocking_ids": [
+        "interval_fubini_calculation",
+        "pi_lambda_extension"
+      ],
+      "open_obligation_details": [
+        {
+          "id": "interval_fubini_calculation",
+          "name": "",
+          "title": "Fubini computation on closed-interval cylinders",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "thm_13_14_closedIntervalCylinder_eq_prod",
+          "landing_analysis": {
+            "names": [
+              "thm_13_14_closedIntervalCylinder_eq_prod"
+            ],
+            "known_declarations": [
+              {
+                "name": "thm_13_14_closedIntervalCylinder_eq_prod",
+                "kind": "theorem"
+              }
+            ],
+            "theorem_or_lemma": [
+              "thm_13_14_closedIntervalCylinder_eq_prod"
+            ],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [],
+            "missing_names": [],
+            "has_theorem_or_lemma": true,
+            "problem": ""
+          },
+          "is_interface": false,
+          "child_task_id": "obl_thm_13_14_interval_fubini_calculation",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        },
+        {
+          "id": "pi_lambda_extension",
+          "name": "",
+          "title": "Extend from closed intervals to all Borel y-sets",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "thm_13_14_verticalCylinder_eq_prod",
+          "landing_analysis": {
+            "names": [
+              "thm_13_14_verticalCylinder_eq_prod"
+            ],
+            "known_declarations": [
+              {
+                "name": "thm_13_14_verticalCylinder_eq_prod",
+                "kind": "theorem"
+              }
+            ],
+            "theorem_or_lemma": [
+              "thm_13_14_verticalCylinder_eq_prod"
+            ],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [],
+            "missing_names": [],
+            "has_theorem_or_lemma": true,
+            "problem": ""
+          },
+          "is_interface": false,
+          "child_task_id": "obl_thm_13_14_pi_lambda_extension",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        }
+      ],
+      "accepted_proof_debt_count": 0,
+      "reasons": [
+        "ledger_status:FAILED_LOCAL",
+        "open_obligations",
+        "public_surface_error"
+      ],
+      "action_bucket": "public_surface_and_obligations",
+      "next_action": "First remove public Support/Spine parameters, then close the named proof obligations with theorem-level landings.",
+      "build": null
+    },
+    {
+      "task_id": "ex_14_4_3",
+      "chapter": 14,
+      "status": "FAILED_LOCAL",
+      "file": "ToyApollo/Output/ex_14_4_3.lean",
+      "output_exists": true,
+      "open_blocking_ids": [
+        "lyapunov_fourth_moment_bound"
+      ],
+      "open_obligation_details": [
+        {
+          "id": "lyapunov_fourth_moment_bound",
+          "name": "",
+          "title": "Lyapunov delta=2 verification by fourth-moment/Riemann bounds",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "ex_14_4_3_LyapunovVerification",
+          "landing_analysis": {
+            "names": [
+              "ex_14_4_3_LyapunovVerification"
+            ],
+            "known_declarations": [
+              {
+                "name": "ex_14_4_3_LyapunovVerification",
+                "kind": "structure"
+              }
+            ],
+            "theorem_or_lemma": [],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [],
+            "missing_names": [],
+            "has_theorem_or_lemma": false,
+            "problem": "non_theorem_landing"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_ex_14_4_3_lyapunov_fourth_moment_bound",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        }
+      ],
+      "accepted_proof_debt_count": 0,
+      "reasons": [
+        "ledger_status:FAILED_LOCAL",
+        "open_obligations",
+        "public_surface_error"
+      ],
+      "action_bucket": "public_surface_and_obligations",
+      "next_action": "First remove public Support/Spine parameters, then close the named proof obligations with theorem-level landings.",
+      "build": null
+    },
+    {
+      "task_id": "prob_14_1",
+      "chapter": 14,
+      "status": "FAILED_LOCAL",
+      "file": "ToyApollo/Output/prob_14_1.lean",
+      "output_exists": true,
+      "open_blocking_ids": [
+        "obligation_1",
+        "obligation_4"
+      ],
+      "open_obligation_details": [
+        {
+          "id": "obligation_1",
+          "name": "finite_polya_white_count_mass_formula",
+          "title": "finite Polya urn count formula",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "prob_14_1_PolyaUrnBetaSetup.polya_white_count_mass / prob_14_1_white_count_mass",
+          "landing_analysis": {
+            "names": [
+              "prob_14_1_PolyaUrnBetaSetup.polya_white_count_mass",
+              "prob_14_1_white_count_mass"
+            ],
+            "known_declarations": [
+              {
+                "name": "prob_14_1_PolyaUrnBetaSetup",
+                "kind": "structure"
+              },
+              {
+                "name": "prob_14_1_white_count_mass",
+                "kind": "theorem"
+              }
+            ],
+            "theorem_or_lemma": [
+              "prob_14_1_white_count_mass"
+            ],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [
+              "prob_14_1_PolyaUrnBetaSetup.polya_white_count_mass"
+            ],
+            "missing_names": [],
+            "has_theorem_or_lemma": true,
+            "problem": "theorem_wrapper_over_structure_field"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_prob_14_1_obligation_1",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        },
+        {
+          "id": "obligation_4",
+          "name": "stirling_asymptotic_cdf_convergence",
+          "title": "Stirling to Beta CDF convergence",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "prob_14_1_PolyaUrnBetaSetup.stirling_cdf_convergence / prob_14_1_stirling_beta_cdf_convergence",
+          "landing_analysis": {
+            "names": [
+              "prob_14_1_PolyaUrnBetaSetup.stirling_cdf_convergence",
+              "prob_14_1_stirling_beta_cdf_convergence"
+            ],
+            "known_declarations": [
+              {
+                "name": "prob_14_1_PolyaUrnBetaSetup",
+                "kind": "structure"
+              },
+              {
+                "name": "prob_14_1_stirling_beta_cdf_convergence",
+                "kind": "theorem"
+              }
+            ],
+            "theorem_or_lemma": [
+              "prob_14_1_stirling_beta_cdf_convergence"
+            ],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [
+              "prob_14_1_PolyaUrnBetaSetup.stirling_cdf_convergence"
+            ],
+            "missing_names": [],
+            "has_theorem_or_lemma": true,
+            "problem": "theorem_wrapper_over_structure_field"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_prob_14_1_obligation_4",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        }
+      ],
+      "accepted_proof_debt_count": 0,
+      "reasons": [
+        "ledger_status:FAILED_LOCAL",
+        "open_obligations"
+      ],
+      "action_bucket": "obligation_resolution",
+      "next_action": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields.",
+      "build": null
+    },
+    {
+      "task_id": "prob_14_10",
+      "chapter": 14,
+      "status": "FAILED_LOCAL",
+      "file": "ToyApollo/Output/prob_14_10.lean",
+      "output_exists": true,
+      "open_blocking_ids": [
+        "obligation_4"
+      ],
+      "open_obligation_details": [
+        {
+          "id": "obligation_4",
+          "name": "moments_to_mgf_convergence",
+          "title": "moments to MGF convergence",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "prob_14_10_BoundedMomentSetup.moments_to_mgf_setup",
+          "landing_analysis": {
+            "names": [
+              "prob_14_10_BoundedMomentSetup.moments_to_mgf_setup"
+            ],
+            "known_declarations": [
+              {
+                "name": "prob_14_10_BoundedMomentSetup",
+                "kind": "structure"
+              }
+            ],
+            "theorem_or_lemma": [],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [
+              "prob_14_10_BoundedMomentSetup.moments_to_mgf_setup"
+            ],
+            "missing_names": [],
+            "has_theorem_or_lemma": false,
+            "problem": "structure_field_landing"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_prob_14_10_obligation_4",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        }
+      ],
+      "accepted_proof_debt_count": 0,
+      "reasons": [
+        "ledger_status:FAILED_LOCAL",
+        "open_obligations"
+      ],
+      "action_bucket": "obligation_resolution",
+      "next_action": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields.",
+      "build": null
+    },
+    {
+      "task_id": "prob_14_11",
+      "chapter": 14,
+      "status": "FAILED_LOCAL",
+      "file": "ToyApollo/Output/prob_14_11.lean",
+      "output_exists": true,
+      "open_blocking_ids": [
+        "obligation_2",
+        "obligation_3",
+        "obligation_4"
+      ],
+      "open_obligation_details": [
+        {
+          "id": "obligation_2",
+          "name": "generalized_coupon_triangular_array",
+          "title": "generalized triangular array",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "prob_14_11_CouponRatioTriangularArraySetup.theoremSetup / source_rows_are_independent / source_coupon_collection_law_is_stage_sum",
+          "landing_analysis": {
+            "names": [
+              "prob_14_11_CouponRatioTriangularArraySetup.theoremSetup",
+              "source_rows_are_independent",
+              "source_coupon_collection_law_is_stage_sum"
+            ],
+            "known_declarations": [
+              {
+                "name": "prob_14_11_CouponRatioTriangularArraySetup",
+                "kind": "structure"
+              }
+            ],
+            "theorem_or_lemma": [],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [
+              "prob_14_11_CouponRatioTriangularArraySetup.theoremSetup"
+            ],
+            "missing_names": [
+              "source_rows_are_independent",
+              "source_coupon_collection_law_is_stage_sum"
+            ],
+            "has_theorem_or_lemma": false,
+            "problem": "structure_field_landing"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_prob_14_11_obligation_2",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        },
+        {
+          "id": "obligation_3",
+          "name": "generalized_mean_variance_scales",
+          "title": "generalized mean and variance scales",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "prob_14_11_asymptoticMeanScale / prob_14_11_asymptoticVarianceScale / mean_asymptotic / variance_asymptotic",
+          "landing_analysis": {
+            "names": [
+              "prob_14_11_asymptoticMeanScale",
+              "prob_14_11_asymptoticVarianceScale",
+              "mean_asymptotic",
+              "variance_asymptotic"
+            ],
+            "known_declarations": [
+              {
+                "name": "prob_14_11_asymptoticMeanScale",
+                "kind": "def"
+              },
+              {
+                "name": "prob_14_11_asymptoticVarianceScale",
+                "kind": "def"
+              }
+            ],
+            "theorem_or_lemma": [],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [],
+            "missing_names": [
+              "mean_asymptotic",
+              "variance_asymptotic"
+            ],
+            "has_theorem_or_lemma": false,
+            "problem": "missing_theorem_or_lemma_landing"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_prob_14_11_obligation_3",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        },
+        {
+          "id": "obligation_4",
+          "name": "generalized_lyapunov_condition",
+          "title": "generalized Lyapunov verification",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "prob_14_11_CouponRatioTriangularArraySetup.generalized_lyapunov_condition",
+          "landing_analysis": {
+            "names": [
+              "prob_14_11_CouponRatioTriangularArraySetup.generalized_lyapunov_condition"
+            ],
+            "known_declarations": [
+              {
+                "name": "prob_14_11_CouponRatioTriangularArraySetup",
+                "kind": "structure"
+              }
+            ],
+            "theorem_or_lemma": [],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [
+              "prob_14_11_CouponRatioTriangularArraySetup.generalized_lyapunov_condition"
+            ],
+            "missing_names": [],
+            "has_theorem_or_lemma": false,
+            "problem": "structure_field_landing"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_prob_14_11_obligation_4",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        }
+      ],
+      "accepted_proof_debt_count": 0,
+      "reasons": [
+        "ledger_status:FAILED_LOCAL",
+        "open_obligations"
+      ],
+      "action_bucket": "obligation_resolution",
+      "next_action": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields.",
+      "build": null
+    },
+    {
+      "task_id": "prob_14_8",
+      "chapter": 14,
+      "status": "FAILED_LOCAL",
+      "file": "ToyApollo/Output/prob_14_8.lean",
+      "output_exists": true,
+      "open_blocking_ids": [
+        "obligation_4"
+      ],
+      "open_obligation_details": [
+        {
+          "id": "obligation_4",
+          "name": "mgf_convergence_gives_characteristic_convergence",
+          "title": "MGF to characteristic convergence",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "prob_14_8_MgfConvergenceSetup.mgf_to_characteristic_convergence / prob_14_8_characteristic_convergence",
+          "landing_analysis": {
+            "names": [
+              "prob_14_8_MgfConvergenceSetup.mgf_to_characteristic_convergence",
+              "prob_14_8_characteristic_convergence"
+            ],
+            "known_declarations": [
+              {
+                "name": "prob_14_8_MgfConvergenceSetup",
+                "kind": "structure"
+              },
+              {
+                "name": "prob_14_8_characteristic_convergence",
+                "kind": "theorem"
+              }
+            ],
+            "theorem_or_lemma": [
+              "prob_14_8_characteristic_convergence"
+            ],
+            "projection_wrapper_theorems": [
+              {
+                "name": "prob_14_8_characteristic_convergence",
+                "projection": "S.mgf_to_characteristic_convergence"
+              }
+            ],
+            "structure_fields": [
+              "prob_14_8_MgfConvergenceSetup.mgf_to_characteristic_convergence"
+            ],
+            "missing_names": [],
+            "has_theorem_or_lemma": false,
+            "problem": "theorem_wrapper_over_structure_field"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_prob_14_8_obligation_4",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        }
+      ],
+      "accepted_proof_debt_count": 0,
+      "reasons": [
+        "ledger_status:FAILED_LOCAL",
+        "open_obligations"
+      ],
+      "action_bucket": "obligation_resolution",
+      "next_action": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields.",
+      "build": null
+    },
+    {
+      "task_id": "thm_14_7",
+      "chapter": 14,
+      "status": "FAILED_LOCAL",
+      "file": "ToyApollo/Output/thm_14_7.lean",
+      "output_exists": true,
+      "open_blocking_ids": [
+        "center_and_standardize",
+        "quadratic_characteristic_expansion",
+        "independent_sum_characteristic"
+      ],
+      "open_obligation_details": [
+        {
+          "id": "center_and_standardize",
+          "name": "",
+          "title": "Center and standardize the iid sequence",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "thm_14_7_LindebergLevySetup.mean, thm_14_7_LindebergLevySetup.sigma, thm_14_7_LindebergLevySetup.standardizedLaws",
+          "landing_analysis": {
+            "names": [
+              "thm_14_7_LindebergLevySetup.mean",
+              "thm_14_7_LindebergLevySetup.sigma",
+              "thm_14_7_LindebergLevySetup.standardizedLaws"
+            ],
+            "known_declarations": [
+              {
+                "name": "thm_14_7_LindebergLevySetup",
+                "kind": "structure"
+              },
+              {
+                "name": "thm_14_7_LindebergLevySetup",
+                "kind": "structure"
+              },
+              {
+                "name": "thm_14_7_LindebergLevySetup",
+                "kind": "structure"
+              }
+            ],
+            "theorem_or_lemma": [],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [
+              "thm_14_7_LindebergLevySetup.mean",
+              "thm_14_7_LindebergLevySetup.sigma",
+              "thm_14_7_LindebergLevySetup.standardizedLaws"
+            ],
+            "missing_names": [],
+            "has_theorem_or_lemma": false,
+            "problem": "structure_field_landing"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_thm_14_7_center_and_standardize",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        },
+        {
+          "id": "quadratic_characteristic_expansion",
+          "name": "",
+          "title": "Quadratic expansion of the one-step characteristic function",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "thm_14_7_quadraticCharacteristicExpansion, thm_14_7_LindebergLevySetup.quadratic_expansion",
+          "landing_analysis": {
+            "names": [
+              "thm_14_7_quadraticCharacteristicExpansion",
+              "thm_14_7_LindebergLevySetup.quadratic_expansion"
+            ],
+            "known_declarations": [
+              {
+                "name": "thm_14_7_quadraticCharacteristicExpansion",
+                "kind": "def"
+              },
+              {
+                "name": "thm_14_7_LindebergLevySetup",
+                "kind": "structure"
+              }
+            ],
+            "theorem_or_lemma": [],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [
+              "thm_14_7_LindebergLevySetup.quadratic_expansion"
+            ],
+            "missing_names": [],
+            "has_theorem_or_lemma": false,
+            "problem": "structure_field_landing"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_thm_14_7_quadratic_characteristic_expansion",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        },
+        {
+          "id": "independent_sum_characteristic",
+          "name": "",
+          "title": "Independence gives the product characteristic function",
+          "kind": "proof_debt_support",
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "thm_14_7_LindebergLevySetup.c, thm_14_7_LindebergLevySetup.c_definition",
+          "landing_analysis": {
+            "names": [
+              "thm_14_7_LindebergLevySetup.c",
+              "thm_14_7_LindebergLevySetup.c_definition"
+            ],
+            "known_declarations": [
+              {
+                "name": "thm_14_7_LindebergLevySetup",
+                "kind": "structure"
+              },
+              {
+                "name": "thm_14_7_LindebergLevySetup",
+                "kind": "structure"
+              }
+            ],
+            "theorem_or_lemma": [],
+            "projection_wrapper_theorems": [],
+            "structure_fields": [
+              "thm_14_7_LindebergLevySetup.c",
+              "thm_14_7_LindebergLevySetup.c_definition"
+            ],
+            "missing_names": [],
+            "has_theorem_or_lemma": false,
+            "problem": "structure_field_landing"
+          },
+          "is_interface": false,
+          "child_task_id": "obl_thm_14_7_independent_sum_characteristic",
+          "child_status": "FAILED_LOCAL",
+          "child_has_output": false
+        }
+      ],
+      "accepted_proof_debt_count": 0,
+      "reasons": [
+        "ledger_status:FAILED_LOCAL",
+        "open_obligations"
+      ],
+      "action_bucket": "obligation_resolution",
+      "next_action": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields.",
+      "build": null
+    },
+    {
+      "task_id": "thm_14_8",
+      "chapter": 14,
+      "status": "COMPLETED_WITH_PROOF_DEBT",
+      "file": "ToyApollo/Output/thm_14_8.lean",
+      "output_exists": true,
+      "open_blocking_ids": [],
+      "open_obligation_details": [],
+      "accepted_proof_debt_count": 0,
+      "reasons": [
+        "ledger_status:COMPLETED_WITH_PROOF_DEBT",
+        "completed_with_proof_debt"
+      ],
+      "action_bucket": "allowed_beyond_book_hygiene",
+      "next_action": "Keep only the documented thm_14_8 beyond-book exception and make inherited uses explicit.",
+      "build": null
+    }
+  ],
+  "repair_batches": [
+    {
+      "bucket": "critical_bridge_verification",
+      "count": 1,
+      "task_ids": [
+        "thm_6_7__lemma_1"
+      ],
+      "next_action": "Build-check the Chapter 6 bridge and keep it in the report as a critical dependency, even though it is already completed."
+    },
+    {
+      "bucket": "public_surface_and_obligations",
+      "count": 7,
+      "task_ids": [
+        "prob_11_10",
+        "prob_11_6",
+        "prob_11_8",
+        "prob_11_9",
+        "thm_11_7",
+        "thm_13_14",
+        "ex_14_4_3"
+      ],
+      "next_action": "First remove public Support/Spine parameters, then close the named proof obligations with theorem-level landings."
+    },
+    {
+      "bucket": "obligation_resolution",
+      "count": 5,
+      "task_ids": [
+        "prob_14_1",
+        "prob_14_10",
+        "prob_14_11",
+        "prob_14_8",
+        "thm_14_7"
+      ],
+      "next_action": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields."
+    },
+    {
+      "bucket": "allowed_beyond_book_hygiene",
+      "count": 1,
+      "task_ids": [
+        "thm_14_8"
+      ],
+      "next_action": "Keep only the documented thm_14_8 beyond-book exception and make inherited uses explicit."
+    }
+  ],
+  "orphan_outputs": [
+    {
+      "task_id": "thm_9_5_dirichlet",
+      "chapter": 9,
+      "file": "ToyApollo/Output/thm_9_5_dirichlet.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "thm_9_5_kernel"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_9_5_fubini",
+      "chapter": 9,
+      "file": "ToyApollo/Output/thm_9_5_fubini.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "thm_9_5_kernel"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_9_5_kernel",
+      "chapter": 9,
+      "file": "ToyApollo/Output/thm_9_5_kernel.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "thm_9_5"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "prob_10_10_distribution_bridge",
+      "chapter": 10,
+      "file": "ToyApollo/Output/prob_10_10_distribution_bridge.lean",
+      "has_prompt_pack": false,
+      "imported_by": [],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_10_8_inverse_comparison",
+      "chapter": 10,
+      "file": "ToyApollo/Output/thm_10_8_inverse_comparison.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "thm_10_8_quantile_convergence"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_10_8_quantile_convergence",
+      "chapter": 10,
+      "file": "ToyApollo/Output/thm_10_8_quantile_convergence.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "thm_10_8"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_10_8_quantile_defs",
+      "chapter": 10,
+      "file": "ToyApollo/Output/thm_10_8_quantile_defs.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "thm_10_8",
+        "thm_10_8_inverse_comparison",
+        "thm_10_8_quantile_law"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_10_8_quantile_law",
+      "chapter": 10,
+      "file": "ToyApollo/Output/thm_10_8_quantile_law.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "thm_10_8"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_10_8_quantile_space",
+      "chapter": 10,
+      "file": "ToyApollo/Output/thm_10_8_quantile_space.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "thm_10_8_quantile_defs"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_14_4_dominating_measure",
+      "chapter": 14,
+      "file": "ToyApollo/Output/thm_14_4_dominating_measure.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "thm_14_4"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    }
+  ]
+}

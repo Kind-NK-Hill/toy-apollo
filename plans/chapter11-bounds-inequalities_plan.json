@@ -1,0 +1,53 @@
+[
+    {
+        "block_id": "intro_11",
+        "type": "Remark",
+        "title": "Laws of Large Numbers",
+        "content": "\\section*{Laws of Large Numbers}",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter11-bounds-inequalities"
+    },
+    {
+        "block_id": "intro_11_1",
+        "type": "Remark",
+        "title": "Some Useful Bounds and Inequalities",
+        "content": "\\subsection*{11.1 Some Useful Bounds and Inequalities}\n\n11Laws of Large Numbers\n\nThe laws of large numbers give operational meaning to the expectation of a random\n\nvariable. If we generate independent realizations of a random variable and compute\n\ntheir mean, the weak law of large numbers states that the sample mean converges\n\nto the expected value in probability as we increase the number of samples. In\n\nthis chapter, we present two versions of the weak law of large numbers. The first\n\none assumes that the random variables have finite variance, while the second one\n\nassumes that the mean is finite.\n\nThe weak law has numerous applications. We discuss two sample applications:\n\nMonte Carlo integration and data compression. Monte Carlo integration is a simple\n\nbut effective method for approximating integral in high dimensions, which arises\n\nin financial computations. Data compression is a topic in information theory. The\n\nfundamental result by Shannon on data compression is based on the weak law of\n\nlarge numbers. We end this chapter with a version of the strong law of large number\n\nthat assumes the fourth moments of the random variables are finite.\n\nThe first inequality is the complex version of Cauchy-Schwarz inequality. In the\n\nnext theorem,X* denote the complex conjugate of X .",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter11-bounds-inequalities"
+    },
+    {
+        "block_id": "thm_11_1",
+        "type": "Theorem_with_Proof",
+        "title": "11.1 (Cauchy-Schwarz Inequality)",
+        "content": "\\begin{thmbox}{11.1 (Cauchy-Schwarz Inequality)}\n\\end{thmbox}\n\nFor complex-valued random variables X and Y in L2, the expectation\n\nE[X*Y] is well-defined, and\n\n\\vertE[X*Y]\\vert \\leq\n\n\\sqrt\n\nE[\\vertX\\vert2]E[\\vertY\\vert 2] (11.1)\n\nholds, with equality holding iff X and Y are scalar multiple of each other with\n\nprobability 1. When X and Y are real, E[X*Y] is simplified to E[XY ].\n\n\\textit{Proof} Let X and Y be complex-valued random variables such that both E[\\vertX\\vert2]\n\nand E[\\vertY\\vert2] are finite. We first show that \\vertX*Y\\vert is integrable. Let A1 be the subset\n\nof \\Omega in which \\vertX()\\vert > \\vertY()\\vert, and A2 be the subset in which \\vertX()\\vert\\leq\\vert Y()\\vert.\n\nThen, we have\n\nE[\\vertX*Y\\vert] =\n\n\\int\n\nA1\n\n\\vertX*Y\\vert+\n\n\\int\n\nA2\n\n\\vertX*Y\\vert\\leq\n\n\\int\n\nA1\n\n\\vertX\\vert2 +\n\n\\int\n\nA2\n\n\\vertY\\vert2 \\leq E[\\vertX\\vert2]+ E[\\vertY\\vert2].\n\nThis shows that .\n\n\\int\n\n\\vertX*Y\\vert is finite, and hence, X*Y is integrable.\n\nIf E[\\vertX\\vert2]= 0, then X = 0 almost surely, and hence, X*Y = 0 almost surely.\n\nBoth sides of (11.1) are equal to zero. Suppose E[\\vertX\\vert2] > 0. Define a function\n\nf( z )\\coloneqqE[\\vertzX + Y\\vert2] with z being a complex variable. We can expand it as\n\nf( z )= E[(zX +Y)*(zX +Y)]=\\vert z\\vert2E[\\vertX\\vert2]+ z*E[X*Y]+ zE[XY *]+ E[\\vertY\\vert2].\n\nBy completing square, we obtain\n\nf( z )= E[\\vertX\\vert2]\\cdot\n\n\\vert\\vert\\vertz+ E[X*Y]\n\nE[\\vertX\\vert2]\n\n\\vert\\vert\\vert\n\n- \\vertE[X*Y]\\vert2\n\nE[\\vertX\\vert2] +E [\\vertY\\vert 2].\n\nSince f( z )\\geq 0 for all z, the constant term on the right must be nonnegative. This\n\nyields the Cauchy-Schwarz inequality.\n\nWhen equality holds, then f( z0) = 0 for a particular choice of z0. This implies\n\nthatE[\\vertz0X + Y\\vert2]= 0, and hence, Y =- z0X almost surely. \\hfill $\\square$\n\nNote that the proof of Theorem 11.1 does not rely on the assumption that the\n\nunderlying measure space is a probability space. The Cauchy-Schwarz inequality\n\ncan be derived for a general measure, as long as X and Y are square integrable.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter11-bounds-inequalities"
+    },
+    {
+        "block_id": "thm_11_2",
+        "type": "Theorem_with_Proof",
+        "title": "11.2 (Chebyshev Inequality)",
+        "content": "\\begin{thmbox}{11.2 (Chebyshev Inequality)}\n\\end{thmbox}\n\nIf the variance of a real-valued random variable X is finite, then for any\n\n\\epsilon> 0,\n\nP(\\vertX - E[X]\\vert \\geq \\epsilon)\\leq Va r(X)\n\n\\epsilon2 .\n\n\\textit{Proof} The indicator function .1{\\vertX-E[X]\\vert\\geq\\epsilon}() satisfies\n\n1{\\vertX-E[X]\\vert\\geq\\epsilon}()\\leq (X() - E [X])2/\\epsilon2 for all \\in \\Omega.\n\nTaking the expectation of both sides, we obtain\n\nP( \\vertX- E [X]\\vert \\geq\\epsilon)= E [1{\\vertX-E[X]\\vert\\geq\\epsilon}] \\leq E[(X- E [X])2]\n\n\\epsilon2 = Va r(X)\n\n\\epsilon2 .\n\n\\hfill $\\square$\n\nThe next result is called Jensen inequality .",
+        "dependencies": [
+            "def_9_1",
+            "thm_10_3"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter11-bounds-inequalities"
+    },
+    {
+        "block_id": "thm_11_3",
+        "type": "Theorem_with_Proof",
+        "title": "11.3 (Jensen Inequality)",
+        "content": "\\begin{thmbox}{11.3 (Jensen Inequality)}\n\\end{thmbox}\n\nSuppose \\phi is a convex function and X is a real-valued random variable with\n\nfinite mean. Then E[\\phi(X)]\\geq \\phi(E[X]).\n\n\\textit{Proof} By the convexity of \\phi, at each point x* in the domain of \\phi, we can draw a\n\nstraight line that touches the graph of \\phi at one point, ie., it passes through the point\n\n(x*,\\phi( x*)) and lies beneath the graph of \\phi(x).\n\nWe pick x* =E [X], which is finite by assumption. Let g(x)= ax + b be a\n\nlinear function such that g(E[X])= \\phi(E [X]) andg(x)\\leq \\phi(x) for all x I f \\phi is not\n\ndifferentiable at x* =E [X], there could be more than one choice of coefficients a\n\nand b In this case, we just pick one arbitrarily.\n\nBy applying the monotonic property of integral, we obtain\n\nE[\\phi(X)]\\geq E[g(X)]= aE[X]+ bE[1]= aE[X]+ b= \\phi(E [X]).\n\nNote that we have used E[1]= 1 in the second last equality. \\hfill $\\square$",
+        "dependencies": [
+            "def_4_1",
+            "thm_6_7__lemma_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter11-bounds-inequalities"
+    }
+]

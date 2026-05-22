@@ -1,0 +1,26 @@
+[
+    {
+        "block_id": "intro_12_3",
+        "type": "Remark",
+        "title": "Orthogonality Principle",
+        "content": "\\subsection*{12.3 Orthogonality Principle}\n\nWhen W has infinite dimension, computing the projection of a random variable\n\nY onto a closed space W using the definition may be difficult. The next theorem\n\nprovides a useful characterization of the projection function in terms of perpen-\n\ndicular projection. Essentially, the theorem states that the optimal solution in W\n\nthat minimizes the distance to Y is achieved when and only when the error vector\n\nis perpendicular to W Note that we are not proving any existence result in the\n\ntheorem below, as the well-definedness of the projection function has already been\n\nestablished in Theorem 12.4. The objective of the theorem below is to give an\n\nalternate way to compute the projection of a random variable.",
+        "dependencies": [
+            "thm_12_4"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter12-orthogonality-principle"
+    },
+    {
+        "block_id": "thm_12_5",
+        "type": "Theorem_with_Proof",
+        "title": "12.5 (Orthogonality Principle)",
+        "content": "\\begin{thmbox}{12.5 (Orthogonality Principle)}\n\\end{thmbox}\n\nGiven a random variable Y in L2(P) and a closed subspace W in L2(P) ,t h e\n\nprojection of Y onto W is characterized by\n\nX* =Proj W (Y) X * \\inW and \\langleY- X *,X \\rangle= 0 X\\in W.\n\n\\textit{Proof} ( . ) Suppose. X* is the random variable in W that minimizes Y- X over\n\nall X\\in W We need to show that \\langleY- X *,X \\rangle= 0 for all X\\in W We proceed by\n\ncontradiction. Suppose there exists a random variable X0 in W such that Y- X * is\n\nnot orthogonal to X0, ie.,\\langleY- X *,X 0\\rangle /=0 We can then deduce that X* is not the\n\nminimizer.\n\nOne way to see this by completing the square. Consider\n\nY- (X * -uX 0)2\n\nas a function of u Since X* minimizes Y- X over all X\\in W , this function is\n\nminimized atu= 0 Expanding it as a polynomial in u ,we have\n\nuX0 +Y - X *2 =u 2X02 +2 u\\langleX0,Y - X *\\rangle+ Y- X *2.\n\nSince it is assumed that \\langleX0,Y - X *\\rangle /=0 ,t h e. L2 normX02 should be nonzero.\n\nWe complete the square and write the above expression as\n\nX02\n\n(\n\nu+ \\langleX0,Y - X *\\rangle\n\nX02\n\n) 2\n\n- \\langleX0,Y - X *\\rangle2\n\nX02 + Y- X *2.\n\nWe can pick the value of u such that the square in the first term is zero. Then,\n\n- \\langleX0,Y - X *\\rangle2\n\nX02 + Y- X *2\n\nis strictly less than Y- X *2. This contradicts the minimality of Y- X *2, and\n\nhence, we must have \\langleY- X *,X 0\\rangle= 0.\n\n(. ) Suppose. X is a random variable such that\n\n\\langleY- X,X \\rangle= 0 for allX \\in W. (12.2)\n\nWe want to show that X coincides with ProjW (Y) We havej u s tp r o v e di nt h e\n\nprevious paragraph that ProjW (Y)= X * satisfies\n\n\\langleY- Proj W (Y), X\\rangle= 0 for allX \\in W. (12.3)\n\nBy subtracting (12.3) from (12.2), we get\n\n\\langleProjW (Y)- X,X \\rangle= 0 for allX \\in W. (12.4)\n\nMoreover,ProjW (Y)- X is a random variable in W because both ProjW (Y) and. X\n\nare in W and W is a subspace. Hence, in (12.4), we can substitute X by. ProjW (Y)-\n\nX to getProj W (Y)- X2 =0 This proves that ProjW (Y)= X almost surely. \\hfill $\\square$\n\nIn view of the Orthogonality Principle, we can interpret the minimum mean-\n\nsquared error (MMSE) estimator geometrically as a projection operator.",
+        "dependencies": [
+            "thm_12_4",
+            "def_12_5",
+            "def_12_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter12-orthogonality-principle"
+    }
+]

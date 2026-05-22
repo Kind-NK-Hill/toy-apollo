@@ -1,0 +1,455 @@
+\subsection*{13.3 Properties of Conditional Expectation}
+
+In this section, we consider a probability space .(\Omega, \mathcal{F},P) and a sub-\sigma-field. \mathcal{G}of. \mathcal{F}.
+
+We first address the existence of conditional expectation, which follows from the
+
+Radon-Nikodym theorem.
+
+Let \mu and \nu be measures defined on the same measurable space. We say that
+
+measure \nu is absolutely continuous with respect to measure \mu if \mu(A)= 0
+
+\nu(A)= 0 This is denoted by \nu\ll \mu .
+
+For example, a continuous-type distribution is absolutely continuous with respect
+
+to the Lebesgue measure. The theorem by Radon and Nikodym provides a partial
+
+converse result. We state it below without proof.
+
+\begin{thmbox}{13.5 (Radon-Nikodym)}
+\end{thmbox}
+
+Let. \mathcal{G}be a sub-\sigma-field of. \mathcal{F}Suppose. \nu and. \mu are\sigma-finite measures such that
+
+\nu\ll \mu Then there exists a nonnegative \mathcal{G}-measurable function f such that
+
+\nu(B)=
+
+\int
+
+B fd \mu for all B\in \mathcal{G}The function f is unique in the sense that if
+
+g is another\mathcal{G}-measurable function with the same property, then g is equal to
+
+f \mu-almost everywhere.
+
+The function f is called the density or the Radon-Nikodym derivative of
+
+\nu with respect to. \mu. It is represented by the symbol d\nu
+
+d\mu .
+
+\begin{thmbox}{13.6 (Existence of Conditional Expectation)}
+\end{thmbox}
+
+If X\in L 1(P) and \mathcal{G}is a sub-\sigma-field of \mathcal{F}, then the conditional expectation
+
+E[X\vert\mathcal{G}] exists.
+
+\textit{Proof} For random variable X in L2(P) , we know that the conditional expectation
+
+of X can be obtained by the projection function.
+
+For random variable X in L1(P) , the existence of conditional expectation is a
+
+consequence of the Radon-Nikodym theorem because the measure \nu defined by
+
+\nu(B)=
+
+\int
+
+B
+
+XdP
+
+is absolutely continuous with respect to measure P We can take the Radon-
+
+Nikodym derivatived\nu/dP as the conditional expectation. \hfill $\square$
+
+Most of the random variables we encounter have finite second moment. The
+
+construction of conditional expectation using L2 theory and projection suffices for
+
+most purposes. However, when a random variable is in L1 but not in. L2, we need to
+
+use the Radon-Nikodym theorem to prove the existence. We refer readers to more
+
+advanced textbooks, such as [ 2] and [4], for further details.
+
+From now on, we will assume that conditional expectation for random variable
+
+in. L1 exists.
+
+\begin{thmbox}{13.7 (Properties of Conditional Expectation)}
+\end{thmbox}
+
+Let.(\Omega, \mathcal{F},P) denote a probability space, and let \mathcal{G}be a\sigma-subfield of. \mathcal{F}:
+
+1. If X is inL1(P) and is\mathcal{G}-measurable, thenE[X\vert\mathcal{G}]= X as. In particular ,
+
+for any constant c,E[c\vert\mathcal{G}]= c as.
+
+2. (Nonnegativity) IfX \geq 0 as., thenE[X\vert\mathcal{G}]\geq 0 as.
+
+3. (Linearity) SupposeX, Y \in L1(P) and a is a constant. We have
+
+E[X + Y\vert\mathcal{G}]= E[X\vert\mathcal{G}]+ E[Y\vert\mathcal{G}],
+
+and
+
+E[aX\vert\mathcal{G}]= aE[X\vert\mathcal{G}].
+
+4. (Monotonicity) If X and Y are in L1(P) and X \leq Y as., then E[X\vert\mathcal{G}]\leq
+
+E[Y\vert\mathcal{G}] as.
+
+5. (Conditional triangle inequality) For random variable X inL1(P) ,
+
+\vert\vert\vertE[X\vert\mathcal{G}]
+
+\vert\vert\vert \leqE
+
+[
+
+\vertX\vert\vert \mathcal{G}
+
+]
+
+\textit{Proof}
+
+(1) We verify that X is \mathcal{G}-measurable, and we can replace X by X in the defining
+
+propertyE[ X1B]= E[X1B] for allB \in\mathcal{G}The second statement in (1) follows
+
+because a constant random variable is \mathcal{G}-measurable for any \sigma-algebra. \mathcal{G}.
+
+(2) SupposeX \geq 0 almost surely, and. X is a version of E[X\vert\mathcal{G}]For integern \geq 1,
+
+take En to be the set .{ : X \leq- 1/n}, for integer n \geq 1The s e t En is
+
+\mathcal{G}-measurable because X is \mathcal{G}-measurable. Because X is nonnegative as. by
+
+assumption,
+
+\int
+
+En
+
+X=
+
+\int
+
+En
+
+X \geq 0
+
+for all n. Hence,
+
+0 \leq
+
+\int
+
+En
+
+XdP \leq
+
+\int
+
+En
+
+(
+
+- 1
+
+n
+
+)
+
+dP=- 1
+
+nP(En).
+
+This is possible only if P(En) = 0. Since P(En) = 0 for all n \geq 1, the event
+
+{ X< 0}=\cup nEn must have probability zero. This proves that X\geq 0 as.
+
+(3) For any eventB\in \mathcal{G},we have
+
+\int
+
+B
+
+X=
+
+\int
+
+B
+
+X. (13.6)
+
+\int
+
+B
+
+Y =
+
+\int
+
+B
+
+Y, (13.7)
+
+where X and Y are versions of E[X\vert\mathcal{G}] and E[Y\vert\mathcal{G}], respectively. By adding
+
+(13.6) and (13.7), we obtain
+
+\int
+
+B
+
+Z=
+
+\int
+
+B
+
+(X+ Y) =
+
+\int
+
+B
+
+( X+ Y). (13.8)
+
+Comparing with the defining property of conditional expectation for E[Z\vert\mathcal{G}],
+
+\int
+
+B
+
+Z=
+
+\int
+
+B
+
+Z,
+
+where. Z denotes a version of E[Z\vert\mathcal{G}], we see that
+
+\int
+
+B
+
+Z=
+
+\int
+
+B
+
+( X+ Y)
+
+for allB\in \mathcal{G}This proves Z= X+ Y as.
+
+Similarly, we can proveE[aX\vert\mathcal{G}]= a X as.
+
+(4) SinceY- X \geq 0 as., by the nonnegativity of conditional expectation, we have
+
+E[Y- X \vert\mathcal{G}]\geq 0 as. By linearity, we obtain E[Y\vert\mathcal{G}]- E[X\vert\mathcal{G}]\geq 0.
+
+(5) SinceX\leq\vert X\vert, by monotonic property of conditional expectation,
+
+E[X\vert\mathcal{G}]\leq E[\vert X\vert\vert \mathcal{G}]as.
+
+Similarly, from.-X\leq\vert X\vert, we derive that
+
+-E [X\vert\mathcal{G}]= E[-X\vert\mathcal{G}]\leq E[\vert X\vert\vert \mathcal{G}]as.
+
+This proves that the absolute value of the conditional expectation of X given \mathcal{G}
+
+is less than or equal to the conditional expectation of \vertX\vert given. \mathcal{G}.
+
+\hfill $\square$
+
+The properties listed in the previous theorem all have analog in ordinary
+
+expectation. The basic convergence theorems such as Fatou's lemma, monotone
+
+convergence theorem, and dominated convergence theorem also have versions for
+
+conditional expectation. However, the next three properties are unique to conditional
+
+expectation.
+
+\begin{thmbox}{13.8 (Tower Property)}
+\end{thmbox}
+
+Suppose\mathcal{F}\mathcal{G} \mathcal{H} is a tower of \sigma-algebras and X is inL1(P) Then
+
+E[X\vert\mathcal{H}]= E[E [X\vert\mathcal{G}]\vert\mathcal{H}]as.
+
+\textit{Proof} We want to show that for all B\in \mathcal{H} ,
+
+\int
+
+B
+
+E[X\vert\mathcal{H}]dP =
+
+\int
+
+B
+
+E[E [X\vert\mathcal{G}]\vert\mathcal{H}]dP. (13.9)
+
+The left-hand side is .
+
+\int
+
+B XdP The right-hand side is equal to .
+
+\int
+
+B E[X\vert\mathcal{G}]dP =\int
+
+B XdP The first equality is due to B\in \mathcal{H} The second equality follows from
+
+B\in \mathcal{G}Therefore, both sides of (13.9) are identical.
+
+Since (13.9) holds for all \mathcal{H}-measurable set B , we conclude that E[E [X\vert\mathcal{G}]\vert\mathcal{H}]
+
+is a version of the conditional expectation of X given. \mathcal{H}\hfill $\square$
+
+\begin{thmbox}{13.9}
+\end{thmbox}
+
+Suppose XY are in L1(P,\mathcal{F}), where X is a \mathcal{G}-measurable function and Y is
+
+\mathcal{F}-measurable and integrable, then
+
+E[XY\vert\mathcal{G}]= XE[Y\vert\mathcal{G}]as.
+
+In particular , when X is a function of Z , we have E[XY\vertZ]= XE[Y\vertZ] as.
+
+\textit{Proof} We first show that, for any \mathcal{G}-measurable set A ,
+
+\int
+
+B
+
+E[1AY\vert\mathcal{G}]dP =
+
+\int
+
+B
+
+1AE[Y\vert\mathcal{G}]dP B\in \mathcal{G}. (13.10)
+
+For eachB\in \mathcal{G}, the right-hand side of (13.10) equals
+
+\int
+
+1B\capAE[Y\vert\mathcal{G}]dP =
+
+\int
+
+B\capA
+
+E[Y\vert\mathcal{G}]dP =
+
+\int
+
+B\capA
+
+Yd P . ( B \cap A \in\mathcal{G}).
+
+Meanwhile, the left-hand side of (13.10) is equal to
+
+\int
+
+B
+
+1AYd P =
+
+\int
+
+1B\capAYd P =
+
+\int
+
+B\capA
+
+Yd P . ( B \cap A \in\mathcal{G}).
+
+This proves that (13.10) holds for allB\in \mathcal{G}, and hence for all \mathcal{G}-measurable simple
+
+functions. Extend (13.10) to nonnegative functions and real-valued functions. \hfill $\square$
+
+\begin{thmbox}{13.10}
+\end{thmbox}
+
+Suppose X is a random variable in .(\Omega,\mathcal{F},P) that is integrable and \mathcal{G}is a
+
+sub-\sigma-algebra of. \mathcal{F}I f\sigma(X) and. \mathcal{G}are independent, then
+
+E[X\vert\mathcal{G}]= E[X]as.
+
+In particular , when X and Y are independent random variables, we have
+
+E[X\vertY]= E[X] as.
+
+\textit{Proof} It is sufficient to show that for each B\in \mathcal{G},
+
+\int
+
+B
+
+XdP =
+
+\int
+
+B
+
+E[X]dP. (13.11)
+
+SupposeX= 1 A for some\mathcal{F}-measurable set A For any set B\in \mathcal{G}, the left-hand
+
+side of (13.11) is
+
+\int
+
+B
+
+1A dP=
+
+\int
+
+1A\capB dP= P(A \capB) = P(A)P(B).
+
+On the other hand, we can write the right-hand side of (13.11) as
+
+\int
+
+B
+
+E[1A]dP = E [1A]
+
+\int
+
+B
+
+dP= P(A)P(B).
+
+Therefore, (13.11) holds forX= 1 A and anyB\in \mathcal{G}.
+
+We can extend this to simple functions, nonnegative functions, and finally to
+
+real-valued functions. \hfill $\square$
+
+\textbf{Example 13.3.1 (Iterated Expectation)} \\
+
+For any random variables X and Y , apply Theorem 13.8 with \mathcal{H}={ \emptyset ,\Omega} and \mathcal{G}= \sigma(Y) S i n c e
+
+E[Z\vert\mathcal{H}] is a constant and is equal toE[Z] for any random variable Z ,we getE[E[X\vertY]] =E [X].

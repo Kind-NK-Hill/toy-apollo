@@ -1,0 +1,79 @@
+[
+    {
+        "block_id": "intro_12_2",
+        "type": "Remark",
+        "title": "Closed Subspace and Projection",
+        "content": "\\subsection*{12.2 Closed Subspace and Projection}\n\nWe define the notion of closed subspace below.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter12-closed-subspace-projection"
+    },
+    {
+        "block_id": "def_12_4",
+        "type": "Definition",
+        "title": "12.4",
+        "content": "\\begin{defbox}{12.4}\n\\end{defbox}\n\nA subset W ofL2(P) is said to be:\n\nA subspace ifX, Y \\in W implies\\alphaX + \\betaY \\in W for all scalars \\alpha and. \\beta\n\nClosed ifXn \\in W ,f o rn = 1, 2, 3,... , andXn\n\nL2\n\n-\\to X, then. X \\in W\n\nIn any finite-dimensional vector space, such as Rn, any subspace is closed. The\n\nassumption of closedness is important when we are dealing with vector space with\n\ninfinite dimension.",
+        "dependencies": [
+            "def_12_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter12-closed-subspace-projection"
+    },
+    {
+        "block_id": "ex_12_2_1",
+        "type": "Example_Proof",
+        "title": "Example 12.2.1 (An Example of Subspace that Is Not Closed)",
+        "content": "\\textbf{Example 12.2.1 (An Example of Subspace that Is Not Closed)} \\\\\n\nIn Example 12.1.2,w el e t W denote the subset of infinite sequences .(x1,x 2,x 3,... ) in which only\n\nfinitely many components are nonzero. This is a vector space because it is closed under addition\n\nand scalar multiplication.\n\nHowever, this subspace is not closed because\n\nXk \\coloneqq(1, 1, 1,..., 1,\n\nk ones\n\n0, 0, 0,...,)\n\nconverges to an infinite sequence that contains infinitely many 1's, as k \\to\\infty , which is not in the\n\nsubspace.",
+        "dependencies": [
+            "ex_12_1_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter12-closed-subspace-projection"
+    },
+    {
+        "block_id": "ex_12_2_2",
+        "type": "Example_Proof",
+        "title": "Example 12.2.2 (Simple Random Variables Associated with a Fixed Partition of the",
+        "content": "\\textbf{Example 12.2.2 (Simple Random Variables Associated with a Fixed Partition of the} \\\\\n\nSample Space)\n\nLet .(\\Omega, \\mathcal{F},P) be a probability space and let A1, A2,...,A d be a partition of the sample space\n\n\\Omega Let W denote the set consisting of random variables that are constant on each Ak ,f o r k =\n\n1, 2,...,d It is clear that W is a linear subspace of L2(P) .\n\nTo show that W is closed, consider a Cauchy sequence .(Xn)\\infty\n\nn=1 in W For each index\n\nk = 1, 2,...,d , we can write Xn()1Ak () = cnk 1Ak () for some constant cnk The sequence\n\n(cnk)\\infty\n\nn=1 is a Cauchy sequence of real numbers and thus is converging to some constant, say k ,a s\n\nn \\to\\infty .\n\nDefine a random variable X in W by.\n\n\\sumd\n\nk=1 k 1Ak S i n c eXk \\to X inL2(P) , we see that W is\n\na closed subspace.",
+        "dependencies": [
+            "def_12_4"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter12-closed-subspace-projection"
+    },
+    {
+        "block_id": "thm_12_4",
+        "type": "Theorem_with_Proof",
+        "title": "12.4 (Projection Theorem)",
+        "content": "\\begin{thmbox}{12.4 (Projection Theorem)}\n\\end{thmbox}\n\nGiven a closed subspace W \\subseteq L2(P) and a random variable Y \\in L2(P) ,\n\nthere exists a unique random variable X* \\in W such that\n\nY - X*2 = inf\n\nX\\inW\n\nY - X2.\n\nThis theorem says that we can always find a point in W whose distance to Y is\n\nthe smallest among all other points in W .\n\n\\textit{Proof} (Existence) Suppose infX\\inW Y- X= \\alpha. Since. \\alpha is the largest lower bound\n\nof .{Y- X : X\\in W } , we can find a sequence .(\\alphan)\\infty\n\nn=1 such that \\alphan \\alpha , such\n\nthat for each n , \\alphan is the L2 distance between Y and Xn for some random variable\n\nXn in the subspace W We claim that the sequence of random variables .(Xn)\\infty\n\nn=1 is\n\na Cauchy sequence.\n\nTo prove this claim, we make use of the parallelogram law (Exercise 12.1), which\n\nsays that for any two random variables U and V in L2(P) ,\n\nU+ V 2 + U- V 2 =2 U2 +2 V2.\n\nSuppose m and n are two positive integers. In the parallelogram law, substitute U by\n\nY- Xm and V by Y- XnWe haveU+ V= 2 Y- Xm -Xn andU- V= X n -Xm.\n\nThe parallelogram law gives\n\n2Y- X m -X n2 + Xn -X m2 =2 Y- X m2 +2 Y- X n2.\n\nArrange the terms to get\n\nXn -X m2 =2 Y- X m2 +2 Y- X n2 - 4 Y- (X n +X m)/22.\n\nIn the last term, .(Xn +X m)/2 is the \"mid-point\" between Xn and. Xm and is thus a\n\nrandom variable in W (because W is a subspace)The distance Y- (Xn +Xm)/2\n\ncannot be less than \\alpha by the definition of infimum. Therefore,\n\nXn -X m2 \\leq2 \\alpha2\n\nm +2 \\alpha2\n\nn - 4 \\alpha2.\n\nGiven any \\epsilon> 0, we choose a positive integer N such that the right-hand side of\n\nthe above inequality is less than \\epsilon for all m, n\\geq N This is possible because the\n\nsequence .(\\alphak)\\infty\n\nk=1 is converging to \\alpha. This completes the proof of the claim that\n\n(Xn)\\infty\n\nn=1 is a Cauchy sequence (with respect to the L2 norm).\n\nBy the completeness of L2 norm (Theorem 12.3), the sequence . (Xn)\\infty\n\nn=1\n\nconverges to a random variable. X* inL2(P) That is, there exists a random variable\n\nX* \\inL 2(P) such that Xn converges to X* in mean square. Since W is closed, this\n\nrandom variable. X* must be in W .\n\nFinally, we can conclude that\n\n\\alpha= inf\n\nX\\inW\n\nY- X = limn\\to\\infty Y- X n= Y- X *.\n\nThe last step is due to the continuity of the L2 norm. This proves the existence part.\n\n(Uniqueness) Suppose there are two random variables X*\n\n1 and. X*\n\n2 in W such that\n\nY - X*\n\n1= Y - X*\n\n2= inf\n\nX\\inW\n\nY - X\\coloneqq\\alpha.\n\nWe can apply the parallelogram law with U = Y - X*\n\n1 andV = Y - X*\n\n2 to obtain\n\nX*\n\n1 - X*\n\n22 \\leq 2Y - X*\n\n12 + 2Y - X*\n\n22 - 4\\alpha2 = 2\\alpha2 + 2\\alpha2 - 4\\alpha2 = 0.\n\nTherefore,X*\n\n1 - X*\n\n2= 0. It can be true only when X*\n\n1 and. X*\n\n2 are equal as. \\hfill $\\square$\n\nThe infimum in Theorem 12.4 can indeed be achieved. The random variable. X* \\in\n\nW satisfiesY - X*2 = minX\\inW Y - X2. In view of the previous theorem, we\n\nmake the following definition.",
+        "dependencies": [
+            "thm_12_3",
+            "prob_12_1"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter12-closed-subspace-projection"
+    },
+    {
+        "block_id": "def_12_5",
+        "type": "Definition",
+        "title": "12.5",
+        "content": "\\begin{defbox}{12.5}\n\\end{defbox}\n\n(Projection function) Given a closed subspace W inL2(P) and a random variable\n\nY \\in L2(P) , the unique random variable X that minimizes Y - X2 is called\n\nthe projection of Y onto W We denote this minimizer as\n\nProjW (Y) \\coloneqqarg min\n\nX\\inW\n\nY - X2.\n\nMany estimation problems can be formulated as projection onto a closed\n\nsubspace. The basic linear regression is an example.",
+        "dependencies": [
+            "thm_12_4"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter12-closed-subspace-projection"
+    },
+    {
+        "block_id": "ex_12_2_3",
+        "type": "Example_Proof",
+        "title": "Example 12.2.3 (Linear Regression as Projection)",
+        "content": "\\textbf{Example 12.2.3 (Linear Regression as Projection)} \\\\\n\nGiven n data points .(xi,yi),f o r i = 1, 2,...,n , the problem of linear regression is to find\n\ncoefficients a and b that minimize the mean-squared error .\n\n\\sumn\n\ni=1(yi - axi - b)2T of o r m u l a t e\n\nthis problem as a projection, we can consider a finite sample space \\Omega ={ 1, 2,...,n } equipped\n\nwith the discrete\\sigma-field and the uniform distribution P The data are represented by two functions\n\nX, Y : \\Omega \\to R,d e fi n e db yX(i) = xi andY(i) = yi ,f o ri = 1, 2,...,n Let I denote the all-one\n\nfunction on. \\Omega .\n\nThe mean square error can be expressed as\n\nnE[(Y - aX - bI) 2]= nY - aX - bI2\n\n2.\n\nDefine a subspace of L2(P) by\n\nW ={ aX + bI : a \\inR,b \\inR}.\n\nThis subspace is closed because it has finite dimension. We can interpret the optimal choice of a\n\nand b as the projection of the random variable Y onto the closed subspace W .",
+        "dependencies": [
+            "def_12_4",
+            "def_12_5"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter12-closed-subspace-projection"
+    }
+]

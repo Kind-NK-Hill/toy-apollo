@@ -23,13 +23,14 @@ OBLIGATION_KINDS = {
     "assembly",
     "scaffold_elimination",
     "dependency",
+    "external_theorem_gap",
     "review_blocker",
 }
-OBLIGATION_STATUSES = {"open", "in_progress", "proved", "partial", "blocked", "obsolete"}
+OBLIGATION_STATUSES = {"open", "in_progress", "proved", "partial", "blocked", "obsolete", "accepted_as_proof_debt"}
 OBLIGATION_REVIEW_STATUSES = {"unreviewed", "accepted", "rejected", "needs_review"}
-REVIEW_ITEM_STATUSES = {"covered", "partial", "missing", "violated", "unclear", "not_applicable"}
-PASSING_REVIEW_ITEM_STATUSES = {"covered", "not_applicable"}
-PASSING_OBLIGATION_STATUSES = {"proved", "obsolete"}
+REVIEW_ITEM_STATUSES = {"covered", "partial", "missing", "violated", "unclear", "not_applicable", "accepted_as_proof_debt"}
+PASSING_REVIEW_ITEM_STATUSES = {"covered", "not_applicable", "accepted_as_proof_debt"}
+PASSING_OBLIGATION_STATUSES = {"proved", "obsolete", "accepted_as_proof_debt"}
 SCAFFOLD_CATEGORIES = {
     "interface_translation",
     "proof_debt_support",
@@ -187,6 +188,13 @@ def summarize_proof_obligations(payload: dict[str, Any]) -> dict[str, Any]:
     obligations = payload.get("obligations", []) if isinstance(payload.get("obligations", []), list) else []
     status_counts = Counter(str(item.get("status", "open") or "open") for item in obligations if isinstance(item, dict))
     review_counts = Counter(str(item.get("review_status", "unreviewed") or "unreviewed") for item in obligations if isinstance(item, dict))
+    alignment_counts = Counter(
+        str(item.get("source_output_alignment", {}).get("audit_class", "") or "unclassified")
+        for item in obligations
+        if isinstance(item, dict)
+        and str(item.get("status", "") or "").strip().lower() == "accepted_as_proof_debt"
+        and isinstance(item.get("source_output_alignment", {}), dict)
+    )
     open_blocking_ids = [
         str(item.get("id", "") or "")
         for item in obligations
@@ -204,6 +212,7 @@ def summarize_proof_obligations(payload: dict[str, Any]) -> dict[str, Any]:
         "total_obligations": len(obligations),
         "status_counts": dict(status_counts),
         "review_status_counts": dict(review_counts),
+        "source_output_alignment_counts": dict(alignment_counts),
         "open_blocking_ids": open_blocking_ids,
         "scaffold_hypothesis_count": len(scaffolds),
         "placeholder_obligation_ids": placeholder_ids,
@@ -286,6 +295,32 @@ def render_proof_obligations_markdown(payload: dict[str, Any], *, path: Path | N
                 lines.append(f"  - Source ref: {source_ref}")
             lines.append(f"  - Depends on: `{', '.join(str(dep) for dep in deps) if deps else '(none)'}`")
             lines.append(f"  - Lean landing: `{lean_landing or '(not assigned)'}`")
+            alignment = item.get("source_output_alignment", {})
+            if isinstance(alignment, dict) and alignment:
+                audit_class = str(alignment.get("audit_class", "") or "unclassified")
+                family = str(alignment.get("family", "") or "unclassified")
+                next_action = str(alignment.get("next_action", "") or "").strip()
+                existing = alignment.get("existing_local_declarations", [])
+                missing = alignment.get("missing_landing_names", [])
+                lines.append(f"  - Source-output alignment: `{audit_class}` / `{family}`")
+                if isinstance(existing, list) and existing:
+                    decls = []
+                    for decl in existing:
+                        if not isinstance(decl, dict):
+                            continue
+                        name = str(decl.get("name", "") or "")
+                        kind = str(decl.get("kind", "") or "")
+                        file = str(decl.get("file", "") or "")
+                        line = str(decl.get("line", "") or "")
+                        if name:
+                            location = f"{file}:{line}" if file and line else file
+                            decls.append(f"{name} ({kind}{', ' + location if location else ''})")
+                    if decls:
+                        lines.append(f"  - Existing local declarations: `{'; '.join(decls)}`")
+                if isinstance(missing, list) and missing:
+                    lines.append(f"  - Missing landing names: `{', '.join(str(name) for name in missing)}`")
+                if next_action:
+                    lines.append(f"  - Alignment next action: {next_action}")
     scaffolds = payload.get("scaffold_hypotheses", []) if isinstance(payload.get("scaffold_hypotheses", []), list) else []
     lines.extend(["", "### Scaffold Hypotheses"])
     if not scaffolds:
@@ -315,7 +350,7 @@ def validate_obligation_review_shape(result: dict[str, Any]) -> str:
             return "reviewer field obligation_review.items entries must be objects"
         item_status = str(item.get("status", "") or "").strip().lower()
         if item_status not in REVIEW_ITEM_STATUSES:
-            return "reviewer field obligation_review.items status must be covered/partial/missing/violated/unclear/not_applicable"
+            return "reviewer field obligation_review.items status must be covered/partial/missing/violated/unclear/not_applicable/accepted_as_proof_debt"
     return ""
 
 
@@ -334,14 +369,30 @@ def validate_obligation_review_for_pass(review_input: dict[str, Any], result: di
     if needs_concrete_decomposition(payload):
         return "invalid reviewer output: complex tasks require concrete proof_obligations.json nodes before semantic pass"
     obligations = payload.get("obligations", []) if isinstance(payload.get("obligations", []), list) else []
-    required_ids = [
-        str(item.get("id", "") or "")
-        for item in obligations
-        if isinstance(item, dict)
-        and str(item.get("id", "") or "")
-        and bool(item.get("blocking", True))
-        and str(item.get("status", "open") or "open") not in PASSING_OBLIGATION_STATUSES
-    ]
+    focus_ids = [
+        str(item).strip()
+        for item in review_basis.get("focus_obligation_ids", [])
+        if str(item).strip()
+    ] if isinstance(review_basis.get("focus_obligation_ids", []), list) else []
+    if focus_ids:
+        focus_set = set(focus_ids)
+        required_ids = [
+            str(item.get("id", "") or "")
+            for item in obligations
+            if isinstance(item, dict)
+            and str(item.get("id", "") or "") in focus_set
+            and bool(item.get("blocking", True))
+            and str(item.get("status", "open") or "open") not in {"proved", "obsolete"}
+        ]
+    else:
+        required_ids = [
+            str(item.get("id", "") or "")
+            for item in obligations
+            if isinstance(item, dict)
+            and str(item.get("id", "") or "")
+            and bool(item.get("blocking", True))
+            and str(item.get("status", "open") or "open") not in PASSING_OBLIGATION_STATUSES
+        ]
     if not required_ids:
         return ""
     item_statuses: dict[str, str] = {}
@@ -389,7 +440,10 @@ def extract_obligation_review_blockers(review_result: dict[str, Any]) -> list[di
 
 
 def apply_obligation_review(pack_dir: Path, review_result: dict[str, Any]) -> dict[str, Any]:
-    path = proof_obligation_path(pack_dir)
+    return apply_obligation_review_to_file(proof_obligation_path(pack_dir), review_result)
+
+
+def apply_obligation_review_to_file(path: Path, review_result: dict[str, Any]) -> dict[str, Any]:
     if not path.exists():
         return {}
     payload = read_json_safely(path, {})
@@ -420,6 +474,12 @@ def apply_obligation_review(pack_dir: Path, review_result: dict[str, Any]) -> di
             for scaffold in target.get("scaffold_hypotheses", []):
                 if isinstance(scaffold, dict):
                     scaffold["status"] = "discharged"
+        elif status == "accepted_as_proof_debt":
+            target["review_status"] = "accepted"
+            target["status"] = "accepted_as_proof_debt"
+            for scaffold in target.get("scaffold_hypotheses", []):
+                if isinstance(scaffold, dict):
+                    scaffold["status"] = "accepted_as_proof_debt"
         elif status in {"partial", "missing", "violated", "unclear"}:
             target["review_status"] = "rejected" if status in {"missing", "violated"} else "needs_review"
             target["status"] = "blocked" if status in {"missing", "violated"} else "partial"

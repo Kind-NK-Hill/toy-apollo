@@ -1,0 +1,264 @@
+\subsection*{12.2 Closed Subspace and Projection}
+
+We define the notion of closed subspace below.
+
+\begin{defbox}{12.4}
+\end{defbox}
+
+A subset W ofL2(P) is said to be:
+
+A subspace ifX, Y \in W implies\alphaX + \betaY \in W for all scalars \alpha and. \beta
+
+Closed ifXn \in W ,f o rn = 1, 2, 3,... , andXn
+
+L2
+
+-\to X, then. X \in W
+
+In any finite-dimensional vector space, such as Rn, any subspace is closed. The
+
+assumption of closedness is important when we are dealing with vector space with
+
+infinite dimension.
+
+\textbf{Example 12.2.1 (An Example of Subspace that Is Not Closed)} \\
+
+In Example 12.1.2,w el e t W denote the subset of infinite sequences .(x1,x 2,x 3,... ) in which only
+
+finitely many components are nonzero. This is a vector space because it is closed under addition
+
+and scalar multiplication.
+
+However, this subspace is not closed because
+
+Xk \coloneqq(1, 1, 1,..., 1,
+
+k ones
+
+0, 0, 0,...,)
+
+converges to an infinite sequence that contains infinitely many 1's, as k \to\infty , which is not in the
+
+subspace.
+
+\textbf{Example 12.2.2 (Simple Random Variables Associated with a Fixed Partition of the} \\
+
+Sample Space)
+
+Let .(\Omega, \mathcal{F},P) be a probability space and let A1, A2,...,A d be a partition of the sample space
+
+\Omega Let W denote the set consisting of random variables that are constant on each Ak ,f o r k =
+
+1, 2,...,d It is clear that W is a linear subspace of L2(P) .
+
+To show that W is closed, consider a Cauchy sequence .(Xn)\infty
+
+n=1 in W For each index
+
+k = 1, 2,...,d , we can write Xn()1Ak () = cnk 1Ak () for some constant cnk The sequence
+
+(cnk)\infty
+
+n=1 is a Cauchy sequence of real numbers and thus is converging to some constant, say k ,a s
+
+n \to\infty .
+
+Define a random variable X in W by.
+
+\sumd
+
+k=1 k 1Ak S i n c eXk \to X inL2(P) , we see that W is
+
+a closed subspace.
+
+\begin{thmbox}{12.4 (Projection Theorem)}
+\end{thmbox}
+
+Given a closed subspace W \subseteq L2(P) and a random variable Y \in L2(P) ,
+
+there exists a unique random variable X* \in W such that
+
+Y - X*2 = inf
+
+X\inW
+
+Y - X2.
+
+This theorem says that we can always find a point in W whose distance to Y is
+
+the smallest among all other points in W .
+
+\textit{Proof} (Existence) Suppose infX\inW Y- X= \alpha. Since. \alpha is the largest lower bound
+
+of .{Y- X : X\in W } , we can find a sequence .(\alphan)\infty
+
+n=1 such that \alphan \alpha , such
+
+that for each n , \alphan is the L2 distance between Y and Xn for some random variable
+
+Xn in the subspace W We claim that the sequence of random variables .(Xn)\infty
+
+n=1 is
+
+a Cauchy sequence.
+
+To prove this claim, we make use of the parallelogram law (Exercise 12.1), which
+
+says that for any two random variables U and V in L2(P) ,
+
+U+ V 2 + U- V 2 =2 U2 +2 V2.
+
+Suppose m and n are two positive integers. In the parallelogram law, substitute U by
+
+Y- Xm and V by Y- XnWe haveU+ V= 2 Y- Xm -Xn andU- V= X n -Xm.
+
+The parallelogram law gives
+
+2Y- X m -X n2 + Xn -X m2 =2 Y- X m2 +2 Y- X n2.
+
+Arrange the terms to get
+
+Xn -X m2 =2 Y- X m2 +2 Y- X n2 - 4 Y- (X n +X m)/22.
+
+In the last term, .(Xn +X m)/2 is the "mid-point" between Xn and. Xm and is thus a
+
+random variable in W (because W is a subspace)The distance Y- (Xn +Xm)/2
+
+cannot be less than \alpha by the definition of infimum. Therefore,
+
+Xn -X m2 \leq2 \alpha2
+
+m +2 \alpha2
+
+n - 4 \alpha2.
+
+Given any \epsilon> 0, we choose a positive integer N such that the right-hand side of
+
+the above inequality is less than \epsilon for all m, n\geq N This is possible because the
+
+sequence .(\alphak)\infty
+
+k=1 is converging to \alpha. This completes the proof of the claim that
+
+(Xn)\infty
+
+n=1 is a Cauchy sequence (with respect to the L2 norm).
+
+By the completeness of L2 norm (Theorem 12.3), the sequence . (Xn)\infty
+
+n=1
+
+converges to a random variable. X* inL2(P) That is, there exists a random variable
+
+X* \inL 2(P) such that Xn converges to X* in mean square. Since W is closed, this
+
+random variable. X* must be in W .
+
+Finally, we can conclude that
+
+\alpha= inf
+
+X\inW
+
+Y- X = limn\to\infty Y- X n= Y- X *.
+
+The last step is due to the continuity of the L2 norm. This proves the existence part.
+
+(Uniqueness) Suppose there are two random variables X*
+
+1 and. X*
+
+2 in W such that
+
+Y - X*
+
+1= Y - X*
+
+2= inf
+
+X\inW
+
+Y - X\coloneqq\alpha.
+
+We can apply the parallelogram law with U = Y - X*
+
+1 andV = Y - X*
+
+2 to obtain
+
+X*
+
+1 - X*
+
+22 \leq 2Y - X*
+
+12 + 2Y - X*
+
+22 - 4\alpha2 = 2\alpha2 + 2\alpha2 - 4\alpha2 = 0.
+
+Therefore,X*
+
+1 - X*
+
+2= 0. It can be true only when X*
+
+1 and. X*
+
+2 are equal as. \hfill $\square$
+
+The infimum in Theorem 12.4 can indeed be achieved. The random variable. X* \in
+
+W satisfiesY - X*2 = minX\inW Y - X2. In view of the previous theorem, we
+
+make the following definition.
+
+\begin{defbox}{12.5}
+\end{defbox}
+
+(Projection function) Given a closed subspace W inL2(P) and a random variable
+
+Y \in L2(P) , the unique random variable X that minimizes Y - X2 is called
+
+the projection of Y onto W We denote this minimizer as
+
+ProjW (Y) \coloneqqarg min
+
+X\inW
+
+Y - X2.
+
+Many estimation problems can be formulated as projection onto a closed
+
+subspace. The basic linear regression is an example.
+
+\textbf{Example 12.2.3 (Linear Regression as Projection)} \\
+
+Given n data points .(xi,yi),f o r i = 1, 2,...,n , the problem of linear regression is to find
+
+coefficients a and b that minimize the mean-squared error .
+
+\sumn
+
+i=1(yi - axi - b)2T of o r m u l a t e
+
+this problem as a projection, we can consider a finite sample space \Omega ={ 1, 2,...,n } equipped
+
+with the discrete\sigma-field and the uniform distribution P The data are represented by two functions
+
+X, Y : \Omega \to R,d e fi n e db yX(i) = xi andY(i) = yi ,f o ri = 1, 2,...,n Let I denote the all-one
+
+function on. \Omega .
+
+The mean square error can be expressed as
+
+nE[(Y - aX - bI) 2]= nY - aX - bI2
+
+2.
+
+Define a subspace of L2(P) by
+
+W ={ aX + bI : a \inR,b \inR}.
+
+This subspace is closed because it has finite dimension. We can interpret the optimal choice of a
+
+and b as the projection of the random variable Y onto the closed subspace W .

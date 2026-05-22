@@ -1,0 +1,101 @@
+[
+    {
+        "block_id": "intro_13_3",
+        "type": "Remark",
+        "title": "Properties of Conditional Expectation",
+        "content": "\\subsection*{13.3 Properties of Conditional Expectation}\n\nIn this section, we consider a probability space .(\\Omega, \\mathcal{F},P) and a sub-\\sigma-field. \\mathcal{G}of. \\mathcal{F}.\n\nWe first address the existence of conditional expectation, which follows from the\n\nRadon-Nikodym theorem.\n\nLet \\mu and \\nu be measures defined on the same measurable space. We say that\n\nmeasure \\nu is absolutely continuous with respect to measure \\mu if \\mu(A)= 0\n\n\\nu(A)= 0 This is denoted by \\nu\\ll \\mu .\n\nFor example, a continuous-type distribution is absolutely continuous with respect\n\nto the Lebesgue measure. The theorem by Radon and Nikodym provides a partial\n\nconverse result. We state it below without proof.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter13-properties"
+    },
+    {
+        "block_id": "thm_13_5",
+        "type": "Theorem_Statement",
+        "title": "13.5 (Radon-Nikodym)",
+        "content": "\\begin{thmbox}{13.5 (Radon-Nikodym)}\n\\end{thmbox}\n\nLet. \\mathcal{G}be a sub-\\sigma-field of. \\mathcal{F}Suppose. \\nu and. \\mu are\\sigma-finite measures such that\n\n\\nu\\ll \\mu Then there exists a nonnegative \\mathcal{G}-measurable function f such that\n\n\\nu(B)=\n\n\\int\n\nB fd \\mu for all B\\in \\mathcal{G}The function f is unique in the sense that if\n\ng is another\\mathcal{G}-measurable function with the same property, then g is equal to\n\nf \\mu-almost everywhere.\n\nThe function f is called the density or the Radon-Nikodym derivative of\n\n\\nu with respect to. \\mu. It is represented by the symbol d\\nu\n\nd\\mu .",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter13-properties"
+    },
+    {
+        "block_id": "thm_13_6",
+        "type": "Theorem_with_Proof",
+        "title": "13.6 (Existence of Conditional Expectation)",
+        "content": "\\begin{thmbox}{13.6 (Existence of Conditional Expectation)}\n\\end{thmbox}\n\nIf X\\in L 1(P) and \\mathcal{G}is a sub-\\sigma-field of \\mathcal{F}, then the conditional expectation\n\nE[X\\vert\\mathcal{G}] exists.\n\n\\textit{Proof} For random variable X in L2(P) , we know that the conditional expectation\n\nof X can be obtained by the projection function.\n\nFor random variable X in L1(P) , the existence of conditional expectation is a\n\nconsequence of the Radon-Nikodym theorem because the measure \\nu defined by\n\n\\nu(B)=\n\n\\int\n\nB\n\nXdP\n\nis absolutely continuous with respect to measure P We can take the Radon-\n\nNikodym derivatived\\nu/dP as the conditional expectation. \\hfill $\\square$\n\nMost of the random variables we encounter have finite second moment. The\n\nconstruction of conditional expectation using L2 theory and projection suffices for\n\nmost purposes. However, when a random variable is in L1 but not in. L2, we need to\n\nuse the Radon-Nikodym theorem to prove the existence. We refer readers to more\n\nadvanced textbooks, such as [ 2] and [4], for further details.\n\nFrom now on, we will assume that conditional expectation for random variable\n\nin. L1 exists.",
+        "dependencies": [
+            "def_13_3",
+            "thm_13_5"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter13-properties"
+    },
+    {
+        "block_id": "thm_13_7",
+        "type": "Theorem_with_Proof",
+        "title": "13.7 (Properties of Conditional Expectation)",
+        "content": "\\begin{thmbox}{13.7 (Properties of Conditional Expectation)}\n\\end{thmbox}\n\nLet.(\\Omega, \\mathcal{F},P) denote a probability space, and let \\mathcal{G}be a\\sigma-subfield of. \\mathcal{F}:\n\n1. If X is inL1(P) and is\\mathcal{G}-measurable, thenE[X\\vert\\mathcal{G}]= X as. In particular ,\n\nfor any constant c,E[c\\vert\\mathcal{G}]= c as.\n\n2. (Nonnegativity) IfX \\geq 0 as., thenE[X\\vert\\mathcal{G}]\\geq 0 as.\n\n3. (Linearity) SupposeX, Y \\in L1(P) and a is a constant. We have\n\nE[X + Y\\vert\\mathcal{G}]= E[X\\vert\\mathcal{G}]+ E[Y\\vert\\mathcal{G}],\n\nand\n\nE[aX\\vert\\mathcal{G}]= aE[X\\vert\\mathcal{G}].\n\n4. (Monotonicity) If X and Y are in L1(P) and X \\leq Y as., then E[X\\vert\\mathcal{G}]\\leq\n\nE[Y\\vert\\mathcal{G}] as.\n\n5. (Conditional triangle inequality) For random variable X inL1(P) ,\n\n\\vert\\vert\\vertE[X\\vert\\mathcal{G}]\n\n\\vert\\vert\\vert \\leqE\n\n[\n\n\\vertX\\vert\\vert \\mathcal{G}\n\n]\n\n\\textit{Proof}\n\n(1) We verify that X is \\mathcal{G}-measurable, and we can replace X by X in the defining\n\npropertyE[ X1B]= E[X1B] for allB \\in\\mathcal{G}The second statement in (1) follows\n\nbecause a constant random variable is \\mathcal{G}-measurable for any \\sigma-algebra. \\mathcal{G}.\n\n(2) SupposeX \\geq 0 almost surely, and. X is a version of E[X\\vert\\mathcal{G}]For integern \\geq 1,\n\ntake En to be the set .{ : X \\leq- 1/n}, for integer n \\geq 1The s e t En is\n\n\\mathcal{G}-measurable because X is \\mathcal{G}-measurable. Because X is nonnegative as. by\n\nassumption,\n\n\\int\n\nEn\n\nX=\n\n\\int\n\nEn\n\nX \\geq 0\n\nfor all n. Hence,\n\n0 \\leq\n\n\\int\n\nEn\n\nXdP \\leq\n\n\\int\n\nEn\n\n(\n\n- 1\n\nn\n\n)\n\ndP=- 1\n\nnP(En).\n\nThis is possible only if P(En) = 0. Since P(En) = 0 for all n \\geq 1, the event\n\n{ X< 0}=\\cup nEn must have probability zero. This proves that X\\geq 0 as.\n\n(3) For any eventB\\in \\mathcal{G},we have\n\n\\int\n\nB\n\nX=\n\n\\int\n\nB\n\nX. (13.6)\n\n\\int\n\nB\n\nY =\n\n\\int\n\nB\n\nY, (13.7)\n\nwhere X and Y are versions of E[X\\vert\\mathcal{G}] and E[Y\\vert\\mathcal{G}], respectively. By adding\n\n(13.6) and (13.7), we obtain\n\n\\int\n\nB\n\nZ=\n\n\\int\n\nB\n\n(X+ Y) =\n\n\\int\n\nB\n\n( X+ Y). (13.8)\n\nComparing with the defining property of conditional expectation for E[Z\\vert\\mathcal{G}],\n\n\\int\n\nB\n\nZ=\n\n\\int\n\nB\n\nZ,\n\nwhere. Z denotes a version of E[Z\\vert\\mathcal{G}], we see that\n\n\\int\n\nB\n\nZ=\n\n\\int\n\nB\n\n( X+ Y)\n\nfor allB\\in \\mathcal{G}This proves Z= X+ Y as.\n\nSimilarly, we can proveE[aX\\vert\\mathcal{G}]= a X as.\n\n(4) SinceY- X \\geq 0 as., by the nonnegativity of conditional expectation, we have\n\nE[Y- X \\vert\\mathcal{G}]\\geq 0 as. By linearity, we obtain E[Y\\vert\\mathcal{G}]- E[X\\vert\\mathcal{G}]\\geq 0.\n\n(5) SinceX\\leq\\vert X\\vert, by monotonic property of conditional expectation,\n\nE[X\\vert\\mathcal{G}]\\leq E[\\vert X\\vert\\vert \\mathcal{G}]as.\n\nSimilarly, from.-X\\leq\\vert X\\vert, we derive that\n\n-E [X\\vert\\mathcal{G}]= E[-X\\vert\\mathcal{G}]\\leq E[\\vert X\\vert\\vert \\mathcal{G}]as.\n\nThis proves that the absolute value of the conditional expectation of X given \\mathcal{G}\n\nis less than or equal to the conditional expectation of \\vertX\\vert given. \\mathcal{G}.\n\n\\hfill $\\square$\n\nThe properties listed in the previous theorem all have analog in ordinary\n\nexpectation. The basic convergence theorems such as Fatou's lemma, monotone\n\nconvergence theorem, and dominated convergence theorem also have versions for\n\nconditional expectation. However, the next three properties are unique to conditional\n\nexpectation.",
+        "dependencies": [
+            "def_13_3",
+            "thm_13_4",
+            "thm_13_6"
+        ],
+        "is_renowned": true,
+        "source_plan": "chapter13-properties"
+    },
+    {
+        "block_id": "thm_13_8",
+        "type": "Theorem_with_Proof",
+        "title": "13.8 (Tower Property)",
+        "content": "\\begin{thmbox}{13.8 (Tower Property)}\n\\end{thmbox}\n\nSuppose\\mathcal{F}\\mathcal{G} \\mathcal{H} is a tower of \\sigma-algebras and X is inL1(P) Then\n\nE[X\\vert\\mathcal{H}]= E[E [X\\vert\\mathcal{G}]\\vert\\mathcal{H}]as.\n\n\\textit{Proof} We want to show that for all B\\in \\mathcal{H} ,\n\n\\int\n\nB\n\nE[X\\vert\\mathcal{H}]dP =\n\n\\int\n\nB\n\nE[E [X\\vert\\mathcal{G}]\\vert\\mathcal{H}]dP. (13.9)\n\nThe left-hand side is .\n\n\\int\n\nB XdP The right-hand side is equal to .\n\n\\int\n\nB E[X\\vert\\mathcal{G}]dP =\\int\n\nB XdP The first equality is due to B\\in \\mathcal{H} The second equality follows from\n\nB\\in \\mathcal{G}Therefore, both sides of (13.9) are identical.\n\nSince (13.9) holds for all \\mathcal{H}-measurable set B , we conclude that E[E [X\\vert\\mathcal{G}]\\vert\\mathcal{H}]\n\nis a version of the conditional expectation of X given. \\mathcal{H}\\hfill $\\square$",
+        "dependencies": [
+            "def_13_3",
+            "thm_13_4",
+            "thm_13_6"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter13-properties"
+    },
+    {
+        "block_id": "thm_13_9",
+        "type": "Theorem_with_Proof",
+        "title": "13.9",
+        "content": "\\begin{thmbox}{13.9}\n\\end{thmbox}\n\nSuppose XY are in L1(P,\\mathcal{F}), where X is a \\mathcal{G}-measurable function and Y is\n\n\\mathcal{F}-measurable and integrable, then\n\nE[XY\\vert\\mathcal{G}]= XE[Y\\vert\\mathcal{G}]as.\n\nIn particular , when X is a function of Z , we have E[XY\\vertZ]= XE[Y\\vertZ] as.\n\n\\textit{Proof} We first show that, for any \\mathcal{G}-measurable set A ,\n\n\\int\n\nB\n\nE[1AY\\vert\\mathcal{G}]dP =\n\n\\int\n\nB\n\n1AE[Y\\vert\\mathcal{G}]dP B\\in \\mathcal{G}. (13.10)\n\nFor eachB\\in \\mathcal{G}, the right-hand side of (13.10) equals\n\n\\int\n\n1B\\capAE[Y\\vert\\mathcal{G}]dP =\n\n\\int\n\nB\\capA\n\nE[Y\\vert\\mathcal{G}]dP =\n\n\\int\n\nB\\capA\n\nYd P . ( B \\cap A \\in\\mathcal{G}).\n\nMeanwhile, the left-hand side of (13.10) is equal to\n\n\\int\n\nB\n\n1AYd P =\n\n\\int\n\n1B\\capAYd P =\n\n\\int\n\nB\\capA\n\nYd P . ( B \\cap A \\in\\mathcal{G}).\n\nThis proves that (13.10) holds for allB\\in \\mathcal{G}, and hence for all \\mathcal{G}-measurable simple\n\nfunctions. Extend (13.10) to nonnegative functions and real-valued functions. \\hfill $\\square$",
+        "dependencies": [
+            "def_13_3",
+            "def_13_4",
+            "thm_13_4",
+            "thm_13_6",
+            "thm_13_7"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter13-properties"
+    },
+    {
+        "block_id": "thm_13_10",
+        "type": "Theorem_with_Proof",
+        "title": "13.10",
+        "content": "\\begin{thmbox}{13.10}\n\\end{thmbox}\n\nSuppose X is a random variable in .(\\Omega,\\mathcal{F},P) that is integrable and \\mathcal{G}is a\n\nsub-\\sigma-algebra of. \\mathcal{F}I f\\sigma(X) and. \\mathcal{G}are independent, then\n\nE[X\\vert\\mathcal{G}]= E[X]as.\n\nIn particular , when X and Y are independent random variables, we have\n\nE[X\\vertY]= E[X] as.\n\n\\textit{Proof} It is sufficient to show that for each B\\in \\mathcal{G},\n\n\\int\n\nB\n\nXdP =\n\n\\int\n\nB\n\nE[X]dP. (13.11)\n\nSupposeX= 1 A for some\\mathcal{F}-measurable set A For any set B\\in \\mathcal{G}, the left-hand\n\nside of (13.11) is\n\n\\int\n\nB\n\n1A dP=\n\n\\int\n\n1A\\capB dP= P(A \\capB) = P(A)P(B).\n\nOn the other hand, we can write the right-hand side of (13.11) as\n\n\\int\n\nB\n\nE[1A]dP = E [1A]\n\n\\int\n\nB\n\ndP= P(A)P(B).\n\nTherefore, (13.11) holds forX= 1 A and anyB\\in \\mathcal{G}.\n\nWe can extend this to simple functions, nonnegative functions, and finally to\n\nreal-valued functions. \\hfill $\\square$",
+        "dependencies": [
+            "def_13_3",
+            "def_13_4",
+            "thm_13_4",
+            "thm_13_6",
+            "thm_13_7"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter13-properties"
+    },
+    {
+        "block_id": "ex_13_3_1",
+        "type": "Example_Proof",
+        "title": "Example 13.3.1 (Iterated Expectation)",
+        "content": "\\textbf{Example 13.3.1 (Iterated Expectation)} \\\\\n\nFor any random variables X and Y , apply Theorem 13.8 with \\mathcal{H}={ \\emptyset ,\\Omega} and \\mathcal{G}= \\sigma(Y) S i n c e\n\nE[Z\\vert\\mathcal{H}] is a constant and is equal toE[Z] for any random variable Z ,we getE[E[X\\vertY]] =E [X].",
+        "dependencies": [
+            "def_13_4",
+            "ex_13_2_1",
+            "thm_13_8"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter13-properties"
+    }
+]

@@ -1,0 +1,196 @@
+\subsection*{11.2 Weak Law of Large Numbers}
+
+In the followings, we consider a sequence of independent random variables X1,X2,
+
+X3,.defined on a common probability space .(\Omega,\mathcal{F},P) F o r n\geq 1 , denote the
+
+sum of the first n random variables by
+
+Sn \coloneqqX 1 +X 2 +\cdot\cdot\cdot+ Xn.
+
+We recall the following basic property of variance for pairwise uncorrelated
+
+random variables (see Definition 7.3).
+
+\begin{thmbox}{11.4}
+\end{thmbox}
+
+IfX1,X 2,...,X n are pairwise uncorrelated, then
+
+Va r(X1 + X2 +\cdot\cdot\cdot+ Xn) =
+
+n\sum
+
+i=1
+
+Va r(Xi).
+
+\textit{Proof} Without loss of generality, suppose the random variables X1,...,X n have
+
+zero mean. (We can consider the centered random variable Yn = Xn - E[Xn]
+
+otherwise.)
+
+Using the definition of variance and the linearity of expectation, we have
+
+Va r(X1 + X2 +\cdot\cdot\cdot+ Xn) = E
+
+[
+
+X2
+
+1 + X2
+
+2 +\cdot\cdot\cdot+ X2
+
+n + 2
+
+\sum
+
+i<j
+
+XiXj
+
+]
+
+=
+
+n\sum
+
+i=1
+
+E[X2
+
+i ].
+
+The assumption of pairwise uncorrelatedness guarantees that the cross-terms
+
+E[XiXj ] are zero for i /=j Therefore, we have
+
+Va r(X1 + X2 +\cdot\cdot\cdot+ Xn) =
+
+n\sum
+
+i=1
+
+E[X2
+
+i ]=
+
+n\sum
+
+i=1
+
+Va r(Xi).
+
+\hfill $\square$
+
+We will present two versions of weak law of large numbers. The first one
+
+assumes that the random variables are pairwise uncorrelated with the same mean
+
+and variance. Note that the random variables need not be identically distributed, and
+
+they need not be independent.
+
+\begin{thmbox}{11.5 (Weak Law of Large Numbers (L2 Version))}
+\end{thmbox}
+
+Let .(Xi)\infty
+
+i=1 be a sequence of pairwise uncorrelated random variables with
+
+common mean E[Xi]= \mu and variance Va r(Xi) = \sigma2 for all i. Then
+
+Sn/n
+
+P
+
+-\to \mu.
+
+\textit{Proof} The proof is an application of Chebyshev inequality (Theorem 11.2).
+
+Fix any \epsilon> 0 and integer n. Using the fact that Sn/n is an average of pairwise
+
+uncorrelated random variables with common mean \mu,we have
+
+P
+
+(\vert\vertSn
+
+n -\mu
+
+\vert\vert >\epsilon
+
+)
+
+=P
+
+(\vert\vertSn -n\mu
+
+\vert\vert >n \epsilon
+
+)
+
+\leq Va r(Sn)
+
+n2\epsilon2 = 1
+
+n2\epsilon2
+
+n\sum
+
+i=1
+
+Va r(Xi).
+
+The last equality follows from Theorem 11.4.
+
+Using Theorem 11.4, we know that .
+
+\sumn
+
+i=1 Va r(Xi)= n\sigma 2. Therefore, we have
+
+P
+
+( \vert\vert\vertSn
+
+n -\mu
+
+\vert\vert\vert >\epsilon
+
+)
+
+\leq n\sigma2
+
+n2\epsilon2 = \sigma2
+
+n\epsilon2 .
+
+Asn\to\infty , the right-hand side approaches zero, which implies thatSn/n converges
+
+in probability to \mu. This completes the proof. \hfill $\square$
+
+The assumption of finite second moment can be relaxed to finite mean, but at the
+
+cost of strengthening the uncorrelated assumption to independence.
+
+\begin{thmbox}{11.6 (Weak Law of Large Numbers (L1 Version))}
+\end{thmbox}
+
+Suppose .(Xi)\infty
+
+i=1 is a sequence of iid. random variables with finite mean \mu.
+
+ThenSn/n
+
+P
+
+-\to \mu .
+
+Theorem 11.5, also known as Khinchin's weak law of large numbers, has a
+
+detailed proof in [4, Theorem 2.2.14]In the following two sections, we will discuss
+
+two applications of this theorem instead of going through the proof.

@@ -12,12 +12,20 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from src.block_id_naming import canonicalize_block_id, canonicalize_id_list, canonicalize_task_dict, extract_chapter, legacy_ids_for
+from src.block_id_naming import (
+    canonicalize_block_id,
+    canonicalize_id_list,
+    canonicalize_task_dict,
+    extract_chapter,
+    is_canonical_block_id,
+    legacy_ids_for,
+)
 from src.compiler import LeanCompiler
 
 from .core import LedgerManager, TaskStatus
 from .dependency_decisions import DependencyDecision, load_dependency_decisions, record_dependency_decision
 from .phase2_failure_budget import phase2_failure_counters_from_history
+from .phase2_output_binding import resolve_phase2_output_binding
 from .phase2_semantic_review import (
     SEMANTIC_REVIEW_PROMPT_VERSION,
     SEMANTIC_REVIEW_RUBRIC_VERSION,
@@ -404,6 +412,89 @@ def _load_task_from_phase2_pack(task_id: str, settings) -> dict[str, Any] | None
     return task
 
 
+def _task_final_import_union(task: dict[str, Any]) -> list[str]:
+    hard_deps = canonicalize_id_list(task.get("dependencies", []))
+    soft_imports = canonicalize_id_list(task.get("soft_imports", []))
+    explicit_union = canonicalize_id_list(task.get("final_import_union", []))
+    return canonicalize_id_list(hard_deps + soft_imports + explicit_union)
+
+
+def _merge_task_import_fields(
+    *,
+    task_id: str,
+    hard_deps: list[str],
+    soft_imports: list[str],
+    import_union: list[str],
+    payload: dict[str, Any] | None,
+) -> tuple[list[str], list[str], list[str]]:
+    if not isinstance(payload, dict):
+        return hard_deps, soft_imports, import_union
+    hard_deps = canonicalize_id_list(hard_deps + payload.get("dependencies", []))
+    soft_imports = canonicalize_id_list(soft_imports + payload.get("soft_imports", []))
+    import_union = canonicalize_id_list(import_union + payload.get("final_import_union", []))
+    extra_soft = [
+        dep
+        for dep in import_union
+        if dep and dep != task_id and dep not in hard_deps and dep not in soft_imports
+    ]
+    soft_imports = canonicalize_id_list(soft_imports + extra_soft)
+    import_union = canonicalize_id_list(hard_deps + soft_imports + import_union)
+    return hard_deps, soft_imports, import_union
+
+
+def _merge_effective_task_imports(task: dict[str, Any], task_id: str, ledger: LedgerManager, settings) -> dict[str, Any]:
+    merged = canonicalize_task_dict(task)
+    canonical_task_id = canonicalize_block_id(task_id)
+    hard_deps = canonicalize_id_list(merged.get("dependencies", []))
+    soft_imports = canonicalize_id_list(merged.get("soft_imports", []))
+    import_union = canonicalize_id_list(merged.get("final_import_union", []))
+
+    pack_task = _load_task_from_phase2_pack(canonical_task_id, settings)
+    pack_has_import_manifest = isinstance(pack_task, dict) and any(
+        key in pack_task for key in ("dependencies", "soft_imports", "final_import_union")
+    )
+    if pack_has_import_manifest:
+        hard_deps = canonicalize_id_list(pack_task.get("dependencies", hard_deps))
+        soft_imports = canonicalize_id_list(pack_task.get("soft_imports", []))
+        import_union = canonicalize_id_list(pack_task.get("final_import_union", hard_deps + soft_imports))
+        extra_soft = [
+            dep
+            for dep in import_union
+            if dep and dep != canonical_task_id and dep not in hard_deps and dep not in soft_imports
+        ]
+        soft_imports = canonicalize_id_list(soft_imports + extra_soft)
+        import_union = canonicalize_id_list(hard_deps + soft_imports + import_union)
+    else:
+        hard_deps, soft_imports, import_union = _merge_task_import_fields(
+            task_id=canonical_task_id,
+            hard_deps=hard_deps,
+            soft_imports=soft_imports,
+            import_union=import_union,
+            payload=pack_task,
+        )
+
+    record = ledger.ledger.get("tasks", {}).get(canonical_task_id, {})
+    snapshot = record.get("candidate_snapshot", {}) if isinstance(record, dict) else {}
+    is_obligation_task = str(merged.get("type", "") or "").strip() == "Phase2ObligationTask"
+    if is_obligation_task or not pack_has_import_manifest:
+        hard_deps, soft_imports, import_union = _merge_task_import_fields(
+            task_id=canonical_task_id,
+            hard_deps=hard_deps,
+            soft_imports=soft_imports,
+            import_union=import_union,
+            payload=snapshot if isinstance(snapshot, dict) else None,
+        )
+
+    merged["dependencies"] = canonicalize_id_list([dep for dep in hard_deps if dep and dep != canonical_task_id])
+    merged["soft_imports"] = canonicalize_id_list(
+        dep
+        for dep in soft_imports
+        if dep and dep != canonical_task_id and dep not in merged["dependencies"]
+    )
+    merged["final_import_union"] = canonicalize_id_list(merged["dependencies"] + merged["soft_imports"] + import_union)
+    return merged
+
+
 def resolve_phase2_task(task_id: str, ledger: LedgerManager, settings) -> dict[str, Any]:
     canonical_task_id = canonicalize_block_id(task_id)
     tasks = ledger.ledger.get("tasks", {})
@@ -412,15 +503,15 @@ def resolve_phase2_task(task_id: str, ledger: LedgerManager, settings) -> dict[s
         if isinstance(task_record, dict):
             task = canonicalize_task_dict(task_record)
             if task.get("block_id") == canonical_task_id and str(task.get("content", "")).strip():
-                return task
+                return _merge_effective_task_imports(task, canonical_task_id, ledger, settings)
 
     task = find_task_in_plans(canonical_task_id, settings.plans_dir)
     if task is not None:
-        return task
+        return _merge_effective_task_imports(task, canonical_task_id, ledger, settings)
 
     task = _load_task_from_phase2_pack(canonical_task_id, settings)
     if task is not None:
-        return task
+        return _merge_effective_task_imports(task, canonical_task_id, ledger, settings)
 
     pack_task_path = settings.phase2_prompt_packs_dir / canonical_task_id / "task.json"
     raise FileNotFoundError(
@@ -731,9 +822,7 @@ def extract_search_terms(title: str, content: str, limit: int = 8) -> list[str]:
 
 
 def build_import_lines(task: dict[str, Any]) -> list[str]:
-    deps = canonicalize_id_list(task.get("dependencies", []))
-    soft_imports = canonicalize_id_list(task.get("soft_imports", []))
-    final_union = canonicalize_id_list(deps + soft_imports)
+    final_union = _task_final_import_union(task)
     import_lines = ["import Mathlib"]
     for dep in final_union:
         import_lines.append(f"import ToyApollo.Output.{canonicalize_block_id(dep)}")
@@ -744,7 +833,7 @@ def build_dependency_decision_context(task: dict[str, Any], settings) -> dict[st
     task_id = canonicalize_block_id(str(task.get("block_id", "")))
     hard_deps = canonicalize_id_list(task.get("dependencies", []))
     soft_imports = canonicalize_id_list(task.get("soft_imports", []))
-    final_union = canonicalize_id_list(hard_deps + soft_imports)
+    final_union = _task_final_import_union(task)
     decisions_by_dep: dict[str, list[dict[str, Any]]] = {}
     missing: list[str] = []
     decisions = load_dependency_decisions(settings, task_id)
@@ -855,6 +944,10 @@ def has_meaningful_declaration(code: str) -> bool:
     if "-- WRITE FINAL LEAN CODE BELOW" in code:
         return False
     return TOP_LEVEL_DECL_RE.search(code) is not None
+
+
+def has_top_level_declaration(code: str) -> bool:
+    return bool(code.strip() and TOP_LEVEL_DECL_RE.search(code) is not None)
 
 
 def _source_text(task: dict[str, Any]) -> str:
@@ -1057,7 +1150,95 @@ def iter_official_output_targets(task_id: str, source_plan: str, settings) -> li
 def _has_active_official_output(task_id: str, source_plan: str, ledger: LedgerManager, settings) -> bool:
     status = str(ledger.ledger.get("tasks", {}).get(task_id, {}).get("status", "") or "")
     existing = find_existing_task_file(task_id, source_plan, settings)
-    return status == TaskStatus.COMPLETED.value and existing is not None and existing.exists()
+    completed_statuses = {TaskStatus.COMPLETED.value, TaskStatus.COMPLETED_WITH_PROOF_DEBT.value}
+    return status in completed_statuses and existing is not None and existing.exists()
+
+
+def _status_counts_have_accepted_proof_debt(status_counts: Any) -> bool:
+    if not isinstance(status_counts, dict):
+        return False
+    try:
+        return int(status_counts.get("accepted_as_proof_debt", 0) or 0) > 0
+    except (TypeError, ValueError):
+        return False
+
+
+def _ledger_record_has_accepted_proof_debt(record: dict[str, Any]) -> bool:
+    status = str(record.get("status", "") or "").strip()
+    if status == TaskStatus.COMPLETED_WITH_PROOF_DEBT.value:
+        return True
+    summary = record.get("proof_obligation_summary")
+    if isinstance(summary, dict) and _status_counts_have_accepted_proof_debt(summary.get("status_counts", {})):
+        return True
+    obligations = record.get("proof_obligations")
+    if isinstance(obligations, dict):
+        if _status_counts_have_accepted_proof_debt(obligations.get("status_counts", {})):
+            return True
+        raw_items = obligations.get("obligations", [])
+        if isinstance(raw_items, list) and any(
+            isinstance(item, dict) and str(item.get("status", "") or "").strip().lower() == "accepted_as_proof_debt"
+            for item in raw_items
+        ):
+            return True
+    obligation_review = record.get("obligation_review")
+    if isinstance(obligation_review, dict):
+        raw_items = obligation_review.get("items", [])
+        if isinstance(raw_items, list) and any(
+            isinstance(item, dict) and str(item.get("status", "") or "").strip().lower() == "accepted_as_proof_debt"
+            for item in raw_items
+        ):
+            return True
+    return False
+
+
+def _ledger_record_dependencies(record: dict[str, Any]) -> list[str]:
+    deps: list[str] = []
+    deps.extend(canonicalize_id_list(record.get("dependencies", [])))
+    snapshot = record.get("candidate_snapshot", {})
+    if isinstance(snapshot, dict):
+        deps.extend(canonicalize_id_list(snapshot.get("dependencies", [])))
+    return canonicalize_id_list(deps)
+
+
+def hard_dependency_proof_debt_blockers(task: dict[str, Any], ledger: LedgerManager) -> list[str]:
+    task_id = canonicalize_block_id(str(task.get("block_id", "")))
+    task_map = ledger.ledger.get("tasks", {})
+    if not isinstance(task_map, dict):
+        return []
+    blockers: list[str] = []
+    seen: set[str] = {task_id} if task_id else set()
+    stack = list(reversed(canonicalize_id_list(task.get("dependencies", []))))
+    while stack:
+        dep_id = stack.pop()
+        if dep_id in seen:
+            continue
+        seen.add(dep_id)
+        dep_record = task_map.get(dep_id, {})
+        if not isinstance(dep_record, dict):
+            continue
+        if _ledger_record_has_accepted_proof_debt(dep_record) or str(dep_record.get("status", "") or "") == "DEPENDENCY_PROOF_DEBT":
+            blockers.append(dep_id)
+            continue
+        stack.extend(reversed(_ledger_record_dependencies(dep_record)))
+    return canonicalize_id_list(blockers)
+
+
+def hard_dependency_proof_debt_blocker_message(task: dict[str, Any], ledger: LedgerManager) -> str:
+    blockers = hard_dependency_proof_debt_blockers(task, ledger)
+    if not blockers:
+        return ""
+    task_id = canonicalize_block_id(str(task.get("block_id", "")))
+    blocker_text = ", ".join(blockers)
+    return (
+        f"Task {task_id} is blocked because hard dependency {blocker_text} carries accepted proof debt. "
+        "Run debt-fix on the blocker and finish the repair loop before generating downstream Phase 2 work."
+    )
+
+
+def _raise_if_hard_dependency_has_proof_debt(task: dict[str, Any], ledger: LedgerManager) -> None:
+    detail = hard_dependency_proof_debt_blocker_message(task, ledger)
+    if detail:
+        raise ValueError(detail)
 
 
 def _pack_metadata_path(pack_dir: Path) -> Path:
@@ -1189,8 +1370,12 @@ def _run_staged_official_build(
     attempt: int,
     mode: str,
     restore_on_success: bool = True,
+    output_owner_task_id: str | None = None,
 ) -> tuple[bool, str]:
-    lock_path, lock_payload = _acquire_task_local_lock(task_id, pack_dir, mode)
+    output_owner_task_id = canonicalize_block_id(output_owner_task_id or task_id)
+    lock_pack_dir = settings.phase2_prompt_packs_dir / output_owner_task_id if output_owner_task_id != task_id else pack_dir
+    lock_pack_dir.mkdir(parents=True, exist_ok=True)
+    lock_path, lock_payload = _acquire_task_local_lock(output_owner_task_id, lock_pack_dir, mode)
     staging_dir = _task_staging_root(pack_dir) / f"{mode}-{attempt}"
     staging_dir.mkdir(parents=True, exist_ok=False)
     lock_payload["staging_dir"] = str(staging_dir)
@@ -1199,13 +1384,14 @@ def _run_staged_official_build(
     manifest_path = staging_dir / "staging_manifest.json"
     manifest: dict[str, Any] = {
         "task_id": task_id,
+        "output_owner_task_id": output_owner_task_id,
         "mode": mode,
         "created_at": _utc_now_z(),
         "targets": [],
     }
     restore_completed = False
     try:
-        for index, target in enumerate(iter_official_output_targets(task_id, source_plan, settings), start=1):
+        for index, target in enumerate(iter_official_output_targets(output_owner_task_id, source_plan, settings), start=1):
             target.parent.mkdir(parents=True, exist_ok=True)
             original_existed = target.exists()
             backup_path = staging_dir / f"backup_{index}_{target.name}"
@@ -1223,12 +1409,12 @@ def _run_staged_official_build(
         for entry in manifest["targets"]:
             Path(str(entry["target"])).write_text(candidate_code, encoding="utf-8")
 
-        success, output = _run_official_module_build(task_id, settings)
+        success, output = _run_official_module_build(output_owner_task_id, settings)
         if not success or restore_on_success:
             restore_completed = _restore_staging_manifest(manifest_path)
             if not restore_completed:
                 raise RuntimeError(
-                    f"Phase 2 staging restore failed for {task_id} after {mode}; manual recovery required."
+                    f"Phase 2 staging restore failed for {output_owner_task_id} after {mode}; manual recovery required."
                 )
         else:
             shutil.rmtree(staging_dir, ignore_errors=True)
@@ -1328,10 +1514,21 @@ def _task_local_import_allowlist(task: dict[str, Any], ledger: LedgerManager | N
 def _candidate_local_imports(candidate_code: str) -> list[str]:
     imports: list[str] = []
     for match in re.finditer(r"(?m)^\s*import\s+ToyApollo\.Output\.([A-Za-z0-9_']+)\s*$", candidate_code):
-        dep = canonicalize_block_id(match.group(1))
+        dep = str(match.group(1) or "").strip().lower()
         if dep:
             imports.append(dep)
     return imports
+
+
+def _task_like_local_imports(imported_modules: list[str]) -> list[str]:
+    task_imports: list[str] = []
+    for module in imported_modules:
+        canonical = canonicalize_block_id(module)
+        if not canonical:
+            continue
+        if module == canonical or module in legacy_ids_for(canonical) or is_canonical_block_id(module):
+            task_imports.append(canonical)
+    return task_imports
 
 
 def validate_candidate_hard_checks(
@@ -1340,6 +1537,7 @@ def validate_candidate_hard_checks(
     ledger: LedgerManager | None = None,
 ) -> tuple[bool, list[dict[str, Any]], str]:
     task_id = canonicalize_block_id(str(task.get("block_id", "")))
+    target_task_id = _hard_check_target_task_id(task, ledger)
     if not candidate_code.strip():
         detail = "Candidate file is empty."
         return False, _hard_check_diagnostic("empty_candidate", detail), detail
@@ -1352,16 +1550,18 @@ def validate_candidate_hard_checks(
         detail = "Candidate introduces a top-level axiom placeholder, so the result is not a real formalization."
         return False, _hard_check_diagnostic("axiom_placeholder", detail), detail
 
-    exported_kind = _candidate_decl_kind(task_id, candidate_code)
+    exported_kind = _candidate_decl_kind(target_task_id, candidate_code)
     if exported_kind is None:
-        detail = f"Candidate does not declare the target task id `{task_id}` as a top-level def/theorem/lemma."
+        detail = f"Candidate does not declare the target task id `{target_task_id}` as a top-level def/theorem/lemma."
         return False, _hard_check_diagnostic("missing_target_declaration", detail), detail
 
-    imported = _candidate_local_imports(candidate_code)
-    if task_id in imported:
-        detail = f"Candidate self-imports ToyApollo.Output.{task_id}, which would bypass verification."
+    imported_modules = _candidate_local_imports(candidate_code)
+    self_import_names = {target_task_id, *legacy_ids_for(target_task_id)}
+    if any(module in self_import_names for module in imported_modules):
+        detail = f"Candidate self-imports ToyApollo.Output.{target_task_id}, which would bypass verification."
         return False, _hard_check_diagnostic("self_import", detail), detail
 
+    imported = _task_like_local_imports(imported_modules)
     allowed_imports = _task_local_import_allowlist(task, ledger)
     undeclared = sorted([dep for dep in imported if dep not in allowed_imports])
     if undeclared:
@@ -1369,13 +1569,35 @@ def validate_candidate_hard_checks(
         return False, _hard_check_diagnostic_with_symbols("undeclared_local_import", detail, undeclared), detail
 
     task_type = str(task.get("type", "")).strip().lower()
-    if ("theorem" in task_type or task_id.startswith("thm_")) and exported_kind == "def":
-        prop_def_re = re.compile(rf"(?ms)^\s*(?:noncomputable\s+)?def\s+{re.escape(task_id)}\b.*?:\s*Prop\s*:=\s*")
+    if ("theorem" in task_type or target_task_id.startswith("thm_")) and exported_kind == "def":
+        prop_def_re = re.compile(rf"(?ms)^\s*(?:noncomputable\s+)?def\s+{re.escape(target_task_id)}\b.*?:\s*Prop\s*:=\s*")
         if prop_def_re.search(candidate_code):
             detail = "Theorem-like task exports only a Prop-valued definition instead of a theorem/lemma."
             return False, _hard_check_diagnostic("theorem_declared_as_prop_def", detail), detail
 
     return True, [], ""
+
+
+def _hard_check_target_task_id(task: dict[str, Any], ledger: LedgerManager | None = None) -> str:
+    task_id = canonicalize_block_id(str(task.get("block_id", "")))
+    merged = dict(task)
+    if ledger is not None:
+        record = ledger.ledger.get("tasks", {}).get(task_id, {})
+        if isinstance(record, dict):
+            merged = dict(record)
+            merged.update(task)
+    if str(merged.get("type", "") or "") == "Phase2ObligationTask":
+        target = canonicalize_block_id(
+            str(
+                merged.get("target_task_id", "")
+                or merged.get("parent_task_id", "")
+                or merged.get("parent_block_id", "")
+                or ""
+            )
+        )
+        if target:
+            return target
+    return task_id
 
 
 def _is_vacuous_candidate(task: dict[str, Any], candidate_code: str) -> bool:
@@ -1660,6 +1882,13 @@ def build_target_stub(task: dict[str, Any], import_lines: list[str], existing_co
     else:
         lines.append("-- WRITE FINAL LEAN CODE BELOW")
     return "\n".join(lines).strip() + "\n"
+
+
+def build_obligation_target_stub(existing_code: str | None, fallback_stub: str) -> str:
+    existing = (existing_code or "").strip()
+    if existing and has_top_level_declaration(existing):
+        return existing + "\n"
+    return fallback_stub
 
 
 def _read_file_safely(path: Path) -> str:
@@ -1972,6 +2201,45 @@ def _search_top_level_decls(
         rf"^\s*(?:noncomputable\s+)?(?:theorem|def|lemma)\s+({'|'.join(re.escape(c) for c in candidates)})\b",
         re.MULTILINE,
     )
+    rg_pattern = (
+        r"^\s*(?:noncomputable\s+)?(?:theorem|def|lemma)\s+"
+        rf"({'|'.join(re.escape(c) for c in candidates)})\b"
+    )
+    try:
+        proc = subprocess.run(
+            ["rg", "-n", "--glob", "*.lean", rg_pattern, str(root)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except Exception:
+        proc = None
+
+    if proc is not None and proc.returncode in (0, 1):
+        results: list[dict[str, Any]] = []
+        for raw_line in proc.stdout.splitlines():
+            match = re.match(r"^(.*):(\d+):(.*)$", raw_line)
+            if not match:
+                continue
+            path_str, line_no, line_text = match.groups()
+            file_path = Path(path_str)
+            content = _read_file_safely(file_path)
+            idx = content.find(line_text.strip())
+            snippet = content[max(0, idx - 180): idx + 420].strip() if idx >= 0 else line_text.strip()
+            results.append(
+                {
+                    "path": path_str,
+                    "line_no": int(line_no),
+                    "line": line_text.strip(),
+                    "snippet": snippet,
+                }
+            )
+            if len(results) >= max_results:
+                return results
+        if results:
+            return results
+        return []
+
     results: list[dict[str, Any]] = []
     for file_path in _iter_lean_files(root, file_cache):
         try:
@@ -2772,11 +3040,22 @@ def build_semantic_review_context_markdown(task: dict[str, Any], ledger: LedgerM
     task_id = task["block_id"]
     current_record = ledger.ledger.get("tasks", {}).get(task_id, {})
     source_plan = str(task.get("source_plan", "unknown") or "unknown")
-    downstream = _collect_direct_downstream_consumers(task_id, settings)
+    output_binding = resolve_phase2_output_binding(task, ledger, settings)
+    output_owner_id = output_binding.output_owner_task_id
+    output_owner_record = ledger.ledger.get("tasks", {}).get(output_owner_id, {})
+    if not isinstance(output_owner_record, dict):
+        output_owner_record = {}
+    output_owner_task = canonicalize_task_dict(output_owner_record) if output_owner_record else task
+    if output_binding.is_obligation_task and output_owner_task.get("block_id") != output_owner_id:
+        output_owner_task = dict(output_owner_task)
+        output_owner_task["block_id"] = output_owner_id
+    obligations_pack_dir = output_binding.owner_pack_dir if output_binding.is_obligation_task else pack_dir
+    downstream = _collect_direct_downstream_consumers(output_owner_id, settings)
     hard_deps = canonicalize_id_list(task.get("dependencies", []))
     soft_imports = canonicalize_id_list(task.get("soft_imports", []))
-    active_targets = list(iter_official_output_targets(task_id, source_plan, settings))
-    public_exports = current_record.get("exported_symbols", [])
+    active_targets = list(output_binding.official_targets)
+    public_exports_source = output_owner_record if output_binding.is_obligation_task else current_record
+    public_exports = public_exports_source.get("exported_symbols", []) if isinstance(public_exports_source, dict) else []
     if not isinstance(public_exports, list):
         public_exports = []
     lines = [
@@ -2826,18 +3105,32 @@ def build_semantic_review_context_markdown(task: dict[str, Any], ledger: LedgerM
                 f"- `{consumer['block_id']}` from `{consumer['source_plan']}` via `{consumer['relation']}` / `{consumer['type']}`: {consumer['title'] or '(untitled)'}"
             )
     lines.extend(["", "## Current Public Interface Summary", ""])
+    lines.append(f"- Output owner task: `{output_owner_id}`")
+    if output_binding.focus_obligation_ids:
+        lines.append(f"- Focused obligation ids: `{', '.join(output_binding.focus_obligation_ids)}`")
     lines.append(f"- Official output targets: `{', '.join(str(path) for path in active_targets) if active_targets else '(none)'}`")
     lines.append(f"- Recorded exported symbols: `{', '.join(str(item) for item in public_exports) if public_exports else '(none recorded)'}`")
     lines.append(f"- Current ledger status: `{current_record.get('status', 'UNKNOWN')}`")
+    if output_binding.is_obligation_task:
+        lines.append(f"- Output owner ledger status: `{output_owner_record.get('status', 'UNKNOWN')}`")
     lines.append(f"- Build candidate state: `{current_record.get('pack_candidate_state', 'draft')}`")
     latest_review_result = str(current_record.get("latest_semantic_review_result_file", "") or "")
     lines.append(f"- Last completed semantic review result: `{latest_review_result or '(none)'}`")
+    obligations_record = output_owner_record if output_binding.is_obligation_task else current_record
     proof_obligations = ensure_proof_obligations_file(
-        pack_dir,
-        task,
-        current_record=current_record if isinstance(current_record, dict) else {},
+        obligations_pack_dir,
+        output_owner_task,
+        current_record=obligations_record if isinstance(obligations_record, dict) else {},
     )
-    lines.extend(["", render_proof_obligations_markdown(proof_obligations, path=pack_dir / PROOF_OBLIGATIONS_FILE_NAME).rstrip()])
+    lines.extend(
+        [
+            "",
+            render_proof_obligations_markdown(
+                proof_obligations,
+                path=obligations_pack_dir / PROOF_OBLIGATIONS_FILE_NAME,
+            ).rstrip(),
+        ]
+    )
     lines.extend(["", "## Allowed Abstraction Layer", ""])
     for item in _review_allowed_abstractions(task):
         lines.append(f"- {item}")
@@ -3139,7 +3432,7 @@ def _backfill_review_repair_request_from_latest_failed_review(
 
 def _build_dependency_review_summary(task: dict[str, Any], ledger: LedgerManager, settings) -> list[dict[str, Any]]:
     summary: list[dict[str, Any]] = []
-    for dep in canonicalize_id_list(task.get("dependencies", []) + task.get("soft_imports", [])):
+    for dep in _task_final_import_union(task):
         dep_record = ledger.ledger.get("tasks", {}).get(dep, {})
         source_plan = dep_record.get("source_plan", "unknown") if isinstance(dep_record, dict) else "unknown"
         dep_file = find_existing_task_file(dep, str(source_plan), settings)
@@ -4052,14 +4345,17 @@ def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[
 
     task_id = canonicalize_block_id(task_id)
     pack_dir = settings.phase2_prompt_packs_dir / task_id
-    pack_dir.mkdir(parents=True, exist_ok=True)
+    output_binding = resolve_phase2_output_binding(task, ledger, settings)
 
     current_record = ledger.ledger.get("tasks", {}).get(task_id, {})
     snapshot = current_record.get("candidate_snapshot", {})
     if not isinstance(snapshot, dict):
         snapshot = {}
     task["dependencies"] = canonicalize_id_list(task.get("dependencies", []))
-    task["soft_imports"] = canonicalize_id_list(snapshot.get("soft_imports", []))
+    task["soft_imports"] = canonicalize_id_list(task.get("soft_imports", []) + snapshot.get("soft_imports", []))
+    task["final_import_union"] = _task_final_import_union(task)
+    _raise_if_hard_dependency_has_proof_debt(task, ledger)
+    pack_dir.mkdir(parents=True, exist_ok=True)
     soft_confirmed = ledger.has_confirmed_soft_imports(task_id)
     if str(task.get("type", "")).strip().lower() == "problem" and not soft_confirmed:
         raise ValueError(
@@ -4075,9 +4371,18 @@ def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[
         latest_candidate = str(latest_pack_candidate)
 
     import_lines = build_import_lines(task)
-    existing_file = find_existing_task_file(task_id, task.get("source_plan", "unknown"), settings)
+    existing_file = find_existing_task_file(
+        output_binding.output_owner_task_id,
+        task.get("source_plan", "unknown"),
+        settings,
+    )
     existing_code = _read_file_safely(existing_file) if existing_file else ""
-    target_stub_text = build_target_stub(task, import_lines, existing_code=existing_code)
+    fallback_stub_text = build_target_stub(task, import_lines, existing_code=existing_code)
+    target_stub_text = (
+        build_obligation_target_stub(existing_code, fallback_stub_text)
+        if output_binding.is_obligation_task
+        else fallback_stub_text
+    )
     target_stub_path = pack_dir / "target_stub.lean"
     draft_path = pack_dir / DRAFT_FILE_NAME
     intent_contract = ensure_intent_contract(pack_dir, task)
@@ -4099,7 +4404,11 @@ def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[
     has_valid_ready = bool(str(current_record.get("latest_build_ready_candidate_file", "") or ""))
     next_pack_state = current_state if has_valid_ready and current_state in {"build_ready", "review_pending", "review_rejected"} else "draft"
 
-    if not draft_path.exists():
+    should_seed_draft = not draft_path.exists()
+    if output_binding.is_obligation_task and draft_path.exists():
+        should_seed_draft = not has_top_level_declaration(_read_file_safely(draft_path))
+
+    if should_seed_draft:
         if latest_pack_candidate is not None:
             draft_path.write_text(_read_file_safely(latest_pack_candidate), encoding="utf-8")
         elif latest_candidate and Path(latest_candidate).exists():
@@ -4115,7 +4424,7 @@ def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[
         "source_plan": task.get("source_plan", "unknown"),
         "dependencies": task.get("dependencies", []),
         "soft_imports": task.get("soft_imports", []),
-        "final_import_union": canonicalize_id_list(task.get("dependencies", []) + task.get("soft_imports", [])),
+        "final_import_union": _task_final_import_union(task),
     }
     metadata_payload = {
         "task_id": task_id,
@@ -4131,6 +4440,11 @@ def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[
         "intent_contract_file": str(_intent_contract_path(pack_dir)),
         "proof_obligations_file": str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME),
         "proof_obligation_summary": proof_obligation_summary,
+        "output_owner_task_id": output_binding.output_owner_task_id,
+        "output_module": output_binding.output_module,
+        "official_output_targets": [target.as_posix() for target in output_binding.official_targets],
+        "proof_obligations_owner_file": output_binding.proof_obligations_file.as_posix(),
+        "focus_obligation_ids": output_binding.focus_obligation_ids,
         "search_manifest_file": str(search_manifest_path),
         "attempt_history_file": str(pack_dir / ATTEMPT_HISTORY_FILE_NAME),
         "failure_summary_file": str(failure_summary_path),
@@ -4326,6 +4640,11 @@ def _compose_detail_text(repl_output: str, temp_build_output: str, final_build_o
     if final_build_output.strip():
         sections.append("[FINAL BUILD]\n" + final_build_output.strip())
     return "\n\n".join(sections).strip() or "(no detail)"
+
+
+def _is_repl_timeout_output(repl_output: str) -> bool:
+    lowered = str(repl_output or "").lower()
+    return "repl system error" in lowered and "timed out" in lowered
 
 
 def _build_verify_result_payload(
@@ -4622,6 +4941,10 @@ async def build_check_prompt_pack_candidate(
     task = ensure_task_registered(resolve_phase2_task(task_id, ledger, settings), ledger)
     task_id = task["block_id"]
     source_plan = str(task.get("source_plan", "unknown") or "unknown")
+    output_binding = resolve_phase2_output_binding(task, ledger, settings)
+    proof_debt_blocker = hard_dependency_proof_debt_blocker_message(task, ledger)
+    if proof_debt_blocker:
+        return False, proof_debt_blocker
     original_status = str(ledger.ledger.get("tasks", {}).get(task_id, {}).get("status", ""))
     pack_dir = settings.phase2_prompt_packs_dir / task_id
     if not pack_dir.exists():
@@ -4715,11 +5038,11 @@ async def build_check_prompt_pack_candidate(
         _set_latest_operation(task_id, ledger, kind="build-check", file_path=str(build_result_path))
         if success:
             if existing_completed_output:
-                ledger.update_status(task_id, TaskStatus.COMPLETED)
+                ledger.update_status(task_id, TaskStatus(original_status))
             else:
                 ledger.update_status(task_id, TaskStatus.PACKED)
         elif existing_completed_output:
-            ledger.update_status(task_id, TaskStatus.COMPLETED)
+            ledger.update_status(task_id, TaskStatus(original_status))
         elif failure_counters.build_fail_counter >= failure_counters.limit:
             ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=detail_text)
         else:
@@ -4749,6 +5072,18 @@ async def build_check_prompt_pack_candidate(
     try:
         repl_success, repl_output = await compiler.validate_with_repl_async(candidate_code)
         temp_build_success, temp_build_output = await compiler.build_module_async(temp_module_name)
+        repl_timeout_nonblocking = (
+            not repl_success
+            and temp_build_success
+            and _is_repl_timeout_output(repl_output)
+        )
+        if repl_timeout_nonblocking:
+            repl_success = True
+            repl_output = (
+                "REPL precheck timed out and was treated as non-blocking because "
+                "the temporary module build succeeded; final staged build is still required.\n\n"
+                + repl_output
+            )
         if not repl_success or not temp_build_success:
             diagnostics: list[dict[str, Any]] = []
             if not repl_success:
@@ -4776,6 +5111,7 @@ async def build_check_prompt_pack_candidate(
             attempt=attempt,
             mode="build-check",
             restore_on_success=True,
+            output_owner_task_id=output_binding.output_owner_task_id,
         )
         if not final_success:
             diagnostics = _parse_diagnostics(final_output, "final_build_failed", "final_build")
@@ -4910,6 +5246,28 @@ def _write_codex_handoff_review_artifacts(
         "forbidden_weakenings": [],
         "findings": [],
         "recommended_disposition": "revise",
+        "reviewer_schema_hints": {
+            "section_status_values": ["covered", "partial", "missing", "violated", "unclear"],
+            "obligation_item_status_values": [
+                "covered",
+                "partial",
+                "missing",
+                "violated",
+                "unclear",
+                "not_applicable",
+                "accepted_as_proof_debt",
+            ],
+            "downstream_consumer_entry_shape": {
+                "block_id": "<direct downstream block_id>",
+                "status": "covered | not_applicable | blocked",
+                "evidence": "<why this exported interface is adequate or not applicable>",
+            },
+            "forbidden_weakening_status_values": ["not_present", "present", "not_applicable"],
+            "pass_review_apply_command": (
+                "python .\\run_chapter.py --phase 2 --phase2-mode review-apply "
+                "--tasks <task_id> --review-result <semantic_review_result_vM.json>"
+            ),
+        },
     }
     _write_json(template_path, template)
     review_request = _build_semantic_review_request(
@@ -5019,6 +5377,9 @@ def _write_review_compat_summary(
 async def write_codex_review_pack(task_id: str, ledger: LedgerManager, settings, candidate_arg: str | None = None) -> tuple[bool, str]:
     task = ensure_task_registered(resolve_phase2_task(task_id, ledger, settings), ledger)
     task_id = task["block_id"]
+    proof_debt_blocker = hard_dependency_proof_debt_blocker_message(task, ledger)
+    if proof_debt_blocker:
+        return False, proof_debt_blocker
     pack_dir = settings.phase2_prompt_packs_dir / task_id
     if not pack_dir.exists():
         pack_dir = write_prompt_pack(task_id, ledger, settings, task=task)
@@ -5129,6 +5490,9 @@ async def write_existing_output_review_pack(
 ) -> tuple[bool, str]:
     task = ensure_task_registered(resolve_phase2_task(task_id, ledger, settings), ledger)
     task_id = task["block_id"]
+    proof_debt_blocker = hard_dependency_proof_debt_blocker_message(task, ledger)
+    if proof_debt_blocker:
+        return False, proof_debt_blocker
     pack_dir = settings.phase2_prompt_packs_dir / task_id
     if not pack_dir.exists():
         pack_dir = write_prompt_pack(task_id, ledger, settings, task=task)
@@ -5676,6 +6040,9 @@ def _write_review_repair_artifacts(
 async def verify_prompt_pack_candidate(task_id: str, ledger: LedgerManager, settings, candidate_arg: str | None = None) -> tuple[bool, str]:
     task = ensure_task_registered(resolve_phase2_task(task_id, ledger, settings), ledger)
     task_id = task["block_id"]
+    proof_debt_blocker = hard_dependency_proof_debt_blocker_message(task, ledger)
+    if proof_debt_blocker:
+        return False, proof_debt_blocker
     verify_original_status = str(ledger.ledger.get("tasks", {}).get(task_id, {}).get("status", ""))
 
     pack_dir = settings.phase2_prompt_packs_dir / task_id
@@ -5691,8 +6058,9 @@ async def verify_prompt_pack_candidate(task_id: str, ledger: LedgerManager, sett
     verified_at = datetime.now(UTC).isoformat().replace("+00:00", "Z")
     source_plan = task.get("source_plan", "unknown")
     existing_official_output = find_existing_task_file(task_id, str(source_plan), settings)
+    completed_statuses = {TaskStatus.COMPLETED.value, TaskStatus.COMPLETED_WITH_PROOF_DEBT.value}
     existing_completed_output = (
-        verify_original_status == TaskStatus.COMPLETED.value
+        verify_original_status in completed_statuses
         and existing_official_output is not None
         and existing_official_output.exists()
     )
@@ -5746,7 +6114,7 @@ async def verify_prompt_pack_candidate(task_id: str, ledger: LedgerManager, sett
         (pack_dir / FAILURE_SUMMARY_FILE_NAME).write_text(failure_summary, encoding="utf-8")
         build_feedback_path.write_text(detail_text, encoding="utf-8")
         if existing_completed_output:
-            ledger.update_status(task_id, TaskStatus.COMPLETED)
+            ledger.update_status(task_id, TaskStatus(verify_original_status))
         else:
             ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=detail_text)
         ledger.mark_verifying(

@@ -46,6 +46,51 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(args.phase2_mode, "review-fix")
         self.assertTrue(args.abandon_current_repair)
 
+    def test_cli_debt_fix_mode_is_accepted(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        with patch.object(
+            sys,
+            "argv",
+            [
+                "toy-apollo",
+                "--phase",
+                "2",
+                "--phase2-mode",
+                "debt-fix",
+                "--tasks",
+                "thm_4_cli_debt_fix",
+            ],
+        ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock:
+            code = cli_app.main()
+
+        self.assertEqual(code, 0)
+        process_target_mock.assert_awaited_once()
+        args = process_target_mock.await_args.args[0]
+        self.assertEqual(args.phase2_mode, "debt-fix")
+
+    def test_cli_promote_obligations_mode_allows_empty_task_filter(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        with patch.object(
+            sys,
+            "argv",
+            [
+                "toy-apollo",
+                "--phase",
+                "2",
+                "--phase2-mode",
+                "promote-obligations",
+            ],
+        ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock:
+            code = cli_app.main()
+
+        self.assertEqual(code, 0)
+        process_target_mock.assert_awaited_once()
+        args = process_target_mock.await_args.args[0]
+        self.assertEqual(args.phase2_mode, "promote-obligations")
+        self.assertEqual(args.task_ids, [])
+
     def test_cli_auto_loop_accepts_limits_and_review_subject(self):
         from src.toy_apollo.cli import app as cli_app
 

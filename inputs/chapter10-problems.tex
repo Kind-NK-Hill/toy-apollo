@@ -1,0 +1,60 @@
+\subsection*{Problems}
+
+\textbf{10.1.} Prove that a sequence of random variables $(X_k)_{k\geq 1}$ converges to $X$ a.s. if and only if for each $\epsilon>0$,
+\[
+\lim_{n\to\infty}P(\lvert X_k-X\rvert\leq \epsilon\text{ for all }k\geq n)=1.
+\]
+
+\textbf{10.2.} For $n\geq 1$, let $X_n$ be independent Bernoulli random variable with distribution
+\[
+\operatorname{Pr}(X_n=1)=p_n
+\qquad\text{and}\qquad
+\operatorname{Pr}(X_n=0)=1-p_n,
+\]
+where $p_n$ is a real number between $0$ and $1$.
+\begin{enumerate}
+\item Show that $(X_n)_{n\geq 1}$ converges to $0$ in probability if and only if $\lim_{n\to\infty}p_n=0$.
+\item Show that $(X_n)_{n\geq 1}$ converges to $0$ a.s. if and only if $\sum_{n=1}^{\infty}p_n$ is finite.
+\end{enumerate}
+
+\textbf{10.3.} Prove that if a sequence of random variables $(X_k)_{k\geq 1}$ converges in distribution to $X$ that satisfies $P(X=c)=1$ for some constant $c$, then $X_k\to X$ in probability.
+
+\textbf{10.4.} Suppose $(X_n)_{n=1}^{\infty}$ is a sequence of random variables and $(a_n)_{n=1}^{\infty}$ is a sequence of real numbers such that $X_n-a_n\xrightarrow{P}0$ and $\lim_{n\to\infty}a_n=c$. Deduce that $X_n\xrightarrow{P}c$.
+
+\textbf{10.5.} Suppose $X_n\to 0$ in probability. Show that if $\lvert X_n\rvert\leq Y$ for an integrable random variable $Y$ for all $n$, then $X_n\to 0$ in the mean.
+
+\textbf{10.6.} Suppose the sample space $\Omega$ is a countable set. Prove that $\mu_n\xrightarrow{D}\mu$ if and only if $\mu_n(\{x\})\to\mu(\{x\})$ as $n\to\infty$ for all $x\in\Omega$.
+
+\textbf{10.7.} Let $X$ be a discrete random variable with distribution
+\[
+P(X=-1)=P(X=1)=\frac{1}{2},
+\]
+and let $(U_n)_{n\geq 1}$ be a sequence of i.i.d. random variables uniformly distributed between $0$ and $1$. Assume that $X$ and $(U_n)_{n\geq 1}$ are independent. For $n=1,2,\ldots$, define
+\[
+Y_n=
+\begin{cases}
+X, & U_n\geq 1/n^2,\\
+\pi n, & U_n<1/n^2.
+\end{cases}
+\]
+Determine whether $(Y_n)_{n\geq 1}$ converges to $X$ (i) in probability, (ii) almost surely, (iii) in mean square.
+
+\textbf{10.8.} For each $n=1,2,3,\ldots$, let $X_n$ denote a discrete random variable whose value is uniformly distributed on
+\[
+\{k^2/n^2:k=1,2,\ldots,n\}.
+\]
+Prove that the random variables $X_n$'s converge in distribution, and find the distribution in the limit.
+
+\textbf{10.9.} Let $X_n$ be geometrically distributed random variable with pmf
+\[
+P(X_n=k)=\frac{1}{n}\left(1-\frac{1}{n}\right)^{k-1},
+\qquad k=1,2,3,\ldots.
+\]
+Show that $X_n/n$ converges to the exponential distribution with mean $1$ in distribution.
+
+\textbf{10.10.} (Slutsky Theorem) Suppose $X_n\xrightarrow{D}X$ and $Y_n\xrightarrow{D}c$ for some constant $c$. Assume that $X_n$ and $Y_n$ are defined on the same probability space for each $n$. Prove:
+\begin{enumerate}
+\item $X_n+Y_n\xrightarrow{D}X+c$.
+\item $X_nY_n\xrightarrow{D}cX$.
+\end{enumerate}
+Hint: Use Exercise 10.3 and proceed as in the proof of Theorem 10.7.

@@ -1,0 +1,273 @@
+{
+  "applied_at": "2026-05-22",
+  "changed_count": 19,
+  "changed": [
+    {
+      "task_id": "obl_prob_14_12_obligation_2",
+      "obligation_id": "obligation_2",
+      "parent_task_id": "prob_14_12",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "['prob_14_12_TightnessSetup.variable_ui_to_law_ui']",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "['prob_14_12_variable_tailExpectation_eq_law_tailExpectation', 'prob_14_12_variable_ui_to_law_ui_of_distributions', 'prob_14_12_uniformIntegrable_tight']"
+    },
+    {
+      "task_id": "obl_prob_14_12_obligation_3",
+      "obligation_id": "obligation_3",
+      "parent_task_id": "prob_14_12",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "['prob_14_12_TightnessSetup.markov_tail_uniform_integrability_to_tightness', 'prob_14_12_uniformIntegrable_tight']",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "['prob_14_12_tailExpectation_antitone', 'prob_14_12_tailMeasure_le_tailExpectation', 'prob_14_12_tailMass_lt_of_tailExpectation_bound', 'prob_14_12_uniformTailBound_of_uniformIntegrableLaws', 'prob_14_12_markov_tail_uniform_integrability_to_tightness', 'prob_14_12_uniformIntegrable_tight']"
+    },
+    {
+      "task_id": "obl_prob_14_12_obligation_5",
+      "obligation_id": "obligation_5",
+      "parent_task_id": "prob_14_12",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "['prob_14_12_MeanConvergenceSetup.uniform_integrability_probability_to_mean', 'prob_14_12_uniformIntegrable_probability_to_mean']",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "['prob_14_12_tail_eLpNorm_eq_variableTailExpectation', 'prob_14_12_uniformIntegrableVariables_to_mathlib', 'prob_14_12_tendstoInMeasure_of_convergesInProbability', 'prob_14_12_uniform_integrability_probability_to_mean', 'prob_14_12_uniformIntegrable_probability_to_mean']"
+    },
+    {
+      "task_id": "obl_prob_14_5_obligation_3",
+      "obligation_id": "obligation_3",
+      "parent_task_id": "prob_14_5",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "prob_14_5_totalVariation_to_weak"
+    },
+    {
+      "task_id": "obl_prob_14_5_obligation_4",
+      "obligation_id": "obligation_4",
+      "parent_task_id": "prob_14_5",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "prob_14_5_weak_to_singleton_masses"
+    },
+    {
+      "task_id": "obl_prob_14_5_obligation_5",
+      "obligation_id": "obligation_5",
+      "parent_task_id": "prob_14_5",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "prob_14_5_singleton_masses_to_totalVariation"
+    },
+    {
+      "task_id": "obl_prob_14_6_obligation_1",
+      "obligation_id": "obligation_1",
+      "parent_task_id": "prob_14_6",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "prob_14_6_scaled_tendstoInMeasure_zero"
+    },
+    {
+      "task_id": "obl_prob_14_6_obligation_2",
+      "obligation_id": "obligation_2",
+      "parent_task_id": "prob_14_6",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "prob_14_6"
+    },
+    {
+      "task_id": "obl_prob_14_6_obligation_3",
+      "obligation_id": "obligation_3",
+      "parent_task_id": "prob_14_6",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "prob_14_6_scaled_weak_convergence"
+    },
+    {
+      "task_id": "obl_prob_14_9_obligation_4",
+      "obligation_id": "obligation_4",
+      "parent_task_id": "prob_14_9",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "prob_14_9_limsup_preimage_closed_le; prob_14_9_mapped_laws_converge; prob_14_9_mapped_characteristic_convergence"
+    },
+    {
+      "task_id": "obl_thm_10_8_almost_sure_quantile_convergence",
+      "obligation_id": "almost_sure_quantile_convergence",
+      "parent_task_id": "thm_10_8",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "SkorokhodQuantileSupport.almost_sure_quantile_convergence",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "thm_10_8_almost_sure_lowerQuantile_tendsto"
+    },
+    {
+      "task_id": "obl_thm_10_8_quantile_event_measurability",
+      "obligation_id": "quantile_event_measurability",
+      "parent_task_id": "thm_10_8",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "SkorokhodQuantileSupport.Yn_measurable, SkorokhodQuantileSupport.Y_measurable, SkorokhodQuantileSupport.Yn_Iic, SkorokhodQuantileSupport.Y_Iic",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "thm_10_8_lowerQuantileVariable_measurable, thm_10_8_quantile_event_ae_eq_Ioc, thm_10_8_unitIntervalMeasure_lowerQuantile_event, thm_10_8_quantile_law_preservation_of_probabilityCdfOfMeasure"
+    },
+    {
+      "task_id": "obl_thm_10_8_upper_lower_inverse_comparison",
+      "obligation_id": "upper_lower_inverse_comparison",
+      "parent_task_id": "thm_10_8",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "SkorokhodQuantileSupport.upper_lower_inverse_comparison",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "thm_10_8_upper_lower_inverse_comparison"
+    },
+    {
+      "task_id": "obl_thm_13_12_candidate_satisfies_def_13_3",
+      "obligation_id": "candidate_satisfies_def_13_3",
+      "parent_task_id": "thm_13_12",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "thm_13_12_countablePartitionVersionSupport"
+    },
+    {
+      "task_id": "obl_thm_14_6_inversion_formula_identification",
+      "obligation_id": "inversion_formula_identification",
+      "parent_task_id": "thm_14_6",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "thm_14_6_LevyCompletionSpine.inversion_formula_identifies_limit",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "thm_14_6_inversion_formula_identifies_limit"
+    },
+    {
+      "task_id": "obl_thm_14_6_real_analysis_subsequence_principle",
+      "obligation_id": "real_analysis_subsequence_principle",
+      "parent_task_id": "thm_14_6",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "thm_14_6_LevyCompletionSpine.real_analysis_subsequence_principle",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "thm_14_6_real_analysis_subsequence_principle"
+    },
+    {
+      "task_id": "obl_thm_14_6_subsequence_characteristic_limit",
+      "obligation_id": "subsequence_characteristic_limit",
+      "parent_task_id": "thm_14_6",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "thm_14_6_LevyCompletionSpine.subsequence_inherits_characteristic_limit",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "thm_14_6_subsequence_inherits_characteristic_limit"
+    },
+    {
+      "task_id": "obl_thm_14_6_subsubsequence_test_integral_limit",
+      "obligation_id": "subsubsequence_test_integral_limit",
+      "parent_task_id": "thm_14_6",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "thm_14_6_everySubsequenceHasSubsubsequenceLimit; thm_14_6_LevyCompletionSpine.subsubsequence_test_integral_limit",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "thm_14_6_subsubsequence_test_integral_limit"
+    },
+    {
+      "task_id": "obl_thm_14_6_theorem_14_3_characteristic_limit",
+      "obligation_id": "theorem_14_3_characteristic_limit",
+      "parent_task_id": "thm_14_6",
+      "old": {
+        "kind": "proof_debt_support",
+        "lean_landing": "thm_14_6_LevyCompletionSpine.theorem_14_3_characteristic_limit",
+        "status": "open",
+        "review_status": "needs_review",
+        "blocking": true
+      },
+      "new_landing": "thm_14_6_theorem_14_3_characteristic_limit"
+    }
+  ],
+  "skipped_policy": "Skipped thm_14_5 child obligations because their parent landing is the aggregate thm_14_5 theorem rather than a per-step theorem-level landing.",
+  "additional_syncs": [
+    {
+      "applied_at": "2026-05-22",
+      "family": "thm_14_5",
+      "changed_task_count": 10,
+      "changed_tasks": [
+        "obl_thm_14_5_averaged_kernel_identity",
+        "obl_thm_14_5_characteristic_at_zero",
+        "obl_thm_14_5_continuity_small_u_bound",
+        "obl_thm_14_5_dominated_convergence_bound",
+        "obl_thm_14_5_finite_prefix_tail_bound",
+        "obl_thm_14_5_fubini_identity",
+        "obl_thm_14_5_inner_integral_identity",
+        "obl_thm_14_5_kernel_tail_lower_bound",
+        "obl_thm_14_5_tail_bound_by_averaged_characteristic",
+        "obl_thm_14_5_uniform_tail_bound"
+      ]
+    }
+  ]
+}
