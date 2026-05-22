@@ -94,6 +94,17 @@ multiple independently reviewable proof steps, repeated partial progress, or a
 temporary assembly scaffold that would otherwise leak into the public theorem
 interface.
 
+Use this vocabulary consistently:
+
+- Level 0 ordinary Phase2: no new task-local proof-obligation ledger.
+- Level 1 interface translation: theorem-level adapters for notation or
+  representation mismatch; not proof debt.
+- Level 2 complex obligation tracking: concrete source-step obligations and
+  task-local `proof_obligations.json`.
+- `assembly_scaffold`, `support_constructor`, and `support_package` are internal
+  proof-organization artifacts. They are not proof debt unless they expose an
+  unproved mathematical assumption as public support.
+
 ## Recommended Format For Each Debt
 
 Use this local analysis format before editing Lean:

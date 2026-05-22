@@ -39,6 +39,18 @@ When writing a candidate, prefer this order:
 Before authoring a proof-bearing task, classify it as `normal` or `complex`.
 This is a structural classification, not a list of favored theorem names.
 
+Phase2 tracking has three levels:
+
+- Level 0, ordinary Phase2: the default path. The candidate must build and pass
+  semantic review, but the runtime does not create a new task-local
+  `proof_obligations.json`.
+- Level 1, interface translation: use theorem-level lemmas to translate between
+  textbook notation and Mathlib or existing ToyApollo interfaces. This is not
+  proof debt.
+- Level 2, complex obligation tracking: create or maintain
+  `proof_obligations.json` only when the task has independently reviewable
+  proof steps that need explicit tracking.
+
 Use `complex` when a one-piece proof would hide independent work that a reviewer
 should be able to inspect separately. Common structural triggers are:
 
@@ -107,6 +119,13 @@ Scaffold hypotheses must be classified precisely:
 
 - `interface_translation`: allowed temporarily only for representation or
   notation mismatch, and it must point to the obligation it helps discharge
+- `assembly_scaffold`: an internal proof-organization object used while
+  reconstructing the theorem; it must not become a public final-theorem
+  hypothesis
+- `support_constructor`: a theorem or lemma that proves and returns a
+  `Support`/`Spine` package from theorem-level evidence
+- `support_package`: a proved internal package used to assemble fields after
+  the fields themselves have theorem-level landings
 - `proof_debt_support`: an explicit, auditable support assumption for reusable
   mathematics not yet available locally or in Mathlib; it must name the source
   obligation it supports and must not be reported as a fully closed proof

@@ -11,6 +11,18 @@ Phase2 is now explicitly split into two loops:
 
 The default path is no longer "edit draft, then let `review-pack` decide whether it builds." The build gate is explicit and happens first.
 
+Phase2 uses a three-level tracking policy:
+
+- Level 0 ordinary Phase2 is the default: build, semantic review, source proof
+  spine, interface contract, and downstream adequacy. It does not create a new
+  task-local `proof_obligations.json`.
+- Level 1 interface translation records theorem-level adapters between
+  textbook notation and Mathlib or existing ToyApollo declarations. These
+  adapters are not proof debt.
+- Level 2 complex obligation tracking is reserved for tasks whose proof needs
+  separately reviewable source-step nodes. Only this level creates or maintains
+  task-local proof-obligation ledgers for new work.
+
 ## Default Workflow
 
 For a new candidate:
@@ -23,7 +35,7 @@ For a new candidate:
 6. inspect the reviewer verdict and generated `semantic_review_result_vM.json`
 7. run `review-apply` only when you want to land the review result
 8. if review fails or is inconclusive, run `review-fix`, repair `draft.lean`, then return to `build-check`
-9. if the task lands as `COMPLETED_WITH_PROOF_DEBT`, or an older completed task has `accepted_as_proof_debt` in `proof_obligations.json`, run `debt-fix`, then `review-fix`, repair `draft.lean`, and return to `build-check`
+9. if the task lands as `COMPLETED_WITH_PROOF_DEBT`, or an older completed task has `accepted_as_proof_debt` in `proof_obligations.json` or the ledger proof-obligation summary, run `debt-fix`, then `review-fix`, repair `draft.lean`, and return to `build-check`
 
 For an existing runnable official output:
 
@@ -98,7 +110,7 @@ Rules:
 - `review-now --review-subject current` reuses the latest review request only if the runtime freshness preflight succeeds; otherwise it instructs the operator to prepare a fresh request.
 - `review-fix` requires exactly one task id and only works when there is an active `review_repair_request_vM.json`.
 - `review-fix` does not run `build-check` automatically; it seeds `draft.lean` for the next authoring pass and refreshes the repair-mode operator context.
-- `debt-fix` requires exactly one task id and works only when `proof_obligations.json` contains `accepted_as_proof_debt`.
+- `debt-fix` requires exactly one task id and works only when `proof_obligations.json` or the ledger proof-obligation summary contains `accepted_as_proof_debt`.
   It creates a normal `review_repair_request_vM.json` with `repair_trigger = proof_debt`,
   seeds from the official output or latest official snapshot, and then the normal
   `review-fix -> build-check -> review-now --review-subject candidate -> review-apply`
@@ -325,6 +337,7 @@ contain:
 - dependencies between obligation nodes
 - Lean landing plan and status for each obligation
 - scaffold hypotheses, classified as `interface_translation`,
+  `assembly_scaffold`, `support_constructor`, `support_package`,
   `proof_debt_support`, `proof_obligation`, `external_theorem_gap`, or
   `forbidden_shortcut`
 - reconstruction target showing how proved obligations assemble into the

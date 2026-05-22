@@ -2,14 +2,15 @@
   "severity_counts": {
     "allowed": 7,
     "error": 9,
-    "review": 100
+    "review": 98
   },
   "category_counts": {
     "allowed_beyond_book_obligation": 2,
-    "allowed_beyond_book_surface": 5,
-    "public_bridge_parameter_review": 1,
+    "allowed_beyond_book_surface": 3,
+    "inherited_beyond_book_surface": 2,
+    "public_interface_bridge_parameter_review": 1,
     "public_proof_package_parameter": 9,
-    "public_proof_package_parameter_in_support_proof_review": 3,
+    "public_proof_package_parameter_in_support_proof_review": 1,
     "public_proof_package_return_review": 22,
     "public_setup_parameter_review": 74
   },
@@ -528,11 +529,11 @@
       "task_id": "prob_14_11",
       "file": "ToyApollo/Output/prob_14_11.lean",
       "line": 78,
-      "category": "allowed_beyond_book_surface",
+      "category": "inherited_beyond_book_surface",
       "severity": "allowed",
       "detail": "thm_14_8_ProofBeyondBook",
       "evidence": "theorem prob_14_11_asymptoticNormality (S : prob_14_11_CouponRatioTriangularArraySetup) (H : thm_14_8_ProofBeyondBook S.theoremSetup) : Tendsto S.normalizedCouponLaws atTop (𝓝 S.standardNormalLaw) := by",
-      "action": "Keep as the only accepted proof-beyond-book exception; do not treat it as ordinary proved debt."
+      "action": "Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt."
     },
     {
       "task_id": "prob_14_11",
@@ -548,11 +549,11 @@
       "task_id": "prob_14_11",
       "file": "ToyApollo/Output/prob_14_11.lean",
       "line": 90,
-      "category": "allowed_beyond_book_surface",
+      "category": "inherited_beyond_book_surface",
       "severity": "allowed",
       "detail": "thm_14_8_ProofBeyondBook",
       "evidence": "theorem prob_14_11 (S : prob_14_11_CouponRatioTriangularArraySetup) (H : thm_14_8_ProofBeyondBook S.theoremSetup) : Tendsto S.normalizedCouponLaws atTop (𝓝 S.standardNormalLaw) ∧ Tendsto (fun n : ℕ => S.couponMean n / (S.couponTypes n : ℝ)) atTop (𝓝 (-Real.log (1 - S.r))) ∧ Tendsto (fun n : ℕ => S.theoremSetup.sn n ^ 2 / (S.couponTypes n : ℝ)) atTop (𝓝 (S.r / (1 - S.r) + Real.log (1 - S.r))) := by",
-      "action": "Keep as the only accepted proof-beyond-book exception; do not treat it as ordinary proved debt."
+      "action": "Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt."
     },
     {
       "task_id": "prob_14_11",
@@ -1008,11 +1009,11 @@
       "task_id": "thm_14_6",
       "file": "ToyApollo/Output/thm_14_6.lean",
       "line": 488,
-      "category": "public_bridge_parameter_review",
+      "category": "public_interface_bridge_parameter_review",
       "severity": "review",
       "detail": "def_14_3_IntervalMathlibTightBridge",
       "evidence": "theorem thm_14_6_of_interval_tight (Pseq : ℕ → ProbabilityMeasure ℝ) (hbridge : def_14_3_IntervalMathlibTightBridge Pseq) (hTight : def_14_3 Pseq) : thm_14_6_weaklyConvergentSubsequence Pseq :=",
-      "action": "Review whether this bridge is a genuine interface conversion or a hidden proof-debt support object."
+      "action": "Review as interface translation; bridge parameters are not proof debt unless they carry unproved mathematics."
     },
     {
       "task_id": "thm_14_7",
@@ -1092,7 +1093,7 @@
       "severity": "allowed",
       "detail": "thm_14_8_ProofBeyondBook",
       "evidence": "theorem thm_14_8_of_lindeberg (S : thm_14_8_TriangularArraySetup) (H : thm_14_8_ProofBeyondBook S) (hL : thm_14_8_LindebergCondition S) : thm_14_8_conclusion S :=",
-      "action": "Keep as the only accepted proof-beyond-book exception; do not treat it as ordinary proved debt."
+      "action": "Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt."
     },
     {
       "task_id": "thm_14_8",
@@ -1112,7 +1113,7 @@
       "severity": "allowed",
       "detail": "thm_14_8_ProofBeyondBook",
       "evidence": "theorem thm_14_8_of_lyapunov (S : thm_14_8_TriangularArraySetup) (H : thm_14_8_ProofBeyondBook S) (hY : thm_14_8_LyapunovCondition S) : thm_14_8_conclusion S :=",
-      "action": "Keep as the only accepted proof-beyond-book exception; do not treat it as ordinary proved debt."
+      "action": "Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt."
     },
     {
       "task_id": "thm_14_8",
@@ -1132,7 +1133,7 @@
       "severity": "allowed",
       "detail": "thm_14_8_ProofBeyondBook",
       "evidence": "theorem thm_14_8 (S : thm_14_8_TriangularArraySetup) (H : thm_14_8_ProofBeyondBook S) (h : thm_14_8_condition S) : thm_14_8_conclusion S := by",
-      "action": "Keep as the only accepted proof-beyond-book exception; do not treat it as ordinary proved debt."
+      "action": "Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt."
     },
     {
       "task_id": "thm_14_8",
@@ -1143,26 +1144,6 @@
       "detail": "thm_14_8_TriangularArraySetup",
       "evidence": "theorem thm_14_8 (S : thm_14_8_TriangularArraySetup) (H : thm_14_8_ProofBeyondBook S) (h : thm_14_8_condition S) : thm_14_8_conclusion S := by",
       "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
-    },
-    {
-      "task_id": "thm_9_5",
-      "file": "ToyApollo/Output/thm_9_5.lean",
-      "line": 293,
-      "category": "public_proof_package_parameter_in_support_proof_review",
-      "severity": "review",
-      "detail": "CharacteristicInversionSourceSpine",
-      "evidence": "theorem characteristicInversionLimitAssembly_of_sourceSpine (μ : Measure ℝ) [IsFiniteMeasure μ] (h_spine : CharacteristicInversionSourceSpine μ) ⦃a b : ℝ⦄ (hab : a < b) : characteristicInversionLimitAssembly μ a b := by",
-      "action": "Review as a theorem-level support-producing lemma; it should not be a task-facing final theorem."
-    },
-    {
-      "task_id": "thm_9_5",
-      "file": "ToyApollo/Output/thm_9_5.lean",
-      "line": 318,
-      "category": "public_proof_package_parameter_in_support_proof_review",
-      "severity": "review",
-      "detail": "CharacteristicInversionSourceSpine",
-      "evidence": "theorem characteristicInversionFormula_of_sourceSpine (μ : Measure ℝ) [IsFiniteMeasure μ] (h_spine : CharacteristicInversionSourceSpine μ) : CharacteristicInversionFormula μ := by",
-      "action": "Review as a theorem-level support-producing lemma; it should not be a task-facing final theorem."
     },
     {
       "task_id": "obl_thm_14_8_beyond_book_proof_obligations",

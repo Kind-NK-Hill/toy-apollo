@@ -32,9 +32,12 @@ REVIEW_ITEM_STATUSES = {"covered", "partial", "missing", "violated", "unclear", 
 PASSING_REVIEW_ITEM_STATUSES = {"covered", "not_applicable", "accepted_as_proof_debt"}
 PASSING_OBLIGATION_STATUSES = {"proved", "obsolete", "accepted_as_proof_debt"}
 SCAFFOLD_CATEGORIES = {
+    "assembly_scaffold",
     "interface_translation",
     "proof_debt_support",
     "proof_obligation",
+    "support_constructor",
+    "support_package",
     "external_theorem_gap",
     "forbidden_shortcut",
 }
@@ -178,6 +181,58 @@ def ensure_proof_obligations_file(
     path.parent.mkdir(parents=True, exist_ok=True)
     write_json(path, payload)
     return payload
+
+
+def _positive_count(value: Any) -> bool:
+    try:
+        return int(value or 0) > 0
+    except (TypeError, ValueError):
+        return False
+
+
+def should_track_proof_obligations(
+    pack_dir: Path,
+    task: dict[str, Any],
+    *,
+    current_record: dict[str, Any] | None = None,
+    tracking_level: int = 0,
+) -> bool:
+    """Return true only for Level 2 obligation tracking or existing ledgers.
+
+    Level 0 ordinary Phase2 work should not create an empty
+    `proof_obligations.json`. Existing ledgers stay readable so old packs and
+    active debt-repair flows are not orphaned.
+    """
+    if proof_obligation_path(pack_dir).exists():
+        return True
+    if str(task.get("type", "") or "").strip() == "Phase2ObligationTask":
+        return True
+    record = current_record if isinstance(current_record, dict) else {}
+    if str(record.get("type", "") or "").strip() == "Phase2ObligationTask":
+        return True
+    summary = record.get("proof_obligation_summary", {})
+    if isinstance(summary, dict):
+        total = summary.get("total_obligations", 0)
+        status_counts = summary.get("status_counts", {})
+        if _positive_count(total):
+            return True
+        if isinstance(status_counts, dict) and any(_positive_count(status_counts.get(key, 0)) for key in PASSING_OBLIGATION_STATUSES):
+            return True
+    if tracking_level < 2:
+        return False
+    return bool(classify_task_complexity(task, record).get("requires_decomposition", False))
+
+
+def maybe_ensure_proof_obligations_file(
+    pack_dir: Path,
+    task: dict[str, Any],
+    *,
+    current_record: dict[str, Any] | None = None,
+    tracking_level: int = 0,
+) -> dict[str, Any] | None:
+    if not should_track_proof_obligations(pack_dir, task, current_record=current_record, tracking_level=tracking_level):
+        return None
+    return ensure_proof_obligations_file(pack_dir, task, current_record=current_record)
 
 
 def load_proof_obligations(pack_dir: Path, task: dict[str, Any]) -> dict[str, Any]:

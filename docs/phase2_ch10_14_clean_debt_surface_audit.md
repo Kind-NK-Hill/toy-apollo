@@ -1,4 +1,4 @@
-# Chapter 9-14 Clean Proof-Debt Surface Audit
+# Chapter 10-14 Clean Proof-Debt Surface Audit
 
 This report checks every official output task in scope, not only theorem tasks.
 The only allowed proof-debt exception is `thm_14_8_ProofBeyondBook`.
@@ -8,16 +8,17 @@ The only allowed proof-debt exception is `thm_14_8_ProofBeyondBook`.
 - include mirrors: `False`
 - allowed: 7
 - error: 9
-- review: 100
+- review: 98
 - error tasks: 7
 
 ## Category Counts
 
 - allowed_beyond_book_obligation: 2
-- allowed_beyond_book_surface: 5
-- public_bridge_parameter_review: 1
+- allowed_beyond_book_surface: 3
+- inherited_beyond_book_surface: 2
+- public_interface_bridge_parameter_review: 1
 - public_proof_package_parameter: 9
-- public_proof_package_parameter_in_support_proof_review: 3
+- public_proof_package_parameter_in_support_proof_review: 1
 - public_proof_package_return_review: 22
 - public_setup_parameter_review: 74
 
@@ -75,9 +76,9 @@ The only allowed proof-debt exception is `thm_14_8_ProofBeyondBook`.
 | `review` | `public_setup_parameter_review` | `prob_14_10` | `ToyApollo/Output/prob_14_10.lean:125` | prob_14_10_BoundedMomentSetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
 | `review` | `public_setup_parameter_review` | `prob_14_10` | `ToyApollo/Output/prob_14_10.lean:133` | prob_14_10_BoundedMomentSetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
 | `review` | `public_setup_parameter_review` | `prob_14_10` | `ToyApollo/Output/prob_14_10.lean:149` | prob_14_10_BoundedMomentSetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
-| `allowed` | `allowed_beyond_book_surface` | `prob_14_11` | `ToyApollo/Output/prob_14_11.lean:78` | thm_14_8_ProofBeyondBook | Keep as the only accepted proof-beyond-book exception; do not treat it as ordinary proved debt. |
+| `allowed` | `inherited_beyond_book_surface` | `prob_14_11` | `ToyApollo/Output/prob_14_11.lean:78` | thm_14_8_ProofBeyondBook | Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt. |
 | `review` | `public_setup_parameter_review` | `prob_14_11` | `ToyApollo/Output/prob_14_11.lean:78` | prob_14_11_CouponRatioTriangularArraySetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
-| `allowed` | `allowed_beyond_book_surface` | `prob_14_11` | `ToyApollo/Output/prob_14_11.lean:90` | thm_14_8_ProofBeyondBook | Keep as the only accepted proof-beyond-book exception; do not treat it as ordinary proved debt. |
+| `allowed` | `inherited_beyond_book_surface` | `prob_14_11` | `ToyApollo/Output/prob_14_11.lean:90` | thm_14_8_ProofBeyondBook | Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt. |
 | `review` | `public_setup_parameter_review` | `prob_14_11` | `ToyApollo/Output/prob_14_11.lean:90` | prob_14_11_CouponRatioTriangularArraySetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
 | `review` | `public_setup_parameter_review` | `prob_14_12` | `ToyApollo/Output/prob_14_12.lean:247` | prob_14_12_TightnessSetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
 | `review` | `public_setup_parameter_review` | `prob_14_12` | `ToyApollo/Output/prob_14_12.lean:364` | prob_14_12_MeanConvergenceSetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
@@ -123,7 +124,7 @@ The only allowed proof-debt exception is `thm_14_8_ProofBeyondBook`.
 | `review` | `public_proof_package_return_review` | `thm_13_14` | `ToyApollo/Output/thm_13_14.lean:296` | thm_13_14_piLambdaExtensionSupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
 | `error` | `public_proof_package_parameter` | `thm_13_14` | `ToyApollo/Output/thm_13_14.lean:328` | thm_13_14_intervalFubiniSupport, thm_13_14_piLambdaExtensionSupport | Replace the public parameter with internally constructed theorem-level evidence. |
 | `error` | `public_proof_package_parameter` | `thm_13_14` | `ToyApollo/Output/thm_13_14.lean:346` | thm_13_14_intervalFubiniSupport, thm_13_14_piLambdaExtensionSupport | Replace the public parameter with internally constructed theorem-level evidence. |
-| `review` | `public_bridge_parameter_review` | `thm_14_6` | `ToyApollo/Output/thm_14_6.lean:488` | def_14_3_IntervalMathlibTightBridge | Review whether this bridge is a genuine interface conversion or a hidden proof-debt support object. |
+| `review` | `public_interface_bridge_parameter_review` | `thm_14_6` | `ToyApollo/Output/thm_14_6.lean:488` | def_14_3_IntervalMathlibTightBridge | Review as interface translation; bridge parameters are not proof debt unless they carry unproved mathematics. |
 | `review` | `public_setup_parameter_review` | `thm_14_7` | `ToyApollo/Output/thm_14_7.lean:230` | thm_14_7_LindebergLevySetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
 | `review` | `public_setup_parameter_review` | `thm_14_7` | `ToyApollo/Output/thm_14_7.lean:250` | thm_14_7_LindebergLevySetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
 | `review` | `public_setup_parameter_review` | `thm_14_7` | `ToyApollo/Output/thm_14_7.lean:259` | thm_14_7_LindebergLevySetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
@@ -131,13 +132,11 @@ The only allowed proof-debt exception is `thm_14_8_ProofBeyondBook`.
 | `review` | `public_setup_parameter_review` | `thm_14_8` | `ToyApollo/Output/thm_14_8.lean:142` | thm_14_8_TriangularArraySetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
 | `review` | `public_setup_parameter_review` | `thm_14_8` | `ToyApollo/Output/thm_14_8.lean:153` | thm_14_8_TriangularArraySetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
 | `review` | `public_setup_parameter_review` | `thm_14_8` | `ToyApollo/Output/thm_14_8.lean:159` | thm_14_8_TriangularArraySetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
-| `allowed` | `allowed_beyond_book_surface` | `thm_14_8` | `ToyApollo/Output/thm_14_8.lean:175` | thm_14_8_ProofBeyondBook | Keep as the only accepted proof-beyond-book exception; do not treat it as ordinary proved debt. |
+| `allowed` | `allowed_beyond_book_surface` | `thm_14_8` | `ToyApollo/Output/thm_14_8.lean:175` | thm_14_8_ProofBeyondBook | Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt. |
 | `review` | `public_setup_parameter_review` | `thm_14_8` | `ToyApollo/Output/thm_14_8.lean:175` | thm_14_8_TriangularArraySetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
-| `allowed` | `allowed_beyond_book_surface` | `thm_14_8` | `ToyApollo/Output/thm_14_8.lean:184` | thm_14_8_ProofBeyondBook | Keep as the only accepted proof-beyond-book exception; do not treat it as ordinary proved debt. |
+| `allowed` | `allowed_beyond_book_surface` | `thm_14_8` | `ToyApollo/Output/thm_14_8.lean:184` | thm_14_8_ProofBeyondBook | Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt. |
 | `review` | `public_setup_parameter_review` | `thm_14_8` | `ToyApollo/Output/thm_14_8.lean:184` | thm_14_8_TriangularArraySetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
-| `allowed` | `allowed_beyond_book_surface` | `thm_14_8` | `ToyApollo/Output/thm_14_8.lean:195` | thm_14_8_ProofBeyondBook | Keep as the only accepted proof-beyond-book exception; do not treat it as ordinary proved debt. |
+| `allowed` | `allowed_beyond_book_surface` | `thm_14_8` | `ToyApollo/Output/thm_14_8.lean:195` | thm_14_8_ProofBeyondBook | Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt. |
 | `review` | `public_setup_parameter_review` | `thm_14_8` | `ToyApollo/Output/thm_14_8.lean:195` | thm_14_8_TriangularArraySetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
-| `review` | `public_proof_package_parameter_in_support_proof_review` | `thm_9_5` | `ToyApollo/Output/thm_9_5.lean:293` | CharacteristicInversionSourceSpine | Review as a theorem-level support-producing lemma; it should not be a task-facing final theorem. |
-| `review` | `public_proof_package_parameter_in_support_proof_review` | `thm_9_5` | `ToyApollo/Output/thm_9_5.lean:318` | CharacteristicInversionSourceSpine | Review as a theorem-level support-producing lemma; it should not be a task-facing final theorem. |
 | `allowed` | `allowed_beyond_book_obligation` | `obl_thm_14_8_beyond_book_proof_obligations` | `phase2_prompt_packs/obl_thm_14_8_beyond_book_proof_obligations/proof_obligations.json` | beyond_book_proof_obligations | Keep visible as the only permitted beyond-book exception; do not generalize this pattern. |
 | `allowed` | `allowed_beyond_book_obligation` | `thm_14_8` | `phase2_prompt_packs/thm_14_8/proof_obligations.json` | beyond_book_proof_obligations | Keep visible as the only permitted beyond-book exception; do not generalize this pattern. |

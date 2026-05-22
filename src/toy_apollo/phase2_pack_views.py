@@ -45,7 +45,7 @@ from .phase2_pack_shared.runtime_state import (
     recommended_action_for_kind,
 )
 from .phase2_proof_obligations import (
-    ensure_proof_obligations_file,
+    maybe_ensure_proof_obligations_file,
     render_proof_obligations_markdown,
     summarize_proof_obligations,
 )
@@ -578,12 +578,24 @@ def build_semantic_review_context_markdown(task: dict[str, Any], ledger: LedgerM
     lines.append("- Pass evidence requirements:")
     for item in spine_contract["pass_evidence_requirements"]:
         lines.append(f"  - {item}")
-    proof_obligations = ensure_proof_obligations_file(
+    proof_obligations = maybe_ensure_proof_obligations_file(
         pack_dir,
         task,
         current_record=current_record if isinstance(current_record, dict) else {},
+        tracking_level=2,
     )
-    lines.extend(["", render_proof_obligations_markdown(proof_obligations, path=pack_dir / PROOF_OBLIGATIONS_FILE_NAME).rstrip()])
+    if proof_obligations is None:
+        lines.extend(
+            [
+                "",
+                "## Proof Obligation Tracking",
+                "",
+                "- Proof obligation tracking: `Level 0 ordinary Phase2 path`.",
+                "- No task-local `proof_obligations.json` is generated for this normal task.",
+            ]
+        )
+    else:
+        lines.extend(["", render_proof_obligations_markdown(proof_obligations, path=pack_dir / PROOF_OBLIGATIONS_FILE_NAME).rstrip()])
     lines.extend(["", "## Allowed Abstraction Layer", ""])
     for item in review_allowed_abstractions(task):
         lines.append(f"- {item}")
@@ -861,9 +873,9 @@ def refresh_pack_runtime_view(task: dict[str, Any], ledger: LedgerManager, setti
     metadata["latest_verify_result_file"] = str(current_record.get("latest_verify_result_file", "") or select_latest_verify_result(pack_dir) or "")
     metadata["draft_file"] = str(pack_dir / DRAFT_FILE_NAME)
     metadata["intent_contract_file"] = str(intent_contract_path(pack_dir))
-    proof_obligations = ensure_proof_obligations_file(pack_dir, task, current_record=current_record)
-    metadata["proof_obligations_file"] = str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME)
-    metadata["proof_obligation_summary"] = summarize_proof_obligations(proof_obligations)
+    proof_obligations = maybe_ensure_proof_obligations_file(pack_dir, task, current_record=current_record, tracking_level=2)
+    metadata["proof_obligations_file"] = str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME) if proof_obligations is not None else ""
+    metadata["proof_obligation_summary"] = summarize_proof_obligations(proof_obligations) if proof_obligations is not None else {}
     metadata["search_manifest_file"] = str(pack_dir / SEARCH_MANIFEST_FILE_NAME)
     metadata["attempt_history_file"] = str(pack_dir / ATTEMPT_HISTORY_FILE_NAME)
     metadata["failure_summary_file"] = str(pack_dir / FAILURE_SUMMARY_FILE_NAME)

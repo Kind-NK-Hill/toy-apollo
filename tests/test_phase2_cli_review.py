@@ -21,6 +21,48 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 runpy.run_module("src.toy_apollo.cli.app", run_name="__main__")
         self.assertEqual(exc.exception.code, 0)
 
+    def test_phase2_default_mode_is_pack(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        with patch.object(
+            sys,
+            "argv",
+            [
+                "toy-apollo",
+                "--phase",
+                "2",
+                "--tasks",
+                "thm_4_default_pack",
+            ],
+        ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock:
+            code = cli_app.main()
+
+        self.assertEqual(code, 0)
+        process_target_mock.assert_awaited_once()
+        args = process_target_mock.await_args.args[0]
+        self.assertEqual(args.phase2_mode, "pack")
+
+    def test_cli_rejects_legacy_phase2_mode(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        with patch.object(
+            sys,
+            "argv",
+            [
+                "toy-apollo",
+                "--phase",
+                "2",
+                "--phase2-mode",
+                "legacy",
+                "--tasks",
+                "thm_4_legacy",
+            ],
+        ):
+            with self.assertRaises(SystemExit) as exc:
+                cli_app.main()
+
+        self.assertEqual(exc.exception.code, 2)
+
     def test_cli_review_fix_accepts_abandon_flag(self):
         from src.toy_apollo.cli import app as cli_app
 

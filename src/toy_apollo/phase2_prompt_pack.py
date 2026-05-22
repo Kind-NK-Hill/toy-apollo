@@ -42,7 +42,7 @@ from .phase2_semantic_review import (
 )
 from .phase2_proof_obligations import (
     PROOF_OBLIGATIONS_FILE_NAME,
-    ensure_proof_obligations_file,
+    maybe_ensure_proof_obligations_file,
     render_proof_obligations_markdown,
     summarize_proof_obligations,
 )
@@ -3117,20 +3117,32 @@ def build_semantic_review_context_markdown(task: dict[str, Any], ledger: LedgerM
     latest_review_result = str(current_record.get("latest_semantic_review_result_file", "") or "")
     lines.append(f"- Last completed semantic review result: `{latest_review_result or '(none)'}`")
     obligations_record = output_owner_record if output_binding.is_obligation_task else current_record
-    proof_obligations = ensure_proof_obligations_file(
+    proof_obligations = maybe_ensure_proof_obligations_file(
         obligations_pack_dir,
         output_owner_task,
         current_record=obligations_record if isinstance(obligations_record, dict) else {},
+        tracking_level=2,
     )
-    lines.extend(
-        [
-            "",
-            render_proof_obligations_markdown(
-                proof_obligations,
-                path=obligations_pack_dir / PROOF_OBLIGATIONS_FILE_NAME,
-            ).rstrip(),
-        ]
-    )
+    if proof_obligations is None:
+        lines.extend(
+            [
+                "",
+                "## Proof Obligation Tracking",
+                "",
+                "- Proof obligation tracking: `Level 0 ordinary Phase2 path`.",
+                "- No task-local `proof_obligations.json` is generated for this normal task.",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                "",
+                render_proof_obligations_markdown(
+                    proof_obligations,
+                    path=obligations_pack_dir / PROOF_OBLIGATIONS_FILE_NAME,
+                ).rstrip(),
+            ]
+        )
     lines.extend(["", "## Allowed Abstraction Layer", ""])
     for item in _review_allowed_abstractions(task):
         lines.append(f"- {item}")
@@ -4386,12 +4398,13 @@ def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[
     target_stub_path = pack_dir / "target_stub.lean"
     draft_path = pack_dir / DRAFT_FILE_NAME
     intent_contract = ensure_intent_contract(pack_dir, task)
-    proof_obligations = ensure_proof_obligations_file(
+    proof_obligations = maybe_ensure_proof_obligations_file(
         pack_dir,
         task,
         current_record=current_record if isinstance(current_record, dict) else {},
+        tracking_level=2,
     )
-    proof_obligation_summary = summarize_proof_obligations(proof_obligations)
+    proof_obligation_summary = summarize_proof_obligations(proof_obligations) if proof_obligations is not None else {}
     search_manifest = build_search_manifest(task, ledger, settings)
     search_manifest_path = pack_dir / SEARCH_MANIFEST_FILE_NAME
     history = _ensure_attempt_history(pack_dir, task_id)
@@ -4438,7 +4451,7 @@ def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[
         "final_import_union": canonicalize_id_list(task.get("dependencies", []) + task.get("soft_imports", [])),
         "draft_file": str(draft_path),
         "intent_contract_file": str(_intent_contract_path(pack_dir)),
-        "proof_obligations_file": str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME),
+        "proof_obligations_file": str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME) if proof_obligations is not None else "",
         "proof_obligation_summary": proof_obligation_summary,
         "output_owner_task_id": output_binding.output_owner_task_id,
         "output_module": output_binding.output_module,
@@ -4480,7 +4493,7 @@ def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[
         task_id,
         pack_candidate_state=next_pack_state,
         draft_file=str(draft_path),
-        proof_obligations_file=str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME),
+        proof_obligations_file=str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME) if proof_obligations is not None else "",
         proof_obligation_summary=proof_obligation_summary,
     )
     _refresh_pack_runtime_view(task, ledger, settings, pack_dir)
