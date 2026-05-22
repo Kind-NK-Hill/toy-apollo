@@ -1,5 +1,6 @@
 import sys
 import json
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -12,26 +13,69 @@ from src.toy_apollo.phase2_proof_obligations import (  # noqa: E402
     needs_concrete_decomposition,
     normalize_proof_obligations,
     render_proof_obligations_markdown,
+    should_track_proof_obligations,
     summarize_proof_obligations,
     validate_obligation_review_for_pass,
 )
 
 
 class Phase2ProofObligationsTests(unittest.TestCase):
+    def test_level0_does_not_create_new_obligation_tracking_even_for_complex_task(self):
+        task = {
+            "block_id": "thm_10_8",
+            "type": "Theorem_with_Proof",
+            "content": "Proof. Construct the representation, split cases, pass to limits, and show convergence. " * 40,
+            "dependencies": ["def_10_4", "prob_3_5"],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            pack_dir = Path(tmp)
+            self.assertFalse(should_track_proof_obligations(pack_dir, task, tracking_level=0))
+
+    def test_level2_tracks_only_complex_or_existing_obligation_ledgers(self):
+        normal_task = {
+            "block_id": "prob_11_4",
+            "type": "Problem",
+            "content": "Show a direct calculation.",
+            "dependencies": [],
+        }
+        complex_task = {
+            "block_id": "thm_10_8",
+            "type": "Theorem_with_Proof",
+            "content": "Proof. Construct the representation, split cases, pass to limits, and show convergence. " * 40,
+            "dependencies": ["def_10_4", "prob_3_5"],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            normal_pack = root / "normal"
+            complex_pack = root / "complex"
+            legacy_pack = root / "legacy"
+            normal_pack.mkdir()
+            complex_pack.mkdir()
+            legacy_pack.mkdir()
+            (legacy_pack / "proof_obligations.json").write_text("{}", encoding="utf-8")
+
+            self.assertFalse(should_track_proof_obligations(normal_pack, normal_task, tracking_level=2))
+            self.assertTrue(should_track_proof_obligations(complex_pack, complex_task, tracking_level=2))
+            self.assertTrue(should_track_proof_obligations(legacy_pack, normal_task, tracking_level=0))
+
     def test_thm_10_8_quantile_law_debt_uses_local_bridge(self):
         lean_path = REPO_ROOT / "ToyApollo" / "Output" / "thm_10_8.lean"
+        bridge_path = REPO_ROOT / "ToyApollo" / "Output" / "thm_10_8_quantile_law.lean"
         obligations_path = REPO_ROOT / "phase2_prompt_packs" / "thm_10_8" / "proof_obligations.json"
 
         lean = lean_path.read_text(encoding="utf-8")
+        bridge = bridge_path.read_text(encoding="utf-8")
         obligations = json.loads(obligations_path.read_text(encoding="utf-8"))
         by_id = {item["id"]: item for item in obligations["obligations"]}
 
         self.assertNotIn("quantile_law_preservation :", lean)
-        self.assertIn("thm_10_8_quantile_law_preservation_seq_of_Iic", lean)
-        self.assertIn("thm_10_8_quantile_law_preservation_of_Iic", lean)
+        self.assertIn("import ToyApollo.Output.thm_10_8_quantile_law", lean)
+        self.assertIn("thm_10_8_quantile_law_preservation_of_probabilityCdfOfMeasure", lean)
+        self.assertIn("thm_10_8_quantile_law_preservation_seq_of_Iic", bridge)
+        self.assertIn("thm_10_8_quantile_law_preservation_of_Iic", bridge)
         self.assertEqual(by_id["quantile_law_preservation"]["status"], "proved")
         self.assertEqual(by_id["quantile_law_preservation"]["kind"], "source_step")
-        self.assertEqual(by_id["quantile_event_measurability"]["status"], "accepted_as_proof_debt")
+        self.assertEqual(by_id["quantile_event_measurability"]["status"], "proved")
         self.assertIn("event calculation", by_id["quantile_event_measurability"]["notes"])
 
     def test_placeholder_spine_requires_concrete_decomposition(self):
@@ -103,6 +147,38 @@ class Phase2ProofObligationsTests(unittest.TestCase):
             [item["scaffold_hypotheses"][0]["category"] for item in payload["obligations"]],
             ["interface_translation", "proof_debt_support"],
         )
+
+    def test_non_debt_scaffold_categories_are_preserved(self):
+        task = {
+            "block_id": "thm_9_5",
+            "type": "Theorem_with_Proof",
+            "content": "Proof. Assemble already proved support constructors into the final theorem.",
+        }
+        payload = normalize_proof_obligations(
+            {
+                "task_id": "thm_9_5",
+                "classification": {"requires_decomposition": True},
+                "obligations": [
+                    {
+                        "id": "assemble_internal_support",
+                        "kind": "assembly",
+                        "status": "open",
+                        "scaffold_hypotheses": [
+                            {"name": "local_spine", "category": "assembly_scaffold"},
+                            {"name": "proved_fields", "category": "support_package"},
+                            {"name": "mk_support", "category": "support_constructor"},
+                        ],
+                    }
+                ],
+            },
+            task,
+        )
+
+        categories = [
+            item["category"]
+            for item in payload["obligations"][0]["scaffold_hypotheses"]
+        ]
+        self.assertEqual(categories, ["assembly_scaffold", "support_package", "support_constructor"])
 
     def test_accepted_proof_debt_support_is_auditable_and_nonblocking(self):
         task = {

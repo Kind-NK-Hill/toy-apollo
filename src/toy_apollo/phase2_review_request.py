@@ -29,7 +29,7 @@ from .phase2_semantic_review import (
 from .phase2_output_binding import Phase2OutputBinding, resolve_phase2_output_binding
 from .phase2_proof_obligations import (
     PROOF_OBLIGATIONS_FILE_NAME,
-    ensure_proof_obligations_file,
+    maybe_ensure_proof_obligations_file,
     summarize_proof_obligations,
 )
 
@@ -224,13 +224,19 @@ def build_semantic_review_basis(
         else task
     )
     current_record = ledger.ledger.get("tasks", {}).get(task_id, {})
-    proof_obligations = ensure_proof_obligations_file(
+    proof_obligations = maybe_ensure_proof_obligations_file(
         obligations_pack_dir,
         obligations_task,
         current_record=ledger.ledger.get("tasks", {}).get(output_binding.output_owner_task_id, {})
         if output_binding.is_obligation_task
         else current_record if isinstance(current_record, dict) else {},
+        tracking_level=2,
     )
+    proof_obligations_file = (
+        output_binding.proof_obligations_file.as_posix()
+        if output_binding.is_obligation_task
+        else str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME)
+    ) if proof_obligations is not None else ""
     downstream = sorted(
         _collect_direct_downstream_consumers(output_binding.output_owner_task_id, settings),
         key=lambda item: (
@@ -258,11 +264,9 @@ def build_semantic_review_basis(
         "focus_obligation_ids": output_binding.focus_obligation_ids,
         "direct_downstream_consumers": downstream,
         "spine_review_contract": review_spine_contract(task),
-        "proof_obligations_file": output_binding.proof_obligations_file.as_posix()
-        if output_binding.is_obligation_task
-        else str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME),
-        "proof_obligations": proof_obligations,
-        "proof_obligation_summary": summarize_proof_obligations(proof_obligations),
+        "proof_obligations_file": proof_obligations_file,
+        "proof_obligations": proof_obligations if proof_obligations is not None else {},
+        "proof_obligation_summary": summarize_proof_obligations(proof_obligations) if proof_obligations is not None else {},
         "allowed_abstractions": review_allowed_abstractions(task),
         "forbidden_weakenings": review_forbidden_weakenings(task),
         "historical_shortcut_risks": review_history_risks(task_id),

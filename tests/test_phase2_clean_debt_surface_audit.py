@@ -112,6 +112,95 @@ theorem tail_from_sixth (h : SixthMomentSupport) : TailSummabilitySupport := by
                 "public_proof_package_parameter_in_support_proof_review",
             )
 
+    def test_bridge_parameter_is_interface_review_not_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            output = root / "ToyApollo" / "Output"
+            output.mkdir(parents=True)
+            (root / "phase2_prompt_packs").mkdir()
+            (output / "thm_14_6.lean").write_text(
+                """
+structure SomeMathlibBridge where
+  ok : True
+
+theorem thm_14_6 (B : SomeMathlibBridge) : True := by
+  exact B.ok
+""",
+                encoding="utf-8",
+            )
+
+            payload = findings_payload(scan_public_surface(root, 10, 14))
+
+            self.assertNotIn("error", payload["severity_counts"])
+            self.assertEqual(payload["severity_counts"]["review"], 1)
+            self.assertEqual(
+                payload["findings"][0]["category"],
+                "public_interface_bridge_parameter_review",
+            )
+            self.assertIn("interface translation", payload["findings"][0]["action"])
+
+    def test_non_thm_14_8_beyond_book_obligation_is_not_allowed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            output = root / "ToyApollo" / "Output"
+            packs = root / "phase2_prompt_packs" / "prob_14_11"
+            output.mkdir(parents=True)
+            packs.mkdir(parents=True)
+            (output / "prob_14_11.lean").write_text(
+                """
+structure prob_14_11_ProofBeyondBook where
+  ok : True
+""",
+                encoding="utf-8",
+            )
+            (packs / "proof_obligations.json").write_text(
+                json.dumps(
+                    {
+                        "task_id": "prob_14_11",
+                        "obligations": [
+                            {
+                                "id": "beyond_book_proof_obligations",
+                                "kind": "proof_debt_support",
+                                "status": "accepted_as_proof_debt",
+                                "review_status": "accepted",
+                                "lean_landing": "prob_14_11_ProofBeyondBook",
+                            }
+                        ],
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
+            payload = findings_payload(scan_obligations(root, 10, 14))
+
+            self.assertEqual(payload["severity_counts"]["error"], 1)
+            self.assertNotIn("allowed", payload["severity_counts"])
+            self.assertEqual(payload["findings"][0]["category"], "non_exception_accepted_debt")
+
+    def test_thm_14_8_beyond_book_parameter_is_allowed_for_direct_downstream(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            output = root / "ToyApollo" / "Output"
+            output.mkdir(parents=True)
+            (root / "phase2_prompt_packs").mkdir()
+            (output / "prob_14_11.lean").write_text(
+                """
+structure thm_14_8_ProofBeyondBook where
+  ok : True
+
+theorem prob_14_11 (H : thm_14_8_ProofBeyondBook) : True := by
+  exact H.ok
+""",
+                encoding="utf-8",
+            )
+
+            payload = findings_payload(scan_public_surface(root, 10, 14))
+
+            self.assertNotIn("error", payload["severity_counts"])
+            self.assertEqual(payload["severity_counts"]["allowed"], 1)
+            self.assertEqual(payload["findings"][0]["category"], "inherited_beyond_book_surface")
+
     def test_verification_parameter_is_treated_as_public_proof_package(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

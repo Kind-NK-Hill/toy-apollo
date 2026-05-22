@@ -173,18 +173,16 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertTrue((pack_dir / "semantic_review_request.json").exists())
             self.assertTrue((pack_dir / "semantic_review_input.json").exists())
             self.assertTrue((pack_dir / "semantic_review_prompt.md").exists())
-            self.assertTrue((pack_dir / "proof_obligations.json").exists())
+            self.assertFalse((pack_dir / "proof_obligations.json").exists())
             self.assertFalse(output_path.exists())
-
-            obligation_ledger = json.loads((pack_dir / "proof_obligations.json").read_text(encoding="utf-8"))
-            self.assertEqual(obligation_ledger["schema_version"], "phase2.proof_obligations.v1")
-            self.assertEqual(obligation_ledger["task_id"], task_id)
 
             review_input = json.loads((pack_dir / "semantic_review_input_v1.json").read_text(encoding="utf-8"))
             self.assertEqual(review_input["mode"], "review-pack")
             self.assertEqual(review_input["prompt_version"], SEMANTIC_REVIEW_PROMPT_VERSION)
             self.assertEqual(review_input["rubric_version"], SEMANTIC_REVIEW_RUBRIC_VERSION)
-            self.assertEqual(review_input["review_basis"]["proof_obligations"]["task_id"], task_id)
+            self.assertEqual(review_input["review_basis"]["proof_obligations"], {})
+            self.assertEqual(review_input["review_basis"]["proof_obligations_file"], "")
+            self.assertEqual(review_input["review_basis"]["proof_obligation_summary"], {})
 
             review_template = json.loads((pack_dir / "semantic_review_result_template_v1.json").read_text(encoding="utf-8"))
             schema_hints = review_template["reviewer_schema_hints"]
@@ -205,7 +203,55 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertIn("forbidden_weakenings entries use status not_present/present/not_applicable", review_prompt)
 
             review_context = (pack_dir / "semantic_review_context_v1.md").read_text(encoding="utf-8")
-            self.assertIn("Proof Obligation Ledger", review_context)
+            self.assertIn("Proof obligation tracking: `Level 0", review_context)
+            self.assertNotIn("## Proof Obligation Ledger", review_context)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_complex_pack_still_creates_proof_obligations_file(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_complex_obligations"
+        try:
+            self._clean_root(root)
+            plans_dir = root / "plans"
+            plans_dir.mkdir(parents=True, exist_ok=True)
+            task_id = "thm_10_8"
+            complex_content = "Proof. Construct the representation, split the cases, pass to the limit, and show convergence. " * 40
+            (plans_dir / "chapter10-problems_plan.json").write_text(
+                json.dumps(
+                    [
+                        {
+                            "block_id": task_id,
+                            "type": "Theorem_with_Proof",
+                            "title": "Complex proof",
+                            "content": complex_content,
+                            "dependencies": ["def_10_4", "prob_3_5"],
+                        }
+                    ],
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+            ledger = LedgerManager(ledger_path=str(root / "project_ledger.json"))
+            ledger.add_or_update_task(
+                {
+                    "block_id": task_id,
+                    "type": "Theorem_with_Proof",
+                    "title": "Complex proof",
+                    "content": complex_content,
+                    "source_plan": "chapter10-problems",
+                    "dependencies": ["def_10_4", "prob_3_5"],
+                }
+            )
+            settings = self._make_settings(root, plans_dir)
+
+            pack_dir = write_prompt_pack(task_id, ledger, settings)
+
+            obligations_path = pack_dir / "proof_obligations.json"
+            self.assertTrue(obligations_path.exists())
+            obligation_ledger = json.loads(obligations_path.read_text(encoding="utf-8"))
+            self.assertEqual(obligation_ledger["task_id"], task_id)
+            self.assertTrue(obligation_ledger["classification"]["requires_decomposition"])
+            self.assertEqual(obligation_ledger["obligations"][0]["id"], "source_proof_spine")
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

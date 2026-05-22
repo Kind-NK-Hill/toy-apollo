@@ -43,6 +43,7 @@ BRIDGE_RE = re.compile(r"\b" + LEAN_AUDIT_NAME_PREFIX + r"Bridge\b")
 BRIDGE_PARAM_RE = re.compile(
     r"\([^)]*:\s*[^)]*\b" + LEAN_AUDIT_NAME_PREFIX + r"Bridge\b[^)]*\)"
 )
+ALLOWED_PROOF_BEYOND_BOOK_TASK = "thm_14_8"
 ALLOWED_PROOF_BEYOND_BOOK = "thm_14_8_ProofBeyondBook"
 OPEN_STATUSES = {"open", "in_progress", "partial", "blocked"}
 PASSING_STATUSES = {"proved", "obsolete", "accepted_as_proof_debt"}
@@ -275,7 +276,7 @@ def declaration_headers(source: str) -> Iterable[tuple[int, str]]:
         index = max(cursor + 1, index + 1)
 
 
-def is_allowed_beyond_book(header_or_landing: str) -> bool:
+def is_allowed_beyond_book(header_or_landing: str, task_id: str = "") -> bool:
     return ALLOWED_PROOF_BEYOND_BOOK in header_or_landing
 
 
@@ -299,16 +300,21 @@ def scan_public_surface(
             return_packages = sorted(set(PROOF_PACKAGE_RE.findall(header_without_params)))
             if packages:
                 if all(package == ALLOWED_PROOF_BEYOND_BOOK for package in packages):
+                    category = (
+                        "allowed_beyond_book_surface"
+                        if task_id == ALLOWED_PROOF_BEYOND_BOOK_TASK
+                        else "inherited_beyond_book_surface"
+                    )
                     findings.append(
                         Finding(
                             task_id=task_id,
                             file=rel(path, root),
                             line=line,
-                            category="allowed_beyond_book_surface",
+                            category=category,
                             severity="allowed",
                             detail=", ".join(packages),
                             evidence=header[:500],
-                            action="Keep as the only accepted proof-beyond-book exception; do not treat it as ordinary proved debt.",
+                            action="Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt.",
                         )
                     )
                 elif return_packages:
@@ -358,11 +364,11 @@ def scan_public_surface(
                         task_id=task_id,
                         file=rel(path, root),
                         line=line,
-                        category="public_bridge_parameter_review",
+                        category="public_interface_bridge_parameter_review",
                         severity="review",
                         detail=", ".join(bridges),
                         evidence=header[:500],
-                        action="Review whether this bridge is a genuine interface conversion or a hidden proof-debt support object.",
+                        action="Review as interface translation; bridge parameters are not proof debt unless they carry unproved mathematics.",
                     )
                 )
             setup_params = sorted(set(SETUP_RE.findall(" ".join(SETUP_PARAM_RE.findall(header)))))
@@ -452,7 +458,7 @@ def scan_obligations(root: Path, start_chapter: int, end_chapter: int) -> list[F
                     )
                 continue
             if status == "proved":
-                if is_allowed_beyond_book(landing) or "beyond_book" in obligation_id:
+                if is_allowed_beyond_book(landing, task_id):
                     findings.append(
                         Finding(
                             task_id=task_id,
@@ -517,7 +523,7 @@ def scan_obligations(root: Path, start_chapter: int, end_chapter: int) -> list[F
                             action="Replace the nonproof landing with theorem-level evidence before marking the obligation proved.",
                         )
                     )
-            elif status == "accepted_as_proof_debt" and not (is_allowed_beyond_book(landing) or "beyond_book" in obligation_id):
+            elif status == "accepted_as_proof_debt" and not is_allowed_beyond_book(landing, task_id):
                 findings.append(
                     Finding(
                         task_id=task_id,
@@ -530,7 +536,7 @@ def scan_obligations(root: Path, start_chapter: int, end_chapter: int) -> list[F
                         action="Promote this to an explicit task to clear; only ProofBeyondBook may remain accepted.",
                     )
                 )
-            elif status == "accepted_as_proof_debt" and (is_allowed_beyond_book(landing) or "beyond_book" in obligation_id):
+            elif status == "accepted_as_proof_debt" and is_allowed_beyond_book(landing, task_id):
                 findings.append(
                     Finding(
                         task_id=task_id,
@@ -628,7 +634,7 @@ def apply_status_fixes(root: Path, start_chapter: int, end_chapter: int) -> dict
             obligation_id = str(obligation.get("id", "") or "")
             status = str(obligation.get("status", "") or "")
             landing = str(obligation.get("lean_landing", "") or obligation.get("landing", "") or "")
-            is_beyond = is_allowed_beyond_book(landing) or "beyond_book" in obligation_id
+            is_beyond = is_allowed_beyond_book(landing, task_id)
             old = {
                 "status": status,
                 "review_status": str(obligation.get("review_status", "") or ""),
