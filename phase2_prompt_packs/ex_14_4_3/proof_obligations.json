@@ -1,0 +1,140 @@
+{
+  "schema_version": "phase2.proof_obligations.v1",
+  "task_id": "ex_14_4_3",
+  "generated_at": "2026-05-18T07:22:06.874292Z",
+  "classification": {
+    "requires_decomposition": true,
+    "reason": "complex proof: prove independently reviewable obligations before final assembly",
+    "evidence": [
+      "source text or task type is proof-bearing",
+      "task has 2 declared upstream dependencies",
+      "source text is long enough to hide multiple obligations",
+      "source text has multiple paragraphs or proof lines"
+    ],
+    "dependency_count": 2,
+    "source_length": 3952,
+    "structural_operation_count": 1
+  },
+  "obligations": [
+    {
+      "id": "coupon_geometric_decomposition",
+      "title": "Coupon collection as sum of independent geometric waits",
+      "kind": "source_step",
+      "source_ref": "T_{n,m}=X_{n,0}+...+X_{n,m-1}; X_{n,i} is geometric with success probability p_{n,i}=1-i/n; X_{n,0}=1.",
+      "depends_on": [],
+      "lean_landing": "ex_14_4_3_CouponTriangularArraySetup; ex_14_4_3_successProbability; import ToyApollo.Output.prob_6_3",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "Reuses the Chapter 6 coupon collector formalization rather than rebuilding geometric waiting times; the setup fields are concrete proof obligations, not arbitrary Prop placeholders.",
+      "last_review_evidence": "The candidate imports prob_6_3 and uses Prob63Support.stageSuccessProb, couponCollectorValueReal, and concrete setup fields for stage laws, independence, and sum-law representation."
+    },
+    {
+      "id": "geometric_moment_formulas",
+      "title": "MGF, mean, variance, and centered fourth moment",
+      "kind": "source_step",
+      "source_ref": "E[e^{tX_{n,i}}]=p_{n,i}e^t/(1-(1-p_{n,i})e^t), E[X_{n,i}]=1/p_{n,i}, Var=(1-p_{n,i})/p_{n,i}^2, and the displayed centered fourth moment.",
+      "depends_on": [
+        "coupon_geometric_decomposition"
+      ],
+      "lean_landing": "ex_14_4_3_geometricMgf; ex_14_4_3_geometricMean; ex_14_4_3_geometricVariance; ex_14_4_3_geometricCenteredFourthMoment; ex_14_4_3_GeometricMomentFormulas",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The moment formulas are explicit and packaged for the Lyapunov verification.",
+      "last_review_evidence": "MGF, mean, variance, centered fourth moment, and GeometricMomentFormulas are all explicit."
+    },
+    {
+      "id": "lyapunov_fourth_moment_bound",
+      "title": "Lyapunov delta=2 verification by fourth-moment/Riemann bounds",
+      "kind": "proof_debt_support",
+      "source_ref": "Use delta=2, bound the fourth-moment sum by the Riemann integral expression, show s_n^2 ~ n(1-log 2), and conclude the Lyapunov condition.",
+      "depends_on": [
+        "geometric_moment_formulas"
+      ],
+      "lean_landing": "ex_14_4_3_LyapunovVerification",
+      "status": "open",
+      "review_status": "needs_review",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The analytic Riemann-sum details are named in the verification structure, with the final LyapunovCondition field used downstream.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support lands only on non-theorem declarations.",
+      "last_review_evidence": "Discharged by ledger obligation task obl_ex_14_4_3_lyapunov_fourth_moment_bound.",
+      "source_output_alignment": {
+        "audited_at": "2026-05-19",
+        "audit_class": "C_support_predicate_or_structure_only",
+        "family": "tail/moment/ui",
+        "existing_local_declarations": [
+          {
+            "name": "ex_14_4_3_LyapunovVerification",
+            "kind": "structure",
+            "file": "ToyApollo/Output/ex_14_4_3.lean",
+            "line": 348
+          }
+        ],
+        "missing_landing_names": [],
+        "next_action": "Do not count this as proof; replace the support predicate, structure, or field with theorem-level evidence.",
+        "manual_review_required": false
+      },
+      "ledger_task_id": "obl_ex_14_4_3_lyapunov_fourth_moment_bound",
+      "obligation_fingerprint": "24e8ef50fb7f579eac8e871464f4e617c193be502b634b0b7b03b00e024a1718",
+      "discharged_by_task": "obl_ex_14_4_3_lyapunov_fourth_moment_bound"
+    },
+    {
+      "id": "apply_triangular_array_clt",
+      "title": "Apply Theorem 14.8 to normalized coupon collection time",
+      "kind": "source_step",
+      "source_ref": "Apply Theorem 14.8 to conclude (T_{n,(n+1)/2}-n log 2)/sqrt(n(1-log 2)) -> N(0,1).",
+      "depends_on": [
+        "lyapunov_fourth_moment_bound"
+      ],
+      "lean_landing": "ex_14_4_3_asymptoticNormality; ex_14_4_3",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The final theorem invokes thm_14_8 through the Lyapunov branch. It explicitly inherits the sole allowed beyond-book exception through H : thm_14_8_ProofBeyondBook C.theoremSetup; the non-beyond-book Lyapunov verification remains a separate open obligation.",
+      "last_review_evidence": "ex_14_4_3_asymptoticNormality applies thm_14_8 through Or.inr hLyapunov, where hLyapunov : thm_14_8_LyapunovCondition C.theoremSetup is an explicit public theorem parameter."
+    }
+  ],
+  "scaffold_hypotheses": [],
+  "review_history": [
+    {
+      "reviewed_at": "2026-05-18T07:33:33.367864Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All blocking obligations have Lean landing points. The Riemann-sum and Lyapunov proof details are accepted as named proof debt because they are explicitly represented and then consumed by the theorem.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-20T13:27:45.368993Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "Accepted on a fresh review basis under the user Tao-style staging principle.",
+      "open_blockers": []
+    }
+  ],
+  "last_reviewed_at": "2026-05-20T13:27:45.368993Z",
+  "source_output_alignment_audit": {
+    "audited_at": "2026-05-19",
+    "accepted_debt_count": 1,
+    "status": "metadata_attached"
+  },
+  "clean_debt_surface_audit": {
+    "applied_at": "2026-05-21T02:15:59.912339Z",
+    "status": "status_fixes_applied",
+    "changes": [
+      {
+        "obligation_id": "lyapunov_fourth_moment_bound",
+        "action": "proved_to_open",
+        "reason": "proved proof_debt_support lands only on non-theorem declarations",
+        "old": {
+          "status": "proved",
+          "review_status": "accepted",
+          "lean_landing": "ex_14_4_3_LyapunovVerification"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,158 @@
+{
+  "schema_version": "phase2.proof_obligations.v1",
+  "task_id": "prob_11_10",
+  "generated_at": "2026-05-17T22:38:19.192492Z",
+  "classification": {
+    "requires_decomposition": false,
+    "reason": "normal proof: no structural decomposition trigger was detected",
+    "evidence": [],
+    "dependency_count": 2,
+    "source_length": 118,
+    "structural_operation_count": 1
+  },
+  "obligations": [
+    {
+      "id": "continuous_cdf_interface",
+      "description": "Record the simplifying assumption that the limit cdf F is continuous, together with the monotonicity inherent in being a cdf.",
+      "source_proof_spine": "Assume the limit cdf F(x) is continuous.",
+      "expected_formal_items": [
+        "prob_11_10_continuousCDF"
+      ],
+      "title": "continuous_cdf_interface",
+      "kind": "source_step",
+      "source_ref": "",
+      "depends_on": [],
+      "lean_landing": "",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "",
+      "last_review_evidence": "Continuity and cdf monotonicity are represented."
+    },
+    {
+      "id": "empirical_cdf_objects",
+      "description": "Use the existing empirical-cdf estimator and define the uniform sup-norm deviation.",
+      "source_proof_spine": "Glivenko-Cantelli concerns sup_x |F_n(x)-F(x)|.",
+      "expected_formal_items": [
+        "prob_11_10_uniformCDFDeviation",
+        "empiricalCDFAt"
+      ],
+      "title": "empirical_cdf_objects",
+      "kind": "source_step",
+      "source_ref": "",
+      "depends_on": [
+        "continuous_cdf_interface"
+      ],
+      "lean_landing": "",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "",
+      "last_review_evidence": "The uniform sup-norm error is the target random variable."
+    },
+    {
+      "id": "pointwise_slln",
+      "description": "Apply the fixed-point empirical-cdf strong law from Example 11.5.1 at each real x.",
+      "source_proof_spine": "For each fixed x, F_n(x) converges almost surely to F(x).",
+      "expected_formal_items": [
+        "prob_11_10_pointwiseIndicatorAssumptions",
+        "prob_11_10_pointwise"
+      ],
+      "title": "pointwise_slln",
+      "kind": "source_step",
+      "source_ref": "",
+      "depends_on": [
+        "empirical_cdf_objects"
+      ],
+      "lean_landing": "",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "This reuses ex_11_5_1 rather than re-proving the strong law.",
+      "last_review_evidence": "The proof reuses ex_11_5_1 rather than rebuilding the pointwise empirical-cdf strong law."
+    },
+    {
+      "id": "continuous_grid_uniformization",
+      "description": "Use continuity and monotonicity of the cdf to pass from finitely many grid points to uniform convergence over all real x.",
+      "source_proof_spine": "Choose a finite grid where F changes by small increments and sandwich F_n(x)-F(x) between neighboring grid-point errors.",
+      "expected_formal_items": [
+        "prob_11_10_uniformizationSupport",
+        "prob_11_10"
+      ],
+      "title": "continuous_grid_uniformization",
+      "kind": "proof_debt_support",
+      "source_ref": "",
+      "depends_on": [
+        "pointwise_slln"
+      ],
+      "lean_landing": "",
+      "status": "open",
+      "review_status": "needs_review",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The local library has the pointwise empirical-cdf theorem but not the full finite-grid Glivenko-Cantelli uniformization argument.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.\n[clean-debt-public-surface] 2026-05-22: public theorem no longer requires prob_11_10_uniformizationSupport; it now exposes the explicit implication from continuous CDF plus pointwise a.s. convergence to uniform a.s. convergence.\n[debt-recheck 2026-05-22] Still open. `ex_11_5_1` supplies only fixed-x almost-sure convergence. The explicit public uniformization implication asks for an upgrade from pointwise convergence plus `Monotone F ∧ Continuous F`; this is not enough for the textbook finite-grid proof. The missing formal inputs are: cdf tail limits/tightness (`F -> 0` at -infinity and `F -> 1` at +infinity, or equivalent compact truncation), pathwise monotonicity of each empirical cdf in x, finite-grid/countable-intersection assembly of the a.s. pointwise events, measurability/boundedness of the sup-deviation random variables, and a theorem-level sandwich from grid errors to the global `sSup` deviation. In fact the support premise as stated is too weak: pointwise convergence of empirical cdfs to the continuous monotone zero function can occur when samples drift to +infinity, while the sup deviation stays 1. This rules out proving the current public implication without strengthening it to the actual textbook cdf/iid/tail setting.",
+      "last_review_evidence": "Blocked: no theorem-level continuous-grid uniformization landing exists, and the current support interface is mathematically too weak for the desired implication.",
+      "source_output_alignment": {
+        "audited_at": "2026-05-19",
+        "audit_class": "D_no_landing_search_required",
+        "family": "tail/moment/ui",
+        "existing_local_declarations": [],
+        "missing_landing_names": [],
+        "next_action": "Re-open the source and ToyApollo/Output search, then assign a real Lean landing before repair.",
+        "manual_review_required": false
+      },
+      "ledger_task_id": "obl_prob_11_10_continuous_grid_uniformization",
+      "obligation_fingerprint": "bd737a934fd532aaab1de3d730c2b002e390c0e3460601820bba02cccbfd4cc3",
+      "discharged_by_task": ""
+    }
+  ],
+  "scaffold_hypotheses": [],
+  "review_history": [
+    {
+      "reviewed_at": "2026-05-17T22:44:04.269947Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All source obligations are represented, with the continuous-grid upgrade accepted as explicit support debt.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-17T22:47:39.856608Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All source obligations are represented, with the continuous-grid upgrade accepted as explicit support debt.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-20T10:57:15.104364Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "The focused child is accepted as a named theorem-level or support-interface stage with an explicit downstream bridge. Hard calculations that remain as support predicates are not treated as hidden facts.",
+      "open_blockers": []
+    }
+  ],
+  "last_reviewed_at": "2026-05-20T10:57:15.104364Z",
+  "source_output_alignment_audit": {
+    "audited_at": "2026-05-19",
+    "accepted_debt_count": 1,
+    "status": "metadata_attached"
+  },
+  "clean_debt_surface_audit": {
+    "applied_at": "2026-05-21T02:15:59.912339Z",
+    "status": "status_fixes_applied",
+    "changes": [
+      {
+        "obligation_id": "continuous_grid_uniformization",
+        "action": "proved_to_open",
+        "reason": "proved proof_debt_support has no theorem-level landing",
+        "old": {
+          "status": "proved",
+          "review_status": "accepted",
+          "lean_landing": ""
+        }
+      }
+    ]
+  }
+}

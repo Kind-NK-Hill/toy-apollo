@@ -6,18 +6,16 @@ The only allowed proof-debt exception is `thm_14_8_ProofBeyondBook`.
 ## Summary
 
 - include mirrors: `False`
-- allowed: 7
-- error: 9
+- allowed: 9
 - review: 98
-- error tasks: 7
+- error tasks: 0
 
 ## Category Counts
 
 - allowed_beyond_book_obligation: 2
 - allowed_beyond_book_surface: 3
-- inherited_beyond_book_surface: 2
+- inherited_beyond_book_surface: 4
 - public_interface_bridge_parameter_review: 1
-- public_proof_package_parameter: 9
 - public_proof_package_parameter_in_support_proof_review: 1
 - public_proof_package_return_review: 22
 - public_setup_parameter_review: 74
@@ -46,26 +44,22 @@ The only allowed proof-debt exception is `thm_14_8_ProofBeyondBook`.
 | `review` | `public_setup_parameter_review` | `ex_14_4_2` | `ToyApollo/Output/ex_14_4_2.lean:152` | ex_14_4_2_PoissonNormalSetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
 | `review` | `public_setup_parameter_review` | `ex_14_4_2` | `ToyApollo/Output/ex_14_4_2.lean:160` | ex_14_4_2_PoissonNormalSetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
 | `review` | `public_proof_package_return_review` | `ex_14_4_3` | `ToyApollo/Output/ex_14_4_3.lean:275` | Prob63Support | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
-| `error` | `public_proof_package_parameter` | `ex_14_4_3` | `ToyApollo/Output/ex_14_4_3.lean:376` | ex_14_4_3_LyapunovVerification | Replace the public parameter with internally constructed theorem-level evidence. |
+| `allowed` | `inherited_beyond_book_surface` | `ex_14_4_3` | `ToyApollo/Output/ex_14_4_3.lean:376` | thm_14_8_ProofBeyondBook | Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt. |
 | `review` | `public_setup_parameter_review` | `ex_14_4_3` | `ToyApollo/Output/ex_14_4_3.lean:376` | ex_14_4_3_CouponTriangularArraySetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
-| `error` | `public_proof_package_parameter` | `ex_14_4_3` | `ToyApollo/Output/ex_14_4_3.lean:390` | ex_14_4_3_LyapunovVerification | Replace the public parameter with internally constructed theorem-level evidence. |
+| `allowed` | `inherited_beyond_book_surface` | `ex_14_4_3` | `ToyApollo/Output/ex_14_4_3.lean:390` | thm_14_8_ProofBeyondBook | Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt. |
 | `review` | `public_setup_parameter_review` | `ex_14_4_3` | `ToyApollo/Output/ex_14_4_3.lean:390` | ex_14_4_3_CouponTriangularArraySetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
 | `review` | `public_proof_package_return_review` | `prob_11_10` | `ToyApollo/Output/prob_11_10.lean:47` | prob_11_10_uniformizationSupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
-| `error` | `public_proof_package_parameter` | `prob_11_10` | `ToyApollo/Output/prob_11_10.lean:65` | prob_11_10_uniformizationSupport | Replace the public parameter with internally constructed theorem-level evidence. |
 | `review` | `public_proof_package_return_review` | `prob_11_5` | `ToyApollo/Output/prob_11_5.lean:42` | prob_11_5_tailSummabilitySupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
 | `review` | `public_proof_package_return_review` | `prob_11_5` | `ToyApollo/Output/prob_11_5.lean:126` | prob_11_5_tailSummabilitySupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
 | `review` | `public_proof_package_return_review` | `prob_11_6` | `ToyApollo/Output/prob_11_6.lean:54` | prob_11_6_sixthMomentSupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
 | `review` | `public_proof_package_return_review` | `prob_11_6` | `ToyApollo/Output/prob_11_6.lean:62` | prob_11_6_tailSummabilitySupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
 | `review` | `public_proof_package_parameter_in_support_proof_review` | `prob_11_6` | `ToyApollo/Output/prob_11_6.lean:144` | prob_11_6_sixthMomentSupport | Review as a theorem-level support-producing lemma; it should not be a task-facing final theorem. |
-| `error` | `public_proof_package_parameter` | `prob_11_6` | `ToyApollo/Output/prob_11_6.lean:197` | prob_11_6_sixthMomentSupport | Replace the public parameter with internally constructed theorem-level evidence. |
 | `review` | `public_proof_package_return_review` | `prob_11_7` | `ToyApollo/Output/prob_11_7.lean:54` | prob_11_7_sampleMeanVarianceSupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
 | `review` | `public_proof_package_return_review` | `prob_11_7` | `ToyApollo/Output/prob_11_7.lean:472` | prob_11_7_sampleMeanVarianceSupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
 | `review` | `public_proof_package_return_review` | `prob_11_8` | `ToyApollo/Output/prob_11_8.lean:40` | prob_11_8_covarianceSupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
-| `error` | `public_proof_package_parameter` | `prob_11_8` | `ToyApollo/Output/prob_11_8.lean:46` | prob_11_8_covarianceSupport | Replace the public parameter with internally constructed theorem-level evidence. |
 | `review` | `public_proof_package_return_review` | `prob_11_9` | `ToyApollo/Output/prob_11_9.lean:50` | prob_11_9_occupancyMomentSupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
 | `review` | `public_proof_package_return_review` | `prob_11_9` | `ToyApollo/Output/prob_11_9.lean:61` | prob_11_9_meanSquareELpNormSupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
 | `review` | `public_proof_package_return_review` | `prob_11_9` | `ToyApollo/Output/prob_11_9.lean:106` | prob_11_9_meanSquareELpNormSupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
-| `error` | `public_proof_package_parameter` | `prob_11_9` | `ToyApollo/Output/prob_11_9.lean:145` | prob_11_9_occupancyMomentSupport | Replace the public parameter with internally constructed theorem-level evidence. |
 | `review` | `public_setup_parameter_review` | `prob_14_1` | `ToyApollo/Output/prob_14_1.lean:228` | prob_14_1_PolyaUrnBetaSetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
 | `review` | `public_setup_parameter_review` | `prob_14_1` | `ToyApollo/Output/prob_14_1.lean:270` | prob_14_1_PolyaUrnBetaSetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
 | `review` | `public_setup_parameter_review` | `prob_14_1` | `ToyApollo/Output/prob_14_1.lean:278` | prob_14_1_PolyaUrnBetaSetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
@@ -116,14 +110,11 @@ The only allowed proof-debt exception is `thm_14_8_ProofBeyondBook`.
 | `review` | `public_setup_parameter_review` | `prob_14_9` | `ToyApollo/Output/prob_14_9.lean:179` | prob_14_9_ContinuousMappingSetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
 | `review` | `public_proof_package_return_review` | `thm_10_8` | `ToyApollo/Output/thm_10_8.lean:101` | SkorokhodQuantileSupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
 | `review` | `public_proof_package_return_review` | `thm_11_7` | `ToyApollo/Output/thm_11_7.lean:228` | thm_11_7_tailSummabilitySupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
-| `error` | `public_proof_package_parameter` | `thm_11_7` | `ToyApollo/Output/thm_11_7.lean:246` | thm_11_7_tailSummabilitySupport | Replace the public parameter with internally constructed theorem-level evidence. |
 | `review` | `public_proof_package_return_review` | `thm_13_12` | `ToyApollo/Output/thm_13_12.lean:418` | thm_13_12_countablePartitionVersionSupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
 | `review` | `public_proof_package_return_review` | `thm_13_13` | `ToyApollo/Output/thm_13_13.lean:177` | thm_13_13_atomIntegralSupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
 | `review` | `public_proof_package_return_review` | `thm_13_13` | `ToyApollo/Output/thm_13_13.lean:187` | thm_13_13_atomIntegralSupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
 | `review` | `public_proof_package_return_review` | `thm_13_14` | `ToyApollo/Output/thm_13_14.lean:287` | thm_13_14_intervalFubiniSupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
 | `review` | `public_proof_package_return_review` | `thm_13_14` | `ToyApollo/Output/thm_13_14.lean:296` | thm_13_14_piLambdaExtensionSupport | Review as theorem-level evidence for a support package; this is not a public support parameter by itself. |
-| `error` | `public_proof_package_parameter` | `thm_13_14` | `ToyApollo/Output/thm_13_14.lean:328` | thm_13_14_intervalFubiniSupport, thm_13_14_piLambdaExtensionSupport | Replace the public parameter with internally constructed theorem-level evidence. |
-| `error` | `public_proof_package_parameter` | `thm_13_14` | `ToyApollo/Output/thm_13_14.lean:346` | thm_13_14_intervalFubiniSupport, thm_13_14_piLambdaExtensionSupport | Replace the public parameter with internally constructed theorem-level evidence. |
 | `review` | `public_interface_bridge_parameter_review` | `thm_14_6` | `ToyApollo/Output/thm_14_6.lean:488` | def_14_3_IntervalMathlibTightBridge | Review as interface translation; bridge parameters are not proof debt unless they carry unproved mathematics. |
 | `review` | `public_setup_parameter_review` | `thm_14_7` | `ToyApollo/Output/thm_14_7.lean:230` | thm_14_7_LindebergLevySetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |
 | `review` | `public_setup_parameter_review` | `thm_14_7` | `ToyApollo/Output/thm_14_7.lean:250` | thm_14_7_LindebergLevySetup | Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields. |

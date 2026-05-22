@@ -1,29 +1,19 @@
 {
   "severity_counts": {
-    "allowed": 7,
-    "error": 9,
+    "allowed": 9,
     "review": 98
   },
   "category_counts": {
     "allowed_beyond_book_obligation": 2,
     "allowed_beyond_book_surface": 3,
-    "inherited_beyond_book_surface": 2,
+    "inherited_beyond_book_surface": 4,
     "public_interface_bridge_parameter_review": 1,
-    "public_proof_package_parameter": 9,
     "public_proof_package_parameter_in_support_proof_review": 1,
     "public_proof_package_return_review": 22,
     "public_setup_parameter_review": 74
   },
-  "error_task_count": 7,
-  "error_tasks": [
-    "ex_14_4_3",
-    "prob_11_10",
-    "prob_11_6",
-    "prob_11_8",
-    "prob_11_9",
-    "thm_11_7",
-    "thm_13_14"
-  ],
+  "error_task_count": 0,
+  "error_tasks": [],
   "findings": [
     {
       "task_id": "ex_10_3_2",
@@ -229,11 +219,11 @@
       "task_id": "ex_14_4_3",
       "file": "ToyApollo/Output/ex_14_4_3.lean",
       "line": 376,
-      "category": "public_proof_package_parameter",
-      "severity": "error",
-      "detail": "ex_14_4_3_LyapunovVerification",
-      "evidence": "theorem ex_14_4_3_asymptoticNormality (C : ex_14_4_3_CouponTriangularArraySetup) (V : ex_14_4_3_LyapunovVerification C) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) := by",
-      "action": "Replace the public parameter with internally constructed theorem-level evidence."
+      "category": "inherited_beyond_book_surface",
+      "severity": "allowed",
+      "detail": "thm_14_8_ProofBeyondBook",
+      "evidence": "theorem ex_14_4_3_asymptoticNormality (C : ex_14_4_3_CouponTriangularArraySetup) (hLyapunov : thm_14_8_LyapunovCondition C.theoremSetup) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) := by",
+      "action": "Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt."
     },
     {
       "task_id": "ex_14_4_3",
@@ -242,18 +232,18 @@
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "ex_14_4_3_CouponTriangularArraySetup",
-      "evidence": "theorem ex_14_4_3_asymptoticNormality (C : ex_14_4_3_CouponTriangularArraySetup) (V : ex_14_4_3_LyapunovVerification C) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) := by",
+      "evidence": "theorem ex_14_4_3_asymptoticNormality (C : ex_14_4_3_CouponTriangularArraySetup) (hLyapunov : thm_14_8_LyapunovCondition C.theoremSetup) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) := by",
       "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
     },
     {
       "task_id": "ex_14_4_3",
       "file": "ToyApollo/Output/ex_14_4_3.lean",
       "line": 390,
-      "category": "public_proof_package_parameter",
-      "severity": "error",
-      "detail": "ex_14_4_3_LyapunovVerification",
-      "evidence": "theorem ex_14_4_3 (C : ex_14_4_3_CouponTriangularArraySetup) (V : ex_14_4_3_LyapunovVerification C) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) :=",
-      "action": "Replace the public parameter with internally constructed theorem-level evidence."
+      "category": "inherited_beyond_book_surface",
+      "severity": "allowed",
+      "detail": "thm_14_8_ProofBeyondBook",
+      "evidence": "theorem ex_14_4_3 (C : ex_14_4_3_CouponTriangularArraySetup) (hLyapunov : thm_14_8_LyapunovCondition C.theoremSetup) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) :=",
+      "action": "Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt."
     },
     {
       "task_id": "ex_14_4_3",
@@ -262,7 +252,7 @@
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "ex_14_4_3_CouponTriangularArraySetup",
-      "evidence": "theorem ex_14_4_3 (C : ex_14_4_3_CouponTriangularArraySetup) (V : ex_14_4_3_LyapunovVerification C) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) :=",
+      "evidence": "theorem ex_14_4_3 (C : ex_14_4_3_CouponTriangularArraySetup) (hLyapunov : thm_14_8_LyapunovCondition C.theoremSetup) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) :=",
       "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
     },
     {
@@ -274,16 +264,6 @@
       "detail": "prob_11_10_uniformizationSupport",
       "evidence": "def prob_11_10_uniformizationSupport {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) (X : ℕ → Ω → ℝ) (F : ℝ → ℝ) : Prop :=",
       "action": "Review as theorem-level evidence for a support package; this is not a public support parameter by itself."
-    },
-    {
-      "task_id": "prob_11_10",
-      "file": "ToyApollo/Output/prob_11_10.lean",
-      "line": 65,
-      "category": "public_proof_package_parameter",
-      "severity": "error",
-      "detail": "prob_11_10_uniformizationSupport",
-      "evidence": "theorem prob_11_10 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) (X : ℕ → Ω → ℝ) (F : ℝ → ℝ) (hCDF : prob_11_10_continuousCDF F) (hIndicators : prob_11_10_pointwiseIndicatorAssumptions P X F) (hUniform : prob_11_10_uniformizationSupport P X F) : ConvergesAlmostSurely P (fun n => prob_11_10_uniformCDFDeviation X F n) (fun _ : Ω => 0) := by",
-      "action": "Replace the public parameter with internally constructed theorem-level evidence."
     },
     {
       "task_id": "prob_11_5",
@@ -336,16 +316,6 @@
       "action": "Review as a theorem-level support-producing lemma; it should not be a task-facing final theorem."
     },
     {
-      "task_id": "prob_11_6",
-      "file": "ToyApollo/Output/prob_11_6.lean",
-      "line": 197,
-      "category": "public_proof_package_parameter",
-      "severity": "error",
-      "detail": "prob_11_6_sixthMomentSupport",
-      "evidence": "theorem prob_11_6 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ) (_hInd : def_5_10_randomVariables P X) (_hMean : ∀ n : ℕ, P[X n] = 0) (_hUniformBound : ∃ c : ℝ, 0 < c ∧ ∀ n : ℕ, P {ω : Ω | |X n ω| < c} = 1) (_hSixth : prob_11_6_sixthMomentSupport P X) : ConvergesAlmostSurely P (prob_11_6_scaledSum X) (fun _ => 0) := by",
-      "action": "Replace the public parameter with internally constructed theorem-level evidence."
-    },
-    {
       "task_id": "prob_11_7",
       "file": "ToyApollo/Output/prob_11_7.lean",
       "line": 54,
@@ -376,16 +346,6 @@
       "action": "Review as theorem-level evidence for a support package; this is not a public support parameter by itself."
     },
     {
-      "task_id": "prob_11_8",
-      "file": "ToyApollo/Output/prob_11_8.lean",
-      "line": 46,
-      "category": "public_proof_package_parameter",
-      "severity": "error",
-      "detail": "prob_11_8_covarianceSupport",
-      "evidence": "theorem prob_11_8 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P] (X N : ℕ → Ω → ℝ) (ρ σ2 K : ℝ) (a : ℕ → ℝ) (_hAR : prob_11_8_ar1Assumptions P X N ρ σ2) (hCov : prob_11_8_covarianceSupport P X K a) : ConvergesInProbability P (fun n => thm_11_5_sampleMean X n) (fun _ => 0) := by",
-      "action": "Replace the public parameter with internally constructed theorem-level evidence."
-    },
-    {
       "task_id": "prob_11_9",
       "file": "ToyApollo/Output/prob_11_9.lean",
       "line": 50,
@@ -414,16 +374,6 @@
       "detail": "prob_11_9_meanSquareELpNormSupport",
       "evidence": "theorem prob_11_9_meanSquareELpNormSupport_of_measurable {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) (boxes : ℕ → ℕ) (X : ℕ → Ω → ℝ) (a : ℝ) (hX : ∀ n : ℕ, AEStronglyMeasurable ((prob_11_9_emptyBoxRatio boxes X) n) P) : prob_11_9_meanSquareELpNormSupport P boxes X a := by",
       "action": "Review as theorem-level evidence for a support package; this is not a public support parameter by itself."
-    },
-    {
-      "task_id": "prob_11_9",
-      "file": "ToyApollo/Output/prob_11_9.lean",
-      "line": 145,
-      "category": "public_proof_package_parameter",
-      "severity": "error",
-      "detail": "prob_11_9_occupancyMomentSupport",
-      "evidence": "theorem prob_11_9 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) (boxes k : ℕ → ℕ) (X : ℕ → Ω → ℝ) (a : ℝ) (hRegime : prob_11_9_asymptoticRegime boxes k a) (hMoment : prob_11_9_occupancyMomentSupport P boxes k X a) (hX : ∀ n : ℕ, AEStronglyMeasurable ((prob_11_9_emptyBoxRatio boxes X) n) P) : ConvergesInMeanSquare P (prob_11_9_emptyBoxRatio boxes X) (fun _ : Ω => Real.exp (-a)) ∧ ConvergesInProbability P (prob_11_9_emptyBoxRatio boxes X) (fun _ : Ω => Real.exp (-a)) := by",
-      "action": "Replace the public parameter with internally constructed theorem-level evidence."
     },
     {
       "task_id": "prob_14_1",
@@ -926,16 +876,6 @@
       "action": "Review as theorem-level evidence for a support package; this is not a public support parameter by itself."
     },
     {
-      "task_id": "thm_11_7",
-      "file": "ToyApollo/Output/thm_11_7.lean",
-      "line": 246,
-      "category": "public_proof_package_parameter",
-      "severity": "error",
-      "detail": "thm_11_7_tailSummabilitySupport",
-      "evidence": "theorem thm_11_7 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ) (μ : ℝ) (_hindep : def_5_10_randomVariables P X) (_hmean : ∀ i : ℕ, P[X i] = μ) (_hfourth : ∃ c : ℝ, thm_11_7_fourthMomentUniformBound P X μ c) (h_tail_summability_support : thm_11_7_tailSummabilitySupport P X μ) : ConvergesAlmostSurely P (fun n => thm_11_5_sampleMean X n) (fun _ => μ) := by",
-      "action": "Replace the public parameter with internally constructed theorem-level evidence."
-    },
-    {
       "task_id": "thm_13_12",
       "file": "ToyApollo/Output/thm_13_12.lean",
       "line": 418,
@@ -984,26 +924,6 @@
       "detail": "thm_13_14_piLambdaExtensionSupport",
       "evidence": "def thm_13_14_piLambdaExtensionSupport (P : Measure (ℝ × ℝ)) (g h : ℝ → ℝ) : Prop :=",
       "action": "Review as theorem-level evidence for a support package; this is not a public support parameter by itself."
-    },
-    {
-      "task_id": "thm_13_14",
-      "file": "ToyApollo/Output/thm_13_14.lean",
-      "line": 328,
-      "category": "public_proof_package_parameter",
-      "severity": "error",
-      "detail": "thm_13_14_intervalFubiniSupport, thm_13_14_piLambdaExtensionSupport",
-      "evidence": "theorem thm_13_14 (P : Measure (ℝ × ℝ)) [IsProbabilityMeasure P] (fXY : ℝ × ℝ → ℝ) (g : ℝ → ℝ) (_hDensity : thm_13_14_jointDensityLaw P fXY) (_hGMeas : Measurable g) (_hGInt : Integrable (fun z : ℝ × ℝ => g z.1) P) (_hFY_ne_zero : ∀ y : ℝ, thm_13_14_marginalDensity fXY y ≠ 0) (hIntervals : thm_13_14_intervalFubiniSupport P fXY g) (hExtend : thm_13_14_piLambdaExtensionSupport P g (thm_13_14_conditionalExpectationKernel fXY g)) : thm_13_14_isConditionalExpectationVersion P g (thm_13_14_conditional",
-      "action": "Replace the public parameter with internally constructed theorem-level evidence."
-    },
-    {
-      "task_id": "thm_13_14",
-      "file": "ToyApollo/Output/thm_13_14.lean",
-      "line": 346,
-      "category": "public_proof_package_parameter",
-      "severity": "error",
-      "detail": "thm_13_14_intervalFubiniSupport, thm_13_14_piLambdaExtensionSupport",
-      "evidence": "theorem thm_13_14_identity (P : Measure (ℝ × ℝ)) [IsProbabilityMeasure P] (fXY : ℝ × ℝ → ℝ) (hDensity : thm_13_14_jointDensityLaw P fXY) (hXMeas : Measurable (fun x : ℝ => x)) (hXInt : Integrable (fun z : ℝ × ℝ => z.1) P) (hFY_ne_zero : ∀ y : ℝ, thm_13_14_marginalDensity fXY y ≠ 0) (hIntervals : thm_13_14_intervalFubiniSupport P fXY (fun x : ℝ => x)) (hExtend : thm_13_14_piLambdaExtensionSupport P (fun x : ℝ => x) (thm_13_14_identityConditionalExpectationKernel fXY)) : thm_13_14_isConditionalExp",
-      "action": "Replace the public parameter with internally constructed theorem-level evidence."
     },
     {
       "task_id": "thm_14_6",

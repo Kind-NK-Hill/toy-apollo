@@ -1,0 +1,192 @@
+{
+  "schema_version": "phase2.proof_obligations.v1",
+  "task_id": "thm_13_14",
+  "generated_at": "2026-05-17T23:25:33.485653Z",
+  "classification": {
+    "requires_decomposition": true,
+    "reason": "complex proof: prove independently reviewable obligations before final assembly",
+    "evidence": [
+      "source text or task type is proof-bearing",
+      "source text is long enough to hide multiple obligations",
+      "source text has multiple paragraphs or proof lines",
+      "source theorem explicitly uses a generator family and a pi-lambda extension argument"
+    ],
+    "dependency_count": 0,
+    "source_length": 3925,
+    "structural_operation_count": 1
+  },
+  "obligations": [
+    {
+      "id": "density_and_kernel_definitions",
+      "title": "Joint density, marginal density, conditional density, and candidate kernel",
+      "kind": "source_step",
+      "source_ref": "Definitions before Eq. (13.13) and Eq. (13.14)",
+      "depends_on": [],
+      "lean_landing": "thm_13_14_jointDensityLaw; thm_13_14_marginalDensity; thm_13_14_conditionalDensity; thm_13_14_conditionalExpectationKernel",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The theorem records fY(y) as an integral and fX|Y as the quotient fXY/fY, with the candidate h(y) as the integral of g against the conditional density.",
+      "last_review_evidence": "Definitions match the source formulas."
+    },
+    {
+      "id": "interval_fubini_calculation",
+      "title": "Fubini computation on closed-interval cylinders",
+      "kind": "proof_debt_support",
+      "source_ref": "Proof block for B = R x [a,b] through Eq. (13.16)",
+      "depends_on": [
+        "density_and_kernel_definitions"
+      ],
+      "lean_landing": "thm_13_14_closedIntervalCylinder_eq_prod",
+      "status": "open",
+      "review_status": "needs_review",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "Partial theorem-level landing added on 2026-05-21: the closed-interval cylinder is identified with `univ x [a,b]`. Rechecked on 2026-05-22: the analytic Fubini/density calculation from `thm_13_14_jointDensityLaw` to the Bochner set-integral identity is still not provable from the public theorem assumptions. The current statement lacks explicit nonnegativity/measurability for `fXY`, a usable `P = volume.withDensity (ENNReal.ofReal \u2218 fXY)` rewrite with finite density, integrability of the density-weighted functions needed for Fubini, and the algebraic bridge `h(y) * fY(y) = \u222b g(x) fXY(x,y) dx`. Therefore the public theorem still cannot construct `thm_13_14_intervalFubiniSupport` internally without adding source-level analytic hypotheses.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support lands only on non-theorem declarations.",
+      "last_review_evidence": "Lean/API probe on 2026-05-22: Mathlib Fubini and withDensity rewrites require measurable/aemeasurable density and Integrable hypotheses; source lines 150-164 also explicitly use finiteness of the density-weighted absolute integral. Current Lean assumptions only include `Integrable (fun z => g z.1) P` and a lintegral law through `ENNReal.ofReal`, whose negative part is invisible to the law but still affects `fY` and the kernel.",
+      "source_output_alignment": {
+        "audited_at": "2026-05-19",
+        "audit_class": "C_support_predicate_or_structure_only",
+        "family": "tv/rn/density",
+        "existing_local_declarations": [
+          {
+            "name": "thm_13_14_closedIntervalCylinder_eq_prod",
+            "kind": "theorem",
+            "file": "ToyApollo/Output/thm_13_14.lean",
+            "line": 269
+          }
+        ],
+        "missing_landing_names": [],
+        "next_action": "Do not count this as proof; replace the support predicate, structure, or field with theorem-level evidence.",
+        "manual_review_required": false
+      },
+      "ledger_task_id": "obl_thm_13_14_interval_fubini_calculation",
+      "obligation_fingerprint": "25ae379a98e6aea726178bee3e615a86dc850102555053bd91500725f69157f4",
+      "discharged_by_task": "obl_thm_13_14_interval_fubini_calculation"
+    },
+    {
+      "id": "pi_lambda_extension",
+      "title": "Extend from closed intervals to all Borel y-sets",
+      "kind": "proof_debt_support",
+      "source_ref": "Paragraph extending (13.16) by the pi-lambda theorem",
+      "depends_on": [
+        "interval_fubini_calculation"
+      ],
+      "lean_landing": "thm_13_14_verticalCylinder_eq_prod",
+      "status": "open",
+      "review_status": "needs_review",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "Partial theorem-level landing added on 2026-05-21: vertical cylinders are identified with `univ x S`. Rechecked on 2026-05-22: no theorem-level π-λ/signed-integral extension from closed intervals to all Borel y-sets is available from the current public `thm_13_14_piLambdaExtensionSupport` statement alone. To prove the λ-system closure for Bochner set integrals one needs integrability or finite signed-measure structure for both integrands on vertical cylinders; the support predicate currently has only the interval identity premise and no such integrability hypotheses. Thus the public theorem still cannot construct `thm_13_14_piLambdaExtensionSupport` internally.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support lands only on non-theorem declarations.",
+      "last_review_evidence": "Lean/API probe on 2026-05-22: closed intervals generate the Borel sigma-field (`borel_eq_generateFrom_Icc`) and form a pi-system (`isPiSystem_Icc`), but turning interval equalities of Bochner set integrals into all-Borel equalities requires λ-system closure, which is blocked without integrability/signed-measure hypotheses for `g z.1` and `h z.2`.",
+      "source_output_alignment": {
+        "audited_at": "2026-05-19",
+        "audit_class": "C_support_predicate_or_structure_only",
+        "family": "measure/fubini/dct",
+        "existing_local_declarations": [
+          {
+            "name": "thm_13_14_verticalCylinder_eq_prod",
+            "kind": "theorem",
+            "file": "ToyApollo/Output/thm_13_14.lean",
+            "line": 264
+          }
+        ],
+        "missing_landing_names": [],
+        "next_action": "Do not count this as proof; replace the support predicate, structure, or field with theorem-level evidence.",
+        "manual_review_required": false
+      },
+      "ledger_task_id": "obl_thm_13_14_pi_lambda_extension",
+      "obligation_fingerprint": "18a8136106155226b3c5c01764cfc924be7722b9a30dedf283aaffeed2c84c35",
+      "discharged_by_task": "obl_thm_13_14_pi_lambda_extension"
+    },
+    {
+      "id": "conditional_expectation_criterion",
+      "title": "Conclude the candidate is a conditional-expectation version",
+      "kind": "source_step",
+      "source_ref": "Final paragraph identifying h(Y) as a version of E[g(X)|Y]",
+      "depends_on": [
+        "pi_lambda_extension"
+      ],
+      "lean_landing": "thm_13_14_integralIdentity; thm_13_14_isConditionalExpectationVersion; thm_13_14",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The final theorem converts the cylinder identity for every Borel y-set into the set-integral criterion for a version of the conditional expectation.",
+      "last_review_evidence": "The final theorem proves the criterion for every represented sigma(Y)-measurable set."
+    },
+    {
+      "id": "identity_case",
+      "title": "Specialize g(x)=x for E[X|Y]",
+      "kind": "source_step",
+      "source_ref": "Displayed 'In particular' formula",
+      "depends_on": [
+        "conditional_expectation_criterion"
+      ],
+      "lean_landing": "thm_13_14_identityConditionalExpectationKernel; thm_13_14_identity",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The identity case is a specialization of the main kernel to the identity function.",
+      "last_review_evidence": "The candidate specializes g to the identity function."
+    }
+  ],
+  "scaffold_hypotheses": [],
+  "review_history": [
+    {
+      "reviewed_at": "2026-05-17T23:32:05.348071Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All concrete obligations are accounted for. The Fubini and pi-lambda obligations are accepted as explicit proof debt because the current local library has no continuous joint-density conditional-expectation bridge.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-20T10:58:25.898158Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "The focused child is accepted as a named theorem-level or support-interface stage with an explicit downstream bridge. Hard calculations that remain as support predicates are not treated as hidden facts.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-20T10:59:51.318039Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "Fresh review basis accepted; no hidden placeholder or axiom is introduced.",
+      "open_blockers": []
+    }
+  ],
+  "last_reviewed_at": "2026-05-20T10:59:51.318039Z",
+  "source_output_alignment_audit": {
+    "audited_at": "2026-05-19",
+    "accepted_debt_count": 2,
+    "status": "metadata_attached"
+  },
+  "clean_debt_surface_audit": {
+    "applied_at": "2026-05-21T02:15:59.912339Z",
+    "status": "status_fixes_applied",
+    "changes": [
+      {
+        "obligation_id": "interval_fubini_calculation",
+        "action": "proved_to_open",
+        "reason": "proved proof_debt_support lands only on non-theorem declarations",
+        "old": {
+          "status": "proved",
+          "review_status": "accepted",
+          "lean_landing": "thm_13_14_closedIntervalCylinder; thm_13_14_intervalFubiniSupport"
+        }
+      },
+      {
+        "obligation_id": "pi_lambda_extension",
+        "action": "proved_to_open",
+        "reason": "proved proof_debt_support lands only on non-theorem declarations",
+        "old": {
+          "status": "proved",
+          "review_status": "accepted",
+          "lean_landing": "thm_13_14_verticalCylinder; thm_13_14_sigmaYMeasurableSet; thm_13_14_piLambdaExtensionSupport"
+        }
+      }
+    ]
+  }
+}

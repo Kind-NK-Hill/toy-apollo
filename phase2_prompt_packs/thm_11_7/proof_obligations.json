@@ -1,0 +1,196 @@
+{
+  "schema_version": "phase2.proof_obligations.v1",
+  "task_id": "thm_11_7",
+  "generated_at": "2026-05-17T12:58:00Z",
+  "classification": {
+    "requires_decomposition": true,
+    "reason": "complex fourth-moment strong law proof: the source proof has a centered reduction, finite fourth-moment expansion, Cauchy-Schwarz bound, Borel-Cantelli step, and almost-sure convergence bridge",
+    "evidence": [
+      "source text proves a theorem, not just a statement",
+      "source proof expands E[S_n^4] and estimates the resulting terms",
+      "source proof explicitly uses Cauchy-Schwarz, Borel-Cantelli Lemma 1, and Theorem 10.1",
+      "source note emphasizes that the variables need not be identically distributed"
+    ],
+    "dependency_count": 6,
+    "source_length": 1884,
+    "structural_operation_count": 6
+  },
+  "obligations": [
+    {
+      "id": "independent_sequence_interface",
+      "title": "Independent sequence interface",
+      "kind": "source_step",
+      "source_ref": "Suppose X_i are independent random variables",
+      "depends_on": [
+        "def_5_10"
+      ],
+      "lean_landing": "def_5_10_randomVariables P X",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "Reuse the local independence interface and do not strengthen the theorem to identically distributed variables.",
+      "last_review_evidence": "`thm_11_7` exposes `_hindep : def_5_10_randomVariables P X` and does not assume identical distribution."
+    },
+    {
+      "id": "sample_average_interface",
+      "title": "Sample-average interface",
+      "kind": "source_step",
+      "source_ref": "S_n/n",
+      "depends_on": [
+        "thm_11_5"
+      ],
+      "lean_landing": "thm_11_5_sampleMean",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "Reuse the existing Chapter 11 sample-average definition rather than defining another average.",
+      "last_review_evidence": "The conclusion uses the existing `thm_11_5_sampleMean X n` interface."
+    },
+    {
+      "id": "mean_and_fourth_moment_interface",
+      "title": "Mean and uniform fourth-moment interface",
+      "kind": "source_step",
+      "source_ref": "mean mu and E[X_i^4] <= c < infinity for all i",
+      "depends_on": [
+        "def_9_1"
+      ],
+      "lean_landing": "P[X i] = mu and thm_11_7_fourthMomentUniformBound P X mu c",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The formal bound uses the local fourth-moment interface from Chapter 9.",
+      "last_review_evidence": "`_hmean` states the common mean and `_hfourth` packages the uniform centered fourth-moment bound."
+    },
+    {
+      "id": "fourth_moment_expansion_tail_bound",
+      "title": "Fourth-moment expansion and summable tail bound",
+      "kind": "proof_debt_support",
+      "source_ref": "E[S_n^4] expansion, Cauchy-Schwarz bound, and P(|S_n|/n > eps) <= 3c/(n^2 eps^4)",
+      "depends_on": [
+        "def_9_1",
+        "thm_11_1"
+      ],
+      "lean_landing": "",
+      "status": "open",
+      "review_status": "needs_review",
+      "blocking": true,
+      "scaffold_hypotheses": [
+        {
+          "name": "h_tail_summability_support",
+          "category": "proof_debt_support",
+          "obligation_id": "fourth_moment_expansion_tail_bound",
+          "discharge_plan": "Replace this support parameter by a reusable local lemma proving the fourth-moment expansion, zero mixed terms from independence, the Cauchy-Schwarz product bound, and summability of deviation probabilities.",
+          "status": "open"
+        }
+      ],
+      "notes": "No current local or Mathlib theorem was found for the non-identically-distributed fourth-moment SLLN estimate. This is the only carried proof debt.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support lands only on non-theorem declarations.\n[clean-debt-public-surface] 2026-05-22: public theorem no longer requires thm_11_7_tailSummabilitySupport; it now exposes the explicit tail-summability statement.",
+      "last_review_evidence": "Blocked: child pack only packaged the support boundary; no theorem-level fourth-moment expansion/tail-bound landing exists.",
+      "source_output_alignment": {
+        "audited_at": "2026-05-19",
+        "audit_class": "C_support_field_gap_no_decl",
+        "family": "tail/moment/ui",
+        "existing_local_declarations": [
+          {
+            "name": "thm_11_7_tailSummabilitySupport",
+            "kind": "def",
+            "file": "ToyApollo/Output/thm_11_7.lean",
+            "line": 228
+          }
+        ],
+        "missing_landing_names": [
+          "explicit_fourth_moment_tail_summability"
+        ],
+        "next_action": "Do not count this as proof; derive the explicit fourth-moment tail-summability statement from theorem-level evidence.",
+        "manual_review_required": false
+      },
+      "ledger_task_id": "obl_thm_11_7_fourth_moment_expansion_tail_bound",
+      "obligation_fingerprint": "c144341678e0befc9fc946267e1d4c802eccbe66afb7860f8707585e28e7c54f",
+      "discharged_by_task": ""
+    },
+    {
+      "id": "borel_cantelli_limsup_step",
+      "title": "Apply Borel-Cantelli to deviation events",
+      "kind": "source_step",
+      "source_ref": "apply the first Borel-Cantelli lemma (Theorem 5.8)",
+      "depends_on": [
+        "thm_5_8"
+      ],
+      "lean_landing": "thm_5_8 applied to almostSureDeviationEvent",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "This step should be fully proved from the summable tail support.",
+      "last_review_evidence": "The proof applies `thm_5_8` to the deviation events using the support summability hypothesis."
+    },
+    {
+      "id": "almost_sure_convergence_bridge",
+      "title": "Use Theorem 10.1 to conclude almost-sure convergence",
+      "kind": "source_step",
+      "source_ref": "Therefore, by Theorem 10.1, S_n/n converges almost surely",
+      "depends_on": [
+        "thm_10_1"
+      ],
+      "lean_landing": "thm_10_1 converts null infinitely-often deviations to ConvergesAlmostSurely",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "This step should be fully proved with the local Chapter 10 theorem.",
+      "last_review_evidence": "The final proof uses `thm_10_1` to reconstruct almost-sure convergence from null infinitely-often deviations."
+    }
+  ],
+  "scaffold_hypotheses": [],
+  "reconstruction_target": {
+    "statement": "thm_11_7",
+    "description": "Assemble the public strong-law statement from local independence, local moment, existing sample-average, explicit fourth-moment tail proof debt, Borel-Cantelli, and Theorem 10.1."
+  },
+  "review_history": [
+    {
+      "reviewed_at": "2026-05-17T13:01:40.070205Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "Five obligations are covered by Lean declarations/proof steps; the fourth-moment expansion tail estimate is accepted as named proof-debt support.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-18T13:40:30.261755Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "The refreshed obligation ledger has no open blockers: five obligations are proved/accepted by Lean declarations or proof steps, and the fourth-moment expansion tail estimate is accepted as proof debt.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-20T10:57:31.131104Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "The focused child is accepted as a named theorem-level or support-interface stage with an explicit downstream bridge. Hard calculations that remain as support predicates are not treated as hidden facts.",
+      "open_blockers": []
+    }
+  ],
+  "last_reviewed_at": "2026-05-20T10:57:31.131104Z",
+  "source_output_alignment_audit": {
+    "audited_at": "2026-05-19",
+    "accepted_debt_count": 1,
+    "status": "metadata_attached"
+  },
+  "clean_debt_surface_audit": {
+    "applied_at": "2026-05-21T02:15:59.912339Z",
+    "status": "status_fixes_applied",
+    "changes": [
+      {
+        "obligation_id": "fourth_moment_expansion_tail_bound",
+        "action": "proved_to_open",
+        "reason": "proved proof_debt_support lands only on non-theorem declarations",
+        "old": {
+          "status": "proved",
+          "review_status": "accepted",
+          "lean_landing": "h_tail_summability_support : thm_11_7_tailSummabilitySupport P X mu"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,188 @@
+{
+  "schema_version": "phase2.proof_obligations.v1",
+  "task_id": "prob_11_6",
+  "generated_at": "2026-05-17T22:09:19.915255Z",
+  "classification": {
+    "requires_decomposition": false,
+    "reason": "normal proof: no structural decomposition trigger was detected",
+    "evidence": [
+      "task has 3 declared upstream dependencies",
+      "source text has multiple paragraphs or proof lines"
+    ],
+    "dependency_count": 3,
+    "source_length": 378,
+    "structural_operation_count": 0
+  },
+  "obligations": [
+    {
+      "id": "define_scaled_sum",
+      "description": "Define S_n and the scaled sequence S_n / n^(3/4).",
+      "source_proof_spine": "The problem works with partial sums S_n and the normalization n^(3/4).",
+      "expected_formal_items": [
+        "prob_11_6_partialSum",
+        "prob_11_6_scaledSum"
+      ],
+      "title": "define_scaled_sum",
+      "kind": "source_step",
+      "source_ref": "",
+      "depends_on": [],
+      "lean_landing": "",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "",
+      "last_review_evidence": "The normalized sum is defined directly."
+    },
+    {
+      "id": "sixth_moment_support",
+      "description": "Use the hint to control E[S_n^6] by a constant multiple of n^3.",
+      "source_proof_spine": "Expand the sixth moment using independence, zero means, and uniform boundedness.",
+      "expected_formal_items": [
+        "prob_11_6_sixthMomentSupport"
+      ],
+      "title": "sixth_moment_support",
+      "kind": "proof_debt_support",
+      "source_ref": "",
+      "depends_on": [
+        "define_scaled_sum"
+      ],
+      "lean_landing": "",
+      "status": "open",
+      "review_status": "needs_review",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.\n[clean-debt-public-surface] 2026-05-22: public theorem no longer requires prob_11_6_sixthMomentSupport; it now exposes the explicit sixth-moment bound. Still blocked as a proof debt because no theorem derives that bound from iid/zero-mean/uniform-bounded assumptions.",
+      "last_review_evidence": "Blocked: child pack only packaged the support boundary; no theorem-level sixth-moment expansion landing exists.",
+      "source_output_alignment": {
+        "audited_at": "2026-05-19",
+        "audit_class": "D_no_landing_search_required",
+        "family": "tail/moment/ui",
+        "existing_local_declarations": [],
+        "missing_landing_names": [],
+        "next_action": "Re-open the source and ToyApollo/Output search, then assign a real Lean landing before repair.",
+        "manual_review_required": false
+      },
+      "ledger_task_id": "obl_prob_11_6_sixth_moment_support",
+      "obligation_fingerprint": "3c73073d3a12790566facfd2362fc26f88d7fca3ee0c183f9a015a0a88e8db9e",
+      "discharged_by_task": ""
+    },
+    {
+      "id": "tail_summability_support",
+      "description": "Convert the sixth-moment bound into summable deviation probabilities.",
+      "source_proof_spine": "Markov gives a constant multiple of n^(-3/2), which is summable.",
+      "expected_formal_items": [
+        "prob_11_6_tailSummabilitySupport"
+      ],
+      "title": "tail_summability_support",
+      "kind": "proof_debt_support",
+      "source_ref": "",
+      "depends_on": [
+        "sixth_moment_support"
+      ],
+      "lean_landing": "prob_11_6_tailSummability_of_sixthMoment",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.\n[clean-debt-refresh] 2026-05-21: resolved with theorem-level landing prob_11_6_tailSummability_of_sixthMoment.",
+      "last_review_evidence": "The theorem prob_11_6_tailSummability_of_sixthMoment proves the Markov/p-series tail summability from prob_11_6_sixthMomentSupport; the public final theorem no longer accepts a tail-summability support parameter.",
+      "source_output_alignment": {
+        "audited_at": "2026-05-19",
+        "audit_class": "A_existing_theorem_candidate",
+        "family": "tail/moment/ui",
+        "existing_local_declarations": [
+          "prob_11_6_tailSummability_of_sixthMoment"
+        ],
+        "missing_landing_names": [],
+        "next_action": "Resolved by theorem-level landing; no public tail-summability support parameter remains.",
+        "manual_review_required": false
+      },
+      "ledger_task_id": "obl_prob_11_6_tail_summability_support",
+      "obligation_fingerprint": "cbeac738cffacdd7298727f709cd8cff409fa8b92bcf275fbd625041e82a6a2a",
+      "discharged_by_task": "obl_prob_11_6_tail_summability_support"
+    },
+    {
+      "id": "borel_cantelli_to_as",
+      "description": "Use Borel-Cantelli and Theorem 10.1 to conclude almost-sure convergence.",
+      "source_proof_spine": "Summable normalized-tail probabilities imply the normalized deviations occur only finitely often almost surely.",
+      "expected_formal_items": [
+        "prob_11_6_of_tail_summability",
+        "prob_11_6"
+      ],
+      "title": "borel_cantelli_to_as",
+      "kind": "source_step",
+      "source_ref": "",
+      "depends_on": [
+        "tail_summability_support"
+      ],
+      "lean_landing": "",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "",
+      "last_review_evidence": "The proof uses the existing Borel-Cantelli and almost-sure convergence criterion outputs."
+    }
+  ],
+  "scaffold_hypotheses": [],
+  "review_history": [
+    {
+      "reviewed_at": "2026-05-17T22:13:31.516957Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "The definitional and Borel-Cantelli obligations are covered, while the sixth-moment and summability estimates are accepted as explicit proof debt.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-20T10:51:24.351345Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "The tail_summability_support obligation is proved by a theorem-level bridge rather than accepted as a new public hypothesis.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-20T10:55:47.899418Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "The focused child is accepted as a named theorem-level or support-interface stage with an explicit downstream bridge. Hard calculations that remain as support predicates are not treated as hidden facts.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-21T10:35:00Z",
+      "verdict": "partial",
+      "status": "partial",
+      "summary": "Clean-debt refresh resolved tail_summability_support by theorem-level landing. sixth_moment_support remains open because no theorem-level sixth-moment expansion has been landed.",
+      "open_blockers": [
+        "sixth_moment_support"
+      ]
+    }
+  ],
+  "last_reviewed_at": "2026-05-21T10:35:00Z",
+  "source_output_alignment_audit": {
+    "audited_at": "2026-05-21",
+    "accepted_debt_count": 1,
+    "status": "partial_theorem_landing"
+  },
+  "clean_debt_surface_audit": {
+    "applied_at": "2026-05-21T10:35:00Z",
+    "status": "partial_status_fixes_applied",
+    "changes": [
+      {
+        "obligation_id": "tail_summability_support",
+        "action": "open_to_proved",
+        "reason": "theorem-level landing added",
+        "new": {
+          "status": "proved",
+          "review_status": "accepted",
+          "lean_landing": "prob_11_6_tailSummability_of_sixthMoment"
+        }
+      },
+      {
+        "obligation_id": "sixth_moment_support",
+        "action": "kept_open",
+        "reason": "no theorem-level sixth-moment expansion landing exists"
+      }
+    ]
+  }
+}

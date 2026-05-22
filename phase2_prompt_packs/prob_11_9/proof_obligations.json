@@ -1,0 +1,164 @@
+{
+  "schema_version": "phase2.proof_obligations.v1",
+  "task_id": "prob_11_9",
+  "generated_at": "2026-05-17T22:25:52.482949Z",
+  "classification": {
+    "requires_decomposition": false,
+    "reason": "normal proof: no structural decomposition trigger was detected",
+    "evidence": [
+      "source text has multiple paragraphs or proof lines"
+    ],
+    "dependency_count": 3,
+    "source_length": 461,
+    "structural_operation_count": 0
+  },
+  "obligations": [
+    {
+      "id": "asymptotic_regime",
+      "description": "Record the asymptotic regime: the box counts diverge, each experiment has positive box count, k_n / n tends to a positive constant a.",
+      "source_proof_spine": "Assume k and n increase simultaneously with k/n -> a, for some positive constant a.",
+      "expected_formal_items": [
+        "prob_11_9_asymptoticRegime"
+      ],
+      "title": "asymptotic_regime",
+      "kind": "source_step",
+      "source_ref": "",
+      "depends_on": [],
+      "lean_landing": "",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "",
+      "last_review_evidence": "The predicate captures the positive limit and simultaneous asymptotic regime."
+    },
+    {
+      "id": "empty_box_ratio",
+      "description": "Formalize X_n / n as the proportion of empty boxes.",
+      "source_proof_spine": "Let X_n denote the number of empty boxes; prove X_n/n -> exp(-a).",
+      "expected_formal_items": [
+        "prob_11_9_emptyBoxRatio"
+      ],
+      "title": "empty_box_ratio",
+      "kind": "source_step",
+      "source_ref": "",
+      "depends_on": [
+        "asymptotic_regime"
+      ],
+      "lean_landing": "",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "",
+      "last_review_evidence": "The exported definition is the normalized empty-box count."
+    },
+    {
+      "id": "occupancy_moment_calculation",
+      "description": "Carry out the textbook second-moment occupancy calculation using the one-box empty probability and two-box joint empty probability.",
+      "source_proof_spine": "Expand X_n as a sum of empty-box indicators and show E[(X_n/n - exp(-a))^2] -> 0.",
+      "expected_formal_items": [
+        "prob_11_9_occupancyMomentSupport",
+        "prob_11_9_quadratic_mean"
+      ],
+      "title": "occupancy_moment_calculation",
+      "kind": "proof_debt_support",
+      "source_ref": "",
+      "depends_on": [
+        "empty_box_ratio"
+      ],
+      "lean_landing": "",
+      "status": "open",
+      "review_status": "needs_review",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The local library does not expose the finite independent uniform balls-in-boxes probability space, so the standard second-moment calculation is an explicit support interface.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.",
+      "last_review_evidence": "Blocked: child pack only packaged the support boundary; no theorem-level finite occupancy second-moment landing exists.",
+      "source_output_alignment": {
+        "audited_at": "2026-05-19",
+        "audit_class": "D_no_landing_search_required",
+        "family": "tail/moment/ui",
+        "existing_local_declarations": [],
+        "missing_landing_names": [],
+        "next_action": "Re-open the source and ToyApollo/Output search, then assign a real Lean landing before repair.",
+        "manual_review_required": false
+      },
+      "ledger_task_id": "obl_prob_11_9_occupancy_moment_calculation",
+      "obligation_fingerprint": "3b2c4b36ea1f7497b0d6a2a4ff49c7a60bf223ec27b8d901d93ebdf379a1776e",
+      "discharged_by_task": ""
+    },
+    {
+      "id": "hence_in_probability",
+      "description": "Use the Chapter 10 L^r-to-probability result to obtain convergence in probability from the quadratic-mean calculation.",
+      "source_proof_spine": "Convergence in quadratic mean implies convergence in probability.",
+      "expected_formal_items": [
+        "prob_11_9_meanSquareELpNormSupport",
+        "prob_11_9_eLpNorm_tendsto_of_convergesInMeanSquare",
+        "prob_11_9_meanSquareELpNormSupport_of_measurable",
+        "prob_11_9_probability",
+        "prob_11_9"
+      ],
+      "title": "hence_in_probability",
+      "kind": "source_step",
+      "source_ref": "",
+      "depends_on": [
+        "occupancy_moment_calculation"
+      ],
+      "lean_landing": "prob_11_9_eLpNorm_tendsto_of_convergesInMeanSquare; prob_11_9_meanSquareELpNormSupport_of_measurable; prob_11_9_probability",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The eLpNorm bridge is now proved from ConvergesInMeanSquare and ordinary AEStronglyMeasurable data; the public theorem no longer requires prob_11_9_meanSquareELpNormSupport as a parameter.",
+      "last_review_evidence": "prob_11_9_eLpNorm_tendsto_of_convergesInMeanSquare proves the analytic L2-norm limit from the local mean-square definition; prob_11_9_meanSquareELpNormSupport_of_measurable constructs the prior support package internally from measurability, and prob_11_9_probability applies thm_10_5."
+    }
+  ],
+  "scaffold_hypotheses": [],
+  "review_history": [
+    {
+      "reviewed_at": "2026-05-17T22:37:51.056619Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All source steps are represented; the occupancy second-moment expansion is accepted as explicit proof debt.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-20T10:56:59.063903Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "The focused child is accepted as a named theorem-level or support-interface stage with an explicit downstream bridge. Hard calculations that remain as support predicates are not treated as hidden facts.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-21T12:42:58Z",
+      "verdict": "partial",
+      "status": "partial",
+      "summary": "The mean-square to eLpNorm support bridge is discharged by theorem-level landings in prob_11_9. The occupancy second-moment calculation remains open because the local library still lacks a finite independent uniform balls-in-boxes model for empty-box indicators and their two-box joint probabilities.",
+      "open_blockers": [
+        "occupancy_moment_calculation"
+      ]
+    }
+  ],
+  "last_reviewed_at": "2026-05-21T12:42:58Z",
+  "source_output_alignment_audit": {
+    "audited_at": "2026-05-19",
+    "accepted_debt_count": 1,
+    "status": "metadata_attached"
+  },
+  "clean_debt_surface_audit": {
+    "applied_at": "2026-05-21T02:15:59.912339Z",
+    "status": "status_fixes_applied",
+    "changes": [
+      {
+        "obligation_id": "occupancy_moment_calculation",
+        "action": "proved_to_open",
+        "reason": "proved proof_debt_support has no theorem-level landing",
+        "old": {
+          "status": "proved",
+          "review_status": "accepted",
+          "lean_landing": ""
+        }
+      }
+    ]
+  }
+}
