@@ -31,6 +31,7 @@ class TaskStatus(str, Enum):
     HARVESTED = "HARVESTED"            # Legacy external-result status; current Phase 3 does not emit it
     ALIGNING = "ALIGNING"              # Legacy Phase 4 status; current Phase 4 is disabled/no-op
     COMPLETED = "COMPLETED"            # Verified by lake build
+    COMPLETED_WITH_PROOF_DEBT = "COMPLETED_WITH_PROOF_DEBT"  # Accepted with explicit proof-debt support
     USER_MODIFIED = "USER_MODIFIED"    # Output hash mismatch (User manual edit)
     ORPHANED = "ORPHANED"              # Task no longer in LaTeX source
 
@@ -106,6 +107,8 @@ class LedgerManager:
         if not isinstance(deps, list):
             deps = []
         safe_deps = canonicalize_id_list(deps)
+        if soft_imports is None:
+            soft_imports = task.get("soft_imports", [])
         safe_soft_imports = self._normalize_soft_imports(soft_imports)
 
         depth_raw = task.get("depth", 0)
@@ -584,6 +587,7 @@ class LedgerManager:
 
             existing = self.ledger["tasks"][tid]
             self._ensure_task_schema(existing, tid)
+            plan_soft_imports = self._normalize_soft_imports(task.get("soft_imports", []))
             existing_soft_imports = self._normalize_soft_imports(
                 existing.get("candidate_snapshot", {}).get("soft_imports", [])
             )
@@ -594,6 +598,10 @@ class LedgerManager:
                     existing["status"] = TaskStatus.DISCOVERED.value
                 existing_soft_imports = []
                 existing["soft_imports_confirmed_at"] = ""
+            soft_imports_confirmed = bool(str(existing.get("soft_imports_confirmed_at", "") or "").strip())
+            task_type = str(task.get("type", existing.get("type", "")) or "").strip().lower()
+            if plan_soft_imports and (task_type != "problem" or not soft_imports_confirmed):
+                existing_soft_imports = plan_soft_imports
 
             if existing["status"] == TaskStatus.ORPHANED.value:
                 existing["status"] = TaskStatus.DISCOVERED.value
@@ -812,6 +820,31 @@ class LedgerManager:
             stats[status] += 1
         return stats
 
+    def get_proof_debt_summary(self):
+        task_count = 0
+        obligation_count = 0
+        completed_hidden_task_count = 0
+        for task in self.ledger["tasks"].values():
+            proof_summary = task.get("proof_obligation_summary", {})
+            status_counts = proof_summary.get("status_counts", {}) if isinstance(proof_summary, dict) else {}
+            if not isinstance(status_counts, dict):
+                continue
+            try:
+                accepted_count = int(status_counts.get("accepted_as_proof_debt", 0) or 0)
+            except (TypeError, ValueError):
+                accepted_count = 0
+            if accepted_count <= 0:
+                continue
+            task_count += 1
+            obligation_count += accepted_count
+            if task.get("status", "") == TaskStatus.COMPLETED.value:
+                completed_hidden_task_count += 1
+        return {
+            "task_count": task_count,
+            "obligation_count": obligation_count,
+            "completed_hidden_task_count": completed_hidden_task_count,
+        }
+
     def print_status_summary(self):
         print("\n" + "=" * 40)
         print("📊 TOY APOLLO PROJECT LEDGER")
@@ -820,4 +853,17 @@ class LedgerManager:
         for status, count in stats.items():
             if count > 0:
                 print(f"  {status.ljust(15)} : {count}")
+        proof_debt = self.get_proof_debt_summary()
+        if proof_debt["task_count"] > 0:
+            print(
+                "  "
+                + "ACCEPTED_PROOF_DEBT".ljust(25)
+                + f" : {proof_debt['task_count']} tasks / {proof_debt['obligation_count']} obligations"
+            )
+            if proof_debt["completed_hidden_task_count"] > 0:
+                print(
+                    "  "
+                    + "COMPLETED_WITH_HIDDEN_DEBT".ljust(25)
+                    + f" : {proof_debt['completed_hidden_task_count']} tasks"
+                )
         print("=" * 40)

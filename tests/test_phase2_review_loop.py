@@ -12,13 +12,160 @@ if str(REPO_ROOT) not in sys.path:
 
 from src.toy_apollo.phase2_review_loop import (  # noqa: E402
     run_codex_auto_loop,
+    run_codex_debt_fix,
     run_codex_review_fix,
     run_codex_review_now,
 )
+from src.toy_apollo.phase2_proof_obligations import summarize_proof_obligations  # noqa: E402
 from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E402
 
 
 class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
+    def _setup_downstream_of_proof_debt_task(self, root: Path):
+        self._clean_root(root)
+        plans_dir = root / "plans"
+        plans_dir.mkdir(parents=True, exist_ok=True)
+        dep_id = "thm_10_8"
+        task_id = "thm_10_9"
+        (plans_dir / "chapter10-continuous-mapping_plan.json").write_text(
+            json.dumps(
+                [
+                    {
+                        "block_id": dep_id,
+                        "type": "Theorem",
+                        "title": "Debt-bearing upstream",
+                        "content": "Upstream theorem with accepted proof debt.",
+                        "dependencies": [],
+                    },
+                    {
+                        "block_id": task_id,
+                        "type": "Theorem",
+                        "title": "Downstream theorem",
+                        "content": "Downstream theorem depending on the upstream result.",
+                        "dependencies": [dep_id],
+                    },
+                ],
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+        from src.ledger_manager import LedgerManager, TaskStatus
+
+        ledger = LedgerManager(ledger_path=str(root / "project_ledger.json"))
+        for block_id, dependencies in ((dep_id, []), (task_id, [dep_id])):
+            ledger.add_or_update_task(
+                {
+                    "block_id": block_id,
+                    "type": "Theorem",
+                    "title": block_id,
+                    "content": "test task",
+                    "source_plan": "chapter10-continuous-mapping",
+                    "dependencies": dependencies,
+                }
+            )
+        ledger.update_status(dep_id, TaskStatus.COMPLETED_WITH_PROOF_DEBT)
+        ledger.update_runtime_metadata(
+            dep_id,
+            proof_obligation_summary={"status_counts": {"proved": 5, "accepted_as_proof_debt": 1}},
+        )
+        settings = self._make_settings(root, plans_dir)
+        return ledger, settings, task_id, dep_id
+
+    def _write_accepted_debt_obligation(self, pack_dir: Path, task_id: str, *, kind: str = "proof_debt_support") -> dict:
+        payload = {
+            "schema_version": "phase2.proof_obligations.v1",
+            "task_id": task_id,
+            "classification": {
+                "requires_decomposition": True,
+                "reason": "test accepted proof debt",
+                "evidence": ["proof carries accepted debt"],
+            },
+            "obligations": [
+                {
+                    "id": "legacy_debt_step",
+                    "title": "Legacy debt step",
+                    "kind": kind,
+                    "source_ref": "test source proof debt",
+                    "depends_on": [],
+                    "lean_landing": "h_legacy_debt",
+                    "status": "accepted_as_proof_debt",
+                    "review_status": "accepted",
+                    "blocking": True,
+                    "scaffold_hypotheses": [
+                        {
+                            "name": "h_legacy_debt",
+                            "category": "proof_debt_support",
+                            "obligation_id": "legacy_debt_step",
+                            "discharge_plan": "replace the accepted debt by a proved local lemma",
+                            "status": "accepted_as_proof_debt",
+                        }
+                    ],
+                    "source_output_alignment": {
+                        "audit_class": "B_partial_theorem_plus_missing_or_support",
+                        "family": "cdf/weak/law",
+                        "existing_local_declarations": [
+                            {
+                                "name": "legacy_bridge",
+                                "kind": "theorem",
+                                "file": "ToyApollo/Output/legacy.lean",
+                                "line": 10,
+                            }
+                        ],
+                        "missing_landing_names": ["h_legacy_debt"],
+                        "next_action": "Use the bridge theorem and replace the support hypothesis.",
+                    },
+                    "notes": "This debt should be repairable even when the historical task status is COMPLETED.",
+                }
+            ],
+            "scaffold_hypotheses": [],
+            "review_history": [],
+        }
+        (pack_dir / "proof_obligations.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        return payload
+
+    def test_debt_fix_prepares_repair_cycle_for_legacy_completed_debt(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_debt_fix_legacy"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_loop_debt_fix_legacy"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
+            obligations = self._write_accepted_debt_obligation(pack_dir, task_id, kind="source_step")
+            ledger.update_runtime_metadata(task_id, proof_obligation_summary=summarize_proof_obligations(obligations))
+
+            success, detail = asyncio.run(run_codex_debt_fix(task_id, ledger, settings))
+
+            self.assertTrue(success, detail)
+            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "COMPLETED_WITH_PROOF_DEBT")
+            request_path = pack_dir / "review_repair_request_v1.json"
+            self.assertTrue(request_path.exists())
+            request = json.loads(request_path.read_text(encoding="utf-8"))
+            self.assertEqual(request["origin_review_mode"], "debt-fix")
+            self.assertEqual(request["repair_trigger"], "proof_debt")
+            self.assertEqual(request["proof_obligation_blockers"][0]["obligation_id"], "legacy_debt_step")
+            self.assertIn("legacy_bridge", request["proof_obligation_blockers"][0]["issue"])
+            self.assertIn("Use the bridge theorem", request["must_fix"][0])
+            self.assertEqual(Path(request["next_draft_seed_file"]), output_path)
+
+            fix_success, fix_detail = asyncio.run(run_codex_review_fix(task_id, ledger, settings))
+            self.assertTrue(fix_success, fix_detail)
+            self.assertEqual((pack_dir / "draft.lean").read_text(encoding="utf-8"), output_path.read_text(encoding="utf-8"))
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_debt_fix_noops_when_task_has_no_accepted_debt(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_debt_fix_noop"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_loop_debt_fix_noop"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id, completed=True)
+
+            success, detail = asyncio.run(run_codex_debt_fix(task_id, ledger, settings))
+
+            self.assertTrue(success, detail)
+            self.assertIn("no accepted proof debt", detail.lower())
+            self.assertFalse((pack_dir / "review_repair_request_v1.json").exists())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
 
     def test_review_now_current_requires_existing_request(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_current_requires_request"
@@ -32,6 +179,34 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
 
             self.assertFalse(success)
             self.assertIn("request", detail.lower())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_review_now_stops_before_preparing_downstream_with_proof_debt_dependency(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_proof_debt_dep_review_now"
+        try:
+            ledger, settings, task_id, dep_id = self._setup_downstream_of_proof_debt_task(root)
+
+            success, detail = asyncio.run(run_codex_review_now(task_id, ledger, settings, review_subject="current"))
+
+            self.assertFalse(success)
+            self.assertIn(dep_id, detail)
+            self.assertIn("proof debt", detail.lower())
+            self.assertFalse((settings.phase2_prompt_packs_dir / task_id).exists())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_auto_loop_stops_before_preparing_downstream_with_proof_debt_dependency(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_proof_debt_dep_auto_loop"
+        try:
+            ledger, settings, task_id, dep_id = self._setup_downstream_of_proof_debt_task(root)
+
+            success, detail = asyncio.run(run_codex_auto_loop(task_id, ledger, settings))
+
+            self.assertFalse(success)
+            self.assertIn(dep_id, detail)
+            self.assertIn("proof debt", detail.lower())
+            self.assertFalse((settings.phase2_prompt_packs_dir / task_id).exists())
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

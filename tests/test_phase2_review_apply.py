@@ -51,6 +51,49 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             encoding="utf-8",
         )
 
+    def _write_single_proof_debt_obligation(self, pack_dir: Path, task_id: str) -> None:
+        (pack_dir / "proof_obligations.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": "phase2.proof_obligations.v1",
+                    "task_id": task_id,
+                    "classification": {
+                        "requires_decomposition": True,
+                        "reason": "test complex proof with accepted proof debt",
+                        "evidence": ["proof carries an explicit reusable support assumption"],
+                    },
+                    "obligations": [
+                        {
+                            "id": "tail_bound_support",
+                            "title": "Tail bound support",
+                            "kind": "proof_debt_support",
+                            "source_ref": "test source proof tail estimate",
+                            "depends_on": [],
+                            "lean_landing": "h_tail_bound_support",
+                            "status": "accepted_as_proof_debt",
+                            "review_status": "accepted",
+                            "blocking": True,
+                            "scaffold_hypotheses": [
+                                {
+                                    "name": "h_tail_bound_support",
+                                    "category": "proof_debt_support",
+                                    "obligation_id": "tail_bound_support",
+                                    "discharge_plan": "replace support parameter by a proved local lemma",
+                                    "status": "accepted_as_proof_debt",
+                                }
+                            ],
+                            "notes": "Accepted proof debt must not be reported as a clean completion.",
+                        }
+                    ],
+                    "scaffold_hypotheses": [],
+                    "review_history": [],
+                },
+                indent=2,
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+
     def _write_two_open_obligations(self, pack_dir: Path, task_id: str) -> None:
         obligations = []
         for obligation_id in ["covered_step", "missing_step"]:
@@ -157,6 +200,48 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_codex_review_apply_pass_is_idempotent_after_candidate_promoted(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_idempotent_pass"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_idempotent_pass"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass")
+
+            def promote_side_effect(*args, **kwargs):
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                output_path.write_text((pack_dir / "candidate_v1.lean").read_text(encoding="utf-8"), encoding="utf-8")
+                return True, "final build ok"
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                side_effect=promote_side_effect,
+            ), patch(
+                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                side_effect=promote_side_effect,
+            ):
+                success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertTrue(success, detail)
+            first_record = dict(ledger.ledger["tasks"][task_id])
+            first_verify_files = sorted(pack_dir.glob("verify_result_v*.json"))
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertTrue(success, detail)
+            self.assertIn("already promoted", detail.lower())
+            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "COMPLETED")
+            self.assertEqual(ledger.ledger["tasks"][task_id]["pack_candidate_state"], first_record["pack_candidate_state"])
+            self.assertEqual(ledger.ledger["tasks"][task_id]["latest_operation_file"], first_record["latest_operation_file"])
+            self.assertEqual(ledger.ledger["tasks"][task_id]["latest_verify_result_file"], first_record["latest_verify_result_file"])
+            self.assertEqual(sorted(pack_dir.glob("verify_result_v*.json")), first_verify_files)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_codex_review_apply_pass_requires_proof_obligation_coverage(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_obligation_partial_pass"
         try:
@@ -189,6 +274,61 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertFalse(success)
             self.assertIn("obligation", detail.lower())
             self.assertFalse(output_path.exists())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_pass_with_proof_debt_marks_completed_with_proof_debt(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_pass_with_proof_debt"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_pass_with_proof_debt"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            self._write_single_proof_debt_obligation(pack_dir, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="pass",
+                obligation_review={
+                    "status": "covered",
+                    "summary": "tail_bound_support is explicit accepted proof debt",
+                    "items": [
+                        {
+                            "obligation_id": "tail_bound_support",
+                            "status": "accepted_as_proof_debt",
+                            "evidence": "support parameter is explicit and has a discharge plan",
+                        }
+                    ],
+                    "open_blockers": [],
+                    "scaffold_assessment": [
+                        {
+                            "name": "h_tail_bound_support",
+                            "assessment": "accepted as explicit proof debt",
+                        }
+                    ],
+                },
+            )
+
+            def promote_side_effect(*args, **kwargs):
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                output_path.write_text((pack_dir / "candidate_v1.lean").read_text(encoding="utf-8"), encoding="utf-8")
+                return True, "final build ok"
+
+            with patch(
+                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                side_effect=promote_side_effect,
+            ):
+                success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertTrue(success, detail)
+            self.assertTrue(output_path.exists())
+            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "COMPLETED_WITH_PROOF_DEBT")
+            self.assertEqual(
+                ledger.ledger["tasks"][task_id]["proof_obligation_summary"]["status_counts"]["accepted_as_proof_debt"],
+                1,
+            )
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -397,6 +537,26 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
 
             self.assertFalse(success)
             self.assertIn("candidate hash", detail.lower())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_validation_failure_preserves_result_file(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_preserve_invalid_result"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_preserve_invalid_result"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass", candidate_hash="mismatch")
+            original_result_text = result_path.read_text(encoding="utf-8")
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertIn("candidate hash", detail.lower())
+            self.assertEqual(result_path.read_text(encoding="utf-8"), original_result_text)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

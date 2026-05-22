@@ -21,6 +21,7 @@ except Exception:
         "HARVESTED",
         "ALIGNING",
         "COMPLETED",
+        "COMPLETED_WITH_PROOF_DEBT",
         "USER_MODIFIED",
         "ORPHANED",
     }
@@ -34,6 +35,7 @@ HIGH_STATUS_REQUIRES_EVIDENCE = {
     "HARVESTED",
     "ALIGNING",
     "COMPLETED",
+    "COMPLETED_WITH_PROOF_DEBT",
     "USER_MODIFIED",
 }
 

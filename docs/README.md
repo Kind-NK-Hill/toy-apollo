@@ -1,6 +1,9 @@
 # Docs Boundary
 
-This directory is for current operator runbooks and stable policy notes. Historical migration, reorg, provider-offload, and one-off handoff notes were removed from the tracked docs; use git history if you need to audit them.
+This directory is for current operator runbooks and stable policy notes.
+Historical migration, reorg, provider-offload, and one-off handoff notes should
+not sit beside current policy. If a historical note must remain available, put
+it under `docs/archive/` and mark it as non-authoritative.
 
 ## Current Runtime Docs
 
@@ -10,6 +13,9 @@ Use these when operating or modifying the current pipeline:
 - `phase2_problem_soft_dependency_workflow.md`
 - `phase2_candidate_guidelines.md`
 - `phase2_review_loop_protocol.md`
+- `proof_debt_next_llm_playbook.md`
+- `phase2_ch10_14_clean_debt_goals.md`
+- `phase2_ch10_14_clean_debt_surface_audit.md`
 
 ## Policy Notes
 
@@ -29,6 +35,14 @@ Use these when changing dependency modeling or source-plan boundaries:
 ## Search Boundary
 
 Default active searches should use normal `rg`; `.rgignore` excludes backup, archive, generated pack, and artifact directories. Use `rg --no-ignore` only when intentionally auditing historical or generated content.
+
+## Archive Boundary
+
+- `docs/archive/outdated_agent_handoffs/` contains old batch/handoff service
+  notes. They are audit trail only.
+- Do not use archived handoff files as current proof-debt policy.
+- Current Chapter 10-14 proof-debt truth comes from
+  `tools/audit_phase2_clean_debt_surface.py` and its generated reports.
 
 ## Legacy Metadata
 

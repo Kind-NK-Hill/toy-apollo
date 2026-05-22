@@ -20,6 +20,7 @@ python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --r
 python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject existing
 python .\run_chapter.py --phase 2 --phase2-mode review-existing-queue
 python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks <task_id> --review-result <path>
+python .\run_chapter.py --phase 2 --phase2-mode debt-fix --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode verify --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode audit --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode soft-pack --tasks <problem_ids>
@@ -61,6 +62,14 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids>
   - `review-pack`, `review-existing`, and `review-existing-queue` only prepare review materials and are prepare-only/compatibility paths, not the default semantic review entrypoint
   - `review-now` is the current semantic review orchestration entrypoint
   - `review-apply` only validates and consumes an already existing review result
+  - `debt-fix` creates a repair request for accepted proof debt and then resumes through `review-fix`
+  - `COMPLETED_WITH_PROOF_DEBT` is not a clean dependency; hard dependents and
+    selected soft imports must wait until `debt-fix` removes the accepted debt
+  - before adding a new proof-debt support object or helper obligation, inspect
+    existing `ToyApollo/Output` files, including older textbook outputs,
+    definition files, bridge/foundation files, renamed helper variants, and
+    downstream-imported files; reuse or register buildable local outputs before
+    treating an obligation as unavailable
   - `verify` and `audit` remain runner-backed advanced modes
   - `pack` consumes hard deps plus confirmed soft imports and writes `dependency_decision_context.*`
   - `build-check` records undeclared local imports as dependency violations; it does not add them to the ledger
@@ -134,6 +143,10 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids>
 - Use `python .\run_chapter.py --phase 2 --phase2-mode build-check --tasks <task_id>` for the default technical gate
 - Use `python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject candidate` for the default semantic review of a build-ready candidate
 - Use `python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject existing` for existing runnable official output
+- Use `python .\run_chapter.py --phase 2 --phase2-mode debt-fix --tasks <task_id>` only for tasks with `accepted_as_proof_debt` in `proof_obligations.json` or the ledger proof-obligation summary
+- If a hard dependency is `COMPLETED_WITH_PROOF_DEBT`, or a legacy
+  `COMPLETED` dependency still records `accepted_as_proof_debt`, skip the
+  downstream task as proof-debt-blocked and repair the blocker first.
 - Use `review-pack` and `review-existing` only as prepare-only/compatibility material-generation modes
 - Use `python .\run_chapter.py --phase 2 --phase2-mode review-existing-queue` to build the batch Codex reviewer queue from `ToyApollo/Output`
 - Use `python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids> --selection <path>` only to persist selected soft imports

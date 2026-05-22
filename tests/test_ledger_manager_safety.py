@@ -3,6 +3,7 @@ import shutil
 import sys
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -12,6 +13,40 @@ from src.ledger_manager import LedgerManager, TaskStatus  # noqa: E402
 
 
 class LedgerManagerSafetyTests(unittest.TestCase):
+    def test_status_summary_reports_accepted_proof_debt_hidden_under_completed(self):
+        root = REPO_ROOT / "tests" / "_tmp_ledger_status_proof_debt"
+        try:
+            if root.exists():
+                shutil.rmtree(root, ignore_errors=True)
+            root.mkdir(parents=True, exist_ok=True)
+
+            ledger = LedgerManager(ledger_path=str(root / "project_ledger.json"))
+            ledger.add_or_update_task(
+                {
+                    "block_id": "thm_9_debt",
+                    "type": "Theorem",
+                    "title": "Debt",
+                    "content": "A task with accepted debt.",
+                    "source_plan": "chapter9",
+                    "dependencies": [],
+                }
+            )
+            ledger.update_status("thm_9_debt", TaskStatus.COMPLETED)
+            ledger.update_runtime_metadata(
+                "thm_9_debt",
+                proof_obligation_summary={"status_counts": {"accepted_as_proof_debt": 2}},
+            )
+
+            with patch("builtins.print") as print_mock:
+                ledger.print_status_summary()
+
+            printed = "\n".join(" ".join(str(part) for part in call.args) for call in print_mock.call_args_list)
+            self.assertIn("ACCEPTED_PROOF_DEBT", printed)
+            self.assertIn("2 obligations", printed)
+            self.assertIn("COMPLETED_WITH_HIDDEN_DEBT", printed)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_save_keeps_json_parseable_and_writes_recoverable_backup(self):
         root = REPO_ROOT / "tests" / "_tmp_ledger_backup_recovery"
         try:
@@ -174,6 +209,87 @@ class LedgerManagerSafetyTests(unittest.TestCase):
             self.assertEqual(persisted["tasks"]["task_a"]["status"], TaskStatus.LOCAL_FIXING.value)
             self.assertIn("task_b", persisted["tasks"])
             self.assertEqual(persisted["tasks"]["task_b"]["source_plan"], "plan_b")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_plan_soft_imports_refresh_existing_non_problem_snapshot(self):
+        root = REPO_ROOT / "tests" / "_tmp_ledger_plan_soft_imports"
+        try:
+            if root.exists():
+                shutil.rmtree(root, ignore_errors=True)
+            root.mkdir(parents=True, exist_ok=True)
+
+            ledger_path = root / "project_ledger.json"
+            ledger = LedgerManager(ledger_path=str(ledger_path))
+            ledger.add_or_update_task(
+                {
+                    "block_id": "thm_12_3",
+                    "type": "Theorem_with_Proof",
+                    "title": "Riesz-Fischer",
+                    "content": "L2 is complete.",
+                    "source_plan": "chapter12",
+                    "dependencies": ["thm_7_3"],
+                }
+            )
+            ledger.add_or_update_task(
+                {
+                    "block_id": "thm_12_3",
+                    "type": "Theorem_with_Proof",
+                    "title": "Riesz-Fischer",
+                    "content": "L2 is complete.",
+                    "source_plan": "chapter12",
+                    "dependencies": ["thm_7_3"],
+                    "soft_imports": ["def_12_2", "def_12_3"],
+                }
+            )
+
+            persisted = LedgerManager(ledger_path=str(ledger_path)).ledger
+            self.assertEqual(
+                persisted["tasks"]["thm_12_3"]["candidate_snapshot"]["soft_imports"],
+                ["def_12_2", "def_12_3"],
+            )
+            self.assertFalse(persisted["tasks"]["thm_12_3"]["soft_imports_confirmed_at"])
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_confirmed_problem_soft_imports_are_not_overwritten_by_plan_refresh(self):
+        root = REPO_ROOT / "tests" / "_tmp_ledger_problem_soft_imports"
+        try:
+            if root.exists():
+                shutil.rmtree(root, ignore_errors=True)
+            root.mkdir(parents=True, exist_ok=True)
+
+            ledger_path = root / "project_ledger.json"
+            ledger = LedgerManager(ledger_path=str(ledger_path))
+            ledger.add_or_update_task(
+                {
+                    "block_id": "prob_12_2",
+                    "type": "Problem",
+                    "title": "L2 problem",
+                    "content": "Problem content.",
+                    "source_plan": "chapter12",
+                    "dependencies": [],
+                }
+            )
+            ledger.mark_soft_imports_confirmed("prob_12_2", ["def_12_2"])
+            ledger.add_or_update_task(
+                {
+                    "block_id": "prob_12_2",
+                    "type": "Problem",
+                    "title": "L2 problem",
+                    "content": "Problem content.",
+                    "source_plan": "chapter12",
+                    "dependencies": [],
+                    "soft_imports": ["def_12_3"],
+                }
+            )
+
+            persisted = LedgerManager(ledger_path=str(ledger_path)).ledger
+            self.assertEqual(
+                persisted["tasks"]["prob_12_2"]["candidate_snapshot"]["soft_imports"],
+                ["def_12_2"],
+            )
+            self.assertTrue(persisted["tasks"]["prob_12_2"]["soft_imports_confirmed_at"])
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

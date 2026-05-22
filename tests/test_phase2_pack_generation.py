@@ -18,6 +18,8 @@ from src.toy_apollo.phase2_pack_generation import (  # noqa: E402
     write_existing_output_review_queue,
     write_prompt_pack,
 )
+from src.toy_apollo.phase2_prompt_pack import validate_candidate_hard_checks  # noqa: E402
+from src.ledger_manager import LedgerManager, TaskStatus  # noqa: E402
 from src.toy_apollo.phase2_semantic_review import (  # noqa: E402
     SEMANTIC_REVIEW_PROMPT_VERSION,
     SEMANTIC_REVIEW_RUBRIC_VERSION,
@@ -26,6 +28,57 @@ from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E4
 
 
 class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
+    def _setup_proof_debt_dependency_task(self, root: Path, *, legacy_completed_debt: bool = False):
+        self._clean_root(root)
+        plans_dir = root / "plans"
+        plans_dir.mkdir(parents=True, exist_ok=True)
+        dep_id = "thm_10_8"
+        task_id = "prob_10_10"
+        (plans_dir / "chapter10-problems_plan.json").write_text(
+            json.dumps(
+                [
+                    {
+                        "block_id": dep_id,
+                        "type": "Theorem",
+                        "title": "Debt-bearing upstream",
+                        "content": "Upstream theorem with accepted proof debt.",
+                        "dependencies": [],
+                    },
+                    {
+                        "block_id": task_id,
+                        "type": "Problem",
+                        "title": "Downstream problem",
+                        "content": "Downstream task that depends on the upstream theorem.",
+                        "dependencies": [dep_id],
+                    },
+                ],
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+        ledger = LedgerManager(ledger_path=str(root / "project_ledger.json"))
+        for block_id, dependencies in ((dep_id, []), (task_id, [dep_id])):
+            ledger.add_or_update_task(
+                {
+                    "block_id": block_id,
+                    "type": "Theorem" if block_id == dep_id else "Problem",
+                    "title": block_id,
+                    "content": "test task",
+                    "source_plan": "chapter10-problems",
+                    "dependencies": dependencies,
+                }
+            )
+        if legacy_completed_debt:
+            ledger.update_status(dep_id, TaskStatus.COMPLETED)
+        else:
+            ledger.update_status(dep_id, TaskStatus.COMPLETED_WITH_PROOF_DEBT)
+        ledger.update_runtime_metadata(
+            dep_id,
+            proof_obligation_summary={"status_counts": {"proved": 4, "accepted_as_proof_debt": 1}},
+        )
+        settings = self._make_settings(root, plans_dir)
+        return ledger, settings, task_id, dep_id
+
     def _seed_build_failures(self, pack_dir: Path, task_id: str, count: int) -> None:
         (pack_dir / "attempt_history.json").write_text(
             json.dumps(
@@ -133,8 +186,114 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertEqual(review_input["rubric_version"], SEMANTIC_REVIEW_RUBRIC_VERSION)
             self.assertEqual(review_input["review_basis"]["proof_obligations"]["task_id"], task_id)
 
+            review_template = json.loads((pack_dir / "semantic_review_result_template_v1.json").read_text(encoding="utf-8"))
+            schema_hints = review_template["reviewer_schema_hints"]
+            self.assertEqual(schema_hints["section_status_values"], ["covered", "partial", "missing", "violated", "unclear"])
+            self.assertEqual(
+                schema_hints["downstream_consumer_entry_shape"],
+                {
+                    "block_id": "<direct downstream block_id>",
+                    "status": "covered | not_applicable | blocked",
+                    "evidence": "<why this exported interface is adequate or not applicable>",
+                },
+            )
+            self.assertEqual(schema_hints["forbidden_weakening_status_values"], ["not_present", "present", "not_applicable"])
+
+            review_prompt = (pack_dir / "semantic_review_prompt_v1.md").read_text(encoding="utf-8")
+            self.assertIn("Status enum fields", review_prompt)
+            self.assertIn("downstream_adequacy.consumers_checked entries must be objects", review_prompt)
+            self.assertIn("forbidden_weakenings entries use status not_present/present/not_applicable", review_prompt)
+
             review_context = (pack_dir / "semantic_review_context_v1.md").read_text(encoding="utf-8")
             self.assertIn("Proof Obligation Ledger", review_context)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_write_prompt_pack_rejects_hard_dependency_with_proof_debt(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_proof_debt_dep"
+        try:
+            ledger, settings, task_id, dep_id = self._setup_proof_debt_dependency_task(root)
+
+            with self.assertRaisesRegex(ValueError, f"{dep_id}.*proof debt"):
+                write_prompt_pack(task_id, ledger, settings)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_build_check_rejects_existing_pack_when_hard_dependency_has_legacy_proof_debt(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_legacy_proof_debt_dep"
+        try:
+            ledger, settings, task_id, dep_id = self._setup_proof_debt_dependency_task(
+                root,
+                legacy_completed_debt=True,
+            )
+            pack_dir = settings.phase2_prompt_packs_dir / task_id
+            pack_dir.mkdir(parents=True, exist_ok=True)
+            (pack_dir / "draft.lean").write_text("import Mathlib\n\ntheorem prob_10_10 : True := by\n  trivial\n", encoding="utf-8")
+
+            success, detail = asyncio.run(build_check_prompt_pack_candidate(task_id, ledger, settings))
+
+            self.assertFalse(success)
+            self.assertIn(dep_id, detail)
+            self.assertIn("proof debt", detail.lower())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_pack_reflects_pack_soft_imports(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_pack_soft_import"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_pack_generation_pack_soft_import"
+            dep_id = "thm_4_pack_generation_soft_dep"
+            stale_dep_id = "thm_4_pack_generation_stale_soft_dep"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+
+            for local_dep_id in [dep_id, stale_dep_id]:
+                dep_code = f"import Mathlib\n\ntheorem {local_dep_id} : True := by\n  trivial\n"
+                dep_path = settings.toyapollo_output_dir / f"{local_dep_id}.lean"
+                dep_path.parent.mkdir(parents=True, exist_ok=True)
+                dep_path.write_text(dep_code, encoding="utf-8")
+                ledger.add_or_update_task(
+                    {
+                        "block_id": local_dep_id,
+                        "type": "Theorem",
+                        "title": "Soft dependency",
+                        "content": "A previously completed local output.",
+                        "source_plan": "08_chap4_measurable_functions",
+                        "dependencies": [],
+                    }
+                )
+                ledger.register_success(local_dep_id, dep_code, ledger._hash_text(dep_code))
+            ledger.update_candidate_soft_imports(task_id, [stale_dep_id])
+
+            task_json_path = pack_dir / "task.json"
+            task_payload = json.loads(task_json_path.read_text(encoding="utf-8"))
+            task_payload["soft_imports"] = [dep_id]
+            task_payload["final_import_union"] = [dep_id]
+            task_json_path.write_text(json.dumps(task_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+            (pack_dir / "draft.lean").write_text(
+                f"import Mathlib\nimport ToyApollo.Output.{dep_id}\n\ntheorem {task_id} : True := by\n  exact {dep_id}\n",
+                encoding="utf-8",
+            )
+
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            with patch.dict(os.environ, {"TOY_APOLLO_PHASE2_REVIEWER_ARGV_JSON": ""}, clear=False):
+                review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+
+            self.assertTrue(review_success, review_detail)
+            review_input = json.loads((pack_dir / "semantic_review_input_v1.json").read_text(encoding="utf-8"))
+            self.assertIn(dep_id, review_input["task"]["soft_imports"])
+            self.assertIn(dep_id, review_input["review_basis"]["task"]["soft_imports"])
+            self.assertNotIn(stale_dep_id, review_input["task"]["soft_imports"])
+            self.assertNotIn(stale_dep_id, review_input["review_basis"]["task"]["soft_imports"])
+            self.assertIn(f"import ToyApollo.Output.{dep_id}", review_input["imports"])
+            self.assertNotIn(f"import ToyApollo.Output.{stale_dep_id}", review_input["imports"])
+            self.assertIn(dep_id, {entry["task_id"] for entry in review_input["dependencies"]})
+            self.assertNotIn(stale_dep_id, {entry["task_id"] for entry in review_input["dependencies"]})
+            review_context = (pack_dir / "semantic_review_context_v1.md").read_text(encoding="utf-8")
+            self.assertIn(dep_id, review_context)
+            self.assertNotIn(stale_dep_id, review_context)
+            self.assertIn("Soft imports", review_context)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -207,6 +366,53 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertEqual(task["phase2_build_fail_counter"], 0)
         finally:
             shutil.rmtree(root, ignore_errors=True)
+
+    def test_hard_check_allows_auxiliary_output_module_with_task_prefix(self):
+        task = {"block_id": "thm_10_8", "type": "Theorem_with_Proof", "dependencies": []}
+        candidate = """
+import Mathlib
+import ToyApollo.Output.thm_10_8_quantile_defs
+
+theorem thm_10_8 : True := by
+  trivial
+""".strip()
+
+        success, diagnostics, detail = validate_candidate_hard_checks(task, candidate)
+
+        self.assertTrue(success, detail)
+        self.assertEqual(diagnostics, [])
+
+    def test_hard_check_still_rejects_exact_self_import(self):
+        task = {"block_id": "thm_10_8", "type": "Theorem_with_Proof", "dependencies": []}
+        candidate = """
+import Mathlib
+import ToyApollo.Output.thm_10_8
+
+theorem thm_10_8 : True := by
+  trivial
+""".strip()
+
+        success, diagnostics, detail = validate_candidate_hard_checks(task, candidate)
+
+        self.assertFalse(success)
+        self.assertIn("self-imports", detail)
+        self.assertEqual(diagnostics[0]["kind"], "self_import")
+
+    def test_hard_check_still_rejects_undeclared_task_import(self):
+        task = {"block_id": "thm_10_8", "type": "Theorem_with_Proof", "dependencies": []}
+        candidate = """
+import Mathlib
+import ToyApollo.Output.prob_10_10
+
+theorem thm_10_8 : True := by
+  trivial
+""".strip()
+
+        success, diagnostics, detail = validate_candidate_hard_checks(task, candidate)
+
+        self.assertFalse(success)
+        self.assertIn("prob_10_10", detail)
+        self.assertEqual(diagnostics[0]["kind"], "undeclared_local_import")
 
     def test_review_existing_success_generates_official_snapshot_and_review_artifacts(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_review_existing_success"

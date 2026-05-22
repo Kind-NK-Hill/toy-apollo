@@ -25,10 +25,13 @@ from .phase2_pack_views import _render_review_repair_summary, refresh_pack_runti
 from .phase2_failure_budget import phase2_failure_counters_from_history
 from .phase2_proof_obligations import (
     apply_obligation_review,
+    apply_obligation_review_to_file,
     extract_obligation_review_blockers,
     proof_obligation_path,
     summarize_proof_obligations,
 )
+from .phase2_obligation_tasks import reconcile_obligation_tasks_for_task
+from .phase2_output_binding import resolve_phase2_output_binding
 from .phase2_review_request import _clear_current_review_metadata, _resolve_review_binding_path, _validate_review_input_freshness
 from .phase2_semantic_review import (
     SEMANTIC_REVIEW_PROMPT_VERSION,
@@ -111,6 +114,31 @@ def _sync_current_review_repair_aliases(
         if alias.exists():
             alias.unlink()
         shutil.copyfile(source, alias)
+
+
+def _has_accepted_proof_debt(review_result: dict[str, Any], task_record: dict[str, Any]) -> bool:
+    obligation_review = review_result.get("obligation_review", {}) if isinstance(review_result, dict) else {}
+    if isinstance(obligation_review, dict):
+        items = obligation_review.get("items", [])
+        if isinstance(items, list) and any(
+            isinstance(item, dict) and str(item.get("status", "") or "").strip().lower() == "accepted_as_proof_debt"
+            for item in items
+        ):
+            return True
+    proof_summary = task_record.get("proof_obligation_summary", {}) if isinstance(task_record, dict) else {}
+    status_counts = proof_summary.get("status_counts", {}) if isinstance(proof_summary, dict) else {}
+    if isinstance(status_counts, dict):
+        try:
+            return int(status_counts.get("accepted_as_proof_debt", 0) or 0) > 0
+        except (TypeError, ValueError):
+            return False
+    return False
+
+
+def _review_completion_status(review_result: dict[str, Any], task_record: dict[str, Any]) -> TaskStatus:
+    if _has_accepted_proof_debt(review_result, task_record):
+        return TaskStatus.COMPLETED_WITH_PROOF_DEBT
+    return TaskStatus.COMPLETED
 
 
 def _clear_current_review_repair_metadata(task_id: str, ledger: LedgerManager) -> None:
@@ -355,6 +383,7 @@ async def apply_codex_review_result_once(
 ) -> ApplyOutcome:
     task = ensure_task_registered(resolve_phase2_task(task_id, ledger, settings), ledger)
     task_id = task["block_id"]
+    output_binding = resolve_phase2_output_binding(task, ledger, settings)
     apply_original_status = str(ledger.ledger.get("tasks", {}).get(task_id, {}).get("status", ""))
     pack_dir = settings.phase2_prompt_packs_dir / task_id
     if not pack_dir.exists():
@@ -403,10 +432,13 @@ async def apply_codex_review_result_once(
                 review_input=review_input,
                 runner_metadata={"status": "codex_handoff_applied", "result_file": str(result_path)},
             )
+    review_basis = review_input.get("review_basis", {}) if isinstance(review_input.get("review_basis", {}), dict) else {}
+    proof_obligations_file = str(review_basis.get("proof_obligations_file", "") or "").strip()
     source_plan = str(task.get("source_plan", "unknown") or "unknown")
     existing_official_output = find_existing_task_file(task_id, source_plan, settings)
+    completed_status_values = {TaskStatus.COMPLETED.value, TaskStatus.COMPLETED_WITH_PROOF_DEBT.value}
     existing_completed_output = (
-        apply_original_status == TaskStatus.COMPLETED.value
+        apply_original_status in completed_status_values
         and existing_official_output is not None
         and existing_official_output.exists()
     )
@@ -418,6 +450,21 @@ async def apply_codex_review_result_once(
         candidate_path = (pack_dir / candidate_path).resolve()
     candidate_code = read_file_safely(candidate_path) if candidate_path.exists() else str(review_input.get("candidate", {}).get("lean", "") or "")
     review_subject_hash = str(review_input.get("review_subject_hash", "") or review_input.get("candidate", {}).get("hash", "") or "")
+
+    def already_promoted_candidate_review() -> bool:
+        if not existing_completed_output or review_subject_kind != "candidate":
+            return False
+        if not isinstance(normalized_review, dict):
+            return False
+        if str(normalized_review.get("verdict", "") or "").strip().lower() != "pass":
+            return False
+        if str(normalized_review.get("recommended_disposition", "") or "").strip().lower() != "promote":
+            return False
+        expected_hash = str(review_input.get("candidate", {}).get("hash", "") or review_subject_hash or "")
+        if not expected_hash or existing_official_output is None:
+            return False
+        existing_output_code = read_file_safely(existing_official_output)
+        return bool(existing_output_code) and sha256_text(existing_output_code) == expected_hash
 
     def finish(
         *,
@@ -499,17 +546,18 @@ async def apply_codex_review_result_once(
                 )
             elif disposition.endswith("_invalid_no_promotion") or disposition.endswith("_fail_no_promotion") or disposition.endswith("_inconclusive_no_promotion"):
                 ledger.update_runtime_metadata(task_id, pack_candidate_state="review_rejected")
+            completion_status = _review_completion_status(semantic_review, ledger.ledger.get("tasks", {}).get(task_id, {}))
             if success:
-                ledger.update_status(task_id, TaskStatus.COMPLETED)
+                ledger.update_status(task_id, completion_status)
             elif existing_completed_output:
-                ledger.update_status(task_id, TaskStatus.COMPLETED)
+                ledger.update_status(task_id, TaskStatus(apply_original_status))
             elif failure_counters.review_fail_counter >= failure_counters.limit:
                 ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=detail_text)
             else:
                 ledger.update_status(task_id, TaskStatus.PACKED)
         else:
             if success:
-                ledger.update_status(task_id, TaskStatus.COMPLETED)
+                ledger.update_status(task_id, _review_completion_status(semantic_review, ledger.ledger.get("tasks", {}).get(task_id, {})))
             elif disposition == "official_output_review_fail":
                 ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=detail_text)
             elif apply_original_status:
@@ -542,6 +590,12 @@ async def apply_codex_review_result_once(
             validation_error = "review result candidate hash does not match semantic review input candidate hash"
     elif not validation_error:
         validation_error = "review result is not a JSON object"
+    if not validation_error and already_promoted_candidate_review():
+        return ApplyOutcome(
+            success=True,
+            detail="Codex semantic review already promoted; no changes made.",
+            disposition="codex_review_already_promoted",
+        )
     if not validation_error:
         validation_error, freshness = _validate_review_input_freshness(
             task=task,
@@ -573,11 +627,13 @@ async def apply_codex_review_result_once(
         normalized_review["review_result_file"] = str(result_path)
     else:
         normalized_review = _write_normalized_codex_review_artifacts(pack_dir, review_input, normalized_review)
-        updated_obligations = apply_obligation_review(pack_dir, normalized_review)
+        obligation_update_path = Path(proof_obligations_file) if proof_obligations_file else proof_obligation_path(pack_dir)
+        updated_obligations = apply_obligation_review_to_file(obligation_update_path, normalized_review)
         if updated_obligations:
+            obligation_owner_task_id = canonicalize_block_id(str(updated_obligations.get("task_id", "") or task_id))
             ledger.update_runtime_metadata(
-                task_id,
-                proof_obligations_file=str(proof_obligation_path(pack_dir)),
+                obligation_owner_task_id,
+                proof_obligations_file=str(obligation_update_path),
                 proof_obligation_summary=summarize_proof_obligations(updated_obligations),
             )
     verdict = str(normalized_review.get("verdict", "inconclusive"))
@@ -664,6 +720,7 @@ async def apply_codex_review_result_once(
     final_success, final_output = run_staged_official_build(
         task_id, source_plan, settings, pack_dir, candidate_code,
         attempt=int(review_input.get("attempt") or 0) or 1, mode="review-apply", restore_on_success=False,
+        output_owner_task_id=output_binding.output_owner_task_id,
     )
     if not final_success:
         diagnostics = parse_diagnostics(final_output, "final_build_failed", "final_build")
@@ -678,7 +735,12 @@ async def apply_codex_review_result_once(
             final_build_output=final_output,
         )
 
-    ledger.register_success(task_id, candidate_code, ledger._hash_text(candidate_code))
+    if output_binding.is_obligation_task:
+        ledger.register_success(output_binding.output_owner_task_id, candidate_code, ledger._hash_text(candidate_code))
+        ledger.update_status(task_id, TaskStatus.COMPLETED)
+        reconcile_obligation_tasks_for_task(output_binding.output_owner_task_id, ledger, settings)
+    else:
+        ledger.register_success(task_id, candidate_code, ledger._hash_text(candidate_code))
     return finish(
         success=True,
         detail_text="Codex semantic review passed; candidate promoted and final build succeeded.",

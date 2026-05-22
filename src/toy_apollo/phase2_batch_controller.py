@@ -17,8 +17,10 @@ from src.toy_apollo.phase2_proof_obligations import needs_concrete_decomposition
 
 
 COMPLETED = "COMPLETED"
+COMPLETED_WITH_PROOF_DEBT = "COMPLETED_WITH_PROOF_DEBT"
 FAILED_LOCAL = "FAILED_LOCAL"
 DEPENDENCY_FAILED = "DEPENDENCY_FAILED"
+DEPENDENCY_PROOF_DEBT = "DEPENDENCY_PROOF_DEBT"
 MECHANISM_BLOCKER = "MECHANISM_BLOCKER"
 USER_INTERRUPTED = "USER_INTERRUPTED"
 NEEDS_DECOMPOSITION = "NEEDS_DECOMPOSITION"
@@ -26,8 +28,10 @@ NONTERMINAL = "NONTERMINAL"
 
 TERMINAL_STATUSES = {
     COMPLETED,
+    COMPLETED_WITH_PROOF_DEBT,
     FAILED_LOCAL,
     DEPENDENCY_FAILED,
+    DEPENDENCY_PROOF_DEBT,
     MECHANISM_BLOCKER,
     USER_INTERRUPTED,
 }
@@ -63,6 +67,7 @@ class BatchTaskRow:
     stop_reason: str = ""
     dependencies: tuple[str, ...] = ()
     failed_dependency: str = ""
+    proof_debt_dependency: str = ""
     substantive_failures: int = 0
     build_fail_streak: int = 0
     review_fail_streak: int = 0
@@ -120,6 +125,7 @@ def analyze_batch_state(payload: dict[str, Any]) -> BatchReport:
         task_map[task_id] = raw_task
 
     hard_failed_roots = _hard_failed_roots(task_map)
+    proof_debt_roots = _proof_debt_roots(task_map)
     rows: list[BatchTaskRow] = []
     for task_id in sorted(task_map):
         raw_task = task_map[task_id]
@@ -127,15 +133,35 @@ def analyze_batch_state(payload: dict[str, Any]) -> BatchReport:
         stop_reason = str(raw_task.get("stop_reason", "") or "").strip()
         dependencies = tuple(canonicalize_id_list(raw_task.get("dependencies", [])))
         failed_dependency = _first_failed_transitive_dependency(task_id, task_map, hard_failed_roots)
+        proof_debt_dependency = (
+            ""
+            if failed_dependency
+            else _first_proof_debt_transitive_dependency(task_id, task_map, proof_debt_roots)
+        )
         counters = phase2_failure_counters_from_task(raw_task)
 
-        status = declared_status
-        if _task_needs_concrete_decomposition(raw_task) and declared_status != COMPLETED:
+        status = COMPLETED_WITH_PROOF_DEBT if declared_status == COMPLETED and _task_has_accepted_proof_debt(raw_task) else declared_status
+        if _task_needs_concrete_decomposition(raw_task) and declared_status not in {COMPLETED, COMPLETED_WITH_PROOF_DEBT}:
             status = NEEDS_DECOMPOSITION
         elif _early_hard_failure_before_budget(declared_status, stop_reason, counters):
             status = NONTERMINAL
-        if failed_dependency and declared_status not in {COMPLETED, FAILED_LOCAL, MECHANISM_BLOCKER, USER_INTERRUPTED}:
+        if failed_dependency and declared_status not in {
+            COMPLETED,
+            COMPLETED_WITH_PROOF_DEBT,
+            FAILED_LOCAL,
+            MECHANISM_BLOCKER,
+            USER_INTERRUPTED,
+        }:
             status = DEPENDENCY_FAILED
+        elif proof_debt_dependency and declared_status not in {
+            COMPLETED,
+            COMPLETED_WITH_PROOF_DEBT,
+            FAILED_LOCAL,
+            MECHANISM_BLOCKER,
+            USER_INTERRUPTED,
+            DEPENDENCY_FAILED,
+        }:
+            status = DEPENDENCY_PROOF_DEBT
 
         budget = count_substantive_failures(raw_task.get("failure_events", raw_task.get("substantive_failures", [])))
         issue = _row_issue(
@@ -146,8 +172,14 @@ def analyze_batch_state(payload: dict[str, Any]) -> BatchReport:
             budget=budget,
             counters=counters,
             failed_dependency=failed_dependency,
+            proof_debt_dependency=proof_debt_dependency,
         )
-        next_action = _next_action(status=status, issue=issue, failed_dependency=failed_dependency)
+        next_action = _next_action(
+            status=status,
+            issue=issue,
+            failed_dependency=failed_dependency,
+            proof_debt_dependency=proof_debt_dependency,
+        )
         rows.append(
             BatchTaskRow(
                 task_id=task_id,
@@ -156,6 +188,7 @@ def analyze_batch_state(payload: dict[str, Any]) -> BatchReport:
                 stop_reason=stop_reason,
                 dependencies=dependencies,
                 failed_dependency=failed_dependency,
+                proof_debt_dependency=proof_debt_dependency,
                 substantive_failures=budget.counted,
                 build_fail_streak=counters.build_fail_counter,
                 review_fail_streak=counters.review_fail_counter,
@@ -216,17 +249,18 @@ def render_markdown_report(report: BatchReport) -> str:
     lines.extend(
         [
             "",
-            "| task_id | status | stop_reason | failed_dependency | substantive_failures | terminal | next_action | issue |",
-            "| --- | --- | --- | --- | ---: | --- | --- | --- |",
+            "| task_id | status | stop_reason | failed_dependency | proof_debt_dependency | substantive_failures | terminal | next_action | issue |",
+            "| --- | --- | --- | --- | --- | ---: | --- | --- | --- |",
         ]
     )
     for row in report.rows:
         lines.append(
-            "| {task_id} | {status} | {stop_reason} | {failed_dependency} | {failures} | {terminal} | {next_action} | {issue} |".format(
+            "| {task_id} | {status} | {stop_reason} | {failed_dependency} | {proof_debt_dependency} | {failures} | {terminal} | {next_action} | {issue} |".format(
                 task_id=row.task_id,
                 status=row.status,
                 stop_reason=row.stop_reason or "",
                 failed_dependency=row.failed_dependency or "",
+                proof_debt_dependency=row.proof_debt_dependency or "",
                 failures=row.substantive_failures,
                 terminal=str(row.terminal).lower(),
                 next_action=row.next_action,
@@ -260,6 +294,7 @@ def main(argv: list[str] | None = None) -> int:
                     "declared_status": row.declared_status,
                     "stop_reason": row.stop_reason,
                     "failed_dependency": row.failed_dependency,
+                    "proof_debt_dependency": row.proof_debt_dependency,
                     "substantive_failures": row.substantive_failures,
                     "build_fail_streak": row.build_fail_streak,
                     "review_fail_streak": row.review_fail_streak,
@@ -290,6 +325,9 @@ def _normalize_status(raw: Any) -> str:
         "DEPENDENCY_FAILED": DEPENDENCY_FAILED,
         "DEPENDENCY-FAILED": DEPENDENCY_FAILED,
         "DEPENDENCY FAILED": DEPENDENCY_FAILED,
+        "DEPENDENCY_PROOF_DEBT": DEPENDENCY_PROOF_DEBT,
+        "DEPENDENCY-PROOF-DEBT": DEPENDENCY_PROOF_DEBT,
+        "DEPENDENCY PROOF DEBT": DEPENDENCY_PROOF_DEBT,
         "MECHANISM_BLOCKER": MECHANISM_BLOCKER,
         "MECHANISM-BLOCKER": MECHANISM_BLOCKER,
         "NEEDS_DECOMPOSITION": NEEDS_DECOMPOSITION,
@@ -319,6 +357,15 @@ def _hard_failed_roots(task_map: dict[str, dict[str, Any]]) -> set[str]:
     return roots
 
 
+def _proof_debt_roots(task_map: dict[str, dict[str, Any]]) -> set[str]:
+    roots: set[str] = set()
+    for task_id, raw_task in task_map.items():
+        status = _normalize_status(raw_task.get("status"))
+        if status == COMPLETED_WITH_PROOF_DEBT or (status == COMPLETED and _task_has_accepted_proof_debt(raw_task)):
+            roots.add(task_id)
+    return roots
+
+
 def _first_failed_transitive_dependency(
     task_id: str,
     task_map: dict[str, dict[str, Any]],
@@ -339,6 +386,26 @@ def _first_failed_transitive_dependency(
     return ""
 
 
+def _first_proof_debt_transitive_dependency(
+    task_id: str,
+    task_map: dict[str, dict[str, Any]],
+    proof_debt_roots: set[str],
+) -> str:
+    seen: set[str] = set()
+    stack = list(reversed(canonicalize_id_list(task_map[task_id].get("dependencies", []))))
+    while stack:
+        dep_id = stack.pop()
+        if dep_id in seen:
+            continue
+        seen.add(dep_id)
+        if dep_id in proof_debt_roots:
+            return dep_id
+        dep_task = task_map.get(dep_id)
+        if isinstance(dep_task, dict):
+            stack.extend(reversed(canonicalize_id_list(dep_task.get("dependencies", []))))
+    return ""
+
+
 def _row_issue(
     *,
     task_id: str,
@@ -348,11 +415,18 @@ def _row_issue(
     budget: FailureBudget,
     counters: Phase2FailureCounters,
     failed_dependency: str,
+    proof_debt_dependency: str,
 ) -> str:
     if failed_dependency and status != DEPENDENCY_FAILED:
         return f"depends on failed root {failed_dependency} but is not dependency-failed"
     if status == DEPENDENCY_FAILED and not failed_dependency:
         return "dependency-failed without a failed hard dependency in this batch"
+    if proof_debt_dependency and status != DEPENDENCY_PROOF_DEBT:
+        return f"depends on proof-debt root {proof_debt_dependency} but is not proof-debt-blocked"
+    if status == DEPENDENCY_PROOF_DEBT and not proof_debt_dependency:
+        return "dependency-proof-debt without an upstream accepted proof debt in this batch"
+    if status == COMPLETED_WITH_PROOF_DEBT:
+        return "accepted proof debt remains; run debt-fix before downstream use"
     if status == NEEDS_DECOMPOSITION:
         return "requires concrete proof-obligation decomposition before blocker/failure admission"
     if _early_hard_failure_before_budget(_normalize_status(raw_task.get("status")), stop_reason, counters):
@@ -365,11 +439,19 @@ def _row_issue(
     return ""
 
 
-def _next_action(*, status: str, issue: str, failed_dependency: str) -> str:
+def _next_action(*, status: str, issue: str, failed_dependency: str, proof_debt_dependency: str) -> str:
     if status == COMPLETED:
         return "none"
+    if status == COMPLETED_WITH_PROOF_DEBT:
+        return "run debt-fix"
     if status == DEPENDENCY_FAILED:
         return f"skip; blocked by {failed_dependency}" if failed_dependency else "skip; dependency failed"
+    if status == DEPENDENCY_PROOF_DEBT:
+        return (
+            f"skip; blocked by proof debt in {proof_debt_dependency}"
+            if proof_debt_dependency
+            else "skip; dependency proof debt"
+        )
     if status == FAILED_LOCAL:
         return "audit root failure"
     if status == MECHANISM_BLOCKER:
@@ -381,6 +463,39 @@ def _next_action(*, status: str, issue: str, failed_dependency: str) -> str:
     if issue:
         return "continue or repair before final summary"
     return "continue independent task"
+
+
+def _task_has_accepted_proof_debt(raw_task: dict[str, Any]) -> bool:
+    summary = raw_task.get("proof_obligation_summary")
+    if isinstance(summary, dict):
+        status_counts = summary.get("status_counts", {})
+        if _status_counts_include_proof_debt(status_counts):
+            return True
+
+    obligations = raw_task.get("proof_obligations")
+    if isinstance(obligations, dict):
+        if _status_counts_include_proof_debt(obligations.get("status_counts", {})):
+            return True
+        for item in obligations.get("obligations", []) if isinstance(obligations.get("obligations", []), list) else []:
+            if isinstance(item, dict) and str(item.get("status", "") or "").strip().lower() == "accepted_as_proof_debt":
+                return True
+
+    obligation_review = raw_task.get("obligation_review")
+    if isinstance(obligation_review, dict):
+        for item in obligation_review.get("items", []) if isinstance(obligation_review.get("items", []), list) else []:
+            if isinstance(item, dict) and str(item.get("status", "") or "").strip().lower() == "accepted_as_proof_debt":
+                return True
+
+    return False
+
+
+def _status_counts_include_proof_debt(status_counts: Any) -> bool:
+    if not isinstance(status_counts, dict):
+        return False
+    try:
+        return int(status_counts.get("accepted_as_proof_debt", 0) or 0) > 0
+    except (TypeError, ValueError):
+        return False
 
 
 def _task_needs_concrete_decomposition(raw_task: dict[str, Any]) -> bool:

@@ -87,6 +87,12 @@ def hard_check_diagnostic(*args: Any, **kwargs: Any):
     return _impl(*args, **kwargs)
 
 
+def hard_dependency_proof_debt_blocker_message(task: dict[str, Any], ledger) -> str:
+    from .phase2_prompt_pack import hard_dependency_proof_debt_blocker_message as _impl
+
+    return _impl(task, ledger)
+
+
 def parse_diagnostics(*args: Any, **kwargs: Any):
     from .phase2_prompt_pack import _parse_diagnostics as _impl
 

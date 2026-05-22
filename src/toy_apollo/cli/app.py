@@ -120,9 +120,11 @@ async def process_target(args):
             write_existing_output_review_pack,
             write_prompt_pack,
         )
+        from ..phase2_obligation_tasks import promote_all_obligation_tasks
         from ..phase2_review_apply import apply_codex_review_result
         from ..phase2_review_loop import (
             run_codex_auto_loop,
+            run_codex_debt_fix,
             run_codex_review_fix,
             run_codex_review_now,
         )
@@ -135,11 +137,11 @@ async def process_target(args):
         settings.toyapollo_output_dir.mkdir(parents=True, exist_ok=True)
         if args.phase2_mode in {"soft-pack", "soft-apply"}:
             settings.phase2_softdep_packs_dir.mkdir(parents=True, exist_ok=True)
-        if not selected_task_ids and args.phase2_mode != "review-existing-queue":
+        if not selected_task_ids and args.phase2_mode not in {"review-existing-queue", "promote-obligations"}:
             print("❌ Phase 2 modes require task ids via --tasks.")
             return
-        if args.phase2_mode in {"pack", "build-check", "verify", "review-pack", "review-existing", "review-now", "review-fix", "auto-loop", "review-apply"} and len(selected_task_ids) != 1:
-            print("❌ Phase 2 pack/build-check/verify/review-pack/review-existing/review-now/review-fix/auto-loop/review-apply modes currently support exactly one task at a time.")
+        if args.phase2_mode in {"pack", "build-check", "verify", "review-pack", "review-existing", "review-now", "review-fix", "debt-fix", "auto-loop", "review-apply"} and len(selected_task_ids) != 1:
+            print("❌ Phase 2 pack/build-check/verify/review-pack/review-existing/review-now/review-fix/debt-fix/auto-loop/review-apply modes currently support exactly one task at a time.")
             return
         try:
             if args.phase2_mode == "pack":
@@ -225,6 +227,14 @@ async def process_target(args):
                 else:
                     print(f"❌ Review repair loop could not be prepared for {task_id}.")
                 print(detail)
+            elif args.phase2_mode == "debt-fix":
+                task_id = next(iter(selected_task_ids))
+                success, detail = await run_codex_debt_fix(task_id, ledger, settings)
+                if success:
+                    print(f"🧾 Proof-debt repair loop prepared for {task_id}.")
+                else:
+                    print(f"❌ Proof-debt repair loop could not be prepared for {task_id}.")
+                print(detail)
             elif args.phase2_mode == "auto-loop":
                 task_id = next(iter(selected_task_ids))
                 success, detail = await run_codex_auto_loop(
@@ -249,6 +259,14 @@ async def process_target(args):
                 else:
                     print("❌ Existing output semantic review queue preparation failed.")
                 print(detail)
+            elif args.phase2_mode == "promote-obligations":
+                selected = sorted(selected_task_ids) if selected_task_ids else None
+                report = promote_all_obligation_tasks(ledger, settings, selected)
+                print(
+                    "🧾 Proof obligations promoted: "
+                    f"{report['created_count']} created, {report['updated_count']} updated, "
+                    f"{len(report['parents_scanned'])} parent tasks scanned."
+                )
             elif args.phase2_mode == "review-apply":
                 task_id = next(iter(selected_task_ids))
                 success, detail = await apply_codex_review_result(task_id, ledger, settings, args.review_result)
@@ -302,6 +320,8 @@ def main() -> int:
         "review-existing",
         "review-now",
         "review-fix",
+        "debt-fix",
+        "promote-obligations",
         "auto-loop",
         "review-existing-queue",
         "review-apply",
@@ -316,6 +336,7 @@ def main() -> int:
         "review-existing",
         "review-now",
         "review-fix",
+        "debt-fix",
         "auto-loop",
         "review-apply",
     )
@@ -328,7 +349,7 @@ def main() -> int:
     parser.add_argument("--phase0-output", type=str, required=False, default="", dest="phase0_output", help="Output stem for Phase 0 packs and inputs/<stem>.tex, for example chapter9-moments-mgf")
     parser.add_argument("--phase1-mode", type=str, choices=["pack", "apply"], default="pack", dest="phase1_mode", help="Phase 1 mode: pack generates operator prompt packs, apply validates and registers a filled draft_plan.json")
     parser.add_argument("--tasks", type=str, required=False, default="", help="Comma-separated block_id filter for Phase 2 modes")
-    parser.add_argument("--phase2-mode", type=str, choices=phase2_modes, default="pack", help="Phase 2 mode: default workflow is pack -> build-check -> review-pack/review-existing -> review-now/review-apply; soft-pack/soft-apply handle Problem soft dependency selection; review-fix activates a semantic-repair build loop from the latest failed review; auto-loop advances the same-session Codex author/reviewer loop state and runtime transitions; review-existing-queue prepares a batch Codex reviewer queue from ToyApollo/Output; verify/audit are optional runner-backed modes")
+    parser.add_argument("--phase2-mode", type=str, choices=phase2_modes, default="pack", help="Phase 2 mode: default workflow is pack -> build-check -> review-pack/review-existing -> review-now/review-apply; soft-pack/soft-apply handle Problem soft dependency selection; review-fix activates a semantic-repair build loop from the latest failed review; debt-fix activates a repair loop for accepted proof debt; promote-obligations turns blocking obligations into ledger child tasks; auto-loop advances the same-session Codex author/reviewer loop state and runtime transitions; review-existing-queue prepares a batch Codex reviewer queue from ToyApollo/Output; verify/audit are optional runner-backed modes")
     parser.add_argument("--phase3-mode", type=str, choices=["soft-pack", "soft-apply"], default=None, help=argparse.SUPPRESS)
     parser.add_argument("--candidate", type=str, required=False, default="", help="Optional external Lean file for --phase 2 --phase2-mode build-check/verify; review-pack only accepts ToyApollo/Output/<task>.lean as a compatibility alias for review-existing")
     parser.add_argument("--review-result", type=str, required=False, default="", dest="review_result", help="Filled semantic review result JSON for --phase 2 --phase2-mode review-apply")
@@ -364,10 +385,10 @@ def main() -> int:
     if args.phase3_mode is not None and args.phase != 3:
         parser.error("--phase3-mode has been merged into --phase2-mode; use --phase 2 --phase2-mode soft-pack/soft-apply.")
     if args.phase == 2 and args.phase2_mode in phase2_modes and not args.task_ids:
-        if args.phase2_mode != "review-existing-queue":
+        if args.phase2_mode not in {"review-existing-queue", "promote-obligations"}:
             parser.error("--phase 2 modes require task ids via --tasks.")
     if args.phase == 2 and args.phase2_mode in phase2_single_task_modes and len(args.task_ids) > 1:
-        parser.error("--phase 2 pack/build-check/verify/review-pack/review-existing/review-now/review-fix/auto-loop/review-apply modes support exactly one task at a time.")
+        parser.error("--phase 2 pack/build-check/verify/review-pack/review-existing/review-now/review-fix/debt-fix/auto-loop/review-apply modes support exactly one task at a time.")
     if args.phase == 2 and args.phase2_mode in phase2_soft_modes:
         invalid = [task_id for task_id in args.task_ids if not task_id.startswith("prob_")]
         if invalid:

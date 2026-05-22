@@ -11,7 +11,7 @@ from src.block_id_naming import canonicalize_block_id, canonicalize_id_list, ext
 
 from .core import LedgerManager
 from .dependency_decisions import DependencyDecision, record_dependency_decision
-from .phase2_prompt_pack import find_existing_task_file
+from .phase2_prompt_pack import _ledger_record_has_accepted_proof_debt, find_existing_task_file
 
 PROBLEM_TYPE = "problem"
 DEFINITION_TYPE_PREFIX = "definition"
@@ -184,6 +184,14 @@ def _allowed_lookup(materials: list[dict[str, Any]]) -> set[str]:
     return {material["block_id"] for material in materials}
 
 
+def _material_has_proof_debt(material_id: str, ledger: LedgerManager) -> bool:
+    task_map = ledger.ledger.get("tasks", {})
+    if not isinstance(task_map, dict):
+        return False
+    record = task_map.get(canonicalize_block_id(material_id), {})
+    return isinstance(record, dict) and _ledger_record_has_accepted_proof_debt(record)
+
+
 def _recommended_ids_for_problem(task: dict[str, Any], allowed_ids: set[str]) -> list[str]:
     task_id = canonicalize_block_id(task.get("block_id"))
     title = str(task.get("title", "")).lower()
@@ -249,7 +257,6 @@ def _build_selection_hints(tasks: list[dict[str, Any]], materials: list[dict[str
 
 
 def write_softdep_pack(task_ids: list[str], ledger: LedgerManager, settings) -> Path:
-    del ledger
     task_ids = canonicalize_id_list(task_ids)
     if not task_ids:
         raise ValueError("No valid task ids provided for soft-pack.")
@@ -274,6 +281,8 @@ def write_softdep_pack(task_ids: list[str], ledger: LedgerManager, settings) -> 
         for task in plan_index.values()
         if extract_chapter(task["block_id"]) == chapter and _is_allowed_material_task(task)
     ]
+    blocked_material_ids = [task["block_id"] for task in materials if _material_has_proof_debt(task["block_id"], ledger)]
+    materials = [task for task in materials if task["block_id"] not in set(blocked_material_ids)]
     materials.sort(key=lambda item: item["block_id"])
 
     batch_id = build_selection_scope_id(task_ids)
@@ -296,6 +305,7 @@ def write_softdep_pack(task_ids: list[str], ledger: LedgerManager, settings) -> 
     (pack_dir / "selection_hints.md").write_text(_build_selection_hints(tasks, materials), encoding="utf-8")
     (pack_dir / "chapter_materials.md").write_text(_build_chapter_materials(materials, settings), encoding="utf-8")
     (pack_dir / "allowed_material_ids.json").write_text(json.dumps(allowed_ids, indent=2, ensure_ascii=False), encoding="utf-8")
+    (pack_dir / "blocked_material_ids.json").write_text(json.dumps(blocked_material_ids, indent=2, ensure_ascii=False), encoding="utf-8")
     (pack_dir / "selection_schema.json").write_text(json.dumps(schema_payload, indent=2, ensure_ascii=False), encoding="utf-8")
     if not (pack_dir / "soft_imports_selection.json").exists():
         (pack_dir / "soft_imports_selection.json").write_text(
@@ -376,6 +386,11 @@ def apply_softdep_selection(task_ids: list[str], ledger: LedgerManager, settings
         invalid = [item for item in normalized if item not in allowed_ids]
         if invalid:
             raise ValueError(f"Selection for {task_id} contains invalid material ids: {invalid}")
+        proof_debt_materials = [item for item in normalized if _material_has_proof_debt(item, ledger)]
+        if proof_debt_materials:
+            raise ValueError(
+                f"Selection for {task_id} contains {', '.join(proof_debt_materials)} carrying proof debt; run debt-fix first."
+            )
         normalized_payload[task_id] = normalized
         ledger.update_candidate_soft_imports(task_id, normalized)
         ledger.mark_soft_imports_confirmed(task_id, normalized)

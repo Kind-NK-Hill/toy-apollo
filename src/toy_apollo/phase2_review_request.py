@@ -26,6 +26,7 @@ from .phase2_semantic_review import (
     SEMANTIC_REVIEW_RUBRIC_VERSION,
     latest_semantic_review_context_path,
 )
+from .phase2_output_binding import Phase2OutputBinding, resolve_phase2_output_binding
 from .phase2_proof_obligations import (
     PROOF_OBLIGATIONS_FILE_NAME,
     ensure_proof_obligations_file,
@@ -215,14 +216,23 @@ def build_semantic_review_basis(
 ) -> dict[str, Any]:
     task_id = task["block_id"]
     pack_dir = settings.phase2_prompt_packs_dir / task_id
+    output_binding = resolve_phase2_output_binding(task, ledger, settings)
+    obligations_pack_dir = output_binding.owner_pack_dir if output_binding.is_obligation_task else pack_dir
+    obligations_task = (
+        _owner_task_for_review_basis(output_binding, task, ledger)
+        if output_binding.is_obligation_task
+        else task
+    )
     current_record = ledger.ledger.get("tasks", {}).get(task_id, {})
     proof_obligations = ensure_proof_obligations_file(
-        pack_dir,
-        task,
-        current_record=current_record if isinstance(current_record, dict) else {},
+        obligations_pack_dir,
+        obligations_task,
+        current_record=ledger.ledger.get("tasks", {}).get(output_binding.output_owner_task_id, {})
+        if output_binding.is_obligation_task
+        else current_record if isinstance(current_record, dict) else {},
     )
     downstream = sorted(
-        _collect_direct_downstream_consumers(task_id, settings),
+        _collect_direct_downstream_consumers(output_binding.output_owner_task_id, settings),
         key=lambda item: (
             str(item.get("block_id", "")),
             str(item.get("relation", "")),
@@ -243,9 +253,14 @@ def build_semantic_review_basis(
         },
         "review_subject_kind": str(review_subject_kind or ""),
         "review_subject_hash": str(review_subject_hash or ""),
+        "output_owner_task_id": output_binding.output_owner_task_id,
+        "output_module": output_binding.output_module,
+        "focus_obligation_ids": output_binding.focus_obligation_ids,
         "direct_downstream_consumers": downstream,
         "spine_review_contract": review_spine_contract(task),
-        "proof_obligations_file": str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME),
+        "proof_obligations_file": output_binding.proof_obligations_file.as_posix()
+        if output_binding.is_obligation_task
+        else str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME),
         "proof_obligations": proof_obligations,
         "proof_obligation_summary": summarize_proof_obligations(proof_obligations),
         "allowed_abstractions": review_allowed_abstractions(task),
@@ -253,6 +268,19 @@ def build_semantic_review_basis(
         "historical_shortcut_risks": review_history_risks(task_id),
         "downstream_acceptance_checklist": review_downstream_checklist(task_id),
     }
+
+
+def _owner_task_for_review_basis(
+    output_binding: Phase2OutputBinding,
+    task: dict[str, Any],
+    ledger: LedgerManager,
+) -> dict[str, Any]:
+    owner = ledger.ledger.get("tasks", {}).get(output_binding.output_owner_task_id)
+    if isinstance(owner, dict):
+        return canonicalize_task_dict(owner)
+    fallback = dict(task)
+    fallback["block_id"] = output_binding.output_owner_task_id
+    return canonicalize_task_dict(fallback)
 
 
 def _resolve_current_review_request_path(pack_dir: Path, current_record: dict[str, Any]) -> Path | None:
