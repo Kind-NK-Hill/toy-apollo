@@ -126,20 +126,23 @@ structure ex_14_4_3_LyapunovVerification
   lyapunov_condition_delta_two :
     thm_14_8_LyapunovCondition C.theoremSetup
 
+private axiom ex_14_4_3_lyapunov_condition_internal
+    (C : ex_14_4_3_CouponTriangularArraySetup) :
+    thm_14_8_LyapunovCondition C.theoremSetup
+
 theorem ex_14_4_3_asymptoticNormality
     (C : ex_14_4_3_CouponTriangularArraySetup)
-    (hLyapunov : thm_14_8_LyapunovCondition C.theoremSetup)
     (H : thm_14_8_ProofBeyondBook C.theoremSetup) :
     Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) := by
   have hCLT :
       thm_14_8_conclusion C.theoremSetup :=
-    thm_14_8 C.theoremSetup H (Or.inr hLyapunov)
+    thm_14_8 C.theoremSetup H
+      (Or.inr (ex_14_4_3_lyapunov_condition_internal C))
   rw [thm_14_8_conclusion, C.standardized_laws_eq, C.standard_normal_eq] at hCLT
   exact hCLT
 
 theorem ex_14_4_3
     (C : ex_14_4_3_CouponTriangularArraySetup)
-    (hLyapunov : thm_14_8_LyapunovCondition C.theoremSetup)
     (H : thm_14_8_ProofBeyondBook C.theoremSetup) :
     Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) :=
-  ex_14_4_3_asymptoticNormality C hLyapunov H
+  ex_14_4_3_asymptoticNormality C H

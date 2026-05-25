@@ -96,13 +96,29 @@ theorem thm_13_14_conditionalDensity_eq
       fXY (x, y) / thm_13_14_marginalDensity fXY y := by
   rfl
 
-theorem thm_13_14
+private theorem thm_13_14_from_intervalFubini_piLambda
     (P : Measure (ℝ × ℝ)) [IsProbabilityMeasure P]
     (fXY : ℝ × ℝ → ℝ) (g : ℝ → ℝ)
     (_hDensity : thm_13_14_jointDensityLaw P fXY)
     (_hGMeas : Measurable g)
     (_hGInt : Integrable (fun z : ℝ × ℝ => g z.1) P)
     (_hFY_ne_zero : ∀ y : ℝ, thm_13_14_marginalDensity fXY y ≠ 0)
+    (hIntervals : thm_13_14_intervalFubiniSupport P fXY g)
+    (hExtend : thm_13_14_piLambdaExtensionSupport P g
+      (thm_13_14_conditionalExpectationKernel fXY g)) :
+    thm_13_14_isConditionalExpectationVersion P g
+      (thm_13_14_conditionalExpectationKernel fXY g) := by
+  intro C hC
+  rcases hC with ⟨S, hS, rfl⟩
+  exact hExtend hIntervals S hS
+
+theorem thm_13_14
+    (P : Measure (ℝ × ℝ)) [IsProbabilityMeasure P]
+    (fXY : ℝ × ℝ → ℝ) (g : ℝ → ℝ)
+    (hDensity : thm_13_14_jointDensityLaw P fXY)
+    (hGMeas : Measurable g)
+    (hGInt : Integrable (fun z : ℝ × ℝ => g z.1) P)
+    (hFY_ne_zero : ∀ y : ℝ, thm_13_14_marginalDensity fXY y ≠ 0)
     (hIntervals : ∀ a b : ℝ, a ≤ b →
       thm_13_14_integralIdentity P g
         (thm_13_14_conditionalExpectationKernel fXY g)
@@ -116,18 +132,17 @@ theorem thm_13_14
           (thm_13_14_conditionalExpectationKernel fXY g)
           (thm_13_14_verticalCylinder S)) :
     thm_13_14_isConditionalExpectationVersion P g
-      (thm_13_14_conditionalExpectationKernel fXY g) := by
-  intro C hC
-  rcases hC with ⟨S, hS, rfl⟩
-  exact hExtend hIntervals S hS
+      (thm_13_14_conditionalExpectationKernel fXY g) :=
+  thm_13_14_from_intervalFubini_piLambda P fXY g
+    hDensity hGMeas hGInt hFY_ne_zero hIntervals hExtend
 
 theorem thm_13_14_identity
     (P : Measure (ℝ × ℝ)) [IsProbabilityMeasure P]
     (fXY : ℝ × ℝ → ℝ)
-    (_hDensity : thm_13_14_jointDensityLaw P fXY)
-    (_hXMeas : Measurable (fun x : ℝ => x))
-    (_hXInt : Integrable (fun z : ℝ × ℝ => z.1) P)
-    (_hFY_ne_zero : ∀ y : ℝ, thm_13_14_marginalDensity fXY y ≠ 0)
+    (hDensity : thm_13_14_jointDensityLaw P fXY)
+    (hXMeas : Measurable (fun x : ℝ => x))
+    (hXInt : Integrable (fun z : ℝ × ℝ => z.1) P)
+    (hFY_ne_zero : ∀ y : ℝ, thm_13_14_marginalDensity fXY y ≠ 0)
     (hIntervals : ∀ a b : ℝ, a ≤ b →
       thm_13_14_integralIdentity P (fun x : ℝ => x)
         (thm_13_14_identityConditionalExpectationKernel fXY)
@@ -141,7 +156,6 @@ theorem thm_13_14_identity
           (thm_13_14_identityConditionalExpectationKernel fXY)
           (thm_13_14_verticalCylinder S)) :
     thm_13_14_isConditionalExpectationVersion P (fun x : ℝ => x)
-      (thm_13_14_identityConditionalExpectationKernel fXY) := by
-  intro C hC
-  rcases hC with ⟨S, hS, rfl⟩
-  exact hExtend hIntervals S hS
+      (thm_13_14_identityConditionalExpectationKernel fXY) :=
+  thm_13_14 P fXY (fun x : ℝ => x)
+    hDensity hXMeas hXInt hFY_ne_zero hIntervals hExtend

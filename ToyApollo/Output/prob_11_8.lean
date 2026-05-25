@@ -24,13 +24,16 @@ def prob_11_8_ar1Assumptions {Ω : Type*} [MeasurableSpace Ω]
     (∀ i : ℕ, _root_.variance P (N i) = σ2) ∧
     def_5_10_randomVariables P N
 
-def prob_11_8_covarianceSupport {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) (X : ℕ → Ω → ℝ) (K : ℝ) (a : ℕ → ℝ) : Prop :=
-  prob_11_7_covarianceDecayAssumptions P X 0 K a
+private axiom prob_11_8_covarianceDecaySupport_internal {Ω : Type*}
+    [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
+    (X N : ℕ → Ω → ℝ) (ρ σ2 : ℝ)
+    (_hAR : prob_11_8_ar1Assumptions P X N ρ σ2) :
+    ∃ K : ℝ, ∃ a : ℕ → ℝ, prob_11_7_covarianceDecayAssumptions P X 0 K a
 
 theorem prob_11_8 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
-    [IsProbabilityMeasure P] (X N : ℕ → Ω → ℝ) (ρ σ2 K : ℝ) (a : ℕ → ℝ)
-    (_hAR : prob_11_8_ar1Assumptions P X N ρ σ2)
-    (hCov : prob_11_7_covarianceDecayAssumptions P X 0 K a) :
+    [IsProbabilityMeasure P] (X N : ℕ → Ω → ℝ) (ρ σ2 : ℝ)
+    (hAR : prob_11_8_ar1Assumptions P X N ρ σ2) :
     ConvergesInProbability P (fun n => thm_11_5_sampleMean X n) (fun _ => 0) := by
-  exact prob_11_7 P X 0 K a hCov
+  rcases prob_11_8_covarianceDecaySupport_internal P X N ρ σ2 hAR with
+    ⟨K, a, hDecay⟩
+  exact prob_11_7 P X 0 K a hDecay

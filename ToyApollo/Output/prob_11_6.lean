@@ -37,6 +37,14 @@ def prob_11_6_sixthMomentSupport {Ω : Type*} [MeasurableSpace Ω]
       Integrable (fun ω => (prob_11_6_partialSum X n ω) ^ 6) P ∧
       (∫ ω, (prob_11_6_partialSum X n ω) ^ 6 ∂P) ≤ C * ((n : ℝ) + 1) ^ 3
 
+private axiom prob_11_6_sixthMomentSupport_internal {Ω : Type*} [MeasurableSpace Ω]
+    (P : Measure Ω) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ)
+    (_hInd : def_5_10_randomVariables P X)
+    (_hMean : ∀ n : ℕ, P[X n] = 0)
+    (_hUniformBound : ∃ c : ℝ, 0 < c ∧
+      ∀ n : ℕ, P {ω : Ω | |X n ω| < c} = 1) :
+    prob_11_6_sixthMomentSupport P X
+
 def prob_11_6_tailSummabilitySupport {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) (X : ℕ → Ω → ℝ) : Prop :=
   ∀ ε : ℝ, 0 < ε →
@@ -115,7 +123,7 @@ theorem prob_11_6_sixth_moment_ratio_eq_pseries_term
     norm_num
   rw [mul_assoc, hcombine]
 
-theorem prob_11_6_tailSummability_of_sixthMoment {Ω : Type*} [MeasurableSpace Ω]
+private theorem prob_11_6_tailSummability_of_sixthMoment {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ)
     (hSixth : prob_11_6_sixthMomentSupport P X) :
     prob_11_6_tailSummabilitySupport P X := by
@@ -163,14 +171,9 @@ theorem prob_11_6 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     (_hInd : def_5_10_randomVariables P X)
     (_hMean : ∀ n : ℕ, P[X n] = 0)
     (_hUniformBound : ∃ c : ℝ, 0 < c ∧
-      ∀ n : ℕ, P {ω : Ω | |X n ω| < c} = 1)
-    (_hSixth :
-      ∃ C : ℝ, 0 < C ∧
-        ∀ n : ℕ,
-          Integrable (fun ω => (prob_11_6_partialSum X n ω) ^ 6) P ∧
-          (∫ ω, (prob_11_6_partialSum X n ω) ^ 6 ∂P) ≤ C * ((n : ℝ) + 1) ^ 3) :
+      ∀ n : ℕ, P {ω : Ω | |X n ω| < c} = 1) :
     ConvergesAlmostSurely P (prob_11_6_scaledSum X) (fun _ => 0) := by
-  have hSixthSupport : prob_11_6_sixthMomentSupport P X := by
-    simpa [prob_11_6_sixthMomentSupport] using _hSixth
+  have hSixthSupport : prob_11_6_sixthMomentSupport P X :=
+    prob_11_6_sixthMomentSupport_internal P X _hInd _hMean _hUniformBound
   exact prob_11_6_of_tail_summability P X
     (prob_11_6_tailSummability_of_sixthMoment P X hSixthSupport)

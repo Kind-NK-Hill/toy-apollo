@@ -14,9 +14,10 @@ Use this skill as a thin entry router. It does not replace repository docs or re
 Read these files before doing task-specific work:
 
 1. `AGENTS.md`
-2. `docs/phase2_candidate_guidelines.md`
-3. `docs/phase2_prompt_pack_workflow.md`
-4. `docs/phase2_review_loop_protocol.md`
+2. `docs/phase2_proof_fidelity_contract.md`
+3. `docs/phase2_candidate_guidelines.md`
+4. `docs/phase2_prompt_pack_workflow.md`
+5. `docs/phase2_review_loop_protocol.md`
 
 Read the task-local artifacts next:
 
@@ -34,14 +35,16 @@ Before editing, state the following in working notes:
 3. Original TeX source span inspected.
 4. Existing local dependencies found in `ToyApollo/Output`.
 5. Whether the task is normal or complex under the repository's structural criteria.
-6. Current ledger state and latest valid operation.
-7. Intended route: authoring, build repair, semantic review repair, dependency skip, or hard-failure assessment.
+6. Current proof-fidelity target: textbook proof, Mathlib-backed adapter, interface bridge, open debt repair, or beyond-book exception.
+7. Current ledger state and latest valid operation.
+8. Intended route: authoring, build repair, semantic review repair, dependency skip, or hard-failure assessment.
 
 ## Complex Task Gate
 
-Treat complexity as a structural property, not a theorem-name whitelist. A task is complex when the proof needs multiple interacting obligations, nontrivial dependency alignment, limit/integral/order/topology interactions, source proof reconstruction, or bridge lemmas that could hide real mathematical content.
-
-For complex tasks, do not write a monolithic proof first. Ensure the proof is decomposed into explicit obligations, then reconstruct the final theorem from those obligations. Keep `proof_obligations.json`, `decomposition_plan.md` when present, Lean helper lemmas, and semantic review comments aligned.
+Treat complexity as a structural property, not a theorem-name whitelist. Use
+`docs/phase2_proof_fidelity_contract.md` for the Level 0/1/2 distinction,
+complex decomposition rule, adapter/proof-debt boundary, and public
+Support/Spine surface rule.
 
 ## Operation Route
 
@@ -62,6 +65,7 @@ Stop and re-read the required docs when any of these occur:
 
 - Claiming `hard_failure` before source proof-spine decomposition, dependency search, and retry-budget evidence.
 - Adding scaffold hypotheses that state the task's main conclusion or hide source mathematics.
+- Treating a Mathlib-backed adapter, bridge theorem, private axiom, support field, or clean ledger row as textbook proof completion.
 - Treating prompt-pack summaries as a substitute for original TeX.
 - Landing a task without `review-apply`.
 - Mixing unrelated dirty files, old plan reviews, and new chapter source output in one change.
@@ -77,6 +81,7 @@ Phase 2 entry report:
 - Source TeX inspected:
 - Local dependencies:
 - Complexity:
+- Proof-fidelity target:
 - Ledger state:
 - Route:
 - Immediate next command/action:

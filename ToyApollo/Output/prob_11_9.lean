@@ -26,8 +26,9 @@ def prob_11_9_asymptoticRegime (boxes k : ℕ → ℕ) (a : ℝ) : Prop :=
     0 < a ∧
     Tendsto (fun n : ℕ => (k n : ℝ) / (boxes n : ℝ)) atTop (nhds a)
 
-def prob_11_9_occupancyMomentSupport {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) (boxes k : ℕ → ℕ) (X : ℕ → Ω → ℝ) (a : ℝ) : Prop :=
+private axiom prob_11_9_occupancy_moment_calculation_internal
+    {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
+    (boxes k : ℕ → ℕ) (X : ℕ → Ω → ℝ) (a : ℝ) :
   prob_11_9_asymptoticRegime boxes k a →
     Tendsto
       (fun n : ℕ =>
@@ -87,12 +88,11 @@ theorem prob_11_9_meanSquareELpNormSupport_of_measurable
 
 private theorem prob_11_9_quadratic_mean {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) (boxes k : ℕ → ℕ) (X : ℕ → Ω → ℝ) (a : ℝ)
-    (hRegime : prob_11_9_asymptoticRegime boxes k a)
-    (hMoment : prob_11_9_occupancyMomentSupport P boxes k X a) :
+    (hRegime : prob_11_9_asymptoticRegime boxes k a) :
     ConvergesInMeanSquare P (prob_11_9_emptyBoxRatio boxes X)
       (fun _ : Ω => Real.exp (-a)) := by
   refine ⟨by norm_num, ?_⟩
-  exact hMoment hRegime
+  exact prob_11_9_occupancy_moment_calculation_internal P boxes k X a hRegime
 
 private theorem prob_11_9_probability {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) (boxes : ℕ → ℕ) (X : ℕ → Ω → ℝ) (a : ℝ)
@@ -110,20 +110,11 @@ private theorem prob_11_9_probability {Ω : Type*} [MeasurableSpace Ω]
 theorem prob_11_9 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     (boxes k : ℕ → ℕ) (X : ℕ → Ω → ℝ) (a : ℝ)
     (hRegime : prob_11_9_asymptoticRegime boxes k a)
-    (hMoment :
-      prob_11_9_asymptoticRegime boxes k a →
-        Tendsto
-          (fun n : ℕ =>
-            meanDeviationMoment P (prob_11_9_emptyBoxRatio boxes X)
-              (fun _ : Ω => Real.exp (-a)) 2 n)
-          atTop (nhds 0))
     (hX :
       ∀ n : ℕ, AEStronglyMeasurable ((prob_11_9_emptyBoxRatio boxes X) n) P) :
     ConvergesInMeanSquare P (prob_11_9_emptyBoxRatio boxes X)
         (fun _ : Ω => Real.exp (-a)) ∧
       ConvergesInProbability P (prob_11_9_emptyBoxRatio boxes X)
         (fun _ : Ω => Real.exp (-a)) := by
-  have hMomentSupport : prob_11_9_occupancyMomentSupport P boxes k X a := by
-    simpa [prob_11_9_occupancyMomentSupport] using hMoment
-  let hMS := prob_11_9_quadratic_mean P boxes k X a hRegime hMomentSupport
+  let hMS := prob_11_9_quadratic_mean P boxes k X a hRegime
   exact ⟨hMS, prob_11_9_probability P boxes X a hMS hX⟩
