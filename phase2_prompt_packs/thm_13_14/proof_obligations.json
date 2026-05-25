@@ -15,6 +15,30 @@
     "source_length": 3925,
     "structural_operation_count": 1
   },
+  "worker_b_recheck_2026_05_24": {
+    "classification": "open_math_debt",
+    "decision": "Keep the theorem buildable without a private axiom, and do not mark the two analytic support obligations as proved.",
+    "local_files_inspected": [
+      "docs/phase2_post_ch9_textbook_fidelity_rework_implementation_plan.md#Task 4",
+      "inputs/chapter13-continuous-random-variable.tex",
+      "ToyApollo/Output/thm_13_14.lean",
+      "ToyApollo/Output/thm_13_12.lean",
+      "ToyApollo/Output/thm_13_13.lean",
+      "ToyApollo/Output/ex_13_5_1.lean"
+    ],
+    "basis": [
+      "The public theorem now asks callers for the expanded closed y-cylinder identity and extension formula directly, rather than hiding those missing analytic steps behind a private axiom.",
+      "The final assembly from those two formulas lands on theorem `thm_13_14_from_intervalFubini_piLambda`.",
+      "The current joint-density law only gives a lintegral identity through ENNReal.ofReal and does not expose the nonnegativity, measurability, withDensity rewrite, and weighted integrability needed for the Fubini calculation.",
+      "The current statement has Integrable (fun z => g z.1) P but no theorem-level integrability or finite signed-measure structure for the candidate kernel h(Y), which is needed for the pi-lambda/signed-integral extension.",
+      "ex_13_5_1 demonstrates a successful concrete cylinder proof under a much stronger uniform-square law, but that pattern does not transfer to this abstract density theorem without additional analytic hypotheses."
+    ],
+    "remaining_public_debt": [
+      "thm_13_14_intervalFubiniSupport",
+      "thm_13_14_piLambdaExtensionSupport"
+    ],
+    "internal_private_axiom_debt": []
+  },
   "obligations": [
     {
       "id": "density_and_kernel_definitions",
@@ -38,12 +62,12 @@
       "depends_on": [
         "density_and_kernel_definitions"
       ],
-      "lean_landing": "thm_13_14_closedIntervalCylinder_eq_prod",
+      "lean_landing": "thm_13_14_intervalFubiniSupport; public hIntervals premise of thm_13_14; thm_13_14_from_intervalFubini_piLambda consumes it",
       "status": "open",
       "review_status": "needs_review",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "Partial theorem-level landing added on 2026-05-21: the closed-interval cylinder is identified with `univ x [a,b]`. Rechecked on 2026-05-22: the analytic Fubini/density calculation from `thm_13_14_jointDensityLaw` to the Bochner set-integral identity is still not provable from the public theorem assumptions. The current statement lacks explicit nonnegativity/measurability for `fXY`, a usable `P = volume.withDensity (ENNReal.ofReal \u2218 fXY)` rewrite with finite density, integrability of the density-weighted functions needed for Fubini, and the algebraic bridge `h(y) * fY(y) = \u222b g(x) fXY(x,y) dx`. Therefore the public theorem still cannot construct `thm_13_14_intervalFubiniSupport` internally without adding source-level analytic hypotheses.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support lands only on non-theorem declarations.",
+      "notes": "Partial theorem-level landing added on 2026-05-21: the closed-interval cylinder is identified with `univ x [a,b]`. Rechecked on 2026-05-22: the analytic Fubini/density calculation from `thm_13_14_jointDensityLaw` to the Bochner set-integral identity is still not provable from the public theorem assumptions. The current statement lacks explicit nonnegativity/measurability for `fXY`, a usable `P = volume.withDensity (ENNReal.ofReal \u2218 fXY)` rewrite with finite density, integrability of the density-weighted functions needed for Fubini, and the algebraic bridge `h(y) * fY(y) = \u222b g(x) fXY(x,y) dx`. On 2026-05-24 the private axiom was removed; this obligation remains open as the explicit `hIntervals` statement-boundary premise consumed by `thm_13_14_from_intervalFubini_piLambda`.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support lands only on non-theorem declarations.",
       "last_review_evidence": "Lean/API probe on 2026-05-22: Mathlib Fubini and withDensity rewrites require measurable/aemeasurable density and Integrable hypotheses; source lines 150-164 also explicitly use finiteness of the density-weighted absolute integral. Current Lean assumptions only include `Integrable (fun z => g z.1) P` and a lintegral law through `ENNReal.ofReal`, whose negative part is invisible to the law but still affects `fY` and the kernel.",
       "source_output_alignment": {
         "audited_at": "2026-05-19",
@@ -58,7 +82,7 @@
           }
         ],
         "missing_landing_names": [],
-        "next_action": "Do not count this as proof; replace the support predicate, structure, or field with theorem-level evidence.",
+        "next_action": "Do not count the public hIntervals premise as proof; replace it with theorem-level Fubini/density evidence derived from adequate density regularity assumptions.",
         "manual_review_required": false
       },
       "ledger_task_id": "obl_thm_13_14_interval_fubini_calculation",
@@ -73,12 +97,12 @@
       "depends_on": [
         "interval_fubini_calculation"
       ],
-      "lean_landing": "thm_13_14_verticalCylinder_eq_prod",
+      "lean_landing": "thm_13_14_piLambdaExtensionSupport; public hExtend premise of thm_13_14; thm_13_14_from_intervalFubini_piLambda consumes it",
       "status": "open",
       "review_status": "needs_review",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "Partial theorem-level landing added on 2026-05-21: vertical cylinders are identified with `univ x S`. Rechecked on 2026-05-22: no theorem-level π-λ/signed-integral extension from closed intervals to all Borel y-sets is available from the current public `thm_13_14_piLambdaExtensionSupport` statement alone. To prove the λ-system closure for Bochner set integrals one needs integrability or finite signed-measure structure for both integrands on vertical cylinders; the support predicate currently has only the interval identity premise and no such integrability hypotheses. Thus the public theorem still cannot construct `thm_13_14_piLambdaExtensionSupport` internally.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support lands only on non-theorem declarations.",
+      "notes": "Partial theorem-level landing added on 2026-05-21: vertical cylinders are identified with `univ x S`. Rechecked on 2026-05-22: no theorem-level π-λ/signed-integral extension from closed intervals to all Borel y-sets is available from the current public `thm_13_14_piLambdaExtensionSupport` statement alone. To prove the λ-system closure for Bochner set integrals one needs integrability or finite signed-measure structure for both integrands on vertical cylinders. On 2026-05-24 the private axiom was removed; this obligation remains open as the explicit `hExtend` statement-boundary premise consumed by `thm_13_14_from_intervalFubini_piLambda`.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support lands only on non-theorem declarations.",
       "last_review_evidence": "Lean/API probe on 2026-05-22: closed intervals generate the Borel sigma-field (`borel_eq_generateFrom_Icc`) and form a pi-system (`isPiSystem_Icc`), but turning interval equalities of Bochner set integrals into all-Borel equalities requires λ-system closure, which is blocked without integrability/signed-measure hypotheses for `g z.1` and `h z.2`.",
       "source_output_alignment": {
         "audited_at": "2026-05-19",
@@ -93,7 +117,7 @@
           }
         ],
         "missing_landing_names": [],
-        "next_action": "Do not count this as proof; replace the support predicate, structure, or field with theorem-level evidence.",
+        "next_action": "Do not count the public hExtend premise as proof; replace it with theorem-level π-λ or generator-extension evidence under explicit integrability/signed-measure hypotheses.",
         "manual_review_required": false
       },
       "ledger_task_id": "obl_thm_13_14_pi_lambda_extension",
@@ -108,7 +132,7 @@
       "depends_on": [
         "pi_lambda_extension"
       ],
-      "lean_landing": "thm_13_14_integralIdentity; thm_13_14_isConditionalExpectationVersion; thm_13_14",
+      "lean_landing": "thm_13_14_integralIdentity; thm_13_14_isConditionalExpectationVersion; thm_13_14_from_intervalFubini_piLambda; thm_13_14",
       "status": "proved",
       "review_status": "accepted",
       "blocking": true,
@@ -155,9 +179,29 @@
       "status": "covered",
       "summary": "Fresh review basis accepted; no hidden placeholder or axiom is introduced.",
       "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-23T00:00:00+08:00",
+      "verdict": "blocked",
+      "status": "open_math_debt",
+      "summary": "Public hIntervals/hExtend proof-package parameters had been removed from thm_13_14 and thm_13_14_identity, but the analytic Fubini and extension debt remained unresolved. This was interface cleanup, not proof completion.",
+      "open_blockers": [
+        "interval_fubini_calculation",
+        "pi_lambda_extension"
+      ]
+    },
+    {
+      "reviewed_at": "2026-05-24T00:00:00+08:00",
+      "verdict": "blocked",
+      "status": "statement_boundary_open_math_debt",
+      "summary": "The private axiom was removed and final assembly now lands on `thm_13_14_from_intervalFubini_piLambda`. The interval Fubini calculation and π-λ extension remain open as explicit statement-boundary premises, so this is not Textbook Complete.",
+      "open_blockers": [
+        "interval_fubini_calculation",
+        "pi_lambda_extension"
+      ]
     }
   ],
-  "last_reviewed_at": "2026-05-20T10:59:51.318039Z",
+  "last_reviewed_at": "2026-05-24T00:00:00+08:00",
   "source_output_alignment_audit": {
     "audited_at": "2026-05-19",
     "accepted_debt_count": 2,

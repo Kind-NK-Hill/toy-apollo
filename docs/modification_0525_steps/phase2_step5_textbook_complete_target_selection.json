@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "created": "2026-05-24",
+  "status": "step5_decision_freeze_complete",
+  "scope": "Phase2 Step 5 Textbook Complete target selection; decision freeze only",
+  "no_lean_proof_edits": true,
+  "project_ledger_edited": false,
+  "allowed_decision_statuses": [
+    "accepted_for_textbook_complete",
+    "accepted_as_adapter",
+    "accepted_as_adapter_surface",
+    "accepted_as_bridge_surface",
+    "kept_as_open_debt",
+    "kept_as_open_debt_with_inherited_exception",
+    "needs_statement_rewrite",
+    "rejected_for_current_scope"
+  ],
+  "selected_step6_targets": [
+    {
+      "priority": 1,
+      "task_id": "prob_10_6",
+      "target_class": "textbook_proof_completed",
+      "route": "countable_singleton_mass_to_bounded_test_distribution_bridge"
+    },
+    {
+      "priority": 2,
+      "task_id": "thm_11_7",
+      "target_class": "textbook_proof_completed",
+      "route": "fourth_moment_tail_summability_theorem_route"
+    },
+    {
+      "priority": 3,
+      "task_id": "thm_13_14",
+      "target_class": "textbook_proof_completed",
+      "route": "interval_fubini_conditional_density_generator_extension_route"
+    }
+  ],
+  "decision_records": [
+    {
+      "task_id": "prob_10_6",
+      "current_class": "needs_decision",
+      "target_class": "textbook_proof_completed",
+      "priority": 1,
+      "blocker_declaration": "prob_10_6_singleton_masses_to_distribution_internal",
+      "allowed_route": "Build a reusable countable-space singleton-mass to bounded-test distribution bridge, preferably through countable TV or finite-truncation/countable-integral evidence. Use tv_distance_core and prob_14_5 only as proof seeds.",
+      "decision_required": "Whether to build the reusable countable-space bridge or keep the reverse direction open.",
+      "decision_status": "accepted_for_textbook_complete",
+      "decision_owner": "Step 5 decision freeze",
+      "validation_commands": [
+        "lake env lean ToyApollo/Output/prob_10_6.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "acceptance_criterion": "Private axiom removed and replaced by theorem-level bridge evidence; public theorem remains free of Bridge or Support proof-package parameters; Lean file builds."
+    },
+    {
+      "task_id": "prob_10_5",
+      "current_class": "needs_decision",
+      "target_class": "open_math_debt",
+      "priority": 2,
+      "blocker_declaration": "prob_10_5_dominated_probability_to_mean_internal",
+      "allowed_route": "Future pass must choose a Vitali/subsequence-DCT bridge or rewrite to an a.e.-convergence DCT interface before proof work.",
+      "decision_required": "Whether to strengthen or rewrite the statement, or prove a bridge matching the current statement.",
+      "decision_status": "kept_as_open_debt",
+      "decision_owner": "Step 5 decision freeze",
+      "validation_commands": [
+        "lake env lean ToyApollo/Output/prob_10_5.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "acceptance_criterion": "No hidden measurability or uniform-integrability assumptions; any future new hypothesis is recorded as a statement decision."
+    },
+    {
+      "task_id": "prob_11_6",
+      "current_class": "needs_decision",
+      "target_class": "open_math_debt",
+      "priority": 3,
+      "blocker_declaration": "prob_11_6_sixthMomentSupport_internal",
+      "allowed_route": "Future pass must accept explicit measurability, integrability, a.e. bound prerequisites or a reusable independent finite-sum sixth-moment layer.",
+      "decision_required": "Whether to strengthen the random-variable interface or prove the current statement as written.",
+      "decision_status": "kept_as_open_debt",
+      "decision_owner": "Step 5 decision freeze",
+      "validation_commands": [
+        "lake env lean ToyApollo/Output/prob_11_6.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "acceptance_criterion": "Sixth-moment support is theorem-level evidence, not a private axiom; final theorem public interface remains clean."
+    },
+    {
+      "task_id": "prob_11_9",
+      "current_class": "needs_decision",
+      "target_class": "open_math_debt",
+      "priority": 4,
+      "blocker_declaration": "prob_11_9_occupancy_moment_calculation_internal",
+      "allowed_route": "Future pass must rewrite around an explicit finite independent uniform balls-in-boxes model or keep the abstract moment calculation open.",
+      "decision_required": "Whether the theorem statement should expose the concrete occupancy model needed for Chapter 6 reuse.",
+      "decision_status": "kept_as_open_debt",
+      "decision_owner": "Step 5 decision freeze",
+      "validation_commands": [
+        "lake env lean ToyApollo/Output/prob_11_9.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "acceptance_criterion": "Empty-box first and second moment calculations land on theorem-level lemmas; Chapter 6 reuse is actual theorem reuse."
+    },
+    {
+      "task_id": "thm_11_7",
+      "current_class": "open_math_debt",
+      "target_class": "textbook_proof_completed",
+      "priority": 5,
+      "blocker_declaration": "thm_11_7_tail_summability_internal",
+      "allowed_route": "Formalize the fourth-moment expansion and tail-summability estimate at theorem level.",
+      "decision_required": "No route decision needed unless the statement is found too weak for the estimate.",
+      "decision_status": "accepted_for_textbook_complete",
+      "decision_owner": "Step 5 decision freeze",
+      "validation_commands": [
+        "lake env lean ToyApollo/Output/thm_11_7.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "acceptance_criterion": "Private axiom removed; fourth-moment and tail-summability lemmas have real theorem landings."
+    },
+    {
+      "task_id": "thm_13_14",
+      "current_class": "open_math_debt",
+      "target_class": "textbook_proof_completed",
+      "priority": 6,
+      "blocker_declaration": "thm_13_14_conditional_expectation_internal",
+      "allowed_route": "Formalize interval Fubini, marginal and conditional density calculation, and generator extension as theorem-level lemmas.",
+      "decision_required": "Decide only if the current density hypotheses are insufficient and need a statement change.",
+      "decision_status": "accepted_for_textbook_complete",
+      "decision_owner": "Step 5 decision freeze",
+      "validation_commands": [
+        "lake env lean ToyApollo/Output/thm_13_14.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "acceptance_criterion": "Private axiom removed; Fubini and generator-extension obligations land on lemmas, not structure fields."
+    },
+    {
+      "task_id": "thm_14_7",
+      "current_class": "open_math_debt",
+      "target_class": "open_math_debt",
+      "priority": 7,
+      "blocker_declaration": "thm_14_7_quadratic_characteristic_expansion_internal",
+      "allowed_route": "Defer from the first Step 6 pass; later decompose centering, independent-sum characteristic convergence, quadratic expansion, and normal characteristic identification.",
+      "decision_required": "Whether thm_14_7_LindebergLevySetup is acceptable source data or must be decomposed.",
+      "decision_status": "rejected_for_current_scope",
+      "decision_owner": "Step 5 decision freeze",
+      "validation_commands": [
+        "lake env lean ToyApollo/Output/thm_14_7.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "acceptance_criterion": "Debt remains explicit; no adapter or setup field is marked as Textbook Complete."
+    },
+    {
+      "task_id": "thm_14_5",
+      "current_class": "mathlib_backed_adapter_completed",
+      "target_class": "mathlib_backed_adapter_completed",
+      "priority": 8,
+      "blocker_declaration": "thm_14_5_SourceProofSpine",
+      "allowed_route": "Keep the current Mathlib-backed adapter unless a later pass explicitly selects source-spine upgrade.",
+      "decision_required": "Resolve whether this theorem remains an adapter or becomes a Textbook Complete target.",
+      "decision_status": "accepted_as_adapter",
+      "decision_owner": "Step 5 decision freeze",
+      "validation_commands": [
+        "lake env lean ToyApollo/Output/thm_14_5.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "acceptance_criterion": "Adapter classification remains explicit; source-spine route is not marked as textbook proof completed."
+    }
+  ],
+  "accepted_adapter_set": [
+    {
+      "task_id": "thm_14_5",
+      "decision_status": "accepted_as_adapter"
+    },
+    {
+      "task_id": "thm_14_6",
+      "decision_status": "accepted_as_adapter"
+    },
+    {
+      "task_id": "prob_14_12",
+      "decision_status": "accepted_as_adapter"
+    },
+    {
+      "task_id": "thm_14_1",
+      "decision_status": "accepted_as_adapter_surface"
+    },
+    {
+      "task_id": "thm_14_2",
+      "decision_status": "accepted_as_bridge_surface"
+    }
+  ],
+  "open_debt_backlog": [
+    "prob_10_5",
+    "prob_11_6",
+    "prob_11_8",
+    "prob_11_9",
+    "prob_11_10",
+    "prob_14_1",
+    "prob_14_2",
+    "prob_14_8",
+    "prob_14_10",
+    "prob_14_11",
+    "ex_14_4_1",
+    "ex_14_4_2",
+    "ex_14_4_3",
+    "thm_14_7"
+  ],
+  "beyond_book_boundary": {
+    "root_exception": "thm_14_8_ProofBeyondBook",
+    "inherited_users": [
+      "ex_14_4_3",
+      "prob_14_11"
+    ],
+    "unique_root_exception": true
+  },
+  "validation_result": {
+    "completed": true,
+    "commands_passed": [
+      "python -m json.tool docs/phase2_completion_classification.json",
+      "python -m json.tool docs/modification_0525_steps/phase2_step5_textbook_complete_target_selection.json",
+      "python tools/validate_phase2_completion_classification.py",
+      "python -m unittest tests.test_phase2_completion_classification",
+      "python -m py_compile tools/audit_phase2_clean_debt_surface.py",
+      "python -m unittest tests.test_phase2_clean_debt_surface_audit",
+      "python tools/audit_phase2_clean_debt_surface.py --write-report --fail-on-errors"
+    ],
+    "clean_debt_audit_error_task_count": 0,
+    "project_ledger_edited": false
+  }
+}

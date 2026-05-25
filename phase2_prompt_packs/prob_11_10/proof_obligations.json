@@ -3,12 +3,19 @@
   "task_id": "prob_11_10",
   "generated_at": "2026-05-17T22:38:19.192492Z",
   "classification": {
-    "requires_decomposition": false,
-    "reason": "normal proof: no structural decomposition trigger was detected",
-    "evidence": [],
+    "requires_decomposition": true,
+    "reason": "open_math_debt/internal_axiom: the public Lean theorem no longer exposes hUniform, but the finite-grid Glivenko-Cantelli uniformization step is still supplied by a private axiom.",
+    "evidence": [
+      "ToyApollo/Output/prob_11_10.lean defines the source CDF, uniform-deviation, and pointwise-indicator interfaces as local declarations.",
+      "ToyApollo/Output/prob_11_10.lean proves the fixed-x empirical-cdf convergence through prob_11_10_pointwise by applying ex_11_5_1.",
+      "ToyApollo/Output/prob_11_10.lean closes the uniform convergence theorem through private axiom prob_11_10_continuous_grid_uniformization_internal.",
+      "The public prob_11_10 theorem no longer exposes hUniform or prob_11_10_uniformizationSupport as a caller-supplied proof package."
+    ],
     "dependency_count": 2,
     "source_length": 118,
-    "structural_operation_count": 1
+    "structural_operation_count": 1,
+    "proof_route_class": "open_math_debt",
+    "audit_class": "internal_axiom_open_debt"
   },
   "obligations": [
     {
@@ -22,7 +29,7 @@
       "kind": "source_step",
       "source_ref": "",
       "depends_on": [],
-      "lean_landing": "",
+      "lean_landing": "prob_11_10_continuousCDF",
       "status": "proved",
       "review_status": "accepted",
       "blocking": true,
@@ -44,7 +51,7 @@
       "depends_on": [
         "continuous_cdf_interface"
       ],
-      "lean_landing": "",
+      "lean_landing": "prob_11_10_uniformCDFDeviation; empiricalCDFAt",
       "status": "proved",
       "review_status": "accepted",
       "blocking": true,
@@ -66,7 +73,7 @@
       "depends_on": [
         "empirical_cdf_objects"
       ],
-      "lean_landing": "",
+      "lean_landing": "prob_11_10_pointwiseIndicatorAssumptions; prob_11_10_pointwise",
       "status": "proved",
       "review_status": "accepted",
       "blocking": true,
@@ -93,15 +100,56 @@
       "review_status": "needs_review",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "The local library has the pointwise empirical-cdf theorem but not the full finite-grid Glivenko-Cantelli uniformization argument.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.\n[clean-debt-public-surface] 2026-05-22: public theorem no longer requires prob_11_10_uniformizationSupport; it now exposes the explicit implication from continuous CDF plus pointwise a.s. convergence to uniform a.s. convergence.\n[debt-recheck 2026-05-22] Still open. `ex_11_5_1` supplies only fixed-x almost-sure convergence. The explicit public uniformization implication asks for an upgrade from pointwise convergence plus `Monotone F ∧ Continuous F`; this is not enough for the textbook finite-grid proof. The missing formal inputs are: cdf tail limits/tightness (`F -> 0` at -infinity and `F -> 1` at +infinity, or equivalent compact truncation), pathwise monotonicity of each empirical cdf in x, finite-grid/countable-intersection assembly of the a.s. pointwise events, measurability/boundedness of the sup-deviation random variables, and a theorem-level sandwich from grid errors to the global `sSup` deviation. In fact the support premise as stated is too weak: pointwise convergence of empirical cdfs to the continuous monotone zero function can occur when samples drift to +infinity, while the sup deviation stays 1. This rules out proving the current public implication without strengthening it to the actual textbook cdf/iid/tail setting.",
-      "last_review_evidence": "Blocked: no theorem-level continuous-grid uniformization landing exists, and the current support interface is mathematically too weak for the desired implication.",
+      "notes": "The local library has the pointwise empirical-cdf theorem but not the full finite-grid Glivenko-Cantelli uniformization argument.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.\n[clean-debt-public-surface] 2026-05-22: public theorem no longer requires prob_11_10_uniformizationSupport; it now exposes the explicit implication from continuous CDF plus pointwise a.s. convergence to uniform a.s. convergence.\n[debt-recheck 2026-05-22] Still open. `ex_11_5_1` supplies only fixed-x almost-sure convergence. The explicit public uniformization implication asks for an upgrade from pointwise convergence plus `Monotone F ∧ Continuous F`; this is not enough for the textbook finite-grid proof. The missing formal inputs are: cdf tail limits/tightness (`F -> 0` at -infinity and `F -> 1` at +infinity, or equivalent compact truncation), pathwise monotonicity of each empirical cdf in x, finite-grid/countable-intersection assembly of the a.s. pointwise events, measurability/boundedness of the sup-deviation random variables, and a theorem-level sandwich from grid errors to the global `sSup` deviation. In fact the support premise as stated is too weak: pointwise convergence of empirical cdfs to the continuous monotone zero function can occur when samples drift to +infinity, while the sup deviation stays 1. This rules out proving the old public implication without strengthening it to the actual textbook cdf/iid/tail setting.\n[worker-c 2026-05-23] Removed the public `hUniform` theorem parameter. The remaining uniformization debt is now carried by the private internal axiom `prob_11_10_continuous_grid_uniformization_internal`, whose support interface also receives `prob_11_10_pointwiseIndicatorAssumptions` rather than the too-weak pointwise-only implication. This keeps the Lean file buildable but this obligation remains open_math_debt.",
+      "last_review_evidence": "Blocked: no theorem-level continuous-grid uniformization proof exists. The public hUniform parameter was internalized as a private axiom, so the final theorem surface is cleaner but still depends on open math debt.",
       "source_output_alignment": {
-        "audited_at": "2026-05-19",
-        "audit_class": "D_no_landing_search_required",
+        "audited_at": "2026-05-24",
+        "audit_class": "private_axiom_open_debt",
         "family": "tail/moment/ui",
-        "existing_local_declarations": [],
-        "missing_landing_names": [],
-        "next_action": "Re-open the source and ToyApollo/Output search, then assign a real Lean landing before repair.",
+        "existing_local_declarations": [
+          {
+            "name": "prob_11_10_continuousCDF",
+            "kind": "definition",
+            "file": "ToyApollo/Output/prob_11_10.lean",
+            "line": 24
+          },
+          {
+            "name": "prob_11_10_uniformCDFDeviation",
+            "kind": "definition",
+            "file": "ToyApollo/Output/prob_11_10.lean",
+            "line": 28
+          },
+          {
+            "name": "prob_11_10_pointwiseIndicatorAssumptions",
+            "kind": "definition",
+            "file": "ToyApollo/Output/prob_11_10.lean",
+            "line": 34
+          },
+          {
+            "name": "prob_11_10_pointwise",
+            "kind": "theorem",
+            "file": "ToyApollo/Output/prob_11_10.lean",
+            "line": 57
+          },
+          {
+            "name": "prob_11_10_continuous_grid_uniformization_internal",
+            "kind": "private_axiom",
+            "file": "ToyApollo/Output/prob_11_10.lean",
+            "line": 64
+          },
+          {
+            "name": "prob_11_10",
+            "kind": "theorem",
+            "file": "ToyApollo/Output/prob_11_10.lean",
+            "line": 71
+          }
+        ],
+        "missing_landing_names": [
+          "finite-grid/cdf-tail uniformization theorem",
+          "pathwise empirical-cdf monotonicity to sSup deviation bound",
+          "countable-intersection assembly of pointwise almost-sure convergence events"
+        ],
+        "next_action": "Replace prob_11_10_continuous_grid_uniformization_internal with theorem-level finite-grid Glivenko-Cantelli evidence before marking this obligation proved.",
         "manual_review_required": false
       },
       "ledger_task_id": "obl_prob_11_10_continuous_grid_uniformization",
@@ -109,7 +157,14 @@
       "discharged_by_task": ""
     }
   ],
-  "scaffold_hypotheses": [],
+  "scaffold_hypotheses": [
+    {
+      "name": "prob_11_10_continuous_grid_uniformization_internal",
+      "kind": "private_axiom",
+      "location": "ToyApollo/Output/prob_11_10.lean",
+      "public_surface": false
+    }
+  ],
   "review_history": [
     {
       "reviewed_at": "2026-05-17T22:44:04.269947Z",
@@ -131,9 +186,19 @@
       "status": "covered",
       "summary": "The focused child is accepted as a named theorem-level or support-interface stage with an explicit downstream bridge. Hard calculations that remain as support predicates are not treated as hidden facts.",
       "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-24T00:00:00+08:00",
+      "verdict": "blocked",
+      "status": "open_math_debt",
+      "summary": "Public hUniform was removed, and the CDF/object/pointwise steps now have concrete local landings. The continuous-grid uniformization remains private axiom debt in prob_11_10_continuous_grid_uniformization_internal.",
+      "open_blockers": [
+        "continuous_grid_uniformization",
+        "prob_11_10_continuous_grid_uniformization_internal"
+      ]
     }
   ],
-  "last_reviewed_at": "2026-05-20T10:57:15.104364Z",
+  "last_reviewed_at": "2026-05-24T00:00:00+08:00",
   "source_output_alignment_audit": {
     "audited_at": "2026-05-19",
     "accepted_debt_count": 1,

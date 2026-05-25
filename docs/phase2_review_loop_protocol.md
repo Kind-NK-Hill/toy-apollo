@@ -1,6 +1,8 @@
 # Phase 2 Review Loop Protocol
 
 This document carries the expanded runtime/operator protocol for the Phase 2 Codex semantic-review loop.
+For proof-fidelity verdicts, adapter/debt classification, and public
+proof-package surface rules, use `docs/phase2_proof_fidelity_contract.md`.
 
 ## Composite Actions
 
@@ -35,6 +37,9 @@ This document carries the expanded runtime/operator protocol for the Phase 2 Cod
 - Invalid reviewer output is not a normal completion point; current review subject metadata and same-session auto-loop state should remain available so the same session can continue with a corrected reviewer result.
 
 ## Accepted Proof-Debt Repair
+
+Use `docs/phase2_proof_fidelity_contract.md` for the semantic meaning and
+lifecycle of accepted proof debt. The runtime protocol is:
 
 `COMPLETED_WITH_PROOF_DEBT` is a completed-but-not-clean state. It should not
 be consumed as an ordinary completed dependency. Downstream hard dependents are

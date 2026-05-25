@@ -3,14 +3,19 @@
   "task_id": "prob_11_9",
   "generated_at": "2026-05-17T22:25:52.482949Z",
   "classification": {
-    "requires_decomposition": false,
-    "reason": "normal proof: no structural decomposition trigger was detected",
+    "requires_decomposition": true,
+    "reason": "needs_decision/internal_axiom: Step 2.5 found that prob_11_9 still closes the occupancy second-moment calculation through private axiom prob_11_9_occupancy_moment_calculation_internal, while the public statement does not include a finite independent uniform balls-in-boxes model connecting X to the one-box and two-box empty probabilities.",
     "evidence": [
-      "source text has multiple paragraphs or proof lines"
+      "ToyApollo/Output/prob_11_9.lean still closes the quadratic-mean theorem through private axiom prob_11_9_occupancy_moment_calculation_internal.",
+      "ToyApollo/Output/prob_11_9.lean proves the mean-square-to-eLpNorm and probability-convergence bridge after the missing occupancy moment calculation.",
+      "Step 2.5 investigation on 2026-05-24 found no local finite independent uniform balls-in-boxes model for empty-box indicators and their two-box joint probabilities.",
+      "ToyApollo/Output/ex_6_5_2.lean has a finite balls-into-bins model for a different one-box exact-occupancy expectation, but it is not connected to the abstract X in prob_11_9 and does not provide empty-box or two-box empty probability landings."
     ],
     "dependency_count": 3,
     "source_length": 461,
-    "structural_operation_count": 0
+    "structural_operation_count": 0,
+    "proof_route_class": "needs_decision",
+    "audit_class": "internal_axiom_open_debt"
   },
   "obligations": [
     {
@@ -24,12 +29,12 @@
       "kind": "source_step",
       "source_ref": "",
       "depends_on": [],
-      "lean_landing": "",
+      "lean_landing": "prob_11_9_asymptoticRegime",
       "status": "proved",
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "",
+      "notes": "[phase2-step4-cleanup] 2026-05-24: filled lean_landing for proved metadata hygiene.",
       "last_review_evidence": "The predicate captures the positive limit and simultaneous asymptotic regime."
     },
     {
@@ -45,12 +50,12 @@
       "depends_on": [
         "asymptotic_regime"
       ],
-      "lean_landing": "",
+      "lean_landing": "prob_11_9_emptyBoxRatio",
       "status": "proved",
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "",
+      "notes": "[phase2-step4-cleanup] 2026-05-24: filled lean_landing for proved metadata hygiene.",
       "last_review_evidence": "The exported definition is the normalized empty-box count."
     },
     {
@@ -58,7 +63,7 @@
       "description": "Carry out the textbook second-moment occupancy calculation using the one-box empty probability and two-box joint empty probability.",
       "source_proof_spine": "Expand X_n as a sum of empty-box indicators and show E[(X_n/n - exp(-a))^2] -> 0.",
       "expected_formal_items": [
-        "prob_11_9_occupancyMomentSupport",
+        "private prob_11_9_occupancy_moment_calculation_internal",
         "prob_11_9_quadratic_mean"
       ],
       "title": "occupancy_moment_calculation",
@@ -69,11 +74,18 @@
       ],
       "lean_landing": "",
       "status": "open",
-      "review_status": "needs_review",
+      "review_status": "blocked",
       "blocking": true,
-      "scaffold_hypotheses": [],
-      "notes": "The local library does not expose the finite independent uniform balls-in-boxes probability space, so the standard second-moment calculation is an explicit support interface.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.",
-      "last_review_evidence": "Blocked: child pack only packaged the support boundary; no theorem-level finite occupancy second-moment landing exists.",
+      "scaffold_hypotheses": [
+        {
+          "name": "prob_11_9_occupancy_moment_calculation_internal",
+          "kind": "private_axiom",
+          "location": "ToyApollo/Output/prob_11_9.lean",
+          "reason": "Private axiom supplies the missing finite occupancy model and second-moment calculation."
+        }
+      ],
+      "notes": "The local library does not expose the finite independent uniform balls-in-boxes probability space needed by this statement, so the standard second-moment calculation remains open math debt. On 2026-05-23 the public hMoment/prob_11_9_occupancyMomentSupport proof package was removed from the public theorem interface and replaced by the private internal axiom prob_11_9_occupancy_moment_calculation_internal.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.\n[phase2-step2.5] 2026-05-24: reclassified as needs_decision because the current public statement abstracts over X and does not encode the finite independent uniform balls-in-boxes model needed to prove the empty-box and two-box probability calculation. The adjacent ex_6_5_2 model covers a different exact-occupancy first-moment problem and is not a landing for this second-moment theorem.",
+      "last_review_evidence": "Step 2.5 review on 2026-05-24 found no theorem-level finite occupancy model or second-moment landing; ex_6_5_2 provides only an adjacent one-box exact-occupancy model, and the existing eLpNorm/probability bridge is downstream of the missing calculation.",
       "source_output_alignment": {
         "audited_at": "2026-05-19",
         "audit_class": "D_no_landing_search_required",
@@ -113,7 +125,14 @@
       "last_review_evidence": "prob_11_9_eLpNorm_tendsto_of_convergesInMeanSquare proves the analytic L2-norm limit from the local mean-square definition; prob_11_9_meanSquareELpNormSupport_of_measurable constructs the prior support package internally from measurability, and prob_11_9_probability applies thm_10_5."
     }
   ],
-  "scaffold_hypotheses": [],
+  "scaffold_hypotheses": [
+    {
+      "name": "prob_11_9_occupancy_moment_calculation_internal",
+      "kind": "private_axiom",
+      "location": "ToyApollo/Output/prob_11_9.lean",
+      "public_surface": false
+    }
+  ],
   "review_history": [
     {
       "reviewed_at": "2026-05-17T22:37:51.056619Z",
@@ -137,9 +156,27 @@
       "open_blockers": [
         "occupancy_moment_calculation"
       ]
+    },
+    {
+      "reviewed_at": "2026-05-23T14:26:10Z",
+      "verdict": "partial",
+      "status": "partial",
+      "summary": "The public hMoment proof package was removed from prob_11_9. The occupancy second-moment calculation remains open and is represented only by the private internal axiom prob_11_9_occupancy_moment_calculation_internal because no local finite independent uniform occupancy model was found.",
+      "open_blockers": [
+        "occupancy_moment_calculation"
+      ]
+    },
+    {
+      "reviewed_at": "2026-05-24T00:00:00+08:00",
+      "verdict": "blocked",
+      "status": "needs_decision",
+      "summary": "Step 2.5 found that the current public statement lacks a finite independent uniform balls-in-boxes model connecting X to empty-box and two-box empty probabilities; the adjacent ex_6_5_2 finite model handles a different one-box exact-occupancy expectation and does not replace this missing second-moment landing.",
+      "open_blockers": [
+        "prob_11_9_occupancy_moment_calculation_internal"
+      ]
     }
   ],
-  "last_reviewed_at": "2026-05-21T12:42:58Z",
+  "last_reviewed_at": "2026-05-24T00:00:00+08:00",
   "source_output_alignment_audit": {
     "audited_at": "2026-05-19",
     "accepted_debt_count": 1,

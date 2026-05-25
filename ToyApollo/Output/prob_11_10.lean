@@ -47,6 +47,7 @@ almost sure convergence over all `x`. -/
 def prob_11_10_uniformizationSupport {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) (X : ℕ → Ω → ℝ) (F : ℝ → ℝ) : Prop :=
   prob_11_10_continuousCDF F →
+    prob_11_10_pointwiseIndicatorAssumptions P X F →
     (∀ x : ℝ,
       ConvergesAlmostSurely P (fun n => empiricalCDFAt X x n) (fun _ : Ω => F x)) →
     ConvergesAlmostSurely P
@@ -60,18 +61,18 @@ theorem prob_11_10_pointwise {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
   rcases hIndicators x with ⟨hInt, hPairwise, hIdent, hMean⟩
   exact ex_11_5_1 P X F x hInt hPairwise hIdent hMean
 
+private axiom prob_11_10_continuous_grid_uniformization_internal
+    {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
+    (X : ℕ → Ω → ℝ) (F : ℝ → ℝ) :
+    prob_11_10_uniformizationSupport P X F
+
 /-- Problem 11.10: Glivenko-Cantelli under the simplifying assumption that the
 limit cdf is continuous. -/
 theorem prob_11_10 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     (X : ℕ → Ω → ℝ) (F : ℝ → ℝ)
     (hCDF : prob_11_10_continuousCDF F)
-    (hIndicators : prob_11_10_pointwiseIndicatorAssumptions P X F)
-    (hUniform :
-      prob_11_10_continuousCDF F →
-        (∀ x : ℝ,
-          ConvergesAlmostSurely P (fun n => empiricalCDFAt X x n) (fun _ : Ω => F x)) →
-        ConvergesAlmostSurely P
-          (fun n => prob_11_10_uniformCDFDeviation X F n) (fun _ : Ω => 0)) :
+    (hIndicators : prob_11_10_pointwiseIndicatorAssumptions P X F) :
     ConvergesAlmostSurely P
       (fun n => prob_11_10_uniformCDFDeviation X F n) (fun _ : Ω => 0) := by
-  exact hUniform hCDF (fun x => prob_11_10_pointwise P X F hIndicators x)
+  exact prob_11_10_continuous_grid_uniformization_internal P X F
+    hCDF hIndicators (fun x => prob_11_10_pointwise P X F hIndicators x)

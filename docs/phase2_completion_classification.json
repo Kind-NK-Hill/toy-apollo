@@ -1,0 +1,1884 @@
+{
+  "schema_version": 1,
+  "created": "2026-05-24",
+  "scope": "ToyApollo Phase2 completion classification; ledger-independent",
+  "allowed_primary_classes": [
+    "textbook_proof_completed",
+    "mathlib_backed_adapter_completed",
+    "interface_bridge_completed",
+    "open_math_debt",
+    "beyond_book_exception",
+    "needs_decision"
+  ],
+  "allowed_flags": [
+    "public_interface_clean",
+    "public_interface_leak",
+    "private_axiom_internalized",
+    "inherited_beyond_book_exception",
+    "source_route_open",
+    "metadata_only_cleanliness_risk",
+    "mathlib_switch_without_textbook_route",
+    "interface_bridge_present",
+    "support_constructor_return_only",
+    "setup_parameter_review_needed",
+    "ledger_unchanged"
+  ],
+  "tasks": [
+    {
+      "task_id": "ex_10_3_2",
+      "chapter": 10,
+      "lean_file": "ToyApollo/Output/ex_10_3_2.lean",
+      "declarations": [
+        "ex_10_3_2_randomVariables_convergeInDistribution",
+        "ex_10_3_2_gaussian_convergesInDistribution",
+        "ex_10_3_2"
+      ],
+      "primary_class": "textbook_proof_completed",
+      "flags": [
+        "public_interface_clean",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/ex_10_3_2.lean",
+          "line": 216,
+          "kind": "structure",
+          "text": "structure ex_10_3_2_ContinuousRandomVariableSetup"
+        },
+        {
+          "file": "ToyApollo/Output/ex_10_3_2.lean",
+          "line": 327,
+          "kind": "structure",
+          "text": "structure ex_10_3_2_GaussianDensityConvergenceSetup"
+        },
+        {
+          "file": "ToyApollo/Output/ex_10_3_2.lean",
+          "line": 360,
+          "kind": "theorem",
+          "text": "theorem ex_10_3_2"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 25,
+          "kind": "audit_signal",
+          "text": "`ex_10_3_2`"
+        },
+        {
+          "file": "phase2_prompt_packs/ex_10_3_2/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"ex_10_3_2\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/ex_10_3_2.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Step 4 reviewed the public setup structures as source density/law data, not proof packages. The density and Gaussian theorem landings build without private axioms, so this is now classified as textbook proof completed for Good Corpus purposes.",
+      "next_action": "No Step 4 repair remains; keep this classification unless a later strict Textbook Complete pass changes the statement or proof route."
+    },
+    {
+      "task_id": "prob_10_5",
+      "chapter": 10,
+      "lean_file": "ToyApollo/Output/prob_10_5.lean",
+      "declarations": [
+        "prob_10_5",
+        "prob_10_5_dominated_probability_to_mean_internal"
+      ],
+      "primary_class": "needs_decision",
+      "flags": [
+        "public_interface_clean",
+        "private_axiom_internalized",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/prob_10_5.lean",
+          "line": 22,
+          "kind": "private_axiom",
+          "text": "private axiom prob_10_5_dominated_probability_to_mean_internal"
+        },
+        {
+          "file": "ToyApollo/Output/prob_10_5.lean",
+          "line": 32,
+          "kind": "theorem",
+          "text": "theorem prob_10_5"
+        },
+        {
+          "file": "phase2_prompt_packs/prob_10_5/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"prob_10_5\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/prob_10_5.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Step 2.5 investigation found that the current public statement lacks theorem-level measurability and uniform-integrability bridge hypotheses needed to replace the private axiom with the available Chapter 7 DCT route, so this task is decision-needed instead of patched with hidden assumptions.",
+      "next_action": "Decide whether to strengthen the public theorem with explicit measurability/uniform-integrability/Vitali hypotheses, add local bridge theorems, or keep this as open internal debt."
+    },
+    {
+      "task_id": "prob_10_6",
+      "chapter": 10,
+      "lean_file": "ToyApollo/Output/prob_10_6.lean",
+      "declarations": [
+        "prob_10_6",
+        "prob_10_6_singleton_masses_to_distribution_internal"
+      ],
+      "primary_class": "textbook_proof_completed",
+      "flags": [
+        "public_interface_clean",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/prob_10_6.lean",
+          "line": 287,
+          "kind": "theorem",
+          "text": "private theorem prob_10_6_singleton_masses_to_distribution_internal"
+        },
+        {
+          "file": "ToyApollo/Output/prob_10_6.lean",
+          "line": 323,
+          "kind": "theorem",
+          "text": "theorem prob_10_6"
+        },
+        {
+          "file": "phase2_prompt_packs/prob_10_6/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"prob_10_6\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/prob_10_6.lean",
+        "lake build ToyApollo.Output.prob_10_6",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Step 6B removed the private axiom and landed theorem-level source-route evidence for the arbitrary countable Ω singleton-mass-to-bounded-test direction, using countable PMF atomization, Tannery/dominated tsum convergence, and PMF.integral_eq_tsum.",
+      "next_action": "No Step 6B proof action remains for prob_10_6; keep this classification unless a later strict-interface pass replaces the custom countable bounded-test interface."
+    },
+    {
+      "task_id": "thm_10_8",
+      "chapter": 10,
+      "lean_file": "ToyApollo/Output/thm_10_8.lean",
+      "declarations": [
+        "mkSkorokhodQuantileSupport",
+        "thm_10_8"
+      ],
+      "primary_class": "textbook_proof_completed",
+      "flags": [
+        "public_interface_clean",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/thm_10_8.lean",
+          "line": 91,
+          "kind": "structure",
+          "text": "structure SkorokhodQuantileSupport"
+        },
+        {
+          "file": "ToyApollo/Output/thm_10_8.lean",
+          "line": 101,
+          "kind": "theorem",
+          "text": "theorem mkSkorokhodQuantileSupport"
+        },
+        {
+          "file": "ToyApollo/Output/thm_10_8.lean",
+          "line": 115,
+          "kind": "theorem",
+          "text": "theorem thm_10_8"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 106,
+          "kind": "audit_signal",
+          "text": "`thm_10_8`"
+        },
+        {
+          "file": "phase2_prompt_packs/thm_10_8/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"thm_10_8\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/thm_10_8.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Step 4 reviewed the Skorokhod quantile support constructor. It is theorem-level evidence constructed internally by the public theorem, and the public theorem has no support-package parameter.",
+      "next_action": "No Step 4 repair remains; keep this classification unless a later strict Textbook Complete pass changes the statement or proof route."
+    },
+    {
+      "task_id": "prob_11_10",
+      "chapter": 11,
+      "lean_file": "ToyApollo/Output/prob_11_10.lean",
+      "declarations": [
+        "prob_11_10",
+        "prob_11_10_continuous_grid_uniformization_internal"
+      ],
+      "primary_class": "open_math_debt",
+      "flags": [
+        "public_interface_clean",
+        "private_axiom_internalized",
+        "support_constructor_return_only",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/prob_11_10.lean",
+          "line": 64,
+          "kind": "private_axiom",
+          "text": "private axiom prob_11_10_continuous_grid_uniformization_internal"
+        },
+        {
+          "file": "ToyApollo/Output/prob_11_10.lean",
+          "line": 47,
+          "kind": "def",
+          "text": "def prob_11_10_uniformizationSupport"
+        },
+        {
+          "file": "ToyApollo/Output/prob_11_10.lean",
+          "line": 71,
+          "kind": "theorem",
+          "text": "theorem prob_11_10"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 49,
+          "kind": "audit_signal",
+          "text": "`prob_11_10`"
+        },
+        {
+          "file": "phase2_prompt_packs/prob_11_10/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"prob_11_10\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/prob_11_10.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Open math debt remains because continuous-grid uniformization is internalized as a private axiom.",
+      "next_action": "Replace the private axiom with theorem-level finite-grid/continuous-CDF uniformization evidence."
+    },
+    {
+      "task_id": "prob_11_5",
+      "chapter": 11,
+      "lean_file": "ToyApollo/Output/prob_11_5.lean",
+      "declarations": [
+        "prob_11_5_tailSummability_of_variance_growth",
+        "prob_11_5"
+      ],
+      "primary_class": "textbook_proof_completed",
+      "flags": [
+        "public_interface_clean",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/prob_11_5.lean",
+          "line": 42,
+          "kind": "def",
+          "text": "def prob_11_5_tailSummabilitySupport"
+        },
+        {
+          "file": "ToyApollo/Output/prob_11_5.lean",
+          "line": 126,
+          "kind": "theorem",
+          "text": "theorem prob_11_5_tailSummability_of_variance_growth"
+        },
+        {
+          "file": "ToyApollo/Output/prob_11_5.lean",
+          "line": 189,
+          "kind": "theorem",
+          "text": "theorem prob_11_5"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 50,
+          "kind": "audit_signal",
+          "text": "`prob_11_5`"
+        },
+        {
+          "file": "phase2_prompt_packs/prob_11_5/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"prob_11_5\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/prob_11_5.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Step 4 reviewed the tail-summability support route. The support is produced by theorem-level p-series and Chebyshev evidence and is consumed internally by the public theorem.",
+      "next_action": "No Step 4 repair remains; keep this classification unless a later strict Textbook Complete pass changes the statement or proof route."
+    },
+    {
+      "task_id": "prob_11_6",
+      "chapter": 11,
+      "lean_file": "ToyApollo/Output/prob_11_6.lean",
+      "declarations": [
+        "prob_11_6",
+        "prob_11_6_sixthMomentSupport_internal"
+      ],
+      "primary_class": "needs_decision",
+      "flags": [
+        "public_interface_clean",
+        "private_axiom_internalized",
+        "support_constructor_return_only",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/prob_11_6.lean",
+          "line": 62,
+          "kind": "private_axiom",
+          "text": "private axiom prob_11_6_sixthMomentSupport_internal"
+        },
+        {
+          "file": "ToyApollo/Output/prob_11_6.lean",
+          "line": 71,
+          "kind": "def",
+          "text": "def prob_11_6_tailSummabilitySupport"
+        },
+        {
+          "file": "ToyApollo/Output/prob_11_6.lean",
+          "line": 205,
+          "kind": "theorem",
+          "text": "theorem prob_11_6"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 52,
+          "kind": "audit_signal",
+          "text": "`prob_11_6`"
+        },
+        {
+          "file": "phase2_prompt_packs/prob_11_6/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"prob_11_6\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/prob_11_6.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Step 2.5 investigation found that replacing the sixth-moment private axiom requires a theorem-level independent-sum sixth-moment expansion, plus explicit measurability, integrability, a.e. uniform-bound, and zero-mean mixed-term cancellation landings; the current public interface does not provide those prerequisites.",
+      "next_action": "Decide whether to strengthen the random-variable interface with AEStronglyMeasurable/MemLp or a.e. bound landings, build a reusable independent finite-sum sixth-moment layer, or keep the sixth-moment expansion as internal debt."
+    },
+    {
+      "task_id": "prob_11_7",
+      "chapter": 11,
+      "lean_file": "ToyApollo/Output/prob_11_7.lean",
+      "declarations": [
+        "prob_11_7_sampleMeanVarianceSupport_of_covarianceDecay",
+        "prob_11_7"
+      ],
+      "primary_class": "textbook_proof_completed",
+      "flags": [
+        "public_interface_clean",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/prob_11_7.lean",
+          "line": 54,
+          "kind": "def",
+          "text": "def prob_11_7_sampleMeanVarianceSupport"
+        },
+        {
+          "file": "ToyApollo/Output/prob_11_7.lean",
+          "line": 472,
+          "kind": "theorem",
+          "text": "theorem prob_11_7_sampleMeanVarianceSupport_of_covarianceDecay"
+        },
+        {
+          "file": "ToyApollo/Output/prob_11_7.lean",
+          "line": 538,
+          "kind": "theorem",
+          "text": "theorem prob_11_7"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 54,
+          "kind": "audit_signal",
+          "text": "`prob_11_7`"
+        },
+        {
+          "file": "phase2_prompt_packs/prob_11_7/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"prob_11_7\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/prob_11_7.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Step 4 reviewed the covariance-decay support route. The sample-mean variance support is produced by theorem-level covariance and Cesaro estimates and is consumed internally by the public theorem.",
+      "next_action": "No Step 4 repair remains; keep this classification unless a later strict Textbook Complete pass changes the statement or proof route."
+    },
+    {
+      "task_id": "prob_11_8",
+      "chapter": 11,
+      "lean_file": "ToyApollo/Output/prob_11_8.lean",
+      "declarations": [
+        "prob_11_8",
+        "prob_11_8_covarianceDecaySupport_internal"
+      ],
+      "primary_class": "open_math_debt",
+      "flags": [
+        "public_interface_clean",
+        "private_axiom_internalized",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/prob_11_8.lean",
+          "line": 41,
+          "kind": "private_axiom",
+          "text": "private axiom prob_11_8_covarianceDecaySupport_internal"
+        },
+        {
+          "file": "ToyApollo/Output/prob_11_8.lean",
+          "line": 49,
+          "kind": "theorem",
+          "text": "theorem prob_11_8"
+        },
+        {
+          "file": "phase2_prompt_packs/prob_11_8/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"prob_11_8\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/prob_11_8.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Open math debt remains because the AR(1) covariance decay support is supplied by a private axiom.",
+      "next_action": "Replace the private axiom with theorem-level covariance-decay evidence."
+    },
+    {
+      "task_id": "prob_11_9",
+      "chapter": 11,
+      "lean_file": "ToyApollo/Output/prob_11_9.lean",
+      "declarations": [
+        "prob_11_9",
+        "prob_11_9_occupancy_moment_calculation_internal"
+      ],
+      "primary_class": "needs_decision",
+      "flags": [
+        "public_interface_clean",
+        "private_axiom_internalized",
+        "support_constructor_return_only",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/prob_11_9.lean",
+          "line": 55,
+          "kind": "private_axiom",
+          "text": "private axiom prob_11_9_occupancy_moment_calculation_internal"
+        },
+        {
+          "file": "ToyApollo/Output/prob_11_9.lean",
+          "line": 67,
+          "kind": "def",
+          "text": "def prob_11_9_meanSquareELpNormSupport"
+        },
+        {
+          "file": "ToyApollo/Output/prob_11_9.lean",
+          "line": 150,
+          "kind": "theorem",
+          "text": "theorem prob_11_9"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 56,
+          "kind": "audit_signal",
+          "text": "`prob_11_9`"
+        },
+        {
+          "file": "phase2_prompt_packs/prob_11_9/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"prob_11_9\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/prob_11_9.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Step 2.5 investigation found that the current public statement abstracts over boxes, ball counts, and X but does not include a finite independent uniform balls-in-boxes model connecting X to one-box and two-box empty probabilities; the nearby ex_6_5_2 model covers a different one-box exact-occupancy expectation and is not a landing for this second-moment calculation.",
+      "next_action": "Decide whether to rewrite or strengthen prob_11_9 around an explicit occupancy model, possibly reusing ex_6_5_2 ingredients but adding empty-box count and two-box joint probability lemmas, or keep this as internal debt."
+    },
+    {
+      "task_id": "thm_11_7",
+      "chapter": 11,
+      "lean_file": "ToyApollo/Output/thm_11_7.lean",
+      "declarations": [
+        "thm_11_7",
+        "thm_11_7_tailSummabilitySupport",
+        "thm_11_7_from_tailSummability"
+      ],
+      "primary_class": "open_math_debt",
+      "flags": [
+        "public_interface_leak",
+        "source_route_open",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/thm_11_7.lean",
+          "line": 248,
+          "kind": "def",
+          "text": "def thm_11_7_tailSummabilitySupport"
+        },
+        {
+          "file": "ToyApollo/Output/thm_11_7.lean",
+          "line": 257,
+          "kind": "theorem",
+          "text": "theorem thm_11_7_from_tailSummability"
+        },
+        {
+          "file": "ToyApollo/Output/thm_11_7.lean",
+          "line": 282,
+          "kind": "theorem",
+          "text": "theorem thm_11_7"
+        },
+        {
+          "file": "phase2_prompt_packs/thm_11_7/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"thm_11_7\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/thm_11_7.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Open math debt remains because the fourth-moment expansion and tail-bound are not derived from the source assumptions; Step 6B removed the private axiom and landed theorem-level final assembly from an explicit public tail-summability premise.",
+      "next_action": "Replace the public tail-summability premise with theorem-level fourth-moment expansion, mixed-term cancellation, Cauchy-Schwarz, Markov, and p-series evidence."
+    },
+    {
+      "task_id": "ex_13_5_1",
+      "chapter": 13,
+      "lean_file": "ToyApollo/Output/ex_13_5_1.lean",
+      "declarations": [
+        "ex_13_5_1_rectangleAreaSupport_of_uniformSquareLaw",
+        "ex_13_5_1"
+      ],
+      "primary_class": "textbook_proof_completed",
+      "flags": [
+        "public_interface_clean",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/ex_13_5_1.lean",
+          "line": 270,
+          "kind": "def",
+          "text": "def ex_13_5_1_rectangleAreaSupport"
+        },
+        {
+          "file": "ToyApollo/Output/ex_13_5_1.lean",
+          "line": 400,
+          "kind": "def",
+          "text": "def ex_13_5_1_piLambdaExtensionSupport"
+        },
+        {
+          "file": "ToyApollo/Output/ex_13_5_1.lean",
+          "line": 416,
+          "kind": "theorem",
+          "text": "theorem ex_13_5_1"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 27,
+          "kind": "audit_signal",
+          "text": "`ex_13_5_1`"
+        },
+        {
+          "file": "phase2_prompt_packs/ex_13_5_1/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"ex_13_5_1\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/ex_13_5_1.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Step 4 reviewed the rectangle/Fubini support surface. The final theorem uses theorem-level uniform-square and cylinder-integral evidence, with no private axiom or public support package parameter.",
+      "next_action": "No Step 4 repair remains; keep this classification unless a later strict Textbook Complete pass changes the statement or proof route."
+    },
+    {
+      "task_id": "thm_13_12",
+      "chapter": 13,
+      "lean_file": "ToyApollo/Output/thm_13_12.lean",
+      "declarations": [
+        "thm_13_12_countablePartitionVersionSupport",
+        "thm_13_12"
+      ],
+      "primary_class": "textbook_proof_completed",
+      "flags": [
+        "public_interface_clean",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/thm_13_12.lean",
+          "line": 418,
+          "kind": "theorem",
+          "text": "theorem thm_13_12_countablePartitionVersionSupport"
+        },
+        {
+          "file": "ToyApollo/Output/thm_13_12.lean",
+          "line": 505,
+          "kind": "theorem",
+          "text": "theorem thm_13_12"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 108,
+          "kind": "audit_signal",
+          "text": "`thm_13_12`"
+        },
+        {
+          "file": "phase2_prompt_packs/thm_13_12/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"thm_13_12\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/thm_13_12.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Step 4 reviewed countablePartitionVersionSupport as theorem-level source-route evidence. The public theorem constructs and consumes this evidence internally.",
+      "next_action": "No Step 4 repair remains; keep this classification unless a later strict Textbook Complete pass changes the statement or proof route."
+    },
+    {
+      "task_id": "thm_13_13",
+      "chapter": 13,
+      "lean_file": "ToyApollo/Output/thm_13_13.lean",
+      "declarations": [
+        "thm_13_13_atomIntegral_from_jointLaw",
+        "thm_13_13"
+      ],
+      "primary_class": "textbook_proof_completed",
+      "flags": [
+        "public_interface_clean",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/thm_13_13.lean",
+          "line": 177,
+          "kind": "def",
+          "text": "def thm_13_13_atomIntegralSupport"
+        },
+        {
+          "file": "ToyApollo/Output/thm_13_13.lean",
+          "line": 187,
+          "kind": "theorem",
+          "text": "theorem thm_13_13_atomIntegral_from_jointLaw"
+        },
+        {
+          "file": "ToyApollo/Output/thm_13_13.lean",
+          "line": 239,
+          "kind": "theorem",
+          "text": "theorem thm_13_13"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 109,
+          "kind": "audit_signal",
+          "text": "`thm_13_13`"
+        },
+        {
+          "file": "phase2_prompt_packs/thm_13_13/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"thm_13_13\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/thm_13_13.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Step 4 reviewed atomIntegralSupport. The atom-integral support is produced by theorem-level joint-law evidence and the final theorem has no private axiom debt.",
+      "next_action": "No Step 4 repair remains; keep this classification unless a later strict Textbook Complete pass changes the statement or proof route."
+    },
+    {
+      "task_id": "thm_13_14",
+      "chapter": 13,
+      "lean_file": "ToyApollo/Output/thm_13_14.lean",
+      "declarations": [
+        "thm_13_14",
+        "thm_13_14_from_intervalFubini_piLambda",
+        "thm_13_14_intervalFubiniSupport",
+        "thm_13_14_piLambdaExtensionSupport"
+      ],
+      "primary_class": "open_math_debt",
+      "flags": [
+        "public_interface_leak",
+        "source_route_open",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/thm_13_14.lean",
+          "line": 327,
+          "kind": "theorem",
+          "text": "theorem thm_13_14_from_intervalFubini_piLambda"
+        },
+        {
+          "file": "ToyApollo/Output/thm_13_14.lean",
+          "line": 287,
+          "kind": "def",
+          "text": "def thm_13_14_intervalFubiniSupport"
+        },
+        {
+          "file": "ToyApollo/Output/thm_13_14.lean",
+          "line": 296,
+          "kind": "def",
+          "text": "def thm_13_14_piLambdaExtensionSupport"
+        },
+        {
+          "file": "ToyApollo/Output/thm_13_14.lean",
+          "line": 347,
+          "kind": "theorem",
+          "text": "theorem thm_13_14"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 111,
+          "kind": "audit_signal",
+          "text": "`thm_13_14`"
+        },
+        {
+          "file": "phase2_prompt_packs/thm_13_14/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"thm_13_14\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/thm_13_14.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Open math debt remains because interval Fubini and pi-lambda extension are not derived internally; Step 6B removed the private axiom and landed theorem-level final assembly from explicit public Fubini and extension premises.",
+      "next_action": "Replace the public Fubini and extension premises with theorem-level density/Fubini, kernel integrability, and generator-extension evidence."
+    },
+    {
+      "task_id": "ex_14_3_1",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/ex_14_3_1.lean",
+      "declarations": [
+        "ex_14_3_1_binomialCharacteristic_tendsto",
+        "ex_14_3_1_converges_to_poisson",
+        "ex_14_3_1"
+      ],
+      "primary_class": "textbook_proof_completed",
+      "flags": [
+        "public_interface_clean",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/ex_14_3_1.lean",
+          "line": 92,
+          "kind": "structure",
+          "text": "structure ex_14_3_1_BinomialPoissonSetup"
+        },
+        {
+          "file": "ToyApollo/Output/ex_14_3_1.lean",
+          "line": 74,
+          "kind": "theorem",
+          "text": "theorem ex_14_3_1_binomialCharacteristic_tendsto"
+        },
+        {
+          "file": "ToyApollo/Output/ex_14_3_1.lean",
+          "line": 127,
+          "kind": "theorem",
+          "text": "theorem ex_14_3_1_converges_to_poisson"
+        },
+        {
+          "file": "ToyApollo/Output/ex_14_3_1.lean",
+          "line": 145,
+          "kind": "theorem",
+          "text": "theorem ex_14_3_1"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 30,
+          "kind": "audit_signal",
+          "text": "`ex_14_3_1`"
+        },
+        {
+          "file": "phase2_prompt_packs/ex_14_3_1/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"ex_14_3_1\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/ex_14_3_1.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Worker-D evidence records a closed law-level source route with setup fields used as source/object data, not proof packages.",
+      "next_action": "Keep the source setup documented; no private proof debt is recorded for this law-level statement."
+    },
+    {
+      "task_id": "ex_14_3_2",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/ex_14_3_2.lean",
+      "declarations": [
+        "ex_14_3_2_scaledGeometricCharacteristic_tendsto",
+        "ex_14_3_2_converges_to_exponential",
+        "ex_14_3_2"
+      ],
+      "primary_class": "textbook_proof_completed",
+      "flags": [
+        "public_interface_clean",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/ex_14_3_2.lean",
+          "line": 258,
+          "kind": "structure",
+          "text": "structure ex_14_3_2_GeometricExponentialSetup"
+        },
+        {
+          "file": "ToyApollo/Output/ex_14_3_2.lean",
+          "line": 220,
+          "kind": "theorem",
+          "text": "theorem ex_14_3_2_scaledGeometricCharacteristic_tendsto"
+        },
+        {
+          "file": "ToyApollo/Output/ex_14_3_2.lean",
+          "line": 294,
+          "kind": "theorem",
+          "text": "theorem ex_14_3_2_converges_to_exponential"
+        },
+        {
+          "file": "ToyApollo/Output/ex_14_3_2.lean",
+          "line": 313,
+          "kind": "theorem",
+          "text": "theorem ex_14_3_2"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 34,
+          "kind": "audit_signal",
+          "text": "`ex_14_3_2`"
+        },
+        {
+          "file": "phase2_prompt_packs/ex_14_3_2/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"ex_14_3_2\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/ex_14_3_2.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Worker-D evidence records a closed law-level source route with setup fields used as source/object data, not proof packages.",
+      "next_action": "Keep the source setup documented; no private proof debt is recorded for this law-level statement."
+    },
+    {
+      "task_id": "ex_14_4_1",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/ex_14_4_1.lean",
+      "declarations": [
+        "ex_14_4_1",
+        "ex_14_4_1_apply_lindeberg_levy_clt_internal"
+      ],
+      "primary_class": "open_math_debt",
+      "flags": [
+        "public_interface_clean",
+        "private_axiom_internalized",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/ex_14_4_1.lean",
+          "line": 76,
+          "kind": "private_axiom",
+          "text": "private axiom ex_14_4_1_apply_lindeberg_levy_clt_internal"
+        },
+        {
+          "file": "ToyApollo/Output/ex_14_4_1.lean",
+          "line": 96,
+          "kind": "theorem",
+          "text": "theorem ex_14_4_1"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 38,
+          "kind": "audit_signal",
+          "text": "`ex_14_4_1`"
+        },
+        {
+          "file": "phase2_prompt_packs/ex_14_4_1/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"ex_14_4_1\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/ex_14_4_1.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Open math debt remains because the Bernoulli/binomial specialization of Lindeberg-Levy is internalized as a private axiom.",
+      "next_action": "Construct the thm_14_7_LindebergLevySetup route from Bernoulli source data at theorem level."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/ex_14_4_2.lean",
+      "declarations": [
+        "ex_14_4_2",
+        "ex_14_4_2_apply_lindeberg_levy_clt_internal"
+      ],
+      "primary_class": "open_math_debt",
+      "flags": [
+        "public_interface_clean",
+        "private_axiom_internalized",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/ex_14_4_2.lean",
+          "line": 126,
+          "kind": "private_axiom",
+          "text": "private axiom ex_14_4_2_apply_lindeberg_levy_clt_internal"
+        },
+        {
+          "file": "ToyApollo/Output/ex_14_4_2.lean",
+          "line": 158,
+          "kind": "theorem",
+          "text": "theorem ex_14_4_2"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 41,
+          "kind": "audit_signal",
+          "text": "`ex_14_4_2`"
+        },
+        {
+          "file": "phase2_prompt_packs/ex_14_4_2/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"ex_14_4_2\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/ex_14_4_2.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Open math debt remains because the Poisson normal approximation CLT specialization is internalized as a private axiom.",
+      "next_action": "Construct the thm_14_7_LindebergLevySetup route from Poisson source data at theorem level."
+    },
+    {
+      "task_id": "ex_14_4_3",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/ex_14_4_3.lean",
+      "declarations": [
+        "ex_14_4_3",
+        "ex_14_4_3_lyapunov_condition_internal",
+        "thm_14_8_ProofBeyondBook"
+      ],
+      "primary_class": "open_math_debt",
+      "flags": [
+        "public_interface_clean",
+        "private_axiom_internalized",
+        "inherited_beyond_book_exception",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/ex_14_4_3.lean",
+          "line": 374,
+          "kind": "private_axiom",
+          "text": "private axiom ex_14_4_3_lyapunov_condition_internal"
+        },
+        {
+          "file": "ToyApollo/Output/ex_14_4_3.lean",
+          "line": 380,
+          "kind": "theorem",
+          "text": "theorem ex_14_4_3_asymptoticNormality"
+        },
+        {
+          "file": "ToyApollo/Output/ex_14_4_3.lean",
+          "line": 382,
+          "kind": "public_parameter",
+          "text": "thm_14_8_ProofBeyondBook C.theoremSetup"
+        },
+        {
+          "file": "ToyApollo/Output/ex_14_4_3.lean",
+          "line": 394,
+          "kind": "theorem",
+          "text": "theorem ex_14_4_3"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 44,
+          "kind": "audit_signal",
+          "text": "`ex_14_4_3`"
+        },
+        {
+          "file": "phase2_prompt_packs/ex_14_4_3/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"ex_14_4_3\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/ex_14_4_3.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Open math debt remains because Lyapunov verification is a private axiom; inherited thm_14_8_ProofBeyondBook is recorded separately and is not ordinary proved debt.",
+      "next_action": "Replace the Lyapunov private axiom with theorem-level fourth-moment/Riemann-sum evidence while preserving inherited beyond-book classification."
+    },
+    {
+      "task_id": "prob_14_1",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/prob_14_1.lean",
+      "declarations": [
+        "prob_14_1",
+        "prob_14_1_stirling_cdf_convergence_internal"
+      ],
+      "primary_class": "open_math_debt",
+      "flags": [
+        "public_interface_clean",
+        "private_axiom_internalized",
+        "setup_parameter_review_needed",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/prob_14_1.lean",
+          "line": 232,
+          "kind": "private_axiom",
+          "text": "private axiom prob_14_1_stirling_cdf_convergence_internal"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_1.lean",
+          "line": 212,
+          "kind": "structure",
+          "text": "structure prob_14_1_PolyaUrnBetaSetup"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_1.lean",
+          "line": 307,
+          "kind": "theorem",
+          "text": "theorem prob_14_1"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 58,
+          "kind": "audit_signal",
+          "text": "`prob_14_1`"
+        },
+        {
+          "file": "phase2_prompt_packs/prob_14_1/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"prob_14_1\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/prob_14_1.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Open math debt remains because Stirling-to-Beta CDF convergence is a private axiom and finite Polya law setup still needs source-route review.",
+      "next_action": "Prove finite urn mass and Stirling-to-Beta CDF convergence at theorem level, or keep both obligations explicitly open."
+    },
+    {
+      "task_id": "prob_14_10",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/prob_14_10.lean",
+      "declarations": [
+        "prob_14_10",
+        "prob_14_10_moments_to_mgf_setup_internal"
+      ],
+      "primary_class": "open_math_debt",
+      "flags": [
+        "public_interface_clean",
+        "private_axiom_internalized",
+        "setup_parameter_review_needed",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/prob_14_10.lean",
+          "line": 103,
+          "kind": "private_axiom",
+          "text": "private axiom prob_14_10_moments_to_mgf_setup_internal"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_10.lean",
+          "line": 86,
+          "kind": "structure",
+          "text": "structure prob_14_10_BoundedMomentSetup"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_10.lean",
+          "line": 158,
+          "kind": "theorem",
+          "text": "theorem prob_14_10"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 64,
+          "kind": "audit_signal",
+          "text": "`prob_14_10`"
+        },
+        {
+          "file": "phase2_prompt_packs/prob_14_10/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"prob_14_10\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/prob_14_10.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Open math debt remains because bounded moments-to-MGF setup is supplied by a private axiom.",
+      "next_action": "Replace the private axiom with theorem-level bounded moments-to-MGF evidence."
+    },
+    {
+      "task_id": "prob_14_11",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/prob_14_11.lean",
+      "declarations": [
+        "prob_14_11",
+        "prob_14_11_generalized_triangular_array_internal",
+        "prob_14_11_mean_asymptotic_internal",
+        "prob_14_11_variance_asymptotic_internal",
+        "prob_14_11_generalized_lyapunov_condition_internal",
+        "thm_14_8_ProofBeyondBook"
+      ],
+      "primary_class": "open_math_debt",
+      "flags": [
+        "public_interface_clean",
+        "private_axiom_internalized",
+        "inherited_beyond_book_exception",
+        "setup_parameter_review_needed",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/prob_14_11.lean",
+          "line": 60,
+          "kind": "private_axiom",
+          "text": "private axiom prob_14_11_generalized_triangular_array_internal"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_11.lean",
+          "line": 66,
+          "kind": "private_axiom",
+          "text": "private axiom prob_14_11_mean_asymptotic_internal"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_11.lean",
+          "line": 75,
+          "kind": "private_axiom",
+          "text": "private axiom prob_14_11_variance_asymptotic_internal"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_11.lean",
+          "line": 85,
+          "kind": "private_axiom",
+          "text": "private axiom prob_14_11_generalized_lyapunov_condition_internal"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_11.lean",
+          "line": 93,
+          "kind": "public_parameter",
+          "text": "thm_14_8_ProofBeyondBook S.theoremSetup"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_11.lean",
+          "line": 104,
+          "kind": "theorem",
+          "text": "theorem prob_14_11"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 68,
+          "kind": "audit_signal",
+          "text": "`prob_14_11`"
+        },
+        {
+          "file": "phase2_prompt_packs/prob_14_11/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"prob_14_11\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/prob_14_11.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Open math debt remains because non-beyond-book coupon representation, asymptotic, and Lyapunov steps are private axioms; thm_14_8 is inherited separately.",
+      "next_action": "Replace private axioms with theorem-level generalized coupon and Lyapunov evidence while preserving inherited beyond-book classification."
+    },
+    {
+      "task_id": "prob_14_12",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/prob_14_12.lean",
+      "declarations": [
+        "prob_14_12_uniformIntegrable_tight",
+        "prob_14_12_uniformIntegrable_probability_to_mean",
+        "prob_14_12"
+      ],
+      "primary_class": "mathlib_backed_adapter_completed",
+      "flags": [
+        "public_interface_clean",
+        "interface_bridge_present",
+        "setup_parameter_review_needed",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/prob_14_12.lean",
+          "line": 247,
+          "kind": "theorem",
+          "text": "theorem prob_14_12_uniformIntegrable_tight"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_12.lean",
+          "line": 302,
+          "kind": "interface_bridge",
+          "text": "theorem prob_14_12_tendstoInMeasure_of_convergesInProbability"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_12.lean",
+          "line": 364,
+          "kind": "theorem",
+          "text": "theorem prob_14_12_uniformIntegrable_probability_to_mean"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_12.lean",
+          "line": 375,
+          "kind": "theorem",
+          "text": "theorem prob_14_12"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 72,
+          "kind": "audit_signal",
+          "text": "`prob_14_12`"
+        },
+        {
+          "file": "phase2_prompt_packs/prob_14_12/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"prob_14_12\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/prob_14_12.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Worker-D evidence records a mixed task: local tightness route is complete, while the mean route is Mathlib-backed adapter/interface evidence rather than strict textbook-route completion.",
+      "next_action": "Keep current setup public and documented; only upgrade the mean-convergence adapter if strict textbook-route formalization is later required."
+    },
+    {
+      "task_id": "prob_14_2",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/prob_14_2.lean",
+      "declarations": [
+        "prob_14_2",
+        "prob_14_2_apply_lindeberg_levy_clt_internal"
+      ],
+      "primary_class": "open_math_debt",
+      "flags": [
+        "public_interface_clean",
+        "private_axiom_internalized",
+        "setup_parameter_review_needed",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/prob_14_2.lean",
+          "line": 165,
+          "kind": "private_axiom",
+          "text": "private axiom prob_14_2_apply_lindeberg_levy_clt_internal"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_2.lean",
+          "line": 145,
+          "kind": "structure",
+          "text": "structure prob_14_2_GammaCLTSetup"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_2.lean",
+          "line": 185,
+          "kind": "theorem",
+          "text": "theorem prob_14_2"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 75,
+          "kind": "audit_signal",
+          "text": "`prob_14_2`"
+        },
+        {
+          "file": "phase2_prompt_packs/prob_14_2/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"prob_14_2\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/prob_14_2.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Open math debt remains because the Gamma Lindeberg-Levy specialization is internalized as a private axiom.",
+      "next_action": "Construct the thm_14_7_LindebergLevySetup route from Gamma source data at theorem level."
+    },
+    {
+      "task_id": "prob_14_3",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/prob_14_3.lean",
+      "declarations": [
+        "prob_14_3_gaussian_characteristic_limit",
+        "prob_14_3_not_tight",
+        "prob_14_3"
+      ],
+      "primary_class": "textbook_proof_completed",
+      "flags": [
+        "public_interface_clean",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/prob_14_3.lean",
+          "line": 48,
+          "kind": "structure",
+          "text": "structure prob_14_3_GaussianVarianceEscapeSetup"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_3.lean",
+          "line": 64,
+          "kind": "theorem",
+          "text": "theorem prob_14_3_gaussian_characteristic_limit"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_3.lean",
+          "line": 201,
+          "kind": "theorem",
+          "text": "theorem prob_14_3_not_tight"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_3.lean",
+          "line": 210,
+          "kind": "theorem",
+          "text": "theorem prob_14_3"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 78,
+          "kind": "audit_signal",
+          "text": "`prob_14_3`"
+        },
+        {
+          "file": "phase2_prompt_packs/prob_14_3/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"prob_14_3\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/prob_14_3.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Worker-D evidence records a closed law-level counterexample route with setup used as source/object data.",
+      "next_action": "Keep the setup public and documented as source data."
+    },
+    {
+      "task_id": "prob_14_4",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/prob_14_4.lean",
+      "declarations": [
+        "prob_14_4_gaussian_characteristic_limit",
+        "prob_14_4_converges_to_dirac_zero",
+        "prob_14_4"
+      ],
+      "primary_class": "textbook_proof_completed",
+      "flags": [
+        "public_interface_clean",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/prob_14_4.lean",
+          "line": 38,
+          "kind": "structure",
+          "text": "structure prob_14_4_ShrinkingGaussianSetup"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_4.lean",
+          "line": 64,
+          "kind": "theorem",
+          "text": "theorem prob_14_4_gaussian_characteristic_limit"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_4.lean",
+          "line": 105,
+          "kind": "theorem",
+          "text": "theorem prob_14_4_converges_to_dirac_zero"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_4.lean",
+          "line": 126,
+          "kind": "theorem",
+          "text": "theorem prob_14_4"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 84,
+          "kind": "audit_signal",
+          "text": "`prob_14_4`"
+        },
+        {
+          "file": "phase2_prompt_packs/prob_14_4/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"prob_14_4\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/prob_14_4.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Worker-D evidence records a closed law-level shrinking-Gaussian route with setup used as source/object data.",
+      "next_action": "Keep the setup public and documented as source data."
+    },
+    {
+      "task_id": "prob_14_7",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/prob_14_7.lean",
+      "declarations": [
+        "prob_14_7_sum_characteristic_convergence",
+        "prob_14_7_sum_laws_converge",
+        "prob_14_7"
+      ],
+      "primary_class": "textbook_proof_completed",
+      "flags": [
+        "public_interface_clean",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/prob_14_7.lean",
+          "line": 44,
+          "kind": "structure",
+          "text": "structure prob_14_7_IndependentSumSetup"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_7.lean",
+          "line": 100,
+          "kind": "theorem",
+          "text": "theorem prob_14_7_sum_characteristic_convergence"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_7.lean",
+          "line": 133,
+          "kind": "theorem",
+          "text": "theorem prob_14_7_sum_laws_converge"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_7.lean",
+          "line": 146,
+          "kind": "theorem",
+          "text": "theorem prob_14_7"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 88,
+          "kind": "audit_signal",
+          "text": "`prob_14_7`"
+        },
+        {
+          "file": "phase2_prompt_packs/prob_14_7/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"prob_14_7\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/prob_14_7.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Worker-D evidence records theorem-level characteristic and Levy landings; public setup fields are source/object assumptions.",
+      "next_action": "Keep setup assumptions public and documented; no private proof-field debt is recorded for this statement."
+    },
+    {
+      "task_id": "prob_14_8",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/prob_14_8.lean",
+      "declarations": [
+        "prob_14_8",
+        "prob_14_8_mgf_to_characteristic_convergence_internal"
+      ],
+      "primary_class": "open_math_debt",
+      "flags": [
+        "public_interface_clean",
+        "private_axiom_internalized",
+        "setup_parameter_review_needed",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/prob_14_8.lean",
+          "line": 85,
+          "kind": "private_axiom",
+          "text": "private axiom prob_14_8_mgf_to_characteristic_convergence_internal"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_8.lean",
+          "line": 64,
+          "kind": "structure",
+          "text": "structure prob_14_8_MgfConvergenceSetup"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_8.lean",
+          "line": 129,
+          "kind": "theorem",
+          "text": "theorem prob_14_8"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 93,
+          "kind": "audit_signal",
+          "text": "`prob_14_8`"
+        },
+        {
+          "file": "phase2_prompt_packs/prob_14_8/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"prob_14_8\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/prob_14_8.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Open math debt remains because MGF-to-characteristic convergence is supplied by a private axiom.",
+      "next_action": "Replace the private axiom with theorem-level MGF-to-characteristic convergence evidence."
+    },
+    {
+      "task_id": "prob_14_9",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/prob_14_9.lean",
+      "declarations": [
+        "prob_14_9_mapped_laws_converge",
+        "prob_14_9_mapped_characteristic_convergence",
+        "prob_14_9"
+      ],
+      "primary_class": "textbook_proof_completed",
+      "flags": [
+        "public_interface_clean",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/prob_14_9.lean",
+          "line": 35,
+          "kind": "structure",
+          "text": "structure prob_14_9_ContinuousMappingSetup"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_9.lean",
+          "line": 140,
+          "kind": "theorem",
+          "text": "theorem prob_14_9_mapped_laws_converge"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_9.lean",
+          "line": 165,
+          "kind": "theorem",
+          "text": "theorem prob_14_9_mapped_characteristic_convergence"
+        },
+        {
+          "file": "ToyApollo/Output/prob_14_9.lean",
+          "line": 179,
+          "kind": "theorem",
+          "text": "theorem prob_14_9"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 97,
+          "kind": "audit_signal",
+          "text": "`prob_14_9`"
+        },
+        {
+          "file": "phase2_prompt_packs/prob_14_9/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"prob_14_9\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/prob_14_9.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Worker-D evidence records a closed law-level continuous-mapping route; setup fields are natural source hypotheses.",
+      "next_action": "Keep setup public; consider audit allowlisting for reviewed source setup if review noise becomes costly."
+    },
+    {
+      "task_id": "thm_14_5",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/thm_14_5.lean",
+      "declarations": [
+        "thm_14_5",
+        "isTightMeasureSet_of_tendsto_charFun",
+        "def_14_3_of_mathlibTight"
+      ],
+      "primary_class": "mathlib_backed_adapter_completed",
+      "flags": [
+        "public_interface_clean",
+        "source_route_open",
+        "metadata_only_cleanliness_risk",
+        "mathlib_switch_without_textbook_route",
+        "interface_bridge_present",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/thm_14_5.lean",
+          "line": 430,
+          "kind": "theorem",
+          "text": "theorem thm_14_5"
+        },
+        {
+          "file": "ToyApollo/Output/thm_14_5.lean",
+          "line": 437,
+          "kind": "mathlib_adapter",
+          "text": "isTightMeasureSet_of_tendsto_charFun"
+        },
+        {
+          "file": "ToyApollo/Output/thm_14_5.lean",
+          "line": 442,
+          "kind": "interface_bridge",
+          "text": "def_14_3_of_mathlibTight Pseq hTight"
+        },
+        {
+          "file": "phase2_prompt_packs/thm_14_5/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"thm_14_5\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/thm_14_5.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "The public theorem is buildable through Mathlib characteristic-function tightness and a bridge, but the textbook SourceProofSpine route remains open.",
+      "next_action": "Keep adapter classification unless the source-route lemmas are formalized and thm_14_5 is reassembled through thm_14_5_of_uniformTailBound."
+    },
+    {
+      "task_id": "thm_14_6",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/thm_14_6.lean",
+      "declarations": [
+        "thm_14_6",
+        "def_14_3_to_mathlibTight",
+        "def_14_3_intervalMathlibTightBridge"
+      ],
+      "primary_class": "mathlib_backed_adapter_completed",
+      "flags": [
+        "public_interface_clean",
+        "interface_bridge_present",
+        "mathlib_switch_without_textbook_route",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/thm_14_6.lean",
+          "line": 459,
+          "kind": "theorem",
+          "text": "theorem thm_14_6"
+        },
+        {
+          "file": "ToyApollo/Output/thm_14_6.lean",
+          "line": 464,
+          "kind": "mathlib_adapter",
+          "text": "isCompact_closure_of_isTightMeasureSet"
+        },
+        {
+          "file": "ToyApollo/Output/thm_14_6.lean",
+          "line": 491,
+          "kind": "interface_bridge",
+          "text": "def_14_3_to_mathlibTight Pseq hTight"
+        },
+        {
+          "file": "ToyApollo/Output/def_14_3.lean",
+          "line": 203,
+          "kind": "interface_bridge",
+          "text": "theorem def_14_3_intervalMathlibTightBridge"
+        },
+        {
+          "file": "phase2_prompt_packs/thm_14_6/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"thm_14_6\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/thm_14_6.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "The main theorem uses Mathlib tightness compactness/Prokhorov-style route; the interval bridge is theorem-level evidence.",
+      "next_action": "Keep Mathlib-backed adapter classification unless a textbook Prokhorov/Levy completion route is formalized locally."
+    },
+    {
+      "task_id": "thm_14_7",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/thm_14_7.lean",
+      "declarations": [
+        "thm_14_7",
+        "thm_14_7_quadratic_characteristic_expansion_internal"
+      ],
+      "primary_class": "open_math_debt",
+      "flags": [
+        "public_interface_clean",
+        "private_axiom_internalized",
+        "setup_parameter_review_needed",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/thm_14_7.lean",
+          "line": 205,
+          "kind": "structure",
+          "text": "structure thm_14_7_LindebergLevySetup"
+        },
+        {
+          "file": "ToyApollo/Output/thm_14_7.lean",
+          "line": 226,
+          "kind": "private_axiom",
+          "text": "private axiom thm_14_7_quadratic_characteristic_expansion_internal"
+        },
+        {
+          "file": "ToyApollo/Output/thm_14_7.lean",
+          "line": 261,
+          "kind": "theorem",
+          "text": "theorem thm_14_7"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 113,
+          "kind": "audit_signal",
+          "text": "`thm_14_7`"
+        },
+        {
+          "file": "phase2_prompt_packs/thm_14_7/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"thm_14_7\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/thm_14_7.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "Open math debt remains because the quadratic characteristic expansion is a private axiom and other setup fields still require source-route proof review.",
+      "next_action": "Formalize centering, independent-sum characteristic convergence, and normal characteristic identification at theorem level."
+    },
+    {
+      "task_id": "thm_14_8",
+      "chapter": 14,
+      "lean_file": "ToyApollo/Output/thm_14_8.lean",
+      "declarations": [
+        "thm_14_8_ProofBeyondBook",
+        "thm_14_8"
+      ],
+      "primary_class": "beyond_book_exception",
+      "flags": [
+        "public_interface_clean",
+        "ledger_unchanged"
+      ],
+      "evidence": [
+        {
+          "file": "ToyApollo/Output/thm_14_8.lean",
+          "line": 167,
+          "kind": "structure",
+          "text": "structure thm_14_8_ProofBeyondBook"
+        },
+        {
+          "file": "ToyApollo/Output/thm_14_8.lean",
+          "line": 195,
+          "kind": "theorem",
+          "text": "theorem thm_14_8"
+        },
+        {
+          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+          "line": 116,
+          "kind": "audit_signal",
+          "text": "`thm_14_8`"
+        },
+        {
+          "file": "phase2_prompt_packs/thm_14_8/proof_obligations.json",
+          "line": 3,
+          "kind": "metadata_note",
+          "text": "\"task_id\": \"thm_14_8\""
+        }
+      ],
+      "validation": [
+        "lake env lean ToyApollo/Output/thm_14_8.lean",
+        "python tools/validate_phase2_completion_classification.py",
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+      ],
+      "classification_reason": "This is the sole allowed beyond-book exception explicitly represented by thm_14_8_ProofBeyondBook.",
+      "next_action": "Preserve this boundary; downstream uses must be flagged as inherited_beyond_book_exception, not ordinary proved debt."
+    }
+  ]
+}

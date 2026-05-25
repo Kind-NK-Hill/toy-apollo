@@ -54,13 +54,13 @@
       "depends_on": [
         "geometric_moment_formulas"
       ],
-      "lean_landing": "ex_14_4_3_LyapunovVerification",
+      "lean_landing": "ex_14_4_3_LyapunovVerification; ex_14_4_3_lyapunov_condition_internal",
       "status": "open",
       "review_status": "needs_review",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "The analytic Riemann-sum details are named in the verification structure, with the final LyapunovCondition field used downstream.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support lands only on non-theorem declarations.",
-      "last_review_evidence": "Discharged by ledger obligation task obl_ex_14_4_3_lyapunov_fourth_moment_bound.",
+      "notes": "The analytic Riemann-sum details are named in the verification structure, but this remains open_math_debt because the final Lyapunov condition is now isolated in private axiom ex_14_4_3_lyapunov_condition_internal.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support lands only on non-theorem declarations.\n[phase2-public-interface] 2026-05-23: removed the public theorem parameter hLyapunov. The non-beyond-book Lyapunov verification is no longer a caller obligation, but still must be replaced by theorem-level fourth-moment/Riemann-sum evidence.",
+      "last_review_evidence": "The public hLyapunov parameter has been removed. ex_14_4_3_asymptoticNormality now applies thm_14_8 through Or.inr (ex_14_4_3_lyapunov_condition_internal C), so the proof remains open private axiom debt rather than a public proof package.",
       "source_output_alignment": {
         "audited_at": "2026-05-19",
         "audit_class": "C_support_predicate_or_structure_only",
@@ -94,8 +94,8 @@
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "The final theorem invokes thm_14_8 through the Lyapunov branch. It explicitly inherits the sole allowed beyond-book exception through H : thm_14_8_ProofBeyondBook C.theoremSetup; the non-beyond-book Lyapunov verification remains a separate open obligation.",
-      "last_review_evidence": "ex_14_4_3_asymptoticNormality applies thm_14_8 through Or.inr hLyapunov, where hLyapunov : thm_14_8_LyapunovCondition C.theoremSetup is an explicit public theorem parameter."
+      "notes": "The final theorem invokes thm_14_8 through the Lyapunov branch. It explicitly inherits the sole allowed beyond-book exception through H : thm_14_8_ProofBeyondBook C.theoremSetup; the non-beyond-book Lyapunov verification remains a separate open obligation isolated in a private axiom.",
+      "last_review_evidence": "ex_14_4_3_asymptoticNormality applies thm_14_8 through Or.inr (ex_14_4_3_lyapunov_condition_internal C). The former public hLyapunov parameter is gone; only the inherited H : thm_14_8_ProofBeyondBook C.theoremSetup remains public."
     }
   ],
   "scaffold_hypotheses": [],

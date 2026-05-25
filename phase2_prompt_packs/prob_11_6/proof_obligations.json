@@ -3,15 +3,19 @@
   "task_id": "prob_11_6",
   "generated_at": "2026-05-17T22:09:19.915255Z",
   "classification": {
-    "requires_decomposition": false,
-    "reason": "normal proof: no structural decomposition trigger was detected",
+    "requires_decomposition": true,
+    "reason": "needs_decision/internal_axiom: Step 2.5 found that prob_11_6 still closes the source hint's sixth-moment expansion through private axiom prob_11_6_sixthMomentSupport_internal, and the required independent-sum sixth-moment, integrability-from-a.s.-boundedness, and zero-mean mixed-term cancellation landings are not available locally.",
     "evidence": [
-      "task has 3 declared upstream dependencies",
-      "source text has multiple paragraphs or proof lines"
+      "ToyApollo/Output/prob_11_6.lean still closes prob_11_6 through private axiom prob_11_6_sixthMomentSupport_internal.",
+      "The downstream Markov, p-series, Borel-Cantelli, and Theorem 10.1 route is already theorem-level after prob_11_6_sixthMomentSupport.",
+      "Step 2.5 investigation on 2026-05-24 found no local theorem-level independent-sum sixth-moment expansion deriving the support from independence, zero mean, and almost-sure uniform boundedness.",
+      "The current public hypotheses do not provide the measurability, AEStronglyMeasurable/MemLp, integrability, or measurable a.e.-bound landings needed by the relevant Mathlib independence and boundedness APIs."
     ],
     "dependency_count": 3,
     "source_length": 378,
-    "structural_operation_count": 0
+    "structural_operation_count": 0,
+    "proof_route_class": "needs_decision",
+    "audit_class": "internal_axiom_open_debt"
   },
   "obligations": [
     {
@@ -26,12 +30,12 @@
       "kind": "source_step",
       "source_ref": "",
       "depends_on": [],
-      "lean_landing": "",
+      "lean_landing": "prob_11_6_partialSum, prob_11_6_scaledSum",
       "status": "proved",
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "",
+      "notes": "[phase2-step4-cleanup] 2026-05-24: filled lean_landing for proved metadata hygiene.",
       "last_review_evidence": "The normalized sum is defined directly."
     },
     {
@@ -49,11 +53,18 @@
       ],
       "lean_landing": "",
       "status": "open",
-      "review_status": "needs_review",
+      "review_status": "blocked",
       "blocking": true,
-      "scaffold_hypotheses": [],
-      "notes": "[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.\n[clean-debt-public-surface] 2026-05-22: public theorem no longer requires prob_11_6_sixthMomentSupport; it now exposes the explicit sixth-moment bound. Still blocked as a proof debt because no theorem derives that bound from iid/zero-mean/uniform-bounded assumptions.",
-      "last_review_evidence": "Blocked: child pack only packaged the support boundary; no theorem-level sixth-moment expansion landing exists.",
+      "scaffold_hypotheses": [
+        {
+          "name": "prob_11_6_sixthMomentSupport_internal",
+          "kind": "private_axiom",
+          "location": "ToyApollo/Output/prob_11_6.lean",
+          "reason": "Private axiom supplies the missing theorem-level sixth-moment expansion from independence, zero mean, and almost-sure uniform boundedness."
+        }
+      ],
+      "notes": "[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.\n[clean-debt-public-surface] 2026-05-22: public theorem no longer requires prob_11_6_sixthMomentSupport; it now exposes the explicit sixth-moment bound. Still blocked as a proof debt because no theorem derives that bound from iid/zero-mean/uniform-bounded assumptions.\n[phase2-post-ch9-rework] 2026-05-23: public theorem no longer exposes the explicit sixth-moment bound either; the missing expansion is internalized as private axiom prob_11_6_sixthMomentSupport_internal and remains open_math_debt.\n[phase2-step2.5] 2026-05-24: reclassified as needs_decision because replacing the axiom requires a reusable independent-sum moment expansion layer plus measurability, integrability, a.e. bound, and mixed-term cancellation landings. The current `def_5_10_randomVariables` independence wrapper does not itself supply the strong measurability/integrability facts needed by Mathlib product-integral and boundedness APIs.",
+      "last_review_evidence": "Step 2.5 review on 2026-05-24 found no theorem-level sixth-moment expansion landing in local Chapter 11 dependencies; nearby thm_11_7 fourth-moment work is itself private-axiom-backed, and downstream tail summability remains theorem-level only after the missing support.",
       "source_output_alignment": {
         "audited_at": "2026-05-19",
         "audit_class": "D_no_landing_search_required",
@@ -85,8 +96,8 @@
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.\n[clean-debt-refresh] 2026-05-21: resolved with theorem-level landing prob_11_6_tailSummability_of_sixthMoment.",
-      "last_review_evidence": "The theorem prob_11_6_tailSummability_of_sixthMoment proves the Markov/p-series tail summability from prob_11_6_sixthMomentSupport; the public final theorem no longer accepts a tail-summability support parameter.",
+      "notes": "[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.\n[clean-debt-refresh] 2026-05-21: resolved with theorem-level landing prob_11_6_tailSummability_of_sixthMoment.\n[phase2-post-ch9-rework] 2026-05-23: landing is retained as a private theorem-level internal step so support-package parameters are not exported through public task-facing declarations.",
+      "last_review_evidence": "The private theorem prob_11_6_tailSummability_of_sixthMoment proves the Markov/p-series tail summability from prob_11_6_sixthMomentSupport; the public final theorem no longer accepts a tail-summability or sixth-moment support parameter.",
       "source_output_alignment": {
         "audited_at": "2026-05-19",
         "audit_class": "A_existing_theorem_candidate",
@@ -116,16 +127,23 @@
       "depends_on": [
         "tail_summability_support"
       ],
-      "lean_landing": "",
+      "lean_landing": "prob_11_6_of_tail_summability, prob_11_6",
       "status": "proved",
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "",
+      "notes": "[phase2-step4-cleanup] 2026-05-24: filled lean_landing for proved metadata hygiene.",
       "last_review_evidence": "The proof uses the existing Borel-Cantelli and almost-sure convergence criterion outputs."
     }
   ],
-  "scaffold_hypotheses": [],
+  "scaffold_hypotheses": [
+    {
+      "name": "prob_11_6_sixthMomentSupport_internal",
+      "kind": "private_axiom",
+      "location": "ToyApollo/Output/prob_11_6.lean",
+      "public_surface": false
+    }
+  ],
   "review_history": [
     {
       "reviewed_at": "2026-05-17T22:13:31.516957Z",
@@ -156,9 +174,18 @@
       "open_blockers": [
         "sixth_moment_support"
       ]
+    },
+    {
+      "reviewed_at": "2026-05-24T00:00:00+08:00",
+      "verdict": "blocked",
+      "status": "needs_decision",
+      "summary": "Step 2.5 found that closing prob_11_6 requires a reusable theorem-level sixth-moment expansion from independence, zero mean, and almost-sure uniform boundedness, plus explicit measurability/integrability landings that the current public interface does not provide.",
+      "open_blockers": [
+        "prob_11_6_sixthMomentSupport_internal"
+      ]
     }
   ],
-  "last_reviewed_at": "2026-05-21T10:35:00Z",
+  "last_reviewed_at": "2026-05-24T00:00:00+08:00",
   "source_output_alignment_audit": {
     "audited_at": "2026-05-21",
     "accepted_debt_count": 1,

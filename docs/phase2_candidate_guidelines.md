@@ -3,6 +3,9 @@
 ## Purpose
 
 This document defines the candidate-writing rules for the prompt-pack workflow. It is narrower than the workflow runbook: this file is about how to write the Lean candidate itself.
+For completion classes, public proof-package surface rules, and obligation
+landing discipline, use `docs/phase2_proof_fidelity_contract.md` as the source
+of truth.
 
 ## Core Principle
 
@@ -39,17 +42,9 @@ When writing a candidate, prefer this order:
 Before authoring a proof-bearing task, classify it as `normal` or `complex`.
 This is a structural classification, not a list of favored theorem names.
 
-Phase2 tracking has three levels:
-
-- Level 0, ordinary Phase2: the default path. The candidate must build and pass
-  semantic review, but the runtime does not create a new task-local
-  `proof_obligations.json`.
-- Level 1, interface translation: use theorem-level lemmas to translate between
-  textbook notation and Mathlib or existing ToyApollo interfaces. This is not
-  proof debt.
-- Level 2, complex obligation tracking: create or maintain
-  `proof_obligations.json` only when the task has independently reviewable
-  proof steps that need explicit tracking.
+Phase2 tracking has three levels, defined in
+`docs/phase2_proof_fidelity_contract.md`: ordinary Phase2, interface
+translation, and complex obligation tracking.
 
 Use `complex` when a one-piece proof would hide independent work that a reviewer
 should be able to inspect separately. Common structural triggers are:
@@ -70,33 +65,24 @@ Use `normal` only when the task is a direct definition, wrapper, calculation, or
 one-step theorem reuse and a reviewer can identify the source obligation and
 Lean landing place without a helper chain.
 
-Normal tasks should stay on the older Phase2 path: buildable Lean plus semantic
-review of source claims, proof spine, interface contract, and downstream
-adequacy. If an existing normal prompt pack already has
+Normal tasks should stay on the ordinary Phase2 path: buildable Lean plus
+semantic review of source claims, proof spine, interface contract, and
+downstream adequacy. If an existing normal prompt pack already has
 `phase2_prompt_packs/<task_id>/proof_obligations.json`, treat it as lightweight
 metadata, not as a reason to introduce proof-debt scaffolding.
 
 For a `complex` task, `proof_obligations.json` is the task-local
-proof-obligation ledger. Split the source proof into obligation nodes, give each
-node a source reference, dependencies, expected Lean landing place, and status,
-then build the candidate as a reconstruction of those nodes. The exported
-declaration should assemble proved obligations into the textbook claim; it must
-not assume the hard obligations as theorem-level hypotheses.
+proof-obligation contract. Split the source proof into obligation nodes, give
+each node a source reference, dependencies, expected theorem-level landing, and
+status, then build the candidate as a reconstruction of those nodes. The
+exported declaration should assemble proved obligations into the textbook claim;
+it must not assume the hard obligations as theorem-level hypotheses.
 
 This public-surface rule applies to all official task outputs, not only theorem
 source blocks. Examples, problems, and definition-adjacent proof artifacts must
 satisfy the same discipline when they export a theorem or task-facing helper.
-For Chapter 10 and later, the only permitted standing proof-debt exception is
-`thm_14_8_ProofBeyondBook`, because the source explicitly declares that proof
-beyond the book. Ordinary `Support` and `Spine` packages must be replaced by
-theorem-level evidence and internally assembled before a task is called clean.
-
-A theorem or lemma that proves and returns a `Support`/`Spine` package is
-allowed, and may be a useful internal assembly step. A public declaration must
-not require such a package as a parameter unless it is the explicit
-`thm_14_8_ProofBeyondBook` exception. A helper that consumes a support package
-only to assemble the final task theorem should usually be `private` unless it is
-a genuine reusable theorem whose premises are part of the textbook interface.
+Use `docs/phase2_proof_fidelity_contract.md` for the exact public
+`Support`/`Spine`/`Bridge`/`ProofBeyondBook` rules.
 
 The generated `source_proof_spine` node is an unresolved placeholder, not a
 completed decomposition. Replace it with concrete source-step nodes before
@@ -115,44 +101,12 @@ downstream tasks. If such an output exists, use it or add it as a hard
 dependency before continuing. A missing ledger record for an existing, buildable
 output is a metadata repair, not evidence that the dependency is unavailable.
 
-Scaffold hypotheses must be classified precisely:
-
-- `interface_translation`: allowed temporarily only for representation or
-  notation mismatch, and it must point to the obligation it helps discharge
-- `assembly_scaffold`: an internal proof-organization object used while
-  reconstructing the theorem; it must not become a public final-theorem
-  hypothesis
-- `support_constructor`: a theorem or lemma that proves and returns a
-  `Support`/`Spine` package from theorem-level evidence
-- `support_package`: a proved internal package used to assemble fields after
-  the fields themselves have theorem-level landings
-- `proof_debt_support`: an explicit, auditable support assumption for reusable
-  mathematics not yet available locally or in Mathlib; it must name the source
-  obligation it supports and must not be reported as a fully closed proof
-- `proof_obligation`: a real source step that must become a ledger node and be
-  proved or blocked explicitly
-- `external_theorem_gap`: a possible local/Mathlib dependency that must be
-  searched and either reused, imported, or ruled out
-- `forbidden_shortcut`: an assumption of the main conclusion, a theorem-specific
-  black box, or a hypothesis that erases a source proof step; this cannot pass
-  semantic review
-
-Use `interface_translation` lemmas for interface mismatch only. Do not use a
-translation predicate to assume substantive source mathematics or the main
-theorem conclusion. If the project explicitly accepts temporary support
-assumptions, classify them as `proof_debt_support` instead and keep them
-auditable. This is an exceptional cleanup mechanism, not the default authoring
-mode for normal tasks. When review intentionally accepts such an item, record
-the proof obligation status as `accepted_as_proof_debt`; this means the file is
-buildable and the debt is explicit, not that the underlying reusable mathematics
-has been fully proved. A task with accepted proof debt is not a clean upstream
-dependency: downstream hard dependents and selected soft imports must wait
-until `debt-fix` discharges the debt and the task lands without
-`accepted_as_proof_debt`.
-Do not mark a `proof_debt_support` item as `proved` merely because the candidate
-defines a support structure or a source-spine field. The landing for `proved`
-must be a theorem/lemma proving the source obligation, not a field projection
-such as `SomeSourceSpine.some_field`.
+Scaffold hypotheses must be classified precisely. Use the contract vocabulary:
+interface translation, assembly scaffold, support constructor, support package,
+proof-debt support, proof obligation, external theorem gap, and forbidden
+shortcut. Do not use an interface bridge to assume substantive source
+mathematics, and do not mark a proof-debt item as `proved` unless its landing is
+an actual theorem or lemma proving the source obligation.
 
 ## Definitions
 

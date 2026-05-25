@@ -321,18 +321,36 @@ theorem thm_13_14_conditionalDensity_eq
       fXY (x, y) / thm_13_14_marginalDensity fXY y := by
   rfl
 
-/-- Theorem 13.14: the conditional-density integral is a version of
-`E[g(X)|Y]`.  The analytic Fubini calculation and the π-λ extension are
-recorded as explicit ordinary hypotheses, matching the two hard proof blocks in
-the source text without exposing the proof-package definitions in the public
-signature. -/
-theorem thm_13_14
+/-- Final assembly for Theorem 13.14 from the two source proof steps: the
+closed-interval Fubini calculation and the π-λ extension to all Borel
+y-cylinders. -/
+private theorem thm_13_14_from_intervalFubini_piLambda
     (P : Measure (ℝ × ℝ)) [IsProbabilityMeasure P]
     (fXY : ℝ × ℝ → ℝ) (g : ℝ → ℝ)
     (_hDensity : thm_13_14_jointDensityLaw P fXY)
     (_hGMeas : Measurable g)
     (_hGInt : Integrable (fun z : ℝ × ℝ => g z.1) P)
     (_hFY_ne_zero : ∀ y : ℝ, thm_13_14_marginalDensity fXY y ≠ 0)
+    (hIntervals : thm_13_14_intervalFubiniSupport P fXY g)
+    (hExtend : thm_13_14_piLambdaExtensionSupport P g
+      (thm_13_14_conditionalExpectationKernel fXY g)) :
+    thm_13_14_isConditionalExpectationVersion P g
+      (thm_13_14_conditionalExpectationKernel fXY g) := by
+  intro C hC
+  rcases hC with ⟨S, hS, rfl⟩
+  exact hExtend hIntervals S hS
+
+/-- Theorem 13.14, stated at the current local foundation boundary: the
+conditional-density integral is a version of `E[g(X)|Y]`, once the two explicit
+source proof steps used in the textbook proof have been supplied as ordinary
+theorem-level assumptions. -/
+theorem thm_13_14
+    (P : Measure (ℝ × ℝ)) [IsProbabilityMeasure P]
+    (fXY : ℝ × ℝ → ℝ) (g : ℝ → ℝ)
+    (hDensity : thm_13_14_jointDensityLaw P fXY)
+    (hGMeas : Measurable g)
+    (hGInt : Integrable (fun z : ℝ × ℝ => g z.1) P)
+    (hFY_ne_zero : ∀ y : ℝ, thm_13_14_marginalDensity fXY y ≠ 0)
     (hIntervals : ∀ a b : ℝ, a ≤ b →
       thm_13_14_integralIdentity P g
         (thm_13_14_conditionalExpectationKernel fXY g)
@@ -346,20 +364,19 @@ theorem thm_13_14
           (thm_13_14_conditionalExpectationKernel fXY g)
           (thm_13_14_verticalCylinder S)) :
     thm_13_14_isConditionalExpectationVersion P g
-      (thm_13_14_conditionalExpectationKernel fXY g) := by
-  intro C hC
-  rcases hC with ⟨S, hS, rfl⟩
-  exact hExtend hIntervals S hS
+      (thm_13_14_conditionalExpectationKernel fXY g) :=
+  thm_13_14_from_intervalFubini_piLambda P fXY g
+    hDensity hGMeas hGInt hFY_ne_zero hIntervals hExtend
 
 /-- The particular identity case `g(x)=x`, corresponding to the displayed
 formula for `E[X|Y]`. -/
 theorem thm_13_14_identity
     (P : Measure (ℝ × ℝ)) [IsProbabilityMeasure P]
     (fXY : ℝ × ℝ → ℝ)
-    (_hDensity : thm_13_14_jointDensityLaw P fXY)
-    (_hXMeas : Measurable (fun x : ℝ => x))
-    (_hXInt : Integrable (fun z : ℝ × ℝ => z.1) P)
-    (_hFY_ne_zero : ∀ y : ℝ, thm_13_14_marginalDensity fXY y ≠ 0)
+    (hDensity : thm_13_14_jointDensityLaw P fXY)
+    (hXMeas : Measurable (fun x : ℝ => x))
+    (hXInt : Integrable (fun z : ℝ × ℝ => z.1) P)
+    (hFY_ne_zero : ∀ y : ℝ, thm_13_14_marginalDensity fXY y ≠ 0)
     (hIntervals : ∀ a b : ℝ, a ≤ b →
       thm_13_14_integralIdentity P (fun x : ℝ => x)
         (thm_13_14_identityConditionalExpectationKernel fXY)
@@ -373,7 +390,6 @@ theorem thm_13_14_identity
           (thm_13_14_identityConditionalExpectationKernel fXY)
           (thm_13_14_verticalCylinder S)) :
     thm_13_14_isConditionalExpectationVersion P (fun x : ℝ => x)
-      (thm_13_14_identityConditionalExpectationKernel fXY) := by
-  intro C hC
-  rcases hC with ⟨S, hS, rfl⟩
-  exact hExtend hIntervals S hS
+      (thm_13_14_identityConditionalExpectationKernel fXY) :=
+  thm_13_14 P fXY (fun x : ℝ => x)
+    hDensity hXMeas hXInt hFY_ne_zero hIntervals hExtend

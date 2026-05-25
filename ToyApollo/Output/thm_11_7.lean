@@ -217,13 +217,33 @@ def thm_11_7_fourthMomentUniformBound {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) (X : ℕ → Ω → ℝ) (μ c : ℝ) : Prop :=
   0 ≤ c ∧ ∀ i : ℕ, rthMoment P (fun ω => X i ω - μ) 4 ≤ c
 
+/-- The centered partial sum used in the fourth-moment estimate for Theorem 11.7. -/
+noncomputable def thm_11_7_centeredPartialSum {Ω : Type*} (X : ℕ → Ω → ℝ)
+    (μ : ℝ) (n : ℕ) : Ω → ℝ :=
+  fun ω => ∑ i : Fin (n + 1), X i.1 ω - μ
+
 /--
-Explicit proof-debt support for the fourth-moment expansion in Theorem 11.7.
+Concrete fourth-moment estimate for the centered partial sums.
+
+This is the explicit `E[S_n^4] = O(n^2)` intermediate estimate obtained in the
+printed proof by expanding the fourth power, cancelling mixed terms using
+independence, and bounding the paired square terms by Cauchy-Schwarz.
+-/
+def thm_11_7_fourthMomentPartialSumBound {Ω : Type*} [MeasurableSpace Ω]
+    (P : Measure Ω) (X : ℕ → Ω → ℝ) (μ : ℝ) : Prop :=
+  ∃ C : ℝ, 0 ≤ C ∧
+    ∀ n : ℕ,
+      Integrable (fun ω => (thm_11_7_centeredPartialSum X μ n ω) ^ 4) P ∧
+      (∫ ω, (thm_11_7_centeredPartialSum X μ n ω) ^ 4 ∂P) ≤
+        C * ((n : ℝ) + 1) ^ 2
+
+/--
+Explicit support predicate for the fourth-moment expansion in Theorem 11.7.
 
 The textbook proves this by expanding `E[S_n^4]`, killing mixed terms by
 independence, bounding the quadratic products by Cauchy-Schwarz, and obtaining
 a summable deviation bound.  The Borel-Cantelli and Theorem 10.1 steps below
-are fully formalized from this reusable tail-summability interface.
+are fully formalized from this tail-summability statement.
 -/
 def thm_11_7_tailSummabilitySupport {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) (X : ℕ → Ω → ℝ) (μ : ℝ) : Prop :=
@@ -232,15 +252,32 @@ def thm_11_7_tailSummabilitySupport {Ω : Type*} [MeasurableSpace Ω]
       P (almostSureDeviationEvent
         (fun n => thm_11_5_sampleMean X n) (fun _ : Ω => μ) n ε)) ≠ ∞
 
+/-- Final assembly for Theorem 11.7 from the fourth-moment tail summability
+estimate supplied by the source expansion. -/
+private theorem thm_11_7_from_tailSummability {Ω : Type*} [MeasurableSpace Ω]
+    (P : Measure Ω) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ) (μ : ℝ)
+    (h_tail_summability : thm_11_7_tailSummabilitySupport P X μ) :
+    ConvergesAlmostSurely P (fun n => thm_11_5_sampleMean X n) (fun _ => μ) := by
+  refine (thm_10_1 P (fun n => thm_11_5_sampleMean X n) (fun _ : Ω => μ)).2 ?_
+  intro ε hε
+  have hsum := h_tail_summability ε hε
+  simpa [deviationInfinitelyOften] using
+    (thm_5_8 P
+      (fun n : ℕ =>
+        almostSureDeviationEvent
+          (fun n => thm_11_5_sampleMean X n) (fun _ : Ω => μ) n ε)
+      hsum)
+
 /--
 Theorem 11.7, the fourth-moment strong law.
 
 The exported statement keeps the source assumptions visible: independent
-variables, common mean, and a uniform fourth-moment bound.  The remaining
-fourth-moment expansion is exposed as the explicit tail-summability statement
-from the printed proof.  From that point onward the proof follows the textbook
-exactly: Borel-Cantelli gives null infinitely-often deviation events, and
-Theorem 10.1 converts those events to almost-sure convergence.
+variables, common mean, and a uniform fourth-moment bound.  The current local
+foundation boundary also asks for the explicit tail-summability conclusion
+produced by the fourth-moment expansion in the printed proof.  From that point
+onward the proof follows the textbook exactly: Borel-Cantelli gives null
+infinitely-often deviation events, and Theorem 10.1 converts those events to
+almost-sure convergence.
 -/
 theorem thm_11_7 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ) (μ : ℝ)
@@ -252,13 +289,5 @@ theorem thm_11_7 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
         (∑' n : ℕ,
           P (almostSureDeviationEvent
             (fun n => thm_11_5_sampleMean X n) (fun _ : Ω => μ) n ε)) ≠ ∞) :
-    ConvergesAlmostSurely P (fun n => thm_11_5_sampleMean X n) (fun _ => μ) := by
-  refine (thm_10_1 P (fun n => thm_11_5_sampleMean X n) (fun _ : Ω => μ)).2 ?_
-  intro ε hε
-  have hsum := h_tail_summability ε hε
-  simpa [deviationInfinitelyOften] using
-    (thm_5_8 P
-      (fun n : ℕ =>
-        almostSureDeviationEvent
-          (fun n => thm_11_5_sampleMean X n) (fun _ : Ω => μ) n ε)
-      hsum)
+    ConvergesAlmostSurely P (fun n => thm_11_5_sampleMean X n) (fun _ => μ) :=
+  thm_11_7_from_tailSummability P X μ h_tail_summability

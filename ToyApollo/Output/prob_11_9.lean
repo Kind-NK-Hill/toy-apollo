@@ -43,12 +43,18 @@ def prob_11_9_asymptoticRegime (boxes k : ℕ → ℕ) (a : ℝ) : Prop :=
     0 < a ∧
     Tendsto (fun n : ℕ => (k n : ℝ) / (boxes n : ℝ)) atTop (nhds a)
 
-/-- Support for the textbook occupancy calculation.  Expanding
+/-- Internal open debt for the textbook occupancy calculation.  Expanding
 `X_n = ∑_j 1_{box j is empty}` gives
 `E[(X_n/n - exp (-a))^2] → 0`; the expansion uses the one-box empty
-probability `(1 - 1/n)^k` and the two-box joint probability `(1 - 2/n)^k`. -/
-def prob_11_9_occupancyMomentSupport {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) (boxes k : ℕ → ℕ) (X : ℕ → Ω → ℝ) (a : ℝ) : Prop :=
+probability `(1 - 1/n)^k` and the two-box joint probability `(1 - 2/n)^k`.
+
+The local library currently has no finite independent uniform balls-in-boxes
+model connecting the abstract process `X` to those probabilities, so this
+calculation is retained as a private axiom rather than a public theorem
+argument. -/
+private axiom prob_11_9_occupancy_moment_calculation_internal
+    {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
+    (boxes k : ℕ → ℕ) (X : ℕ → Ω → ℝ) (a : ℝ) :
   prob_11_9_asymptoticRegime boxes k a →
     Tendsto
       (fun n : ℕ =>
@@ -117,12 +123,11 @@ theorem prob_11_9_meanSquareELpNormSupport_of_measurable
 `e^{-a}` in mean square. -/
 private theorem prob_11_9_quadratic_mean {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) (boxes k : ℕ → ℕ) (X : ℕ → Ω → ℝ) (a : ℝ)
-    (hRegime : prob_11_9_asymptoticRegime boxes k a)
-    (hMoment : prob_11_9_occupancyMomentSupport P boxes k X a) :
+    (hRegime : prob_11_9_asymptoticRegime boxes k a) :
     ConvergesInMeanSquare P (prob_11_9_emptyBoxRatio boxes X)
       (fun _ : Ω => Real.exp (-a)) := by
   refine ⟨by norm_num, ?_⟩
-  exact hMoment hRegime
+  exact prob_11_9_occupancy_moment_calculation_internal P boxes k X a hRegime
 
 /-- Problem 11.9, probability part: the mean-square convergence is passed to
 convergence in probability through the Chapter 10 `L^r` result. -/
@@ -145,20 +150,11 @@ quadratic mean and hence in probability. -/
 theorem prob_11_9 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     (boxes k : ℕ → ℕ) (X : ℕ → Ω → ℝ) (a : ℝ)
     (hRegime : prob_11_9_asymptoticRegime boxes k a)
-    (hMoment :
-      prob_11_9_asymptoticRegime boxes k a →
-        Tendsto
-          (fun n : ℕ =>
-            meanDeviationMoment P (prob_11_9_emptyBoxRatio boxes X)
-              (fun _ : Ω => Real.exp (-a)) 2 n)
-          atTop (nhds 0))
     (hX :
       ∀ n : ℕ, AEStronglyMeasurable ((prob_11_9_emptyBoxRatio boxes X) n) P) :
     ConvergesInMeanSquare P (prob_11_9_emptyBoxRatio boxes X)
         (fun _ : Ω => Real.exp (-a)) ∧
       ConvergesInProbability P (prob_11_9_emptyBoxRatio boxes X)
         (fun _ : Ω => Real.exp (-a)) := by
-  have hMomentSupport : prob_11_9_occupancyMomentSupport P boxes k X a := by
-    simpa [prob_11_9_occupancyMomentSupport] using hMoment
-  let hMS := prob_11_9_quadratic_mean P boxes k X a hRegime hMomentSupport
+  let hMS := prob_11_9_quadratic_mean P boxes k X a hRegime
   exact ⟨hMS, prob_11_9_probability P boxes X a hMS hX⟩

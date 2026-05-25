@@ -1,15 +1,13 @@
 {
   "severity_counts": {
     "allowed": 9,
-    "review": 98
+    "review": 94
   },
   "category_counts": {
     "allowed_beyond_book_obligation": 2,
     "allowed_beyond_book_surface": 3,
     "inherited_beyond_book_surface": 4,
-    "public_interface_bridge_parameter_review": 1,
-    "public_proof_package_parameter_in_support_proof_review": 1,
-    "public_proof_package_return_review": 22,
+    "public_proof_package_return_review": 20,
     "public_setup_parameter_review": 74
   },
   "error_task_count": 0,
@@ -148,7 +146,7 @@
     {
       "task_id": "ex_14_4_1",
       "file": "ToyApollo/Output/ex_14_4_1.lean",
-      "line": 79,
+      "line": 81,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "ex_14_4_1_BernoulliBinomialSetup",
@@ -188,7 +186,7 @@
     {
       "task_id": "ex_14_4_2",
       "file": "ToyApollo/Output/ex_14_4_2.lean",
-      "line": 152,
+      "line": 150,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "ex_14_4_2_PoissonNormalSetup",
@@ -198,7 +196,7 @@
     {
       "task_id": "ex_14_4_2",
       "file": "ToyApollo/Output/ex_14_4_2.lean",
-      "line": 160,
+      "line": 158,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "ex_14_4_2_PoissonNormalSetup",
@@ -218,41 +216,41 @@
     {
       "task_id": "ex_14_4_3",
       "file": "ToyApollo/Output/ex_14_4_3.lean",
-      "line": 376,
+      "line": 380,
       "category": "inherited_beyond_book_surface",
       "severity": "allowed",
       "detail": "thm_14_8_ProofBeyondBook",
-      "evidence": "theorem ex_14_4_3_asymptoticNormality (C : ex_14_4_3_CouponTriangularArraySetup) (hLyapunov : thm_14_8_LyapunovCondition C.theoremSetup) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) := by",
+      "evidence": "theorem ex_14_4_3_asymptoticNormality (C : ex_14_4_3_CouponTriangularArraySetup) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) := by",
       "action": "Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt."
     },
     {
       "task_id": "ex_14_4_3",
       "file": "ToyApollo/Output/ex_14_4_3.lean",
-      "line": 376,
+      "line": 380,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "ex_14_4_3_CouponTriangularArraySetup",
-      "evidence": "theorem ex_14_4_3_asymptoticNormality (C : ex_14_4_3_CouponTriangularArraySetup) (hLyapunov : thm_14_8_LyapunovCondition C.theoremSetup) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) := by",
+      "evidence": "theorem ex_14_4_3_asymptoticNormality (C : ex_14_4_3_CouponTriangularArraySetup) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) := by",
       "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
     },
     {
       "task_id": "ex_14_4_3",
       "file": "ToyApollo/Output/ex_14_4_3.lean",
-      "line": 390,
+      "line": 394,
       "category": "inherited_beyond_book_surface",
       "severity": "allowed",
       "detail": "thm_14_8_ProofBeyondBook",
-      "evidence": "theorem ex_14_4_3 (C : ex_14_4_3_CouponTriangularArraySetup) (hLyapunov : thm_14_8_LyapunovCondition C.theoremSetup) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) :=",
+      "evidence": "theorem ex_14_4_3 (C : ex_14_4_3_CouponTriangularArraySetup) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) :=",
       "action": "Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt."
     },
     {
       "task_id": "ex_14_4_3",
       "file": "ToyApollo/Output/ex_14_4_3.lean",
-      "line": 390,
+      "line": 394,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "ex_14_4_3_CouponTriangularArraySetup",
-      "evidence": "theorem ex_14_4_3 (C : ex_14_4_3_CouponTriangularArraySetup) (hLyapunov : thm_14_8_LyapunovCondition C.theoremSetup) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) :=",
+      "evidence": "theorem ex_14_4_3 (C : ex_14_4_3_CouponTriangularArraySetup) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) :=",
       "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
     },
     {
@@ -298,22 +296,12 @@
     {
       "task_id": "prob_11_6",
       "file": "ToyApollo/Output/prob_11_6.lean",
-      "line": 62,
+      "line": 71,
       "category": "public_proof_package_return_review",
       "severity": "review",
       "detail": "prob_11_6_tailSummabilitySupport",
       "evidence": "def prob_11_6_tailSummabilitySupport {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) (X : ℕ → Ω → ℝ) : Prop :=",
       "action": "Review as theorem-level evidence for a support package; this is not a public support parameter by itself."
-    },
-    {
-      "task_id": "prob_11_6",
-      "file": "ToyApollo/Output/prob_11_6.lean",
-      "line": 144,
-      "category": "public_proof_package_parameter_in_support_proof_review",
-      "severity": "review",
-      "detail": "prob_11_6_sixthMomentSupport",
-      "evidence": "theorem prob_11_6_tailSummability_of_sixthMoment {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ) (hSixth : prob_11_6_sixthMomentSupport P X) : prob_11_6_tailSummabilitySupport P X := by",
-      "action": "Review as a theorem-level support-producing lemma; it should not be a task-facing final theorem."
     },
     {
       "task_id": "prob_11_7",
@@ -336,29 +324,9 @@
       "action": "Review as theorem-level evidence for a support package; this is not a public support parameter by itself."
     },
     {
-      "task_id": "prob_11_8",
-      "file": "ToyApollo/Output/prob_11_8.lean",
-      "line": 40,
-      "category": "public_proof_package_return_review",
-      "severity": "review",
-      "detail": "prob_11_8_covarianceSupport",
-      "evidence": "def prob_11_8_covarianceSupport {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) (X : ℕ → Ω → ℝ) (K : ℝ) (a : ℕ → ℝ) : Prop :=",
-      "action": "Review as theorem-level evidence for a support package; this is not a public support parameter by itself."
-    },
-    {
       "task_id": "prob_11_9",
       "file": "ToyApollo/Output/prob_11_9.lean",
-      "line": 50,
-      "category": "public_proof_package_return_review",
-      "severity": "review",
-      "detail": "prob_11_9_occupancyMomentSupport",
-      "evidence": "def prob_11_9_occupancyMomentSupport {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) (boxes k : ℕ → ℕ) (X : ℕ → Ω → ℝ) (a : ℝ) : Prop :=",
-      "action": "Review as theorem-level evidence for a support package; this is not a public support parameter by itself."
-    },
-    {
-      "task_id": "prob_11_9",
-      "file": "ToyApollo/Output/prob_11_9.lean",
-      "line": 61,
+      "line": 67,
       "category": "public_proof_package_return_review",
       "severity": "review",
       "detail": "prob_11_9_meanSquareELpNormSupport",
@@ -368,7 +336,7 @@
     {
       "task_id": "prob_11_9",
       "file": "ToyApollo/Output/prob_11_9.lean",
-      "line": 106,
+      "line": 112,
       "category": "public_proof_package_return_review",
       "severity": "review",
       "detail": "prob_11_9_meanSquareELpNormSupport",
@@ -378,7 +346,7 @@
     {
       "task_id": "prob_14_1",
       "file": "ToyApollo/Output/prob_14_1.lean",
-      "line": 228,
+      "line": 226,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_1_PolyaUrnBetaSetup",
@@ -388,7 +356,7 @@
     {
       "task_id": "prob_14_1",
       "file": "ToyApollo/Output/prob_14_1.lean",
-      "line": 270,
+      "line": 272,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_1_PolyaUrnBetaSetup",
@@ -398,7 +366,7 @@
     {
       "task_id": "prob_14_1",
       "file": "ToyApollo/Output/prob_14_1.lean",
-      "line": 278,
+      "line": 280,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_1_PolyaUrnBetaSetup",
@@ -408,7 +376,7 @@
     {
       "task_id": "prob_14_1",
       "file": "ToyApollo/Output/prob_14_1.lean",
-      "line": 289,
+      "line": 291,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_1_PolyaUrnBetaSetup",
@@ -418,7 +386,7 @@
     {
       "task_id": "prob_14_1",
       "file": "ToyApollo/Output/prob_14_1.lean",
-      "line": 297,
+      "line": 298,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_1_PolyaUrnBetaSetup",
@@ -428,7 +396,7 @@
     {
       "task_id": "prob_14_1",
       "file": "ToyApollo/Output/prob_14_1.lean",
-      "line": 305,
+      "line": 307,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_1_PolyaUrnBetaSetup",
@@ -438,7 +406,7 @@
     {
       "task_id": "prob_14_10",
       "file": "ToyApollo/Output/prob_14_10.lean",
-      "line": 101,
+      "line": 110,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_10_BoundedMomentSetup",
@@ -448,7 +416,7 @@
     {
       "task_id": "prob_14_10",
       "file": "ToyApollo/Output/prob_14_10.lean",
-      "line": 125,
+      "line": 134,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_10_BoundedMomentSetup",
@@ -458,7 +426,7 @@
     {
       "task_id": "prob_14_10",
       "file": "ToyApollo/Output/prob_14_10.lean",
-      "line": 133,
+      "line": 142,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_10_BoundedMomentSetup",
@@ -468,7 +436,7 @@
     {
       "task_id": "prob_14_10",
       "file": "ToyApollo/Output/prob_14_10.lean",
-      "line": 149,
+      "line": 158,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_10_BoundedMomentSetup",
@@ -478,7 +446,7 @@
     {
       "task_id": "prob_14_11",
       "file": "ToyApollo/Output/prob_14_11.lean",
-      "line": 78,
+      "line": 91,
       "category": "inherited_beyond_book_surface",
       "severity": "allowed",
       "detail": "thm_14_8_ProofBeyondBook",
@@ -488,7 +456,7 @@
     {
       "task_id": "prob_14_11",
       "file": "ToyApollo/Output/prob_14_11.lean",
-      "line": 78,
+      "line": 91,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_11_CouponRatioTriangularArraySetup",
@@ -498,7 +466,7 @@
     {
       "task_id": "prob_14_11",
       "file": "ToyApollo/Output/prob_14_11.lean",
-      "line": 90,
+      "line": 104,
       "category": "inherited_beyond_book_surface",
       "severity": "allowed",
       "detail": "thm_14_8_ProofBeyondBook",
@@ -508,7 +476,7 @@
     {
       "task_id": "prob_14_11",
       "file": "ToyApollo/Output/prob_14_11.lean",
-      "line": 90,
+      "line": 104,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_11_CouponRatioTriangularArraySetup",
@@ -548,7 +516,7 @@
     {
       "task_id": "prob_14_2",
       "file": "ToyApollo/Output/prob_14_2.lean",
-      "line": 170,
+      "line": 171,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_2_GammaCLTSetup",
@@ -558,7 +526,7 @@
     {
       "task_id": "prob_14_2",
       "file": "ToyApollo/Output/prob_14_2.lean",
-      "line": 178,
+      "line": 177,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_2_GammaCLTSetup",
@@ -568,7 +536,7 @@
     {
       "task_id": "prob_14_2",
       "file": "ToyApollo/Output/prob_14_2.lean",
-      "line": 186,
+      "line": 185,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_2_GammaCLTSetup",
@@ -728,7 +696,7 @@
     {
       "task_id": "prob_14_8",
       "file": "ToyApollo/Output/prob_14_8.lean",
-      "line": 84,
+      "line": 93,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_8_MgfConvergenceSetup",
@@ -738,7 +706,7 @@
     {
       "task_id": "prob_14_8",
       "file": "ToyApollo/Output/prob_14_8.lean",
-      "line": 93,
+      "line": 102,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_8_MgfConvergenceSetup",
@@ -748,7 +716,7 @@
     {
       "task_id": "prob_14_8",
       "file": "ToyApollo/Output/prob_14_8.lean",
-      "line": 108,
+      "line": 117,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_8_MgfConvergenceSetup",
@@ -758,7 +726,7 @@
     {
       "task_id": "prob_14_8",
       "file": "ToyApollo/Output/prob_14_8.lean",
-      "line": 120,
+      "line": 129,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_8_MgfConvergenceSetup",
@@ -868,7 +836,7 @@
     {
       "task_id": "thm_11_7",
       "file": "ToyApollo/Output/thm_11_7.lean",
-      "line": 228,
+      "line": 248,
       "category": "public_proof_package_return_review",
       "severity": "review",
       "detail": "thm_11_7_tailSummabilitySupport",
@@ -926,19 +894,9 @@
       "action": "Review as theorem-level evidence for a support package; this is not a public support parameter by itself."
     },
     {
-      "task_id": "thm_14_6",
-      "file": "ToyApollo/Output/thm_14_6.lean",
-      "line": 488,
-      "category": "public_interface_bridge_parameter_review",
-      "severity": "review",
-      "detail": "def_14_3_IntervalMathlibTightBridge",
-      "evidence": "theorem thm_14_6_of_interval_tight (Pseq : ℕ → ProbabilityMeasure ℝ) (hbridge : def_14_3_IntervalMathlibTightBridge Pseq) (hTight : def_14_3 Pseq) : thm_14_6_weaklyConvergentSubsequence Pseq :=",
-      "action": "Review as interface translation; bridge parameters are not proof debt unless they carry unproved mathematics."
-    },
-    {
       "task_id": "thm_14_7",
       "file": "ToyApollo/Output/thm_14_7.lean",
-      "line": 230,
+      "line": 232,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "thm_14_7_LindebergLevySetup",
@@ -948,7 +906,7 @@
     {
       "task_id": "thm_14_7",
       "file": "ToyApollo/Output/thm_14_7.lean",
-      "line": 250,
+      "line": 252,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "thm_14_7_LindebergLevySetup",
@@ -958,7 +916,7 @@
     {
       "task_id": "thm_14_7",
       "file": "ToyApollo/Output/thm_14_7.lean",
-      "line": 259,
+      "line": 261,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "thm_14_7_LindebergLevySetup",

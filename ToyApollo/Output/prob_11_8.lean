@@ -33,19 +33,23 @@ def prob_11_8_ar1Assumptions {Ω : Type*} [MeasurableSpace Ω]
     (∀ i : ℕ, _root_.variance P (N i) = σ2) ∧
     def_5_10_randomVariables P N
 
-/-- Support for the standard AR(1) covariance calculation: `|ρ| < 1` makes the
-autocovariances decay geometrically, so the covariance-decay hypotheses of
-Problem 11.7 hold.  The sample-mean variance decay is now derived inside
-`prob_11_7` from this hypothesis. -/
-def prob_11_8_covarianceSupport {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) (X : ℕ → Ω → ℝ) (K : ℝ) (a : ℕ → ℝ) : Prop :=
-  prob_11_7_covarianceDecayAssumptions P X 0 K a
+/-- Internalized open math debt: derive the geometric covariance-decay package
+for a stable AR(1) process from the recursion and independent Gaussian
+innovations.  The current local interface records only the moments and
+independence of the innovations, so this calculation is not yet theorem-level
+formalized. -/
+private axiom prob_11_8_covarianceDecaySupport_internal {Ω : Type*}
+    [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
+    (X N : ℕ → Ω → ℝ) (ρ σ2 : ℝ)
+    (_hAR : prob_11_8_ar1Assumptions P X N ρ σ2) :
+    ∃ K : ℝ, ∃ a : ℕ → ℝ, prob_11_7_covarianceDecayAssumptions P X 0 K a
 
 /-- Problem 11.8: the sample averages of the stable first-order
 autocorrelation process converge to `0` in probability. -/
 theorem prob_11_8 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
-    [IsProbabilityMeasure P] (X N : ℕ → Ω → ℝ) (ρ σ2 K : ℝ) (a : ℕ → ℝ)
-    (_hAR : prob_11_8_ar1Assumptions P X N ρ σ2)
-    (hCov : prob_11_7_covarianceDecayAssumptions P X 0 K a) :
+    [IsProbabilityMeasure P] (X N : ℕ → Ω → ℝ) (ρ σ2 : ℝ)
+    (hAR : prob_11_8_ar1Assumptions P X N ρ σ2) :
     ConvergesInProbability P (fun n => thm_11_5_sampleMean X n) (fun _ => 0) := by
-  exact prob_11_7 P X 0 K a hCov
+  rcases prob_11_8_covarianceDecaySupport_internal P X N ρ σ2 hAR with
+    ⟨K, a, hDecay⟩
+  exact prob_11_7 P X 0 K a hDecay

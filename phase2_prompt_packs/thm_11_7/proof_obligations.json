@@ -73,21 +73,13 @@
         "def_9_1",
         "thm_11_1"
       ],
-      "lean_landing": "",
+      "lean_landing": "thm_11_7_tailSummabilitySupport; thm_11_7_from_tailSummability; public h_tail_summability premise of thm_11_7",
       "status": "open",
       "review_status": "needs_review",
       "blocking": true,
-      "scaffold_hypotheses": [
-        {
-          "name": "h_tail_summability_support",
-          "category": "proof_debt_support",
-          "obligation_id": "fourth_moment_expansion_tail_bound",
-          "discharge_plan": "Replace this support parameter by a reusable local lemma proving the fourth-moment expansion, zero mixed terms from independence, the Cauchy-Schwarz product bound, and summability of deviation probabilities.",
-          "status": "open"
-        }
-      ],
-      "notes": "No current local or Mathlib theorem was found for the non-identically-distributed fourth-moment SLLN estimate. This is the only carried proof debt.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support lands only on non-theorem declarations.\n[clean-debt-public-surface] 2026-05-22: public theorem no longer requires thm_11_7_tailSummabilitySupport; it now exposes the explicit tail-summability statement.",
-      "last_review_evidence": "Blocked: child pack only packaged the support boundary; no theorem-level fourth-moment expansion/tail-bound landing exists.",
+      "scaffold_hypotheses": [],
+      "notes": "No current local or Mathlib theorem was found for the non-identically-distributed fourth-moment SLLN estimate. The private axiom was removed on 2026-05-24 and the final Borel-Cantelli/Theorem 10.1 assembly now lands on `thm_11_7_from_tailSummability`, but the source fourth-moment expansion is still an open_math_debt obligation exposed as the explicit tail-summability premise of `thm_11_7`.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support lands only on non-theorem declarations.\n[step6b-boundary] 2026-05-24: private axiom thm_11_7_tail_summability_internal removed; proof completion is not claimed until a theorem derives tail summability from independence, common mean, and uniform fourth-moment bound.",
+      "last_review_evidence": "Step 6B boundary pass: `thm_11_7_from_tailSummability` compiles and proves the tail-summability-to-a.s.-convergence bridge; the fourth-moment expansion/tail-bound derivation remains open.",
       "source_output_alignment": {
         "audited_at": "2026-05-19",
         "audit_class": "C_support_field_gap_no_decl",
@@ -97,13 +89,19 @@
             "name": "thm_11_7_tailSummabilitySupport",
             "kind": "def",
             "file": "ToyApollo/Output/thm_11_7.lean",
-            "line": 228
+            "line": 248
+          },
+          {
+            "name": "thm_11_7_from_tailSummability",
+            "kind": "theorem",
+            "file": "ToyApollo/Output/thm_11_7.lean",
+            "line": 257
           }
         ],
         "missing_landing_names": [
-          "explicit_fourth_moment_tail_summability"
+          "theorem-level fourth_moment_expansion_tail_bound deriving thm_11_7_tailSummabilitySupport from the source assumptions"
         ],
-        "next_action": "Do not count this as proof; derive the explicit fourth-moment tail-summability statement from theorem-level evidence.",
+        "next_action": "Do not count the public tail-summability premise as proof completion; derive it from theorem-level fourth-moment expansion, mixed-term cancellation, Cauchy-Schwarz, Markov, and p-series evidence.",
         "manual_review_required": false
       },
       "ledger_task_id": "obl_thm_11_7_fourth_moment_expansion_tail_bound",
@@ -146,7 +144,7 @@
   "scaffold_hypotheses": [],
   "reconstruction_target": {
     "statement": "thm_11_7",
-    "description": "Assemble the public strong-law statement from local independence, local moment, existing sample-average, explicit fourth-moment tail proof debt, Borel-Cantelli, and Theorem 10.1."
+    "description": "Assemble the public strong-law statement from local independence, local moment, existing sample-average, explicit open_math_debt for the fourth-moment tail estimate, Borel-Cantelli, and Theorem 10.1."
   },
   "review_history": [
     {
@@ -169,9 +167,27 @@
       "status": "covered",
       "summary": "The focused child is accepted as a named theorem-level or support-interface stage with an explicit downstream bridge. Hard calculations that remain as support predicates are not treated as hidden facts.",
       "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-23",
+      "verdict": "needs_review",
+      "status": "open_math_debt_internalized",
+      "summary": "Local search did not find theorem-level evidence for the fourth-moment expansion/tail estimate. The public theorem no longer asks callers for h_tail_summability; that debt is carried by a private internal axiom.",
+      "open_blockers": [
+        "fourth_moment_expansion_tail_bound"
+      ]
+    },
+    {
+      "reviewed_at": "2026-05-24T00:00:00+08:00",
+      "verdict": "blocked",
+      "status": "statement_boundary_open_math_debt",
+      "summary": "The private axiom was removed and the final Borel-Cantelli/Theorem 10.1 assembly now lands on `thm_11_7_from_tailSummability`. The fourth-moment expansion itself remains open and is exposed as an explicit tail-summability premise, so this is not Textbook Complete.",
+      "open_blockers": [
+        "fourth_moment_expansion_tail_bound"
+      ]
     }
   ],
-  "last_reviewed_at": "2026-05-20T10:57:31.131104Z",
+  "last_reviewed_at": "2026-05-24T00:00:00+08:00",
   "source_output_alignment_audit": {
     "audited_at": "2026-05-19",
     "accepted_debt_count": 1,
@@ -189,6 +205,26 @@
           "status": "proved",
           "review_status": "accepted",
           "lean_landing": "h_tail_summability_support : thm_11_7_tailSummabilitySupport P X mu"
+        }
+      },
+      {
+        "obligation_id": "fourth_moment_expansion_tail_bound",
+        "action": "public_tail_summability_parameter_to_private_axiom",
+        "reason": "the existing local files do not prove the fourth-moment tail estimate, so the theorem-facing proof package was internalized without marking the debt proved",
+        "current": {
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "private axiom thm_11_7_tail_summability_internal : thm_11_7_tailSummabilitySupport P X μ"
+        }
+      },
+      {
+        "obligation_id": "fourth_moment_expansion_tail_bound",
+        "action": "private_axiom_to_statement_boundary",
+        "reason": "Step 6B removed the hidden axiom and landed theorem-level final assembly from explicit tail summability, while leaving the fourth-moment expansion obligation open.",
+        "current": {
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "thm_11_7_tailSummabilitySupport; thm_11_7_from_tailSummability; public h_tail_summability premise of thm_11_7"
         }
       }
     ]
