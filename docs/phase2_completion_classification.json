@@ -33,10 +33,11 @@
         "ex_10_3_2_gaussian_convergesInDistribution",
         "ex_10_3_2"
       ],
-      "primary_class": "textbook_proof_completed",
+      "primary_class": "needs_decision",
       "flags": [
         "public_interface_clean",
-        "ledger_unchanged"
+        "ledger_unchanged",
+        "metadata_only_cleanliness_risk"
       ],
       "evidence": [
         {
@@ -75,8 +76,8 @@
         "python tools/validate_phase2_completion_classification.py",
         "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
       ],
-      "classification_reason": "Step 4 reviewed the public setup structures as source density/law data, not proof packages. The density and Gaussian theorem landings build without private axioms, so this is now classified as textbook proof completed for Good Corpus purposes.",
-      "next_action": "No Step 4 repair remains; keep this classification unless a later strict Textbook Complete pass changes the statement or proof route."
+      "classification_reason": "Step 5.6 strict contract reconciliation supersedes the earlier Good Corpus classification: this row has build/public-surface evidence but no verified proof_contract evidence for its proved obligation ledger. It is therefore not counted as strict textbook_proof_completed until the source-route signatures and obligation contracts are checked.",
+      "next_action": "Run Step 6A source-route extraction/signature freeze for this task, then either add honest verified proof_contract evidence or keep/reclassify the task as adapter, bridge, or open debt."
     },
     {
       "task_id": "prob_10_5",
@@ -151,16 +152,23 @@
           "line": 3,
           "kind": "metadata_note",
           "text": "\"task_id\": \"prob_10_6\""
+        },
+        {
+          "file": "phase2_prompt_packs/prob_10_6/proof_obligations.json",
+          "line": 47,
+          "kind": "proof_contract",
+          "text": "\"proof_contract_status\": \"verified\""
         }
       ],
       "validation": [
         "lake env lean ToyApollo/Output/prob_10_6.lean",
         "lake build ToyApollo.Output.prob_10_6",
         "python tools/validate_phase2_completion_classification.py",
-        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors",
+        "python tools/validate_phase2_obligation_contracts.py --task prob_10_6 --write-report"
       ],
-      "classification_reason": "Step 6B removed the private axiom and landed theorem-level source-route evidence for the arbitrary countable Ω singleton-mass-to-bounded-test direction, using countable PMF atomization, Tannery/dominated tsum convergence, and PMF.integral_eq_tsum.",
-      "next_action": "No Step 6B proof action remains for prob_10_6; keep this classification unless a later strict-interface pass replaces the custom countable bounded-test interface."
+      "classification_reason": "Step 6B removed the private axiom and Step 5.6 verified the two proof-obligation contracts in phase2_prompt_packs/prob_10_6/proof_obligations.json: bounded-test convergence implies singleton-mass convergence, and singleton-mass convergence implies bounded-test distribution convergence. The checked Lean landings are theorem-level and do not re-assume the target obligations as public premises.",
+      "next_action": "No Step 5.6 contract action remains for prob_10_6; keep the validator command in the classification evidence set."
     },
     {
       "task_id": "thm_10_8",
@@ -170,10 +178,11 @@
         "mkSkorokhodQuantileSupport",
         "thm_10_8"
       ],
-      "primary_class": "textbook_proof_completed",
+      "primary_class": "needs_decision",
       "flags": [
         "public_interface_clean",
-        "ledger_unchanged"
+        "ledger_unchanged",
+        "metadata_only_cleanliness_risk"
       ],
       "evidence": [
         {
@@ -212,63 +221,67 @@
         "python tools/validate_phase2_completion_classification.py",
         "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
       ],
-      "classification_reason": "Step 4 reviewed the Skorokhod quantile support constructor. It is theorem-level evidence constructed internally by the public theorem, and the public theorem has no support-package parameter.",
-      "next_action": "No Step 4 repair remains; keep this classification unless a later strict Textbook Complete pass changes the statement or proof route."
+      "classification_reason": "Step 5.6 strict contract reconciliation supersedes the earlier Good Corpus classification: this row has build/public-surface evidence but no verified proof_contract evidence for its proved obligation ledger. It is therefore not counted as strict textbook_proof_completed until the source-route signatures and obligation contracts are checked.",
+      "next_action": "Run Step 6A source-route extraction/signature freeze for this task, then either add honest verified proof_contract evidence or keep/reclassify the task as adapter, bridge, or open debt."
     },
     {
       "task_id": "prob_11_10",
       "chapter": 11,
       "lean_file": "ToyApollo/Output/prob_11_10.lean",
       "declarations": [
+        "prob_11_10_polya_uniformization_from_pointwise",
+        "prob_11_10_finite_grid_uniformization",
+        "prob_11_10_continuous_grid_uniformization",
         "prob_11_10",
-        "prob_11_10_continuous_grid_uniformization_internal"
+        "prob_11_10_continuousCDF_finite_grid",
+        "prob_11_10_pathwise_grid_sandwich",
+        "prob_11_10_uniformCDFDeviation_le_of_pointwise"
       ],
-      "primary_class": "open_math_debt",
+      "primary_class": "textbook_proof_completed",
       "flags": [
         "public_interface_clean",
-        "private_axiom_internalized",
-        "support_constructor_return_only",
         "ledger_unchanged"
       ],
       "evidence": [
         {
           "file": "ToyApollo/Output/prob_11_10.lean",
-          "line": 64,
-          "kind": "private_axiom",
-          "text": "private axiom prob_11_10_continuous_grid_uniformization_internal"
+          "line": 377,
+          "kind": "theorem",
+          "text": "theorem prob_11_10_polya_uniformization_from_pointwise"
         },
         {
           "file": "ToyApollo/Output/prob_11_10.lean",
-          "line": 47,
-          "kind": "def",
-          "text": "def prob_11_10_uniformizationSupport"
+          "line": 457,
+          "kind": "theorem",
+          "text": "theorem prob_11_10_finite_grid_uniformization"
         },
         {
           "file": "ToyApollo/Output/prob_11_10.lean",
-          "line": 71,
+          "line": 493,
           "kind": "theorem",
           "text": "theorem prob_11_10"
         },
         {
-          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
-          "line": 49,
-          "kind": "audit_signal",
-          "text": "`prob_11_10`"
+          "file": "phase2_prompt_packs/prob_11_10/semantic_review_result_v7.json",
+          "line": 20,
+          "kind": "metadata_note",
+          "text": "\"verdict\": \"pass\""
         },
         {
           "file": "phase2_prompt_packs/prob_11_10/proof_obligations.json",
-          "line": 3,
-          "kind": "metadata_note",
-          "text": "\"task_id\": \"prob_11_10\""
+          "line": 181,
+          "kind": "proof_contract",
+          "text": "\"proof_contract_status\": \"verified\""
         }
       ],
       "validation": [
         "lake env lean ToyApollo/Output/prob_11_10.lean",
-        "python tools/validate_phase2_completion_classification.py",
-        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+        "python tools/validate_phase2_obligation_contracts.py --task prob_11_10 --write-report --fail-on-errors",
+        "python tools/validate_phase2_completion_classification.py --require-proof-contract",
+        "python tools/audit_phase2_clean_debt_surface.py --write-report --fail-on-errors"
       ],
-      "classification_reason": "Open math debt remains because continuous-grid uniformization is internalized as a private axiom.",
-      "next_action": "Replace the private axiom with theorem-level finite-grid/continuous-CDF uniformization evidence."
+      "classification_reason": "The former finite-grid Glivenko-Cantelli uniformization debt is now discharged by theorem-level Lean evidence. prob_11_10_polya_uniformization_from_pointwise builds cdf tail cutoffs, finite grid coverage, finite almost-sure event assembly, empirical-cdf monotonicity and boundedness, pathwise grid sandwiching, and the sSup deviation bound; prob_11_10 then obtains the pointwise hypotheses from Example 11.5.1 and exposes no private axiom or public proof package.",
+      "next_action": "No prob_11_10 proof-production action remains; downstream tasks may consume the textbook completed theorem."
     },
     {
       "task_id": "prob_11_5",
@@ -278,10 +291,11 @@
         "prob_11_5_tailSummability_of_variance_growth",
         "prob_11_5"
       ],
-      "primary_class": "textbook_proof_completed",
+      "primary_class": "needs_decision",
       "flags": [
         "public_interface_clean",
-        "ledger_unchanged"
+        "ledger_unchanged",
+        "metadata_only_cleanliness_risk"
       ],
       "evidence": [
         {
@@ -320,8 +334,8 @@
         "python tools/validate_phase2_completion_classification.py",
         "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
       ],
-      "classification_reason": "Step 4 reviewed the tail-summability support route. The support is produced by theorem-level p-series and Chebyshev evidence and is consumed internally by the public theorem.",
-      "next_action": "No Step 4 repair remains; keep this classification unless a later strict Textbook Complete pass changes the statement or proof route."
+      "classification_reason": "Step 5.6 strict contract reconciliation supersedes the earlier Good Corpus classification: this row has build/public-surface evidence but no verified proof_contract evidence for its proved obligation ledger. It is therefore not counted as strict textbook_proof_completed until the source-route signatures and obligation contracts are checked.",
+      "next_action": "Run Step 6A source-route extraction/signature freeze for this task, then either add honest verified proof_contract evidence or keep/reclassify the task as adapter, bridge, or open debt."
     },
     {
       "task_id": "prob_11_6",
@@ -329,45 +343,45 @@
       "lean_file": "ToyApollo/Output/prob_11_6.lean",
       "declarations": [
         "prob_11_6",
-        "prob_11_6_sixthMomentSupport_internal"
+        "prob_11_6_scaledSum_def",
+        "prob_11_6_sixthMomentSupport_of_uniformAEBound",
+        "prob_11_6_tailSummability_of_sixthMoment"
       ],
-      "primary_class": "needs_decision",
+      "primary_class": "textbook_proof_completed",
       "flags": [
         "public_interface_clean",
-        "private_axiom_internalized",
-        "support_constructor_return_only",
         "ledger_unchanged"
       ],
       "evidence": [
         {
           "file": "ToyApollo/Output/prob_11_6.lean",
-          "line": 62,
-          "kind": "private_axiom",
-          "text": "private axiom prob_11_6_sixthMomentSupport_internal"
+          "line": 54,
+          "kind": "theorem",
+          "text": "theorem prob_11_6_scaledSum_def"
         },
         {
           "file": "ToyApollo/Output/prob_11_6.lean",
-          "line": 71,
-          "kind": "def",
-          "text": "def prob_11_6_tailSummabilitySupport"
+          "line": 501,
+          "kind": "theorem",
+          "text": "theorem prob_11_6_sixthMomentSupport_of_uniformAEBound"
         },
         {
           "file": "ToyApollo/Output/prob_11_6.lean",
-          "line": 205,
+          "line": 666,
+          "kind": "theorem",
+          "text": "private theorem prob_11_6_tailSummability_of_sixthMoment"
+        },
+        {
+          "file": "ToyApollo/Output/prob_11_6.lean",
+          "line": 719,
           "kind": "theorem",
           "text": "theorem prob_11_6"
         },
         {
-          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
-          "line": 52,
-          "kind": "audit_signal",
-          "text": "`prob_11_6`"
-        },
-        {
           "file": "phase2_prompt_packs/prob_11_6/proof_obligations.json",
-          "line": 3,
-          "kind": "metadata_note",
-          "text": "\"task_id\": \"prob_11_6\""
+          "line": 61,
+          "kind": "proof_contract",
+          "text": "\"lean_landing\": \"prob_11_6_sixthMomentSupport_of_uniformAEBound\""
         }
       ],
       "validation": [
@@ -375,8 +389,8 @@
         "python tools/validate_phase2_completion_classification.py",
         "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
       ],
-      "classification_reason": "Step 2.5 investigation found that replacing the sixth-moment private axiom requires a theorem-level independent-sum sixth-moment expansion, plus explicit measurability, integrability, a.e. uniform-bound, and zero-mean mixed-term cancellation landings; the current public interface does not provide those prerequisites.",
-      "next_action": "Decide whether to strengthen the random-variable interface with AEStronglyMeasurable/MemLp or a.e. bound landings, build a reusable independent finite-sum sixth-moment layer, or keep the sixth-moment expansion as internal debt."
+      "classification_reason": "Phase2 proof-production replaced the private sixth-moment axiom with theorem-level finite-sum expansion, singleton cancellation, integrability from uniform a.e. boundedness, and no-singleton tuple counting; the final theorem now derives sixth-moment support internally and no public proof-package premise remains.",
+      "next_action": "No prob_11_6 proof-production action remains; keep the Phase2 contract validators in the evidence loop."
     },
     {
       "task_id": "prob_11_7",
@@ -386,10 +400,11 @@
         "prob_11_7_sampleMeanVarianceSupport_of_covarianceDecay",
         "prob_11_7"
       ],
-      "primary_class": "textbook_proof_completed",
+      "primary_class": "needs_decision",
       "flags": [
         "public_interface_clean",
-        "ledger_unchanged"
+        "ledger_unchanged",
+        "metadata_only_cleanliness_risk"
       ],
       "evidence": [
         {
@@ -428,8 +443,8 @@
         "python tools/validate_phase2_completion_classification.py",
         "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
       ],
-      "classification_reason": "Step 4 reviewed the covariance-decay support route. The sample-mean variance support is produced by theorem-level covariance and Cesaro estimates and is consumed internally by the public theorem.",
-      "next_action": "No Step 4 repair remains; keep this classification unless a later strict Textbook Complete pass changes the statement or proof route."
+      "classification_reason": "Step 5.6 strict contract reconciliation supersedes the earlier Good Corpus classification: this row has build/public-surface evidence but no verified proof_contract evidence for its proved obligation ledger. It is therefore not counted as strict textbook_proof_completed until the source-route signatures and obligation contracts are checked.",
+      "next_action": "Run Step 6A source-route extraction/signature freeze for this task, then either add honest verified proof_contract evidence or keep/reclassify the task as adapter, bridge, or open debt."
     },
     {
       "task_id": "prob_11_8",
@@ -437,41 +452,55 @@
       "lean_file": "ToyApollo/Output/prob_11_8.lean",
       "declarations": [
         "prob_11_8",
-        "prob_11_8_covarianceDecaySupport_internal"
+        "prob_11_8_ar1Assumptions",
+        "prob_11_8_ar1Past_indep_future",
+        "prob_11_8_covarianceDecaySupport_of_ar1Assumptions"
       ],
-      "primary_class": "open_math_debt",
+      "primary_class": "textbook_proof_completed",
       "flags": [
         "public_interface_clean",
-        "private_axiom_internalized",
         "ledger_unchanged"
       ],
       "evidence": [
         {
           "file": "ToyApollo/Output/prob_11_8.lean",
-          "line": 41,
-          "kind": "private_axiom",
-          "text": "private axiom prob_11_8_covarianceDecaySupport_internal"
+          "line": 27,
+          "kind": "def",
+          "text": "def prob_11_8_ar1Assumptions"
         },
         {
           "file": "ToyApollo/Output/prob_11_8.lean",
-          "line": 49,
+          "line": 74,
+          "kind": "theorem",
+          "text": "theorem prob_11_8_ar1Past_indep_future"
+        },
+        {
+          "file": "ToyApollo/Output/prob_11_8.lean",
+          "line": 146,
+          "kind": "theorem",
+          "text": "theorem prob_11_8_covarianceDecaySupport_of_ar1Assumptions"
+        },
+        {
+          "file": "ToyApollo/Output/prob_11_8.lean",
+          "line": 321,
           "kind": "theorem",
           "text": "theorem prob_11_8"
         },
         {
           "file": "phase2_prompt_packs/prob_11_8/proof_obligations.json",
-          "line": 3,
-          "kind": "metadata_note",
-          "text": "\"task_id\": \"prob_11_8\""
+          "line": 58,
+          "kind": "proof_contract",
+          "text": "\"lean_landing\": \"prob_11_8_covarianceDecaySupport_of_ar1Assumptions\""
         }
       ],
       "validation": [
         "lake env lean ToyApollo/Output/prob_11_8.lean",
+        "python tools/validate_phase2_obligation_contracts.py --task prob_11_8 --write-report --fail-on-errors",
         "python tools/validate_phase2_completion_classification.py",
         "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
       ],
-      "classification_reason": "Open math debt remains because the AR(1) covariance decay support is supplied by a private axiom.",
-      "next_action": "Replace the private axiom with theorem-level covariance-decay evidence."
+      "classification_reason": "Phase2 proof-production replaced the private AR(1) covariance-decay axiom with theorem-level finite AR(1) unrolling, past/future innovation independence from independent innovations, Gaussian moment derivation, variance and covariance recursion, and the prob_11_7 covariance-decay application. The public interface remains the source-facing AR(1) setup and no public proof-package premise remains.",
+      "next_action": "No prob_11_8 proof-production action remains; keep the Phase2 contract validators in the evidence loop."
     },
     {
       "task_id": "prob_11_9",
@@ -479,54 +508,72 @@
       "lean_file": "ToyApollo/Output/prob_11_9.lean",
       "declarations": [
         "prob_11_9",
-        "prob_11_9_occupancy_moment_calculation_internal"
+        "prob_11_9_finiteIndependentUniformEmptyBoxModel",
+        "prob_11_9_oneBoxEmptyEvent_probability",
+        "prob_11_9_twoBoxEmptyEvent_probability",
+        "prob_11_9_emptyBoxRatio_integral_eq",
+        "prob_11_9_emptyBoxRatio_sq_integral_eq",
+        "prob_11_9_meanDeviationMoment_eq_formula",
+        "prob_11_9_occupancy_moment_calculation_internal",
+        "prob_11_9_quadratic_mean"
       ],
-      "primary_class": "needs_decision",
+      "primary_class": "textbook_proof_completed",
       "flags": [
         "public_interface_clean",
-        "private_axiom_internalized",
-        "support_constructor_return_only",
         "ledger_unchanged"
       ],
       "evidence": [
         {
           "file": "ToyApollo/Output/prob_11_9.lean",
-          "line": 55,
-          "kind": "private_axiom",
-          "text": "private axiom prob_11_9_occupancy_moment_calculation_internal"
-        },
-        {
-          "file": "ToyApollo/Output/prob_11_9.lean",
-          "line": 67,
+          "line": 258,
           "kind": "def",
-          "text": "def prob_11_9_meanSquareELpNormSupport"
+          "text": "def prob_11_9_finiteIndependentUniformEmptyBoxModel"
         },
         {
           "file": "ToyApollo/Output/prob_11_9.lean",
-          "line": 150,
+          "line": 271,
+          "kind": "theorem",
+          "text": "theorem prob_11_9_oneBoxEmptyEvent_probability"
+        },
+        {
+          "file": "ToyApollo/Output/prob_11_9.lean",
+          "line": 292,
+          "kind": "theorem",
+          "text": "theorem prob_11_9_twoBoxEmptyEvent_probability"
+        },
+        {
+          "file": "ToyApollo/Output/prob_11_9.lean",
+          "line": 927,
+          "kind": "theorem",
+          "text": "theorem prob_11_9_meanDeviationMoment_eq_formula"
+        },
+        {
+          "file": "ToyApollo/Output/prob_11_9.lean",
+          "line": 990,
+          "kind": "theorem",
+          "text": "theorem prob_11_9_occupancy_moment_calculation_internal"
+        },
+        {
+          "file": "ToyApollo/Output/prob_11_9.lean",
+          "line": 1205,
           "kind": "theorem",
           "text": "theorem prob_11_9"
         },
         {
-          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
-          "line": 56,
-          "kind": "audit_signal",
-          "text": "`prob_11_9`"
-        },
-        {
           "file": "phase2_prompt_packs/prob_11_9/proof_obligations.json",
-          "line": 3,
-          "kind": "metadata_note",
-          "text": "\"task_id\": \"prob_11_9\""
+          "line": 95,
+          "kind": "proof_contract",
+          "text": "\"lean_landing\": \"prob_11_9_occupancy_moment_calculation_internal\""
         }
       ],
       "validation": [
         "lake env lean ToyApollo/Output/prob_11_9.lean",
-        "python tools/validate_phase2_completion_classification.py",
-        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+        "python tools/validate_phase2_obligation_contracts.py --task prob_11_9 --write-report --fail-on-errors",
+        "python tools/validate_phase2_completion_classification.py --require-proof-contract",
+        "python tools/audit_phase2_clean_debt_surface.py --write-report --fail-on-errors"
       ],
-      "classification_reason": "Step 2.5 investigation found that the current public statement abstracts over boxes, ball counts, and X but does not include a finite independent uniform balls-in-boxes model connecting X to one-box and two-box empty probabilities; the nearby ex_6_5_2 model covers a different one-box exact-occupancy expectation and is not a landing for this second-moment calculation.",
-      "next_action": "Decide whether to rewrite or strengthen prob_11_9 around an explicit occupancy model, possibly reusing ex_6_5_2 ingredients but adding empty-box count and two-box joint probability lemmas, or keep this as internal debt."
+      "classification_reason": "Phase2 proof-production replaced the private occupancy second-moment axiom with theorem-level finite independent uniform balls-in-boxes evidence: one-box and two-box empty event probabilities are derived from a MeasurePreserving uniform location-space model, the empty-box ratio integrals and mean-deviation formula are proved, and quadratic mean convergence is assembled from the source-facing occupancy setup.",
+      "next_action": "No prob_11_9 proof-production action remains; keep the Phase2 contract validators in the evidence loop."
     },
     {
       "task_id": "thm_11_7",
@@ -534,48 +581,99 @@
       "lean_file": "ToyApollo/Output/thm_11_7.lean",
       "declarations": [
         "thm_11_7",
+        "thm_11_7_fourthMomentUniformBound",
+        "thm_11_7_centeredFourthMomentUniformBound",
+        "thm_11_7_centeredPartialSum",
+        "thm_11_7_centeredPartialSum_fourth_expand",
+        "thm_11_7_centered_independence",
+        "thm_11_7_centered_pairwise_indepFun",
+        "thm_11_7_centered_mean_zero",
+        "thm_11_7_centered_memLp_four_of_uniform",
+        "thm_11_7_centered_fourth_integral_bound_of_uniform",
+        "thm_11_7_centered_integrable_of_uniform",
+        "thm_11_7_centered_fourth_power_integrable_of_memLp",
+        "thm_11_7_fourth_centering_pointwise_bound",
+        "thm_11_7_centeredFourthMomentUniformBound_of_fourthMomentUniformBound",
+        "thm_11_7_centeredPartialSum_fourth_integrable_of_uniform",
+        "thm_11_7_centered_pair_product_integral_eq_zero",
+        "thm_11_7_centered_singleton_pair_product_integral_eq_zero",
+        "thm_11_7_centered_four_distinct_product_integral_eq_zero",
+        "thm_11_7_centered_fourth_memLp_to_square_memLp",
+        "thm_11_7_paired_square_bound",
+        "thm_11_7_fourthMomentPartialSumBound",
+        "thm_11_7_fourth_moment_sum_bound",
         "thm_11_7_tailSummabilitySupport",
+        "thm_11_7_tail_summability_from_partial_sum_bound",
+        "thm_11_7_tail_summability_from_fourth_moment",
+        "thm_11_7_pseries_tail_bound",
+        "thm_11_7_sampleMean_sub_mean_eq_centeredPartialSum_div",
+        "thm_11_7_markov_fourth_tail_bound",
+        "thm_11_7_fourth_moment_ratio_eq_pseries_term",
         "thm_11_7_from_tailSummability"
       ],
-      "primary_class": "open_math_debt",
+      "primary_class": "textbook_proof_completed",
       "flags": [
-        "public_interface_leak",
-        "source_route_open",
+        "public_interface_clean",
         "ledger_unchanged"
       ],
       "evidence": [
         {
           "file": "ToyApollo/Output/thm_11_7.lean",
-          "line": 248,
-          "kind": "def",
-          "text": "def thm_11_7_tailSummabilitySupport"
-        },
-        {
-          "file": "ToyApollo/Output/thm_11_7.lean",
-          "line": 257,
+          "line": 550,
           "kind": "theorem",
-          "text": "theorem thm_11_7_from_tailSummability"
+          "text": "theorem thm_11_7_fourth_moment_sum_bound"
         },
         {
           "file": "ToyApollo/Output/thm_11_7.lean",
-          "line": 282,
+          "line": 364,
+          "kind": "theorem",
+          "text": "theorem thm_11_7_centeredFourthMomentUniformBound_of_fourthMomentUniformBound"
+        },
+        {
+          "file": "ToyApollo/Output/thm_11_7.lean",
+          "line": 1118,
+          "kind": "theorem",
+          "text": "theorem thm_11_7_tail_summability_from_fourth_moment"
+        },
+        {
+          "file": "ToyApollo/Output/thm_11_7.lean",
+          "line": 1087,
+          "kind": "theorem",
+          "text": "theorem thm_11_7_tail_summability_from_partial_sum_bound"
+        },
+        {
+          "file": "ToyApollo/Output/thm_11_7.lean",
+          "line": 1137,
+          "kind": "theorem",
+          "text": "private theorem thm_11_7_from_tailSummability"
+        },
+        {
+          "file": "ToyApollo/Output/thm_11_7.lean",
+          "line": 1160,
           "kind": "theorem",
           "text": "theorem thm_11_7"
         },
         {
           "file": "phase2_prompt_packs/thm_11_7/proof_obligations.json",
-          "line": 3,
-          "kind": "metadata_note",
-          "text": "\"task_id\": \"thm_11_7\""
+          "line": 155,
+          "kind": "proof_contract",
+          "text": "\"proof_contract_status\": \"verified\""
+        },
+        {
+          "file": "phase2_prompt_packs/thm_11_7/proof_obligations.json",
+          "line": 159,
+          "kind": "proof_contract",
+          "text": "\"public_premise_check\": \"passed\""
         }
       ],
       "validation": [
         "lake env lean ToyApollo/Output/thm_11_7.lean",
-        "python tools/validate_phase2_completion_classification.py",
-        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+        "python tools/validate_phase2_obligation_contracts.py --task thm_11_7",
+        "python tools/validate_phase2_completion_classification.py --require-proof-contract",
+        "python tools/audit_phase2_clean_debt_surface.py --write-report --fail-on-errors"
       ],
-      "classification_reason": "Open math debt remains because the fourth-moment expansion and tail-bound are not derived from the source assumptions; Step 6B removed the private axiom and landed theorem-level final assembly from an explicit public tail-summability premise.",
-      "next_action": "Replace the public tail-summability premise with theorem-level fourth-moment expansion, mixed-term cancellation, Cauchy-Schwarz, Markov, and p-series evidence."
+      "classification_reason": "Self-correction checked the expanded public assumptions. `thm_11_7_fourthMomentUniformBound` now records the uncentered textbook fourth-moment assumption (`MemLp (X i) 4 P` and `rthMoment P (X i) 4 <= c`); `thm_11_7_centeredFourthMomentUniformBound_of_fourthMomentUniformBound` internally derives the centered package using `(x - mu)^4 <= 8 * (x^4 + mu^4)`. `thm_11_7_fourth_moment_sum_bound` proves the finite partial-sum fourth-moment estimate by expansion, mixed-term cancellation, paired-square bounds, and counting; `thm_11_7_tail_summability_from_fourth_moment` then derives tail summability, and public `thm_11_7` has no `h_tail_summability` or equivalent proof-package premise.",
+      "next_action": "No thm_11_7 source-route proof action remains; keep the task-local contract validator and Lean check in the completion evidence set."
     },
     {
       "task_id": "ex_13_5_1",
@@ -585,10 +683,11 @@
         "ex_13_5_1_rectangleAreaSupport_of_uniformSquareLaw",
         "ex_13_5_1"
       ],
-      "primary_class": "textbook_proof_completed",
+      "primary_class": "needs_decision",
       "flags": [
         "public_interface_clean",
-        "ledger_unchanged"
+        "ledger_unchanged",
+        "metadata_only_cleanliness_risk"
       ],
       "evidence": [
         {
@@ -627,8 +726,8 @@
         "python tools/validate_phase2_completion_classification.py",
         "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
       ],
-      "classification_reason": "Step 4 reviewed the rectangle/Fubini support surface. The final theorem uses theorem-level uniform-square and cylinder-integral evidence, with no private axiom or public support package parameter.",
-      "next_action": "No Step 4 repair remains; keep this classification unless a later strict Textbook Complete pass changes the statement or proof route."
+      "classification_reason": "Step 5.6 strict contract reconciliation supersedes the earlier Good Corpus classification: this row has build/public-surface evidence but no verified proof_contract evidence for its proved obligation ledger. It is therefore not counted as strict textbook_proof_completed until the source-route signatures and obligation contracts are checked.",
+      "next_action": "Run Step 6A source-route extraction/signature freeze for this task, then either add honest verified proof_contract evidence or keep/reclassify the task as adapter, bridge, or open debt."
     },
     {
       "task_id": "thm_13_12",
@@ -638,10 +737,11 @@
         "thm_13_12_countablePartitionVersionSupport",
         "thm_13_12"
       ],
-      "primary_class": "textbook_proof_completed",
+      "primary_class": "needs_decision",
       "flags": [
         "public_interface_clean",
-        "ledger_unchanged"
+        "ledger_unchanged",
+        "metadata_only_cleanliness_risk"
       ],
       "evidence": [
         {
@@ -658,7 +758,7 @@
         },
         {
           "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
-          "line": 108,
+          "line": 110,
           "kind": "audit_signal",
           "text": "`thm_13_12`"
         },
@@ -674,8 +774,8 @@
         "python tools/validate_phase2_completion_classification.py",
         "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
       ],
-      "classification_reason": "Step 4 reviewed countablePartitionVersionSupport as theorem-level source-route evidence. The public theorem constructs and consumes this evidence internally.",
-      "next_action": "No Step 4 repair remains; keep this classification unless a later strict Textbook Complete pass changes the statement or proof route."
+      "classification_reason": "Step 5.6 strict contract reconciliation supersedes the earlier Good Corpus classification: this row has build/public-surface evidence but no verified proof_contract evidence for its proved obligation ledger. It is therefore not counted as strict textbook_proof_completed until the source-route signatures and obligation contracts are checked.",
+      "next_action": "Run Step 6A source-route extraction/signature freeze for this task, then either add honest verified proof_contract evidence or keep/reclassify the task as adapter, bridge, or open debt."
     },
     {
       "task_id": "thm_13_13",
@@ -685,10 +785,11 @@
         "thm_13_13_atomIntegral_from_jointLaw",
         "thm_13_13"
       ],
-      "primary_class": "textbook_proof_completed",
+      "primary_class": "needs_decision",
       "flags": [
         "public_interface_clean",
-        "ledger_unchanged"
+        "ledger_unchanged",
+        "metadata_only_cleanliness_risk"
       ],
       "evidence": [
         {
@@ -711,7 +812,7 @@
         },
         {
           "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
-          "line": 109,
+          "line": 111,
           "kind": "audit_signal",
           "text": "`thm_13_13`"
         },
@@ -727,8 +828,8 @@
         "python tools/validate_phase2_completion_classification.py",
         "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
       ],
-      "classification_reason": "Step 4 reviewed atomIntegralSupport. The atom-integral support is produced by theorem-level joint-law evidence and the final theorem has no private axiom debt.",
-      "next_action": "No Step 4 repair remains; keep this classification unless a later strict Textbook Complete pass changes the statement or proof route."
+      "classification_reason": "Step 5.6 strict contract reconciliation supersedes the earlier Good Corpus classification: this row has build/public-surface evidence but no verified proof_contract evidence for its proved obligation ledger. It is therefore not counted as strict textbook_proof_completed until the source-route signatures and obligation contracts are checked.",
+      "next_action": "Run Step 6A source-route extraction/signature freeze for this task, then either add honest verified proof_contract evidence or keep/reclassify the task as adapter, bridge, or open debt."
     },
     {
       "task_id": "thm_13_14",
@@ -736,61 +837,118 @@
       "lean_file": "ToyApollo/Output/thm_13_14.lean",
       "declarations": [
         "thm_13_14",
+        "thm_13_14_identity",
         "thm_13_14_from_intervalFubini_piLambda",
+        "thm_13_14_isConditionalExpectationVersion",
         "thm_13_14_intervalFubiniSupport",
-        "thm_13_14_piLambdaExtensionSupport"
+        "thm_13_14_interval_fubini_from_joint_density",
+        "thm_13_14_setIntegral_jointDensity_eq",
+        "thm_13_14_integrable_under_jointDensity",
+        "thm_13_14_jointDensity_integrable",
+        "thm_13_14_kernel_stronglyMeasurable",
+        "thm_13_14_kernel_mul_marginal_eq_integral",
+        "thm_13_14_gWeighted_abs_integrable",
+        "thm_13_14_marginalDensity_pos_of_nonneg_ne_zero",
+        "thm_13_14_kernel_abs_mul_marginal_le_integral_abs",
+        "thm_13_14_kernelWeighted_integrable_from_gWeighted",
+        "thm_13_14_interval_weighted_identity",
+        "thm_13_14_piLambdaExtensionSupport",
+        "thm_13_14_piLambdaExtensionSupport_from_integrable",
+        "phase2_measure_eq_withDensity_of_forall_measurable",
+        "phase2_setIntegral_withDensity_ofReal_eq",
+        "phase2_integrable_withDensity_ofReal_of_weighted",
+        "phase2_vectorMeasure_ext_of_Icc"
       ],
-      "primary_class": "open_math_debt",
+      "primary_class": "textbook_proof_completed",
       "flags": [
-        "public_interface_leak",
-        "source_route_open",
+        "public_interface_clean",
+        "interface_bridge_present",
         "ledger_unchanged"
       ],
       "evidence": [
         {
           "file": "ToyApollo/Output/thm_13_14.lean",
-          "line": 327,
-          "kind": "theorem",
-          "text": "theorem thm_13_14_from_intervalFubini_piLambda"
-        },
-        {
-          "file": "ToyApollo/Output/thm_13_14.lean",
-          "line": 287,
-          "kind": "def",
-          "text": "def thm_13_14_intervalFubiniSupport"
-        },
-        {
-          "file": "ToyApollo/Output/thm_13_14.lean",
-          "line": 296,
-          "kind": "def",
-          "text": "def thm_13_14_piLambdaExtensionSupport"
-        },
-        {
-          "file": "ToyApollo/Output/thm_13_14.lean",
-          "line": 347,
+          "line": 818,
           "kind": "theorem",
           "text": "theorem thm_13_14"
         },
         {
-          "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
-          "line": 111,
-          "kind": "audit_signal",
-          "text": "`thm_13_14`"
+          "file": "ToyApollo/Output/thm_13_14.lean",
+          "line": 835,
+          "kind": "theorem",
+          "text": "theorem thm_13_14_identity"
+        },
+        {
+          "file": "ToyApollo/Output/thm_13_14.lean",
+          "line": 319,
+          "kind": "def",
+          "text": "def thm_13_14_isConditionalExpectationVersion"
+        },
+        {
+          "file": "ToyApollo/Output/thm_13_14.lean",
+          "line": 437,
+          "kind": "theorem",
+          "text": "theorem thm_13_14_kernel_stronglyMeasurable"
+        },
+        {
+          "file": "ToyApollo/Output/thm_13_14.lean",
+          "line": 538,
+          "kind": "theorem",
+          "text": "theorem thm_13_14_kernelWeighted_integrable_from_gWeighted"
+        },
+        {
+          "file": "ToyApollo/Output/thm_13_14.lean",
+          "line": 690,
+          "kind": "theorem",
+          "text": "theorem thm_13_14_interval_fubini_from_joint_density"
+        },
+        {
+          "file": "ToyApollo/Output/thm_13_14.lean",
+          "line": 721,
+          "kind": "theorem",
+          "text": "theorem thm_13_14_piLambdaExtensionSupport_from_integrable"
+        },
+        {
+          "file": "ToyApollo/Phase2/DensityIntegralBridge.lean",
+          "line": 7,
+          "kind": "interface_bridge",
+          "text": "theorem phase2_measure_eq_withDensity_of_forall_measurable"
+        },
+        {
+          "file": "ToyApollo/Phase2/DensityIntegralBridge.lean",
+          "line": 17,
+          "kind": "interface_bridge",
+          "text": "theorem phase2_setIntegral_withDensity_ofReal_eq"
+        },
+        {
+          "file": "ToyApollo/Phase2/DensityIntegralBridge.lean",
+          "line": 36,
+          "kind": "interface_bridge",
+          "text": "theorem phase2_integrable_withDensity_ofReal_of_weighted"
+        },
+        {
+          "file": "ToyApollo/Phase2/VectorMeasureBorelBridge.lean",
+          "line": 11,
+          "kind": "theorem",
+          "text": "theorem phase2_vectorMeasure_ext_of_Icc"
         },
         {
           "file": "phase2_prompt_packs/thm_13_14/proof_obligations.json",
-          "line": 3,
-          "kind": "metadata_note",
-          "text": "\"task_id\": \"thm_13_14\""
+          "line": 174,
+          "kind": "proof_contract",
+          "text": "\"proof_contract_status\": \"verified\""
         }
       ],
       "validation": [
+        "lake env lean ToyApollo/Phase2/VectorMeasureBorelBridge.lean",
+        "lake env lean ToyApollo/Phase2/DensityIntegralBridge.lean",
         "lake env lean ToyApollo/Output/thm_13_14.lean",
-        "python tools/validate_phase2_completion_classification.py",
-        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+        "python tools/validate_phase2_obligation_contracts.py --task thm_13_14",
+        "python tools/validate_phase2_completion_classification.py --require-proof-contract",
+        "python tools/audit_phase2_clean_debt_surface.py --write-report --fail-on-errors"
       ],
-      "classification_reason": "Open math debt remains because interval Fubini and pi-lambda extension are not derived internally; Step 6B removed the private axiom and landed theorem-level final assembly from explicit public Fubini and extension premises.",
-      "next_action": "Replace the public Fubini and extension premises with theorem-level density/Fubini, kernel integrability, and generator-extension evidence."
+      "classification_reason": "The public theorem now follows the textbook route at theorem level: density-to-withDensity rewrite, interval Fubini calculation, kernel algebra, kernel measurability, kernel-weighted integrability derived from the weighted L1 route, and pi-lambda/generator extension are all proved internally. Public proof-package premises hIntervals, hExtend, hKernelWeightedInt, and hIdentityKernelWeightedInt are absent. The remaining public assumptions are source-facing formal spellings of joint density measurability/nonnegativity, g in L1(P) under the density, and the source-stated nonzero marginal simplification.",
+      "next_action": "No thm_13_14 proof-production action remains; keep future changes limited to reviewer-requested refinements or downstream call-site updates."
     },
     {
       "task_id": "ex_14_3_1",
@@ -847,10 +1005,11 @@
       "validation": [
         "lake env lean ToyApollo/Output/ex_14_3_1.lean",
         "python tools/validate_phase2_completion_classification.py",
-        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors",
+        "python tools/validate_phase2_obligation_contracts.py --task ex_14_3_1 --write-report"
       ],
-      "classification_reason": "Worker-D evidence records a closed law-level source route with setup fields used as source/object data, not proof packages.",
-      "next_action": "Keep the source setup documented; no private proof debt is recorded for this law-level statement."
+      "classification_reason": "Worker-D evidence records a closed law-level source route with setup fields used as source/object data, not proof packages. Step 5.6 reconciliation: no task-local proof obligations are in scope because Level 0 direct proof/source-law setup; the task-local proof_obligations.json has no blocking obligation rows, and no adapter/support constructor is being used as proof-contract evidence.",
+      "next_action": "Keep as Level 0 direct statement/setup unless a later source-route review introduces concrete proof obligations."
     },
     {
       "task_id": "ex_14_3_2",
@@ -907,10 +1066,11 @@
       "validation": [
         "lake env lean ToyApollo/Output/ex_14_3_2.lean",
         "python tools/validate_phase2_completion_classification.py",
-        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
+        "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors",
+        "python tools/validate_phase2_obligation_contracts.py --task ex_14_3_2 --write-report"
       ],
-      "classification_reason": "Worker-D evidence records a closed law-level source route with setup fields used as source/object data, not proof packages.",
-      "next_action": "Keep the source setup documented; no private proof debt is recorded for this law-level statement."
+      "classification_reason": "Worker-D evidence records a closed law-level source route with setup fields used as source/object data, not proof packages. Step 5.6 reconciliation: no task-local proof obligations are in scope because Level 0 direct proof/source-law setup; the task-local proof_obligations.json has no blocking obligation rows, and no adapter/support constructor is being used as proof-contract evidence.",
+      "next_action": "Keep as Level 0 direct statement/setup unless a later source-route review introduces concrete proof obligations."
     },
     {
       "task_id": "ex_14_4_1",
@@ -1384,10 +1544,11 @@
         "prob_14_3_not_tight",
         "prob_14_3"
       ],
-      "primary_class": "textbook_proof_completed",
+      "primary_class": "needs_decision",
       "flags": [
         "public_interface_clean",
-        "ledger_unchanged"
+        "ledger_unchanged",
+        "metadata_only_cleanliness_risk"
       ],
       "evidence": [
         {
@@ -1432,8 +1593,8 @@
         "python tools/validate_phase2_completion_classification.py",
         "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
       ],
-      "classification_reason": "Worker-D evidence records a closed law-level counterexample route with setup used as source/object data.",
-      "next_action": "Keep the setup public and documented as source data."
+      "classification_reason": "Step 5.6 strict contract reconciliation supersedes the earlier Good Corpus classification: this row has build/public-surface evidence but no verified proof_contract evidence for its proved obligation ledger. It is therefore not counted as strict textbook_proof_completed until the source-route signatures and obligation contracts are checked.",
+      "next_action": "Run Step 6A source-route extraction/signature freeze for this task, then either add honest verified proof_contract evidence or keep/reclassify the task as adapter, bridge, or open debt."
     },
     {
       "task_id": "prob_14_4",
@@ -1444,10 +1605,11 @@
         "prob_14_4_converges_to_dirac_zero",
         "prob_14_4"
       ],
-      "primary_class": "textbook_proof_completed",
+      "primary_class": "needs_decision",
       "flags": [
         "public_interface_clean",
-        "ledger_unchanged"
+        "ledger_unchanged",
+        "metadata_only_cleanliness_risk"
       ],
       "evidence": [
         {
@@ -1492,8 +1654,8 @@
         "python tools/validate_phase2_completion_classification.py",
         "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
       ],
-      "classification_reason": "Worker-D evidence records a closed law-level shrinking-Gaussian route with setup used as source/object data.",
-      "next_action": "Keep the setup public and documented as source data."
+      "classification_reason": "Step 5.6 strict contract reconciliation supersedes the earlier Good Corpus classification: this row has build/public-surface evidence but no verified proof_contract evidence for its proved obligation ledger. It is therefore not counted as strict textbook_proof_completed until the source-route signatures and obligation contracts are checked.",
+      "next_action": "Run Step 6A source-route extraction/signature freeze for this task, then either add honest verified proof_contract evidence or keep/reclassify the task as adapter, bridge, or open debt."
     },
     {
       "task_id": "prob_14_7",
@@ -1504,10 +1666,11 @@
         "prob_14_7_sum_laws_converge",
         "prob_14_7"
       ],
-      "primary_class": "textbook_proof_completed",
+      "primary_class": "needs_decision",
       "flags": [
         "public_interface_clean",
-        "ledger_unchanged"
+        "ledger_unchanged",
+        "metadata_only_cleanliness_risk"
       ],
       "evidence": [
         {
@@ -1552,8 +1715,8 @@
         "python tools/validate_phase2_completion_classification.py",
         "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
       ],
-      "classification_reason": "Worker-D evidence records theorem-level characteristic and Levy landings; public setup fields are source/object assumptions.",
-      "next_action": "Keep setup assumptions public and documented; no private proof-field debt is recorded for this statement."
+      "classification_reason": "Step 5.6 strict contract reconciliation supersedes the earlier Good Corpus classification: this row has build/public-surface evidence but no verified proof_contract evidence for its proved obligation ledger. It is therefore not counted as strict textbook_proof_completed until the source-route signatures and obligation contracts are checked.",
+      "next_action": "Run Step 6A source-route extraction/signature freeze for this task, then either add honest verified proof_contract evidence or keep/reclassify the task as adapter, bridge, or open debt."
     },
     {
       "task_id": "prob_14_8",
@@ -1619,10 +1782,11 @@
         "prob_14_9_mapped_characteristic_convergence",
         "prob_14_9"
       ],
-      "primary_class": "textbook_proof_completed",
+      "primary_class": "needs_decision",
       "flags": [
         "public_interface_clean",
-        "ledger_unchanged"
+        "ledger_unchanged",
+        "metadata_only_cleanliness_risk"
       ],
       "evidence": [
         {
@@ -1667,8 +1831,8 @@
         "python tools/validate_phase2_completion_classification.py",
         "python tools/audit_phase2_clean_debt_surface.py --fail-on-errors"
       ],
-      "classification_reason": "Worker-D evidence records a closed law-level continuous-mapping route; setup fields are natural source hypotheses.",
-      "next_action": "Keep setup public; consider audit allowlisting for reviewed source setup if review noise becomes costly."
+      "classification_reason": "Step 5.6 strict contract reconciliation supersedes the earlier Good Corpus classification: this row has build/public-surface evidence but no verified proof_contract evidence for its proved obligation ledger. It is therefore not counted as strict textbook_proof_completed until the source-route signatures and obligation contracts are checked.",
+      "next_action": "Run Step 6A source-route extraction/signature freeze for this task, then either add honest verified proof_contract evidence or keep/reclassify the task as adapter, bridge, or open debt."
     },
     {
       "task_id": "thm_14_5",
@@ -1814,7 +1978,7 @@
         },
         {
           "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
-          "line": 113,
+          "line": 117,
           "kind": "audit_signal",
           "text": "`thm_14_7`"
         },
@@ -1861,7 +2025,7 @@
         },
         {
           "file": "docs/phase2_ch10_14_clean_debt_surface_audit.md",
-          "line": 116,
+          "line": 122,
           "kind": "audit_signal",
           "text": "`thm_14_8`"
         },

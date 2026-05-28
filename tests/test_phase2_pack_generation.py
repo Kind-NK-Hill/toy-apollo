@@ -18,7 +18,7 @@ from src.toy_apollo.phase2_pack_generation import (  # noqa: E402
     write_existing_output_review_queue,
     write_prompt_pack,
 )
-from src.toy_apollo.phase2_prompt_pack import validate_candidate_hard_checks  # noqa: E402
+from src.toy_apollo.phase2_prompt_pack import _build_build_result_payload, validate_candidate_hard_checks  # noqa: E402
 from src.ledger_manager import LedgerManager, TaskStatus  # noqa: E402
 from src.toy_apollo.phase2_semantic_review import (  # noqa: E402
     SEMANTIC_REVIEW_PROMPT_VERSION,
@@ -187,6 +187,11 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             review_template = json.loads((pack_dir / "semantic_review_result_template_v1.json").read_text(encoding="utf-8"))
             schema_hints = review_template["reviewer_schema_hints"]
             self.assertEqual(schema_hints["section_status_values"], ["covered", "partial", "missing", "violated", "unclear"])
+            self.assertIn("obligation_item_contract_fields", schema_hints)
+            self.assertEqual(
+                schema_hints["obligation_item_contract_fields"]["proof_contract_status"],
+                "unverified | verified | failed | not_applicable | accepted_adapter | open_math_debt | beyond_book_exception",
+            )
             self.assertEqual(
                 schema_hints["downstream_consumer_entry_shape"],
                 {
@@ -199,12 +204,68 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
 
             review_prompt = (pack_dir / "semantic_review_prompt_v1.md").read_text(encoding="utf-8")
             self.assertIn("Status enum fields", review_prompt)
+            self.assertIn("proof_contract_status = verified", review_prompt)
             self.assertIn("downstream_adequacy.consumers_checked entries must be objects", review_prompt)
             self.assertIn("forbidden_weakenings entries use status not_present/present/not_applicable", review_prompt)
 
             review_context = (pack_dir / "semantic_review_context_v1.md").read_text(encoding="utf-8")
             self.assertIn("Proof obligation tracking: `Level 0", review_context)
             self.assertNotIn("## Proof Obligation Ledger", review_context)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_build_check_rejects_draft_superseded_by_official_output(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_stale_draft_official"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_pack_generation_stale_draft_official"
+            stale_draft = f"import Mathlib\n\ntheorem {task_id} : True := by\n  trivial\n"
+            repaired_output = f"import Mathlib\n\n-- repaired official output\ntheorem {task_id} : True := by\n  trivial\n"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(
+                root,
+                task_id,
+                candidate_code=stale_draft,
+            )
+            os.utime(pack_dir / "draft.lean", (1000, 1000))
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(repaired_output, encoding="utf-8")
+            os.utime(output_path, (2000, 2000))
+
+            success, detail = asyncio.run(build_check_prompt_pack_candidate(task_id, ledger, settings))
+
+            self.assertFalse(success)
+            self.assertIn("Stale build-check source target", detail)
+            self.assertIn("review-now --review-subject existing", detail)
+            self.assertFalse((pack_dir / "candidate_v1.lean").exists())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_build_check_scans_all_official_targets_for_newer_divergent_output(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_multiple_official_targets"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_pack_generation_multiple_official_targets"
+            stale_draft = f"import Mathlib\n\ntheorem {task_id} : True := by\n  trivial\n"
+            repaired_output = f"import Mathlib\n\n-- repaired secondary official output\ntheorem {task_id} : True := by\n  trivial\n"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(
+                root,
+                task_id,
+                candidate_code=stale_draft,
+            )
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(stale_draft, encoding="utf-8")
+            os.utime(output_path, (1000, 1000))
+            os.utime(pack_dir / "draft.lean", (1000, 1000))
+            secondary_output = settings.output_lean_files_dir / "08_chap4_measurable_functions" / f"{task_id}.lean"
+            secondary_output.parent.mkdir(parents=True, exist_ok=True)
+            secondary_output.write_text(repaired_output, encoding="utf-8")
+            os.utime(secondary_output, (2000, 2000))
+
+            success, detail = asyncio.run(build_check_prompt_pack_candidate(task_id, ledger, settings))
+
+            self.assertFalse(success)
+            self.assertIn(str(secondary_output), detail)
+            self.assertIn("Stale build-check source target", detail)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -460,6 +521,43 @@ theorem thm_10_8 : True := by
         self.assertIn("prob_10_10", detail)
         self.assertEqual(diagnostics[0]["kind"], "undeclared_local_import")
 
+    def test_build_result_classifies_task_prefixed_unknown_identifier_as_missing_local_foundation(self):
+        diagnostics = [
+            {
+                "stage": "repl",
+                "kind": "unknown_identifier",
+                "message": "Line 129, Col 8: Unknown identifier `prob_11_10_polya_uniformization_from_pointwise`",
+                "line": 129,
+                "column": 8,
+                "blocking_symbols": ["prob_11_10_polya_uniformization_from_pointwise"],
+            }
+        ]
+
+        payload = _build_build_result_payload(
+            task_id="prob_11_10",
+            attempt=7,
+            candidate_path=Path("candidate_v7.lean"),
+            candidate_code="theorem prob_11_10 : True := by\n  exact prob_11_10_polya_uniformization_from_pointwise\n",
+            candidate_kind="draft",
+            built_at="2026-05-28T00:00:00Z",
+            hard_checks_success=True,
+            repl_success=False,
+            repl_output="unknown identifier",
+            temp_build_success=False,
+            temp_build_output="unknown identifier",
+            final_build_success=False,
+            final_build_output="",
+            diagnostics=diagnostics,
+            disposition="build_check_temp_build_failed",
+        )
+
+        self.assertEqual(payload["primary_failure_kind"], "missing_local_foundation_lemma")
+        self.assertEqual(payload["diagnostics"][0]["kind"], "missing_local_foundation_lemma")
+        self.assertEqual(
+            payload["diagnostics"][0]["local_missing_symbols"],
+            ["prob_11_10_polya_uniformization_from_pointwise"],
+        )
+
     def test_review_existing_success_generates_official_snapshot_and_review_artifacts(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_review_existing_success"
         try:
@@ -484,6 +582,71 @@ theorem thm_10_8 : True := by
             self.assertTrue(str(task["latest_verify_result_file"]).endswith("verify_result_v1.json"))
             self.assertEqual(task["pack_candidate_state"], "draft")
             self.assertTrue(str(task["current_review_request_file"]).endswith("semantic_review_request_v1.json"))
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_review_existing_uses_latest_official_target_when_multiple_exist(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_review_existing_latest_target"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_pack_generation_review_existing_latest_target"
+            old_output = f"import Mathlib\n\n-- old official output\ntheorem {task_id} : True := by\n  trivial\n"
+            latest_output = f"import Mathlib\n\n-- latest official output\ntheorem {task_id} : True := by\n  trivial\n"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(
+                root,
+                task_id,
+                completed=True,
+            )
+            output_path.write_text(old_output, encoding="utf-8")
+            os.utime(output_path, (1000, 1000))
+            secondary_output = settings.output_lean_files_dir / "08_chap4_measurable_functions" / f"{task_id}.lean"
+            secondary_output.parent.mkdir(parents=True, exist_ok=True)
+            secondary_output.write_text(latest_output, encoding="utf-8")
+            os.utime(secondary_output, (2000, 2000))
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "build ok"),
+            ):
+                success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
+
+            self.assertTrue(success, detail)
+            self.assertEqual((pack_dir / "official_snapshot_v1.lean").read_text(encoding="utf-8"), latest_output)
+            task = ledger.ledger["tasks"][task_id]
+            self.assertEqual(task["current_review_subject_kind"], "official_output")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_review_existing_queue_uses_latest_target_when_multiple_exist(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_queue_latest_target"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_pack_generation_queue_latest_target"
+            old_output = f"import Mathlib\n\n-- old official output\ntheorem {task_id} : True := by\n  trivial\n"
+            latest_output = f"import Mathlib\n\n-- latest queue official output\ntheorem {task_id} : True := by\n  trivial\n"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(
+                root,
+                task_id,
+                completed=True,
+            )
+            output_path.write_text(old_output, encoding="utf-8")
+            os.utime(output_path, (1000, 1000))
+            secondary_output = settings.output_lean_files_dir / "08_chap4_measurable_functions" / f"{task_id}.lean"
+            secondary_output.parent.mkdir(parents=True, exist_ok=True)
+            secondary_output.write_text(latest_output, encoding="utf-8")
+            os.utime(secondary_output, (2000, 2000))
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "build ok"),
+            ):
+                success, detail = asyncio.run(write_existing_output_review_queue([task_id], ledger, settings))
+
+            self.assertTrue(success, detail)
+            report_path = next((settings.phase2_prompt_packs_dir / "_reports").glob("review_existing_queue_*.json"))
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertEqual(report["tasks"][0]["official_output_file"], str(secondary_output))
+            self.assertEqual((pack_dir / "official_snapshot_v1.lean").read_text(encoding="utf-8"), latest_output)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

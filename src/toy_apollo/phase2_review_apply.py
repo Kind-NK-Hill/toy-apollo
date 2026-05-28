@@ -177,6 +177,13 @@ def _invalid_codex_review_result(review_input: dict[str, Any], reason: str, raw_
         "verdict": "inconclusive",
         "confidence": "none",
         "summary": reason,
+        "reviewer_independence": {
+            "role": "independent_read_only_reviewer",
+            "read_only": True,
+            "did_edit_candidate": False,
+            "used_current_review_request": False,
+            "attestation": f"Review-apply generated invalid-result record: {reason}",
+        },
         "source_claims": [],
         "claim_mapping": [],
         "findings": [{"severity": "error", "category": "review_apply", "message": reason}],

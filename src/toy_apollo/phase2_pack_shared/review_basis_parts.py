@@ -36,6 +36,7 @@ def review_spine_contract(task: dict[str, Any]) -> dict[str, Any]:
         "pass_evidence_requirements": [
             "List the source-side obligations checked.",
             "Name the Lean landing place for each checked obligation.",
+            "For any covered proof obligation, record a verified proof contract with expected theorem signature, landing kind, signature match, body reassumption check, and public premise check.",
             "Explain why any abstraction used is faithful rather than a substitution.",
         ],
     }

@@ -62,6 +62,13 @@ class Phase2ReviewTestSupport:
             "verdict": verdict,
             "confidence": "high" if verdict == "pass" else "medium",
             "summary": f"fake reviewer {verdict}",
+            "reviewer_independence": {
+                "role": "independent_read_only_reviewer",
+                "read_only": True,
+                "did_edit_candidate": False,
+                "used_current_review_request": True,
+                "attestation": "fake test reviewer is independent and read-only",
+            },
             "source_claims": source_claims,
             "claim_mapping": claim_mapping,
             "spine_alignment": {
@@ -235,6 +242,13 @@ class Phase2ReviewTestSupport:
                     "verdict": verdict,
                     "confidence": "high",
                     "summary": f"manual codex review {verdict}",
+                    "reviewer_independence": {
+                        "role": "independent_read_only_reviewer",
+                        "read_only": True,
+                        "did_edit_candidate": False,
+                        "used_current_review_request": True,
+                        "attestation": "manual test reviewer is independent and read-only",
+                    },
                     "source_claims": source_claims if source_claims is not None else [{"claim": "source claim"}],
                     "claim_mapping": claim_mapping
                     if claim_mapping is not None

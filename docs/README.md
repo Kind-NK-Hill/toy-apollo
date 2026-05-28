@@ -7,15 +7,22 @@ it under `docs/archive/` and mark it as non-authoritative.
 
 ## Current Runtime Docs
 
-Use these when operating or modifying the current pipeline:
+Use these when operating or modifying Phase 2:
 
-- `phase2_prompt_pack_workflow.md`
-- `phase2_proof_fidelity_contract.md`
-- `phase2_problem_soft_dependency_workflow.md`
-- `phase2_candidate_guidelines.md`
-- `phase2_review_loop_protocol.md`
-- `proof_debt_next_llm_playbook.md`
-- `phase2_ch10_14_clean_debt_goals.md`
+- `phase2/README.md`
+- `phase2/proof_fidelity_contract.md`
+- `phase2/workflow.md`
+- `phase2/candidate_guidelines.md`
+- `phase2/review_loop_protocol.md`
+- `phase2/debt_cleanup_playbook.md`
+- `phase2/classification_policy.md`
+- `phase2/tools.md`
+- `phase2/current_corpus_status.md`
+- `phase2/textbook_completion_rework_policy.md`
+- `phase2/textbook_complete_targets.json`
+
+Legacy root-level Phase 2 Markdown files are compatibility redirects only. Do
+not use them as the default policy source.
 
 ## Current Generated Artifacts
 
@@ -34,7 +41,9 @@ refresh. Keep them in root `docs/` unless the tools are updated at the same time
 
 - `modification_0525_steps/` contains temporary step plans, queues, decision
   records, and postmortems for the May 25 Phase2 redesign work. These files are
-  execution-control evidence, not stable runtime policy.
+  execution-control evidence, not stable runtime policy. Current tools may keep
+  a legacy fallback for old worktrees, but active target selection belongs under
+  `docs/phase2/`.
 - One-off diagnostic reports should go under `docs/archive/`, not root `docs/`.
 
 ## Policy Notes
@@ -62,6 +71,8 @@ Default active searches should use normal `rg`; `.rgignore` excludes backup, arc
   notes. They are audit trail only.
 - `docs/archive/phase2_diagnostic_reports_2026-05-21/` contains one-off
   diagnostic reports and manifests from the May 2026 proof-debt cleanup.
+- `docs/archive/phase2_2026_05_rework/` contains full copies of the old long
+  Phase 2 docs and May 25 step records.
 - Do not use archived handoff files as current proof-debt policy.
 - Current Chapter 10-14 proof-debt truth comes from
   `tools/audit_phase2_clean_debt_surface.py` and its generated reports.

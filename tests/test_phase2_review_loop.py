@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import shutil
 import sys
 import unittest
@@ -286,7 +287,7 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
                 )
 
             self.assertTrue(success, detail)
-            self.assertIn("must now perform the reviewer step", detail)
+            self.assertIn("independent read-only reviewer", detail)
             self.assertIn("continue this same-session auto-loop now", detail)
             task_record = ledger.ledger["tasks"][task_id]
             self.assertEqual(task_record.get("current_auto_loop_phase"), "reviewing")
@@ -476,6 +477,171 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertTrue(success, detail)
             task_record = ledger.ledger["tasks"][task_id]
             self.assertEqual(str(task_record.get("current_review_repair_request_file", "") or ""), "")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_review_now_candidate_rejects_candidate_superseded_by_official_output(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_stale_candidate_official"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_loop_stale_candidate_official"
+            stale_candidate = f"import Mathlib\n\ntheorem {task_id} : True := by\n  trivial\n"
+            repaired_output = f"import Mathlib\n\n-- repaired official output\ntheorem {task_id} : True := by\n  trivial\n"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(
+                root,
+                task_id,
+                candidate_code=stale_candidate,
+            )
+
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            candidate_path = Path(str(ledger.ledger["tasks"][task_id]["latest_build_ready_candidate_file"]))
+            os.utime(candidate_path, (1000, 1000))
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(repaired_output, encoding="utf-8")
+            os.utime(output_path, (2000, 2000))
+
+            success, detail = asyncio.run(run_codex_review_now(task_id, ledger, settings, review_subject="candidate"))
+
+            self.assertFalse(success)
+            self.assertIn("Stale candidate review target", detail)
+            self.assertIn("review-now --review-subject existing", detail)
+            self.assertFalse((pack_dir / "semantic_review_request.json").exists())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_review_now_candidate_allows_newer_active_candidate_repair(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_newer_candidate_allowed"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_loop_newer_candidate_allowed"
+            active_candidate = f"import Mathlib\n\n-- active candidate repair\ntheorem {task_id} : True := by\n  trivial\n"
+            old_output = f"import Mathlib\n\n-- old official output\ntheorem {task_id} : True := by\n  trivial\n"
+            ledger, settings, _pack_dir, output_path = self._setup_trivial_phase2_task(
+                root,
+                task_id,
+                candidate_code=active_candidate,
+            )
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(old_output, encoding="utf-8")
+            os.utime(output_path, (1000, 1000))
+
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            candidate_path = Path(str(ledger.ledger["tasks"][task_id]["latest_build_ready_candidate_file"]))
+            os.utime(candidate_path, (2000, 2000))
+
+            success, detail = asyncio.run(run_codex_review_now(task_id, ledger, settings, review_subject="candidate"))
+
+            self.assertTrue(success, detail)
+            self.assertEqual(ledger.ledger["tasks"][task_id]["current_review_subject_kind"], "candidate")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_review_now_current_rejects_stale_candidate_request_after_official_output_changes(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_current_stale_candidate"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_loop_current_stale_candidate"
+            stale_candidate = f"import Mathlib\n\ntheorem {task_id} : True := by\n  trivial\n"
+            repaired_output = f"import Mathlib\n\n-- repaired official output\ntheorem {task_id} : True := by\n  trivial\n"
+            ledger, settings, _pack_dir, output_path = self._setup_trivial_phase2_task(
+                root,
+                task_id,
+                candidate_code=stale_candidate,
+            )
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            success, detail = asyncio.run(run_codex_review_now(task_id, ledger, settings, review_subject="candidate"))
+            self.assertTrue(success, detail)
+
+            candidate_path = Path(str(ledger.ledger["tasks"][task_id]["latest_build_ready_candidate_file"]))
+            os.utime(candidate_path, (1000, 1000))
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(repaired_output, encoding="utf-8")
+            os.utime(output_path, (2000, 2000))
+
+            success, detail = asyncio.run(run_codex_review_now(task_id, ledger, settings, review_subject="current"))
+
+            self.assertFalse(success)
+            self.assertIn("Stale current candidate review request", detail)
+            self.assertIn("review-now --review-subject existing", detail)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_review_fix_rejects_candidate_seed_superseded_by_official_output(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_stale_repair_seed"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_loop_stale_repair_seed"
+            stale_candidate = f"import Mathlib\n\ntheorem {task_id} : True := by\n  trivial\n"
+            repaired_output = f"import Mathlib\n\n-- repaired official output\ntheorem {task_id} : True := by\n  trivial\n"
+            from src.toy_apollo.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
+
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(
+                root,
+                task_id,
+                candidate_code=stale_candidate,
+            )
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            result_path = self._write_codex_review_result(pack_dir, verdict="fail", source_claims=[], claim_mapping=[])
+            asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+            candidate_path = Path(str(ledger.ledger["tasks"][task_id]["current_review_repair_seed_file"]))
+            os.utime(candidate_path, (1000, 1000))
+            draft_before = "import Mathlib\n\n-- do not overwrite stale repair seed\n"
+            (pack_dir / "draft.lean").write_text(draft_before, encoding="utf-8")
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(repaired_output, encoding="utf-8")
+            os.utime(output_path, (2000, 2000))
+
+            success, detail = asyncio.run(run_codex_review_fix(task_id, ledger, settings))
+
+            self.assertFalse(success)
+            self.assertIn("Stale review-fix repair seed target", detail)
+            self.assertEqual((pack_dir / "draft.lean").read_text(encoding="utf-8"), draft_before)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_review_fix_backfill_rejects_candidate_seed_superseded_by_official_output(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_stale_backfill_seed"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_loop_stale_backfill_seed"
+            stale_candidate = f"import Mathlib\n\ntheorem {task_id} : True := by\n  trivial\n"
+            repaired_output = f"import Mathlib\n\n-- repaired official output\ntheorem {task_id} : True := by\n  trivial\n"
+            from src.toy_apollo.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
+
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(
+                root,
+                task_id,
+                candidate_code=stale_candidate,
+            )
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            result_path = self._write_codex_review_result(pack_dir, verdict="fail", source_claims=[], claim_mapping=[])
+            asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+            seed_path = Path(str(ledger.ledger["tasks"][task_id]["current_review_repair_seed_file"]))
+            os.utime(seed_path, (1000, 1000))
+            ledger.update_runtime_metadata(
+                task_id,
+                current_review_repair_request_file="",
+                current_review_repair_summary_file="",
+                current_review_repair_seed_file="",
+                current_review_repair_origin_result_file="",
+                current_review_repair_archive_file="",
+            )
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(repaired_output, encoding="utf-8")
+            os.utime(output_path, (2000, 2000))
+
+            success, detail = asyncio.run(run_codex_review_fix(task_id, ledger, settings))
+
+            self.assertFalse(success)
+            self.assertIn("Stale review-fix backfill seed target", detail)
+            self.assertEqual(str(ledger.ledger["tasks"][task_id].get("current_review_repair_request_file", "") or ""), "")
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

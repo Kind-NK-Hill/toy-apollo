@@ -8,10 +8,13 @@ from src.block_id_naming import canonicalize_block_id, canonicalize_id_list, can
 
 from .core import LedgerManager
 from .phase2_pack_shared.artifacts import (
+    DRAFT_FILE_NAME,
     SEMANTIC_REVIEW_REQUEST_ALIAS,
     SEMANTIC_REVIEW_REQUEST_PREFIX,
     SEMANTIC_REVIEW_RESULT_TEMPLATE_ALIAS,
     find_existing_task_file,
+    select_latest_existing_task_file,
+    stale_candidate_official_output_message,
 )
 from .phase2_pack_shared.io import read_file_safely, read_json_safely, sha256_json, sha256_text
 from .phase2_pack_shared.review_basis_parts import (
@@ -335,8 +338,19 @@ def _validate_review_input_freshness(
         latest_ready_hash = str(ledger.ledger.get("tasks", {}).get(task_id, {}).get("latest_build_ready_candidate_hash", "") or "")
         if current_review_subject_hash != latest_ready_hash:
             return "candidate hash changed since build-check generation", {}
+        stale_official_message = stale_candidate_official_output_message(
+            task_id=task_id,
+            source_plan=source_plan,
+            settings=settings,
+            candidate_path=subject_file_path,
+            candidate_hash=current_review_subject_hash,
+            draft_path=pack_dir / DRAFT_FILE_NAME,
+            action="current candidate review request",
+        )
+        if stale_official_message:
+            return stale_official_message, {}
     else:
-        current_output = find_existing_task_file(task_id, source_plan, settings)
+        current_output = select_latest_existing_task_file(task_id, source_plan, settings)
         current_output_code = read_file_safely(current_output) if current_output and current_output.exists() else ""
         current_review_subject_hash = sha256_text(current_output_code) if current_output_code else ""
         if current_review_subject_hash != recorded_subject_hash:
@@ -373,7 +387,11 @@ def _load_current_codex_review_request(
     current_record = ledger.ledger.get("tasks", {}).get(task["block_id"], {})
     request_path = _resolve_current_review_request_path(pack_dir, current_record if isinstance(current_record, dict) else {})
     if request_path is None:
-        return "No current codex review request is available; run review-pack/review-existing first.", {}
+        return (
+            "No current codex review request is available; prepare one with "
+            "`review-now --review-subject candidate` for a build-ready candidate or "
+            "`review-now --review-subject existing` for an official output."
+        ), {}
     request_payload = read_json_safely(request_path, {})
     if not isinstance(request_payload, dict):
         return "Current codex review request is invalid JSON; regenerate semantic review materials.", {}

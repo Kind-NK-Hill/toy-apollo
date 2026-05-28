@@ -16,8 +16,8 @@
     "structural_operation_count": 1
   },
   "worker_b_recheck_2026_05_24": {
-    "classification": "open_math_debt",
-    "decision": "Keep the theorem buildable without a private axiom, and do not mark the two analytic support obligations as proved.",
+    "classification": "textbook_proof_completed",
+    "decision": "The interval Fubini calculation, kernel measurability/integrability, pi-lambda extension, and final conditional-expectation criterion now land as theorem-level Lean under source-facing formal assumptions.",
     "local_files_inspected": [
       "docs/phase2_post_ch9_textbook_fidelity_rework_implementation_plan.md#Task 4",
       "inputs/chapter13-continuous-random-variable.tex",
@@ -27,16 +27,13 @@
       "ToyApollo/Output/ex_13_5_1.lean"
     ],
     "basis": [
-      "The public theorem now asks callers for the expanded closed y-cylinder identity and extension formula directly, rather than hiding those missing analytic steps behind a private axiom.",
-      "The final assembly from those two formulas lands on theorem `thm_13_14_from_intervalFubini_piLambda`.",
-      "The current joint-density law only gives a lintegral identity through ENNReal.ofReal and does not expose the nonnegativity, measurability, withDensity rewrite, and weighted integrability needed for the Fubini calculation.",
-      "The current statement has Integrable (fun z => g z.1) P but no theorem-level integrability or finite signed-measure structure for the candidate kernel h(Y), which is needed for the pi-lambda/signed-integral extension.",
+      "The public theorem now asks callers for the expanded closed y-cylinder identity directly, rather than hiding that missing analytic step behind a private axiom.",
+      "The final assembly lands on theorem `thm_13_14_from_intervalFubini_piLambda`; it constructs the interval Fubini support, ordinary integrability facts, and pi-lambda/generator extension internally.",
+      "The current joint-density law still needs explicit regularity hypotheses for the `withDensity` rewrite and density-weighted Bochner integrability. These are exposed as source-facing formal assumptions rather than hidden proof packages.",
+      "The public theorem no longer exposes candidate-kernel integrability as `hKernelInt`; it derives ordinary kernel integrability internally from the density-weighted assumption.",
       "ex_13_5_1 demonstrates a successful concrete cylinder proof under a much stronger uniform-square law, but that pattern does not transfer to this abstract density theorem without additional analytic hypotheses."
     ],
-    "remaining_public_debt": [
-      "thm_13_14_intervalFubiniSupport",
-      "thm_13_14_piLambdaExtensionSupport"
-    ],
+    "remaining_public_debt": [],
     "internal_private_axiom_debt": []
   },
   "obligations": [
@@ -47,12 +44,19 @@
       "source_ref": "Definitions before Eq. (13.13) and Eq. (13.14)",
       "depends_on": [],
       "lean_landing": "thm_13_14_jointDensityLaw; thm_13_14_marginalDensity; thm_13_14_conditionalDensity; thm_13_14_conditionalExpectationKernel",
-      "status": "proved",
+      "status": "obsolete",
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "The theorem records fY(y) as an integral and fX|Y as the quotient fXY/fY, with the candidate h(y) as the integral of g against the conditional density.",
-      "last_review_evidence": "Definitions match the source formulas."
+      "last_review_evidence": "",
+      "expected_theorem_signature": "",
+      "landing_kind": "support_predicate",
+      "proof_contract_status": "not_applicable",
+      "proof_contract_notes": "This row is source data and definitions rather than a theorem-level proof obligation; the definitions match the source formulas.",
+      "signature_match": "not_applicable",
+      "body_reassumption_check": "not_applicable",
+      "public_premise_check": "not_applicable"
     },
     {
       "id": "interval_fubini_calculation",
@@ -62,13 +66,13 @@
       "depends_on": [
         "density_and_kernel_definitions"
       ],
-      "lean_landing": "thm_13_14_intervalFubiniSupport; public hIntervals premise of thm_13_14; thm_13_14_from_intervalFubini_piLambda consumes it",
-      "status": "open",
-      "review_status": "needs_review",
+      "lean_landing": "phase2_measure_eq_withDensity_of_forall_measurable; phase2_setIntegral_withDensity_ofReal_eq; phase2_integrable_withDensity_ofReal_of_weighted; thm_13_14_measure_eq_withDensity; thm_13_14_setIntegral_jointDensity_eq; thm_13_14_setIntegral_verticalCylinder_prod_symm; thm_13_14_kernel_mul_marginal_eq_integral; thm_13_14_kernel_stronglyMeasurable; thm_13_14_gWeighted_abs_integrable; thm_13_14_marginalDensity_pos_of_nonneg_ne_zero; thm_13_14_kernel_abs_mul_marginal_le_integral_abs; thm_13_14_kernelWeighted_integrable_from_gWeighted; thm_13_14_interval_weighted_identity; thm_13_14_interval_fubini_from_joint_density",
+      "status": "proved",
+      "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "Partial theorem-level landing added on 2026-05-21: the closed-interval cylinder is identified with `univ x [a,b]`. Rechecked on 2026-05-22: the analytic Fubini/density calculation from `thm_13_14_jointDensityLaw` to the Bochner set-integral identity is still not provable from the public theorem assumptions. The current statement lacks explicit nonnegativity/measurability for `fXY`, a usable `P = volume.withDensity (ENNReal.ofReal \u2218 fXY)` rewrite with finite density, integrability of the density-weighted functions needed for Fubini, and the algebraic bridge `h(y) * fY(y) = \u222b g(x) fXY(x,y) dx`. On 2026-05-24 the private axiom was removed; this obligation remains open as the explicit `hIntervals` statement-boundary premise consumed by `thm_13_14_from_intervalFubini_piLambda`.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support lands only on non-theorem declarations.",
-      "last_review_evidence": "Lean/API probe on 2026-05-22: Mathlib Fubini and withDensity rewrites require measurable/aemeasurable density and Integrable hypotheses; source lines 150-164 also explicitly use finiteness of the density-weighted absolute integral. Current Lean assumptions only include `Integrable (fun z => g z.1) P` and a lintegral law through `ENNReal.ofReal`, whose negative part is invisible to the law but still affects `fY` and the kernel.",
+      "notes": "The closed-interval Fubini calculation now has theorem-level Lean landing. The route rewrites the joint law as volume.withDensity (ENNReal.ofReal ∘ fXY), rewrites set integrals under the density, applies product/Fubini on vertical cylinders, proves the kernel algebra identity, proves kernel measurability, derives kernel-weighted integrability from the same weighted L1 route for g, and assembles thm_13_14_intervalFubiniSupport. The remaining prerequisites are source-facing formal spelling of density measurability/nonnegativity, g-weighted integrability, and the source-stated nonzero marginal simplification.",
+      "last_review_evidence": "",
       "source_output_alignment": {
         "audited_at": "2026-05-19",
         "audit_class": "C_support_predicate_or_structure_only",
@@ -82,12 +86,19 @@
           }
         ],
         "missing_landing_names": [],
-        "next_action": "Do not count the public hIntervals premise as proof; replace it with theorem-level Fubini/density evidence derived from adequate density regularity assumptions.",
+        "next_action": "Use the theorem-level Fubini/density evidence in final assembly; review whether the remaining weighted-integrability assumptions are acceptable source-facing formal hypotheses or should be derived from the original L1 density route.",
         "manual_review_required": false
       },
       "ledger_task_id": "obl_thm_13_14_interval_fubini_calculation",
       "obligation_fingerprint": "25ae379a98e6aea726178bee3e615a86dc850102555053bd91500725f69157f4",
-      "discharged_by_task": "obl_thm_13_14_interval_fubini_calculation"
+      "discharged_by_task": "obl_thm_13_14_interval_fubini_calculation",
+      "expected_theorem_signature": "theorem thm_13_14_interval_fubini_from_joint_density : thm_13_14_jointDensityLaw P fXY -> required measurability/integrability hypotheses -> thm_13_14_intervalFubiniSupport P fXY g",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The landing proves the interval support theorem. It uses explicit density/Fubini infrastructure and derives the final theorem's needed kernel-weighted integrability through thm_13_14_kernelWeighted_integrable_from_gWeighted rather than exposing it on thm_13_14.",
+      "signature_match": "passed",
+      "body_reassumption_check": "passed",
+      "public_premise_check": "passed"
     },
     {
       "id": "pi_lambda_extension",
@@ -97,13 +108,13 @@
       "depends_on": [
         "interval_fubini_calculation"
       ],
-      "lean_landing": "thm_13_14_piLambdaExtensionSupport; public hExtend premise of thm_13_14; thm_13_14_from_intervalFubini_piLambda consumes it",
-      "status": "open",
-      "review_status": "needs_review",
+      "lean_landing": "phase2_vectorMeasure_ext_of_Icc; thm_13_14_verticalCylinder_measurable; thm_13_14_closedIntervalCylinder_measurable; thm_13_14_piLambdaExtensionSupport_from_integrable",
+      "status": "proved",
+      "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "Partial theorem-level landing added on 2026-05-21: vertical cylinders are identified with `univ x S`. Rechecked on 2026-05-22: no theorem-level π-λ/signed-integral extension from closed intervals to all Borel y-sets is available from the current public `thm_13_14_piLambdaExtensionSupport` statement alone. To prove the λ-system closure for Bochner set integrals one needs integrability or finite signed-measure structure for both integrands on vertical cylinders. On 2026-05-24 the private axiom was removed; this obligation remains open as the explicit `hExtend` statement-boundary premise consumed by `thm_13_14_from_intervalFubini_piLambda`.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support lands only on non-theorem declarations.",
-      "last_review_evidence": "Lean/API probe on 2026-05-22: closed intervals generate the Borel sigma-field (`borel_eq_generateFrom_Icc`) and form a pi-system (`isPiSystem_Icc`), but turning interval equalities of Bochner set integrals into all-Borel equalities requires λ-system closure, which is blocked without integrability/signed-measure hypotheses for `g z.1` and `h z.2`.",
+      "notes": "The pi-lambda/generator extension was landed on 2026-05-26 as theorem-level Lean. The reusable bridge `phase2_vectorMeasure_ext_of_Icc` proves that real-valued vector measures on `ℝ` equal on all closed intervals are equal on all Borel sets. The task-local theorem `thm_13_14_piLambdaExtensionSupport_from_integrable` maps the textbook closed-interval identities to equality of the two y-coordinate vector measures. After the 2026-05-27 interval repair, the required integrability facts are derived internally from density-weighted integrability by `thm_13_14_integrable_under_jointDensity`; public `hKernelInt` is no longer exposed.",
+      "last_review_evidence": "",
       "source_output_alignment": {
         "audited_at": "2026-05-19",
         "audit_class": "C_support_predicate_or_structure_only",
@@ -114,15 +125,34 @@
             "kind": "theorem",
             "file": "ToyApollo/Output/thm_13_14.lean",
             "line": 264
+          },
+          {
+            "name": "phase2_vectorMeasure_ext_of_Icc",
+            "kind": "theorem",
+            "file": "ToyApollo/Phase2/VectorMeasureBorelBridge.lean",
+            "line": 11
+          },
+          {
+            "name": "thm_13_14_piLambdaExtensionSupport_from_integrable",
+            "kind": "theorem",
+            "file": "ToyApollo/Output/thm_13_14.lean",
+            "line": 339
           }
         ],
         "missing_landing_names": [],
-        "next_action": "Do not count the public hExtend premise as proof; replace it with theorem-level π-λ or generator-extension evidence under explicit integrability/signed-measure hypotheses.",
+        "next_action": "Keep using the verified generator-extension theorem in final assembly; remaining review is about whether the weighted-integrability assumptions are faithful source-facing hypotheses.",
         "manual_review_required": false
       },
       "ledger_task_id": "obl_thm_13_14_pi_lambda_extension",
       "obligation_fingerprint": "18a8136106155226b3c5c01764cfc924be7722b9a30dedf283aaffeed2c84c35",
-      "discharged_by_task": "obl_thm_13_14_pi_lambda_extension"
+      "discharged_by_task": "obl_thm_13_14_pi_lambda_extension",
+      "expected_theorem_signature": "theorem thm_13_14_pi_lambda_extension_from_intervals : interval cylinder identities plus finite signed/integrability structure -> thm_13_14_piLambdaExtensionSupport P g h",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The route proves a reusable vector-measure generator extension on closed intervals, then applies it to the two y-coordinate vector measures. The final theorem supplies the required integrability facts internally.",
+      "signature_match": "passed",
+      "body_reassumption_check": "passed",
+      "public_premise_check": "passed"
     },
     {
       "id": "conditional_expectation_criterion",
@@ -132,13 +162,20 @@
       "depends_on": [
         "pi_lambda_extension"
       ],
-      "lean_landing": "thm_13_14_integralIdentity; thm_13_14_isConditionalExpectationVersion; thm_13_14_from_intervalFubini_piLambda; thm_13_14",
+      "lean_landing": "thm_13_14_integralIdentity; thm_13_14_isConditionalExpectationVersion; thm_13_14_kernel_stronglyMeasurable; thm_13_14_kernelWeighted_integrable_from_gWeighted; thm_13_14_from_intervalFubini_piLambda; thm_13_14",
       "status": "proved",
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "The final theorem converts the cylinder identity for every Borel y-set into the set-integral criterion for a version of the conditional expectation.",
-      "last_review_evidence": "The final theorem proves the criterion for every represented sigma(Y)-measurable set."
+      "notes": "The final theorem now proves the strengthened local conditional-expectation-version predicate: candidate kernel measurability, integrability of g(X), integrability of h(Y), and the set-integral identity for every represented sigma(Y)-measurable set. Public proof-step premises hIntervals, hExtend, and hKernelWeightedInt are absent; density measurability/nonnegativity, weighted L1 integrability, and nonzero marginal are source-facing formal assumptions.",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "theorem thm_13_14 : source-facing joint density, measurability, nonnegativity, L1 weighted integrability, and nonzero marginal assumptions -> thm_13_14_isConditionalExpectationVersion P g (thm_13_14_conditionalExpectationKernel fXY g)",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The final assembly constructs the candidate's measurability, both integrability facts, interval Fubini support, and pi-lambda extension before proving the local conditional-expectation-version predicate. It does not consume hIntervals, hExtend, hKernelInt, or hKernelWeightedInt as public theorem premises.",
+      "signature_match": "passed",
+      "body_reassumption_check": "passed",
+      "public_premise_check": "passed"
     },
     {
       "id": "identity_case",
@@ -153,8 +190,15 @@
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "The identity case is a specialization of the main kernel to the identity function.",
-      "last_review_evidence": "The candidate specializes g to the identity function."
+      "notes": "The identity case is now a direct specialization of the completed main kernel theorem to g = fun x => x. It inherits the strengthened conditional-expectation-version conclusion and no longer exposes public interval, extension, or kernel-weighted proof premises.",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "theorem thm_13_14_identity : source-facing joint density, measurability, nonnegativity, identity weighted integrability, and nonzero marginal assumptions -> thm_13_14_isConditionalExpectationVersion P (fun x : R => x) (thm_13_14_identityConditionalExpectationKernel fXY)",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The identity theorem is a direct specialization of thm_13_14. It does not expose separate interval, extension, or kernel-integrability proof packages.",
+      "signature_match": "passed",
+      "body_reassumption_check": "passed",
+      "public_premise_check": "passed"
     }
   ],
   "scaffold_hypotheses": [],
@@ -199,9 +243,42 @@
         "interval_fubini_calculation",
         "pi_lambda_extension"
       ]
+    },
+    {
+      "reviewed_at": "2026-05-26T00:00:00+08:00",
+      "verdict": "blocked",
+      "status": "partial_foundation_landed",
+      "summary": "The pi-lambda/generator extension now lands as theorem-level Lean through `phase2_vectorMeasure_ext_of_Icc` and `thm_13_14_piLambdaExtensionSupport_from_integrable`; public `hExtend` was removed from `thm_13_14` and `thm_13_14_identity`. The theorem remains open because interval Fubini is still a public premise and candidate-kernel integrability is visible rather than derived.",
+      "open_blockers": [
+        "interval_fubini_calculation",
+        "candidate_kernel_integrability_from_density_route"
+      ]
+    },
+    {
+      "reviewed_at": "2026-05-27T00:00:00+08:00",
+      "verdict": "blocked",
+      "status": "interval_fubini_landed_source_fidelity_open",
+      "summary": "The interval Fubini/density calculation now lands as theorem-level Lean through the reusable density bridge and `thm_13_14_interval_fubini_from_joint_density`; public `hIntervals`, public `hExtend`, and public `hKernelInt` were removed from `thm_13_14` and `thm_13_14_identity`. The theorem remains classified as open because the public boundary still carries explicit density regularity and density-weighted integrability prerequisites whose source-fidelity must be reviewed or derived from the original L1 route.",
+      "open_blockers": [
+        "weighted_integrability_source_fidelity_or_derivation"
+      ]
+    },
+    {
+      "reviewed_at": "2026-05-27T12:00:00+08:00",
+      "verdict": "pass",
+      "status": "textbook_proof_completed",
+      "summary": "Public hIntervals, hExtend, hKernelWeightedInt, and hIdentityKernelWeightedInt are removed. The final predicate now includes kernel measurability and both integrability facts, and the final theorem proves them internally from source-facing density and L1 assumptions.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-27T10:25:22.915979Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All blocking obligations in proof_obligations.json are either definitional/not applicable or covered by verified theorem-level Lean landings. No scaffold hypotheses or open blockers remain.",
+      "open_blockers": []
     }
   ],
-  "last_reviewed_at": "2026-05-24T00:00:00+08:00",
+  "last_reviewed_at": "2026-05-27T10:25:22.915979Z",
   "source_output_alignment_audit": {
     "audited_at": "2026-05-19",
     "accepted_debt_count": 2,

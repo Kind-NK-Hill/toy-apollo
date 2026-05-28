@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-05-27T04:13:24.653200Z",
+  "root": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo",
+  "summary": {
+    "finding_count": 0,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    },
+    "category_counts": {},
+    "error_task_count": 0,
+    "error_tasks": []
+  },
+  "findings": [],
+  "step_5_5_result": {
+    "contract_validator_implemented": "yes",
+    "review_apply_hardened": "yes",
+    "current_corpus_contract_clean": "yes",
+    "lean_proof_work_performed": "no",
+    "next_allowed_step": "Step 6A route extraction refresh or Step 6B signature freeze, not direct proof implementation."
+  }
+}

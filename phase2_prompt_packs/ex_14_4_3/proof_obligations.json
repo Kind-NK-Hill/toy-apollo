@@ -23,12 +23,19 @@
       "source_ref": "T_{n,m}=X_{n,0}+...+X_{n,m-1}; X_{n,i} is geometric with success probability p_{n,i}=1-i/n; X_{n,0}=1.",
       "depends_on": [],
       "lean_landing": "ex_14_4_3_CouponTriangularArraySetup; ex_14_4_3_successProbability; import ToyApollo.Output.prob_6_3",
-      "status": "proved",
+      "status": "obsolete",
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "Reuses the Chapter 6 coupon collector formalization rather than rebuilding geometric waiting times; the setup fields are concrete proof obligations, not arbitrary Prop placeholders.",
-      "last_review_evidence": "The candidate imports prob_6_3 and uses Prob63Support.stageSuccessProb, couponCollectorValueReal, and concrete setup fields for stage laws, independence, and sum-law representation."
+      "last_review_evidence": "The candidate imports prob_6_3 and uses Prob63Support.stageSuccessProb, couponCollectorValueReal, and concrete setup fields for stage laws, independence, and sum-law representation.",
+      "expected_theorem_signature": "",
+      "landing_kind": "support_predicate",
+      "proof_contract_status": "not_applicable",
+      "proof_contract_notes": "Step 5.6: coupon decomposition/setup is source data and Chapter 6 interface reuse, not a theorem-level proof obligation.",
+      "signature_match": "not_applicable",
+      "body_reassumption_check": "not_applicable",
+      "public_premise_check": "not_applicable"
     },
     {
       "id": "geometric_moment_formulas",
@@ -39,12 +46,19 @@
         "coupon_geometric_decomposition"
       ],
       "lean_landing": "ex_14_4_3_geometricMgf; ex_14_4_3_geometricMean; ex_14_4_3_geometricVariance; ex_14_4_3_geometricCenteredFourthMoment; ex_14_4_3_GeometricMomentFormulas",
-      "status": "proved",
-      "review_status": "accepted",
+      "status": "partial",
+      "review_status": "needs_review",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "The moment formulas are explicit and packaged for the Lyapunov verification.",
-      "last_review_evidence": "MGF, mean, variance, centered fourth moment, and GeometricMomentFormulas are all explicit."
+      "last_review_evidence": "MGF, mean, variance, centered fourth moment, and GeometricMomentFormulas are all explicit.",
+      "expected_theorem_signature": "theorem ex_14_4_3_geometric_moment_formulas_verified : theorem-level derivation of the geometric MGF, mean, variance, and centered fourth moment formulas for the coupon setup",
+      "landing_kind": "support_predicate",
+      "proof_contract_status": "open_math_debt",
+      "proof_contract_notes": "Step 5.6: formulas are currently packaged as structure fields. They are not marked proved until theorem-level derivations are contract-checked.",
+      "signature_match": "unverified",
+      "body_reassumption_check": "unverified",
+      "public_premise_check": "unverified"
     },
     {
       "id": "lyapunov_fourth_moment_bound",
@@ -79,7 +93,14 @@
       },
       "ledger_task_id": "obl_ex_14_4_3_lyapunov_fourth_moment_bound",
       "obligation_fingerprint": "24e8ef50fb7f579eac8e871464f4e617c193be502b634b0b7b03b00e024a1718",
-      "discharged_by_task": "obl_ex_14_4_3_lyapunov_fourth_moment_bound"
+      "discharged_by_task": "obl_ex_14_4_3_lyapunov_fourth_moment_bound",
+      "expected_theorem_signature": "theorem ex_14_4_3_lyapunov_condition_from_fourth_moment_riemann_sum : ex_14_4_3_GeometricMomentFormulas C → thm_14_8_LyapunovCondition C.theoremSetup",
+      "landing_kind": "private_axiom",
+      "proof_contract_status": "open_math_debt",
+      "proof_contract_notes": "Step 5.6: local Lyapunov verification remains open because the current landing includes private axiom ex_14_4_3_lyapunov_condition_internal.",
+      "signature_match": "failed",
+      "body_reassumption_check": "failed",
+      "public_premise_check": "failed"
     },
     {
       "id": "apply_triangular_array_clt",
@@ -90,12 +111,19 @@
         "lyapunov_fourth_moment_bound"
       ],
       "lean_landing": "ex_14_4_3_asymptoticNormality; ex_14_4_3",
-      "status": "proved",
-      "review_status": "accepted",
+      "status": "partial",
+      "review_status": "needs_review",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "The final theorem invokes thm_14_8 through the Lyapunov branch. It explicitly inherits the sole allowed beyond-book exception through H : thm_14_8_ProofBeyondBook C.theoremSetup; the non-beyond-book Lyapunov verification remains a separate open obligation isolated in a private axiom.",
-      "last_review_evidence": "ex_14_4_3_asymptoticNormality applies thm_14_8 through Or.inr (ex_14_4_3_lyapunov_condition_internal C). The former public hLyapunov parameter is gone; only the inherited H : thm_14_8_ProofBeyondBook C.theoremSetup remains public."
+      "last_review_evidence": "ex_14_4_3_asymptoticNormality applies thm_14_8 through Or.inr (ex_14_4_3_lyapunov_condition_internal C). The former public hLyapunov parameter is gone; only the inherited H : thm_14_8_ProofBeyondBook C.theoremSetup remains public.",
+      "expected_theorem_signature": "theorem ex_14_4_3_asymptotic_normality_from_verified_lyapunov : verified local Lyapunov condition plus thm_14_8 beyond-book package → ex_14_4_3 asymptotic normality",
+      "landing_kind": "theorem",
+      "proof_contract_status": "open_math_debt",
+      "proof_contract_notes": "Step 5.6: final CLT application inherits the allowed thm_14_8 beyond-book package, but still depends on the local Lyapunov private axiom debt; no verified/passed contract is claimed.",
+      "signature_match": "unverified",
+      "body_reassumption_check": "unverified",
+      "public_premise_check": "unverified"
     }
   ],
   "scaffold_hypotheses": [],

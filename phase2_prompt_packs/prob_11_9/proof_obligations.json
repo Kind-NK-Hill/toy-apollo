@@ -4,18 +4,18 @@
   "generated_at": "2026-05-17T22:25:52.482949Z",
   "classification": {
     "requires_decomposition": true,
-    "reason": "needs_decision/internal_axiom: Step 2.5 found that prob_11_9 still closes the occupancy second-moment calculation through private axiom prob_11_9_occupancy_moment_calculation_internal, while the public statement does not include a finite independent uniform balls-in-boxes model connecting X to the one-box and two-box empty probabilities.",
+    "reason": "textbook_proof_completed: Phase2 proof-production replaced the occupancy second-moment private axiom with theorem-level finite independent uniform balls-in-boxes landings and a source-facing final theorem.",
     "evidence": [
-      "ToyApollo/Output/prob_11_9.lean still closes the quadratic-mean theorem through private axiom prob_11_9_occupancy_moment_calculation_internal.",
-      "ToyApollo/Output/prob_11_9.lean proves the mean-square-to-eLpNorm and probability-convergence bridge after the missing occupancy moment calculation.",
-      "Step 2.5 investigation on 2026-05-24 found no local finite independent uniform balls-in-boxes model for empty-box indicators and their two-box joint probabilities.",
-      "ToyApollo/Output/ex_6_5_2.lean has a finite balls-into-bins model for a different one-box exact-occupancy expectation, but it is not connected to the abstract X in prob_11_9 and does not provide empty-box or two-box empty probability landings."
+      "ToyApollo/Output/prob_11_9.lean now defines prob_11_9_finiteIndependentUniformEmptyBoxModel with a per-n MeasurePreserving location vector into the finite uniform location-space measure.",
+      "ToyApollo/Output/prob_11_9.lean proves prob_11_9_oneBoxEmptyEvent_probability and prob_11_9_twoBoxEmptyEvent_probability from that uniform location model.",
+      "ToyApollo/Output/prob_11_9.lean proves prob_11_9_occupancy_moment_calculation_internal and prob_11_9_quadratic_mean as the theorem-level second-moment route.",
+      "phase2_prompt_packs/prob_11_9/semantic_review_result_v8.json records an independent read-only pass review with reviewer_independence."
     ],
     "dependency_count": 3,
     "source_length": 461,
     "structural_operation_count": 0,
-    "proof_route_class": "needs_decision",
-    "audit_class": "internal_axiom_open_debt"
+    "proof_route_class": "textbook_proof_completed",
+    "audit_class": "contract_clean"
   },
   "obligations": [
     {
@@ -30,19 +30,27 @@
       "source_ref": "",
       "depends_on": [],
       "lean_landing": "prob_11_9_asymptoticRegime",
-      "status": "proved",
+      "status": "covered",
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "[phase2-step4-cleanup] 2026-05-24: filled lean_landing for proved metadata hygiene.",
-      "last_review_evidence": "The predicate captures the positive limit and simultaneous asymptotic regime."
+      "last_review_evidence": "",
+      "expected_theorem_signature": "def prob_11_9_asymptoticRegime (boxes k : Nat -> Nat) (a : Real) : Prop",
+      "landing_kind": "support_predicate",
+      "proof_contract_status": "not_applicable",
+      "proof_contract_notes": "This is a source-facing assumption predicate recording positive box counts, divergence of box counts, a > 0, and convergence of k_n / boxes_n to a. It is not a theorem-level proof obligation, and it does not hide the final conclusion.",
+      "body_reassumption_check": "not_applicable",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
     },
     {
       "id": "empty_box_ratio",
       "description": "Formalize X_n / n as the proportion of empty boxes.",
       "source_proof_spine": "Let X_n denote the number of empty boxes; prove X_n/n -> exp(-a).",
       "expected_formal_items": [
-        "prob_11_9_emptyBoxRatio"
+        "prob_11_9_emptyBoxRatio",
+        "prob_11_9_emptyBoxCount_eq_sum_indicators"
       ],
       "title": "empty_box_ratio",
       "kind": "source_step",
@@ -50,20 +58,32 @@
       "depends_on": [
         "asymptotic_regime"
       ],
-      "lean_landing": "prob_11_9_emptyBoxRatio",
+      "lean_landing": "prob_11_9_emptyBoxCount_eq_sum_indicators",
       "status": "proved",
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "[phase2-step4-cleanup] 2026-05-24: filled lean_landing for proved metadata hygiene.",
-      "last_review_evidence": "The exported definition is the normalized empty-box count."
+      "last_review_evidence": "",
+      "expected_theorem_signature": "theorem prob_11_9_emptyBoxCount_eq_sum_indicators: the concrete empty-box count equals the finite sum of one-box empty indicators.",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The ratio definition is X n omega / boxes n, and the theorem landing proves the source step that the concrete empty-box count expands as a sum of empty-box indicators.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
     },
     {
       "id": "occupancy_moment_calculation",
       "description": "Carry out the textbook second-moment occupancy calculation using the one-box empty probability and two-box joint empty probability.",
       "source_proof_spine": "Expand X_n as a sum of empty-box indicators and show E[(X_n/n - exp(-a))^2] -> 0.",
       "expected_formal_items": [
-        "private prob_11_9_occupancy_moment_calculation_internal",
+        "prob_11_9_oneBoxEmptyEvent_probability",
+        "prob_11_9_twoBoxEmptyEvent_probability",
+        "prob_11_9_emptyBoxRatio_integral_eq",
+        "prob_11_9_emptyBoxRatio_sq_integral_eq",
+        "prob_11_9_meanDeviationMoment_eq_formula",
+        "prob_11_9_occupancy_moment_calculation_internal",
         "prob_11_9_quadratic_mean"
       ],
       "title": "occupancy_moment_calculation",
@@ -72,20 +92,21 @@
       "depends_on": [
         "empty_box_ratio"
       ],
-      "lean_landing": "",
-      "status": "open",
-      "review_status": "blocked",
+      "lean_landing": "prob_11_9_occupancy_moment_calculation_internal",
+      "status": "proved",
+      "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [
         {
           "name": "prob_11_9_occupancy_moment_calculation_internal",
-          "kind": "private_axiom",
-          "location": "ToyApollo/Output/prob_11_9.lean",
-          "reason": "Private axiom supplies the missing finite occupancy model and second-moment calculation."
+          "category": "proof_obligation",
+          "obligation_id": "",
+          "discharge_plan": "",
+          "status": "discharged"
         }
       ],
-      "notes": "The local library does not expose the finite independent uniform balls-in-boxes probability space needed by this statement, so the standard second-moment calculation remains open math debt. On 2026-05-23 the public hMoment/prob_11_9_occupancyMomentSupport proof package was removed from the public theorem interface and replaced by the private internal axiom prob_11_9_occupancy_moment_calculation_internal.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.\n[phase2-step2.5] 2026-05-24: reclassified as needs_decision because the current public statement abstracts over X and does not encode the finite independent uniform balls-in-boxes model needed to prove the empty-box and two-box probability calculation. The adjacent ex_6_5_2 model covers a different exact-occupancy first-moment problem and is not a landing for this second-moment theorem.",
-      "last_review_evidence": "Step 2.5 review on 2026-05-24 found no theorem-level finite occupancy model or second-moment landing; ex_6_5_2 provides only an adjacent one-box exact-occupancy model, and the existing eLpNorm/probability bridge is downstream of the missing calculation.",
+      "notes": "The local library did not previously expose the finite independent uniform balls-in-boxes probability space needed by this statement. Candidate v7 adds a source-facing uniform finite location-vector model, derives the one-box and two-box empty probabilities from that model, expands the empty count into indicators, and proves the centered second-moment limit through theorem prob_11_9_occupancy_moment_calculation_internal.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support had no theorem-level landing.\n[phase2-step2.5] 2026-05-24: reclassified as needs_decision because the prior public statement abstracted over X and did not encode the finite independent uniform balls-in-boxes model needed to prove the empty-box and two-box probability calculation.\n[phase2-review] 2026-05-28: independent candidate review v8 passed; private axiom debt is discharged by theorem-level Lean landings.",
+      "last_review_evidence": "",
       "source_output_alignment": {
         "audited_at": "2026-05-19",
         "audit_class": "D_no_landing_search_required",
@@ -97,7 +118,14 @@
       },
       "ledger_task_id": "obl_prob_11_9_occupancy_moment_calculation",
       "obligation_fingerprint": "3b2c4b36ea1f7497b0d6a2a4ff49c7a60bf223ec27b8d901d93ebdf379a1776e",
-      "discharged_by_task": ""
+      "discharged_by_task": "",
+      "expected_theorem_signature": "Tendsto (fun n => meanDeviationMoment P (prob_11_9_emptyBoxRatio boxes X) (fun _ => Real.exp (-a)) 2 n) atTop (nhds 0) from a source-faithful finite independent uniform occupancy model.",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The candidate contains theorem prob_11_9_occupancy_moment_calculation_internal at candidate_v7.lean:990 with a proof body. It uses prob_11_9_meanDeviationMoment_eq_formula and asymptotic limit lemmas; it is not declared as axiom/private axiom and does not simply re-assume the moment limit.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
     },
     {
       "id": "hence_in_probability",
@@ -122,15 +150,23 @@
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "The eLpNorm bridge is now proved from ConvergesInMeanSquare and ordinary AEStronglyMeasurable data; the public theorem no longer requires prob_11_9_meanSquareELpNormSupport as a parameter.",
-      "last_review_evidence": "prob_11_9_eLpNorm_tendsto_of_convergesInMeanSquare proves the analytic L2-norm limit from the local mean-square definition; prob_11_9_meanSquareELpNormSupport_of_measurable constructs the prior support package internally from measurability, and prob_11_9_probability applies thm_10_5."
+      "last_review_evidence": "",
+      "expected_theorem_signature": "ConvergesInMeanSquare P (prob_11_9_emptyBoxRatio boxes X) (fun _ => Real.exp (-a)) -> ConvergesInProbability P (prob_11_9_emptyBoxRatio boxes X) (fun _ => Real.exp (-a))",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The bridge consumes the proved ConvergesInMeanSquare result and ordinary measurability data, then applies thm_10_5. The final theorem obtains hMS from prob_11_9_quadratic_mean, whose moment input is now covered.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
     }
   ],
   "scaffold_hypotheses": [
     {
       "name": "prob_11_9_occupancy_moment_calculation_internal",
-      "kind": "private_axiom",
-      "location": "ToyApollo/Output/prob_11_9.lean",
-      "public_surface": false
+      "category": "proof_obligation",
+      "obligation_id": "occupancy_moment_calculation",
+      "discharge_plan": "Discharged by theorem prob_11_9_occupancy_moment_calculation_internal after deriving one-box and two-box empty probabilities from the uniform finite location-vector model.",
+      "status": "discharged"
     }
   ],
   "review_history": [
@@ -174,26 +210,104 @@
       "open_blockers": [
         "prob_11_9_occupancy_moment_calculation_internal"
       ]
+    },
+    {
+      "reviewed_at": "2026-05-27T14:23:28.951039Z",
+      "verdict": "fail",
+      "status": "partial",
+      "summary": "Three peripheral obligations have usable Lean landings, but the blocking occupancy_moment_calculation obligation remains open and is closed in the public theorem only through a private axiom.",
+      "open_blockers": [
+        {
+          "obligation_id": "asymptotic_regime",
+          "issue": "covered"
+        },
+        {
+          "obligation_id": "empty_box_ratio",
+          "issue": "partial"
+        },
+        {
+          "obligation_id": "occupancy_moment_calculation",
+          "issue": "missing"
+        }
+      ]
+    },
+    {
+      "reviewed_at": "2026-05-27T15:43:20.723637Z",
+      "verdict": "fail",
+      "status": "violated",
+      "summary": "Three peripheral pieces are usable or conditionally usable, but the blocking occupancy_moment_calculation obligation remains unproved and is consumed as a public premise in the main theorem.",
+      "open_blockers": [
+        {
+          "obligation_id": "occupancy_moment_calculation",
+          "issue": "The core second-moment occupancy calculation is assumed through hMoment instead of proved."
+        },
+        {
+          "obligation_id": "asymptotic_regime",
+          "issue": "covered"
+        },
+        {
+          "obligation_id": "empty_box_ratio",
+          "issue": "partial"
+        },
+        {
+          "obligation_id": "occupancy_moment_calculation",
+          "issue": "violated"
+        }
+      ]
+    },
+    {
+      "reviewed_at": "2026-05-27T16:35:39.240933Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All blocking obligations are either covered by Lean declarations or explicitly accepted as open proof debt. The exact debt is occupancy_moment_calculation, landed as the private axiom prob_11_9_occupancy_moment_calculation_internal.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-28T07:52:08.191057Z",
+      "verdict": "fail",
+      "status": "partial",
+      "summary": "Three peripheral obligations have acceptable landings or conditional proofs. The blocking occupancy_moment_calculation obligation remains open math debt and prevents a pass/textbook_proof_completed classification.",
+      "open_blockers": [
+        {
+          "obligation_id": "occupancy_moment_calculation",
+          "issue": "The core second-moment occupancy calculation is still supplied by private axiom prob_11_9_occupancy_moment_calculation_internal, so prob_11_9_quadratic_mean is blocked by proof debt."
+        },
+        {
+          "obligation_id": "prob_11_9",
+          "issue": "The final theorem obtains its quadratic-mean conjunct from prob_11_9_quadratic_mean and therefore inherits the same private-axiom proof debt."
+        },
+        {
+          "obligation_id": "hence_in_probability",
+          "issue": "partial"
+        }
+      ]
+    },
+    {
+      "reviewed_at": "2026-05-28T09:29:15.895241Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All listed blocking obligations are covered in candidate_v7. The ledger entry for occupancy_moment_calculation is stale with respect to this candidate: prob_11_9_occupancy_moment_calculation_internal is now a theorem with a proof body, not a private axiom.",
+      "open_blockers": []
     }
   ],
-  "last_reviewed_at": "2026-05-24T00:00:00+08:00",
+  "last_reviewed_at": "2026-05-28T09:29:15.895241Z",
   "source_output_alignment_audit": {
-    "audited_at": "2026-05-19",
-    "accepted_debt_count": 1,
-    "status": "metadata_attached"
+    "audited_at": "2026-05-28",
+    "accepted_debt_count": 0,
+    "status": "superseded_by_textbook_completion"
   },
   "clean_debt_surface_audit": {
-    "applied_at": "2026-05-21T02:15:59.912339Z",
-    "status": "status_fixes_applied",
+    "applied_at": "2026-05-28",
+    "status": "clean_for_task_after_candidate_v7",
     "changes": [
       {
         "obligation_id": "occupancy_moment_calculation",
-        "action": "proved_to_open",
-        "reason": "proved proof_debt_support has no theorem-level landing",
+        "action": "open_to_proved",
+        "reason": "independent candidate review v8 accepted theorem-level occupancy moment landings and no task-local private axiom remains",
         "old": {
-          "status": "proved",
-          "review_status": "accepted",
-          "lean_landing": ""
+          "status": "open",
+          "review_status": "needs_repair",
+          "lean_landing": "prob_11_9_occupancy_moment_calculation_internal"
         }
       }
     ]

@@ -30,12 +30,19 @@
       "source_ref": "",
       "depends_on": [],
       "lean_landing": "prob_11_10_continuousCDF",
-      "status": "proved",
-      "review_status": "accepted",
+      "status": "partial",
+      "review_status": "needs_review",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "",
-      "last_review_evidence": "Continuity and cdf monotonicity are represented."
+      "last_review_evidence": "",
+      "expected_theorem_signature": "prob_11_10_continuousCDF F represents the continuous cdf assumption.",
+      "landing_kind": "support_predicate",
+      "proof_contract_status": "not_applicable",
+      "proof_contract_notes": "This is an interface predicate for a source assumption. It is source-facing because it expands to monotonicity, continuity, and the two cdf tail limits.",
+      "body_reassumption_check": "not_applicable",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
     },
     {
       "id": "empirical_cdf_objects",
@@ -51,13 +58,20 @@
       "depends_on": [
         "continuous_cdf_interface"
       ],
-      "lean_landing": "prob_11_10_uniformCDFDeviation; empiricalCDFAt",
-      "status": "proved",
-      "review_status": "accepted",
+      "lean_landing": "prob_11_10_uniformCDFDeviation",
+      "status": "partial",
+      "review_status": "needs_review",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "",
-      "last_review_evidence": "The uniform sup-norm error is the target random variable."
+      "last_review_evidence": "",
+      "expected_theorem_signature": "prob_11_10_uniformCDFDeviation X F n omega is the sup_x empirical-cdf error.",
+      "landing_kind": "support_predicate",
+      "proof_contract_status": "not_applicable",
+      "proof_contract_notes": "prob_11_10_uniformCDFDeviation is exactly the sSup of |empiricalCDFAt X x n omega - F x| over real thresholds.",
+      "body_reassumption_check": "not_applicable",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
     },
     {
       "id": "pointwise_slln",
@@ -79,7 +93,14 @@
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "This reuses ex_11_5_1 rather than re-proving the strong law.",
-      "last_review_evidence": "The proof reuses ex_11_5_1 rather than rebuilding the pointwise empirical-cdf strong law."
+      "last_review_evidence": "",
+      "expected_theorem_signature": "For each x, the empirical cdf at x converges almost surely to F x under the indicator integrability, independence, identical-distribution, and mean assumptions.",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "prob_11_10_pointwise destructs the indicator-level assumptions at the fixed threshold x and applies ex_11_5_1. This is a legitimate reuse of the existing fixed-point empirical-cdf theorem, not a reassumption of uniform convergence.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
     },
     {
       "id": "continuous_grid_uniformization",
@@ -95,13 +116,13 @@
       "depends_on": [
         "pointwise_slln"
       ],
-      "lean_landing": "",
-      "status": "open",
-      "review_status": "needs_review",
+      "lean_landing": "prob_11_10_polya_uniformization_from_pointwise",
+      "status": "proved",
+      "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "The local library has the pointwise empirical-cdf theorem but not the full finite-grid Glivenko-Cantelli uniformization argument.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.\n[clean-debt-public-surface] 2026-05-22: public theorem no longer requires prob_11_10_uniformizationSupport; it now exposes the explicit implication from continuous CDF plus pointwise a.s. convergence to uniform a.s. convergence.\n[debt-recheck 2026-05-22] Still open. `ex_11_5_1` supplies only fixed-x almost-sure convergence. The explicit public uniformization implication asks for an upgrade from pointwise convergence plus `Monotone F ∧ Continuous F`; this is not enough for the textbook finite-grid proof. The missing formal inputs are: cdf tail limits/tightness (`F -> 0` at -infinity and `F -> 1` at +infinity, or equivalent compact truncation), pathwise monotonicity of each empirical cdf in x, finite-grid/countable-intersection assembly of the a.s. pointwise events, measurability/boundedness of the sup-deviation random variables, and a theorem-level sandwich from grid errors to the global `sSup` deviation. In fact the support premise as stated is too weak: pointwise convergence of empirical cdfs to the continuous monotone zero function can occur when samples drift to +infinity, while the sup deviation stays 1. This rules out proving the old public implication without strengthening it to the actual textbook cdf/iid/tail setting.\n[worker-c 2026-05-23] Removed the public `hUniform` theorem parameter. The remaining uniformization debt is now carried by the private internal axiom `prob_11_10_continuous_grid_uniformization_internal`, whose support interface also receives `prob_11_10_pointwiseIndicatorAssumptions` rather than the too-weak pointwise-only implication. This keeps the Lean file buildable but this obligation remains open_math_debt.",
-      "last_review_evidence": "Blocked: no theorem-level continuous-grid uniformization proof exists. The public hUniform parameter was internalized as a private axiom, so the final theorem surface is cleaner but still depends on open math debt.",
+      "last_review_evidence": "",
       "source_output_alignment": {
         "audited_at": "2026-05-24",
         "audit_class": "private_axiom_open_debt",
@@ -154,15 +175,23 @@
       },
       "ledger_task_id": "obl_prob_11_10_continuous_grid_uniformization",
       "obligation_fingerprint": "bd737a934fd532aaab1de3d730c2b002e390c0e3460601820bba02cccbfd4cc3",
-      "discharged_by_task": ""
+      "discharged_by_task": "",
+      "expected_theorem_signature": "A theorem-level proof that continuity/monotonicity of F and fixed-grid almost-sure convergence imply almost-sure convergence of the uniform empirical-cdf deviation to 0.",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "prob_11_10_polya_uniformization_from_pointwise no longer uses prob_11_10_continuous_grid_uniformization_internal or any private axiom. The proof body builds the finite grid, assembles grid-point a.s. convergence, proves the pathwise sandwich, bounds the sSup deviation, and derives convergence. hPointwise is obtained internally in prob_11_10 from prob_11_10_pointwise.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
     }
   ],
   "scaffold_hypotheses": [
     {
       "name": "prob_11_10_continuous_grid_uniformization_internal",
-      "kind": "private_axiom",
-      "location": "ToyApollo/Output/prob_11_10.lean",
-      "public_surface": false
+      "category": "proof_obligation",
+      "obligation_id": "",
+      "discharge_plan": "",
+      "status": "open"
     }
   ],
   "review_history": [
@@ -196,9 +225,72 @@
         "continuous_grid_uniformization",
         "prob_11_10_continuous_grid_uniformization_internal"
       ]
+    },
+    {
+      "reviewed_at": "2026-05-27T13:51:58.142214Z",
+      "verdict": "fail",
+      "status": "missing",
+      "summary": "Three preliminary obligations are represented, but the blocking continuous_grid_uniformization obligation remains open and is carried by a private axiom.",
+      "open_blockers": [
+        {
+          "obligation_id": "continuous_cdf_interface",
+          "issue": "covered"
+        },
+        {
+          "obligation_id": "empirical_cdf_objects",
+          "issue": "covered"
+        },
+        {
+          "obligation_id": "continuous_grid_uniformization",
+          "issue": "missing"
+        }
+      ]
+    },
+    {
+      "reviewed_at": "2026-05-27T16:49:20.462812Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "The source-facing interface and pointwise theorem obligations are covered. The continuous_grid_uniformization obligation is accepted as explicit private proof debt, not as a verified theorem-level proof.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-28T04:38:57.468048Z",
+      "verdict": "fail",
+      "status": "partial",
+      "summary": "The preliminary interface and pointwise SLLN obligations are represented. The blocking continuous_grid_uniformization obligation remains open proof debt because it is supplied by a private axiom.",
+      "open_blockers": [
+        {
+          "obligation_id": "continuous_grid_uniformization",
+          "issue": "The core uniformization step is private axiom proof debt, not theorem-level proof."
+        },
+        {
+          "obligation_id": "prob_11_10_finite_grid_uniformization_internal",
+          "issue": "The scaffold/proof-debt declaration has no theorem-level discharge in the official output."
+        },
+        {
+          "obligation_id": "continuous_grid_uniformization",
+          "issue": "missing"
+        }
+      ]
+    },
+    {
+      "reviewed_at": "2026-05-28T05:06:21.719592Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All listed proof obligations are covered or not applicable. The formerly blocked continuous_grid_uniformization obligation now has theorem-level evidence and no private axiom in the candidate.",
+      "open_blockers": [
+        {
+          "obligation_id": "continuous_cdf_interface",
+          "issue": "covered"
+        },
+        {
+          "obligation_id": "empirical_cdf_objects",
+          "issue": "covered"
+        }
+      ]
     }
   ],
-  "last_reviewed_at": "2026-05-24T00:00:00+08:00",
+  "last_reviewed_at": "2026-05-28T05:06:21.719592Z",
   "source_output_alignment_audit": {
     "audited_at": "2026-05-19",
     "accepted_debt_count": 1,

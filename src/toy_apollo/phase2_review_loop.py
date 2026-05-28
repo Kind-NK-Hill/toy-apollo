@@ -24,6 +24,7 @@ from .phase2_pack_shared.artifacts import (
     review_repair_summary_path,
     select_latest_verify_result,
     select_latest_official_snapshot,
+    stale_candidate_official_output_message,
 )
 from .phase2_pack_shared.io import read_file_safely, read_json_safely, sha256_json, sha256_text, write_json
 from .phase2_pack_shared.runtime_state import (
@@ -94,6 +95,13 @@ def _auto_loop_review_fingerprint(*, primary_failure_kind: str, must_fix: list[s
         must_fix=must_fix,
         review_subject_kind=review_subject_kind,
     )
+
+
+def _auto_loop_stop_reason_for_detail(detail: str) -> str:
+    lowered = str(detail or "").lower()
+    if "stale" in lowered or "review-subject existing" in lowered:
+        return "freshness_error"
+    return "hard_failure"
 
 
 def _count_auto_loop_build_attempts(pack_dir: Path, task_id: str, round_number: int) -> int:
@@ -381,6 +389,17 @@ def _backfill_review_repair_request_from_latest_failed_review(
             seed_path = _latest_quarantined_seed_path(pack_dir, current_record if isinstance(current_record, dict) else {}, task_id) or subject_path
         else:
             seed_path = subject_path
+            stale_official_message = stale_candidate_official_output_message(
+                task_id=task_id,
+                source_plan=str(task.get("source_plan", "unknown") or "unknown"),
+                settings=settings,
+                candidate_path=subject_path,
+                candidate_hash=str(review_input.get("review_subject_hash", "") or review_input.get("candidate", {}).get("hash", "") or ""),
+                draft_path=pack_dir / DRAFT_FILE_NAME,
+                action="review-fix backfill seed",
+            )
+            if stale_official_message:
+                return stale_official_message, {}
         repair_ready = _write_review_repair_artifacts(
             task=task,
             ledger=ledger,
@@ -505,6 +524,18 @@ def _load_current_review_repair_request(
     current_subject_hash = sha256_text(read_file_safely(failed_review_subject_path))
     if current_subject_hash != str(request_payload.get("failed_review_subject_hash", "") or ""):
         return "Current review repair request is stale because the failed review subject hash changed.", {}
+    if str(request_payload.get("review_subject_kind", "") or "candidate") == "candidate":
+        stale_official_message = stale_candidate_official_output_message(
+            task_id=task_id,
+            source_plan=str(task.get("source_plan", "unknown") or "unknown"),
+            settings=settings,
+            candidate_path=failed_review_subject_path,
+            candidate_hash=current_subject_hash,
+            draft_path=pack_dir / DRAFT_FILE_NAME,
+            action="review-fix repair seed",
+        )
+        if stale_official_message:
+            return stale_official_message, {}
 
     warnings: list[str] = []
     if int(request_payload.get("origin_prompt_version") or 0) != SEMANTIC_REVIEW_PROMPT_VERSION:
@@ -878,7 +909,8 @@ async def run_codex_review_now(
         f"Codex review request is ready for {task_id}. "
         f"Request: {request_path}. "
         f"Expected result: {expected_result_path}. "
-        "In a Codex session, the current agent must read the request and write the semantic_review_result JSON."
+        "In a Codex session, the orchestrating agent must use an independent read-only reviewer "
+        "subagent or configured reviewer runner to write the semantic_review_result JSON."
     )
     if auto_apply_pass:
         detail += " `--auto-apply-pass` was requested; if the Codex reviewer reaches a pass verdict, run review-apply in the same Codex session."
@@ -1130,12 +1162,29 @@ async def run_codex_auto_loop(
 
         current_review_request = str(current_record.get("current_review_request_file", "") or "").strip()
         if current_review_request:
+            validation_error, _request_payload = _load_current_codex_review_request(
+                task=task,
+                ledger=ledger,
+                settings=settings,
+                pack_dir=pack_dir,
+            )
+            if validation_error:
+                _clear_current_review_metadata(task_id, ledger)
+                _set_current_auto_loop_metadata(
+                    task_id,
+                    ledger,
+                    current_auto_loop_phase="entry",
+                    current_auto_loop_status="active",
+                )
+                refresh_pack_runtime_view(task, ledger, settings, pack_dir)
+                continue
             _set_current_auto_loop_metadata(task_id, ledger, current_auto_loop_phase="reviewing", current_auto_loop_status="active")
             refresh_pack_runtime_view(task, ledger, settings, pack_dir)
             expected = _expected_current_review_result_path(pack_dir, current_record)
             return True, (
-                f"Auto-loop is at the reviewer step for {task_id}. The current Codex agent must now perform the reviewer step, "
-                f"write the canonical semantic_review_result JSON, and continue this same-session auto-loop now. "
+                f"Auto-loop is at the reviewer step for {task_id}. The orchestrating Codex agent must now use an independent "
+                f"read-only reviewer subagent or configured reviewer runner to write the canonical semantic_review_result JSON, "
+                f"then continue this same-session auto-loop now. The author must not self-review the candidate. "
                 f"Request: {current_record.get('current_review_request_file', '(none)')}. "
                 f"Expected result: {expected if expected is not None else '(none)'}."
             )
@@ -1177,7 +1226,7 @@ async def run_codex_auto_loop(
                         ledger=ledger,
                         settings=settings,
                         pack_dir=pack_dir,
-                        reason="hard_failure",
+                        reason=_auto_loop_stop_reason_for_detail(detail),
                         detail=f"Auto-loop stopped for {task_id}: {detail}",
                     )
                 refresh_pack_runtime_view(task, ledger, settings, pack_dir)
@@ -1191,7 +1240,7 @@ async def run_codex_auto_loop(
                         ledger=ledger,
                         settings=settings,
                         pack_dir=pack_dir,
-                        reason="hard_failure",
+                        reason=_auto_loop_stop_reason_for_detail(detail),
                         detail=f"Auto-loop stopped for {task_id}: {detail}",
                     )
                 refresh_pack_runtime_view(task, ledger, settings, pack_dir)
@@ -1240,7 +1289,7 @@ async def run_codex_auto_loop(
                 ledger=ledger,
                 settings=settings,
                 pack_dir=pack_dir,
-                reason="hard_failure",
+                reason=_auto_loop_stop_reason_for_detail(detail),
                 detail=f"Auto-loop stopped for {task_id}: {detail}",
             )
         refresh_pack_runtime_view(task, ledger, settings, pack_dir)

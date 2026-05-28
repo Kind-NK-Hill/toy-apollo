@@ -220,6 +220,42 @@ class Phase2ProofObligationsTests(unittest.TestCase):
         self.assertIn("Source-output alignment", rendered)
         self.assertIn("h_skorokhod_support", rendered)
 
+    def test_normalize_obligation_preserves_contract_fields(self):
+        task = {
+            "block_id": "thm_10_8",
+            "type": "Theorem_with_Proof",
+            "content": "Proof. Construct a quantile representation and pass to the limit.",
+        }
+        payload = normalize_proof_obligations(
+            {
+                "task_id": "thm_10_8",
+                "classification": {"requires_decomposition": True},
+                "obligations": [
+                    {
+                        "id": "quantile_support",
+                        "kind": "source_step",
+                        "status": "proved",
+                        "lean_landing": "thm_10_8_quantile_law_preservation",
+                        "expected_theorem_signature": "theorem thm_10_8_quantile_law_preservation : ...",
+                        "landing_kind": "theorem",
+                        "proof_contract_status": "verified",
+                        "proof_contract_notes": "reviewed against source route",
+                        "body_reassumption_check": "passed",
+                        "signature_match": "passed",
+                        "public_premise_check": "passed",
+                    }
+                ],
+            },
+            task,
+        )
+
+        item = payload["obligations"][0]
+        self.assertEqual(item["expected_theorem_signature"], "theorem thm_10_8_quantile_law_preservation : ...")
+        self.assertEqual(item["landing_kind"], "theorem")
+        self.assertEqual(item["proof_contract_status"], "verified")
+        self.assertEqual(item["body_reassumption_check"], "passed")
+        self.assertIn("Proof contract", render_proof_obligations_markdown(payload))
+
     def test_pass_review_can_mark_obligation_accepted_as_proof_debt(self):
         review_input = {
             "review_basis": {
@@ -254,6 +290,53 @@ class Phase2ProofObligationsTests(unittest.TestCase):
             }
         }
 
+        self.assertEqual(validate_obligation_review_for_pass(review_input, result), "")
+
+    def test_pass_review_requires_verified_contract_for_covered_obligation(self):
+        review_input = {
+            "review_basis": {
+                "proof_obligations": {
+                    "task_id": "thm_10_8",
+                    "classification": {"requires_decomposition": True},
+                    "obligations": [
+                        {
+                            "id": "source_step",
+                            "kind": "source_step",
+                            "status": "open",
+                            "review_status": "unreviewed",
+                            "lean_landing": "source_step_thm",
+                            "blocking": True,
+                        }
+                    ],
+                }
+            }
+        }
+        result = {
+            "obligation_review": {
+                "status": "covered",
+                "items": [{"obligation_id": "source_step", "status": "covered", "evidence": "local theorem"}],
+                "open_blockers": [],
+                "scaffold_assessment": [],
+            }
+        }
+
+        self.assertIn(
+            "pass verdict requires verified proof contract for covered obligations",
+            validate_obligation_review_for_pass(review_input, result),
+        )
+
+        result["obligation_review"]["items"][0].update(
+            {
+                "expected_theorem_signature": "theorem source_step_thm : ...",
+                "lean_landing": "source_step_thm",
+                "landing_kind": "theorem",
+                "proof_contract_status": "verified",
+                "proof_contract_notes": "signature and body checked",
+                "body_reassumption_check": "passed",
+                "signature_match": "passed",
+                "public_premise_check": "passed",
+            }
+        )
         self.assertEqual(validate_obligation_review_for_pass(review_input, result), "")
 
     def test_focused_obligation_review_only_requires_focus_ids(self):

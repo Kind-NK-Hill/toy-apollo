@@ -421,7 +421,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
-    def test_codex_review_apply_fail_marks_covered_obligations_as_proved(self):
+    def test_codex_review_apply_fail_keeps_unverified_covered_obligations_partial(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_obligation_partial_progress"
         try:
             self._clean_root(root)
@@ -437,7 +437,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
                 verdict="fail",
                 obligation_review={
                     "status": "partial",
-                    "summary": "covered_step is proved, missing_step still blocks promotion",
+                    "summary": "covered_step has local evidence, missing_step still blocks promotion",
                     "items": [
                         {"obligation_id": "covered_step", "status": "covered", "evidence": "covered by local theorem"},
                         {"obligation_id": "missing_step", "status": "missing", "evidence": "no Lean landing"},
@@ -452,13 +452,65 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertFalse(success, detail)
             updated = json.loads((pack_dir / "proof_obligations.json").read_text(encoding="utf-8"))
             by_id = {item["id"]: item for item in updated["obligations"]}
-            self.assertEqual(by_id["covered_step"]["status"], "proved")
-            self.assertEqual(by_id["covered_step"]["review_status"], "accepted")
-            self.assertEqual(by_id["covered_step"]["scaffold_hypotheses"][0]["status"], "discharged")
+            self.assertEqual(by_id["covered_step"]["status"], "partial")
+            self.assertEqual(by_id["covered_step"]["review_status"], "needs_review")
+            self.assertEqual(by_id["covered_step"]["proof_contract_status"], "unverified")
+            self.assertEqual(by_id["covered_step"]["scaffold_hypotheses"][0]["status"], "open")
             self.assertEqual(by_id["missing_step"]["status"], "blocked")
             repair_request = json.loads((pack_dir / "review_repair_request_v1.json").read_text(encoding="utf-8"))
-            self.assertEqual(repair_request["proof_obligation_summary"]["open_blocking_ids"], ["missing_step"])
+            self.assertEqual(repair_request["proof_obligation_summary"]["open_blocking_ids"], ["covered_step", "missing_step"])
             self.assertEqual(repair_request["proof_obligation_blockers"][0]["obligation_id"], "missing_step")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_fail_marks_verified_contract_covered_obligations_as_proved(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_verified_obligation_progress"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_verified_obligation_progress"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            self._write_two_open_obligations(pack_dir, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="fail",
+                obligation_review={
+                    "status": "partial",
+                    "summary": "covered_step has verified contract, missing_step still blocks promotion",
+                    "items": [
+                        {
+                            "obligation_id": "covered_step",
+                            "status": "covered",
+                            "evidence": "covered by local theorem",
+                            "expected_theorem_signature": "theorem covered_step : True",
+                            "lean_landing": "covered_step",
+                            "landing_kind": "theorem",
+                            "proof_contract_status": "verified",
+                            "proof_contract_notes": "reviewed test contract",
+                            "body_reassumption_check": "passed",
+                            "signature_match": "passed",
+                            "public_premise_check": "passed",
+                        },
+                        {"obligation_id": "missing_step", "status": "missing", "evidence": "no Lean landing"},
+                    ],
+                    "open_blockers": [{"obligation_id": "missing_step", "issue": "finish the remaining source step"}],
+                    "scaffold_assessment": [],
+                },
+            )
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success, detail)
+            updated = json.loads((pack_dir / "proof_obligations.json").read_text(encoding="utf-8"))
+            by_id = {item["id"]: item for item in updated["obligations"]}
+            self.assertEqual(by_id["covered_step"]["status"], "proved")
+            self.assertEqual(by_id["covered_step"]["review_status"], "accepted")
+            self.assertEqual(by_id["covered_step"]["proof_contract_status"], "verified")
+            self.assertEqual(by_id["covered_step"]["scaffold_hypotheses"][0]["status"], "discharged")
+            self.assertEqual(by_id["missing_step"]["status"], "blocked")
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

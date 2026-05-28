@@ -119,6 +119,8 @@ def recommended_action_for_kind(kind: str, repeated_count: int = 0) -> str:
         action = "Restore the original theorem shape and required hard direction instead of strengthening hypotheses to make the proof trivial."
     elif kind == "missing_required_coverage":
         action = "Add the missing textbook content identified in the semantic contract before retrying verification."
+    elif kind == "missing_local_foundation_lemma":
+        action = "Prove or split the task-local missing lemma; do not report a self-created theorem name as an external hard blocker."
     elif kind in {"missing_import", "unknown_identifier"}:
         action = "Return to `search_manifest.json` first and repair imports or symbol names before touching the proof body."
     elif kind == "noncomputable_required":

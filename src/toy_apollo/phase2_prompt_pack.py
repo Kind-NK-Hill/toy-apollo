@@ -25,6 +25,7 @@ from src.compiler import LeanCompiler
 from .core import LedgerManager, TaskStatus
 from .dependency_decisions import DependencyDecision, load_dependency_decisions, record_dependency_decision
 from .phase2_failure_budget import phase2_failure_counters_from_history
+from .phase2_pack_shared.artifacts import select_latest_existing_task_file, stale_candidate_official_output_message
 from .phase2_output_binding import resolve_phase2_output_binding
 from .phase2_semantic_review import (
     SEMANTIC_REVIEW_PROMPT_VERSION,
@@ -48,6 +49,7 @@ from .phase2_proof_obligations import (
 )
 
 IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_']*$")
+MISSING_LOCAL_FOUNDATION_LEMMA_KIND = "missing_local_foundation_lemma"
 DECL_RE = re.compile(
     r"(?ms)^\s*(?:@[^\n]+\n\s*)*(?:noncomputable\s+)?(?:theorem|lemma|def)\s+[^\n]*?(?=\s*:=|\s*\bwhere\b)",
 )
@@ -2793,6 +2795,8 @@ def _recommended_action_for_kind(kind: str, repeated_count: int = 0) -> str:
         action = "Restore the original theorem shape and required hard direction instead of strengthening hypotheses to make the proof trivial."
     elif kind == "missing_required_coverage":
         action = "Add the missing textbook content identified in the semantic contract before retrying verification."
+    elif kind == MISSING_LOCAL_FOUNDATION_LEMMA_KIND:
+        action = "Prove or split the task-local missing lemma; do not report a self-created theorem name as an external hard blocker."
     elif kind in {"missing_import", "unknown_identifier"}:
         action = "Return to `search_manifest.json` first and repair imports or symbol names before touching the proof body."
     elif kind == "noncomputable_required":
@@ -3502,19 +3506,34 @@ def _is_canonical_official_output(file_path: Path) -> bool:
 
 
 def _iter_review_existing_queue_outputs(settings, selected_task_ids: set[str] | None = None) -> tuple[list[Path], list[str]]:
-    outputs: list[Path] = []
+    outputs_by_task: dict[str, Path] = {}
     skipped_non_official: list[str] = []
-    for file_path in sorted(settings.toyapollo_output_dir.glob("*.lean")):
-        if _is_queue_skipped_temp_output(file_path):
+    output_lean_roots: list[Path] = []
+    if settings.output_lean_files_dir.exists():
+        output_lean_roots = [
+            settings.output_lean_files_dir / "general",
+            *[path for path in settings.output_lean_files_dir.iterdir() if path.is_dir() and path.name != "general"],
+        ]
+    roots = [
+        settings.toyapollo_output_dir,
+        *output_lean_roots,
+    ]
+    for root in roots:
+        if not root.exists():
             continue
-        if not _is_canonical_official_output(file_path):
-            skipped_non_official.append(str(file_path))
-            continue
-        canonical_task_id = canonicalize_block_id(file_path.stem)
-        if selected_task_ids is not None and canonical_task_id not in selected_task_ids:
-            continue
-        outputs.append(file_path)
-    return outputs, skipped_non_official
+        for file_path in sorted(root.glob("*.lean")):
+            if _is_queue_skipped_temp_output(file_path):
+                continue
+            if not _is_canonical_official_output(file_path):
+                skipped_non_official.append(str(file_path))
+                continue
+            canonical_task_id = canonicalize_block_id(file_path.stem)
+            if selected_task_ids is not None and canonical_task_id not in selected_task_ids:
+                continue
+            current = outputs_by_task.get(canonical_task_id)
+            if current is None or file_path.stat().st_mtime > current.stat().st_mtime:
+                outputs_by_task[canonical_task_id] = file_path
+    return [outputs_by_task[task_id] for task_id in sorted(outputs_by_task)], skipped_non_official
 
 
 def _resolve_plan_task_for_output(task_id: str, settings) -> dict[str, Any] | None:
@@ -4616,6 +4635,7 @@ def _primary_failure_kind(diagnostics: list[dict[str, Any]]) -> str:
         "example_wrapped_theorem",
         "weakened_statement",
         "missing_required_coverage",
+        MISSING_LOCAL_FOUNDATION_LEMMA_KIND,
         "missing_import",
         "unknown_identifier",
         "noncomputable_required",
@@ -4642,6 +4662,42 @@ def _collect_blocking_symbols(diagnostics: list[dict[str, Any]]) -> list[str]:
             if symbol not in symbols:
                 symbols.append(symbol)
     return symbols
+
+
+def _task_local_missing_symbols(task_id: str, symbols: list[Any]) -> list[str]:
+    raw_task_id = str(task_id or "").strip()
+    canonical_task_id = canonicalize_block_id(raw_task_id) if raw_task_id else ""
+    prefixes = {item for item in (raw_task_id, canonical_task_id) if item}
+    local_symbols: list[str] = []
+    for raw_symbol in symbols:
+        symbol = str(raw_symbol or "").strip()
+        if not symbol:
+            continue
+        if any(symbol == prefix or symbol.startswith(f"{prefix}_") for prefix in prefixes):
+            local_symbols.append(symbol)
+    return local_symbols
+
+
+def _reclassify_task_local_missing_lemmas(
+    task_id: str, diagnostics: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    reclassified: list[dict[str, Any]] = []
+    for item in diagnostics:
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("kind", "")) != "unknown_identifier":
+            reclassified.append(item)
+            continue
+        local_symbols = _task_local_missing_symbols(task_id, item.get("blocking_symbols", []))
+        if not local_symbols:
+            reclassified.append(item)
+            continue
+        updated = dict(item)
+        updated["kind"] = MISSING_LOCAL_FOUNDATION_LEMMA_KIND
+        updated["local_missing_symbols"] = local_symbols
+        updated["repair_action"] = "prove_or_split_task_local_foundation_lemma"
+        reclassified.append(updated)
+    return reclassified
 
 
 def _compose_detail_text(repl_output: str, temp_build_output: str, final_build_output: str = "") -> str:
@@ -4675,6 +4731,7 @@ def _build_verify_result_payload(
     final_build_output: str,
     diagnostics: list[dict[str, Any]],
 ) -> dict[str, Any]:
+    diagnostics = _reclassify_task_local_missing_lemmas(task_id, diagnostics)
     primary_failure_kind = _primary_failure_kind(diagnostics)
     blocking_symbols = _collect_blocking_symbols(diagnostics)
     return {
@@ -4716,6 +4773,7 @@ def _build_build_result_payload(
     diagnostics: list[dict[str, Any]],
     disposition: str,
 ) -> dict[str, Any]:
+    diagnostics = _reclassify_task_local_missing_lemmas(task_id, diagnostics)
     primary_failure_kind = _primary_failure_kind(diagnostics)
     blocking_symbols = _collect_blocking_symbols(diagnostics)
     return {
@@ -4967,6 +5025,19 @@ async def build_check_prompt_pack_candidate(
     source_candidate_path = resolve_candidate_path(pack_dir, candidate_arg)
     candidate_code = _read_file_safely(source_candidate_path)
     candidate_kind = "external_candidate" if candidate_arg else "draft"
+    candidate_hash = _sha256_text(candidate_code) if candidate_code else ""
+    stale_official_message = stale_candidate_official_output_message(
+        task_id=task_id,
+        source_plan=source_plan,
+        settings=settings,
+        candidate_path=source_candidate_path,
+        candidate_hash=candidate_hash,
+        draft_path=pack_dir / DRAFT_FILE_NAME,
+        action="build-check source",
+    )
+    if stale_official_message:
+        _refresh_pack_runtime_view(task, ledger, settings, pack_dir)
+        return False, stale_official_message
     build_feedback_path = pack_dir / "build_feedback.txt"
     attempt, snapshot_path = _next_candidate_path(pack_dir)
     snapshot_path.write_text(candidate_code, encoding="utf-8")
@@ -5223,7 +5294,7 @@ def _write_codex_handoff_review_artifacts(
     template_path = _result_template_path(pack_dir, attempt)
     expected_result_path = paths["result"]
     template = {
-        "schema_version": "phase2.semantic_review.result.v5",
+        "schema_version": "phase2.semantic_review.result.v6",
         "task_id": task["block_id"],
         "mode": mode,
         "attempt": attempt,
@@ -5238,6 +5309,13 @@ def _write_codex_handoff_review_artifacts(
         "verdict": "inconclusive",
         "confidence": "",
         "summary": "",
+        "reviewer_independence": {
+            "role": "independent_read_only_reviewer",
+            "read_only": True,
+            "did_edit_candidate": False,
+            "used_current_review_request": True,
+            "attestation": "",
+        },
         "source_claims": [],
         "claim_mapping": [],
         "spine_alignment": {
@@ -5260,6 +5338,13 @@ def _write_codex_handoff_review_artifacts(
         "findings": [],
         "recommended_disposition": "revise",
         "reviewer_schema_hints": {
+            "reviewer_independence_shape": {
+                "role": "independent_read_only_reviewer",
+                "read_only": True,
+                "did_edit_candidate": False,
+                "used_current_review_request": True,
+                "attestation": "<short statement that this was an independent read-only review>",
+            },
             "section_status_values": ["covered", "partial", "missing", "violated", "unclear"],
             "obligation_item_status_values": [
                 "covered",
@@ -5270,6 +5355,16 @@ def _write_codex_handoff_review_artifacts(
                 "not_applicable",
                 "accepted_as_proof_debt",
             ],
+            "obligation_item_contract_fields": {
+                "expected_theorem_signature": "<source-faithful theorem/lemma type expected for this obligation>",
+                "lean_landing": "<Lean theorem/lemma declaration proving the obligation>",
+                "landing_kind": "theorem | lemma | private_axiom | structure_field | support_predicate | support_constructor | adapter | public_premise | empty | unknown",
+                "proof_contract_status": "unverified | verified | failed | not_applicable | accepted_adapter | open_math_debt | beyond_book_exception",
+                "signature_match": "unverified | passed | failed | not_applicable",
+                "body_reassumption_check": "unverified | passed | failed | not_applicable",
+                "public_premise_check": "unverified | passed | failed | not_applicable",
+                "proof_contract_notes": "<why the landing satisfies or fails the contract>",
+            },
             "downstream_consumer_entry_shape": {
                 "block_id": "<direct downstream block_id>",
                 "status": "covered | not_applicable | blocked",
@@ -5442,6 +5537,20 @@ async def write_codex_review_pack(task_id: str, ledger: LedgerManager, settings,
         _refresh_pack_runtime_view(task, ledger, settings, pack_dir)
         return False, "The last build-ready candidate is stale; rerun build-check before review-pack."
 
+    source_plan = str(task.get("source_plan", "unknown") or "unknown")
+    stale_official_message = stale_candidate_official_output_message(
+        task_id=task_id,
+        source_plan=source_plan,
+        settings=settings,
+        candidate_path=candidate_path,
+        candidate_hash=candidate_hash,
+        draft_path=pack_dir / DRAFT_FILE_NAME,
+        action="candidate review",
+    )
+    if stale_official_message:
+        _refresh_pack_runtime_view(task, ledger, settings, pack_dir)
+        return False, stale_official_message
+
     review_attempt = _next_review_attempt(pack_dir)
     build_result_file = str(current_record.get("latest_build_result_file", "") or "")
     build_summary = _read_json_safely(Path(build_result_file), {}) if build_result_file else {}
@@ -5511,7 +5620,7 @@ async def write_existing_output_review_pack(
         pack_dir = write_prompt_pack(task_id, ledger, settings, task=task)
 
     source_plan = str(task.get("source_plan", "unknown") or "unknown")
-    output_path = find_existing_task_file(task_id, source_plan, settings)
+    output_path = select_latest_existing_task_file(task_id, source_plan, settings)
     if output_path is None or not output_path.exists():
         raise FileNotFoundError(f"Official output file does not exist for review-existing: {task_id}")
     candidate_code = _read_file_safely(output_path)

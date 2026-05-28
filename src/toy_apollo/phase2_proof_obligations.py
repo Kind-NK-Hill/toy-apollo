@@ -31,6 +31,37 @@ OBLIGATION_REVIEW_STATUSES = {"unreviewed", "accepted", "rejected", "needs_revie
 REVIEW_ITEM_STATUSES = {"covered", "partial", "missing", "violated", "unclear", "not_applicable", "accepted_as_proof_debt"}
 PASSING_REVIEW_ITEM_STATUSES = {"covered", "not_applicable", "accepted_as_proof_debt"}
 PASSING_OBLIGATION_STATUSES = {"proved", "obsolete", "accepted_as_proof_debt"}
+LANDING_KINDS = {
+    "theorem",
+    "lemma",
+    "private_axiom",
+    "structure_field",
+    "support_predicate",
+    "support_constructor",
+    "adapter",
+    "public_premise",
+    "empty",
+    "unknown",
+}
+PROOF_CONTRACT_STATUSES = {
+    "unverified",
+    "verified",
+    "failed",
+    "not_applicable",
+    "accepted_adapter",
+    "open_math_debt",
+    "beyond_book_exception",
+}
+CONTRACT_CHECK_STATUSES = {"unverified", "passed", "failed", "not_applicable"}
+PROOF_CONTRACT_FIELDS = (
+    "expected_theorem_signature",
+    "landing_kind",
+    "proof_contract_status",
+    "proof_contract_notes",
+    "body_reassumption_check",
+    "signature_match",
+    "public_premise_check",
+)
 SCAFFOLD_CATEGORIES = {
     "assembly_scaffold",
     "interface_translation",
@@ -49,6 +80,26 @@ def utc_stamp() -> str:
 
 def proof_obligation_path(pack_dir: Path) -> Path:
     return pack_dir / PROOF_OBLIGATIONS_FILE_NAME
+
+
+def _normalize_enum(value: Any, allowed: set[str], default: str) -> str:
+    normalized = str(value or default).strip().lower()
+    return normalized if normalized in allowed else default
+
+
+def proof_contract_is_verified(item: dict[str, Any]) -> bool:
+    return (
+        str(item.get("proof_contract_status", "") or "").strip().lower() == "verified"
+        and str(item.get("signature_match", "") or "").strip().lower() == "passed"
+        and str(item.get("body_reassumption_check", "") or "").strip().lower() == "passed"
+        and str(item.get("public_premise_check", "") or "").strip().lower() == "passed"
+    )
+
+
+def copy_proof_contract_fields(target: dict[str, Any], source: dict[str, Any]) -> None:
+    for field in PROOF_CONTRACT_FIELDS:
+        if field in source:
+            target[field] = source[field]
 
 
 def classify_task_complexity(task: dict[str, Any], current_record: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -350,6 +401,19 @@ def render_proof_obligations_markdown(payload: dict[str, Any], *, path: Path | N
                 lines.append(f"  - Source ref: {source_ref}")
             lines.append(f"  - Depends on: `{', '.join(str(dep) for dep in deps) if deps else '(none)'}`")
             lines.append(f"  - Lean landing: `{lean_landing or '(not assigned)'}`")
+            expected_signature = str(item.get("expected_theorem_signature", "") or "").strip()
+            proof_contract_notes = str(item.get("proof_contract_notes", "") or "").strip()
+            lines.append(f"  - Expected theorem signature: `{expected_signature or '(not assigned)'}`")
+            lines.append(
+                "  - Proof contract: "
+                f"landing `{item.get('landing_kind', 'unknown')}` / "
+                f"status `{item.get('proof_contract_status', 'unverified')}` / "
+                f"signature `{item.get('signature_match', 'unverified')}` / "
+                f"body reassumption `{item.get('body_reassumption_check', 'unverified')}` / "
+                f"public premise `{item.get('public_premise_check', 'unverified')}`"
+            )
+            if proof_contract_notes:
+                lines.append(f"  - Proof contract notes: {proof_contract_notes}")
             alignment = item.get("source_output_alignment", {})
             if isinstance(alignment, dict) and alignment:
                 audit_class = str(alignment.get("audit_class", "") or "unclassified")
@@ -406,6 +470,16 @@ def validate_obligation_review_shape(result: dict[str, Any]) -> str:
         item_status = str(item.get("status", "") or "").strip().lower()
         if item_status not in REVIEW_ITEM_STATUSES:
             return "reviewer field obligation_review.items status must be covered/partial/missing/violated/unclear/not_applicable/accepted_as_proof_debt"
+        landing_kind = item.get("landing_kind")
+        if landing_kind is not None and _normalize_enum(landing_kind, LANDING_KINDS, "unknown") != str(landing_kind).strip().lower():
+            return "reviewer field obligation_review.items landing_kind must use the proof contract landing enum"
+        contract_status = item.get("proof_contract_status")
+        if contract_status is not None and _normalize_enum(contract_status, PROOF_CONTRACT_STATUSES, "unverified") != str(contract_status).strip().lower():
+            return "reviewer field obligation_review.items proof_contract_status must use the proof contract status enum"
+        for field in ("body_reassumption_check", "signature_match", "public_premise_check"):
+            value = item.get(field)
+            if value is not None and _normalize_enum(value, CONTRACT_CHECK_STATUSES, "unverified") != str(value).strip().lower():
+                return f"reviewer field obligation_review.items {field} must use the proof contract check enum"
     return ""
 
 
@@ -437,7 +511,7 @@ def validate_obligation_review_for_pass(review_input: dict[str, Any], result: di
             if isinstance(item, dict)
             and str(item.get("id", "") or "") in focus_set
             and bool(item.get("blocking", True))
-            and str(item.get("status", "open") or "open") not in {"proved", "obsolete"}
+            and str(item.get("status", "open") or "open") not in PASSING_OBLIGATION_STATUSES
         ]
     else:
         required_ids = [
@@ -451,15 +525,28 @@ def validate_obligation_review_for_pass(review_input: dict[str, Any], result: di
     if not required_ids:
         return ""
     item_statuses: dict[str, str] = {}
+    review_items_by_id: dict[str, dict[str, Any]] = {}
     for item in review.get("items", []):
         if not isinstance(item, dict):
             continue
         item_id = str(item.get("obligation_id", "") or item.get("id", "") or "").strip()
         if item_id:
             item_statuses[item_id] = str(item.get("status", "") or "").strip().lower()
+            review_items_by_id[item_id] = item
     missing = [item_id for item_id in required_ids if item_statuses.get(item_id) not in PASSING_REVIEW_ITEM_STATUSES]
     if missing:
         return "invalid reviewer output: pass verdict requires covered/not_applicable obligation_review.items for: " + ", ".join(missing)
+    unverified_contracts = [
+        item_id
+        for item_id in required_ids
+        if item_statuses.get(item_id) == "covered"
+        and not proof_contract_is_verified(review_items_by_id.get(item_id, {}))
+    ]
+    if unverified_contracts:
+        return (
+            "invalid reviewer output: pass verdict requires verified proof contract for covered obligations: "
+            + ", ".join(unverified_contracts)
+        )
     return ""
 
 
@@ -477,10 +564,12 @@ def extract_obligation_review_blockers(review_result: dict[str, Any]) -> list[di
         if not isinstance(item, dict):
             continue
         status = str(item.get("status", "") or "").strip().lower()
-        if status in PASSING_REVIEW_ITEM_STATUSES:
+        if status in {"not_applicable", "accepted_as_proof_debt"} or (status == "covered" and proof_contract_is_verified(item)):
             continue
         obligation_id = str(item.get("obligation_id", "") or item.get("id", "") or "").strip()
         issue = str(item.get("issue", "") or item.get("summary", "") or item.get("evidence", "") or status).strip()
+        if status == "covered" and not proof_contract_is_verified(item):
+            issue = issue or "covered item lacks a verified proof contract"
         if obligation_id or issue:
             blockers.append({"obligation_id": obligation_id, "issue": issue})
     deduped: list[dict[str, str]] = []
@@ -523,12 +612,19 @@ def apply_obligation_review_to_file(path: Path, review_result: dict[str, Any]) -
             continue
         status = str(item.get("status", "") or "").strip().lower()
         target = by_id[obligation_id]
+        copy_proof_contract_fields(target, item)
         if status == "covered":
-            target["review_status"] = "accepted"
-            target["status"] = "proved"
-            for scaffold in target.get("scaffold_hypotheses", []):
-                if isinstance(scaffold, dict):
-                    scaffold["status"] = "discharged"
+            if proof_contract_is_verified(target):
+                target["review_status"] = "accepted"
+                target["status"] = "proved"
+                for scaffold in target.get("scaffold_hypotheses", []):
+                    if isinstance(scaffold, dict):
+                        scaffold["status"] = "discharged"
+            else:
+                target["review_status"] = "needs_review"
+                target["status"] = "partial"
+                if not str(target.get("proof_contract_status", "") or "").strip():
+                    target["proof_contract_status"] = "unverified"
         elif status == "accepted_as_proof_debt":
             target["review_status"] = "accepted"
             target["status"] = "accepted_as_proof_debt"
@@ -591,6 +687,29 @@ def _normalize_obligation(item: dict[str, Any], index: int) -> dict[str, Any]:
             "blocking": bool(item.get("blocking", True)),
             "scaffold_hypotheses": _normalize_scaffold_list(item.get("scaffold_hypotheses", [])),
             "notes": str(item.get("notes", "") or ""),
+            "expected_theorem_signature": str(item.get("expected_theorem_signature", "") or ""),
+            "landing_kind": _normalize_enum(item.get("landing_kind", "unknown"), LANDING_KINDS, "unknown"),
+            "proof_contract_status": _normalize_enum(
+                item.get("proof_contract_status", "unverified"),
+                PROOF_CONTRACT_STATUSES,
+                "unverified",
+            ),
+            "proof_contract_notes": str(item.get("proof_contract_notes", "") or ""),
+            "body_reassumption_check": _normalize_enum(
+                item.get("body_reassumption_check", "unverified"),
+                CONTRACT_CHECK_STATUSES,
+                "unverified",
+            ),
+            "signature_match": _normalize_enum(
+                item.get("signature_match", "unverified"),
+                CONTRACT_CHECK_STATUSES,
+                "unverified",
+            ),
+            "public_premise_check": _normalize_enum(
+                item.get("public_premise_check", "unverified"),
+                CONTRACT_CHECK_STATUSES,
+                "unverified",
+            ),
         }
     )
     return normalized

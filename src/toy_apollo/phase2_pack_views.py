@@ -29,6 +29,7 @@ from .phase2_pack_shared.artifacts import (
     select_latest_candidate,
     select_latest_official_snapshot,
     select_latest_verify_result,
+    official_output_candidate_divergence,
 )
 from .phase2_pack_shared.io import read_file_safely, read_json_safely, sha256_text, write_json
 from .phase2_pack_shared.review_basis_parts import (
@@ -85,6 +86,43 @@ def _auto_loop_stop_reason_note(stop_reason: str) -> str:
     return ""
 
 
+def _resolve_pack_path(raw_path: str, pack_dir: Path) -> Path:
+    path = Path(raw_path).expanduser()
+    if not path.is_absolute():
+        path = (pack_dir / path).resolve()
+    return path
+
+
+def _official_output_route_note(task: dict[str, Any], current_record: dict[str, Any], settings, pack_dir: Path) -> str:
+    ready_raw = str(current_record.get("latest_build_ready_candidate_file", "") or "").strip()
+    if not ready_raw:
+        return ""
+    ready_path = _resolve_pack_path(ready_raw, pack_dir)
+    if not ready_path.exists():
+        return ""
+    divergence = official_output_candidate_divergence(
+        task_id=task["block_id"],
+        source_plan=str(task.get("source_plan", "unknown") or "unknown"),
+        settings=settings,
+        candidate_path=ready_path,
+        candidate_hash=str(current_record.get("latest_build_ready_candidate_hash", "") or ""),
+        draft_path=pack_dir / DRAFT_FILE_NAME,
+    )
+    if divergence.get("official_supersedes_candidate"):
+        return (
+            "Official output is newer than and differs from the latest build-ready candidate. "
+            "Use `review-now --review-subject existing` to review the repaired official output, "
+            "or sync the official output into `draft.lean` and rerun `build-check` before candidate review."
+        )
+    if divergence.get("official_differs_from_candidate"):
+        return (
+            "Official output differs from the latest build-ready candidate. Continue candidate review only "
+            "when this is an active draft/build-check repair; use `review-now --review-subject existing` "
+            "when auditing the already-runnable output."
+        )
+    return ""
+
+
 def build_operator_prompt(
     task: dict[str, Any],
     ledger: LedgerManager | None = None,
@@ -104,7 +142,7 @@ def build_operator_prompt(
         f"# Operator Prompt for {task_id}",
         "",
         (
-            "You are Codex's same-session semantic reviewer for exactly one Lean task in this repository."
+            "You are Codex's independent read-only semantic reviewer for exactly one Lean task in this repository."
             if review_mode_active
             else "You are Codex's local authoring agent for exactly one Lean task in this repository."
         ),
@@ -117,7 +155,8 @@ def build_operator_prompt(
                 "3. Write the verdict into the exact `semantic_review_result_vM.json` path requested by the current review request.",
                 "4. Keep the binding fields unchanged; do not review a different candidate or invent a different task binding.",
                 "5. Judge semantic fidelity, proof spine, interface contract, and downstream adequacy; do not edit `draft.lean` in reviewer mode.",
-                "6. This is a same-session reviewer step, not a handoff to a different backend.",
+                "6. You must be independent from the authoring pass for this candidate. Fill `reviewer_independence` truthfully.",
+                "7. If you authored or edited this candidate, stop and hand the review to a different read-only reviewer subagent or configured reviewer runner.",
             ]
             if review_mode_active
             else [
@@ -130,13 +169,21 @@ def build_operator_prompt(
                 "7. Do not rewrite dependency files.",
                 "8. Produce complete Lean code with no `sorry`.",
                 "9. Run `build-check` after each meaningful edit loop; do not enter semantic review until the candidate is build-ready.",
-                "10. Preserve the original TeX statement faithfully; use `review-pack`/`review-apply` as the default semantic review path only after `build-check` passes.",
-                "11. `review-existing` is only for auditing an already runnable official output.",
+                "10. Preserve the original TeX statement faithfully; use `review-now --review-subject candidate` after `build-check` passes.",
+                "11. Use `review-now --review-subject existing` only for auditing an already runnable official output.",
                 "12. Use `verify` only when a stable external reviewer runner is configured.",
             ]
         ),
     ]
     if ledger is not None and pack_dir is not None:
+        route_note = _official_output_route_note(
+            task,
+            current_record if isinstance(current_record, dict) else {},
+            settings,
+            pack_dir,
+        ) if settings is not None else ""
+        if route_note:
+            lines.extend(["", "Official output routing guard:", f"- {route_note}"])
         repair_request_file = str(current_record.get("current_review_repair_request_file", "") or "").strip()
         if auto_loop_state["enabled"]:
             lines.extend(
@@ -164,12 +211,12 @@ def build_operator_prompt(
                     [
                         "",
                         "Current same-session action:",
-                        "- You are in semantic review mode for the current auto-loop round.",
+                        "- You are in independent read-only semantic review mode for the current auto-loop round.",
                         "- Read the current semantic review request artifacts.",
-                        "- Write the canonical `semantic_review_result` JSON for the current candidate.",
+                        "- Write the canonical `semantic_review_result` JSON for the current candidate, including `reviewer_independence`.",
                         "- Immediately rerun `auto-loop` after writing the canonical review result so runtime can apply it or start the next repair/build round.",
                         "- Do not wait for a new user message to continue the current auto-loop.",
-                        "- Keep this in the same Codex session; do not hand it off to another reviewer backend.",
+                        "- The orchestrator may hand this review to a distinct reviewer subagent or configured reviewer runner; the author must not self-review.",
                     ]
                 )
             else:
@@ -271,6 +318,12 @@ def build_context_markdown(task: dict[str, Any], ledger: LedgerManager, settings
     if current_repair_request_path is not None and not current_repair_request_path.is_absolute():
         current_repair_request_path = (pack_dir / current_repair_request_path).resolve()
     current_repair_request = read_json_safely(current_repair_request_path, {}) if current_repair_request_path else {}
+    official_route_note = _official_output_route_note(
+        task,
+        current_record if isinstance(current_record, dict) else {},
+        settings,
+        pack_dir,
+    )
     stale_ready = (
         str(current_record.get("latest_build_ready_candidate_kind", "") or "") == ""
         and str(current_record.get("latest_build_candidate_kind", "") or "") == "draft"
@@ -360,6 +413,8 @@ def build_context_markdown(task: dict[str, Any], ledger: LedgerManager, settings
     lines.append(f"- Latest build result: `{latest_build_result_file or '(none)'}`")
     if stale_ready:
         lines.append("- last build-ready candidate is stale")
+    if official_route_note:
+        lines.append(f"- Official output routing guard: {official_route_note}")
     if latest_attempt:
         lines.append(f"- Latest build status: `{'success' if latest_attempt.get('success') else 'failure'}`")
         lines.append(f"- Latest primary failure kind: `{latest_attempt.get('primary_failure_kind', 'none')}`")
@@ -755,7 +810,7 @@ def build_failure_summary_markdown(
                 "",
                 "Recommended next action:",
                 "- Read `search_manifest.json`, then edit `draft.lean` and run `build-check`.",
-                "- Once `build-check` succeeds, run `review-pack`.",
+                "- Once `build-check` succeeds, run `review-now --review-subject candidate`.",
                 "- Use `verify` only if `TOY_APOLLO_PHASE2_REVIEWER_ARGV_JSON` points to a stable local reviewer runner.",
             ]
         )
@@ -804,7 +859,7 @@ def build_failure_summary_markdown(
         lines.append("- No repeated failure pattern yet.")
     lines.extend(["", "## Recommended Next Action", ""])
     if latest.get("success"):
-        lines.append("- The latest candidate passed verification/build checks. Keep `draft.lean` aligned with that snapshot and run `review-pack` next.")
+        lines.append("- The latest candidate passed verification/build checks. Keep `draft.lean` aligned with that snapshot and run `review-now --review-subject candidate` next.")
     else:
         lines.append(f"- {recommended_action_for_kind(str(latest.get('primary_failure_kind') or ''), repeated_count)}")
     return "\n".join(lines).rstrip() + "\n"

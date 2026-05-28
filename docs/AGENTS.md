@@ -14,7 +14,7 @@ Use this folder for current runbooks and stable operator-facing policy docs.
 - Prefer one topic per file over one giant overview document.
 - Follow `docs/README.md` for the current runtime and policy boundary.
 - Keep proof-fidelity, adapter, proof-debt, and public Support/Spine rules in
-  `phase2_proof_fidelity_contract.md`; avoid re-expanding those rules in every
+  `phase2/proof_fidelity_contract.md`; avoid re-expanding those rules in every
   workflow or handoff doc.
 - Prefer git history, PR descriptions, or issues for historical one-off notes instead of adding them back under `docs/`.
 

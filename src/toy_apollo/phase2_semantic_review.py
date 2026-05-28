@@ -19,12 +19,13 @@ from .phase2_proof_obligations import (
 )
 
 
-SEMANTIC_REVIEW_PROMPT_VERSION = 5
-SEMANTIC_REVIEW_RUBRIC_VERSION = 5
+SEMANTIC_REVIEW_PROMPT_VERSION = 6
+SEMANTIC_REVIEW_RUBRIC_VERSION = 6
 SEMANTIC_REVIEW_REQUIRED_FIELDS = {
     "verdict",
     "confidence",
     "summary",
+    "reviewer_independence",
     "source_claims",
     "claim_mapping",
     "spine_alignment",
@@ -165,12 +166,20 @@ def build_semantic_review_input(
         "sanity_build_module": sanity_build_module,
         "sanity_build_passed": bool(sanity_build_passed),
     }
+    reviewer_role_contract = {
+        "required_role": "independent_read_only_reviewer",
+        "read_only": True,
+        "may_edit_candidate": False,
+        "may_author_same_candidate": False,
+        "must_use_current_review_request": True,
+    }
     resolved_review_basis_hash = review_basis_hash or (_hash_json(review_basis) if review_basis else "")
     cache_basis = {
         "task_source_hash": task_source_hash,
         "candidate_hash": candidate_hash,
         "dependency_summary_hash": dependency_summary_hash,
         "build_precondition_hash": _hash_json(build_precondition),
+        "reviewer_role_contract_hash": _hash_json(reviewer_role_contract),
         "review_basis_hash": resolved_review_basis_hash,
         "review_subject_kind": review_subject_kind,
         "prompt_version": SEMANTIC_REVIEW_PROMPT_VERSION,
@@ -204,6 +213,7 @@ def build_semantic_review_input(
         "search_summary": search_summary,
         "build_summary": build_summary,
         "build_precondition": build_precondition,
+        "reviewer_role_contract": reviewer_role_contract,
         "reviewer_backend_id": backend_id,
         "reviewer_argv_hash": reviewer_argv_hash,
         "cache_basis": cache_basis,
@@ -214,6 +224,7 @@ def build_semantic_review_input(
             "Fail or mark inconclusive if a claim is missing, weakened, converted into an assumption, or hidden behind a placeholder.",
             "When the source TeX contains an essential proof, construction, partition argument, or contradiction argument, preserve that proof spine at an appropriate abstraction level instead of replacing it with a theorem-specific wrapper.",
             "When proof_obligations are present in the review basis, judge each blocking obligation explicitly in obligation_review.items.",
+            "For a covered proof obligation, verify that the Lean landing is a theorem/lemma with the expected theorem signature, does not simply re-assume the same source step in its body, and does not move the obligation into a public theorem premise.",
             "Read the full semantic review context markdown before judging the candidate.",
             "Do not accept a pass verdict without non-empty source_claims, claim_mapping, obligation_review, interface_contract, downstream_adequacy, and forbidden_weakenings.",
             "A theorem that cannot honestly support its direct downstream consumers does not pass semantic review.",
@@ -221,6 +232,7 @@ def build_semantic_review_input(
             "For definitions, fail if divergence or undefinedness is hidden behind an arbitrary fallback value such as `0`, `default`, or an unconditional witness.",
             "For definitions that split convergence and value, fail if the exported value can be consumed downstream without an explicit convergence proof or equivalent guard.",
             "Lean build success is necessary but not sufficient for semantic faithfulness.",
+            "The semantic reviewer must be independent and read-only: the author of the candidate must not self-review the same candidate.",
         ],
     }
 
@@ -238,6 +250,13 @@ def render_semantic_review_prompt(review_input: dict[str, Any]) -> str:
             f"- Rubric version: `{review_input.get('rubric_version')}`",
             f"- Candidate: `{candidate.get('file')}`",
             f"- Review context file: `{review_input.get('review_context_file', '') or '(none)'}`",
+            "",
+            "## Reviewer Role Contract",
+            "",
+            "This prompt is for an independent read-only reviewer subagent or a configured external reviewer runner.",
+            "If you authored or edited this candidate in the current repair attempt, do not fill the result; hand it to an independent reviewer.",
+            "Do not edit Lean files, prompt-pack files, obligations, classification, or ledger state while reviewing.",
+            "The result must include a `reviewer_independence` object attesting that the review was read-only and independent.",
             "",
             "## Task Source",
             "",
@@ -267,14 +286,18 @@ def render_semantic_review_prompt(review_input: dict[str, Any]) -> str:
             "Return JSON only, written to the result path supplied by the runner.",
             "Use the generated result template as the starting JSON payload.",
             "Keep these binding fields unchanged: task_id, mode, attempt, prompt_version, rubric_version, review_input_file, review_prompt_file, expected_result_file, candidate_hash.",
-            "Fill these semantic review fields: verdict, confidence, summary, source_claims, claim_mapping, spine_alignment, obligation_review, interface_contract, downstream_adequacy, forbidden_weakenings, findings, recommended_disposition.",
+            "Fill these semantic review fields: verdict, confidence, summary, reviewer_independence, source_claims, claim_mapping, spine_alignment, obligation_review, interface_contract, downstream_adequacy, forbidden_weakenings, findings, recommended_disposition.",
+            "The `reviewer_independence` object must be shaped as {\"role\": \"independent_read_only_reviewer\", \"read_only\": true, \"did_edit_candidate\": false, \"used_current_review_request\": true, \"attestation\": \"<short statement>\"}.",
             "Allowed verdict values: pass, fail, inconclusive.",
             "Status enum fields `spine_alignment.status`, `obligation_review.status`, `interface_contract.status`, and `downstream_adequacy.status` must use covered/partial/missing/violated/unclear.",
             "For obligation_review.items, each status must use covered/partial/missing/violated/unclear/not_applicable/accepted_as_proof_debt.",
+            "For each covered obligation_review.items entry, include expected_theorem_signature, lean_landing, landing_kind, proof_contract_status, body_reassumption_check, signature_match, public_premise_check, and proof_contract_notes.",
             "A pass requires non-empty source_claims and claim_mapping that explicitly connect source claims to Lean declarations, assumptions, and conclusions.",
             "A pass also requires spine_alignment.status = covered with non-empty obligations_checked, obligation_review.status = covered with every blocking proof obligation covered, not_applicable, or explicitly accepted_as_proof_debt, plus interface_contract.status = covered and downstream_adequacy.status = covered.",
+            "A covered proof obligation is eligible for pass only when proof_contract_status = verified and signature_match, body_reassumption_check, and public_premise_check are all passed.",
             "If the source text relies on a proof, construction, reduction, interface translation, proof-debt support, case split, contradiction, partition argument, or other intermediate obligation, a pass must explain in spine_alignment.obligations_checked where that source spine lands in Lean.",
-            "If the review context lists proof_obligations, obligation_review.items must cite each obligation_id, status, and Lean evidence; use accepted_as_proof_debt only for explicit proof_debt_support assumptions that the project is intentionally carrying forward. Open blockers or scaffold hypotheses without a discharge plan rule out pass.",
+            "If the review context lists proof_obligations, obligation_review.items must cite each obligation_id, status, and Lean evidence; use accepted_as_proof_debt only for explicit proof_debt_support assumptions that the project is intentionally carrying forward. Open blockers, scaffold hypotheses without a discharge plan, public-premise relocation, adapter-only landings for textbook targets, or unverified proof contracts rule out pass.",
+            "Classify each obligation route as source-route theorem/lemma, Mathlib-backed adapter, interface bridge, open math debt, or beyond-book exception; do not report an adapter or bridge as textbook proof completion unless that is the explicit classification.",
             "If the reviewer cannot point to the Lean landing place of the source spine and can only describe a shortcut or black-box replacement, the verdict must be fail or inconclusive rather than pass.",
             "When the review basis lists direct downstream consumers, a pass must include one consumers_checked entry per consumer with status covered/not_applicable and no blocking_issues.",
             "downstream_adequacy.consumers_checked entries must be objects shaped as {\"block_id\": \"<direct downstream block_id>\", \"status\": \"covered | not_applicable | blocked\", \"evidence\": \"<why>\"}.",
@@ -286,9 +309,26 @@ def render_semantic_review_prompt(review_input: dict[str, Any]) -> str:
     ).rstrip() + "\n"
 
 
+def _validate_reviewer_independence(result: dict[str, Any]) -> str:
+    reviewer = result.get("reviewer_independence")
+    if not isinstance(reviewer, dict):
+        return "reviewer result reviewer_independence must be an object"
+    if str(reviewer.get("role", "") or "") != "independent_read_only_reviewer":
+        return "reviewer result reviewer_independence.role must be independent_read_only_reviewer"
+    if reviewer.get("read_only") is not True:
+        return "reviewer result reviewer_independence.read_only must be true"
+    if reviewer.get("did_edit_candidate") is not False:
+        return "reviewer result reviewer_independence.did_edit_candidate must be false"
+    if reviewer.get("used_current_review_request") is not True:
+        return "reviewer result reviewer_independence.used_current_review_request must be true"
+    if not str(reviewer.get("attestation", "") or "").strip():
+        return "reviewer result reviewer_independence.attestation must be non-empty"
+    return ""
+
+
 def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_metadata: dict[str, Any]) -> dict[str, Any]:
     base = {
-        "schema_version": "phase2.semantic_review.result.v5",
+        "schema_version": "phase2.semantic_review.result.v6",
         "task_id": review_input.get("task", {}).get("block_id", ""),
         "mode": review_input.get("mode", ""),
         "attempt": review_input.get("attempt"),
@@ -310,6 +350,9 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
             cache_class="operational_failure",
         )
     result = {**base, **raw}
+    independence_error = _validate_reviewer_independence(result)
+    if independence_error:
+        return _inconclusive_result(base, independence_error, raw=raw, cache_class="operational_failure")
     expected_task_id = canonicalize_block_id(str(review_input.get("task", {}).get("block_id", "") or ""))
     result_task_id = canonicalize_block_id(str(result.get("task_id", "") or ""))
     if result_task_id != expected_task_id:
@@ -535,6 +578,13 @@ def _inconclusive_result(
         "verdict": "inconclusive",
         "confidence": "none",
         "summary": reason,
+        "reviewer_independence": {
+            "role": "independent_read_only_reviewer",
+            "read_only": True,
+            "did_edit_candidate": False,
+            "used_current_review_request": False,
+            "attestation": f"Normalizer-generated inconclusive result: {reason}",
+        },
         "source_claims": [],
         "claim_mapping": [],
         "spine_alignment": {
@@ -716,7 +766,7 @@ def _run_or_inconclusive(
 
 def _base_for_runner_failure(review_input: dict[str, Any], metadata: dict[str, Any]) -> dict[str, Any]:
     return {
-        "schema_version": "phase2.semantic_review.result.v5",
+        "schema_version": "phase2.semantic_review.result.v6",
         "task_id": review_input.get("task", {}).get("block_id", ""),
         "mode": review_input.get("mode", ""),
         "attempt": review_input.get("attempt"),
@@ -755,6 +805,7 @@ def render_semantic_review_report(result: dict[str, Any]) -> str:
     downstream_adequacy = result.get("downstream_adequacy", {})
     obligation_review = result.get("obligation_review", {})
     forbidden_weakenings = result.get("forbidden_weakenings", [])
+    reviewer_independence = result.get("reviewer_independence", {})
     lines = [
         f"# Semantic Review Report for {result.get('task_id', '')}",
         "",
@@ -766,6 +817,13 @@ def render_semantic_review_report(result: dict[str, Any]) -> str:
         "## Summary",
         "",
         str(result.get("summary", "")).strip() or "(no summary)",
+        "",
+        "## Reviewer Independence",
+        "",
+        f"- Role: `{reviewer_independence.get('role', 'unknown') if isinstance(reviewer_independence, dict) else 'unknown'}`",
+        f"- Read-only: `{bool(reviewer_independence.get('read_only', False)) if isinstance(reviewer_independence, dict) else False}`",
+        f"- Edited candidate: `{bool(reviewer_independence.get('did_edit_candidate', True)) if isinstance(reviewer_independence, dict) else True}`",
+        f"- Used current request: `{bool(reviewer_independence.get('used_current_review_request', False)) if isinstance(reviewer_independence, dict) else False}`",
         "",
         "## Interface Contract",
         "",

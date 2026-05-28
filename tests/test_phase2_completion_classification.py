@@ -1,4 +1,5 @@
 import json
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -31,6 +32,47 @@ class Phase2CompletionClassificationTests(unittest.TestCase):
         for task in open_debt_tasks:
             self.assertIn("open", task["classification_reason"].lower())
             self.assertTrue(task["next_action"])
+
+    def test_textbook_completed_requires_proof_contract_or_level0_reason(self) -> None:
+        payload = json.loads(Path(DEFAULT_CLASSIFICATION).read_text(encoding="utf-8"))
+        for item in payload["tasks"]:
+            if item["primary_class"] == "textbook_proof_completed":
+                item["validation"] = ["python tools/validate_phase2_obligation_contracts.py --task " + item["task_id"]]
+        task = next(item for item in payload["tasks"] if item["primary_class"] == "textbook_proof_completed")
+        task["validation"] = []
+        task["evidence"] = [item for item in task["evidence"] if item.get("kind") != "proof_contract"]
+        task["classification_reason"] = "textbook proof complete without explicit contract evidence"
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "classification.json"
+            path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+            errors = validate_classification(path, require_textbook_contract=True)
+
+        self.assertTrue(any("requires proof_contract evidence" in error for error in errors))
+
+        task["classification_reason"] = "no task-local proof obligations are in scope because Level 0 direct proof"
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "classification.json"
+            path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+            errors = validate_classification(path, require_textbook_contract=True)
+
+        self.assertFalse(any("requires proof_contract evidence" in error for error in errors))
+
+    def test_adapter_evidence_does_not_satisfy_textbook_contract(self) -> None:
+        payload = json.loads(Path(DEFAULT_CLASSIFICATION).read_text(encoding="utf-8"))
+        for item in payload["tasks"]:
+            if item["primary_class"] == "textbook_proof_completed":
+                item["validation"] = ["python tools/validate_phase2_obligation_contracts.py --task " + item["task_id"]]
+        task = next(item for item in payload["tasks"] if item["primary_class"] == "textbook_proof_completed")
+        task["validation"] = []
+        task["evidence"] = [item for item in task["evidence"] if item.get("kind") != "proof_contract"]
+        task["classification_reason"] = "textbook proof complete without explicit contract evidence"
+        task["evidence"][0]["kind"] = "mathlib_adapter"
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "classification.json"
+            path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+            errors = validate_classification(path, require_textbook_contract=True)
+
+        self.assertTrue(any("requires proof_contract evidence" in error for error in errors))
 
 
 if __name__ == "__main__":

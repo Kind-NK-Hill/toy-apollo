@@ -25,12 +25,19 @@
         "def_5_10"
       ],
       "lean_landing": "def_5_10_randomVariables P X",
-      "status": "proved",
+      "status": "obsolete",
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "Reuse the local independence interface and do not strengthen the theorem to identically distributed variables.",
-      "last_review_evidence": "`thm_11_7` exposes `_hindep : def_5_10_randomVariables P X` and does not assume identical distribution."
+      "last_review_evidence": "",
+      "expected_theorem_signature": "",
+      "landing_kind": "support_predicate",
+      "proof_contract_status": "not_applicable",
+      "proof_contract_notes": "This is a source-facing public independence assumption, not an internal proof obligation.",
+      "signature_match": "not_applicable",
+      "body_reassumption_check": "not_applicable",
+      "public_premise_check": "not_applicable"
     },
     {
       "id": "sample_average_interface",
@@ -40,13 +47,20 @@
       "depends_on": [
         "thm_11_5"
       ],
-      "lean_landing": "thm_11_5_sampleMean",
-      "status": "proved",
+      "lean_landing": "",
+      "status": "obsolete",
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "Reuse the existing Chapter 11 sample-average definition rather than defining another average.",
-      "last_review_evidence": "The conclusion uses the existing `thm_11_5_sampleMean X n` interface."
+      "last_review_evidence": "",
+      "expected_theorem_signature": "",
+      "landing_kind": "support_predicate",
+      "proof_contract_status": "not_applicable",
+      "proof_contract_notes": "This is reuse of the existing sample-average interface, not a proof obligation.",
+      "signature_match": "not_applicable",
+      "body_reassumption_check": "not_applicable",
+      "public_premise_check": "not_applicable"
     },
     {
       "id": "mean_and_fourth_moment_interface",
@@ -57,12 +71,19 @@
         "def_9_1"
       ],
       "lean_landing": "P[X i] = mu and thm_11_7_fourthMomentUniformBound P X mu c",
-      "status": "proved",
+      "status": "obsolete",
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "The formal bound uses the local fourth-moment interface from Chapter 9.",
-      "last_review_evidence": "`_hmean` states the common mean and `_hfourth` packages the uniform centered fourth-moment bound."
+      "notes": "The formal source bound uses the local Chapter 9 `rthMoment` interface together with explicit `MemLp` evidence, because `rthMoment` is a real-valued Bochner integral and does not itself carry finiteness.",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "",
+      "landing_kind": "support_predicate",
+      "proof_contract_status": "not_applicable",
+      "proof_contract_notes": "The common mean and uncentered fourth-moment bound are source assumptions; the centered package is derived internally.",
+      "signature_match": "not_applicable",
+      "body_reassumption_check": "not_applicable",
+      "public_premise_check": "not_applicable"
     },
     {
       "id": "fourth_moment_expansion_tail_bound",
@@ -73,40 +94,69 @@
         "def_9_1",
         "thm_11_1"
       ],
-      "lean_landing": "thm_11_7_tailSummabilitySupport; thm_11_7_from_tailSummability; public h_tail_summability premise of thm_11_7",
-      "status": "open",
-      "review_status": "needs_review",
+      "lean_landing": "thm_11_7_fourth_moment_sum_bound; thm_11_7_tail_summability_from_fourth_moment; thm_11_7_tail_summability_from_partial_sum_bound; thm_11_7_from_tailSummability; thm_11_7",
+      "status": "proved",
+      "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "No current local or Mathlib theorem was found for the non-identically-distributed fourth-moment SLLN estimate. The private axiom was removed on 2026-05-24 and the final Borel-Cantelli/Theorem 10.1 assembly now lands on `thm_11_7_from_tailSummability`, but the source fourth-moment expansion is still an open_math_debt obligation exposed as the explicit tail-summability premise of `thm_11_7`.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support lands only on non-theorem declarations.\n[step6b-boundary] 2026-05-24: private axiom thm_11_7_tail_summability_internal removed; proof completion is not claimed until a theorem derives tail summability from independence, common mean, and uniform fourth-moment bound.",
-      "last_review_evidence": "Step 6B boundary pass: `thm_11_7_from_tailSummability` compiles and proves the tail-summability-to-a.s.-convergence bridge; the fourth-moment expansion/tail-bound derivation remains open.",
+      "notes": "Step 7/8 completion on 2026-05-25, self-corrected on 2026-05-26: the public fourth-moment package was restored to the uncentered textbook assumption, while `thm_11_7_centeredFourthMomentUniformBound_of_fourthMomentUniformBound` derives the centered `L^4`/moment package internally. The finite fourth-moment partial-sum estimate is theorem-level evidence via `thm_11_7_fourth_moment_sum_bound`; `thm_11_7_tail_summability_from_fourth_moment` derives `thm_11_7_tailSummabilitySupport`, and public `thm_11_7` no longer exposes `h_tail_summability` or an equivalent proof premise.",
+      "last_review_evidence": "",
       "source_output_alignment": {
         "audited_at": "2026-05-19",
-        "audit_class": "C_support_field_gap_no_decl",
+        "audit_class": "A_theorem_landing_complete",
         "family": "tail/moment/ui",
         "existing_local_declarations": [
           {
-            "name": "thm_11_7_tailSummabilitySupport",
-            "kind": "def",
+            "name": "thm_11_7_fourth_moment_sum_bound",
+            "kind": "theorem",
             "file": "ToyApollo/Output/thm_11_7.lean",
-            "line": 248
+            "line": 550
+          },
+          {
+            "name": "thm_11_7_centeredFourthMomentUniformBound_of_fourthMomentUniformBound",
+            "kind": "theorem",
+            "file": "ToyApollo/Output/thm_11_7.lean",
+            "line": 364
+          },
+          {
+            "name": "thm_11_7_tail_summability_from_fourth_moment",
+            "kind": "theorem",
+            "file": "ToyApollo/Output/thm_11_7.lean",
+            "line": 1118
+          },
+          {
+            "name": "thm_11_7_tail_summability_from_partial_sum_bound",
+            "kind": "theorem",
+            "file": "ToyApollo/Output/thm_11_7.lean",
+            "line": 1087
           },
           {
             "name": "thm_11_7_from_tailSummability",
             "kind": "theorem",
             "file": "ToyApollo/Output/thm_11_7.lean",
-            "line": 257
+            "line": 1137
+          },
+          {
+            "name": "thm_11_7",
+            "kind": "theorem",
+            "file": "ToyApollo/Output/thm_11_7.lean",
+            "line": 1160
           }
         ],
-        "missing_landing_names": [
-          "theorem-level fourth_moment_expansion_tail_bound deriving thm_11_7_tailSummabilitySupport from the source assumptions"
-        ],
-        "next_action": "Do not count the public tail-summability premise as proof completion; derive it from theorem-level fourth-moment expansion, mixed-term cancellation, Cauchy-Schwarz, Markov, and p-series evidence.",
+        "missing_landing_names": [],
+        "next_action": "No fourth-moment tail-summability source-route action remains for thm_11_7.",
         "manual_review_required": false
       },
       "ledger_task_id": "obl_thm_11_7_fourth_moment_expansion_tail_bound",
       "obligation_fingerprint": "c144341678e0befc9fc946267e1d4c802eccbe66afb7860f8707585e28e7c54f",
-      "discharged_by_task": ""
+      "discharged_by_task": "",
+      "expected_theorem_signature": "theorem thm_11_7_tail_summability_from_fourth_moment {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) (X : ℕ → Ω → ℝ) (μ : ℝ) : def_5_10_randomVariables P X → (∀ i, P[X i] = μ) → (∃ c : ℝ, thm_11_7_fourthMomentUniformBound P X μ c) → thm_11_7_tailSummabilitySupport P X μ",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The landing is theorem-level source-route evidence. It derives centered moment control internally, proves a partial-sum fourth-moment bound, and converts it to tail summability without a public tail-summability premise or private axiom.",
+      "signature_match": "passed",
+      "body_reassumption_check": "passed",
+      "public_premise_check": "passed"
     },
     {
       "id": "borel_cantelli_limsup_step",
@@ -116,13 +166,20 @@
       "depends_on": [
         "thm_5_8"
       ],
-      "lean_landing": "thm_5_8 applied to almostSureDeviationEvent",
+      "lean_landing": "thm_11_7_from_tailSummability",
       "status": "proved",
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "This step should be fully proved from the summable tail support.",
-      "last_review_evidence": "The proof applies `thm_5_8` to the deviation events using the support summability hypothesis."
+      "notes": "The final assembly theorem applies `thm_5_8` to `almostSureDeviationEvent` using `thm_11_7_tailSummabilitySupport`.",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "private theorem thm_11_7_from_tailSummability {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ) (μ : ℝ) : thm_11_7_tailSummabilitySupport P X μ → ConvergesAlmostSurely P (fun n => thm_11_5_sampleMean X n) (fun _ => μ)",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "`thm_11_7_from_tailSummability` applies `thm_5_8` to the deviation events; the tail premise is internal to final assembly.",
+      "signature_match": "passed",
+      "body_reassumption_check": "passed",
+      "public_premise_check": "passed"
     },
     {
       "id": "almost_sure_convergence_bridge",
@@ -132,19 +189,26 @@
       "depends_on": [
         "thm_10_1"
       ],
-      "lean_landing": "thm_10_1 converts null infinitely-often deviations to ConvergesAlmostSurely",
+      "lean_landing": "thm_11_7_from_tailSummability; thm_11_7",
       "status": "proved",
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "This step should be fully proved with the local Chapter 10 theorem.",
-      "last_review_evidence": "The final proof uses `thm_10_1` to reconstruct almost-sure convergence from null infinitely-often deviations."
+      "notes": "`thm_11_7_from_tailSummability` uses `thm_10_1` after the Borel-Cantelli step, and public `thm_11_7` now supplies its tail support internally from the fourth-moment source assumptions.",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "theorem thm_11_7 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ) (μ : ℝ) : def_5_10_randomVariables P X → (∀ i : ℕ, P[X i] = μ) → (∃ c : ℝ, thm_11_7_fourthMomentUniformBound P X μ c) → ConvergesAlmostSurely P (fun n => thm_11_5_sampleMean X n) (fun _ => μ)",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The public theorem has only source assumptions and calls the theorem-level tail-summability route before using the Borel-Cantelli/Theorem 10.1 bridge.",
+      "signature_match": "passed",
+      "body_reassumption_check": "passed",
+      "public_premise_check": "passed"
     }
   ],
   "scaffold_hypotheses": [],
   "reconstruction_target": {
     "statement": "thm_11_7",
-    "description": "Assemble the public strong-law statement from local independence, local moment, existing sample-average, explicit open_math_debt for the fourth-moment tail estimate, Borel-Cantelli, and Theorem 10.1."
+    "description": "Assemble the public strong-law statement from local independence, common mean, uniform uncentered fourth moment, the internal centered fourth-moment bridge, theorem-level fourth-moment partial-sum estimate, Borel-Cantelli, and Theorem 10.1."
   },
   "review_history": [
     {
@@ -185,9 +249,40 @@
       "open_blockers": [
         "fourth_moment_expansion_tail_bound"
       ]
+    },
+    {
+      "reviewed_at": "2026-05-25T00:00:00+08:00",
+      "verdict": "blocked",
+      "status": "step7_foundation_landed_but_tail_support_open",
+      "summary": "Step 7 landed additional fourth-moment foundation lemmas and the theorem-level assembly from a hypothetical partial-sum fourth-moment bound to tail summability. A concrete final attempt at `thm_11_7_tail_summability_from_fourth_moment` still blocks on proving the finite partial-sum fourth-moment inequality, so the public `h_tail_summability` premise remains and completion is not claimed.",
+      "open_blockers": [
+        "fourth_moment_expansion_tail_bound",
+        "thm_11_7_fourth_moment_sum_bound"
+      ]
+    },
+    {
+      "reviewed_at": "2026-05-25T00:00:00+08:00",
+      "verdict": "pass",
+      "status": "textbook_route_completed",
+      "summary": "`thm_11_7_fourth_moment_sum_bound` and `thm_11_7_tail_summability_from_fourth_moment` landed; public `thm_11_7` no longer exposes `h_tail_summability`.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-26T00:00:00+08:00",
+      "verdict": "pass",
+      "status": "hidden_strengthening_corrected",
+      "summary": "Self-correction found that the previous public fourth-moment package directly required centered `MemLp` and centered fourth-moment bounds. The Lean statement was repaired so `thm_11_7_fourthMomentUniformBound` records the uncentered textbook fourth-moment assumption; the centered package is now derived internally by `thm_11_7_centeredFourthMomentUniformBound_of_fourthMomentUniformBound`.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-27T17:11:43.218256Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All blocking obligations are either source-facing interfaces marked not applicable for theorem-level proof contract, or proved with verified theorem-level contract fields. The task-local obligation validator reports zero errors or warnings.",
+      "open_blockers": []
     }
   ],
-  "last_reviewed_at": "2026-05-24T00:00:00+08:00",
+  "last_reviewed_at": "2026-05-27T17:11:43.218256Z",
   "source_output_alignment_audit": {
     "audited_at": "2026-05-19",
     "accepted_debt_count": 1,
@@ -225,6 +320,36 @@
           "status": "open",
           "review_status": "needs_review",
           "lean_landing": "thm_11_7_tailSummabilitySupport; thm_11_7_from_tailSummability; public h_tail_summability premise of thm_11_7"
+        }
+      },
+      {
+        "obligation_id": "fourth_moment_expansion_tail_bound",
+        "action": "step7_pseries_foundation_landed",
+        "reason": "Step 7 landed the elementary p = 2 ENNReal p-series finite-tail lemma needed after a future fourth-moment/Markov bound; the full fourth-moment expansion obligation remains open.",
+        "current": {
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "thm_11_7_pseries_tail_bound; thm_11_7_tailSummabilitySupport; thm_11_7_from_tailSummability; public h_tail_summability premise of thm_11_7"
+        }
+      },
+      {
+        "obligation_id": "fourth_moment_expansion_tail_bound",
+        "action": "step7_markov_foundation_landed",
+        "reason": "Step 7 patched the centered partial sum to the intended per-term centered interface and landed theorem-level sample-mean, Markov, and algebraic ratio bridges. The full fourth-moment expansion and mixed-term cancellation remain open.",
+        "current": {
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "thm_11_7_centeredPartialSum; thm_11_7_sampleMean_sub_mean_eq_centeredPartialSum_div; thm_11_7_markov_fourth_tail_bound; thm_11_7_fourth_moment_ratio_eq_pseries_term; thm_11_7_pseries_tail_bound; public h_tail_summability premise of thm_11_7"
+        }
+      },
+      {
+        "obligation_id": "fourth_moment_expansion_tail_bound",
+        "action": "step7_tail_assembly_hard_block_recorded",
+        "reason": "Step 7 landed theorem-level MemLp/integrability, expansion, mixed-term cancellation, and partial-sum-bound-to-tail-summability support, but the concrete final theorem attempt still lacks the finite fourth-moment partial-sum bound.",
+        "current": {
+          "status": "open",
+          "review_status": "needs_review",
+          "lean_landing": "thm_11_7_centeredPartialSum_fourth_expand; thm_11_7_centered_memLp_four_of_uniform; thm_11_7_centered_fourth_integral_bound_of_uniform; thm_11_7_centered_integrable_of_uniform; thm_11_7_centered_fourth_power_integrable_of_memLp; thm_11_7_centeredPartialSum_fourth_integrable_of_uniform; thm_11_7_centered_singleton_pair_product_integral_eq_zero; thm_11_7_centered_four_distinct_product_integral_eq_zero; thm_11_7_tail_summability_from_partial_sum_bound; public h_tail_summability premise of thm_11_7"
         }
       }
     ]

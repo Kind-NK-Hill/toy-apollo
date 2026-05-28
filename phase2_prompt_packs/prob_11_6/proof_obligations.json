@@ -3,19 +3,19 @@
   "task_id": "prob_11_6",
   "generated_at": "2026-05-17T22:09:19.915255Z",
   "classification": {
-    "requires_decomposition": true,
-    "reason": "needs_decision/internal_axiom: Step 2.5 found that prob_11_6 still closes the source hint's sixth-moment expansion through private axiom prob_11_6_sixthMomentSupport_internal, and the required independent-sum sixth-moment, integrability-from-a.s.-boundedness, and zero-mean mixed-term cancellation landings are not available locally.",
+    "requires_decomposition": false,
+    "reason": "textbook_proof_completed: candidate v5 proves the source sixth-moment hint by theorem-level finite-sum expansion, singleton cancellation from independence and zero mean, uniform a.e. boundedness, and no-singleton tuple counting, then feeds the existing Markov, p-series, Borel-Cantelli, and Theorem 10.1 route.",
     "evidence": [
-      "ToyApollo/Output/prob_11_6.lean still closes prob_11_6 through private axiom prob_11_6_sixthMomentSupport_internal.",
-      "The downstream Markov, p-series, Borel-Cantelli, and Theorem 10.1 route is already theorem-level after prob_11_6_sixthMomentSupport.",
-      "Step 2.5 investigation on 2026-05-24 found no local theorem-level independent-sum sixth-moment expansion deriving the support from independence, zero mean, and almost-sure uniform boundedness.",
-      "The current public hypotheses do not provide the measurability, AEStronglyMeasurable/MemLp, integrability, or measurable a.e.-bound landings needed by the relevant Mathlib independence and boundedness APIs."
+      "ToyApollo/Output/prob_11_6.lean no longer contains private axiom prob_11_6_sixthMomentSupport_internal.",
+      "prob_11_6_sixthMomentSupport_of_uniformAEBound derives prob_11_6_sixthMomentSupport from independence, zero mean, AEStronglyMeasurable random variables, and a uniform almost-sure bound.",
+      "prob_11_6_tailSummability_of_sixthMoment and prob_11_6_of_tail_summability complete the Markov, p-series, Borel-Cantelli, and Theorem 10.1 route.",
+      "Independent semantic review v6 accepted the candidate under the Phase2 proof fidelity contract."
     ],
     "dependency_count": 3,
     "source_length": 378,
     "structural_operation_count": 0,
-    "proof_route_class": "needs_decision",
-    "audit_class": "internal_axiom_open_debt"
+    "proof_route_class": "textbook_proof_completed",
+    "audit_class": "textbook_proof_completed"
   },
   "obligations": [
     {
@@ -30,13 +30,20 @@
       "kind": "source_step",
       "source_ref": "",
       "depends_on": [],
-      "lean_landing": "prob_11_6_partialSum, prob_11_6_scaledSum",
+      "lean_landing": "prob_11_6_scaledSum_def",
       "status": "proved",
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "[phase2-step4-cleanup] 2026-05-24: filled lean_landing for proved metadata hygiene.",
-      "last_review_evidence": "The normalized sum is defined directly."
+      "notes": "[phase2-step4-cleanup] 2026-05-24: filled lean_landing for proved metadata hygiene.\n[phase2-proof-production] 2026-05-28: replaced the comma-separated definition landing with theorem-level landing prob_11_6_scaledSum_def for contract validation.",
+      "last_review_evidence": "candidate_v6.lean lines 37-57 define prob_11_6_partialSum, prob_11_6_normalizer, prob_11_6_scaledSum, and prove prob_11_6_scaledSum_def by rfl.",
+      "expected_theorem_signature": "Define S_n and S_n / n^(3/4) for the sequence X.",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "This is a theorem-level definitional landing for the source scaled sum. It has no proof-package premise and the body is rfl, so it does not reassume any proof step.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
     },
     {
       "id": "sixth_moment_support",
@@ -51,20 +58,21 @@
       "depends_on": [
         "define_scaled_sum"
       ],
-      "lean_landing": "",
-      "status": "open",
-      "review_status": "blocked",
+      "lean_landing": "prob_11_6_sixthMomentSupport_of_uniformAEBound",
+      "status": "proved",
+      "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [
         {
           "name": "prob_11_6_sixthMomentSupport_internal",
-          "kind": "private_axiom",
-          "location": "ToyApollo/Output/prob_11_6.lean",
-          "reason": "Private axiom supplies the missing theorem-level sixth-moment expansion from independence, zero mean, and almost-sure uniform boundedness."
+          "category": "proof_obligation",
+          "obligation_id": "",
+          "discharge_plan": "",
+          "status": "discharged"
         }
       ],
-      "notes": "[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.\n[clean-debt-public-surface] 2026-05-22: public theorem no longer requires prob_11_6_sixthMomentSupport; it now exposes the explicit sixth-moment bound. Still blocked as a proof debt because no theorem derives that bound from iid/zero-mean/uniform-bounded assumptions.\n[phase2-post-ch9-rework] 2026-05-23: public theorem no longer exposes the explicit sixth-moment bound either; the missing expansion is internalized as private axiom prob_11_6_sixthMomentSupport_internal and remains open_math_debt.\n[phase2-step2.5] 2026-05-24: reclassified as needs_decision because replacing the axiom requires a reusable independent-sum moment expansion layer plus measurability, integrability, a.e. bound, and mixed-term cancellation landings. The current `def_5_10_randomVariables` independence wrapper does not itself supply the strong measurability/integrability facts needed by Mathlib product-integral and boundedness APIs.",
-      "last_review_evidence": "Step 2.5 review on 2026-05-24 found no theorem-level sixth-moment expansion landing in local Chapter 11 dependencies; nearby thm_11_7 fourth-moment work is itself private-axiom-backed, and downstream tail summability remains theorem-level only after the missing support.",
+      "notes": "[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.\n[clean-debt-public-surface] 2026-05-22: public theorem no longer requires prob_11_6_sixthMomentSupport; it now exposes the explicit sixth-moment bound. Still blocked as a proof debt because no theorem derives that bound from iid/zero-mean/uniform-bounded assumptions.\n[phase2-post-ch9-rework] 2026-05-23: public theorem no longer exposes the explicit sixth-moment bound either; the missing expansion is internalized as private axiom prob_11_6_sixthMomentSupport_internal and remains open_math_debt.\n[phase2-step2.5] 2026-05-24: reclassified as needs_decision because replacing the axiom requires a reusable independent-sum moment expansion layer plus measurability, integrability, a.e. bound, and mixed-term cancellation landings. The current `def_5_10_randomVariables` independence wrapper does not itself supply the strong measurability/integrability facts needed by Mathlib product-integral and boundedness APIs.\n[phase2-proof-production] 2026-05-28: discharged by theorem-level landing prob_11_6_sixthMomentSupport_of_uniformAEBound.",
+      "last_review_evidence": "candidate_v6.lean lines 501-582 prove prob_11_6_sixthMomentSupport_of_uniformAEBound by expansion, singleton cancellation, tuple counting, and uniform bound estimates.",
       "source_output_alignment": {
         "audited_at": "2026-05-19",
         "audit_class": "D_no_landing_search_required",
@@ -76,7 +84,14 @@
       },
       "ledger_task_id": "obl_prob_11_6_sixth_moment_support",
       "obligation_fingerprint": "3c73073d3a12790566facfd2362fc26f88d7fca3ee0c183f9a015a0a88e8db9e",
-      "discharged_by_task": ""
+      "discharged_by_task": "prob_11_6",
+      "expected_theorem_signature": "From independence, zero mean, and uniform almost-sure boundedness, derive prob_11_6_sixthMomentSupport P X.",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The theorem has the expected conclusion and derives it from source-facing hypotheses. It does not re-assume sixth-moment support and does not use a private axiom.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
     },
     {
       "id": "tail_summability_support",
@@ -97,7 +112,7 @@
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.\n[clean-debt-refresh] 2026-05-21: resolved with theorem-level landing prob_11_6_tailSummability_of_sixthMoment.\n[phase2-post-ch9-rework] 2026-05-23: landing is retained as a private theorem-level internal step so support-package parameters are not exported through public task-facing declarations.",
-      "last_review_evidence": "The private theorem prob_11_6_tailSummability_of_sixthMoment proves the Markov/p-series tail summability from prob_11_6_sixthMomentSupport; the public final theorem no longer accepts a tail-summability or sixth-moment support parameter.",
+      "last_review_evidence": "candidate_v6.lean lines 666-696 prove prob_11_6_tailSummability_of_sixthMoment from hSixth : prob_11_6_sixthMomentSupport P X.",
       "source_output_alignment": {
         "audited_at": "2026-05-19",
         "audit_class": "A_existing_theorem_candidate",
@@ -111,7 +126,14 @@
       },
       "ledger_task_id": "obl_prob_11_6_tail_summability_support",
       "obligation_fingerprint": "cbeac738cffacdd7298727f709cd8cff409fa8b92bcf275fbd625041e82a6a2a",
-      "discharged_by_task": "obl_prob_11_6_tail_summability_support"
+      "discharged_by_task": "obl_prob_11_6_tail_summability_support",
+      "expected_theorem_signature": "prob_11_6_sixthMomentSupport P X -> prob_11_6_tailSummabilitySupport P X",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "This conditional downstream step is theorem-level and consumes the separately proved sixth-moment support inside the file.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
     },
     {
       "id": "borel_cantelli_to_as",
@@ -133,15 +155,23 @@
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "[phase2-step4-cleanup] 2026-05-24: filled lean_landing for proved metadata hygiene.",
-      "last_review_evidence": "The proof uses the existing Borel-Cantelli and almost-sure convergence criterion outputs."
+      "last_review_evidence": "candidate_v6.lean lines 699-729 prove prob_11_6_of_tail_summability and assemble final theorem prob_11_6.",
+      "expected_theorem_signature": "prob_11_6_tailSummabilitySupport P X -> ConvergesAlmostSurely P (prob_11_6_scaledSum X) (fun _ => 0)",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The final theorem obtains hSixthSupport via prob_11_6_sixthMomentSupport_of_uniformAEBound and then applies the theorem-level tail and Borel-Cantelli route.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
     }
   ],
   "scaffold_hypotheses": [
     {
       "name": "prob_11_6_sixthMomentSupport_internal",
-      "kind": "private_axiom",
-      "location": "ToyApollo/Output/prob_11_6.lean",
-      "public_surface": false
+      "category": "proof_obligation",
+      "obligation_id": "",
+      "discharge_plan": "",
+      "status": "discharged"
     }
   ],
   "review_history": [
@@ -183,9 +213,65 @@
       "open_blockers": [
         "prob_11_6_sixthMomentSupport_internal"
       ]
+    },
+    {
+      "reviewed_at": "2026-05-27T14:16:42.887479Z",
+      "verdict": "fail",
+      "status": "violated",
+      "summary": "The blocking sixth_moment_support obligation is carried by a private axiom, which the proof fidelity contract classifies as open_math_debt and not as textbook proof completion.",
+      "open_blockers": [
+        {
+          "obligation_id": "define_scaled_sum",
+          "issue": "prob_11_6_partialSum and prob_11_6_scaledSum define the partial sum and normalized sequence."
+        },
+        {
+          "obligation_id": "sixth_moment_support",
+          "issue": "prob_11_6 proves hSixthSupport by invoking private axiom prob_11_6_sixthMomentSupport_internal."
+        }
+      ]
+    },
+    {
+      "reviewed_at": "2026-05-27T16:48:56.596358Z",
+      "verdict": "inconclusive",
+      "status": "unclear",
+      "summary": "invalid reviewer output: pass verdict requires verified proof contract for covered obligations: define_scaled_sum",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-27T16:54:35.789790Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All non-debt obligations are covered by definitions or theorem-level landings. The sixth_moment_support obligation is accepted as explicit private proof debt, not as a proved obligation.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-28T05:15:47.826760Z",
+      "verdict": "fail",
+      "status": "partial",
+      "summary": "The definitional and downstream conditional obligations are represented, but sixth_moment_support fails the textbook proof contract: its landing is a private axiom with failed signature/body proof checks for completion purposes.",
+      "open_blockers": [
+        {
+          "obligation_id": "sixth_moment_support",
+          "issue": "The only landing deriving prob_11_6_sixthMomentSupport P X from the source hypotheses is private axiom prob_11_6_sixthMomentSupport_internal."
+        }
+      ]
+    },
+    {
+      "reviewed_at": "2026-05-28T06:30:44.510788Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All listed blocking obligations are covered by definitions or theorem-level landings. The previous sixth_moment_support proof debt is discharged by prob_11_6_sixthMomentSupport_of_uniformAEBound.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-28T06:46:57.369648Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All listed blocking obligations are covered by definitions or theorem-level landings. The v7-specific definitional landing is present, and the previous sixth_moment_support proof debt remains discharged by prob_11_6_sixthMomentSupport_of_uniformAEBound.",
+      "open_blockers": []
     }
   ],
-  "last_reviewed_at": "2026-05-24T00:00:00+08:00",
+  "last_reviewed_at": "2026-05-28T06:46:57.369648Z",
   "source_output_alignment_audit": {
     "audited_at": "2026-05-21",
     "accepted_debt_count": 1,
