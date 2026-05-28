@@ -26,7 +26,12 @@ USER_INTERRUPTED = "USER_INTERRUPTED"
 NEEDS_DECOMPOSITION = "NEEDS_DECOMPOSITION"
 NONTERMINAL = "NONTERMINAL"
 
-TERMINAL_STATUSES = {
+TEXTBOOK_COMPLETE_OBJECTIVE = "textbook-complete"
+DIAGNOSTIC_OBJECTIVE = "diagnostic"
+OBJECTIVES = {TEXTBOOK_COMPLETE_OBJECTIVE, DIAGNOSTIC_OBJECTIVE}
+DEFAULT_ALLOWED_BEYOND_BOOK_TASKS = {"thm_14_8"}
+
+REPORTING_TERMINAL_STATUSES = {
     COMPLETED,
     COMPLETED_WITH_PROOF_DEBT,
     FAILED_LOCAL,
@@ -73,7 +78,10 @@ class BatchTaskRow:
     review_fail_streak: int = 0
     retry_budget_required: int = COMPLEX_RETRY_BUDGET
     retry_budget_exhausted: bool = False
+    report_terminal: bool = False
     terminal: bool = False
+    clean_or_allowed_exception: bool = False
+    allowed_beyond_book_exception: bool = False
     issue: str = ""
     next_action: str = ""
 
@@ -82,11 +90,21 @@ class BatchTaskRow:
 class BatchReport:
     batch_id: str
     rows: tuple[BatchTaskRow, ...]
+    objective: str = TEXTBOOK_COMPLETE_OBJECTIVE
+    allowed_beyond_book_tasks: tuple[str, ...] = ()
     issues: tuple[str, ...] = ()
 
     @property
     def all_terminal(self) -> bool:
         return all(row.terminal for row in self.rows)
+
+    @property
+    def all_reporting_terminal(self) -> bool:
+        return all(row.report_terminal for row in self.rows)
+
+    @property
+    def all_clean_or_allowed_exception(self) -> bool:
+        return all(row.clean_or_allowed_exception for row in self.rows)
 
     @property
     def counts(self) -> dict[str, int]:
@@ -104,7 +122,18 @@ def load_batch_state(path: str | Path) -> dict[str, Any]:
     return payload
 
 
-def analyze_batch_state(payload: dict[str, Any]) -> BatchReport:
+def analyze_batch_state(
+    payload: dict[str, Any],
+    *,
+    objective: str = TEXTBOOK_COMPLETE_OBJECTIVE,
+    allowed_beyond_book_tasks: set[str] | None = None,
+) -> BatchReport:
+    normalized_objective = _normalize_objective(objective)
+    allowed_tasks = {
+        canonicalize_block_id(task_id)
+        for task_id in (allowed_beyond_book_tasks or DEFAULT_ALLOWED_BEYOND_BOOK_TASKS)
+        if canonicalize_block_id(task_id)
+    }
     tasks = payload.get("tasks", [])
     if not isinstance(tasks, list):
         raise ValueError("Batch state field `tasks` must be a list.")
@@ -125,7 +154,11 @@ def analyze_batch_state(payload: dict[str, Any]) -> BatchReport:
         task_map[task_id] = raw_task
 
     hard_failed_roots = _hard_failed_roots(task_map)
-    proof_debt_roots = _proof_debt_roots(task_map)
+    proof_debt_roots = _proof_debt_roots(
+        task_map,
+        objective=normalized_objective,
+        allowed_beyond_book_tasks=allowed_tasks,
+    )
     rows: list[BatchTaskRow] = []
     for task_id in sorted(task_map):
         raw_task = task_map[task_id]
@@ -163,6 +196,12 @@ def analyze_batch_state(payload: dict[str, Any]) -> BatchReport:
         }:
             status = DEPENDENCY_PROOF_DEBT
 
+        allowed_exception = _is_allowed_beyond_book_exception(
+            task_id,
+            raw_task,
+            status=status,
+            allowed_beyond_book_tasks=allowed_tasks,
+        )
         budget = count_substantive_failures(raw_task.get("failure_events", raw_task.get("substantive_failures", [])))
         issue = _row_issue(
             task_id=task_id,
@@ -173,13 +212,18 @@ def analyze_batch_state(payload: dict[str, Any]) -> BatchReport:
             counters=counters,
             failed_dependency=failed_dependency,
             proof_debt_dependency=proof_debt_dependency,
+            allowed_beyond_book_exception=allowed_exception,
         )
         next_action = _next_action(
             status=status,
             issue=issue,
             failed_dependency=failed_dependency,
             proof_debt_dependency=proof_debt_dependency,
+            objective=normalized_objective,
+            allowed_beyond_book_exception=allowed_exception,
         )
+        report_terminal = status in REPORTING_TERMINAL_STATUSES
+        clean_or_allowed_exception = status == COMPLETED or allowed_exception
         rows.append(
             BatchTaskRow(
                 task_id=task_id,
@@ -194,13 +238,27 @@ def analyze_batch_state(payload: dict[str, Any]) -> BatchReport:
                 review_fail_streak=counters.review_fail_counter,
                 retry_budget_required=budget.required,
                 retry_budget_exhausted=counters.exhausted,
-                terminal=status in TERMINAL_STATUSES,
+                report_terminal=report_terminal,
+                terminal=_objective_terminal(
+                    status=status,
+                    objective=normalized_objective,
+                    report_terminal=report_terminal,
+                    clean_or_allowed_exception=clean_or_allowed_exception,
+                ),
+                clean_or_allowed_exception=clean_or_allowed_exception,
+                allowed_beyond_book_exception=allowed_exception,
                 issue=issue,
                 next_action=next_action,
             )
         )
 
-    return BatchReport(batch_id=batch_id, rows=tuple(rows), issues=tuple(issues))
+    return BatchReport(
+        batch_id=batch_id,
+        rows=tuple(rows),
+        objective=normalized_objective,
+        allowed_beyond_book_tasks=tuple(sorted(allowed_tasks)),
+        issues=tuple(issues),
+    )
 
 
 def count_substantive_failures(events: Any) -> FailureBudget:
@@ -240,8 +298,13 @@ def render_markdown_report(report: BatchReport) -> str:
     lines = [
         f"# Phase 2 Batch Status: {report.batch_id}",
         "",
+        f"- Objective: `{report.objective}`",
         f"- All terminal: `{str(report.all_terminal).lower()}`",
+        f"- All reporting terminal: `{str(report.all_reporting_terminal).lower()}`",
+        f"- All clean or allowed exception: `{str(report.all_clean_or_allowed_exception).lower()}`",
     ]
+    if report.allowed_beyond_book_tasks:
+        lines.append("- Allowed beyond-book tasks: `" + ", ".join(report.allowed_beyond_book_tasks) + "`")
     for status in sorted(report.counts):
         lines.append(f"- {status}: `{report.counts[status]}`")
     if report.issues:
@@ -249,20 +312,22 @@ def render_markdown_report(report: BatchReport) -> str:
     lines.extend(
         [
             "",
-            "| task_id | status | stop_reason | failed_dependency | proof_debt_dependency | substantive_failures | terminal | next_action | issue |",
-            "| --- | --- | --- | --- | --- | ---: | --- | --- | --- |",
+            "| task_id | status | stop_reason | failed_dependency | proof_debt_dependency | substantive_failures | report_terminal | terminal | clean_or_allowed | next_action | issue |",
+            "| --- | --- | --- | --- | --- | ---: | --- | --- | --- | --- | --- |",
         ]
     )
     for row in report.rows:
         lines.append(
-            "| {task_id} | {status} | {stop_reason} | {failed_dependency} | {proof_debt_dependency} | {failures} | {terminal} | {next_action} | {issue} |".format(
+            "| {task_id} | {status} | {stop_reason} | {failed_dependency} | {proof_debt_dependency} | {failures} | {report_terminal} | {terminal} | {clean_or_allowed} | {next_action} | {issue} |".format(
                 task_id=row.task_id,
                 status=row.status,
                 stop_reason=row.stop_reason or "",
                 failed_dependency=row.failed_dependency or "",
                 proof_debt_dependency=row.proof_debt_dependency or "",
                 failures=row.substantive_failures,
+                report_terminal=str(row.report_terminal).lower(),
                 terminal=str(row.terminal).lower(),
+                clean_or_allowed=str(row.clean_or_allowed_exception).lower(),
                 next_action=row.next_action,
                 issue=row.issue,
             )
@@ -273,18 +338,42 @@ def render_markdown_report(report: BatchReport) -> str:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Report ToyApollo Phase 2 batch-controller checklist state.")
     parser.add_argument("state", help="Path to a batch-controller JSON checklist.")
+    parser.add_argument(
+        "--objective",
+        choices=sorted(OBJECTIVES),
+        default=TEXTBOOK_COMPLETE_OBJECTIVE,
+        help=(
+            "Batch objective. Default textbook-complete treats proof-debt states as unfinished; "
+            "diagnostic preserves report-only terminal coverage."
+        ),
+    )
+    parser.add_argument(
+        "--allow-beyond-book",
+        action="append",
+        default=None,
+        metavar="TASK_ID",
+        help="Task id allowed as a beyond-book exception for textbook-complete clean gate.",
+    )
     parser.add_argument("--json", action="store_true", dest="as_json", help="Emit normalized report JSON.")
     args = parser.parse_args(argv)
 
     try:
-        report = analyze_batch_state(load_batch_state(args.state))
+        report = analyze_batch_state(
+            load_batch_state(args.state),
+            objective=args.objective,
+            allowed_beyond_book_tasks=set(args.allow_beyond_book or DEFAULT_ALLOWED_BEYOND_BOOK_TASKS),
+        )
     except (OSError, json.JSONDecodeError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     if args.as_json:
         payload = {
             "batch_id": report.batch_id,
+            "objective": report.objective,
             "all_terminal": report.all_terminal,
+            "all_reporting_terminal": report.all_reporting_terminal,
+            "all_clean_or_allowed_exception": report.all_clean_or_allowed_exception,
+            "allowed_beyond_book_tasks": list(report.allowed_beyond_book_tasks),
             "counts": report.counts,
             "issues": list(report.issues),
             "tasks": [
@@ -300,7 +389,10 @@ def main(argv: list[str] | None = None) -> int:
                     "review_fail_streak": row.review_fail_streak,
                     "retry_budget_required": row.retry_budget_required,
                     "retry_budget_exhausted": row.retry_budget_exhausted,
+                    "report_terminal": row.report_terminal,
                     "terminal": row.terminal,
+                    "clean_or_allowed_exception": row.clean_or_allowed_exception,
+                    "allowed_beyond_book_exception": row.allowed_beyond_book_exception,
                     "next_action": row.next_action,
                     "issue": row.issue,
                 }
@@ -337,7 +429,7 @@ def _normalize_status(raw: Any) -> str:
         "USER-INTERRUPTED": USER_INTERRUPTED,
     }
     status = aliases.get(status, status)
-    if status in TERMINAL_STATUSES or status in {NONTERMINAL, NEEDS_DECOMPOSITION}:
+    if status in REPORTING_TERMINAL_STATUSES or status in {NONTERMINAL, NEEDS_DECOMPOSITION}:
         return status
     return NONTERMINAL
 
@@ -357,11 +449,26 @@ def _hard_failed_roots(task_map: dict[str, dict[str, Any]]) -> set[str]:
     return roots
 
 
-def _proof_debt_roots(task_map: dict[str, dict[str, Any]]) -> set[str]:
+def _proof_debt_roots(
+    task_map: dict[str, dict[str, Any]],
+    *,
+    objective: str,
+    allowed_beyond_book_tasks: set[str],
+) -> set[str]:
     roots: set[str] = set()
     for task_id, raw_task in task_map.items():
         status = _normalize_status(raw_task.get("status"))
         if status == COMPLETED_WITH_PROOF_DEBT or (status == COMPLETED and _task_has_accepted_proof_debt(raw_task)):
+            if (
+                objective == TEXTBOOK_COMPLETE_OBJECTIVE
+                and _is_allowed_beyond_book_exception(
+                    task_id,
+                    raw_task,
+                    status=COMPLETED_WITH_PROOF_DEBT,
+                    allowed_beyond_book_tasks=allowed_beyond_book_tasks,
+                )
+            ):
+                continue
             roots.add(task_id)
     return roots
 
@@ -416,6 +523,7 @@ def _row_issue(
     counters: Phase2FailureCounters,
     failed_dependency: str,
     proof_debt_dependency: str,
+    allowed_beyond_book_exception: bool,
 ) -> str:
     if failed_dependency and status != DEPENDENCY_FAILED:
         return f"depends on failed root {failed_dependency} but is not dependency-failed"
@@ -425,8 +533,10 @@ def _row_issue(
         return f"depends on proof-debt root {proof_debt_dependency} but is not proof-debt-blocked"
     if status == DEPENDENCY_PROOF_DEBT and not proof_debt_dependency:
         return "dependency-proof-debt without an upstream accepted proof debt in this batch"
-    if status == COMPLETED_WITH_PROOF_DEBT:
+    if status == COMPLETED_WITH_PROOF_DEBT and not allowed_beyond_book_exception:
         return "accepted proof debt remains; run debt-fix before downstream use"
+    if status == COMPLETED_WITH_PROOF_DEBT and allowed_beyond_book_exception:
+        return ""
     if status == NEEDS_DECOMPOSITION:
         return "requires concrete proof-obligation decomposition before blocker/failure admission"
     if _early_hard_failure_before_budget(_normalize_status(raw_task.get("status")), stop_reason, counters):
@@ -439,14 +549,30 @@ def _row_issue(
     return ""
 
 
-def _next_action(*, status: str, issue: str, failed_dependency: str, proof_debt_dependency: str) -> str:
+def _next_action(
+    *,
+    status: str,
+    issue: str,
+    failed_dependency: str,
+    proof_debt_dependency: str,
+    objective: str,
+    allowed_beyond_book_exception: bool,
+) -> str:
     if status == COMPLETED:
         return "none"
     if status == COMPLETED_WITH_PROOF_DEBT:
+        if allowed_beyond_book_exception:
+            return "none; allowed beyond-book exception"
         return "run debt-fix"
     if status == DEPENDENCY_FAILED:
         return f"skip; blocked by {failed_dependency}" if failed_dependency else "skip; dependency failed"
     if status == DEPENDENCY_PROOF_DEBT:
+        if objective == TEXTBOOK_COMPLETE_OBJECTIVE:
+            return (
+                f"repair proof-debt root {proof_debt_dependency} before downstream"
+                if proof_debt_dependency
+                else "repair upstream proof debt before downstream"
+            )
         return (
             f"skip; blocked by proof debt in {proof_debt_dependency}"
             if proof_debt_dependency
@@ -463,6 +589,49 @@ def _next_action(*, status: str, issue: str, failed_dependency: str, proof_debt_
     if issue:
         return "continue or repair before final summary"
     return "continue independent task"
+
+
+def _normalize_objective(raw: str) -> str:
+    objective = str(raw or "").strip().lower().replace("_", "-")
+    if objective not in OBJECTIVES:
+        raise ValueError(f"Unsupported batch objective: {raw}")
+    return objective
+
+
+def _objective_terminal(
+    *,
+    status: str,
+    objective: str,
+    report_terminal: bool,
+    clean_or_allowed_exception: bool,
+) -> bool:
+    if objective == DIAGNOSTIC_OBJECTIVE:
+        return report_terminal
+    if clean_or_allowed_exception:
+        return True
+    return status in {FAILED_LOCAL, DEPENDENCY_FAILED, MECHANISM_BLOCKER, USER_INTERRUPTED}
+
+
+def _is_allowed_beyond_book_exception(
+    task_id: str,
+    raw_task: dict[str, Any],
+    *,
+    status: str,
+    allowed_beyond_book_tasks: set[str],
+) -> bool:
+    if status != COMPLETED_WITH_PROOF_DEBT:
+        return False
+    if canonicalize_block_id(task_id) not in allowed_beyond_book_tasks:
+        return False
+    current_class = str(raw_task.get("current_class", "") or raw_task.get("primary_class", "") or "").strip()
+    if current_class == "beyond_book_exception":
+        return True
+    summary = raw_task.get("proof_obligation_summary")
+    if isinstance(summary, dict):
+        status_counts = summary.get("status_counts", {})
+        if _status_counts_include_proof_debt(status_counts):
+            return True
+    return _task_has_accepted_proof_debt(raw_task)
 
 
 def _task_has_accepted_proof_debt(raw_task: dict[str, Any]) -> bool:

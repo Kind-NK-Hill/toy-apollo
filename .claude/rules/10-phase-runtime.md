@@ -55,9 +55,14 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids>
     1. `pack`
     2. edit `draft.lean`
     3. `build-check` until `lake build ToyApollo.Output.<task_id>` passes
-    4. `review-now --review-subject candidate` for a new candidate, `review-now --review-subject existing` for one runnable official output, or `review-existing-queue` followed by `review-now --review-subject current` for a batch existing-output queue
+    4. `review-now --review-subject candidate` for a new candidate, `review-now --review-subject existing` for one runnable official output, or `review-existing-queue` followed by existing-output review/apply in deterministic queue order for a batch existing-output queue
     5. reviewer writes `semantic_review_result_vM.json`
     6. `review-apply`
+  - if `ToyApollo/Output/<task_id>.lean` is newer than and differs from the
+    latest `draft.lean` or build-ready `candidate_vN.lean`, candidate review is
+    stale; do not build-check or review that stale candidate. Review the
+    official output with `review-now --review-subject existing`, or
+    intentionally sync the output into `draft.lean` and rerun `build-check`
   - `review-pack` is not a build gate
   - `review-pack`, `review-existing`, and `review-existing-queue` only prepare review materials and are prepare-only/compatibility paths, not the default semantic review entrypoint
   - `review-now` is the current semantic review orchestration entrypoint

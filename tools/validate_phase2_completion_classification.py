@@ -73,6 +73,7 @@ ALLOWED_EVIDENCE_KINDS = {
     "metadata_note",
     "audit_signal",
     "validation_command",
+    "proof_contract",
 }
 
 
@@ -87,7 +88,23 @@ def _line_text(path: Path, line_number: int) -> str:
     return lines[line_number - 1]
 
 
-def validate_classification(path: Path = DEFAULT_CLASSIFICATION) -> list[str]:
+def _has_textbook_contract_evidence(task: dict[str, Any], evidence_kinds: set[str]) -> bool:
+    if "proof_contract" in evidence_kinds:
+        return True
+    validation = task.get("validation", [])
+    if isinstance(validation, list) and any(
+        "validate_phase2_obligation_contracts.py" in str(item) for item in validation
+    ):
+        return True
+    reason = str(task.get("classification_reason", "") or "").lower()
+    return "no task-local proof obligations" in reason and "level 0 direct proof" in reason
+
+
+def validate_classification(
+    path: Path = DEFAULT_CLASSIFICATION,
+    *,
+    require_textbook_contract: bool = False,
+) -> list[str]:
     errors: list[str] = []
     payload = json.loads(path.read_text(encoding="utf-8"))
 
@@ -216,6 +233,15 @@ def validate_classification(path: Path = DEFAULT_CLASSIFICATION) -> list[str]:
                 f"{task_id}: mathlib_backed_adapter_completed requires mathlib_adapter "
                 "or interface_bridge evidence"
             )
+        if (
+            require_textbook_contract
+            and primary_class == "textbook_proof_completed"
+            and not _has_textbook_contract_evidence(task, evidence_kinds)
+        ):
+            errors.append(
+                f"{task_id}: textbook_proof_completed requires proof_contract evidence, "
+                "validate_phase2_obligation_contracts.py validation, or an explicit Level 0 direct proof reason"
+            )
 
     if beyond_book_tasks != ["thm_14_8"]:
         errors.append(
@@ -234,8 +260,13 @@ def main() -> int:
         default=str(DEFAULT_CLASSIFICATION),
         help="classification JSON path",
     )
+    parser.add_argument(
+        "--require-proof-contract",
+        action="store_true",
+        help="require proof-contract evidence for textbook_proof_completed entries",
+    )
     args = parser.parse_args()
-    errors = validate_classification(Path(args.path))
+    errors = validate_classification(Path(args.path), require_textbook_contract=args.require_proof_contract)
     if errors:
         for error in errors:
             print(f"ERROR: {error}")

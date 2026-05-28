@@ -107,7 +107,7 @@ python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks ex_4_4_3 --re
 
 权威 runbook 见：
 
-- `docs/phase2_prompt_pack_workflow.md`
+- `docs/phase2/workflow.md`
 
 ## Phase 3/4 边界
 

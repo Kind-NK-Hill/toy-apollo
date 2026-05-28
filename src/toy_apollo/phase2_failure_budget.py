@@ -31,6 +31,7 @@ BUILD_FAILURE_KINDS = {
     "example_wrapped_theorem",
     "weakened_statement",
     "missing_required_coverage",
+    "missing_local_foundation_lemma",
     "missing_import",
     "unknown_identifier",
     "noncomputable_required",

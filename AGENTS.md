@@ -28,7 +28,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
   - CLI `apply --input` points to the source `.tex` or `inputs/` directory, not to `phase1_prompt_packs/<source>/draft_plan.json`
 - Phase 2:
   - before any authoring, review, repair, hard-failure decision, or chapter/task-set batch, use the repo skill `.agents/skills/toy-apollo-phase2-entrypoint/SKILL.md`; if the Codex skill system has not auto-loaded it, read that file manually and follow its entry report before task-specific work
-  - proof-fidelity verdicts are governed by `docs/phase2_proof_fidelity_contract.md`; do not treat Lean build success, ledger cleanliness, or audit cleanliness as textbook proof completion
+  - proof-fidelity verdicts are governed by `docs/phase2/proof_fidelity_contract.md`; do not treat Lean build success, ledger cleanliness, or audit cleanliness as textbook proof completion
   - supported operator modes: `pack`, `build-check`, `review-pack`, `review-existing`, `review-now`, `review-fix`, `debt-fix`, `auto-loop`, `review-existing-queue`, `review-apply`, `verify`, `audit`, `soft-pack`, `soft-apply`
   - default local path is prompt-pack driven, with `build-check` as the normal technical gate, `review-now` as the Codex-facing semantic review entrypoint, `review-fix` as the semantic-repair entrypoint after failed review, `debt-fix` as the accepted-proof-debt repair entrypoint, and `auto-loop` as the same-session Codex orchestration mode
   - `soft-pack` and `soft-apply` are the Problem soft-dependency special case inside Phase 2
@@ -60,8 +60,13 @@ If this file conflicts with older notes, trust current runtime code and the rule
   - failed review follow-up: `review-fix -> edit draft.lean -> build-check -> review-now --review-subject candidate`
   - accepted proof-debt follow-up: `debt-fix -> review-fix -> edit draft.lean -> build-check -> review-now --review-subject candidate -> review-apply`
   - same-session orchestration: `auto-loop`
-  - detailed same-session loop semantics: `docs/phase2_review_loop_protocol.md`
+  - detailed same-session loop semantics: `docs/phase2/review_loop_protocol.md`
   - `review-pack` / `review-existing` are low-level prepare-only modes and should not be presented as the preferred Codex operator path.
+- If `ToyApollo/Output/<task_id>.lean` is newer than and differs from the latest
+  `draft.lean` / `candidate_vN.lean`, the candidate review target is stale.
+  Do not build-check or review that stale candidate. Review the official output
+  with `review-now --review-subject existing`, or intentionally sync the output
+  into `draft.lean` and rerun `build-check`.
 
 ## Codex Review Contract
 
@@ -76,13 +81,18 @@ If this file conflicts with older notes, trust current runtime code and the rule
 - `review-now`, `review-fix`, and `auto-loop` are agent-assisted composite actions.
 - `review-apply` remains the only step that lands a Codex semantic-review result.
 - `auto-loop` is not an unattended reviewer/author daemon.
+- Semantic review is an independent read-only role unless a document explicitly
+  declares a prepare-only non-review action. In active auto-loop repair,
+  the authoring agent must delegate reviewer work to a separate reviewer
+  subagent or configured reviewer runner, and the review result must include
+  `reviewer_independence`.
 - Build-fail and review-prepared states are not normal waiting points; the current Codex agent continues in the same session.
 - Pre-final guard: if `current_auto_loop_status = active`, do not end the turn with a completion-style summary unless the ledger also shows a documented stop reason.
 - The documented stop reasons are only `completed`, `freshness_error`, `hard_failure`, `nonprogress`, `max_rounds`, `build_budget_exhausted`, or explicit user interruption.
 - Needing a substantial semantic rewrite, wanting to summarize current blockers, or waiting for the current Codex agent to perform reviewer/repair work are not stop reasons.
 - `nonprogress` is a semantic stop reason, not a generic build stop.
 - Only stop the same-session loop on `completed`, `freshness_error`, `hard_failure`, `nonprogress`, `max_rounds`, `build_budget_exhausted`, or explicit user interruption.
-- For proof-bearing tasks, adapter/debt decisions, complex decomposition, hard-failure admission, and public proof-package rules, follow `docs/phase2_proof_fidelity_contract.md`; prompt-pack mirrors, clean ledgers, and successful builds are not substitutes for that contract.
+- For proof-bearing tasks, adapter/debt decisions, complex decomposition, hard-failure admission, and public proof-package rules, follow `docs/phase2/proof_fidelity_contract.md`; prompt-pack mirrors, clean ledgers, and successful builds are not substitutes for that contract.
 - Before inventing a new proof obligation, bridge, or foundation API, search existing `ToyApollo/Output`, bridge/foundation files, ledger state, dependency decisions, plans, and Mathlib; reuse or repair metadata before adding new scaffold.
 - Timed-out or manually aborted build/review runs without a canonical result file are mechanism blockers, not substantive proof failures; record them and continue with a narrower diagnostic.
 - When the user asks to review an existing chapter, section, or ordered task set, interpret that as a same-session self-driving existing-output batch review unless the user explicitly asks for prepare-only behavior.
@@ -91,7 +101,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
 - In that existing-output batch mode:
   - use `review_subject=existing`, not `current`
   - process tasks in deterministic `block_id` order
-  - do not stop after `review-now`, build failure, or a prepared review request; the current Codex agent continues the author/reviewer step in the same session
+  - do not stop after `review-now`, build failure, or a prepared review request; the current Codex agent continues the author step or delegates the read-only reviewer step in the same session
   - for pass results, continue to `review-apply` automatically
   - for fail/inconclusive results, continue through `review-apply -> review-fix -> build-check -> review-now --review-subject candidate -> review-apply`
 - Only treat `review existing` as prepare-only when the user explicitly asks to inspect or prepare review materials without landing/apply behavior.

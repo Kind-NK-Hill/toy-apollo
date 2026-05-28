@@ -130,12 +130,75 @@ class Phase2BatchControllerTests(unittest.TestCase):
 
         rows = {row.task_id: row for row in report.rows}
         self.assertEqual(rows["thm_11_7"].status, COMPLETED_WITH_PROOF_DEBT)
-        self.assertTrue(rows["thm_11_7"].terminal)
+        self.assertFalse(rows["thm_11_7"].terminal)
+        self.assertTrue(rows["thm_11_7"].report_terminal)
         self.assertEqual(rows["thm_11_7"].next_action, "run debt-fix")
         self.assertEqual(rows["prob_11_6"].status, DEPENDENCY_PROOF_DEBT)
         self.assertEqual(rows["prob_11_6"].proof_debt_dependency, "thm_11_7")
-        self.assertTrue(rows["prob_11_6"].terminal)
+        self.assertFalse(rows["prob_11_6"].terminal)
+        self.assertTrue(rows["prob_11_6"].report_terminal)
+        self.assertEqual(rows["prob_11_6"].next_action, "repair proof-debt root thm_11_7 before downstream")
         self.assertEqual(rows["prob_11_6"].failed_dependency, "")
+        self.assertFalse(report.all_terminal)
+        self.assertTrue(report.all_reporting_terminal)
+        self.assertFalse(report.all_clean_or_allowed_exception)
+
+    def test_diagnostic_objective_preserves_report_terminal_for_proof_debt(self):
+        report = analyze_batch_state(
+            {
+                "batch_id": "with-debt",
+                "tasks": [
+                    {
+                        "task_id": "thm_11_7",
+                        "status": COMPLETED_WITH_PROOF_DEBT,
+                        "proof_obligation_summary": {
+                            "status_counts": {"proved": 5, "accepted_as_proof_debt": 1},
+                            "needs_concrete_decomposition": False,
+                        },
+                    },
+                    {
+                        "task_id": "prob_11_6",
+                        "status": NONTERMINAL,
+                        "dependencies": ["thm_11_7"],
+                    },
+                ],
+            },
+            objective="diagnostic",
+        )
+
+        rows = {row.task_id: row for row in report.rows}
+        self.assertEqual(rows["thm_11_7"].status, COMPLETED_WITH_PROOF_DEBT)
+        self.assertTrue(rows["thm_11_7"].terminal)
+        self.assertEqual(rows["prob_11_6"].status, DEPENDENCY_PROOF_DEBT)
+        self.assertTrue(rows["prob_11_6"].terminal)
+        self.assertTrue(report.all_terminal)
+        self.assertTrue(report.all_reporting_terminal)
+        self.assertFalse(report.all_clean_or_allowed_exception)
+
+    def test_allowed_beyond_book_exception_is_clean_for_textbook_objective(self):
+        report = analyze_batch_state(
+            {
+                "batch_id": "allowed-beyond-book",
+                "tasks": [
+                    {
+                        "task_id": "thm_14_8",
+                        "status": COMPLETED_WITH_PROOF_DEBT,
+                        "current_class": "beyond_book_exception",
+                        "proof_obligation_summary": {
+                            "status_counts": {"accepted_as_proof_debt": 1},
+                            "needs_concrete_decomposition": False,
+                        },
+                    }
+                ],
+            }
+        )
+
+        row = report.rows[0]
+        self.assertTrue(row.allowed_beyond_book_exception)
+        self.assertTrue(row.clean_or_allowed_exception)
+        self.assertTrue(row.terminal)
+        self.assertEqual(row.next_action, "none; allowed beyond-book exception")
+        self.assertTrue(report.all_clean_or_allowed_exception)
 
     def test_legacy_completed_task_with_accepted_proof_debt_blocks_dependents(self):
         report = analyze_batch_state(
@@ -161,7 +224,9 @@ class Phase2BatchControllerTests(unittest.TestCase):
 
         rows = {row.task_id: row for row in report.rows}
         self.assertEqual(rows["thm_10_8"].status, COMPLETED_WITH_PROOF_DEBT)
+        self.assertFalse(rows["thm_10_8"].terminal)
         self.assertEqual(rows["prob_10_10"].status, DEPENDENCY_PROOF_DEBT)
+        self.assertFalse(rows["prob_10_10"].terminal)
         self.assertEqual(rows["prob_10_10"].proof_debt_dependency, "thm_10_8")
 
     def test_complex_hard_failure_before_retry_budget_is_flagged(self):

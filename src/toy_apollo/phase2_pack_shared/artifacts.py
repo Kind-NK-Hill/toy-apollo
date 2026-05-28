@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .io import read_json_safely
+from .io import read_file_safely, read_json_safely, sha256_text
 
 DRAFT_FILE_NAME = "draft.lean"
 SEARCH_MANIFEST_FILE_NAME = "search_manifest.json"
@@ -172,6 +172,128 @@ def find_existing_task_file(task_id: str, source_plan: str, settings) -> Path | 
         if candidate.exists():
             return candidate
     return None
+
+
+def select_latest_existing_task_file(task_id: str, source_plan: str, settings) -> Path | None:
+    existing = [candidate for candidate in iter_official_output_targets(task_id, source_plan, settings) if candidate.exists()]
+    if not existing:
+        return None
+    return max(existing, key=_path_mtime)
+
+
+def _path_mtime(path: Path | None) -> float:
+    if path is None:
+        return 0.0
+    try:
+        return path.stat().st_mtime
+    except OSError:
+        return 0.0
+
+
+def official_output_candidate_divergence(
+    *,
+    task_id: str,
+    source_plan: str,
+    settings,
+    candidate_path: Path,
+    candidate_hash: str = "",
+    draft_path: Path | None = None,
+) -> dict[str, Any]:
+    info: dict[str, Any] = {
+        "task_id": task_id,
+        "has_official_output": False,
+        "official_output_file": "",
+        "official_output_hash": "",
+        "candidate_file": str(candidate_path),
+        "candidate_hash": str(candidate_hash or ""),
+        "draft_file": str(draft_path) if draft_path else "",
+        "draft_hash": "",
+        "official_mtime": 0.0,
+        "candidate_mtime": _path_mtime(candidate_path),
+        "draft_mtime": _path_mtime(draft_path),
+        "official_differs_from_candidate": False,
+        "official_differs_from_draft": False,
+        "official_newer_than_candidate": False,
+        "official_newer_than_draft": False,
+        "official_supersedes_candidate": False,
+    }
+
+    if candidate_path.exists() and not candidate_hash:
+        candidate_text = read_file_safely(candidate_path)
+        candidate_hash = sha256_text(candidate_text)
+        info["candidate_hash"] = candidate_hash
+    if draft_path is not None and draft_path.exists():
+        draft_text = read_file_safely(draft_path)
+        draft_hash = sha256_text(draft_text)
+        info["draft_hash"] = draft_hash
+    else:
+        draft_hash = ""
+
+    official_candidates: list[dict[str, Any]] = []
+    for target in iter_official_output_targets(task_id, source_plan, settings):
+        if not target.exists():
+            continue
+        official_text = read_file_safely(target)
+        official_hash = sha256_text(official_text)
+        official_candidates.append(
+            {
+                "path": target,
+                "hash": official_hash,
+                "mtime": _path_mtime(target),
+            }
+        )
+    if not official_candidates:
+        return info
+
+    info["has_official_output"] = True
+    superseding = [
+        item
+        for item in official_candidates
+        if candidate_hash and item["hash"] != candidate_hash and item["mtime"] > info["candidate_mtime"]
+    ]
+    selected = max(superseding or official_candidates, key=lambda item: item["mtime"])
+    official_hash = str(selected["hash"])
+    info["official_output_file"] = str(selected["path"])
+    info["official_output_hash"] = official_hash
+    info["official_mtime"] = float(selected["mtime"])
+
+    candidate_differs = bool(candidate_hash and official_hash != candidate_hash)
+    draft_differs = bool(draft_hash and official_hash != draft_hash)
+    info["official_differs_from_candidate"] = candidate_differs
+    info["official_differs_from_draft"] = draft_differs
+    info["official_newer_than_candidate"] = info["official_mtime"] > info["candidate_mtime"]
+    info["official_newer_than_draft"] = bool(draft_path) and info["official_mtime"] > info["draft_mtime"]
+    info["official_supersedes_candidate"] = bool(candidate_differs and info["official_newer_than_candidate"])
+    return info
+
+
+def stale_candidate_official_output_message(
+    *,
+    task_id: str,
+    source_plan: str,
+    settings,
+    candidate_path: Path,
+    candidate_hash: str = "",
+    draft_path: Path | None = None,
+    action: str = "candidate review",
+) -> str:
+    divergence = official_output_candidate_divergence(
+        task_id=task_id,
+        source_plan=source_plan,
+        settings=settings,
+        candidate_path=candidate_path,
+        candidate_hash=candidate_hash,
+        draft_path=draft_path,
+    )
+    if not divergence.get("official_supersedes_candidate"):
+        return ""
+    return (
+        f"Stale {action} target for {task_id}: the official output "
+        f"`{divergence.get('official_output_file')}` is newer than and differs from "
+        f"`{divergence.get('candidate_file')}`. Review the already-repaired official output with "
+        "`review-now --review-subject existing`, or intentionally sync the official output into "
+        "`draft.lean` and rerun `build-check` before `review-now --review-subject candidate`."
+    )
 
 
 def load_attempt_history(pack_dir: Path, task_id: str) -> dict[str, Any]:
