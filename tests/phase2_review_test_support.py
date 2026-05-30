@@ -205,6 +205,7 @@ class Phase2ReviewTestSupport:
         claim_mapping: list[dict] | None = None,
         candidate_hash: str | None = None,
         obligation_review: dict | None = None,
+        evidence_review: dict | None = None,
     ) -> Path:
         request_path = pack_dir / "semantic_review_request.json"
         if request_path.exists():
@@ -215,6 +216,19 @@ class Phase2ReviewTestSupport:
             review_input_path = pack_dir / "semantic_review_input_v1.json"
             result_path = pack_dir / "semantic_review_result_v1.json"
         review_input = json.loads(review_input_path.read_text(encoding="utf-8"))
+        required_evidence = review_input.get("review_basis", {}).get("required_evidence_classes", [])
+        if not isinstance(required_evidence, list) or not required_evidence:
+            required_evidence = [
+                "source_tex",
+                "lean_subject",
+                "proof_obligations",
+                "audit",
+                "classification",
+                "dependency_status",
+                "downstream",
+                "ledger_status",
+                "hashes",
+            ]
         direct_consumers = review_input.get("review_basis", {}).get("direct_downstream_consumers", [])
         consumers_checked = []
         if verdict == "pass" and isinstance(direct_consumers, list):
@@ -274,6 +288,23 @@ class Phase2ReviewTestSupport:
                         if verdict == "pass"
                         else [{"obligation_id": "source_claim", "issue": f"manual {verdict} blocker"}],
                         "scaffold_assessment": [],
+                    },
+                    "evidence_review": evidence_review
+                    if evidence_review is not None
+                    else {
+                        "status": "covered" if verdict == "pass" else "violated",
+                        "summary": f"manual evidence review {verdict}",
+                        "items": [
+                            {
+                                "evidence_class": str(item),
+                                "status": "covered" if verdict == "pass" else "violated",
+                                "evidence": f"manual reviewer checked {item}",
+                            }
+                            for item in required_evidence
+                        ],
+                        "blocking_issues": []
+                        if verdict == "pass"
+                        else [{"evidence_class": "source_tex", "issue": f"manual {verdict} evidence blocker"}],
                     },
                     "interface_contract": {
                         "status": "covered" if verdict == "pass" else "violated",

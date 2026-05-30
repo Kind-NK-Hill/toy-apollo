@@ -19,8 +19,8 @@ from .phase2_proof_obligations import (
 )
 
 
-SEMANTIC_REVIEW_PROMPT_VERSION = 6
-SEMANTIC_REVIEW_RUBRIC_VERSION = 6
+SEMANTIC_REVIEW_PROMPT_VERSION = 7
+SEMANTIC_REVIEW_RUBRIC_VERSION = 7
 SEMANTIC_REVIEW_REQUIRED_FIELDS = {
     "verdict",
     "confidence",
@@ -30,12 +30,15 @@ SEMANTIC_REVIEW_REQUIRED_FIELDS = {
     "claim_mapping",
     "spine_alignment",
     "obligation_review",
+    "evidence_review",
     "interface_contract",
     "downstream_adequacy",
     "forbidden_weakenings",
     "findings",
     "recommended_disposition",
 }
+EVIDENCE_REVIEW_STATUS_VALUES = {"covered", "partial", "missing", "violated", "unclear", "not_applicable"}
+EVIDENCE_REVIEW_PASS_VALUES = {"covered", "not_applicable"}
 SEMANTIC_REVIEW_RESULT_PREFIX = "semantic_review_result"
 SEMANTIC_REVIEW_INPUT_PREFIX = "semantic_review_input"
 SEMANTIC_REVIEW_PROMPT_PREFIX = "semantic_review_prompt"
@@ -286,14 +289,16 @@ def render_semantic_review_prompt(review_input: dict[str, Any]) -> str:
             "Return JSON only, written to the result path supplied by the runner.",
             "Use the generated result template as the starting JSON payload.",
             "Keep these binding fields unchanged: task_id, mode, attempt, prompt_version, rubric_version, review_input_file, review_prompt_file, expected_result_file, candidate_hash.",
-            "Fill these semantic review fields: verdict, confidence, summary, reviewer_independence, source_claims, claim_mapping, spine_alignment, obligation_review, interface_contract, downstream_adequacy, forbidden_weakenings, findings, recommended_disposition.",
+            "Fill these semantic review fields: verdict, confidence, summary, reviewer_independence, source_claims, claim_mapping, spine_alignment, obligation_review, evidence_review, interface_contract, downstream_adequacy, forbidden_weakenings, findings, recommended_disposition.",
             "The `reviewer_independence` object must be shaped as {\"role\": \"independent_read_only_reviewer\", \"read_only\": true, \"did_edit_candidate\": false, \"used_current_review_request\": true, \"attestation\": \"<short statement>\"}.",
             "Allowed verdict values: pass, fail, inconclusive.",
-            "Status enum fields `spine_alignment.status`, `obligation_review.status`, `interface_contract.status`, and `downstream_adequacy.status` must use covered/partial/missing/violated/unclear.",
+            "Status enum fields `spine_alignment.status`, `obligation_review.status`, `evidence_review.status`, `interface_contract.status`, and `downstream_adequacy.status` must use covered/partial/missing/violated/unclear; evidence_review may also use not_applicable for individual items.",
+            "The review basis lists required_evidence_classes. evidence_review.items must include one object per required class: source_tex, lean_subject, proof_obligations, audit, classification, dependency_status, downstream, ledger_status, hashes.",
+            "For audit, classification, dependency_status, downstream, ledger_status, and hashes, explain conflicts or stale evidence instead of letting any single artifact decide completion.",
             "For obligation_review.items, each status must use covered/partial/missing/violated/unclear/not_applicable/accepted_as_proof_debt.",
             "For each covered obligation_review.items entry, include expected_theorem_signature, lean_landing, landing_kind, proof_contract_status, body_reassumption_check, signature_match, public_premise_check, and proof_contract_notes.",
             "A pass requires non-empty source_claims and claim_mapping that explicitly connect source claims to Lean declarations, assumptions, and conclusions.",
-            "A pass also requires spine_alignment.status = covered with non-empty obligations_checked, obligation_review.status = covered with every blocking proof obligation covered, not_applicable, or explicitly accepted_as_proof_debt, plus interface_contract.status = covered and downstream_adequacy.status = covered.",
+            "A pass also requires spine_alignment.status = covered with non-empty obligations_checked, obligation_review.status = covered with every blocking proof obligation covered, not_applicable, or explicitly accepted_as_proof_debt, evidence_review.status = covered with every required evidence class covered/not_applicable and no blocking_issues, plus interface_contract.status = covered and downstream_adequacy.status = covered.",
             "A covered proof obligation is eligible for pass only when proof_contract_status = verified and signature_match, body_reassumption_check, and public_premise_check are all passed.",
             "If the source text relies on a proof, construction, reduction, interface translation, proof-debt support, case split, contradiction, partition argument, or other intermediate obligation, a pass must explain in spine_alignment.obligations_checked where that source spine lands in Lean.",
             "If the review context lists proof_obligations, obligation_review.items must cite each obligation_id, status, and Lean evidence; use accepted_as_proof_debt only for explicit proof_debt_support assumptions that the project is intentionally carrying forward. Open blockers, scaffold hypotheses without a discharge plan, public-premise relocation, adapter-only landings for textbook targets, or unverified proof contracts rule out pass.",
@@ -326,9 +331,51 @@ def _validate_reviewer_independence(result: dict[str, Any]) -> str:
     return ""
 
 
+def _validate_evidence_review(result: dict[str, Any], *, review_input: dict[str, Any], verdict: str) -> str:
+    evidence_review = result.get("evidence_review")
+    if not isinstance(evidence_review, dict):
+        return "reviewer field evidence_review must be an object"
+    status = str(evidence_review.get("status", "")).strip().lower()
+    if status not in EVIDENCE_REVIEW_STATUS_VALUES:
+        return "reviewer field evidence_review.status must be one of covered/partial/missing/violated/unclear/not_applicable"
+    items = evidence_review.get("items", [])
+    if not isinstance(items, list):
+        return "reviewer field evidence_review.items must be a list"
+    blocking_issues = evidence_review.get("blocking_issues", [])
+    if not isinstance(blocking_issues, list):
+        return "reviewer field evidence_review.blocking_issues must be a list"
+    covered: dict[str, str] = {}
+    for item in items:
+        if not isinstance(item, dict):
+            return "reviewer field evidence_review.items entries must be objects"
+        evidence_class = str(item.get("evidence_class", "") or "").strip()
+        item_status = str(item.get("status", "") or "").strip().lower()
+        if not evidence_class:
+            return "reviewer field evidence_review.items entries must include evidence_class"
+        if item_status not in EVIDENCE_REVIEW_STATUS_VALUES:
+            return "reviewer field evidence_review.items status must be one of covered/partial/missing/violated/unclear/not_applicable"
+        covered[evidence_class] = item_status
+    if verdict == "pass":
+        review_basis = review_input.get("review_basis", {})
+        required = review_basis.get("required_evidence_classes", []) if isinstance(review_basis, dict) else []
+        if not isinstance(required, list):
+            required = []
+        missing = [
+            str(evidence_class)
+            for evidence_class in required
+            if covered.get(str(evidence_class)) not in EVIDENCE_REVIEW_PASS_VALUES
+        ]
+        if status != "covered" or blocking_issues or missing:
+            return (
+                "invalid reviewer output: pass verdict requires evidence_review.status = covered, "
+                "no evidence_review.blocking_issues, and covered/not_applicable items for every required evidence class"
+            )
+    return ""
+
+
 def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_metadata: dict[str, Any]) -> dict[str, Any]:
     base = {
-        "schema_version": "phase2.semantic_review.result.v6",
+        "schema_version": "phase2.semantic_review.result.v7",
         "task_id": review_input.get("task", {}).get("block_id", ""),
         "mode": review_input.get("mode", ""),
         "attempt": review_input.get("attempt"),
@@ -408,6 +455,9 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
     if verdict not in {"pass", "fail", "inconclusive"}:
         return _inconclusive_result(base, f"invalid reviewer verdict: {result.get('verdict')}", raw=raw, cache_class="operational_failure")
     result["verdict"] = verdict
+    evidence_error = _validate_evidence_review(result, review_input=review_input, verdict=verdict)
+    if evidence_error:
+        return _inconclusive_result(base, evidence_error, raw=raw, cache_class="operational_failure")
     for field in ("source_claims", "claim_mapping", "forbidden_weakenings", "findings"):
         if not isinstance(result.get(field), list):
             return _inconclusive_result(base, f"reviewer field {field} must be a list", raw=raw, cache_class="operational_failure")
@@ -601,6 +651,12 @@ def _inconclusive_result(
             "open_blockers": [],
             "scaffold_assessment": [],
         },
+        "evidence_review": {
+            "status": "unclear",
+            "summary": reason,
+            "items": [],
+            "blocking_issues": [{"evidence_class": "reviewer_runner", "issue": reason}],
+        },
         "interface_contract": {
             "status": "unclear",
             "summary": reason,
@@ -766,7 +822,7 @@ def _run_or_inconclusive(
 
 def _base_for_runner_failure(review_input: dict[str, Any], metadata: dict[str, Any]) -> dict[str, Any]:
     return {
-        "schema_version": "phase2.semantic_review.result.v6",
+        "schema_version": "phase2.semantic_review.result.v7",
         "task_id": review_input.get("task", {}).get("block_id", ""),
         "mode": review_input.get("mode", ""),
         "attempt": review_input.get("attempt"),

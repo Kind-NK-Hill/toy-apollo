@@ -31,7 +31,9 @@ The orchestrator must use a separate reviewer subagent or a configured external
 reviewer runner for the reviewer step.
 
 The reviewer may only read the current review request, input, prompt, context,
-template, source, dependencies, and candidate. It must not edit Lean files,
+template, source, dependencies, candidate, proof obligations, audit signals,
+classification history, dependency status, downstream/import evidence, ledger
+runtime status, and hash/freshness evidence. It must not edit Lean files,
 prompt-pack state, obligations, classification, or ledger state.
 
 Every semantic review result must include `reviewer_independence` with role
@@ -82,14 +84,27 @@ that as review-result repair or regeneration, not as task completion and not as
 a reason to weaken validation.
 
 A pass verdict must give evidence for source claims, proof spine,
-interface contract, and downstream adequacy. For current strict templates:
+interface contract, downstream adequacy, and the full required evidence bundle.
+For current strict templates:
 
 - `spine_alignment`, `obligation_review`, `interface_contract`, and
   `downstream_adequacy` must be covered or explicitly not applicable;
+- `evidence_review` must cover source TeX, Lean subject, proof obligations,
+  audit, classification, dependency status, downstream/import evidence, ledger
+  status, and hashes, or explain why a class is not applicable;
+- audit, classification, dependency, ledger, or batch evidence cannot decide
+  completion by itself; the reviewer must reconcile conflicts in the verdict;
 - blocking obligations cannot remain open unless the task is honestly
   classified as accepted debt, adapter, open debt, or beyond-book exception;
 - every listed direct downstream consumer needs a downstream-adequacy entry;
 - forbidden weakenings must be absent or not applicable, not present.
+
+For complex tasks, when `decomposition_plan.md` or
+`decomposition_plan.json` exists, the reviewer should read it as the human
+route narrative and check that it agrees with `proof_obligations.json`. The
+obligation JSON remains the machine-facing review basis. A pass still requires
+the candidate to reconstruct concrete obligations; compiling a weaker wrapper
+or accepting a new black-box obligation for a source proof step is a fail.
 
 Schema-constrained statuses matter. Top-level review gates use `covered`,
 `partial`, `missing`, `violated`, or `unclear`; obligation items may also use
@@ -149,9 +164,15 @@ Do not answer a review failure by regenerating the same review request
 unchanged. Either revise the candidate through `review-fix` and the build loop,
 or explicitly audit the existing official output under a fresh review basis.
 
-For official-output review, a fail may quarantine the official output and demote
-the task according to the runtime path. Prepare-only queue modes do not
-quarantine by themselves.
+For official-output review, a fail records review failure, repair-required
+metadata, and the failed-review repair path by default. It must not quarantine
+official output or demote the task by default, because removing official output
+can break downstream imports before the repair is ready.
+
+Quarantine of official output is an explicit opt-in destructive maintenance
+action, not the default apply outcome. Before opt-in quarantine, check direct
+downstream consumers and imports, then record the decision and expected repair
+route. Prepare-only queue modes never quarantine by themselves.
 
 ## Accepted Proof Debt
 

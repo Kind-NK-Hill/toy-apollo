@@ -18,7 +18,11 @@ from src.toy_apollo.phase2_pack_generation import (  # noqa: E402
     write_existing_output_review_queue,
     write_prompt_pack,
 )
-from src.toy_apollo.phase2_prompt_pack import _build_build_result_payload, validate_candidate_hard_checks  # noqa: E402
+from src.toy_apollo.phase2_prompt_pack import (  # noqa: E402
+    _build_build_result_payload,
+    audit_completed_task_output,
+    validate_candidate_hard_checks,
+)
 from src.ledger_manager import LedgerManager, TaskStatus  # noqa: E402
 from src.toy_apollo.phase2_semantic_review import (  # noqa: E402
     SEMANTIC_REVIEW_PROMPT_VERSION,
@@ -211,6 +215,109 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             review_context = (pack_dir / "semantic_review_context_v1.md").read_text(encoding="utf-8")
             self.assertIn("Proof obligation tracking: `Level 0", review_context)
             self.assertNotIn("## Proof Obligation Ledger", review_context)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_pack_includes_required_review_evidence_manifest(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_review_evidence_manifest"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_pack_generation_review_evidence_manifest"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            classification_path = root / "docs" / "phase2_completion_classification.json"
+            classification_path.parent.mkdir(parents=True, exist_ok=True)
+            classification_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "tasks": [
+                            {
+                                "task_id": task_id,
+                                "primary_class": "open_math_debt",
+                                "classification_source": "test fixture",
+                            }
+                        ],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            audit_path = pack_dir / "verify_result_v99.json"
+            audit_path.write_text(
+                json.dumps(
+                    {
+                        "mode": "audit",
+                        "disposition": "audit_semantic_fail",
+                        "diagnostics": [{"severity": "error", "message": "fixture audit finding"}],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            success, detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(success, detail)
+
+            review_input = json.loads((pack_dir / "semantic_review_input_v1.json").read_text(encoding="utf-8"))
+            basis = review_input["review_basis"]
+            self.assertEqual(
+                basis["required_evidence_classes"],
+                [
+                    "source_tex",
+                    "lean_subject",
+                    "proof_obligations",
+                    "audit",
+                    "classification",
+                    "dependency_status",
+                    "downstream",
+                    "ledger_status",
+                    "hashes",
+                ],
+            )
+            self.assertIn("proof_obligations", basis["proof_obligations_evidence"])
+            self.assertEqual(basis["audit_evidence"]["latest_audit_result_file"], str(audit_path))
+            self.assertEqual(basis["classification_history"]["entries"][0]["primary_class"], "open_math_debt")
+            self.assertEqual(basis["ledger_status"]["task_status"], "PACKED")
+            self.assertIn("build_result_hash", basis["hash_evidence"])
+            self.assertEqual(basis["hash_evidence"]["review_subject_hash"], review_input["candidate"]["hash"])
+            self.assertIn("dependency_status", basis)
+            self.assertIn("downstream_evidence", basis)
+            self.assertIn("subject_imports", basis)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_audit_semantic_fail_preserves_official_output_by_default(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_audit_fail_preserves_output"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_pack_generation_audit_fail_preserves_output"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
+            original_output = output_path.read_text(encoding="utf-8")
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "build ok"),
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack._run_semantic_review_for_candidate",
+                return_value={"verdict": "fail", "cache_class": "semantic_verdict", "summary": "fixture audit fail"},
+            ):
+                success, detail = audit_completed_task_output(task_id, ledger, settings)
+
+            self.assertFalse(success)
+            self.assertIn("fixture audit fail", detail)
+            self.assertTrue(output_path.exists())
+            self.assertEqual(output_path.read_text(encoding="utf-8"), original_output)
+            self.assertFalse(list(pack_dir.glob("rejected_official_v*")))
+            task_record = ledger.ledger["tasks"][task_id]
+            self.assertEqual(task_record["status"], "COMPLETED")
+            self.assertEqual(task_record["latest_official_audit_disposition"], "audit_semantic_fail")
+            self.assertEqual(task_record["official_output_quarantine_policy"], "not_quarantined_by_default")
+            verify_result = json.loads((pack_dir / "verify_result_v1.json").read_text(encoding="utf-8"))
+            self.assertEqual(verify_result["state_transition"], "audit_failed_no_quarantine")
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

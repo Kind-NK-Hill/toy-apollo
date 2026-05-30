@@ -18,9 +18,12 @@ python .\run_chapter.py --phase 2 --phase2-mode review-pack --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode review-existing --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject candidate
 python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject existing
+python .\run_chapter.py --phase 2 --phase2-mode review-fix --tasks <task_id>
+python .\run_chapter.py --phase 2 --phase2-mode auto-loop --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode review-existing-queue
 python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks <task_id> --review-result <path>
 python .\run_chapter.py --phase 2 --phase2-mode debt-fix --tasks <task_id>
+python .\run_chapter.py --phase 2 --phase2-mode promote-obligations --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode verify --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode audit --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode soft-pack --tasks <problem_ids>
@@ -51,6 +54,16 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids>
   - problems belong in their own source unit and plan
 - Phase 2:
   - old direct-generation/`legacy` mode is not a stable recommended command; treat it as historical compatibility only when current CLI help still exposes it
+  - Phase 2 authority is three-gate:
+    - Build gate decides only whether the Lean subject builds. Its canonical
+      artifacts are `candidate_vN.lean` and `build_result_vN.json`.
+    - Review gate is the only proof-status verdict. A valid review must inspect
+      source TeX, the Lean subject, `proof_obligations.json`, audit signals,
+      classification history, dependency status, downstream/import evidence,
+      ledger runtime status, and freshness/hash evidence.
+    - Apply gate only lands a passing review result. Failed existing-output
+      review records repair-required/open-debt evidence and preserves official
+      output by default.
   - default workflow is two-stage:
     1. `pack`
     2. edit `draft.lean`
@@ -66,8 +79,22 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids>
   - `review-pack` is not a build gate
   - `review-pack`, `review-existing`, and `review-existing-queue` only prepare review materials and are prepare-only/compatibility paths, not the default semantic review entrypoint
   - `review-now` is the current semantic review orchestration entrypoint
+  - semantic review results must include `evidence_review` covering source TeX,
+    Lean subject, proof obligations, audit, classification, dependency status,
+    downstream/import evidence, ledger status, and hashes; if the reviewer does
+    not address that evidence, the review is not valid proof-status evidence
   - `review-apply` only validates and consumes an already existing review result
+  - candidate `fail`, `inconclusive`, invalid, or stale review results must not
+    promote the candidate
+  - existing-output `fail` must not quarantine or demote official output by
+    default; it records repair-required evidence and continues through repair
+    unless an operator explicitly opts into quarantine after downstream import
+    checks
   - `debt-fix` creates a repair request for accepted proof debt and then resumes through `review-fix`
+  - `promote-obligations` may turn blocking proof obligations into
+    `Phase2ObligationTask` ledger children, but those children still use the
+    ordinary build/review/apply loop and do not create a separate completion
+    authority
   - `COMPLETED_WITH_PROOF_DEBT` is not a clean dependency; hard dependents and
     selected soft imports must wait until `debt-fix` removes the accepted debt
   - before adding a new proof-debt support object or helper obligation, inspect
@@ -125,8 +152,14 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids>
 
 ## Phase 2 Source Of Truth
 
-- Build authority: `phase2_prompt_packs/<task_id>/build_result_vN.json`
-- Review authority: `phase2_prompt_packs/<task_id>/semantic_review_result_vM.json`
+- Build authority: `phase2_prompt_packs/<task_id>/build_result_vN.json` for
+  technical build status only
+- Review authority: the latest valid
+  `phase2_prompt_packs/<task_id>/semantic_review_result_vM.json` matching the
+  current review basis; this is the only proof-status verdict
+- Apply authority: `review-apply` consumes a valid review result and either
+  promotes a passing candidate, reconciles existing output, or records
+  repair-required evidence
 - Compatibility summary: `phase2_prompt_packs/<task_id>/verify_result_vK.json`
 - Runtime summary:
   - latest operation: `latest_operation_kind` + `latest_operation_file`
@@ -134,6 +167,11 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids>
   - current pending review section: `current_review_input_file` + `current_review_prompt_file` + `current_review_template_file`
   - last completed review section: `latest_semantic_review_result_file`
   - compatibility pointer: `latest_verify_result_file`
+- `proof_obligations.json`, classification artifacts, audit reports, batch
+  state JSON, ledger runtime status, and dependency/downstream status are
+  review evidence, caches, or reports. They must be read by review when
+  applicable, but none of them independently marks a task complete or overrides
+  the latest valid semantic review verdict.
 
 ## Phase 2 Problem Soft-Dependency Source Of Truth
 

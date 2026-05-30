@@ -51,6 +51,28 @@ review the official output with `review-now --review-subject existing`, or
 intentionally copy/sync the official output into `draft.lean` and rerun
 `build-check` before candidate review.
 
+## Source And Dependency Recording
+
+For proof-bearing tasks, record the inspected TeX span and proof spine in the
+task-local artifact that explains the decision, such as
+`semantic_review_result_vM.json`, `semantic_review_report_vM.md`,
+`failure_summary.md`, or `hard_failure_note.md`.
+
+If an existing output discharges an obligation but metadata is missing, treat
+that as metadata repair and surface the declaration in review context before
+inventing new scaffold.
+
+Operational classifications:
+
+- `interface_translation` is only for representation mismatch between textbook
+  notation, Mathlib, and existing ToyApollo declarations.
+- Substantive source mathematics must be proved, classified as open math debt,
+  or explicitly placed in the single accepted beyond-book exception.
+- `proof_debt_support` is exceptional and auditable; it is not the default path
+  for normal tasks and is never equivalent to `proved`.
+- When a step has both interface and mathematical content, split the bridge from
+  the mathematical obligation.
+
 ## Pack Artifact Roles
 
 - `draft.lean` is the live editable work file.
@@ -58,14 +80,24 @@ intentionally copy/sync the official output into `draft.lean` and rerun
   work.
 - `build-check` snapshots `draft.lean` into immutable `candidate_vN.lean`.
 - `build_result_vN.json` is the authority for whether a candidate is technically
-  build-ready.
+  build-ready. It has no proof-completion authority.
 - `operator_prompt.md` is an agent behavior contract, not proof evidence.
 - `context.md` is a runtime view; it does not replace source TeX, Lean build
   results, or semantic review.
+- `verify_result_vK.json` records verify/audit/review-apply diagnostics; it is
+  evidence for review and repair, not proof completion by itself.
+- Semantic review artifacts include `semantic_review_input_vM.json`,
+  `semantic_review_prompt_vM.md`, `semantic_review_context_vM.md`,
+  `semantic_review_result_template_vM.json`,
+  `semantic_review_result_vM.json`, `semantic_review_report_vM.md`,
+  `semantic_review_request_vM.json`, `review_repair_request_vM.json`, and
+  `review_repair_summary_vM.md`.
 
 Before editing `draft.lean`, read the grounding files relevant to the current
 state: `context.md`, `failure_summary.md` when present, `proof_obligations.json`
-when present, `search_manifest.json` / `search_notes.md`, `imports.lean`, and
+when present, audit results, classification history, dependency/downstream
+evidence, ledger runtime status, hash/freshness evidence,
+`search_manifest.json` / `search_notes.md`, `imports.lean`, and
 `target_stub.lean`. These files guide the next attempt; they do not override the
 source TeX or current build/review artifacts.
 
@@ -98,7 +130,15 @@ Review pass requires:
 1. statement fidelity;
 2. source proof or construction spine fidelity;
 3. interface contract;
-4. downstream adequacy.
+4. downstream adequacy;
+5. explicit response to the required evidence bundle: source TeX, Lean subject,
+   proof obligations, audit, classification, dependency status, downstream
+   imports/consumers, ledger status, and hashes.
+
+The required evidence bundle is not a set of independent completion verdicts.
+`proof_obligations.json`, classification, audit, dependency status, and batch
+state are review inputs. The semantic review result is invalid if it does not
+explain them, but none of them may bypass the review verdict.
 
 Statement fidelity includes public-assumption expansion: unfold local
 `def`/`structure`/package assumptions, classify extra fields, and reject hidden
@@ -118,9 +158,19 @@ For complex tasks:
 
 - replace generated `source_proof_spine` placeholders with concrete source-step
   obligations;
+- include source TeX file/span, complexity reasons, source obligation nodes in
+  textbook order, dependencies between nodes, Lean landing plans/status, and
+  scaffold classifications;
 - record expected theorem-level landings;
 - assemble proved obligations into the public theorem;
 - do not expose hard obligations as public theorem parameters.
+
+For complex tasks retried after an under-evidenced hard stop, continue until the
+task is completed, explicitly interrupted by the user, blocked by a documented
+mechanism failure, or one of the two Phase2 failure streak counters reaches 15.
+The counters are independent: `phase2_build_fail_counter` counts consecutive
+failed build checks before semantic review, and `phase2_review_fail_counter`
+counts failed or inconclusive semantic reviews of build-ready candidates.
 
 ## Textbook Complete Upgrade Path
 
@@ -185,6 +235,22 @@ python -m unittest tests.test_phase2_completion_classification tests.test_phase2
 For draft candidates, prefer the Phase2 `build-check` mode rather than directly
 editing official output.
 
+## Review JSON Discipline
+
+When writing or repairing a semantic review result:
+
+- use the current `semantic_review_result_template_vM.json`;
+- follow `reviewer_schema_hints` from the template when filling a pass result;
+- keep binding fields and hashes unchanged;
+- use parent obligation ids exactly as shown in the request;
+- include one `downstream_adequacy.consumers_checked` entry for every direct
+  downstream consumer listed in the review input;
+- use schema status values only;
+- if `review-apply` says the basis changed, discard the result, run fresh
+  `review-now`, write a new result, and apply immediately;
+- if `pack` reports a hard dependency still carries proof debt, clear the
+  dependency first instead of editing a stale pack to bypass the gate.
+
 ## Build Triage
 
 After a failed candidate build, inspect the generated build artifacts before
@@ -219,3 +285,10 @@ for prepare-only behavior.
 Valid same-session stop reasons include: completed, freshness error, hard
 failure, nonprogress, max rounds, build budget exhausted, or explicit user
 interruption.
+
+For a proof task, `hard_failure` is valid only after the source/dependency
+evidence required by `proof_fidelity_contract.md` is recorded and the applicable
+retry threshold is reached: `phase2_build_fail_counter >= 15` or
+`phase2_review_fail_counter >= 15`. Do not add build and review failures
+together. Timed-out or aborted runs without canonical result files are mechanism
+blockers, not proof failures.

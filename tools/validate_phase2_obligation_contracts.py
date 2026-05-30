@@ -1,8 +1,8 @@
-"""Validate Phase2 proof-obligation contract metadata.
+"""Validate Phase2 proof-obligation review-evidence metadata.
 
 This validator is intentionally stricter than the public-surface audit: a
 `proved` obligation must point at theorem-level evidence and carry an explicit
-proof-fidelity contract.
+proof-fidelity contract. It does not decide completion without semantic review.
 """
 
 from __future__ import annotations

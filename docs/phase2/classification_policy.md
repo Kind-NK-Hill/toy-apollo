@@ -5,9 +5,14 @@ Use this file when updating `docs/phase2_completion_classification.json` and
 
 ## Source Of Truth
 
-Classification records proof-fidelity state. It is ledger-independent.
+Classification is ledger-independent review evidence and a reporting cache. It
+does not independently decide completion. The latest valid semantic review
+result is the proof-status verdict; classification history must be read by the
+reviewer and reconciled with that verdict.
+
 `project_ledger.json` is runtime bookkeeping and must not be used as the sole
-evidence that a theorem is proof-complete.
+evidence that a theorem is proof-complete. Classification files likewise must
+not be hand-written as a substitute for build + review + apply.
 
 ## Promotion Requirements
 
@@ -54,5 +59,6 @@ Run:
 python tools/validate_phase2_completion_classification.py --require-proof-contract
 ```
 
-The validator checks consistency. It does not replace Lean build or
-source-route review.
+The validator checks consistency. It does not replace Lean build, semantic
+review, or source-route review, and it must not be used as an independent
+completion gate.

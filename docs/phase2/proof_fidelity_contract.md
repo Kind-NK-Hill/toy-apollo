@@ -8,6 +8,13 @@ Responsibility: define proof-fidelity verdicts and public-interface standards.
 Non-responsibility: command sequencing, repair-loop operation, or case-study
 history.
 
+## Authority
+
+This file is current proof-fidelity policy. Historical step documents under
+`docs/modification_0525_steps/` are execution records and design notes, not
+runtime policy unless a rule is copied into `docs/phase2/` or implemented by a
+current tool.
+
 ## Completion Classes
 
 - `textbook_proof_completed`: the public statement is source-faithful, public
@@ -77,8 +84,9 @@ task is honestly classified as an operational/interface theorem.
 
 ## Obligation Contract
 
-For complex tasks, `proof_obligations.json` is a proof contract. A proved
-obligation must identify:
+For complex tasks, `proof_obligations.json` is a review-evidence proof
+contract. It decomposes what the reviewer must inspect, but it does not
+independently decide completion. A proved obligation must identify:
 
 - the source proof step;
 - the expected theorem-level Lean statement;
@@ -108,7 +116,7 @@ Validators check metadata claims; they do not prove missing mathematics.
 The generated `source_proof_spine` placeholder is not a completed
 decomposition. Replace it with concrete source-step obligations before claiming
 complex-task semantic pass. `decomposition_plan.md` may explain the route, but
-`proof_obligations.json` is the machine-facing contract when present.
+`proof_obligations.json` is the machine-facing review contract when present.
 
 If contract checks cannot honestly be made, keep the obligation `open`,
 `partial`, `blocked`, `obsolete`, or explicitly classified as accepted debt,
@@ -126,6 +134,81 @@ adapter, or beyond-book exception as appropriate. Do not fill `verified` or
   reviewable proof steps, repeated partial progress, downstream-sensitive
   interfaces, or scaffolds that might otherwise hide open mathematics.
 
+## Production Sequence
+
+For selected textbook-completion upgrades, keep these step boundaries:
+
+- select targets and freeze adapter/open-debt decisions;
+- harden proof-obligation contracts;
+- reconcile scoped contract metadata;
+- extract the source route and expected theorem signatures before writing proof
+  code;
+- prove bridge and foundation lemmas;
+- assemble the selected public theorem from that evidence;
+- run textbook-fidelity review;
+- update classification only after the proof route is reviewed.
+
+Do not mix route extraction with proof production in a way that turns a newly
+found hard proof gap into a public premise or wrapper theorem.
+
+## Source And Dependency Discipline
+
+For proof-bearing work, inspect the original `inputs/<source>.tex` statement
+and proof or solution span before authoring, reviewing, or declaring a blocker.
+Prompt-pack mirrors are useful, but they are not a substitute for the source.
+
+Before adding a new helper obligation, scaffold, bridge, or debt item, scan:
+
+- existing `ToyApollo/Output/*.lean` files, including older chapters;
+- local bridge and foundation files;
+- dependency decisions and relevant plans;
+- `project_ledger.json` and task-local prompt-pack metadata;
+- Mathlib APIs and already imported local helpers.
+
+If an existing output covers the source step, reuse it or repair metadata. Do
+not create a new black-box bridge for mathematics that is already available.
+
+## Accepted Proof Debt Lifecycle
+
+`accepted_as_proof_debt` and `COMPLETED_WITH_PROOF_DEBT` mean the task is
+buildable with explicit debt, not clean. Such a task is not a clean upstream
+dependency. Downstream hard dependents remain blocked until `debt-fix` repairs
+the task and the repaired candidate passes semantic review without accepted
+debt.
+
+`debt-fix` is a workflow entrypoint, not a proof. It creates the repair
+contract; the authoring step must replace the accepted debt with theorem-level
+evidence, an honest adapter classification, a documented open-debt state, or
+the single beyond-book exception.
+
+## Complex Decomposition
+
+For complex tasks, the generated `source_proof_spine` placeholder is not a
+completed decomposition. Replace it with concrete source-step nodes before
+claiming semantic pass, hard failure, or dependency-failed downstream status.
+
+`decomposition_plan.md` or `decomposition_plan.json` may be readable
+companions, but `proof_obligations.json` is the machine-facing review contract
+when present. The final public theorem should assemble proved obligations into
+the source claim rather than exposing the hard obligations as theorem
+parameters.
+
+## Hard Failure Admission
+
+`hard_failure` is a last-resort semantic stop, not a label for long proofs or
+missing one-shot theorems. It requires:
+
+- source TeX inspection when a proof or solution exists;
+- source proof-spine decomposition into concrete obligations;
+- search evidence across local outputs, bridge files, dependency metadata, and
+  Mathlib;
+- a specific blocking obligation;
+- a task-local note explaining why faithful completion is beyond the current
+  local workflow and why tempting shortcuts would weaken the source claim.
+
+For retried complex tasks, ordinary build or review failures must follow the
+active retry-budget rules in `workflow.md` and `batch_controller.md`.
+
 ## Review Gate
 
 Before calling a proof-bearing task clean, verify:
@@ -140,7 +223,14 @@ Before calling a proof-bearing task clean, verify:
 6. public proof-package parameters are absent except for the unique
    `thm_14_8_ProofBeyondBook` exception;
 7. obligation landings are theorem/lemma landings, not field projections,
-   support declarations, private axioms, or empty names.
+   support declarations, private axioms, or empty names;
+8. audit signals, classification history, dependency status,
+   downstream/import evidence, ledger runtime status, and build/review hash
+   evidence were checked and reconciled.
+
+Proof obligations, classification, audit, dependency status, and batch state
+are evidence for this review gate. They cannot reverse or replace the latest
+valid semantic review verdict.
 
 For non-theorem task types, apply the same review to their exported
 task-facing declarations. Do not exempt a file because its task id is an
@@ -159,3 +249,17 @@ task-local, such as a symbol prefixed by the current task id, this is not an
 external hard blocker. It is an unproved local foundation lemma. The worker must
 prove it, split it into smaller theorem-level lemmas, import an existing
 official helper if one exists, or record the corresponding source obligation.
+
+## Enforcement
+
+Use this contract together with current tools:
+
+- `tools/audit_phase2_clean_debt_surface.py` checks public proof-package
+  surface and the unique beyond-book exception.
+- `tools/validate_phase2_completion_classification.py` checks classification
+  artifact hygiene when classification is part of the current work.
+- `tools/validate_phase2_obligation_contracts.py` checks proof-obligation
+  contract metadata and rejects `proved` obligations whose
+  landing/signature/body/public-premise contract is absent or not verified.
+- Lean build checks remain mandatory for touched Lean-facing files, but build
+  success alone never decides proof-fidelity class.

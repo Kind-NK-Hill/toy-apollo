@@ -302,6 +302,7 @@ def render_markdown_report(report: BatchReport) -> str:
         f"- All terminal: `{str(report.all_terminal).lower()}`",
         f"- All reporting terminal: `{str(report.all_reporting_terminal).lower()}`",
         f"- All clean or allowed exception: `{str(report.all_clean_or_allowed_exception).lower()}`",
+        "- Authority note: batch state is a resume/report cache; proof status comes from the latest valid review result and apply gate.",
     ]
     if report.allowed_beyond_book_tasks:
         lines.append("- Allowed beyond-book tasks: `" + ", ".join(report.allowed_beyond_book_tasks) + "`")

@@ -12,9 +12,13 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <task_ids> --
 
 ## Meaning
 
-`soft-pack` prepares dependency-selection materials. The operator writes the
-selection JSON. `soft-apply` records selected soft imports and marks the choice
-confirmed.
+`soft-pack` prepares dependency-selection materials. This is an operator-driven
+workflow: code prepares markdown/JSON materials, and the local operator writes
+the selection JSON. `soft-apply` records selected soft imports and marks the
+choice confirmed.
+
+The goal is to select chapter-local definition and theorem material once,
+persist it to the ledger, then reuse that selection in pack, build, and review.
 
 An empty soft-import list must still be explicitly confirmed.
 Having `candidate_snapshot.soft_imports` alone is not enough;
@@ -23,8 +27,43 @@ Having `candidate_snapshot.soft_imports` alone is not enough;
 `soft-pack` and `soft-apply` accept only `Problem` task ids, and the selected
 batch must stay within one chapter.
 
+Canonical storage remains:
+
+- `project_ledger.json -> tasks[task_id].candidate_snapshot.soft_imports`
+- `project_ledger.json -> tasks[task_id].soft_imports_confirmed_at`
+
 The selection JSON must have exactly the problem ids in the batch as keys. Each
 value is an ordered list of selected soft imports.
+
+## Directory Layout
+
+Each batch gets `phase2_softdep_packs/<batch_id>/`.
+
+Typical contents:
+
+- `batch.json`
+- `operator_prompt.md`
+- `problem_statements.md`
+- `selection_hints.md`
+- `chapter_materials.md`
+- `allowed_material_ids.json`
+- `selection_schema.json`
+- `soft_imports_selection.json`
+- `apply_report.md`
+
+## Procedure
+
+1. Run `soft-pack`.
+2. Read `problem_statements.md`, `selection_hints.md`,
+   `chapter_materials.md`, `allowed_material_ids.json`, and
+   `selection_schema.json`, then `operator_prompt.md`.
+3. Write `soft_imports_selection.json`.
+4. Run `soft-apply --selection <path>`.
+5. Inspect `project_ledger.json` and
+   `phase2_softdep_packs/<batch_id>/apply_report.md`.
+
+The next step is not provider offload. Continue locally with Phase2 `pack`,
+`build-check`, and `review-now`.
 
 ## Boundary
 

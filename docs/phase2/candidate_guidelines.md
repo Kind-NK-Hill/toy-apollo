@@ -10,7 +10,7 @@ classification policy.
 ## Hard Rules
 
 1. No `sorry`.
-2. No Markdown outside comments/docstrings.
+2. No Markdown or prose outside Lean comments/docstrings.
 3. Do not redefine standard Mathlib objects.
 4. Use provided imports unless there is a clear correction.
 5. Do not silently strengthen the theorem statement.
@@ -99,18 +99,55 @@ Use complex tracking when:
 - the source proof has multiple nontrivial obligations;
 - the exported statement needs a chain of local helper lemmas;
 - local or Mathlib results almost match but require interface conversion;
+- the task has substantial hard dependencies;
 - downstream tasks rely on the exact exported interface;
+- the source-to-Lean gap involves a construction, reduction, limiting passage,
+  algebraic transformation, case split, or other proof operation that cannot be
+  justified by pointing to a single existing theorem;
 - previous attempts show semantic non-progress.
 
-For complex tasks, `proof_obligations.json` is a contract. Split the source
-proof into concrete obligations with source references, dependencies, expected
-landings, and status. The exported theorem should assemble proved obligations,
-not assume them.
+For complex tasks, `proof_obligations.json` is a review-evidence contract.
+Split the source proof into concrete obligations with source references,
+dependencies, expected landings, and status. The exported theorem should
+assemble proved obligations, not assume them. The obligation file guides and
+records review; it does not independently mark the task complete.
 
 The generated `source_proof_spine` entry is only an unresolved placeholder.
 `decomposition_plan.md` is a readable companion, not the machine-checked review
 basis. The Lean candidate must reconstruct the concrete obligations, not merely
 compile a weaker wrapper.
+
+When both `decomposition_plan.md` and `proof_obligations.json` exist, keep them
+in sync; the JSON remains the review basis.
+
+`search_notes.md` is advisory but should strongly shape the candidate. Use it
+to confirm theorem/definition names, import paths, and actual `#check`
+signatures. Do not guess names when search notes or a direct local search can
+settle them.
+
+Do not try to formalize every sentence of the textbook passage. The candidate
+should create the smallest stable Lean artifact that captures the task's
+mathematical role, preserves the proof spine when the source proof matters, and
+supports downstream dependencies.
+
+For `Problem` tasks, stored soft imports are mandatory imports, not optional
+hints. Do not ignore a preselected soft import because the statement looks
+solvable without it, rebuild the soft-dependency selection inside the
+candidate, or import unrelated chapter material outside the final import union.
+
+## Required Loop
+
+Before asking for semantic review:
+
+1. edit `draft.lean`;
+2. run `build-check`;
+3. inspect `build_result_vN.json`, `build_feedback.txt`, and
+   `failure_summary.md`;
+4. edit again if needed;
+5. only once `build-check` succeeds, run
+   `review-now --review-subject candidate`.
+
+Do not use `review-pack` as a substitute for the build loop.
 
 ## Before Declaring Blocked
 
