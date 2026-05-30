@@ -19,7 +19,8 @@ python tools/validate_phase2_completion_classification.py --require-proof-contra
 ```
 
 Checks classification artifacts for consistency and required proof-contract
-evidence.
+evidence. The classification file is review evidence/reporting cache only; it
+does not independently mark a task complete.
 
 ## Obligation Contract Validator
 
@@ -30,7 +31,7 @@ python tools/validate_phase2_obligation_contracts.py --write-report
 
 Checks `proof_obligations.json` contract fields. It rejects metadata claiming
 proved obligations without verified theorem-level support. It is not a Lean
-proof oracle.
+proof oracle and not a completion authority.
 
 Reports are written under `docs/phase2/reports/`.
 
@@ -50,7 +51,9 @@ python tools/audit_phase2_clean_debt_surface.py --write-report --fail-on-errors
 ```
 
 Checks public proof-package surface and the unique beyond-book exception. It is
-a string/static audit, not mathematical proof.
+a string/static audit, not mathematical proof. Audit findings must feed semantic
+review; a clean audit does not bypass review and a failed audit does not by
+itself quarantine official output.
 
 ## Runner-Backed Review Modes
 

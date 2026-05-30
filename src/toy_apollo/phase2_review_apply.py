@@ -43,9 +43,7 @@ from .phase2_semantic_review import (
 from .phase2_pack_generation import (
     hard_check_diagnostic,
     parse_diagnostics,
-    quarantine_official_outputs,
     record_semantic_review_attempt,
-    remove_symbols_owned_by_task,
     review_diagnostics,
     run_staged_official_build,
     write_review_compat_summary,
@@ -566,7 +564,13 @@ async def apply_codex_review_result_once(
             if success:
                 ledger.update_status(task_id, _review_completion_status(semantic_review, ledger.ledger.get("tasks", {}).get(task_id, {})))
             elif disposition == "official_output_review_fail":
-                ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=detail_text)
+                if apply_original_status:
+                    try:
+                        ledger.update_status(task_id, TaskStatus(apply_original_status))
+                    except ValueError:
+                        pass
+                else:
+                    ledger.update_status(task_id, TaskStatus.PACKED)
             elif apply_original_status:
                 try:
                     ledger.update_status(task_id, TaskStatus(apply_original_status))
@@ -665,28 +669,14 @@ async def apply_codex_review_result_once(
             disposition = "codex_review_fail_no_promotion" if verdict == "fail" else "codex_review_inconclusive_no_promotion"
         repair_seed_path = candidate_path
         if review_subject_kind == "official_output" and verdict == "fail":
-            ledger.update_runtime_metadata(task_id, output_hash=None, exported_symbols=[], last_align_error="")
-            remove_symbols_owned_by_task(task_id, ledger)
-            quarantine_dir = quarantine_official_outputs(
-                task_id=task_id,
-                source_plan=source_plan,
-                ledger=ledger,
-                settings=settings,
-                pack_dir=pack_dir,
-                reason=detail,
-                result_path=result_path,
+            ledger.update_runtime_metadata(
+                task_id,
+                latest_official_review_verdict=verdict,
+                latest_official_review_result_file=str(result_path),
+                latest_official_review_requires_repair=True,
+                latest_official_review_detail=detail,
+                official_output_quarantine_policy="not_quarantined_by_default",
             )
-            quarantine_manifest = read_json_safely(quarantine_dir / "quarantine_manifest.json", {})
-            if isinstance(quarantine_manifest, dict):
-                files = quarantine_manifest.get("files", [])
-                if isinstance(files, list):
-                    for item in files:
-                        if isinstance(item, dict) and Path(str(item.get("quarantine_path", ""))).name == f"{task_id}.lean":
-                            repair_seed_path = Path(str(item.get("quarantine_path", "")))
-                            break
-                    else:
-                        if files and isinstance(files[0], dict):
-                            repair_seed_path = Path(str(files[0].get("quarantine_path", "")))
         repair_ready = _write_review_repair_artifacts(
             task=task,
             ledger=ledger,

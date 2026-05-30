@@ -24,7 +24,8 @@ Read the task-local artifacts next:
 1. `plans/<chapter>/<task>.json` or the relevant plan entry
 2. `inputs/<source>.tex` for the original textbook statement and proof
 3. Existing `ToyApollo/Output/*.lean` dependencies and `project_ledger.json`
-4. Existing `phase2_prompt_packs/...` review, build, and obligation artifacts
+4. Existing `phase2_prompt_packs/...` review, build, obligation, audit, and hash artifacts
+5. Classification history, dependency status, downstream/import evidence, and ledger runtime status
 
 ## Start Checklist
 
@@ -51,7 +52,7 @@ Support/Spine surface rule.
 Use the repository workflow rather than ad hoc state changes:
 
 1. Generate or inspect the Phase 2 prompt pack.
-2. Read the source grounding and dependency evidence from the pack, but verify against original TeX when the proof matters.
+2. Read the source grounding and dependency evidence from the pack, but verify against original TeX when the proof matters. Semantic review must also read proof obligations, audit signals, classification history, dependency status, downstream/import evidence, ledger runtime status, and hash/freshness evidence.
 3. Choose the review target route before editing or reviewing:
    - existing official output already repaired in `ToyApollo/Output/<task>.lean`: `review-now --review-subject existing`;
    - active candidate repair: edit `draft.lean`, run `build-check`, then `review-now --review-subject candidate`;
@@ -59,7 +60,7 @@ Use the repository workflow rather than ad hoc state changes:
 4. Edit candidate Lean only on the active candidate route.
 5. Run local build checks.
 6. Run semantic review on the correct subject.
-7. Apply only through `review-apply` when review passes.
+7. Apply only through `review-apply` when review passes. For failed existing-output review, use `review-apply` only to record repair-required evidence; do not quarantine official output by default.
 
 Semantic review of a current candidate is independent and read-only. The author
 worker must not review its own candidate. Use a separate reviewer subagent or a
@@ -75,6 +76,7 @@ Stop and re-read the required docs when any of these occur:
 - Claiming `hard_failure` before source proof-spine decomposition, dependency search, and retry-budget evidence.
 - Adding scaffold hypotheses that state the task's main conclusion or hide source mathematics.
 - Treating a Mathlib-backed adapter, bridge theorem, private axiom, support field, or clean ledger row as textbook proof completion.
+- Treating proof obligations, classification, audit, batch state, or ledger status as an independent completion verdict.
 - Treating prompt-pack summaries as a substitute for original TeX.
 - Landing a task without `review-apply`.
 - For selected textbook-completion targets, stopping at `bridge_landed`, `foundation_lemma_landed`, build success, `contract_clean`, or metadata repair instead of returning to the selected public theorem.
@@ -93,6 +95,7 @@ Phase 2 entry report:
 - Complexity:
 - Proof-fidelity target:
 - Ledger state:
+- Review evidence bundle:
 - Route:
 - Immediate next command/action:
 ```

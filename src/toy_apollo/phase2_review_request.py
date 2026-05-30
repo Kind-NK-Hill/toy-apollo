@@ -36,6 +36,18 @@ from .phase2_proof_obligations import (
     summarize_proof_obligations,
 )
 
+REQUIRED_REVIEW_EVIDENCE_CLASSES = [
+    "source_tex",
+    "lean_subject",
+    "proof_obligations",
+    "audit",
+    "classification",
+    "dependency_status",
+    "downstream",
+    "ledger_status",
+    "hashes",
+]
+
 
 def _review_request_path(pack_dir: Path, attempt: int) -> Path:
     return pack_dir / f"{SEMANTIC_REVIEW_REQUEST_PREFIX}_v{attempt}.json"
@@ -171,6 +183,185 @@ def _collect_direct_downstream_consumers(task_id: str, settings) -> list[dict[st
     return consumers
 
 
+def _hash_file(path: Path | None) -> str:
+    if path is None or not path.exists():
+        return ""
+    text = read_file_safely(path)
+    return sha256_text(text) if text else ""
+
+
+def _subject_imports(subject_file: Path | None) -> list[str]:
+    if subject_file is None or not subject_file.exists():
+        return []
+    imports: list[str] = []
+    for line in read_file_safely(subject_file).splitlines():
+        stripped = line.strip()
+        if stripped.startswith("import "):
+            imports.append(stripped)
+    return imports
+
+
+def _latest_audit_evidence(pack_dir: Path) -> dict[str, Any]:
+    latest_path: Path | None = None
+    for path in sorted(pack_dir.glob("verify_result_v*.json")):
+        payload = read_json_safely(path, {})
+        if not isinstance(payload, dict):
+            continue
+        mode = str(payload.get("mode", "") or "").strip().lower()
+        disposition = str(payload.get("disposition", "") or "").strip().lower()
+        if mode == "audit" or disposition.startswith("audit_"):
+            latest_path = path
+    if latest_path is None:
+        return {
+            "latest_audit_result_file": "",
+            "disposition": "",
+            "success": None,
+            "diagnostics": [],
+        }
+    payload = read_json_safely(latest_path, {})
+    diagnostics = payload.get("diagnostics", []) if isinstance(payload, dict) else []
+    return {
+        "latest_audit_result_file": str(latest_path),
+        "disposition": str(payload.get("disposition", "") or "") if isinstance(payload, dict) else "",
+        "success": payload.get("success") if isinstance(payload, dict) else None,
+        "diagnostics": diagnostics if isinstance(diagnostics, list) else [],
+    }
+
+
+def _classification_history(task_id: str, settings) -> dict[str, Any]:
+    candidates = [
+        settings.artifact_root / "docs" / "phase2_completion_classification.json",
+        settings.runtime_root / "docs" / "phase2_completion_classification.json",
+    ]
+    seen: set[str] = set()
+    for path in candidates:
+        key = str(path.resolve())
+        if key in seen:
+            continue
+        seen.add(key)
+        if not path.exists():
+            continue
+        payload = read_json_safely(path, {})
+        if not isinstance(payload, dict):
+            continue
+        tasks = payload.get("tasks", [])
+        entries = [
+            item
+            for item in tasks
+            if isinstance(item, dict) and canonicalize_block_id(str(item.get("task_id", "") or "")) == task_id
+        ] if isinstance(tasks, list) else []
+        return {
+            "classification_file": str(path),
+            "schema_version": payload.get("schema_version", ""),
+            "entries": entries,
+        }
+    return {
+        "classification_file": "",
+        "schema_version": "",
+        "entries": [],
+    }
+
+
+def _dependency_status(task: dict[str, Any], ledger: LedgerManager, settings) -> list[dict[str, Any]]:
+    status: list[dict[str, Any]] = []
+    hard_deps = canonicalize_id_list(task.get("dependencies", []))
+    soft_imports = canonicalize_id_list(task.get("soft_imports", []))
+    relation_by_id: dict[str, str] = {dep: "hard_dependency" for dep in hard_deps}
+    for dep in soft_imports:
+        relation_by_id.setdefault(dep, "soft_import")
+    for dep_id in sorted(relation_by_id):
+        record = ledger.ledger.get("tasks", {}).get(dep_id, {})
+        record = record if isinstance(record, dict) else {}
+        source_plan = str(record.get("source_plan", "unknown") or "unknown")
+        output_path = find_existing_task_file(dep_id, source_plan, settings)
+        output_exists = bool(output_path and output_path.exists())
+        status.append(
+            {
+                "task_id": dep_id,
+                "relation": relation_by_id[dep_id],
+                "ledger_status": str(record.get("status", "") or ""),
+                "source_plan": source_plan,
+                "official_output_file": str(output_path or ""),
+                "official_output_exists": output_exists,
+                "official_output_hash": _hash_file(output_path) if output_path else "",
+                "proof_obligation_summary": record.get("proof_obligation_summary", {}) if isinstance(record.get("proof_obligation_summary", {}), dict) else {},
+                "latest_semantic_review_result_file": str(record.get("latest_semantic_review_result_file", "") or ""),
+            }
+        )
+    return status
+
+
+def _downstream_evidence(downstream: list[dict[str, str]], settings) -> dict[str, Any]:
+    consumers: list[dict[str, Any]] = []
+    for consumer in downstream:
+        consumer_id = canonicalize_block_id(str(consumer.get("block_id", "") or ""))
+        source_plan = str(consumer.get("source_plan", "unknown") or "unknown")
+        output_path = find_existing_task_file(consumer_id, source_plan, settings)
+        consumers.append(
+            {
+                **consumer,
+                "official_output_file": str(output_path or ""),
+                "official_output_exists": bool(output_path and output_path.exists()),
+                "official_output_imports": _subject_imports(output_path) if output_path else [],
+            }
+        )
+    return {
+        "direct_downstream_consumers": consumers,
+        "downstream_import_scan_required_before_quarantine": bool(consumers),
+    }
+
+
+def _ledger_status_evidence(
+    *,
+    task_id: str,
+    output_owner_task_id: str,
+    ledger: LedgerManager,
+) -> dict[str, Any]:
+    record = ledger.ledger.get("tasks", {}).get(task_id, {})
+    record = record if isinstance(record, dict) else {}
+    owner = ledger.ledger.get("tasks", {}).get(output_owner_task_id, {})
+    owner = owner if isinstance(owner, dict) else {}
+    return {
+        "task_status": str(record.get("status", "") or ""),
+        "output_owner_task_id": output_owner_task_id,
+        "output_owner_status": str(owner.get("status", "") or ""),
+        "latest_build_result_file": str(record.get("latest_build_result_file", "") or ""),
+        "latest_build_ready_candidate_file": str(record.get("latest_build_ready_candidate_file", "") or ""),
+        "latest_build_ready_candidate_hash": str(record.get("latest_build_ready_candidate_hash", "") or ""),
+        "latest_semantic_review_result_file": str(record.get("latest_semantic_review_result_file", "") or ""),
+        "proof_obligation_summary": owner.get("proof_obligation_summary", {}) if isinstance(owner.get("proof_obligation_summary", {}), dict) else {},
+    }
+
+
+def _hash_evidence(
+    *,
+    task_id: str,
+    source_plan: str,
+    review_subject_hash: str,
+    current_record: dict[str, Any],
+    settings,
+) -> dict[str, Any]:
+    build_result_raw = str(current_record.get("latest_build_result_file", "") or "").strip()
+    build_result_path = Path(build_result_raw) if build_result_raw else None
+    if build_result_path is not None and not build_result_path.is_absolute():
+        build_result_path = (settings.artifact_root / build_result_path).resolve()
+    build_candidate_raw = str(current_record.get("latest_build_ready_candidate_file", "") or "").strip()
+    build_candidate_path = Path(build_candidate_raw) if build_candidate_raw else None
+    if build_candidate_path is not None and not build_candidate_path.is_absolute():
+        build_candidate_path = (settings.artifact_root / build_candidate_path).resolve()
+    official_output_path = select_latest_existing_task_file(task_id, source_plan, settings)
+    return {
+        "review_subject_hash": str(review_subject_hash or ""),
+        "build_result_file": str(build_result_path or ""),
+        "build_result_hash": _hash_file(build_result_path),
+        "build_candidate_file": str(build_candidate_path or ""),
+        "build_candidate_hash": str(current_record.get("latest_build_ready_candidate_hash", "") or ""),
+        "build_candidate_file_hash": _hash_file(build_candidate_path),
+        "official_output_file": str(official_output_path or ""),
+        "official_output_hash": _hash_file(official_output_path),
+    }
+
+
 def _build_semantic_review_request(
     *,
     task_id: str,
@@ -216,6 +407,7 @@ def build_semantic_review_basis(
     *,
     review_subject_kind: str,
     review_subject_hash: str = "",
+    review_subject_file: str | Path | None = None,
 ) -> dict[str, Any]:
     task_id = task["block_id"]
     pack_dir = settings.phase2_prompt_packs_dir / task_id
@@ -227,6 +419,7 @@ def build_semantic_review_basis(
         else task
     )
     current_record = ledger.ledger.get("tasks", {}).get(task_id, {})
+    current_record = current_record if isinstance(current_record, dict) else {}
     proof_obligations = maybe_ensure_proof_obligations_file(
         obligations_pack_dir,
         obligations_task,
@@ -250,6 +443,11 @@ def build_semantic_review_basis(
             str(item.get("title", "")),
         ),
     )
+    source_plan = str(task.get("source_plan", "") or "")
+    subject_file_path = Path(review_subject_file).expanduser() if review_subject_file else None
+    if subject_file_path is not None and not subject_file_path.is_absolute():
+        subject_file_path = (pack_dir / subject_file_path).resolve()
+    proof_obligation_summary = summarize_proof_obligations(proof_obligations) if proof_obligations is not None else {}
     return {
         "task": {
             "block_id": task_id,
@@ -265,11 +463,45 @@ def build_semantic_review_basis(
         "output_owner_task_id": output_binding.output_owner_task_id,
         "output_module": output_binding.output_module,
         "focus_obligation_ids": output_binding.focus_obligation_ids,
+        "required_evidence_classes": REQUIRED_REVIEW_EVIDENCE_CLASSES,
+        "source_evidence": {
+            "task_id": task_id,
+            "source_plan": source_plan,
+            "tex_hash": sha256_text(str(task.get("content", "") or "")),
+        },
+        "lean_subject_evidence": {
+            "review_subject_kind": str(review_subject_kind or ""),
+            "review_subject_hash": str(review_subject_hash or ""),
+            "subject_imports": _subject_imports(subject_file_path),
+        },
         "direct_downstream_consumers": downstream,
         "spine_review_contract": review_spine_contract(task),
         "proof_obligations_file": proof_obligations_file,
         "proof_obligations": proof_obligations if proof_obligations is not None else {},
-        "proof_obligation_summary": summarize_proof_obligations(proof_obligations) if proof_obligations is not None else {},
+        "proof_obligation_summary": proof_obligation_summary,
+        "proof_obligations_evidence": {
+            "proof_obligations_file": proof_obligations_file,
+            "proof_obligations": proof_obligations if proof_obligations is not None else {},
+            "proof_obligation_summary": proof_obligation_summary,
+            "authority": "review_evidence_only",
+        },
+        "audit_evidence": _latest_audit_evidence(pack_dir),
+        "classification_history": _classification_history(output_binding.output_owner_task_id, settings),
+        "dependency_status": _dependency_status(task, ledger, settings),
+        "downstream_evidence": _downstream_evidence(downstream, settings),
+        "ledger_status": _ledger_status_evidence(
+            task_id=task_id,
+            output_owner_task_id=output_binding.output_owner_task_id,
+            ledger=ledger,
+        ),
+        "hash_evidence": _hash_evidence(
+            task_id=output_binding.output_owner_task_id,
+            source_plan=source_plan,
+            review_subject_hash=review_subject_hash,
+            current_record=current_record,
+            settings=settings,
+        ),
+        "subject_imports": _subject_imports(subject_file_path),
         "allowed_abstractions": review_allowed_abstractions(task),
         "forbidden_weakenings": review_forbidden_weakenings(task),
         "historical_shortcut_risks": review_history_risks(task_id),
@@ -365,6 +597,7 @@ def _validate_review_input_freshness(
         settings,
         review_subject_kind=review_subject_kind,
         review_subject_hash=current_review_subject_hash,
+        review_subject_file=subject_file_path,
     )
     if sha256_json(current_review_basis) != expected_review_basis_hash:
         return "semantic review basis changed since review generation", {}

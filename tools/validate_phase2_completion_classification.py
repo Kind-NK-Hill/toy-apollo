@@ -1,7 +1,7 @@
-"""Validate the Phase2 completion classification artifact.
+"""Validate the Phase2 completion classification evidence/cache artifact.
 
 This validator checks artifact structure and evidence hygiene.  It does not try
-to infer mathematical truth from Lean text.
+to infer mathematical truth from Lean text and is not a completion authority.
 """
 
 from __future__ import annotations

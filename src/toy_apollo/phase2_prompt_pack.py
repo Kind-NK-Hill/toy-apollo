@@ -3765,6 +3765,7 @@ def _prepare_existing_output_review_materials(
         settings,
         review_subject_kind="official_output",
         review_subject_hash=candidate_hash,
+        review_subject_file=output_path,
     )
     review_basis_hash = _sha256_json(review_basis)
     attempt_info = _find_matching_existing_review_materials(pack_dir, task_id, candidate_hash, review_basis_hash)
@@ -3977,6 +3978,7 @@ def _run_semantic_review_for_candidate(
         settings,
         review_subject_kind="candidate",
         review_subject_hash=_sha256_text(candidate_code),
+        review_subject_file=candidate_path,
     )
     review_input = build_semantic_review_input(
         task=task,
@@ -4200,55 +4202,50 @@ def audit_completed_task_output(task_id: str, ledger: LedgerManager, settings) -
         _refresh_pack_runtime_view(task, ledger, settings, pack_dir)
         return verify_result
 
+    def preserve_official_output_after_audit_failure(disposition: str, detail: str) -> None:
+        if audit_original_status:
+            try:
+                ledger.update_status(task_id, TaskStatus(audit_original_status))
+            except ValueError:
+                pass
+        ledger.update_runtime_metadata(
+            task_id,
+            latest_official_audit_disposition=disposition,
+            latest_official_audit_result_file=str(verify_result_path),
+            latest_official_audit_requires_repair=True,
+            latest_official_audit_detail=detail,
+            official_output_quarantine_policy="not_quarantined_by_default",
+        )
+
     hard_ok, diagnostics, detail = validate_candidate_hard_checks(task, candidate_code, ledger)
     if not hard_ok:
-        result = write_audit_result(
+        disposition = "audit_hard_check_failed"
+        write_audit_result(
             success=False,
             diagnostics=diagnostics,
             detail=detail,
             final_build_success=False,
-            disposition="audit_hard_check_failed",
-            state_transition="completed_to_failed_local",
+            disposition=disposition,
+            state_transition="audit_failed_no_quarantine",
         )
-        ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=detail)
-        ledger.update_runtime_metadata(task_id, output_hash=None, exported_symbols=[], last_align_error="")
-        _remove_symbols_owned_by_task(task_id, ledger)
-        _quarantine_official_outputs(
-            task_id=task_id,
-            source_plan=source_plan,
-            ledger=ledger,
-            settings=settings,
-            pack_dir=pack_dir,
-            reason=detail,
-            result_path=verify_result_path,
-        )
+        preserve_official_output_after_audit_failure(disposition, detail)
         return False, detail
 
     final_success, final_output = _run_official_module_build(task_id, settings)
     if not final_success:
         diagnostics = _parse_diagnostics(final_output, "final_build_failed", "audit_final_build")
         detail = final_output or f"lake build ToyApollo.Output.{task_id} failed during audit."
-        result = write_audit_result(
+        disposition = "audit_final_build_failed"
+        write_audit_result(
             success=False,
             diagnostics=diagnostics,
             detail=detail,
             final_build_success=False,
             final_build_output=final_output,
-            disposition="audit_final_build_failed",
-            state_transition="completed_to_failed_local",
+            disposition=disposition,
+            state_transition="audit_failed_no_quarantine",
         )
-        ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=detail)
-        ledger.update_runtime_metadata(task_id, output_hash=None, exported_symbols=[], last_align_error="")
-        _remove_symbols_owned_by_task(task_id, ledger)
-        _quarantine_official_outputs(
-            task_id=task_id,
-            source_plan=source_plan,
-            ledger=ledger,
-            settings=settings,
-            pack_dir=pack_dir,
-            reason=detail,
-            result_path=verify_result_path,
-        )
+        preserve_official_output_after_audit_failure(disposition, detail)
         return False, detail
 
     config, config_error = _reviewer_config_or_detail(require_config=False)
@@ -4321,6 +4318,7 @@ def audit_completed_task_output(task_id: str, ledger: LedgerManager, settings) -
     diagnostics = _review_diagnostics(review_result)
     if verdict == "fail":
         detail = detail or "Semantic audit failed."
+        disposition = "audit_semantic_fail"
         write_audit_result(
             success=False,
             diagnostics=diagnostics,
@@ -4328,21 +4326,10 @@ def audit_completed_task_output(task_id: str, ledger: LedgerManager, settings) -
             final_build_success=True,
             final_build_output=final_output,
             semantic_review=review_result,
-            disposition="audit_semantic_fail",
-            state_transition="completed_to_failed_local",
+            disposition=disposition,
+            state_transition="audit_failed_no_quarantine",
         )
-        ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=detail)
-        ledger.update_runtime_metadata(task_id, output_hash=None, exported_symbols=[], last_align_error="")
-        _remove_symbols_owned_by_task(task_id, ledger)
-        _quarantine_official_outputs(
-            task_id=task_id,
-            source_plan=source_plan,
-            ledger=ledger,
-            settings=settings,
-            pack_dir=pack_dir,
-            reason=detail,
-            result_path=verify_result_path,
-        )
+        preserve_official_output_after_audit_failure(disposition, detail)
         return False, detail
 
     detail = (
@@ -5262,6 +5249,7 @@ def _write_codex_handoff_review_artifacts(
         settings,
         review_subject_kind=review_subject_kind,
         review_subject_hash=_sha256_text(candidate_code) if candidate_code else "",
+        review_subject_file=candidate_path,
     )
     review_input = build_semantic_review_input(
         task=task,
@@ -5294,7 +5282,7 @@ def _write_codex_handoff_review_artifacts(
     template_path = _result_template_path(pack_dir, attempt)
     expected_result_path = paths["result"]
     template = {
-        "schema_version": "phase2.semantic_review.result.v6",
+        "schema_version": "phase2.semantic_review.result.v7",
         "task_id": task["block_id"],
         "mode": mode,
         "attempt": attempt,
@@ -5332,6 +5320,20 @@ def _write_codex_handoff_review_artifacts(
             "open_blockers": [],
             "scaffold_assessment": [],
         },
+        "evidence_review": {
+            "status": "unclear",
+            "summary": "",
+            "items": [
+                {
+                    "evidence_class": evidence_class,
+                    "status": "unclear",
+                    "evidence": "",
+                }
+                for evidence_class in review_basis.get("required_evidence_classes", [])
+                if isinstance(review_basis.get("required_evidence_classes", []), list)
+            ],
+            "blocking_issues": [],
+        },
         "interface_contract": {"status": "unclear", "summary": "", "mismatches": []},
         "downstream_adequacy": {"status": "unclear", "summary": "", "consumers_checked": [], "blocking_issues": []},
         "forbidden_weakenings": [],
@@ -5365,6 +5367,12 @@ def _write_codex_handoff_review_artifacts(
                 "public_premise_check": "unverified | passed | failed | not_applicable",
                 "proof_contract_notes": "<why the landing satisfies or fails the contract>",
             },
+            "evidence_item_shape": {
+                "evidence_class": "source_tex | lean_subject | proof_obligations | audit | classification | dependency_status | downstream | ledger_status | hashes",
+                "status": "covered | partial | missing | violated | unclear | not_applicable",
+                "evidence": "<what was checked and how conflicts/staleness were resolved>",
+            },
+            "required_evidence_classes": review_basis.get("required_evidence_classes", []),
             "downstream_consumer_entry_shape": {
                 "block_id": "<direct downstream block_id>",
                 "status": "covered | not_applicable | blocked",
@@ -6436,6 +6444,7 @@ def build_semantic_review_basis(
     *,
     review_subject_kind: str,
     review_subject_hash: str = "",
+    review_subject_file: str | Path | None = None,
 ) -> dict[str, Any]:
     from .phase2_review_request import build_semantic_review_basis as _owner_build_semantic_review_basis
     return _owner_build_semantic_review_basis(
@@ -6444,6 +6453,7 @@ def build_semantic_review_basis(
         settings,
         review_subject_kind=review_subject_kind,
         review_subject_hash=review_subject_hash,
+        review_subject_file=review_subject_file,
     )
 
 

@@ -54,6 +54,23 @@ textbook proof completion. A proof-bearing task is clean only when the public
 statement, public assumptions, proof route, dependencies, and metadata all match
 the contract in `proof_fidelity_contract.md`.
 
+Phase2 uses three authority gates:
+
+- Build gate: Lean build status only, represented by `candidate_vN.lean` and
+  `build_result_vN.json`.
+- Review gate: the only proof-status verdict. The review request must include
+  source TeX, the Lean subject, proof obligations, audit signals,
+  classification history, dependency status, downstream/import evidence, ledger
+  runtime status, and freshness/hash evidence.
+- Apply gate: lands a passing candidate review. Failed official-output reviews
+  record repair-required/open-debt evidence by default; they do not quarantine
+  official output unless an operator explicitly opts in after checking
+  downstream imports.
+
+`proof_obligations.json`, classification files, audit reports, and batch-state
+JSON are review evidence, caches, or reports. They must not independently mark
+a task complete. The decision record is `adr_three_gate_model.md`.
+
 ## Doc Hygiene
 
 Keep durable rules under `docs/phase2/` and avoid adding new policy only to

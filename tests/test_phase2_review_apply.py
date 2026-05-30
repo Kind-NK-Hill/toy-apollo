@@ -571,6 +571,28 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_codex_review_apply_pass_requires_evidence_review(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_missing_evidence_review"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_missing_evidence_review"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass")
+            result_payload = json.loads(result_path.read_text(encoding="utf-8"))
+            result_payload.pop("evidence_review", None)
+            result_path.write_text(json.dumps(result_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertIn("evidence_review", detail)
+            self.assertFalse(output_path.exists())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_codex_review_apply_rejects_candidate_hash_mismatch(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_candidate_hash_mismatch"
         try:
@@ -672,6 +694,33 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertFalse(task_record.get("current_auto_loop_enabled"))
             self.assertEqual(task_record.get("current_auto_loop_status"), "")
             self.assertEqual(task_record.get("current_auto_loop_phase"), "")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_existing_review_apply_fail_preserves_official_output_by_default(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_existing_review_apply_fail_preserves_output"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_existing_review_apply_fail_preserves_output"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
+            original_output = output_path.read_text(encoding="utf-8")
+            with patch("src.toy_apollo.phase2_prompt_pack._run_official_module_build", return_value=(True, "sanity ok")):
+                review_success, review_detail = asyncio.run(
+                    write_existing_output_review_pack(task_id, ledger, settings, force_new_attempt=True)
+                )
+            self.assertTrue(review_success, review_detail)
+
+            result_path = self._write_codex_review_result(pack_dir, verdict="fail")
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertIn("fail", detail.lower())
+            self.assertTrue(output_path.exists())
+            self.assertEqual(output_path.read_text(encoding="utf-8"), original_output)
+            self.assertFalse(list(pack_dir.glob("rejected_official_v*")))
+            task_record = ledger.ledger["tasks"][task_id]
+            self.assertEqual(task_record["status"], "COMPLETED")
+            self.assertTrue(str(task_record.get("current_review_repair_request_file", "")).endswith(".json"))
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
