@@ -795,6 +795,60 @@ theorem thm_10_8 : True := by
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_review_existing_queue_reports_stale_results_as_prepared_fresh_review_work(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_existing_queue_stale_summary"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_pack_generation_existing_queue_stale_summary"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id, completed=True)
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "build ok"),
+            ):
+                success, detail = asyncio.run(write_existing_output_review_queue([task_id], ledger, settings))
+            self.assertTrue(success, detail)
+
+            stale_result = {
+                "task_id": task_id,
+                "prompt_version": SEMANTIC_REVIEW_PROMPT_VERSION,
+                "rubric_version": SEMANTIC_REVIEW_RUBRIC_VERSION,
+                "review_input_file": str(pack_dir / "semantic_review_input_v1.json"),
+                "candidate_hash": "stale-hash",
+                "verdict": "pass",
+            }
+            (pack_dir / "semantic_review_result_v1.json").write_text(
+                json.dumps(stale_result, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "build ok"),
+            ):
+                success, detail = asyncio.run(write_existing_output_review_queue([task_id], ledger, settings))
+
+            self.assertTrue(success, detail)
+            report_path = max(
+                (settings.phase2_prompt_packs_dir / "_reports").glob("review_existing_queue_*.json"),
+                key=lambda path: path.stat().st_mtime,
+            )
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertEqual(report["counts"]["stale_review_result"], 1)
+            self.assertEqual(report["counts"]["ready_for_codex_review"], 0)
+            self.assertEqual(report["review_material_summary"]["prepared_review_materials"], 1)
+            self.assertEqual(report["review_material_summary"]["fresh_review_required"], 1)
+            self.assertEqual(report["review_material_summary"]["stale_or_invalid_prior_results"], 1)
+            self.assertEqual(report["review_material_summary"]["current_matching_review_results"], 0)
+            self.assertIn("fresh_review_required=1", detail)
+            markdown_path = report_path.with_suffix(".md")
+            markdown = markdown_path.read_text(encoding="utf-8")
+            self.assertIn("Prepared review materials", markdown)
+            self.assertIn("Fresh review required", markdown)
+            self.assertIn("stale_review_result` means review materials are prepared", markdown)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
 
 if __name__ == "__main__":
     unittest.main()

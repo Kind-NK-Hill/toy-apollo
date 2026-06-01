@@ -3902,8 +3902,30 @@ def _queue_status_for_prepared_materials(prepared: dict[str, Any]) -> tuple[str,
     )
 
 
+def _review_existing_queue_material_summary(counts: dict[str, Any]) -> dict[str, int]:
+    ready_for_codex_review = int(counts.get("ready_for_codex_review", 0) or 0)
+    stale_review_result = int(counts.get("stale_review_result", 0) or 0)
+    review_result_present = int(counts.get("review_result_present", 0) or 0)
+    blocked_build = int(counts.get("blocked_build", 0) or 0)
+    source_missing = int(counts.get("source_missing", 0) or 0)
+    return {
+        "prepared_review_materials": ready_for_codex_review + stale_review_result + review_result_present,
+        "fresh_review_required": ready_for_codex_review + stale_review_result,
+        "ready_without_prior_result": ready_for_codex_review,
+        "stale_or_invalid_prior_results": stale_review_result,
+        "current_matching_review_results": review_result_present,
+        "blocked_build": blocked_build,
+        "source_missing": source_missing,
+    }
+
+
 def _render_review_existing_queue_markdown(report: dict[str, Any]) -> str:
     counts = report.get("counts", {}) if isinstance(report.get("counts", {}), dict) else {}
+    material_summary = (
+        report.get("review_material_summary", {})
+        if isinstance(report.get("review_material_summary", {}), dict)
+        else _review_existing_queue_material_summary(counts)
+    )
     lines = [
         "# Phase 2 review-existing-queue",
         "",
@@ -3925,6 +3947,22 @@ def _render_review_existing_queue_markdown(report: dict[str, Any]) -> str:
             lines.append(f"- `{status}`: `{counts.get(status, 0)}`")
     else:
         lines.append("- No official outputs were scanned.")
+    lines.extend(
+        [
+            "",
+            "## Review Material Summary",
+            "",
+            f"- Prepared review materials: `{material_summary.get('prepared_review_materials', 0)}`",
+            f"- Fresh review required: `{material_summary.get('fresh_review_required', 0)}`",
+            f"- Ready without prior result: `{material_summary.get('ready_without_prior_result', 0)}`",
+            f"- Stale or invalid prior results: `{material_summary.get('stale_or_invalid_prior_results', 0)}`",
+            f"- Current matching review results: `{material_summary.get('current_matching_review_results', 0)}`",
+            f"- Blocked build: `{material_summary.get('blocked_build', 0)}`",
+            f"- Source missing: `{material_summary.get('source_missing', 0)}`",
+            "",
+            "Note: `stale_review_result` means review materials are prepared, but the prior semantic review result is stale or invalid. A reviewer should write a fresh result for that prepared request.",
+        ]
+    )
     lines.extend(["", "## Tasks", ""])
     tasks = report.get("tasks", [])
     if not isinstance(tasks, list) or not tasks:
@@ -5825,20 +5863,23 @@ async def write_existing_output_review_queue(task_ids: list[str], ledger: Ledger
         counts[queue_status] += 1
         task_reports.append(task_report)
 
+    queue_counts = {
+        status: counts.get(status, 0)
+        for status in (
+            "blocked_build",
+            "source_missing",
+            "review_result_present",
+            "stale_review_result",
+            "ready_for_codex_review",
+        )
+    }
+    review_material_summary = _review_existing_queue_material_summary(queue_counts)
     report = {
         "scanned_at": scanned_at,
         "official_outputs_scanned": len(outputs),
         "skipped_non_official_files": skipped_non_official_files,
-        "counts": {
-            status: counts.get(status, 0)
-            for status in (
-                "blocked_build",
-                "source_missing",
-                "review_result_present",
-                "stale_review_result",
-                "ready_for_codex_review",
-            )
-        },
+        "counts": queue_counts,
+        "review_material_summary": review_material_summary,
         "tasks": task_reports,
     }
     report_base = _queue_report_base_name()
@@ -5849,11 +5890,18 @@ async def write_existing_output_review_queue(task_ids: list[str], ledger: Ledger
 
     summary = (
         f"Prepared review-existing queue for {len(outputs)} official outputs; "
+        f"prepared_materials={review_material_summary['prepared_review_materials']}, "
+        f"fresh_review_required={review_material_summary['fresh_review_required']}, "
+        f"stale_or_invalid_prior={review_material_summary['stale_or_invalid_prior_results']}, "
+        f"current_matching_results={review_material_summary['current_matching_review_results']}, "
+        f"blocked_build={review_material_summary['blocked_build']}, "
+        f"source_missing={review_material_summary['source_missing']} "
+        f"(legacy counts: "
         f"ready={report['counts']['ready_for_codex_review']}, "
         f"stale={report['counts']['stale_review_result']}, "
         f"present={report['counts']['review_result_present']}, "
         f"blocked={report['counts']['blocked_build']}, "
-        f"missing={report['counts']['source_missing']}. "
+        f"missing={report['counts']['source_missing']}). "
         f"Report: {json_path}"
     )
     return True, summary
