@@ -17,6 +17,7 @@ from src.toy_apollo.phase2_review_loop import (  # noqa: E402
     run_codex_review_fix,
     run_codex_review_now,
 )
+from src.toy_apollo.phase2_prompt_pack import build_check_prompt_pack_candidate  # noqa: E402
 from src.toy_apollo.phase2_proof_obligations import summarize_proof_obligations  # noqa: E402
 from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E402
 
@@ -329,6 +330,35 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_auto_loop_defaults_to_hardcoded_15_by_15_budget(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_default_budget"
+        try:
+            if root.exists():
+                shutil.rmtree(root, ignore_errors=True)
+            task_id = "thm_4_review_loop_default_budget"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                new=AsyncMock(return_value=(False, "REPL System Error: synthetic failure")),
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                new=AsyncMock(return_value=(True, "temp build ok")),
+            ):
+                success, detail = asyncio.run(run_codex_auto_loop(task_id, ledger, settings))
+
+            self.assertTrue(success, detail)
+            self.assertIn("Build attempts used in this round: 1/15", detail)
+            task_record = ledger.ledger["tasks"][task_id]
+            self.assertEqual(task_record["current_auto_loop_max_rounds"], 15)
+            self.assertEqual(task_record["current_auto_loop_max_build_attempts_per_round"], 15)
+            self.assertEqual(task_record["current_auto_loop_nonprogress_limit"], 15)
+            context = (pack_dir / "context.md").read_text(encoding="utf-8")
+            self.assertIn("Current auto-loop max rounds: `15`", context)
+            self.assertIn("Current auto-loop max build attempts per round: `15`", context)
+            self.assertIn("Current auto-loop non-progress limit: `15`", context)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_review_now_current_reprepares_existing_subject_after_result_exists(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_existing_reprepare"
         try:
@@ -510,6 +540,42 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_review_now_candidate_allows_build_ready_candidate_after_staging_restore(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_staging_restore_candidate"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_loop_staging_restore_candidate"
+            active_candidate = f"import Mathlib\n\n-- active candidate repair\ntheorem {task_id} : True := by\n  trivial\n"
+            old_output = f"import Mathlib\n\n-- old official output\ntheorem {task_id} : True := by\n  trivial\n"
+            ledger, settings, _pack_dir, output_path = self._setup_trivial_phase2_task(
+                root,
+                task_id,
+                candidate_code=active_candidate,
+            )
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(old_output, encoding="utf-8")
+            os.utime(output_path, (1000, 1000))
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                new=AsyncMock(return_value=(True, "repl ok")),
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                new=AsyncMock(return_value=(True, "temp build ok")),
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "official build ok"),
+            ):
+                build_success, build_detail = asyncio.run(build_check_prompt_pack_candidate(task_id, ledger, settings))
+
+            self.assertTrue(build_success, build_detail)
+            success, detail = asyncio.run(run_codex_review_now(task_id, ledger, settings, review_subject="candidate"))
+
+            self.assertTrue(success, detail)
+            self.assertEqual(ledger.ledger["tasks"][task_id]["current_review_subject_kind"], "candidate")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_review_now_candidate_allows_newer_active_candidate_repair(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_newer_candidate_allowed"
         try:
@@ -670,11 +736,11 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
-    def test_auto_loop_candidate_review_preparation_preserves_auto_loop_after_repair_clear(self):
-        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_review_prepare"
+    def test_auto_loop_rejects_same_candidate_review_after_semantic_failure(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_same_candidate_guard"
         try:
             self._clean_root(root)
-            task_id = "thm_4_review_loop_review_prepare"
+            task_id = "thm_4_review_loop_same_candidate_guard"
             from src.toy_apollo.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
 
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
@@ -683,6 +749,9 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             asyncio.run(write_codex_review_pack(task_id, ledger, settings))
             result_path = self._write_codex_review_result(pack_dir, verdict="fail", source_claims=[], claim_mapping=[])
             asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+            task_record_before = ledger.ledger["tasks"][task_id]
+            self.assertEqual(int(task_record_before.get("current_auto_loop_round") or 0), 0)
+            self.assertFalse((pack_dir / "semantic_review_request_v2.json").exists())
 
             with patch(
                 "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
@@ -707,9 +776,94 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
                 )
 
             self.assertTrue(success, detail)
+            self.assertIn("same candidate", detail.lower())
+            self.assertIn("repair `draft.lean`", detail)
             task_record = ledger.ledger["tasks"][task_id]
+            self.assertEqual(task_record.get("current_auto_loop_phase"), "authoring")
+            self.assertEqual(task_record.get("current_auto_loop_status"), "active")
+            self.assertEqual(int(task_record.get("current_auto_loop_round") or 0), 2)
+            self.assertFalse((pack_dir / "semantic_review_request_v2.json").exists())
+            context_text = (pack_dir / "context.md").read_text(encoding="utf-8")
+            self.assertIn("Current auto-loop phase: `authoring`", context_text)
+            history = json.loads((pack_dir / "attempt_history.json").read_text(encoding="utf-8"))
+            round_two_builds = [
+                item
+                for item in history["attempts"]
+                if item.get("stage") == "build" and int(item.get("auto_loop_round") or 0) == 2
+            ]
+            self.assertEqual(len(round_two_builds), 1)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_auto_loop_allows_same_candidate_review_for_non_semantic_repair_seed(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_same_candidate_invalid_exception"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_loop_same_candidate_invalid_exception"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            candidate_hash = str(ledger.ledger["tasks"][task_id].get("latest_build_ready_candidate_hash", "") or "")
+            repair_request = {
+                "schema_version": "phase2.review_repair.request.v1",
+                "task_id": task_id,
+                "origin_review_mode": "review-apply",
+                "review_subject_kind": "candidate",
+                "failed_verdict": "invalid",
+                "failed_review_subject_hash": candidate_hash,
+                "must_fix": ["rewrite invalid reviewer artifact"],
+                "next_draft_seed_file": str(pack_dir / "candidate_v1.lean"),
+            }
+            repair_path = pack_dir / "review_repair_request_v1.json"
+            repair_path.write_text(json.dumps(repair_request, indent=2), encoding="utf-8")
+            ledger.update_runtime_metadata(
+                task_id,
+                current_review_repair_request_file=str(repair_path),
+                current_review_repair_summary_file=str(pack_dir / "review_repair_summary_v1.md"),
+                current_review_repair_seed_file=str(pack_dir / "candidate_v1.lean"),
+                current_auto_loop_enabled=True,
+                current_auto_loop_entry_subject="current",
+                current_auto_loop_round=2,
+                current_auto_loop_max_rounds=6,
+                current_auto_loop_max_build_attempts_per_round=3,
+                current_auto_loop_nonprogress_limit=2,
+                current_auto_loop_consecutive_nonprogress=0,
+                current_auto_loop_phase="entry",
+                current_auto_loop_status="active",
+                current_auto_loop_stop_reason="",
+                current_auto_loop_last_candidate_hash="",
+                current_auto_loop_last_review_fingerprint="",
+                current_auto_loop_last_repair_request_file=str(repair_path),
+            )
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                new=AsyncMock(return_value=(True, "repl ok")),
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                new=AsyncMock(return_value=(True, "temp build ok")),
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                return_value=(True, "final build ok"),
+            ):
+                success, detail = asyncio.run(
+                    run_codex_auto_loop(
+                        task_id,
+                        ledger,
+                        settings,
+                        review_subject="current",
+                        max_auto_rounds=6,
+                        nonprogress_limit=2,
+                        max_build_attempts_per_round=3,
+                    )
+                )
+
+            self.assertTrue(success, detail)
+            self.assertIn("independent read-only reviewer", detail)
+            task_record = ledger.ledger["tasks"][task_id]
+            current_request = Path(str(task_record.get("current_review_request_file", "") or ""))
+            self.assertTrue(current_request.exists())
             self.assertEqual(task_record.get("current_auto_loop_phase"), "reviewing")
-            self.assertEqual(str(task_record.get("current_review_repair_request_file", "") or ""), "")
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -725,6 +879,33 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertTrue(build_success, build_detail)
             asyncio.run(write_codex_review_pack(task_id, ledger, settings))
             result_path = self._write_codex_review_result(pack_dir, verdict="fail", source_claims=[], claim_mapping=[])
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                new=AsyncMock(return_value=(True, "repl ok")),
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                new=AsyncMock(return_value=(True, "temp build ok")),
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                return_value=(True, "final build ok"),
+            ):
+                success, detail = asyncio.run(
+                    run_codex_auto_loop(
+                        task_id,
+                        ledger,
+                        settings,
+                        review_subject="candidate",
+                        max_auto_rounds=6,
+                        nonprogress_limit=1,
+                        max_build_attempts_per_round=3,
+                    )
+                )
+
+            self.assertTrue(success, detail)
+            self.assertIn("same candidate", detail.lower())
+            draft_path = pack_dir / "draft.lean"
+            draft_path.write_text(draft_path.read_text(encoding="utf-8") + "\n-- substantive repair attempt\n", encoding="utf-8")
 
             with patch(
                 "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",

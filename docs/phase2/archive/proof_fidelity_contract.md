@@ -27,6 +27,11 @@ current tool.
 - `interface_bridge_completed`: the declaration connects textbook notation to
   Mathlib or existing ToyApollo interfaces. A bridge may support later proofs
   but does not prove unrelated source mathematics.
+- `source_faithful_definition_bridge_completed`: the source item is itself a
+  definition or notation bridge, and the Lean declaration faithfully connects
+  that textbook object to an existing ToyApollo or Mathlib interface. This may
+  count as task-level pass for that definition/notation task, but not for a
+  theorem, problem, or exercise whose source asks for a proof.
 - `open_math_debt`: a source proof step remains unproved, reassumed, hidden in a
   package, carried by a private axiom, or blocked by a missing theorem-level
   dependency.
@@ -37,6 +42,35 @@ current tool.
 
 Build success is required, but build success alone is never a proof-fidelity
 verdict.
+
+## Task-Level Pass Projection
+
+`review_verdict = pass` does not automatically mean task-level pass. Project
+reports must project the semantic review result through the source task role:
+
+- proof-bearing theorem, problem, and exercise tasks pass only when the result
+  is `textbook_proof_completed` or a stricter source-route completion class;
+- pure definition tasks pass when the result is a source-faithful textbook
+  definition completion;
+- definition or notation tasks whose source explicitly defines one concept by
+  an existing interface may pass as
+  `source_faithful_definition_bridge_completed` or an equivalent
+  `interface_bridge_completed` result with source evidence;
+- `interface_bridge_completed` is not task-level pass for a theorem, problem,
+  or exercise unless that source item itself is explicitly an interface/notation
+  bridge;
+- `mathlib_backed_adapter_completed` is useful evidence, but is not task-level
+  pass for proof-bearing textbook targets.
+
+Example: Definition 13.5 defines conditional probability by
+`P(A | X) := E[1_A | sigma(X)]`. A Lean declaration that faithfully connects
+the event indicator and Definition 13.4 is a source-faithful definition bridge.
+That is different from using a bridge to bypass an unproved theorem route.
+
+Semantic review results must state `proof_class` and `completion_class`. Older
+results that omit them may remain as evidence, but the normalizer must mark a
+pass result as `needs_class_normalization`; such a result cannot be projected
+to task-level pass.
 
 ## Public Surface
 

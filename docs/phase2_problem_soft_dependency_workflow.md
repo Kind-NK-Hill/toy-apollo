@@ -1,12 +1,10 @@
 # Legacy Redirect: Phase2 Problem Soft-Dependency Workflow
 
-Current soft-dependency workflow policy lives at:
+Current Phase2 workflow and maintenance guidance lives at:
 
-- `docs/phase2/problem_soft_dependency_workflow.md`
+- `docs/phase2/workflow.md`
+- `docs/phase2/status_contract.md`
+- `docs/phase2/tools.md`
 
-The full May 2026 version of this file is archived at:
-
-- `docs/archive/phase2_2026_05_rework/current_root_docs/phase2_problem_soft_dependency_workflow.md`
-
-Use the current file for new Phase2 work. Use the archive only for audit
-history.
+Historical versions are audit trail only. Use the current files above for new
+Phase2 work.

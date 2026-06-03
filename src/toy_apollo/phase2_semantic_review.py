@@ -147,6 +147,11 @@ def build_semantic_review_input(
     review_basis: dict[str, Any] | None = None,
     review_basis_hash: str = "",
 ) -> dict[str, Any]:
+    if not isinstance(review_basis, dict):
+        review_basis = {}
+    basis_task = review_basis.get("task", {})
+    if not isinstance(basis_task, dict):
+        basis_task = {}
     task_payload = {
         "block_id": task.get("block_id", ""),
         "type": task.get("type", ""),
@@ -155,12 +160,12 @@ def build_semantic_review_input(
         "source_plan": task.get("source_plan", ""),
         "dependencies": task.get("dependencies", []),
         "soft_imports": task.get("soft_imports", []),
+        "soft_imports_confirmed_at": task.get("soft_imports_confirmed_at", "")
+        or basis_task.get("soft_imports_confirmed_at", ""),
     }
     dependency_summary_hash = _hash_json(dependency_summary)
     task_source_hash = _hash_json(task_payload)
     candidate_hash = _hash_text(candidate_code)
-    if not isinstance(review_basis, dict):
-        review_basis = {}
     build_precondition = {
         "kind": "candidate_build_ready" if review_subject_kind == "candidate" else "official_output_sanity",
         "build_result_file": build_result_file,
@@ -289,7 +294,7 @@ def render_semantic_review_prompt(review_input: dict[str, Any]) -> str:
             "Return JSON only, written to the result path supplied by the runner.",
             "Use the generated result template as the starting JSON payload.",
             "Keep these binding fields unchanged: task_id, mode, attempt, prompt_version, rubric_version, review_input_file, review_prompt_file, expected_result_file, candidate_hash.",
-            "Fill these semantic review fields: verdict, confidence, summary, reviewer_independence, source_claims, claim_mapping, spine_alignment, obligation_review, evidence_review, interface_contract, downstream_adequacy, forbidden_weakenings, findings, recommended_disposition.",
+            "Fill these semantic review fields: verdict, confidence, summary, proof_class, completion_class, reviewer_independence, source_claims, claim_mapping, spine_alignment, obligation_review, evidence_review, interface_contract, downstream_adequacy, forbidden_weakenings, findings, recommended_disposition.",
             "The `reviewer_independence` object must be shaped as {\"role\": \"independent_read_only_reviewer\", \"read_only\": true, \"did_edit_candidate\": false, \"used_current_review_request\": true, \"attestation\": \"<short statement>\"}.",
             "Allowed verdict values: pass, fail, inconclusive.",
             "Status enum fields `spine_alignment.status`, `obligation_review.status`, `evidence_review.status`, `interface_contract.status`, and `downstream_adequacy.status` must use covered/partial/missing/violated/unclear; evidence_review may also use not_applicable for individual items.",
@@ -455,6 +460,7 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
     if verdict not in {"pass", "fail", "inconclusive"}:
         return _inconclusive_result(base, f"invalid reviewer verdict: {result.get('verdict')}", raw=raw, cache_class="operational_failure")
     result["verdict"] = verdict
+    _normalize_completion_class_fields(result, verdict=verdict)
     evidence_error = _validate_evidence_review(result, review_input=review_input, verdict=verdict)
     if evidence_error:
         return _inconclusive_result(base, evidence_error, raw=raw, cache_class="operational_failure")
@@ -593,6 +599,18 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
     return result
 
 
+def _normalize_completion_class_fields(result: dict[str, Any], *, verdict: str) -> None:
+    proof_class = str(result.get("proof_class", "") or "").strip().lower().replace("-", "_").replace(" ", "_")
+    completion_class = str(result.get("completion_class", "") or "").strip().lower().replace("-", "_").replace(" ", "_")
+    if not proof_class and completion_class:
+        proof_class = completion_class
+    if not completion_class and proof_class:
+        completion_class = proof_class
+    result["proof_class"] = proof_class
+    result["completion_class"] = completion_class
+    result["needs_class_normalization"] = verdict == "pass" and not proof_class
+
+
 def _expected_review_input_path(review_input: dict[str, Any]) -> Path | None:
     attempt = int(review_input.get("attempt") or 0)
     if attempt <= 0:
@@ -679,6 +697,9 @@ def _inconclusive_result(
         "recommended_disposition": "needs_review",
         "normalization_reason": reason,
         "cache_class": cache_class,
+        "proof_class": "",
+        "completion_class": "",
+        "needs_class_normalization": False,
     }
     if raw is not None:
         result["raw_result"] = raw
@@ -866,6 +887,10 @@ def render_semantic_review_report(result: dict[str, Any]) -> str:
         f"# Semantic Review Report for {result.get('task_id', '')}",
         "",
         f"- Verdict: `{result.get('verdict', 'inconclusive')}`",
+        f"- Proof class: `{result.get('proof_class', '')}`",
+        f"- Completion class: `{result.get('completion_class', '')}`",
+        f"- Needs class normalization: `{bool(result.get('needs_class_normalization', False))}`",
+        f"- Task status: `{result.get('task_status', '')}`",
         f"- Confidence: `{result.get('confidence', '')}`",
         f"- Recommended disposition: `{result.get('recommended_disposition', '')}`",
         f"- Cache hit: `{bool(result.get('cache_hit', False))}`",

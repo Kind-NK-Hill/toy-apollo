@@ -1,4 +1,5 @@
 import ast
+import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -122,6 +123,56 @@ class Phase2SurfaceReductionTests(unittest.TestCase):
         ]
         for marker in banned_markers:
             self.assertNotIn(marker, source, f"test_phase2_prompt_pack.py still hosts owned test group {marker}")
+
+    def test_active_phase2_docs_surface_is_small(self):
+        result = subprocess.run(
+            ["rg", "--files", "docs/phase2"],
+            cwd=REPO_ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+        )
+        docs = {line.replace("\\", "/") for line in result.stdout.splitlines() if line.strip()}
+        self.assertEqual(
+            docs,
+            {
+                "docs/phase2/README.md",
+                "docs/phase2/workflow.md",
+                "docs/phase2/status_contract.md",
+                "docs/phase2/review_criteria.md",
+                "docs/phase2/artifacts.md",
+                "docs/phase2/tools.md",
+            },
+        )
+
+    def test_ordinary_rg_hides_phase2_archives_packs_and_generated_reports(self):
+        result = subprocess.run(
+            ["rg", "--files"],
+            cwd=REPO_ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+        )
+        files = {line.replace("\\", "/") for line in result.stdout.splitlines() if line.strip()}
+        hidden_prefixes = (
+            "docs/archive/",
+            "docs/phase2/archive/",
+            "phase2_prompt_packs/",
+        )
+        hidden_files = {
+            "docs/phase2/textbook_complete_targets.json",
+            "docs/phase2_completion_classification.md",
+            "docs/phase2_completion_classification.json",
+            "docs/phase2_ch10_14_clean_debt_surface_audit.md",
+            "docs/phase2_ch10_14_clean_debt_surface_audit.json",
+            "docs/phase2_unfinished_tasks_audit.md",
+            "docs/phase2_unfinished_tasks_audit.json",
+            "docs/phase2_source_output_alignment_audit.md",
+        }
+        self.assertFalse(any(path.startswith(hidden_prefixes) for path in files))
+        self.assertTrue(hidden_files.isdisjoint(files))
 
 
 if __name__ == "__main__":

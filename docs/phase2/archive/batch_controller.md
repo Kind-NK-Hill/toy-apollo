@@ -57,8 +57,10 @@ The status helper reports three different gates:
 
 - `all_reporting_terminal`: every row has a reportable pause/failure state.
 - `all_terminal`: every row is terminal for the selected objective.
-- `all_clean_or_allowed_exception`: every row is clean `COMPLETED` or the
-  unique allowed beyond-book exception.
+- `all_clean_or_allowed_exception`: every row is runtime `COMPLETED` with
+  task-level `phase2_task_status=pass`, or the unique allowed beyond-book
+  exception. A row whose semantic review verdict is pass but whose
+  `proof_class` projects to task-status fail is not clean.
 
 ## Required Artifact
 
@@ -118,6 +120,13 @@ increment either counter.
 - `MECHANISM_BLOCKER`: blocked by setup, source, reviewer config, timeout, or
   other mechanism issue rather than a mathematical proof failure.
 - `USER_INTERRUPTED`: the user explicitly paused or stopped the batch.
+
+When `phase2_task_status` is absent but `phase2_review_verdict` and
+`phase2_proof_class` are present, the batch helper must derive task status with
+the same classifier used by `review-apply`. Do not treat the ledger `status`
+field or a handwritten classification file as proof-completion authority.
+When runtime `COMPLETED` has no task-status or class evidence at all, report it
+as `needs_fresh_review`; the empty value is never a clean pass.
 
 A batch is terminal only when every task in scope is terminal for the selected
 objective. Do not read diagnostic terminal coverage as textbook completion.

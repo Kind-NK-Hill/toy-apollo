@@ -28,6 +28,36 @@ Promote a proof-bearing task to `textbook_proof_completed` only when:
 Adapter and bridge completions are valid, but do not promote them to textbook
 proof completion.
 
+When reporting task-level pass/fail/blocked, do not use `review_verdict=pass`
+directly. Project the review result through the source task role:
+
+- theorem, problem, and exercise tasks require `textbook_proof_completed` or a
+  stricter source-route completion class to count as task-level pass;
+- definition tasks require a source-faithful definition completion;
+- a definition or notation task whose source explicitly defines one object by
+  an existing interface may pass as a source-faithful definition bridge;
+- `interface_bridge_completed` is acceptable task-level pass only for such
+  explicit definition/interface/notation tasks, not for ordinary
+  proof-bearing targets;
+- `mathlib_backed_adapter_completed` is not task-level pass for proof-bearing
+  textbook targets.
+
+Example: Definition 13.5 is a source-faithful definition bridge because the
+textbook itself defines `P(A | X)` as `E[1_A | sigma(X)]`. A theorem or problem
+using a bridge to avoid its source proof route must remain non-clean.
+
+Runtime projection is implemented by `src/toy_apollo/phase2_task_status.py`.
+`review-apply` records `phase2_review_verdict`, `phase2_proof_class`,
+`phase2_completion_class`, `phase2_task_status`, and
+`phase2_task_status_reason`. Batch reports must display `review_verdict` and
+`task_status` separately. If a pass review lacks `proof_class` or
+`completion_class`, keep the review as historical evidence but set
+`needs_class_normalization`; it cannot count as task-level pass until a fresh
+classified review result exists.
+`review-apply` must not write ordinary clean `COMPLETED` for a pass review whose
+projected task status is not `pass`; such an apply result is non-clean and must
+remain visible to batch/reporting gates.
+
 For a task explicitly selected as a textbook-complete target, keep
 `textbook_proof_completed` as the success criterion. Intermediate landings such
 as `foundation_lemma_landed`, `bridge_landed`, or `contract_clean` may appear in

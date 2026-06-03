@@ -845,6 +845,15 @@ class LedgerManager:
             "completed_hidden_task_count": completed_hidden_task_count,
         }
 
+    def get_phase2_status_summary(self):
+        stats = {}
+        for task in self.ledger["tasks"].values():
+            status = str(task.get("phase2_status", task.get("phase2_task_status", "")) or "").strip().lower()
+            if not status:
+                continue
+            stats[status] = stats.get(status, 0) + 1
+        return stats
+
     def print_status_summary(self):
         print("\n" + "=" * 40)
         print("📊 TOY APOLLO PROJECT LEDGER")
@@ -852,7 +861,7 @@ class LedgerManager:
         stats = self.get_summary()
         for status, count in stats.items():
             if count > 0:
-                print(f"  {status.ljust(15)} : {count}")
+                print(f"  {('LEDGER_STATUS_' + status).ljust(25)} : {count}")
         proof_debt = self.get_proof_debt_summary()
         if proof_debt["task_count"] > 0:
             print(
@@ -866,4 +875,7 @@ class LedgerManager:
                     + "COMPLETED_WITH_HIDDEN_DEBT".ljust(25)
                     + f" : {proof_debt['completed_hidden_task_count']} tasks"
                 )
+        phase2_stats = self.get_phase2_status_summary()
+        for phase2_status, count in sorted(phase2_stats.items()):
+            print("  " + f"PHASE2_STATUS_{phase2_status.upper()}".ljust(25) + f" : {count} tasks")
         print("=" * 40)

@@ -14,6 +14,7 @@ from src.toy_apollo.phase2_failure_budget import (
     phase2_failure_counters_from_task,
 )
 from src.toy_apollo.phase2_proof_obligations import needs_concrete_decomposition as proof_obligations_need_concrete
+from src.toy_apollo.phase2_task_status import classify_phase2_task_status
 
 
 COMPLETED = "COMPLETED"
@@ -69,9 +70,16 @@ class BatchTaskRow:
     task_id: str
     status: str
     declared_status: str
+    task_status: str = ""
+    report_status: str = ""
+    task_status_reason: str = ""
+    task_status_evidence_type: str = ""
+    review_verdict: str = ""
+    proof_class: str = ""
     stop_reason: str = ""
     dependencies: tuple[str, ...] = ()
     failed_dependency: str = ""
+    blocked_dependency: str = ""
     proof_debt_dependency: str = ""
     substantive_failures: int = 0
     build_fail_streak: int = 0
@@ -154,6 +162,7 @@ def analyze_batch_state(
         task_map[task_id] = raw_task
 
     hard_failed_roots = _hard_failed_roots(task_map)
+    phase2_blocking_roots = _phase2_blocking_roots(task_map, allowed_beyond_book_tasks=allowed_tasks)
     proof_debt_roots = _proof_debt_roots(
         task_map,
         objective=normalized_objective,
@@ -166,9 +175,14 @@ def analyze_batch_state(
         stop_reason = str(raw_task.get("stop_reason", "") or "").strip()
         dependencies = tuple(canonicalize_id_list(raw_task.get("dependencies", [])))
         failed_dependency = _first_failed_transitive_dependency(task_id, task_map, hard_failed_roots)
-        proof_debt_dependency = (
+        blocked_dependency = (
             ""
             if failed_dependency
+            else _first_blocked_transitive_dependency(task_id, task_map, phase2_blocking_roots)
+        )
+        proof_debt_dependency = (
+            ""
+            if failed_dependency or blocked_dependency
             else _first_proof_debt_transitive_dependency(task_id, task_map, proof_debt_roots)
         )
         counters = phase2_failure_counters_from_task(raw_task)
@@ -202,6 +216,27 @@ def analyze_batch_state(
             status=status,
             allowed_beyond_book_tasks=allowed_tasks,
         )
+        task_status, task_status_reason, task_status_evidence_type, review_verdict, proof_class = (
+            _task_level_projection_from_raw(task_id, raw_task)
+        )
+        report_status = _normalize_report_status(
+            raw_task.get("phase2_status", raw_task.get("phase2_task_status"))
+        )
+        if report_status in {"pass", "fail", "blocked", "allowed_exception"}:
+            report_status = task_status
+        if task_status == "fail" and task_status_evidence_type == "needs_class_normalization":
+            report_status = "needs_class_normalization"
+        elif not report_status:
+            report_status = task_status
+        if not task_status and status == COMPLETED and not allowed_exception:
+            report_status = "needs_fresh_review"
+            task_status_reason = "completed runtime status has no phase2_status/proof_class evidence"
+            task_status_evidence_type = "missing_task_status"
+        elif not task_status and blocked_dependency:
+            task_status = "blocked"
+            report_status = "blocked"
+            task_status_reason = f"depends on phase2-blocked root {blocked_dependency}"
+            task_status_evidence_type = "blocked_dependency"
         budget = count_substantive_failures(raw_task.get("failure_events", raw_task.get("substantive_failures", [])))
         issue = _row_issue(
             task_id=task_id,
@@ -211,27 +246,49 @@ def analyze_batch_state(
             budget=budget,
             counters=counters,
             failed_dependency=failed_dependency,
+            blocked_dependency=blocked_dependency,
             proof_debt_dependency=proof_debt_dependency,
             allowed_beyond_book_exception=allowed_exception,
         )
+        if report_status in {"fail", "blocked", "needs_fresh_review", "needs_class_normalization"} and not issue:
+            issue = task_status_reason or f"report status is {report_status}"
         next_action = _next_action(
             status=status,
             issue=issue,
             failed_dependency=failed_dependency,
+            blocked_dependency=blocked_dependency,
             proof_debt_dependency=proof_debt_dependency,
             objective=normalized_objective,
             allowed_beyond_book_exception=allowed_exception,
         )
+        if task_status == "fail":
+            if task_status_evidence_type == "needs_class_normalization":
+                next_action = "run fresh classified semantic review"
+            else:
+                next_action = "repair task-level proof status"
+        elif task_status == "blocked":
+            next_action = f"skip; blocked by {blocked_dependency}" if blocked_dependency else "repair dependency gate blocker"
+        elif report_status == "needs_fresh_review":
+            next_action = "run fresh semantic review"
         report_terminal = status in REPORTING_TERMINAL_STATUSES
-        clean_or_allowed_exception = status == COMPLETED or allowed_exception
+        clean_or_allowed_exception = (status == COMPLETED and task_status == "pass") or (
+            task_status == "allowed_exception" and allowed_exception
+        ) or allowed_exception
         rows.append(
             BatchTaskRow(
                 task_id=task_id,
                 status=status,
                 declared_status=declared_status,
+                task_status=task_status,
+                report_status=report_status,
+                task_status_reason=task_status_reason,
+                task_status_evidence_type=task_status_evidence_type,
+                review_verdict=review_verdict,
+                proof_class=proof_class,
                 stop_reason=stop_reason,
                 dependencies=dependencies,
                 failed_dependency=failed_dependency,
+                blocked_dependency=blocked_dependency,
                 proof_debt_dependency=proof_debt_dependency,
                 substantive_failures=budget.counted,
                 build_fail_streak=counters.build_fail_counter,
@@ -313,17 +370,22 @@ def render_markdown_report(report: BatchReport) -> str:
     lines.extend(
         [
             "",
-            "| task_id | status | stop_reason | failed_dependency | proof_debt_dependency | substantive_failures | report_terminal | terminal | clean_or_allowed | next_action | issue |",
-            "| --- | --- | --- | --- | --- | ---: | --- | --- | --- | --- | --- |",
+            "| task_id | ledger_status | phase2_status | report_status | review_verdict | proof_class | stop_reason | failed_dependency | blocked_dependency | proof_debt_dependency | substantive_failures | report_terminal | terminal | clean_or_allowed | next_action | issue |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---: | --- | --- | --- | --- | --- |",
         ]
     )
     for row in report.rows:
         lines.append(
-            "| {task_id} | {status} | {stop_reason} | {failed_dependency} | {proof_debt_dependency} | {failures} | {report_terminal} | {terminal} | {clean_or_allowed} | {next_action} | {issue} |".format(
+            "| {task_id} | {status} | {task_status} | {report_status} | {review_verdict} | {proof_class} | {stop_reason} | {failed_dependency} | {blocked_dependency} | {proof_debt_dependency} | {failures} | {report_terminal} | {terminal} | {clean_or_allowed} | {next_action} | {issue} |".format(
                 task_id=row.task_id,
                 status=row.status,
+                task_status=row.task_status or "",
+                report_status=row.report_status or "",
+                review_verdict=row.review_verdict or "",
+                proof_class=row.proof_class or "",
                 stop_reason=row.stop_reason or "",
                 failed_dependency=row.failed_dependency or "",
+                blocked_dependency=row.blocked_dependency or "",
                 proof_debt_dependency=row.proof_debt_dependency or "",
                 failures=row.substantive_failures,
                 report_terminal=str(row.report_terminal).lower(),
@@ -382,8 +444,16 @@ def main(argv: list[str] | None = None) -> int:
                     "task_id": row.task_id,
                     "status": row.status,
                     "declared_status": row.declared_status,
+                    "phase2_status": row.task_status,
+                    "task_status": row.task_status,
+                    "report_status": row.report_status,
+                    "task_status_reason": row.task_status_reason,
+                    "task_status_evidence_type": row.task_status_evidence_type,
+                    "review_verdict": row.review_verdict,
+                    "proof_class": row.proof_class,
                     "stop_reason": row.stop_reason,
                     "failed_dependency": row.failed_dependency,
+                    "blocked_dependency": row.blocked_dependency,
                     "proof_debt_dependency": row.proof_debt_dependency,
                     "substantive_failures": row.substantive_failures,
                     "build_fail_streak": row.build_fail_streak,
@@ -435,6 +505,45 @@ def _normalize_status(raw: Any) -> str:
     return NONTERMINAL
 
 
+def _normalize_task_level_status(raw: Any) -> str:
+    status = str(raw or "").strip().lower().replace("-", "_")
+    if status in {"pass", "fail", "blocked", "allowed_exception"}:
+        return status
+    return ""
+
+
+def _normalize_report_status(raw: Any) -> str:
+    status = str(raw or "").strip().lower().replace("-", "_")
+    if status in {"pass", "fail", "blocked", "allowed_exception", "needs_fresh_review", "needs_class_normalization"}:
+        return status
+    return ""
+
+
+def _task_level_projection_from_raw(task_id: str, raw_task: dict[str, Any]) -> tuple[str, str, str, str, str]:
+    task_status = _normalize_task_level_status(raw_task.get("phase2_status", raw_task.get("phase2_task_status")))
+    task_status_reason = str(
+        raw_task.get("phase2_status_reason", raw_task.get("phase2_task_status_reason", "")) or ""
+    ).strip()
+    task_status_evidence_type = str(
+        raw_task.get("phase2_status_evidence_type", raw_task.get("phase2_task_status_evidence_type", "")) or ""
+    ).strip()
+    review_verdict = str(raw_task.get("phase2_review_verdict", "") or "").strip().lower()
+    proof_class = str(raw_task.get("phase2_proof_class", "") or raw_task.get("completion_class", "") or "").strip()
+    if not task_status and (review_verdict or proof_class):
+        projection = classify_phase2_task_status(
+            task_id=task_id,
+            task_type=str(raw_task.get("type", "") or raw_task.get("task_type", "") or ""),
+            review_verdict=review_verdict,
+            proof_class=proof_class,
+            completion_class=raw_task.get("phase2_completion_class", ""),
+        )
+        task_status = projection.task_status
+        task_status_reason = projection.reason
+        task_status_evidence_type = projection.evidence_type
+        proof_class = projection.proof_class or proof_class
+    return task_status, task_status_reason, task_status_evidence_type, review_verdict, proof_class
+
+
 def _hard_failed_roots(task_map: dict[str, dict[str, Any]]) -> set[str]:
     roots: set[str] = set()
     for task_id, raw_task in task_map.items():
@@ -445,6 +554,39 @@ def _hard_failed_roots(task_map: dict[str, dict[str, Any]]) -> set[str]:
             and stop_reason in ROOT_DEPENDENCY_FAILURE_REASONS
             and not _task_needs_concrete_decomposition(raw_task)
             and phase2_failure_counters_from_task(raw_task).exhausted
+        ):
+            roots.add(task_id)
+    return roots
+
+
+def _phase2_blocking_roots(
+    task_map: dict[str, dict[str, Any]],
+    *,
+    allowed_beyond_book_tasks: set[str],
+) -> set[str]:
+    roots: set[str] = set()
+    for task_id, raw_task in task_map.items():
+        status = _normalize_status(raw_task.get("status"))
+        task_status, _, task_status_evidence_type, _, _ = _task_level_projection_from_raw(task_id, raw_task)
+        report_status = _normalize_report_status(
+            raw_task.get("phase2_status", raw_task.get("phase2_task_status"))
+        )
+        if task_status in {"fail", "blocked"}:
+            roots.add(task_id)
+        elif report_status in {"needs_fresh_review", "needs_class_normalization"}:
+            roots.add(task_id)
+        elif task_status_evidence_type == "needs_class_normalization":
+            roots.add(task_id)
+        elif (
+            status == COMPLETED
+            and not task_status
+            and not _task_has_accepted_proof_debt(raw_task)
+            and not _is_allowed_beyond_book_exception(
+                task_id,
+                raw_task,
+                status=status,
+                allowed_beyond_book_tasks=allowed_beyond_book_tasks,
+            )
         ):
             roots.add(task_id)
     return roots
@@ -494,6 +636,26 @@ def _first_failed_transitive_dependency(
     return ""
 
 
+def _first_blocked_transitive_dependency(
+    task_id: str,
+    task_map: dict[str, dict[str, Any]],
+    phase2_blocking_roots: set[str],
+) -> str:
+    seen: set[str] = set()
+    stack = list(reversed(canonicalize_id_list(task_map[task_id].get("dependencies", []))))
+    while stack:
+        dep_id = stack.pop()
+        if dep_id in seen:
+            continue
+        seen.add(dep_id)
+        if dep_id in phase2_blocking_roots:
+            return dep_id
+        dep_task = task_map.get(dep_id)
+        if isinstance(dep_task, dict):
+            stack.extend(reversed(canonicalize_id_list(dep_task.get("dependencies", []))))
+    return ""
+
+
 def _first_proof_debt_transitive_dependency(
     task_id: str,
     task_map: dict[str, dict[str, Any]],
@@ -523,6 +685,7 @@ def _row_issue(
     budget: FailureBudget,
     counters: Phase2FailureCounters,
     failed_dependency: str,
+    blocked_dependency: str,
     proof_debt_dependency: str,
     allowed_beyond_book_exception: bool,
 ) -> str:
@@ -555,6 +718,7 @@ def _next_action(
     status: str,
     issue: str,
     failed_dependency: str,
+    blocked_dependency: str,
     proof_debt_dependency: str,
     objective: str,
     allowed_beyond_book_exception: bool,
@@ -567,6 +731,8 @@ def _next_action(
         return "run debt-fix"
     if status == DEPENDENCY_FAILED:
         return f"skip; blocked by {failed_dependency}" if failed_dependency else "skip; dependency failed"
+    if blocked_dependency:
+        return f"skip; blocked by {blocked_dependency}"
     if status == DEPENDENCY_PROOF_DEBT:
         if objective == TEXTBOOK_COMPLETE_OBJECTIVE:
             return (

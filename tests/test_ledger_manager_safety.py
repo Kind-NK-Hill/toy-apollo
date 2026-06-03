@@ -41,9 +41,45 @@ class LedgerManagerSafetyTests(unittest.TestCase):
                 ledger.print_status_summary()
 
             printed = "\n".join(" ".join(str(part) for part in call.args) for call in print_mock.call_args_list)
+            self.assertIn("LEDGER_STATUS_COMPLETED", printed)
             self.assertIn("ACCEPTED_PROOF_DEBT", printed)
             self.assertIn("2 obligations", printed)
             self.assertIn("COMPLETED_WITH_HIDDEN_DEBT", printed)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_status_summary_reports_non_clean_phase2_status_under_completed(self):
+        root = REPO_ROOT / "tests" / "_tmp_ledger_status_phase2"
+        try:
+            if root.exists():
+                shutil.rmtree(root, ignore_errors=True)
+            root.mkdir(parents=True, exist_ok=True)
+
+            ledger = LedgerManager(ledger_path=str(root / "project_ledger.json"))
+            for task_id, phase2_status in (
+                ("thm_14_5", "fail"),
+                ("prob_14_1", "blocked"),
+            ):
+                ledger.add_or_update_task(
+                    {
+                        "block_id": task_id,
+                        "type": "Theorem",
+                        "title": task_id,
+                        "content": "A task with non-clean Phase2 status.",
+                        "source_plan": "chapter14",
+                        "dependencies": [],
+                    }
+                )
+                ledger.update_status(task_id, TaskStatus.COMPLETED)
+                ledger.update_runtime_metadata(task_id, phase2_status=phase2_status)
+
+            with patch("builtins.print") as print_mock:
+                ledger.print_status_summary()
+
+            printed = "\n".join(" ".join(str(part) for part in call.args) for call in print_mock.call_args_list)
+            self.assertIn("LEDGER_STATUS_COMPLETED", printed)
+            self.assertIn("PHASE2_STATUS_FAIL", printed)
+            self.assertIn("PHASE2_STATUS_BLOCKED", printed)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

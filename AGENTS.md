@@ -28,10 +28,11 @@ If this file conflicts with older notes, trust current runtime code and the rule
   - CLI `apply --input` points to the source `.tex` or `inputs/` directory, not to `phase1_prompt_packs/<source>/draft_plan.json`
 - Phase 2:
   - before any authoring, review, repair, hard-failure decision, or chapter/task-set batch, use the repo skill `.agents/skills/toy-apollo-phase2-entrypoint/SKILL.md`; if the Codex skill system has not auto-loaded it, read that file manually and follow its entry report before task-specific work
-  - proof-fidelity verdicts are governed by `docs/phase2/proof_fidelity_contract.md`; do not treat Lean build success, ledger cleanliness, or audit cleanliness as textbook proof completion
-  - default authority is three-gate: build gate only proves technical build readiness; review gate is the only proof-status verdict and must read source TeX, the Lean subject, proof obligations, audit, classification, dependency/downstream, ledger, and hash evidence; apply gate only lands a passing review result
-  - supported operator modes: `pack`, `build-check`, `review-pack`, `review-existing`, `review-now`, `review-fix`, `debt-fix`, `auto-loop`, `review-existing-queue`, `review-apply`, `verify`, `audit`, `soft-pack`, `soft-apply`
-  - default local path is prompt-pack driven, with `build-check` as the normal technical gate, `review-now` as the Codex-facing semantic review entrypoint, `review-fix` as the semantic-repair entrypoint after failed review, `debt-fix` as the accepted-proof-debt repair entrypoint, and `auto-loop` as the same-session Codex orchestration mode
+  - proof-fidelity verdicts are governed by `docs/phase2/status_contract.md` and `docs/phase2/review_criteria.md`; do not treat Lean build success, ledger cleanliness, audit cleanliness, or classification cleanliness as textbook proof completion
+  - default authority is three-gate: build gate only proves technical build readiness; review gate supplies a strict semantic verdict and proof class; apply gate lands clean completion only when `phase2_status=pass`
+  - default operator path: `pack -> build-check -> review-now -> review-apply`
+  - for chapter-wide or task-set work, start with `batch-plan`; use `--batch-task-kinds theorem,definition --batch-limit 15 --batch-workers <n>` for a non-Problem worker queue, and use `batch-run --batch-max-actions 1` only as a bounded dispatcher over existing review/auto-loop actions
+  - non-default compatibility/maintenance/diagnostic modes include `batch-plan`, `batch-run`, `review-pack`, `review-existing`, `review-existing-queue`, `review-fix`, `debt-fix`, `promote-obligations`, `auto-loop`, `verify`, `audit`, `soft-pack`, and `soft-apply`; these modes do not independently decide clean completion
   - `soft-pack` and `soft-apply` are the Problem soft-dependency special case inside Phase 2
 - Phase 3:
   - merged into Phase 2; old Phase 3 soft-dependency commands should report the migration path
@@ -56,12 +57,16 @@ If this file conflicts with older notes, trust current runtime code and the rule
 - If the task is about prompt-pack formalization, build failure, semantic review failure, or Problem soft-dependency selection, route through Phase 2 modes, not Phase 3.
 - The Phase 2 entry skill is a routing checklist, not a second policy source; it points agents back to this contract and the Phase 2 docs before execution.
 - Phase 2 Codex semantic review workflow:
+  - task-set routing view: `batch-plan`
+  - non-Problem worker queue: `batch-plan --batch-task-kinds theorem,definition --batch-limit 15 --batch-workers <n>`
+  - bounded same-session dispatcher: `batch-run --batch-max-actions 1`
   - existing official output: `review-now --review-subject existing`
   - current build-ready candidate: `review-now --review-subject candidate`
-  - failed review follow-up: `review-fix -> edit draft.lean -> build-check -> review-now --review-subject candidate`
-  - accepted proof-debt follow-up: `debt-fix -> review-fix -> edit draft.lean -> build-check -> review-now --review-subject candidate -> review-apply`
+  - failed review follow-up: use `auto-loop`; the default repair budget and CLI floor are 15 review rounds and 15 build-check attempts before each review round
+  - `review-fix -> edit draft.lean -> build-check -> review-now --review-subject candidate` is a diagnostic/manual decomposition of the loop, not a replacement for the loop
+  - accepted proof-debt follow-up is maintenance only: `debt-fix -> review-fix -> edit draft.lean -> build-check -> review-now --review-subject candidate -> review-apply`
   - same-session orchestration: `auto-loop`
-  - detailed same-session loop semantics: `docs/phase2/review_loop_protocol.md`
+  - current default workflow: `docs/phase2/workflow.md`
   - `review-pack` / `review-existing` are low-level prepare-only modes and should not be presented as the preferred Codex operator path.
 - If `ToyApollo/Output/<task_id>.lean` is newer than and differs from the latest
   `draft.lean` / `candidate_vN.lean`, the candidate review target is stale.
@@ -94,7 +99,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
 - Needing a substantial semantic rewrite, wanting to summarize current blockers, or waiting for the current Codex agent to perform reviewer/repair work are not stop reasons.
 - `nonprogress` is a semantic stop reason, not a generic build stop.
 - Only stop the same-session loop on `completed`, `freshness_error`, `hard_failure`, `nonprogress`, `max_rounds`, `build_budget_exhausted`, or explicit user interruption.
-- For proof-bearing tasks, adapter/debt decisions, complex decomposition, hard-failure admission, and public proof-package rules, follow `docs/phase2/proof_fidelity_contract.md`; prompt-pack mirrors, clean ledgers, and successful builds are not substitutes for that contract.
+- For proof-bearing tasks, adapter/debt decisions, complex decomposition, hard-failure admission, and public proof-package rules, follow `docs/phase2/status_contract.md` and `docs/phase2/review_criteria.md`; prompt-pack mirrors, clean ledgers, and successful builds are not substitutes for that contract.
 - Before inventing a new proof obligation, bridge, or foundation API, search existing `ToyApollo/Output`, bridge/foundation files, ledger state, dependency decisions, plans, and Mathlib; reuse or repair metadata before adding new scaffold.
 - Timed-out or manually aborted build/review runs without a canonical result file are mechanism blockers, not substantive proof failures; record them and continue with a narrower diagnostic.
 - When the user asks to review an existing chapter, section, or ordered task set, interpret that as a same-session self-driving existing-output batch review unless the user explicitly asks for prepare-only behavior.
@@ -109,6 +114,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
 - Only treat `review existing` as prepare-only when the user explicitly asks to inspect or prepare review materials without landing/apply behavior.
 - When the user asks to "review existing", "review pack", or "review now" in the Codex path, do not stop at `codex_handoff_pending` unless the user explicitly wants prepare-only behavior.
 - When the user asks to continue after a failed semantic review, do not rerun `review-existing` on the rejected object; route through `review-fix` and the build loop.
+- When the user asks to repair to completion, naming a precise missing lemma, bridge theorem, API, or source-route gap is not a terminal result; it is the next target inside `auto-loop`.
 - When `auto-loop` is active, ledger runtime metadata is the only live loop state source; `metadata.json`, `context.md`, `failure_summary.md`, and `operator_prompt.md` are mirrors.
 - For ad hoc single-task review requests, if the user does not explicitly ask to apply the review result, stop after the reviewer result is generated and report the verdict plus the result path.
 - The explicit single-task prepare-only rule above does not override the existing-output batch rule; chapter/section/task-set `review existing` requests default to landing/apply behavior unless the user asks otherwise.

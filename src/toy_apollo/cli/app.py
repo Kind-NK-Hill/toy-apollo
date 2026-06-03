@@ -10,6 +10,11 @@ from src.block_id_naming import (
     canonicalize_block_id,
 )
 from ..core.settings import get_settings
+from ..phase2_failure_budget import (
+    PHASE2_AUTO_LOOP_BUILD_ATTEMPTS_PER_REVIEW,
+    PHASE2_AUTO_LOOP_NONPROGRESS_LIMIT,
+    PHASE2_AUTO_LOOP_REVIEW_ROUNDS,
+)
 
 def parse_task_ids(raw: str) -> list[str]:
     seen: set[str] = set()
@@ -22,6 +27,31 @@ def parse_task_ids(raw: str) -> list[str]:
             seen.add(tid)
             task_ids.append(tid)
     return task_ids
+
+
+def parse_batch_task_kinds(raw: str) -> list[str]:
+    aliases = {
+        "theorem": "theorem",
+        "thm": "theorem",
+        "definition": "definition",
+        "def": "definition",
+        "problem": "problem",
+        "prob": "problem",
+        "exercise": "exercise",
+        "ex": "exercise",
+        "remark": "remark",
+        "rem": "remark",
+    }
+    seen: set[str] = set()
+    kinds: list[str] = []
+    for part in raw.split(","):
+        key = part.strip().lower().replace("_", " ").replace("-", " ")
+        kind = aliases.get(key)
+        if not kind or kind in seen:
+            continue
+        seen.add(kind)
+        kinds.append(kind)
+    return kinds
 
 
 async def process_target(args):
@@ -120,6 +150,7 @@ async def process_target(args):
             write_existing_output_review_pack,
             write_prompt_pack,
         )
+        from ..phase2_batch_runner import plan_batch_from_ledger, render_batch_runner_plan, run_batch_actions
         from ..phase2_obligation_tasks import promote_all_obligation_tasks
         from ..phase2_review_apply import apply_codex_review_result
         from ..phase2_review_loop import (
@@ -137,7 +168,7 @@ async def process_target(args):
         settings.toyapollo_output_dir.mkdir(parents=True, exist_ok=True)
         if args.phase2_mode in {"soft-pack", "soft-apply"}:
             settings.phase2_softdep_packs_dir.mkdir(parents=True, exist_ok=True)
-        if not selected_task_ids and args.phase2_mode not in {"review-existing-queue", "promote-obligations"}:
+        if not selected_task_ids and args.phase2_mode not in {"batch-plan", "batch-run", "review-existing-queue", "promote-obligations"}:
             print("❌ Phase 2 modes require task ids via --tasks.")
             return
         if args.phase2_mode in {"pack", "build-check", "verify", "review-pack", "review-existing", "review-now", "review-fix", "debt-fix", "auto-loop", "review-apply"} and len(selected_task_ids) != 1:
@@ -180,9 +211,9 @@ async def process_target(args):
                 task_id = next(iter(selected_task_ids))
                 success, detail = await verify_prompt_pack_candidate(task_id, ledger, settings, args.candidate)
                 if success:
-                    print(f"✅ Candidate verified and promoted for {task_id}.")
+                    print(f"✅ Candidate verify report passed for {task_id}; use review-apply to land completion.")
                 else:
-                    print(f"❌ Candidate verification failed for {task_id}.")
+                    print(f"❌ Candidate verify report did not establish task-level completion for {task_id}.")
                     print(detail)
             elif args.phase2_mode == "review-pack":
                 task_id = next(iter(selected_task_ids))
@@ -259,6 +290,40 @@ async def process_target(args):
                 else:
                     print("❌ Existing output semantic review queue preparation failed.")
                 print(detail)
+            elif args.phase2_mode == "batch-plan":
+                task_ids = sorted(selected_task_ids) if selected_task_ids is not None else sorted(
+                    canonicalize_block_id(task_id)
+                    for task_id in ledger.ledger.get("tasks", {})
+                    if canonicalize_block_id(task_id)
+                )
+                plan = plan_batch_from_ledger(
+                    task_ids,
+                    ledger,
+                    settings,
+                    task_kinds=args.batch_task_kinds,
+                    limit=args.batch_limit,
+                    worker_slots=args.batch_workers,
+                )
+                print(render_batch_runner_plan(plan), end="")
+            elif args.phase2_mode == "batch-run":
+                task_ids = sorted(selected_task_ids) if selected_task_ids is not None else sorted(
+                    canonicalize_block_id(task_id)
+                    for task_id in ledger.ledger.get("tasks", {})
+                    if canonicalize_block_id(task_id)
+                )
+                execution = await run_batch_actions(
+                    task_ids,
+                    ledger,
+                    settings,
+                    max_actions=args.batch_max_actions,
+                    task_kinds=args.batch_task_kinds,
+                    limit=args.batch_limit,
+                    worker_slots=args.batch_workers,
+                )
+                print(render_batch_runner_plan(execution.plan), end="")
+                print(f"\nExecuted actions: {len(execution.executed)}")
+                for action, detail in zip(execution.executed, execution.details):
+                    print(f"- {action.task_id}: {action.action}: {detail}")
             elif args.phase2_mode == "promote-obligations":
                 selected = sorted(selected_task_ids) if selected_task_ids else None
                 report = promote_all_obligation_tasks(ledger, settings, selected)
@@ -271,7 +336,7 @@ async def process_target(args):
                 task_id = next(iter(selected_task_ids))
                 success, detail = await apply_codex_review_result(task_id, ledger, settings, args.review_result)
                 if success:
-                    print(f"✅ Codex semantic review applied and promoted for {task_id}.")
+                    print(f"✅ Codex semantic review applied and clean completion landed for {task_id}.")
                 else:
                     print(f"❌ Codex semantic review apply did not promote {task_id}.")
                 print(detail)
@@ -293,9 +358,9 @@ async def process_target(args):
                 for task_id in sorted(selected_task_ids):
                     success, detail = audit_completed_task_output(task_id, ledger, settings)
                     if success:
-                        print(f"✅ Semantic audit passed for {task_id}.")
+                        print(f"✅ Semantic audit report passed for {task_id}; audit is diagnostic only.")
                     else:
-                        print(f"🧨 Semantic audit demoted {task_id} to FAILED_LOCAL.")
+                        print(f"❌ Semantic audit report found non-clean or failing evidence for {task_id}; official output was not quarantined by default.")
                         print(detail)
         except FileNotFoundError as exc:
             print(f"❌ {exc}")
@@ -327,6 +392,8 @@ def main() -> int:
         "review-apply",
         "soft-pack",
         "soft-apply",
+        "batch-plan",
+        "batch-run",
     )
     phase2_single_task_modes = (
         "pack",
@@ -349,21 +416,26 @@ def main() -> int:
     parser.add_argument("--phase0-output", type=str, required=False, default="", dest="phase0_output", help="Output stem for Phase 0 packs and inputs/<stem>.tex, for example chapter9-moments-mgf")
     parser.add_argument("--phase1-mode", type=str, choices=["pack", "apply"], default="pack", dest="phase1_mode", help="Phase 1 mode: pack generates operator prompt packs, apply validates and registers a filled draft_plan.json")
     parser.add_argument("--tasks", type=str, required=False, default="", help="Comma-separated block_id filter for Phase 2 modes")
-    parser.add_argument("--phase2-mode", type=str, choices=phase2_modes, default="pack", help="Phase 2 mode: default workflow is pack -> build-check -> review-now --review-subject candidate -> review-apply; use review-now --review-subject existing for already runnable official outputs. review-pack/review-existing are prepare-only compatibility modes; soft-pack/soft-apply handle Problem soft dependency selection; review-fix activates a semantic-repair build loop from the latest failed review; debt-fix activates a repair loop for accepted proof debt; promote-obligations turns blocking obligations into ledger child tasks; auto-loop advances the same-session Codex author/reviewer loop state and runtime transitions; review-existing-queue prepares a batch Codex reviewer queue from ToyApollo/Output; verify/audit are optional runner-backed modes")
+    parser.add_argument("--phase2-mode", type=str, choices=phase2_modes, default="pack", help="Phase 2 mode: default workflow is pack -> build-check -> review-now --review-subject candidate -> review-apply. review-apply is the only completion landing gate. batch-plan reports next actions from ledger state; batch-run executes a small number of selected review/auto-loop actions; review-pack/review-existing/review-existing-queue are prepare-only compatibility modes; review-fix repairs failed semantic review; debt-fix and promote-obligations are non-default maintenance paths; soft-pack/soft-apply handle Problem soft dependency selection; auto-loop advances same-session repair/review state; verify/audit are diagnostics and do not land completion.")
     parser.add_argument("--phase3-mode", type=str, choices=["soft-pack", "soft-apply"], default=None, help=argparse.SUPPRESS)
     parser.add_argument("--candidate", type=str, required=False, default="", help="Optional external Lean file for --phase 2 --phase2-mode build-check/verify; review-pack only accepts ToyApollo/Output/<task>.lean as a compatibility alias for review-existing")
     parser.add_argument("--review-result", type=str, required=False, default="", dest="review_result", help="Filled semantic review result JSON for --phase 2 --phase2-mode review-apply")
     parser.add_argument("--review-subject", type=str, choices=["current", "existing", "candidate"], default="current", dest="review_subject", help="Review subject selector for --phase 2 --phase2-mode review-now/auto-loop")
     parser.add_argument("--auto-apply-pass", action="store_true", dest="auto_apply_pass", help="Agent-side hint for --phase 2 --phase2-mode review-now: after the Codex reviewer writes a pass result, continue with review-apply")
     parser.add_argument("--abandon-current-repair", action="store_true", dest="abandon_current_repair", help="With --phase 2 --phase2-mode review-fix, abandon the active repair cycle without changing draft.lean")
-    parser.add_argument("--max-auto-rounds", type=int, default=6, dest="max_auto_rounds", help="Maximum rounds for --phase 2 --phase2-mode auto-loop")
-    parser.add_argument("--nonprogress-limit", type=int, default=2, dest="nonprogress_limit", help="Stop --phase 2 --phase2-mode auto-loop after this many consecutive non-progress failures")
-    parser.add_argument("--max-build-attempts-per-round", type=int, default=3, dest="max_build_attempts_per_round", help="Maximum build-check attempts per round for --phase 2 --phase2-mode auto-loop")
+    parser.add_argument("--max-auto-rounds", type=int, default=PHASE2_AUTO_LOOP_REVIEW_ROUNDS, dest="max_auto_rounds", help="Maximum rounds for --phase 2 --phase2-mode auto-loop; default 15")
+    parser.add_argument("--nonprogress-limit", type=int, default=PHASE2_AUTO_LOOP_NONPROGRESS_LIMIT, dest="nonprogress_limit", help="Stop --phase 2 --phase2-mode auto-loop after this many consecutive non-progress failures; default 15")
+    parser.add_argument("--max-build-attempts-per-round", type=int, default=PHASE2_AUTO_LOOP_BUILD_ATTEMPTS_PER_REVIEW, dest="max_build_attempts_per_round", help="Maximum build-check attempts per round for --phase 2 --phase2-mode auto-loop; default 15")
+    parser.add_argument("--batch-max-actions", type=int, default=1, dest="batch_max_actions", help="Maximum executable actions for --phase 2 --phase2-mode batch-run; default 1")
+    parser.add_argument("--batch-task-kinds", type=str, default="", dest="batch_task_kinds_raw", help="Comma-separated task kinds for batch-plan/batch-run, for example theorem,definition")
+    parser.add_argument("--batch-limit", type=int, default=0, dest="batch_limit", help="Maximum tasks to show or dispatch from batch-plan/batch-run after dependency-aware ranking; 0 means no limit")
+    parser.add_argument("--batch-workers", type=int, default=0, dest="batch_workers", help="Worker slots to annotate in batch-plan/batch-run output; 0 means no worker assignment")
     parser.add_argument("--selection", type=str, required=False, default="", help="Selection JSON for --phase 2 --phase2-mode soft-apply")
     parser.add_argument("--status", action="store_true", help="Show project status summary")
 
     args = parser.parse_args()
     args.task_ids = parse_task_ids(args.tasks)
+    args.batch_task_kinds = parse_batch_task_kinds(args.batch_task_kinds_raw)
     if args.tasks and not args.task_ids:
         parser.error("--tasks was provided but no valid task id was parsed.")
     if args.phase == 0:
@@ -385,7 +457,7 @@ def main() -> int:
     if args.phase3_mode is not None and args.phase != 3:
         parser.error("--phase3-mode has been merged into --phase2-mode; use --phase 2 --phase2-mode soft-pack/soft-apply.")
     if args.phase == 2 and args.phase2_mode in phase2_modes and not args.task_ids:
-        if args.phase2_mode not in {"review-existing-queue", "promote-obligations"}:
+        if args.phase2_mode not in {"batch-plan", "batch-run", "review-existing-queue", "promote-obligations"}:
             parser.error("--phase 2 modes require task ids via --tasks.")
     if args.phase == 2 and args.phase2_mode in phase2_single_task_modes and len(args.task_ids) > 1:
         parser.error("--phase 2 pack/build-check/verify/review-pack/review-existing/review-now/review-fix/debt-fix/auto-loop/review-apply modes support exactly one task at a time.")
@@ -393,6 +465,13 @@ def main() -> int:
         invalid = [task_id for task_id in args.task_ids if not task_id.startswith("prob_")]
         if invalid:
             parser.error(f"--phase 2 --phase2-mode {args.phase2_mode} only supports problem tasks: {', '.join(invalid)}")
+    if args.phase == 2 and args.phase2_mode == "auto-loop":
+        if args.max_auto_rounds < PHASE2_AUTO_LOOP_REVIEW_ROUNDS:
+            parser.error("--max-auto-rounds cannot be below the hard-coded Phase 2 repair budget of 15.")
+        if args.nonprogress_limit < PHASE2_AUTO_LOOP_NONPROGRESS_LIMIT:
+            parser.error("--nonprogress-limit cannot be below the hard-coded Phase 2 repair budget of 15.")
+        if args.max_build_attempts_per_round < PHASE2_AUTO_LOOP_BUILD_ATTEMPTS_PER_REVIEW:
+            parser.error("--max-build-attempts-per-round cannot be below the hard-coded Phase 2 repair budget of 15.")
     if args.phase == 3:
         parser.error(phase3_migration_message)
     if args.phase == 2 and args.input:
@@ -411,9 +490,26 @@ def main() -> int:
         parser.error("--abandon-current-repair is only supported with --phase 2 --phase2-mode review-fix.")
     if (
         args.phase2_mode != "auto-loop"
-        and (args.max_auto_rounds != 6 or args.nonprogress_limit != 2 or args.max_build_attempts_per_round != 3)
+        and (
+            args.max_auto_rounds != PHASE2_AUTO_LOOP_REVIEW_ROUNDS
+            or args.nonprogress_limit != PHASE2_AUTO_LOOP_NONPROGRESS_LIMIT
+            or args.max_build_attempts_per_round != PHASE2_AUTO_LOOP_BUILD_ATTEMPTS_PER_REVIEW
+        )
     ):
         parser.error("--max-auto-rounds/--nonprogress-limit/--max-build-attempts-per-round are only supported with --phase 2 --phase2-mode auto-loop.")
+    if args.phase == 2 and args.phase2_mode == "batch-run" and args.batch_max_actions < 1:
+        parser.error("--batch-max-actions must be at least 1.")
+    if args.phase2_mode != "batch-run" and args.batch_max_actions != 1:
+        parser.error("--batch-max-actions is only supported with --phase 2 --phase2-mode batch-run.")
+    if args.phase == 2 and args.phase2_mode in {"batch-plan", "batch-run"}:
+        if args.batch_task_kinds_raw and not args.batch_task_kinds:
+            parser.error("--batch-task-kinds must contain at least one known kind.")
+        if args.batch_limit < 0:
+            parser.error("--batch-limit must be non-negative.")
+        if args.batch_workers < 0:
+            parser.error("--batch-workers must be non-negative.")
+    elif args.batch_task_kinds_raw or args.batch_limit or args.batch_workers:
+        parser.error("--batch-task-kinds/--batch-limit/--batch-workers are only supported with --phase 2 --phase2-mode batch-plan/batch-run.")
     if args.phase == 2 and args.phase2_mode == "soft-apply" and not args.selection:
         parser.error("--selection is required with --phase 2 --phase2-mode soft-apply.")
     if args.selection and not (args.phase == 2 and args.phase2_mode == "soft-apply"):

@@ -243,6 +243,46 @@ class Phase2SoftdepPackTests(unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_soft_apply_registers_unseen_problem_from_plan_before_confirming_selection(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_softdep_apply_registers_problem"
+        try:
+            if root.exists():
+                shutil.rmtree(root, ignore_errors=True)
+            settings = make_settings(root)
+            settings.plans_dir.mkdir(parents=True, exist_ok=True)
+            plan_payload = [
+                {
+                    "block_id": "def_4_3_sup_inf",
+                    "type": "Definition",
+                    "title": "sup and inf",
+                    "content": "Define supremum and infimum notions.",
+                },
+                {
+                    "block_id": "prob_4_2",
+                    "type": "Problem",
+                    "title": "abs measurable",
+                    "content": "Show |f| is measurable.",
+                    "dependencies": [],
+                },
+            ]
+            (settings.plans_dir / "12_chap4_problems_plan.json").write_text(
+                json.dumps(plan_payload, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            ledger = LedgerManager(ledger_path=str(settings.project_ledger_file))
+
+            pack_dir = write_softdep_pack(["prob_4_2"], ledger, settings)
+            selection_path = pack_dir / "soft_imports_selection.json"
+            success, _, _ = apply_softdep_selection(["prob_4_2"], ledger, settings, str(selection_path))
+
+            self.assertTrue(success)
+            self.assertIn("prob_4_2", ledger.ledger["tasks"])
+            task = ledger.ledger["tasks"]["prob_4_2"]
+            self.assertEqual(task["candidate_snapshot"]["soft_imports"], [])
+            self.assertTrue(task["soft_imports_confirmed_at"])
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_write_softdep_pack_excludes_material_with_proof_debt(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_softdep_excludes_proof_debt"
         try:

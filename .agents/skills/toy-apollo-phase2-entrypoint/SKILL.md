@@ -14,10 +14,11 @@ Use this skill as a thin entry router. It does not replace repository docs or re
 Read these files before doing task-specific work:
 
 1. `AGENTS.md`
-2. `docs/phase2/proof_fidelity_contract.md`
-3. `docs/phase2/candidate_guidelines.md`
-4. `docs/phase2/workflow.md`
-5. `docs/phase2/review_loop_protocol.md`
+2. `docs/phase2/README.md`
+3. `docs/phase2/workflow.md`
+4. `docs/phase2/status_contract.md`
+5. `docs/phase2/review_criteria.md`
+6. `docs/phase2/artifacts.md`
 
 Read the task-local artifacts next:
 
@@ -43,14 +44,22 @@ Before editing, state the following in working notes:
 ## Complex Task Gate
 
 Treat complexity as a structural property, not a theorem-name whitelist. Use
-`docs/phase2/proof_fidelity_contract.md` for the Level 0/1/2 distinction,
-complex decomposition rule, adapter/proof-debt boundary, and public
-Support/Spine surface rule.
+`docs/phase2/status_contract.md` and `docs/phase2/review_criteria.md` for the
+task-status projection, adapter/proof-debt boundary, and strict review rules.
 
 ## Operation Route
 
 Use the repository workflow rather than ad hoc state changes:
 
+0. For a chapter or task-set scope, run `batch-plan` first:
+   `python .\run_chapter.py --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id>`.
+   Use it to identify clean tasks, fresh-review targets, auto-loop repair
+   targets, and blocked downstream tasks. To advance a bounded amount of work,
+   use `batch-run --batch-max-actions 1`; it only dispatches existing Phase2
+   actions and does not decide completion.
+   For chapter-scale repair, add `--batch-task-kinds theorem,definition
+   --batch-limit 15 --batch-workers <n>` to produce a non-Problem worker queue
+   for subagent assignment.
 1. Generate or inspect the Phase 2 prompt pack.
 2. Read the source grounding and dependency evidence from the pack, but verify against original TeX when the proof matters. Semantic review must also read proof obligations, audit signals, classification history, dependency status, downstream/import evidence, ledger runtime status, and hash/freshness evidence.
 3. Choose the review target route before editing or reviewing:
@@ -61,13 +70,19 @@ Use the repository workflow rather than ad hoc state changes:
 5. Run local build checks.
 6. Run semantic review on the correct subject.
 7. Apply only through `review-apply` when review passes. For failed existing-output review, use `review-apply` only to record repair-required evidence; do not quarantine official output by default.
+8. After failed or inconclusive review, run `auto-loop` for repair. The normal
+   runtime budget and CLI floor are 15 review rounds and 15 build-check
+   attempts before each review round. Do not replace this with a manual loop
+   that stops after naming a blocker.
 
 Semantic review of a current candidate is independent and read-only. The author
 worker must not review its own candidate. Use a separate reviewer subagent or a
 configured reviewer runner, and ensure the result contains
 `reviewer_independence`.
 
-Use `audit` or `verify` only when the reviewer runner is configured. If the runner is missing, treat that as a mechanism problem, not a substantive mathematical failure.
+Use `audit` or `verify` only as diagnostics. They do not land completion. If the
+runner is missing, treat that as a mechanism problem, not a substantive
+mathematical failure.
 
 ## Red Flags
 
@@ -80,6 +95,8 @@ Stop and re-read the required docs when any of these occur:
 - Treating prompt-pack summaries as a substitute for original TeX.
 - Landing a task without `review-apply`.
 - For selected textbook-completion targets, stopping at `bridge_landed`, `foundation_lemma_landed`, build success, `contract_clean`, or metadata repair instead of returning to the selected public theorem.
+- Stopping after a precise missing bridge/theorem/API is identified, when the
+  task goal is repair rather than diagnosis.
 - Mixing unrelated dirty files, old plan reviews, and new chapter source output in one change.
 - Stopping a chapter batch after one failed task while independent tasks remain.
 

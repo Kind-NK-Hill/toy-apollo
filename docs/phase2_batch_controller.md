@@ -1,12 +1,10 @@
 # Legacy Redirect: Phase2 Batch Controller
 
-Current batch-controller guidance lives at:
+Current Phase2 batch/report guidance lives at:
 
-- `docs/phase2/batch_controller.md`
+- `docs/phase2/artifacts.md`
+- `docs/phase2/status_contract.md`
+- `docs/phase2/tools.md`
 
-The full May 2026 version of this file is archived at:
-
-- `docs/archive/phase2_2026_05_rework/current_root_docs/phase2_batch_controller.md`
-
-Use the current file for new Phase2 work. Use the archive only for audit
-history.
+Historical versions are audit trail only. Use the current files above for new
+Phase2 work.

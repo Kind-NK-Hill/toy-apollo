@@ -1,82 +1,61 @@
 # Phase2 Tools
 
-This file lists current validation tools and what they do.
+Tools are diagnostics unless explicitly named as one of the three gates in the
+default workflow.
 
-## Lean Build
+## Build Gate
 
 ```powershell
-lake env lean ToyApollo/Output/<task_id>.lean
+python .\run_chapter.py --phase 2 --phase2-mode build-check --tasks <task_id>
 ```
 
-Checks the touched Lean file. Build success is mandatory but not sufficient for
-proof completion.
+This is the technical build gate. It does not prove textbook fidelity.
 
-## Completion Classification Validator
+## Diagnostics
 
 ```powershell
-python tools/validate_phase2_completion_classification.py
+python .\run_chapter.py --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id>
+python .\run_chapter.py --phase 2 --phase2-mode batch-run --tasks <task_id>,<task_id> --batch-max-actions 1
+python .\run_chapter.py --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id> --batch-task-kinds theorem,definition --batch-limit 15 --batch-workers 5
 python tools/validate_phase2_completion_classification.py --require-proof-contract
-```
-
-Checks classification artifacts for consistency and required proof-contract
-evidence. The classification file is review evidence/reporting cache only; it
-does not independently mark a task complete.
-
-## Obligation Contract Validator
-
-```powershell
-python tools/validate_phase2_obligation_contracts.py --task <task_id>
 python tools/validate_phase2_obligation_contracts.py --write-report
-```
-
-Checks `proof_obligations.json` contract fields. It rejects metadata claiming
-proved obligations without verified theorem-level support. It is not a Lean
-proof oracle and not a completion authority.
-
-Reports are written under `docs/phase2/reports/`.
-
-Textbook-complete target selection is read from:
-
-```text
-docs/phase2/textbook_complete_targets.json
-```
-
-The legacy target-selection path is a fallback for old worktrees only; do not
-use it as the active policy source.
-
-## Clean Debt Surface Audit
-
-```powershell
 python tools/audit_phase2_clean_debt_surface.py --write-report --fail-on-errors
+python .\run_chapter.py --phase 2 --phase2-mode verify --tasks <task_id>
+python .\run_chapter.py --phase 2 --phase2-mode audit --tasks <task_id>
 ```
 
-Checks public proof-package surface and the unique beyond-book exception. It is
-a string/static audit, not mathematical proof. Audit findings must feed semantic
-review; a clean audit does not bypass review and a failed audit does not by
-itself quarantine official output.
+`batch-plan` is the thin scheduling view over the current ledger and Phase2
+status metadata. It reports whether each selected task should run fresh existing
+review, enter `auto-loop`, or wait for an upstream blocker. It does not run
+repair, write completion, or replace review/apply.
 
-## Runner-Backed Review Modes
+`batch-run` executes a small number of actions from that same plan. It only
+dispatches existing Phase2 actions such as fresh existing review and
+`auto-loop`; it does not decide completion by itself.
 
-Phase2 `verify` and `audit` require a configured reviewer runner. If reviewer
-configuration is missing, treat that as a mechanism blocker, not a mathematical
-proof failure.
+For chapter-wide work, use `--batch-task-kinds theorem,definition` to prioritize
+non-Problem root tasks, `--batch-limit` to cap the queue, and `--batch-workers`
+to annotate worker slots for subagent assignment. Worker slots are coordination
+labels only; the operator still creates independent author/reviewer subagents
+and must not let two workers edit the same task pack or official output.
 
-## Useful Searches
+The other commands can find stale evidence, missing contracts, public-surface
+debt, classification inconsistencies, and review/build diagnostics. These tools
+are not completion authorities. Their results must feed semantic review or
+repair.
+
+## Maintenance
 
 ```powershell
-rg -n "Support|Spine|Bridge|ProofBeyondBook|private axiom|axiom|sorry|admit" ToyApollo/Output
-rg -n "MemLp|Integrable|Tendsto|Support|Spine|Bridge" ToyApollo/Output/<task_id>.lean
-rg -n "proof_contract_status|expected_theorem_signature|public_premise_check" phase2_prompt_packs/<task_id>/proof_obligations.json
-```
-
-Use these as leads. Final judgment still follows `proof_fidelity_contract.md`.
-
-## Obligation Promotion
-
-```powershell
+python .\run_chapter.py --phase 2 --phase2-mode debt-fix --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode promote-obligations --tasks <task_id>
+python .\run_chapter.py --phase 2 --phase2-mode auto-loop --tasks <task_id> --review-subject current
 ```
 
-Use only for complex tasks whose blocking obligations need first-class ledger
-children. It is not proof production and does not replace Lean build or
-semantic review.
+`auto-loop` is the default repair runner after a failed semantic review. Its
+normal budget and CLI floor are 15 review rounds and 15 build-check attempts
+before each review round. After a semantic failure, unchanged candidates are
+sent back to authoring instead of semantic review; change `draft.lean` or the
+proof artifact before continuing. `debt-fix` prepares repair for accepted proof debt.
+`promote-obligations` creates child obligation tasks. Both return to the
+auto-loop/build/review/apply workflow.

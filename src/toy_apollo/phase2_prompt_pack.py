@@ -24,7 +24,12 @@ from src.compiler import LeanCompiler
 
 from .core import LedgerManager, TaskStatus
 from .dependency_decisions import DependencyDecision, load_dependency_decisions, record_dependency_decision
-from .phase2_failure_budget import phase2_failure_counters_from_history
+from .phase2_failure_budget import (
+    PHASE2_AUTO_LOOP_BUILD_ATTEMPTS_PER_REVIEW,
+    PHASE2_AUTO_LOOP_NONPROGRESS_LIMIT,
+    PHASE2_AUTO_LOOP_REVIEW_ROUNDS,
+    phase2_failure_counters_from_history,
+)
 from .phase2_pack_shared.artifacts import select_latest_existing_task_file, stale_candidate_official_output_message
 from .phase2_output_binding import resolve_phase2_output_binding
 from .phase2_semantic_review import (
@@ -41,6 +46,7 @@ from .phase2_semantic_review import (
     render_semantic_review_report,
     run_semantic_review,
 )
+from .phase2_task_status import classify_phase2_task_status
 from .phase2_proof_obligations import (
     PROOF_OBLIGATIONS_FILE_NAME,
     maybe_ensure_proof_obligations_file,
@@ -1293,6 +1299,10 @@ def _restore_staging_manifest(manifest_path: Path) -> bool:
                     return False
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(backup_path, target)
+                original_atime_ns = entry.get("original_atime_ns")
+                original_mtime_ns = entry.get("original_mtime_ns")
+                if isinstance(original_atime_ns, int) and isinstance(original_mtime_ns, int):
+                    os.utime(target, ns=(original_atime_ns, original_mtime_ns))
             elif target.exists():
                 target.unlink()
     except Exception:
@@ -1397,13 +1407,20 @@ def _run_staged_official_build(
             target.parent.mkdir(parents=True, exist_ok=True)
             original_existed = target.exists()
             backup_path = staging_dir / f"backup_{index}_{target.name}"
+            original_atime_ns = 0
+            original_mtime_ns = 0
             if original_existed:
+                stat = target.stat()
+                original_atime_ns = stat.st_atime_ns
+                original_mtime_ns = stat.st_mtime_ns
                 shutil.copyfile(target, backup_path)
             manifest["targets"].append(
                 {
                     "target": str(target),
                     "backup_path": str(backup_path),
                     "original_existed": original_existed,
+                    "original_atime_ns": original_atime_ns,
+                    "original_mtime_ns": original_mtime_ns,
                 }
             )
         _write_json(manifest_path, manifest)
@@ -4048,6 +4065,13 @@ def _run_semantic_review_for_candidate(
 def _semantic_review_summary(review_result: dict[str, Any]) -> dict[str, Any]:
     return {
         "verdict": review_result.get("verdict", "inconclusive"),
+        "proof_class": review_result.get("proof_class", ""),
+        "completion_class": review_result.get("completion_class", ""),
+        "phase2_status": review_result.get("phase2_status", review_result.get("task_status", "")),
+        "phase2_status_reason": review_result.get("phase2_status_reason", review_result.get("task_status_reason", "")),
+        "task_status": review_result.get("task_status", ""),
+        "task_status_reason": review_result.get("task_status_reason", ""),
+        "needs_class_normalization": bool(review_result.get("needs_class_normalization", False)),
         "runner_status": review_result.get("runner", {}).get("status", ""),
         "summary": review_result.get("summary", ""),
         "recommended_disposition": review_result.get("recommended_disposition", ""),
@@ -4059,6 +4083,50 @@ def _semantic_review_summary(review_result: dict[str, Any]) -> dict[str, Any]:
         "cache_hit": bool(review_result.get("cache_hit", False)),
         "reviewer_backend_id": review_result.get("reviewer_backend_id", ""),
     }
+
+
+def _project_semantic_review_task_status(task: dict[str, Any], review_result: dict[str, Any]) -> dict[str, Any]:
+    task_id = canonicalize_block_id(str(task.get("block_id", "") or review_result.get("task_id", "") or ""))
+    projection = classify_phase2_task_status(
+        task_id=task_id,
+        task_type=str(task.get("type", "") or ""),
+        review_verdict=str(review_result.get("verdict", "") or ""),
+        proof_class=review_result.get("proof_class", ""),
+        completion_class=review_result.get("completion_class", ""),
+    )
+    enriched = dict(review_result)
+    enriched["phase2_status"] = projection.task_status
+    enriched["phase2_status_reason"] = projection.reason
+    enriched["phase2_status_evidence_type"] = projection.evidence_type
+    enriched["task_status"] = projection.task_status
+    enriched["task_status_reason"] = projection.reason
+    enriched["task_status_evidence_type"] = projection.evidence_type
+    enriched["task_role"] = projection.task_role
+    return enriched
+
+
+def _record_phase2_task_status_projection(
+    task_id: str,
+    task: dict[str, Any],
+    ledger: LedgerManager,
+    review_result: dict[str, Any],
+) -> dict[str, Any]:
+    enriched = _project_semantic_review_task_status(task, review_result)
+    ledger.update_runtime_metadata(
+        task_id,
+        phase2_review_verdict=str(enriched.get("verdict", "") or ""),
+        phase2_proof_class=str(enriched.get("proof_class", "") or ""),
+        phase2_completion_class=str(enriched.get("completion_class", "") or ""),
+        phase2_status=str(enriched.get("phase2_status", "") or ""),
+        phase2_status_reason=str(enriched.get("phase2_status_reason", "") or ""),
+        phase2_status_evidence_type=str(enriched.get("phase2_status_evidence_type", "") or ""),
+        phase2_task_status=str(enriched.get("task_status", "") or ""),
+        phase2_task_status_reason=str(enriched.get("task_status_reason", "") or ""),
+        phase2_task_status_evidence_type=str(enriched.get("task_status_evidence_type", "") or ""),
+        phase2_task_role=str(enriched.get("task_role", "") or ""),
+        phase2_needs_class_normalization=bool(enriched.get("needs_class_normalization", False)),
+    )
+    return enriched
 
 
 def _review_diagnostics(review_result: dict[str, Any]) -> list[dict[str, Any]]:
@@ -4339,19 +4407,33 @@ def audit_completed_task_output(task_id: str, ledger: LedgerManager, settings) -
             except ValueError:
                 pass
         return False, detail
+    review_result = _record_phase2_task_status_projection(task_id, task, ledger, review_result)
+    verdict = str(review_result.get("verdict", "inconclusive"))
     if verdict == "pass":
-        ledger.register_success(task_id, candidate_code, ledger._hash_text(candidate_code))
+        non_clean = str(review_result.get("task_status", "") or "") != "pass"
+        disposition = "audit_pass_non_clean_report" if non_clean else "audit_pass_report"
+        detail_text = detail or "Semantic audit passed; report only."
+        if non_clean:
+            detail_text = (
+                f"{detail_text} Non-clean audit: review verdict is pass, but task_status="
+                f"{review_result.get('task_status', '')}; this is not textbook completion."
+            )
         write_audit_result(
-            success=True,
-            diagnostics=[],
-            detail=detail or "Semantic audit passed.",
+            success=not non_clean,
+            diagnostics=[] if not non_clean else _hard_check_diagnostic("phase2_status_not_pass", str(review_result.get("task_status_reason", "") or "")),
+            detail=detail_text,
             final_build_success=True,
             final_build_output=final_output,
             semantic_review=review_result,
-            disposition="audit_pass",
-            state_transition="reconciled_completed",
+            disposition=disposition,
+            state_transition="none",
         )
-        return True, "Semantic audit passed."
+        if audit_original_status:
+            try:
+                ledger.update_status(task_id, TaskStatus(audit_original_status))
+            except ValueError:
+                pass
+        return not non_clean, detail_text
 
     diagnostics = _review_diagnostics(review_result)
     if verdict == "fail":
@@ -4481,8 +4563,10 @@ def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[
         "source_plan": task.get("source_plan", "unknown"),
         "dependencies": task.get("dependencies", []),
         "soft_imports": task.get("soft_imports", []),
+        "soft_imports_confirmed_at": current_record.get("soft_imports_confirmed_at", ""),
         "final_import_union": _task_final_import_union(task),
     }
+
     metadata_payload = {
         "task_id": task_id,
         "status_before_pack": current_record.get("status", TaskStatus.DISCOVERED.value),
@@ -4919,6 +5003,10 @@ def _record_semantic_review_attempt(
             "verify_result_file": str(verify_result_path),
             "review_result_file": str(semantic_review.get("review_result_file", "") or ""),
             "review_verdict": review_verdict,
+            "proof_class": str(semantic_review.get("proof_class", "") or ""),
+            "completion_class": str(semantic_review.get("completion_class", "") or ""),
+            "task_status": str(semantic_review.get("task_status", "") or ""),
+            "task_status_reason": str(semantic_review.get("task_status_reason", "") or ""),
             "disposition": disposition,
             "review_summary": str(semantic_review.get("summary", "") or ""),
             "review_subject_kind": review_subject_kind,
@@ -6363,6 +6451,8 @@ async def verify_prompt_pack_candidate(task_id: str, ledger: LedgerManager, sett
                     semantic_review=review_result,
                     disposition="verify_invalid_reviewer_output",
                 )
+            review_result = _record_phase2_task_status_projection(task_id, task, ledger, review_result)
+            review_verdict = str(review_result.get("verdict", "inconclusive"))
             if review_verdict != "pass":
                 diagnostics = _review_diagnostics(review_result)
                 detail_text = str(review_result.get("summary", "") or f"Semantic reviewer verdict: {review_verdict}")
@@ -6385,7 +6475,7 @@ async def verify_prompt_pack_candidate(task_id: str, ledger: LedgerManager, sett
                 candidate_code,
                 attempt=attempt,
                 mode="verify",
-                restore_on_success=False,
+                restore_on_success=True,
             )
             if not final_success:
                 diagnostics = _parse_diagnostics(final_output, "final_build_failed", "final_build")
@@ -6404,7 +6494,7 @@ async def verify_prompt_pack_candidate(task_id: str, ledger: LedgerManager, sett
                 )
 
             build_feedback_path.write_text("", encoding="utf-8")
-            ledger.register_success(task_id, candidate_code, ledger._hash_text(candidate_code))
+            non_clean = str(review_result.get("task_status", "") or "") != "pass"
             verify_result = _build_verify_result_payload(
                 task_id=task_id,
                 attempt=attempt,
@@ -6420,8 +6510,9 @@ async def verify_prompt_pack_candidate(task_id: str, ledger: LedgerManager, sett
                 diagnostics=[],
             )
             verify_result["mode"] = "verify"
-            verify_result["disposition"] = "verify_pass_promoted"
-            verify_result["state_transition"] = "completed"
+            verify_result["success"] = not non_clean
+            verify_result["disposition"] = "verify_pass_non_clean_report" if non_clean else "verify_pass_report"
+            verify_result["state_transition"] = "none"
             verify_result["semantic_review"] = _semantic_review_summary(review_result)
             verify_result["verify_result_file"] = str(verify_result_path)
             _write_json(verify_result_path, verify_result)
@@ -6436,10 +6527,27 @@ async def verify_prompt_pack_candidate(task_id: str, ledger: LedgerManager, sett
                 latest_verify_result_file=str(verify_result_path),
                 verify_attempts=attempt,
             )
+            if verify_original_status:
+                try:
+                    ledger.update_status(task_id, TaskStatus(verify_original_status))
+                except ValueError:
+                    ledger.update_status(task_id, TaskStatus.PACKED)
+            else:
+                ledger.update_status(task_id, TaskStatus.PACKED)
             _set_latest_operation(task_id, ledger, kind="verify", file_path=str(verify_result_path))
             _refresh_pack_runtime_view(task, ledger, settings, pack_dir)
-            _append_verification_report(pack_dir, verify_result, "REPL, temporary build, and final build all succeeded.")
-            return True, "REPL, temporary build, and final build all succeeded."
+            success_detail = (
+                "REPL, temporary build, and final build all succeeded as a report-only verify check. "
+                f"Task status: {review_result.get('task_status', '')} ({review_result.get('task_status_reason', '')})."
+                " Run review-apply with a fresh semantic review result to land completion."
+            )
+            if non_clean:
+                success_detail = (
+                    f"{success_detail} Non-clean verify: review verdict is pass, but task_status="
+                    f"{review_result.get('task_status', '')}; this is not textbook completion."
+                )
+            _append_verification_report(pack_dir, verify_result, success_detail)
+            return not non_clean, success_detail
 
         diagnostics = []
         if not repl_success:
@@ -6594,9 +6702,9 @@ async def run_codex_auto_loop(
     settings,
     *,
     review_subject: str = "current",
-    max_auto_rounds: int = 6,
-    nonprogress_limit: int = 2,
-    max_build_attempts_per_round: int = 3,
+    max_auto_rounds: int = PHASE2_AUTO_LOOP_REVIEW_ROUNDS,
+    nonprogress_limit: int = PHASE2_AUTO_LOOP_NONPROGRESS_LIMIT,
+    max_build_attempts_per_round: int = PHASE2_AUTO_LOOP_BUILD_ATTEMPTS_PER_REVIEW,
 ) -> tuple[bool, str]:
     from .phase2_review_loop import run_codex_auto_loop as _owner_run_codex_auto_loop
     return await _owner_run_codex_auto_loop(
