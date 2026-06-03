@@ -18,14 +18,9 @@ python .\run_chapter.py --phase 2 --phase2-mode review-pack --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode review-existing --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject candidate
 python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject existing
-python .\run_chapter.py --phase 2 --phase2-mode review-fix --tasks <task_id>
-python .\run_chapter.py --phase 2 --phase2-mode auto-loop --tasks <task_id>
-python .\run_chapter.py --phase 2 --phase2-mode review-existing-queue
 python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks <task_id> --review-result <path>
-python .\run_chapter.py --phase 2 --phase2-mode debt-fix --tasks <task_id>
-python .\run_chapter.py --phase 2 --phase2-mode promote-obligations --tasks <task_id>
-python .\run_chapter.py --phase 2 --phase2-mode verify --tasks <task_id>
-python .\run_chapter.py --phase 2 --phase2-mode audit --tasks <task_id>
+python .\run_chapter.py --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id>
+python .\run_chapter.py --phase 2 --phase2-mode batch-run --tasks <task_id>,<task_id> --batch-max-actions 1
 python .\run_chapter.py --phase 2 --phase2-mode soft-pack --tasks <problem_ids>
 python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids> --selection <path>
 ```
@@ -61,9 +56,10 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids>
       source TeX, the Lean subject, `proof_obligations.json`, audit signals,
       classification history, dependency status, downstream/import evidence,
       ledger runtime status, and freshness/hash evidence.
-    - Apply gate only lands a passing review result. Failed existing-output
-      review records repair-required/open-debt evidence and preserves official
-      output by default.
+    - Apply gate lands clean completion only when the latest valid semantic
+      review projects to task-level `phase2_status=pass`. Failed
+      existing-output review records repair-required/open-debt evidence and
+      preserves official output by default.
   - default workflow is two-stage:
     1. `pack`
     2. edit `draft.lean`
@@ -71,6 +67,17 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids>
     4. `review-now --review-subject candidate` for a new candidate, `review-now --review-subject existing` for one runnable official output, or `review-existing-queue` followed by existing-output review/apply in deterministic queue order for a batch existing-output queue
     5. reviewer writes `semantic_review_result_vM.json`
     6. `review-apply`
+  - after failed or inconclusive semantic review, use `auto-loop` for repair.
+    Its default runtime budget and CLI floor are 15 review rounds and 15
+    build-check attempts before each review round. A manual `review-fix` /
+    `build-check` /
+    `review-now` chain is diagnostic only unless it immediately returns to
+    `auto-loop`.
+  - for a chapter or task-set scope, use `batch-plan` before hand-picking work.
+    `batch-plan` is a read-only scheduler over ledger and Phase2 metadata.
+    `batch-run --batch-max-actions 1` may advance a bounded number of selected
+    actions, but it only dispatches existing review/auto-loop commands and does
+    not decide completion.
   - if `ToyApollo/Output/<task_id>.lean` is newer than and differs from the
     latest `draft.lean` or build-ready `candidate_vN.lean`, candidate review is
     stale; do not build-check or review that stale candidate. Review the
@@ -90,11 +97,8 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids>
     default; it records repair-required evidence and continues through repair
     unless an operator explicitly opts into quarantine after downstream import
     checks
-  - `debt-fix` creates a repair request for accepted proof debt and then resumes through `review-fix`
-  - `promote-obligations` may turn blocking proof obligations into
-    `Phase2ObligationTask` ledger children, but those children still use the
-    ordinary build/review/apply loop and do not create a separate completion
-    authority
+  - `debt-fix` and `promote-obligations` are non-default maintenance paths.
+    They do not create a separate completion authority.
   - `COMPLETED_WITH_PROOF_DEBT` is not a clean dependency; hard dependents and
     selected soft imports must wait until `debt-fix` removes the accepted debt
   - before adding a new proof-debt support object or helper obligation, inspect
@@ -102,7 +106,8 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids>
     definition files, bridge/foundation files, renamed helper variants, and
     downstream-imported files; reuse or register buildable local outputs before
     treating an obligation as unavailable
-  - `verify` and `audit` remain runner-backed advanced modes
+  - `verify` and `audit` are runner-backed diagnostics/report modes only. They
+    do not land completion.
   - `pack` consumes hard deps plus confirmed soft imports and writes `dependency_decision_context.*`
   - `build-check` records undeclared local imports as dependency violations; it does not add them to the ledger
   - `soft-pack` and `soft-apply` are the Problem soft-dependency special case
@@ -158,8 +163,8 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids>
   `phase2_prompt_packs/<task_id>/semantic_review_result_vM.json` matching the
   current review basis; this is the only proof-status verdict
 - Apply authority: `review-apply` consumes a valid review result and either
-  promotes a passing candidate, reconciles existing output, or records
-  repair-required evidence
+  promotes a candidate with `phase2_status=pass`, reconciles existing output
+  with `phase2_status=pass`, or records fail/blocked/repair evidence
 - Compatibility summary: `phase2_prompt_packs/<task_id>/verify_result_vK.json`
 - Runtime summary:
   - latest operation: `latest_operation_kind` + `latest_operation_file`
@@ -186,7 +191,10 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids>
 - Use `python .\run_chapter.py --phase 2 --phase2-mode build-check --tasks <task_id>` for the default technical gate
 - Use `python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject candidate` for the default semantic review of a build-ready candidate
 - Use `python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject existing` for existing runnable official output
-- Use `python .\run_chapter.py --phase 2 --phase2-mode debt-fix --tasks <task_id>` only for tasks with `accepted_as_proof_debt` in `proof_obligations.json` or the ledger proof-obligation summary
+- Use `python .\run_chapter.py --phase 2 --phase2-mode auto-loop --tasks <task_id> --review-subject current` for failed/inconclusive semantic-review repair
+- Use `python .\run_chapter.py --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id>` before chapter-wide or task-set routing decisions
+- Use `python .\run_chapter.py --phase 2 --phase2-mode batch-run --tasks <task_id>,<task_id> --batch-max-actions 1` only to dispatch a bounded number of existing review/auto-loop actions
+- Use `python .\run_chapter.py --phase 2 --phase2-mode debt-fix --tasks <task_id>` only for tasks with `accepted_as_proof_debt` in `proof_obligations.json` or the ledger proof-obligation summary, then return to `auto-loop`
 - If a hard dependency is `COMPLETED_WITH_PROOF_DEBT`, or a legacy
   `COMPLETED` dependency still records `accepted_as_proof_debt`, skip the
   downstream task as proof-debt-blocked and repair the blocker first.

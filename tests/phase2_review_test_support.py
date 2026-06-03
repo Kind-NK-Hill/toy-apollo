@@ -206,6 +206,8 @@ class Phase2ReviewTestSupport:
         candidate_hash: str | None = None,
         obligation_review: dict | None = None,
         evidence_review: dict | None = None,
+        proof_class: str | None = None,
+        completion_class: str | None = None,
     ) -> Path:
         request_path = pack_dir / "semantic_review_request.json"
         if request_path.exists():
@@ -242,9 +244,9 @@ class Phase2ReviewTestSupport:
                             "evidence": "manual reviewer coverage",
                         }
                     )
-        result_path.write_text(
-            json.dumps(
-                {
+        normalized_proof_class = proof_class if proof_class is not None else ("textbook_proof_completed" if verdict == "pass" else "open_math_debt")
+        normalized_completion_class = completion_class if completion_class is not None else normalized_proof_class
+        payload = {
                     "task_id": review_input["task"]["block_id"],
                     "review_input_hash": hashlib.sha256(
                         json.dumps(review_input, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -256,6 +258,8 @@ class Phase2ReviewTestSupport:
                     "verdict": verdict,
                     "confidence": "high",
                     "summary": f"manual codex review {verdict}",
+                    "proof_class": normalized_proof_class,
+                    "completion_class": normalized_completion_class,
                     "reviewer_independence": {
                         "role": "independent_read_only_reviewer",
                         "read_only": True,
@@ -320,7 +324,10 @@ class Phase2ReviewTestSupport:
                     "forbidden_weakenings": [{"status": "not_present", "summary": "manual weakening check"}] if verdict == "pass" else [],
                     "findings": [],
                     "recommended_disposition": "promote" if verdict == "pass" else "revise",
-                },
+                }
+        result_path.write_text(
+            json.dumps(
+                payload,
                 indent=2,
                 ensure_ascii=False,
             ),

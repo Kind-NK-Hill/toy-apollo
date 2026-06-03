@@ -758,6 +758,8 @@ def build_failure_summary_markdown(
             f"- Total semantic review outcomes: `{len(semantic_attempts)}`",
             f"- Latest candidate: `{latest_overall.get('candidate_file', '(unknown)')}`",
             f"- Latest semantic review verdict: `{latest_overall.get('review_verdict', 'unknown')}`",
+            f"- Latest proof class: `{latest_overall.get('proof_class', '')}`",
+            f"- Latest task status: `{latest_overall.get('task_status', '')}`",
             f"- Latest disposition: `{latest_overall.get('disposition', 'unknown')}`",
         ]
         if current_auto_loop.get("enabled"):
@@ -788,13 +790,13 @@ def build_failure_summary_markdown(
         for attempt in all_attempts[-5:]:
             stage = str(attempt.get("stage", "legacy_verify") or "legacy_verify")
             if stage == "semantic_review":
-                lines.append(f"- Attempt `{attempt.get('attempt', '?')}`: `semantic_review` / `{attempt.get('review_verdict', 'unknown')}` / `{attempt.get('disposition', 'unknown')}` / `{attempt.get('candidate_file', '(unknown)')}`")
+                lines.append(f"- Attempt `{attempt.get('attempt', '?')}`: `semantic_review` / verdict `{attempt.get('review_verdict', 'unknown')}` / task `{attempt.get('task_status', '')}` / class `{attempt.get('proof_class', '')}` / `{attempt.get('disposition', 'unknown')}` / `{attempt.get('candidate_file', '(unknown)')}`")
             else:
                 lines.append(f"- Attempt `{attempt.get('attempt', '?')}`: `{'success' if attempt.get('success') else 'failure'}` / `{attempt.get('primary_failure_kind', 'none')}` / `{attempt.get('candidate_file', '(unknown)')}`")
         lines.extend(["", "## Recommended Next Action", ""])
         primary_failure_kind = str(latest_overall.get("primary_failure_kind", "") or "")
         if latest_overall.get("success"):
-            lines.append("- The latest semantic review passed and the candidate was promoted. If `draft.lean` changes again, rerun `build-check` before any new review.")
+            lines.append("- The latest semantic review/apply path succeeded. Use Latest task status, not verdict alone, before calling this textbook complete. If `draft.lean` changes again, rerun `build-check` before any new review.")
         elif primary_failure_kind == "semantic_review_invalid":
             lines.append("- The latest semantic review artifact was stale or invalid. Regenerate a fresh request with `review-now` before applying another review result.")
         else:

@@ -457,6 +457,11 @@ def build_semantic_review_basis(
             "source_plan": str(task.get("source_plan", "") or ""),
             "dependencies": canonicalize_id_list(task.get("dependencies", [])),
             "soft_imports": canonicalize_id_list(task.get("soft_imports", [])),
+            "soft_imports_confirmed_at": str(
+                task.get("soft_imports_confirmed_at", "")
+                or current_record.get("soft_imports_confirmed_at", "")
+                or ""
+            ),
         },
         "review_subject_kind": str(review_subject_kind or ""),
         "review_subject_hash": str(review_subject_hash or ""),

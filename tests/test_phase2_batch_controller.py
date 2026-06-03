@@ -18,6 +18,7 @@ from src.toy_apollo.phase2_batch_controller import (  # noqa: E402
     NONTERMINAL,
     analyze_batch_state,
     count_substantive_failures,
+    render_markdown_report,
 )
 
 
@@ -59,6 +60,38 @@ class Phase2BatchControllerTests(unittest.TestCase):
         self.assertEqual(rows["thm_4_transitive"].failed_dependency, "def_4_root")
         self.assertEqual(rows["thm_4_independent"].status, NONTERMINAL)
         self.assertFalse(report.all_terminal)
+
+    def test_phase2_blocked_dependency_is_reported_as_blocked(self):
+        report = analyze_batch_state(
+            {
+                "batch_id": "blocked-dependency",
+                "tasks": [
+                    {
+                        "task_id": "prob_14_1",
+                        "status": NONTERMINAL,
+                        "phase2_status": "blocked",
+                        "phase2_status_reason": "selected dependency is not clean",
+                    },
+                    {
+                        "task_id": "prob_14_8",
+                        "status": NONTERMINAL,
+                        "dependencies": ["prob_14_1"],
+                    },
+                ],
+            }
+        )
+
+        rows = {row.task_id: row for row in report.rows}
+        self.assertEqual(rows["prob_14_1"].task_status, "blocked")
+        self.assertEqual(rows["prob_14_1"].next_action, "repair dependency gate blocker")
+        self.assertEqual(rows["prob_14_8"].status, NONTERMINAL)
+        self.assertEqual(rows["prob_14_8"].task_status, "blocked")
+        self.assertEqual(rows["prob_14_8"].report_status, "blocked")
+        self.assertEqual(rows["prob_14_8"].blocked_dependency, "prob_14_1")
+        self.assertEqual(rows["prob_14_8"].next_action, "skip; blocked by prob_14_1")
+        markdown = render_markdown_report(report)
+        self.assertIn("blocked_dependency", markdown)
+        self.assertIn("| prob_14_8 | NONTERMINAL | blocked | blocked |", markdown)
 
     def test_substantive_failure_count_is_conservative(self):
         budget = count_substantive_failures(
@@ -142,6 +175,96 @@ class Phase2BatchControllerTests(unittest.TestCase):
         self.assertFalse(report.all_terminal)
         self.assertTrue(report.all_reporting_terminal)
         self.assertFalse(report.all_clean_or_allowed_exception)
+
+    def test_task_status_fail_prevents_clean_batch_completion(self):
+        report = analyze_batch_state(
+            {
+                "batch_id": "task-status",
+                "tasks": [
+                    {
+                        "task_id": "thm_14_6",
+                        "type": "Theorem",
+                        "status": "COMPLETED",
+                        "phase2_review_verdict": "pass",
+                        "phase2_proof_class": "mathlib_backed_adapter_completed",
+                    }
+                ],
+            }
+        )
+
+        row = report.rows[0]
+        self.assertEqual(row.status, "COMPLETED")
+        self.assertEqual(row.task_status, "fail")
+        self.assertFalse(row.clean_or_allowed_exception)
+        self.assertFalse(report.all_clean_or_allowed_exception)
+        self.assertEqual(row.next_action, "repair task-level proof status")
+        markdown = render_markdown_report(report)
+        self.assertIn("| task_id | ledger_status | phase2_status | report_status |", markdown)
+
+    def test_completed_missing_task_status_is_not_clean(self):
+        report = analyze_batch_state(
+            {
+                "batch_id": "missing-task-status",
+                "tasks": [
+                    {
+                        "task_id": "thm_11_7",
+                        "type": "Theorem",
+                        "status": "COMPLETED",
+                    }
+                ],
+            }
+        )
+
+        row = report.rows[0]
+        self.assertEqual(row.status, "COMPLETED")
+        self.assertEqual(row.task_status, "")
+        self.assertEqual(row.report_status, "needs_fresh_review")
+        self.assertFalse(row.clean_or_allowed_exception)
+        self.assertFalse(row.terminal)
+        self.assertFalse(report.all_clean_or_allowed_exception)
+        self.assertEqual(row.next_action, "run fresh semantic review")
+
+    def test_missing_proof_class_uses_report_status_not_phase2_status(self):
+        report = analyze_batch_state(
+            {
+                "batch_id": "needs-class-normalization",
+                "tasks": [
+                    {
+                        "task_id": "thm_11_7",
+                        "type": "Theorem",
+                        "status": "COMPLETED",
+                        "phase2_review_verdict": "pass",
+                    }
+                ],
+            }
+        )
+
+        row = report.rows[0]
+        self.assertEqual(row.task_status, "fail")
+        self.assertEqual(row.report_status, "needs_class_normalization")
+        self.assertFalse(row.clean_or_allowed_exception)
+        self.assertEqual(row.next_action, "run fresh classified semantic review")
+
+    def test_proof_bearing_interface_bridge_review_pass_is_not_clean(self):
+        report = analyze_batch_state(
+            {
+                "batch_id": "bridge-on-theorem",
+                "tasks": [
+                    {
+                        "task_id": "thm_14_6",
+                        "type": "Theorem",
+                        "status": "COMPLETED",
+                        "phase2_review_verdict": "pass",
+                        "phase2_proof_class": "interface_bridge_completed",
+                    }
+                ],
+            }
+        )
+
+        row = report.rows[0]
+        self.assertEqual(row.task_status, "fail")
+        self.assertFalse(row.clean_or_allowed_exception)
+        self.assertEqual(row.next_action, "repair task-level proof status")
 
     def test_diagnostic_objective_preserves_report_terminal_for_proof_debt(self):
         report = analyze_batch_state(

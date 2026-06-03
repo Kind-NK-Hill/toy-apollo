@@ -40,6 +40,7 @@ from .phase2_semantic_review import (
     next_semantic_review_artifact_paths,
     normalize_reviewer_result,
 )
+from .phase2_task_status import classify_phase2_task_status
 from .phase2_pack_generation import (
     hard_check_diagnostic,
     parse_diagnostics,
@@ -133,10 +134,35 @@ def _has_accepted_proof_debt(review_result: dict[str, Any], task_record: dict[st
     return False
 
 
-def _review_completion_status(review_result: dict[str, Any], task_record: dict[str, Any]) -> TaskStatus:
+def _review_completion_status(review_result: dict[str, Any], task_record: dict[str, Any], task_status_projection=None) -> TaskStatus:
+    if task_status_projection is not None and str(task_status_projection.task_status) != "pass":
+        return TaskStatus.COMPLETED_WITH_PROOF_DEBT
     if _has_accepted_proof_debt(review_result, task_record):
         return TaskStatus.COMPLETED_WITH_PROOF_DEBT
     return TaskStatus.COMPLETED
+
+
+def _classify_review_task_status(task_id: str, task: dict[str, Any], review_result: dict[str, Any]):
+    return classify_phase2_task_status(
+        task_id=task_id,
+        task_type=str(task.get("type", "") or ""),
+        review_verdict=str(review_result.get("verdict", "") or ""),
+        proof_class=review_result.get("proof_class", ""),
+        completion_class=review_result.get("completion_class", ""),
+    )
+
+
+def _review_with_task_status(task_id: str, task: dict[str, Any], review_result: dict[str, Any]) -> tuple[dict[str, Any], Any]:
+    projection = _classify_review_task_status(task_id, task, review_result)
+    enriched = dict(review_result)
+    enriched["phase2_status"] = projection.task_status
+    enriched["phase2_status_reason"] = projection.reason
+    enriched["phase2_status_evidence_type"] = projection.evidence_type
+    enriched["task_status"] = projection.task_status
+    enriched["task_status_reason"] = projection.reason
+    enriched["task_status_evidence_type"] = projection.evidence_type
+    enriched["task_role"] = projection.task_role
+    return enriched, projection
 
 
 def _clear_current_review_repair_metadata(task_id: str, ledger: LedgerManager) -> None:
@@ -465,6 +491,8 @@ async def apply_codex_review_result_once(
             return False
         if str(normalized_review.get("recommended_disposition", "") or "").strip().lower() != "promote":
             return False
+        if _classify_review_task_status(task_id, task, normalized_review).task_status != "pass":
+            return False
         expected_hash = str(review_input.get("candidate", {}).get("hash", "") or review_subject_hash or "")
         if not expected_hash or existing_official_output is None:
             return False
@@ -484,6 +512,29 @@ async def apply_codex_review_result_once(
         repair_ready: dict[str, Any] | None = None,
         next_action: str = "",
     ) -> ApplyOutcome:
+        task_status_projection = None
+        if isinstance(semantic_review, dict) and str(semantic_review.get("cache_class", "") or "").strip().lower() == "semantic_verdict":
+            task_status_projection = _classify_review_task_status(task_id, task, semantic_review)
+            semantic_review = dict(semantic_review)
+            semantic_review["phase2_status"] = task_status_projection.task_status
+            semantic_review["phase2_status_reason"] = task_status_projection.reason
+            semantic_review["phase2_status_evidence_type"] = task_status_projection.evidence_type
+            semantic_review["task_status"] = task_status_projection.task_status
+            semantic_review["task_status_reason"] = task_status_projection.reason
+            semantic_review["task_status_evidence_type"] = task_status_projection.evidence_type
+            semantic_review["task_role"] = task_status_projection.task_role
+            if "Task status:" not in detail_text:
+                detail_text = f"{detail_text} Task status: {task_status_projection.task_status} ({task_status_projection.reason})."
+            if success and task_status_projection.task_status != "pass":
+                if not disposition.endswith("_non_clean"):
+                    disposition = f"{disposition}_non_clean"
+                if state_transition == "completed":
+                    state_transition = "non_clean_completed"
+                if "Non-clean apply" not in detail_text:
+                    detail_text = (
+                        f"{detail_text} Non-clean apply: review verdict is pass, but task_status="
+                        f"{task_status_projection.task_status}; this is not textbook completion."
+                    )
         verify_result_path = write_review_compat_summary(
             task_id=task_id,
             ledger=ledger,
@@ -521,6 +572,14 @@ async def apply_codex_review_result_once(
             phase2_build_fail_counter=failure_counters.build_fail_counter,
             phase2_review_fail_counter=failure_counters.review_fail_counter,
         )
+        if task_status_projection is not None:
+            ledger.update_runtime_metadata(
+                task_id,
+                phase2_review_verdict=task_status_projection.review_verdict,
+                phase2_completion_class=str(semantic_review.get("completion_class", "") or ""),
+                latest_semantic_review_result_file=str(semantic_review.get("review_result_file", "") or ""),
+                **task_status_projection.as_metadata(),
+            )
         if success:
             _clear_current_review_metadata(task_id, ledger)
             _clear_current_review_repair_metadata(task_id, ledger)
@@ -549,9 +608,13 @@ async def apply_codex_review_result_once(
                     latest_build_ready_candidate_file="",
                     latest_build_ready_candidate_hash="",
                 )
-            elif disposition.endswith("_invalid_no_promotion") or disposition.endswith("_fail_no_promotion") or disposition.endswith("_inconclusive_no_promotion"):
+            elif disposition.endswith("_no_promotion"):
                 ledger.update_runtime_metadata(task_id, pack_candidate_state="review_rejected")
-            completion_status = _review_completion_status(semantic_review, ledger.ledger.get("tasks", {}).get(task_id, {}))
+            completion_status = _review_completion_status(
+                semantic_review,
+                ledger.ledger.get("tasks", {}).get(task_id, {}),
+                task_status_projection,
+            )
             if success:
                 ledger.update_status(task_id, completion_status)
             elif existing_completed_output:
@@ -562,7 +625,14 @@ async def apply_codex_review_result_once(
                 ledger.update_status(task_id, TaskStatus.PACKED)
         else:
             if success:
-                ledger.update_status(task_id, _review_completion_status(semantic_review, ledger.ledger.get("tasks", {}).get(task_id, {})))
+                ledger.update_status(
+                    task_id,
+                    _review_completion_status(
+                        semantic_review,
+                        ledger.ledger.get("tasks", {}).get(task_id, {}),
+                        task_status_projection,
+                    ),
+                )
             elif disposition == "official_output_review_fail":
                 if apply_original_status:
                     try:
@@ -700,6 +770,22 @@ async def apply_codex_review_result_once(
             state_transition="none" if (existing_completed_output or review_subject_kind == "official_output") else "review_apply_to_failed_local",
             repair_ready=repair_ready,
             next_action="review_fix",
+        )
+    clean_review, task_status_projection = _review_with_task_status(task_id, task, normalized_review)
+    if task_status_projection.task_status != "pass":
+        detail_text = (
+            f"{detail} Task status: {task_status_projection.task_status} ({task_status_projection.reason}). "
+            f"Non-clean apply: review verdict is pass, but phase2_status={task_status_projection.task_status}; "
+            "this result is recorded for repair/report and is not landed as completion."
+        )
+        return finish(
+            success=False,
+            detail_text=detail_text,
+            diagnostics=hard_check_diagnostic("phase2_status_not_pass", task_status_projection.reason),
+            semantic_review=clean_review,
+            disposition=f"codex_review_pass_{task_status_projection.task_status}_no_promotion",
+            state_transition="none" if (existing_completed_output or review_subject_kind == "official_output") else "review_apply_no_completion",
+            next_action="review_fix" if task_status_projection.task_status == "fail" else "repair_dependency_gate",
         )
     if review_subject_kind == "official_output":
         ledger.register_success(task_id, candidate_code, ledger._hash_text(candidate_code))

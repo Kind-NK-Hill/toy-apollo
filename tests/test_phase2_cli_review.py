@@ -133,7 +133,90 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(args.phase2_mode, "promote-obligations")
         self.assertEqual(args.task_ids, [])
 
-    def test_cli_auto_loop_accepts_limits_and_review_subject(self):
+    def test_cli_batch_plan_accepts_multiple_tasks(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        with patch.object(
+            sys,
+            "argv",
+            [
+                "toy-apollo",
+                "--phase",
+                "2",
+                "--phase2-mode",
+                "batch-plan",
+                "--tasks",
+                "thm_1_1,def_1_2",
+            ],
+        ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock:
+            code = cli_app.main()
+
+        self.assertEqual(code, 0)
+        process_target_mock.assert_awaited_once()
+        args = process_target_mock.await_args.args[0]
+        self.assertEqual(args.phase2_mode, "batch-plan")
+        self.assertEqual(args.task_ids, ["thm_1_1", "def_1_2"])
+
+    def test_cli_batch_run_accepts_multiple_tasks_and_action_limit(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        with patch.object(
+            sys,
+            "argv",
+            [
+                "toy-apollo",
+                "--phase",
+                "2",
+                "--phase2-mode",
+                "batch-run",
+                "--tasks",
+                "thm_1_1,def_1_2",
+                "--batch-max-actions",
+                "2",
+            ],
+        ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock:
+            code = cli_app.main()
+
+        self.assertEqual(code, 0)
+        process_target_mock.assert_awaited_once()
+        args = process_target_mock.await_args.args[0]
+        self.assertEqual(args.phase2_mode, "batch-run")
+        self.assertEqual(args.task_ids, ["thm_1_1", "def_1_2"])
+        self.assertEqual(args.batch_max_actions, 2)
+
+    def test_cli_batch_plan_accepts_worker_queue_options(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        with patch.object(
+            sys,
+            "argv",
+            [
+                "toy-apollo",
+                "--phase",
+                "2",
+                "--phase2-mode",
+                "batch-plan",
+                "--tasks",
+                "thm_1_1,def_1_2,prob_1_1",
+                "--batch-task-kinds",
+                "theorem,definition",
+                "--batch-limit",
+                "15",
+                "--batch-workers",
+                "5",
+            ],
+        ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock:
+            code = cli_app.main()
+
+        self.assertEqual(code, 0)
+        process_target_mock.assert_awaited_once()
+        args = process_target_mock.await_args.args[0]
+        self.assertEqual(args.phase2_mode, "batch-plan")
+        self.assertEqual(args.batch_task_kinds, ["theorem", "definition"])
+        self.assertEqual(args.batch_limit, 15)
+        self.assertEqual(args.batch_workers, 5)
+
+    def test_cli_auto_loop_accepts_limits_above_15_and_review_subject(self):
         from src.toy_apollo.cli import app as cli_app
 
         with patch.object(
@@ -150,11 +233,11 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 "--review-subject",
                 "candidate",
                 "--max-auto-rounds",
-                "7",
+                "16",
                 "--nonprogress-limit",
-                "3",
+                "17",
                 "--max-build-attempts-per-round",
-                "4",
+                "18",
             ],
         ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock:
             code = cli_app.main()
@@ -164,9 +247,56 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         args = process_target_mock.await_args.args[0]
         self.assertEqual(args.phase2_mode, "auto-loop")
         self.assertEqual(args.review_subject, "candidate")
-        self.assertEqual(args.max_auto_rounds, 7)
-        self.assertEqual(args.nonprogress_limit, 3)
-        self.assertEqual(args.max_build_attempts_per_round, 4)
+        self.assertEqual(args.max_auto_rounds, 16)
+        self.assertEqual(args.nonprogress_limit, 17)
+        self.assertEqual(args.max_build_attempts_per_round, 18)
+
+    def test_cli_auto_loop_rejects_limits_below_hardcoded_15_budget(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        with patch.object(
+            sys,
+            "argv",
+            [
+                "toy-apollo",
+                "--phase",
+                "2",
+                "--phase2-mode",
+                "auto-loop",
+                "--tasks",
+                "thm_4_cli_auto_loop_low_budget",
+                "--max-auto-rounds",
+                "14",
+            ],
+        ), self.assertRaises(SystemExit) as caught:
+            cli_app.main()
+
+        self.assertEqual(caught.exception.code, 2)
+
+    def test_cli_auto_loop_defaults_to_hardcoded_15_by_15_budget(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        with patch.object(
+            sys,
+            "argv",
+            [
+                "toy-apollo",
+                "--phase",
+                "2",
+                "--phase2-mode",
+                "auto-loop",
+                "--tasks",
+                "thm_4_cli_auto_loop_default_budget",
+            ],
+        ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock:
+            code = cli_app.main()
+
+        self.assertEqual(code, 0)
+        process_target_mock.assert_awaited_once()
+        args = process_target_mock.await_args.args[0]
+        self.assertEqual(args.max_auto_rounds, 15)
+        self.assertEqual(args.max_build_attempts_per_round, 15)
+        self.assertEqual(args.nonprogress_limit, 15)
 
     def test_cli_phase2_soft_pack_accepts_problem_batch(self):
         from src.toy_apollo.cli import app as cli_app

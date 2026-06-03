@@ -375,11 +375,17 @@ def apply_softdep_selection(task_ids: list[str], ledger: LedgerManager, settings
         extra = sorted(received_ids - expected_ids)
         raise ValueError(f"Selection JSON keys mismatch. missing={missing} extra={extra}")
 
+    plan_index = _plan_index(settings.plans_dir)
     normalized_payload: dict[str, list[str]] = {}
     report_lines: list[str] = []
     rationales = _load_soft_import_rationales(pack_dir)
     for raw_task_id, raw_soft_imports in payload.items():
         task_id = canonicalize_block_id(raw_task_id)
+        plan_task = plan_index.get(task_id)
+        if plan_task is None:
+            raise FileNotFoundError(f"Task {task_id} was not found in plans/*.json")
+        if not _is_problem_task(plan_task):
+            raise ValueError(f"soft-apply only supports problem tasks: {task_id}")
         if not isinstance(raw_soft_imports, list):
             raise ValueError(f"Selection for {task_id} must be a list.")
         normalized = canonicalize_id_list(raw_soft_imports)
@@ -391,6 +397,7 @@ def apply_softdep_selection(task_ids: list[str], ledger: LedgerManager, settings
             raise ValueError(
                 f"Selection for {task_id} contains {', '.join(proof_debt_materials)} carrying proof debt; run debt-fix first."
             )
+        ledger.add_or_update_task(plan_task)
         normalized_payload[task_id] = normalized
         ledger.update_candidate_soft_imports(task_id, normalized)
         ledger.mark_soft_imports_confirmed(task_id, normalized)

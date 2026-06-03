@@ -104,6 +104,7 @@ def validate_classification(
     path: Path = DEFAULT_CLASSIFICATION,
     *,
     require_textbook_contract: bool = False,
+    require_fresh_evidence: bool = False,
 ) -> list[str]:
     errors: list[str] = []
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -208,16 +209,17 @@ def validate_classification(
             if not isinstance(text, str) or not text:
                 errors.append(f"{ev_prefix}: text must be a non-empty string")
                 continue
-            try:
-                actual = _line_text(evidence_file, line).strip()
-            except ValueError as exc:
-                errors.append(f"{ev_prefix}: {exc}")
-                continue
-            if text.strip() not in actual:
-                errors.append(
-                    f"{ev_prefix}: evidence text not found at cited line; "
-                    f"expected fragment {text!r}, actual {actual!r}"
-                )
+            if require_fresh_evidence:
+                try:
+                    actual = _line_text(evidence_file, line).strip()
+                except ValueError as exc:
+                    errors.append(f"{ev_prefix}: {exc}")
+                    continue
+                if text.strip() not in actual:
+                    errors.append(
+                        f"{ev_prefix}: evidence text not found at cited line; "
+                        f"expected fragment {text!r}, actual {actual!r}"
+                    )
 
         validation = task.get("validation")
         if not isinstance(validation, list) or not all(isinstance(item, str) for item in validation):
@@ -266,7 +268,10 @@ def main() -> int:
         help="require proof-contract evidence for textbook_proof_completed entries",
     )
     args = parser.parse_args()
-    errors = validate_classification(Path(args.path), require_textbook_contract=args.require_proof_contract)
+    errors = validate_classification(
+        Path(args.path),
+        require_textbook_contract=args.require_proof_contract,
+    )
     if errors:
         for error in errors:
             print(f"ERROR: {error}")

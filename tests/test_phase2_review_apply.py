@@ -200,6 +200,93 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_codex_review_apply_records_task_status_fail_for_adapter_review_pass(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_adapter_task_status"
+        try:
+            self._clean_root(root)
+            task_id = "thm_14_6"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass")
+            result_payload = json.loads(result_path.read_text(encoding="utf-8"))
+            result_payload["proof_class"] = "mathlib_backed_adapter_completed"
+            result_payload["completion_class"] = "mathlib_backed_adapter_completed"
+            result_path.write_text(json.dumps(result_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+            def promote_side_effect(*args, **kwargs):
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                output_path.write_text((pack_dir / "candidate_v1.lean").read_text(encoding="utf-8"), encoding="utf-8")
+                return True, "final build ok"
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                side_effect=promote_side_effect,
+            ), patch(
+                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                side_effect=promote_side_effect,
+            ):
+                success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success, detail)
+            self.assertFalse(output_path.exists())
+            task_record = ledger.ledger["tasks"][task_id]
+            self.assertEqual(task_record["status"], "PACKED")
+            self.assertEqual(task_record["phase2_review_verdict"], "pass")
+            self.assertEqual(task_record["phase2_proof_class"], "mathlib_backed_adapter_completed")
+            self.assertEqual(task_record["phase2_status"], "fail")
+            self.assertEqual(task_record["phase2_task_status"], "fail")
+            self.assertIn("adapter", task_record["phase2_task_status_reason"])
+            self.assertFalse(task_record["phase2_needs_class_normalization"])
+            self.assertIn("Task status: fail", detail)
+            self.assertIn("Non-clean apply", detail)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_missing_class_pass_is_non_clean(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_missing_class_task_status"
+        try:
+            self._clean_root(root)
+            task_id = "thm_11_7"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass")
+            result_payload = json.loads(result_path.read_text(encoding="utf-8"))
+            result_payload.pop("proof_class", None)
+            result_payload.pop("completion_class", None)
+            result_path.write_text(json.dumps(result_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+            def promote_side_effect(*args, **kwargs):
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                output_path.write_text((pack_dir / "candidate_v1.lean").read_text(encoding="utf-8"), encoding="utf-8")
+                return True, "final build ok"
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                side_effect=promote_side_effect,
+            ), patch(
+                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                side_effect=promote_side_effect,
+            ):
+                success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success, detail)
+            self.assertFalse(output_path.exists())
+            task_record = ledger.ledger["tasks"][task_id]
+            self.assertEqual(task_record["status"], "PACKED")
+            self.assertEqual(task_record["phase2_status"], "fail")
+            self.assertEqual(task_record["phase2_task_status"], "fail")
+            self.assertTrue(task_record["phase2_needs_class_normalization"])
+            self.assertIn("needs_class_normalization", task_record["phase2_task_status_evidence_type"])
+            self.assertIn("Non-clean apply", detail)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_codex_review_apply_pass_is_idempotent_after_candidate_promoted(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_idempotent_pass"
         try:

@@ -22,6 +22,7 @@ from src.toy_apollo.phase2_prompt_pack import (  # noqa: E402
     _build_build_result_payload,
     audit_completed_task_output,
     validate_candidate_hard_checks,
+    verify_prompt_pack_candidate,
 )
 from src.ledger_manager import LedgerManager, TaskStatus  # noqa: E402
 from src.toy_apollo.phase2_semantic_review import (  # noqa: E402
@@ -318,6 +319,82 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertEqual(task_record["official_output_quarantine_policy"], "not_quarantined_by_default")
             verify_result = json.loads((pack_dir / "verify_result_v1.json").read_text(encoding="utf-8"))
             self.assertEqual(verify_result["state_transition"], "audit_failed_no_quarantine")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_audit_adapter_review_pass_is_non_clean(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_audit_adapter_non_clean"
+        try:
+            self._clean_root(root)
+            task_id = "thm_14_6"
+            ledger, settings, pack_dir, _output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "build ok"),
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack._run_semantic_review_for_candidate",
+                return_value={
+                    "verdict": "pass",
+                    "cache_class": "semantic_verdict",
+                    "summary": "fixture adapter pass",
+                    "proof_class": "mathlib_backed_adapter_completed",
+                    "completion_class": "mathlib_backed_adapter_completed",
+                },
+            ):
+                success, detail = audit_completed_task_output(task_id, ledger, settings)
+
+            self.assertFalse(success, detail)
+            self.assertIn("Non-clean audit", detail)
+            task_record = ledger.ledger["tasks"][task_id]
+            self.assertEqual(task_record["status"], "COMPLETED")
+            self.assertEqual(task_record["phase2_status"], "fail")
+            self.assertEqual(task_record["phase2_task_status"], "fail")
+            verify_result = json.loads((pack_dir / "verify_result_v1.json").read_text(encoding="utf-8"))
+            self.assertEqual(verify_result["disposition"], "audit_pass_non_clean_report")
+            self.assertEqual(verify_result["state_transition"], "none")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_verify_reports_build_and_review_without_landing_completion(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_verify_report_only"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_pack_generation_verify_report_only"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+
+            with patch("src.toy_apollo.phase2_prompt_pack.LeanCompiler") as compiler_cls, patch(
+                "src.toy_apollo.phase2_prompt_pack._reviewer_config_or_detail",
+                return_value=({"backend": "test"}, ""),
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack._run_semantic_review_for_candidate",
+                return_value={
+                    "verdict": "pass",
+                    "cache_class": "semantic_verdict",
+                    "summary": "fixture verify pass",
+                    "proof_class": "textbook_proof_completed",
+                    "completion_class": "textbook_proof_completed",
+                },
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                return_value=(True, "final build ok"),
+            ) as staged_build:
+                compiler = compiler_cls.return_value
+                compiler.validate_with_repl_async = AsyncMock(return_value=(True, "repl ok"))
+                compiler.build_module_async = AsyncMock(return_value=(True, "temp build ok"))
+
+                success, detail = asyncio.run(verify_prompt_pack_candidate(task_id, ledger, settings))
+
+            self.assertTrue(success, detail)
+            self.assertIn("review-apply", detail)
+            self.assertFalse(output_path.exists())
+            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "PACKED")
+            self.assertEqual(ledger.ledger["tasks"][task_id]["phase2_status"], "pass")
+            staged_kwargs = staged_build.call_args.kwargs
+            self.assertTrue(staged_kwargs["restore_on_success"])
+            verify_result = json.loads((pack_dir / "verify_result_v1.json").read_text(encoding="utf-8"))
+            self.assertEqual(verify_result["disposition"], "verify_pass_report")
+            self.assertEqual(verify_result["state_transition"], "none")
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -689,6 +766,68 @@ theorem thm_10_8 : True := by
             self.assertTrue(str(task["latest_verify_result_file"]).endswith("verify_result_v1.json"))
             self.assertEqual(task["pack_candidate_state"], "draft")
             self.assertTrue(str(task["current_review_request_file"]).endswith("semantic_review_request_v1.json"))
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_review_existing_problem_preserves_soft_import_confirmation_in_review_artifacts(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_problem_soft_confirmed"
+        try:
+            self._clean_root(root)
+            task_id = "prob_4_pack_generation_problem_soft_confirmed"
+            plans_dir = root / "plans"
+            plans_dir.mkdir(parents=True, exist_ok=True)
+            (plans_dir / "12_chap4_problems_plan.json").write_text(
+                json.dumps(
+                    [
+                        {
+                            "block_id": task_id,
+                            "type": "Problem",
+                            "title": "Confirmed soft imports problem",
+                            "content": "Problem with an explicitly confirmed empty soft-import selection.",
+                            "dependencies": [],
+                            "soft_imports": [],
+                        }
+                    ],
+                    indent=2,
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            ledger = LedgerManager(ledger_path=str(root / "project_ledger.json"))
+            ledger.add_or_update_task(
+                {
+                    "block_id": task_id,
+                    "type": "Problem",
+                    "title": "Confirmed soft imports problem",
+                    "content": "Problem with an explicitly confirmed empty soft-import selection.",
+                    "source_plan": "12_chap4_problems",
+                    "dependencies": [],
+                    "soft_imports": [],
+                }
+            )
+            ledger.mark_soft_imports_confirmed(task_id, [])
+            settings = self._make_settings(root, plans_dir)
+            output_path = settings.toyapollo_output_dir / f"{task_id}.lean"
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            official_code = f"import Mathlib\n\ntheorem {task_id} : True := by\n  trivial\n"
+            output_path.write_text(official_code, encoding="utf-8")
+            ledger.register_success(task_id, official_code, ledger._hash_text(official_code))
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "build ok"),
+            ):
+                success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
+
+            self.assertTrue(success, detail)
+            confirmed_at = ledger.ledger["tasks"][task_id]["soft_imports_confirmed_at"]
+            self.assertTrue(confirmed_at)
+            pack_dir = settings.phase2_prompt_packs_dir / task_id
+            task_payload = json.loads((pack_dir / "task.json").read_text(encoding="utf-8"))
+            review_input = json.loads((pack_dir / "semantic_review_input_v1.json").read_text(encoding="utf-8"))
+            self.assertEqual(task_payload["soft_imports_confirmed_at"], confirmed_at)
+            self.assertEqual(review_input["task"]["soft_imports_confirmed_at"], confirmed_at)
+            self.assertEqual(review_input["review_basis"]["task"]["soft_imports_confirmed_at"], confirmed_at)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

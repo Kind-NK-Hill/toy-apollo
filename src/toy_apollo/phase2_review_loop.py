@@ -49,6 +49,11 @@ from .phase2_review_request import _load_current_codex_review_request, _resolve_
 from .phase2_review_request import _clear_current_review_metadata
 from .phase2_semantic_review import SEMANTIC_REVIEW_PROMPT_VERSION, SEMANTIC_REVIEW_RUBRIC_VERSION
 from .phase2_proof_obligations import proof_obligation_path, summarize_proof_obligations
+from .phase2_failure_budget import (
+    PHASE2_AUTO_LOOP_BUILD_ATTEMPTS_PER_REVIEW,
+    PHASE2_AUTO_LOOP_NONPROGRESS_LIMIT,
+    PHASE2_AUTO_LOOP_REVIEW_ROUNDS,
+)
 from .phase2_pack_generation import (
     backfill_semantic_repair_history_from_request,
     build_check_prompt_pack_candidate as run_build_check_cycle,
@@ -166,6 +171,73 @@ def _seeded_repair_request_path(pack_dir: Path, current_record: dict[str, Any]) 
 
         return str(_resolve_review_binding_path(raw, pack_dir=pack_dir))
     return ""
+
+
+def _current_build_ready_candidate_hash(pack_dir: Path, current_record: dict[str, Any]) -> str:
+    for key in ("latest_build_ready_candidate_hash", "latest_build_candidate_hash"):
+        value = str(current_record.get(key, "") or "").strip()
+        if value:
+            return value
+    raw_result = str(current_record.get("latest_build_result_file", "") or "").strip()
+    if not raw_result:
+        return ""
+    result_path = Path(raw_result).expanduser()
+    if not result_path.is_absolute():
+        result_path = (pack_dir / result_path).resolve()
+    payload = read_json_safely(result_path, {})
+    if not isinstance(payload, dict):
+        return ""
+    return str(payload.get("candidate_hash", "") or "").strip()
+
+
+def _semantic_failed_review_subject_hash(repair_request: dict[str, Any]) -> str:
+    failed_hash = str(repair_request.get("failed_review_subject_hash", "") or "").strip()
+    if not failed_hash:
+        return ""
+    failed_verdict = str(repair_request.get("failed_verdict", "") or "").strip().lower()
+    failure_kind = str(
+        repair_request.get("primary_failure_kind", "")
+        or repair_request.get("failed_disposition", "")
+        or repair_request.get("disposition", "")
+        or ""
+    ).strip().lower()
+    semantic_failure_kinds = {
+        "semantic_review_fail",
+        "official_output_review_fail",
+        "codex_review_fail_no_promotion",
+    }
+    if failed_verdict == "fail" or failure_kind in semantic_failure_kinds:
+        return failed_hash
+    return ""
+
+
+def _same_candidate_after_semantic_failure_detail(
+    *,
+    task_id: str,
+    pack_dir: Path,
+    current_record: dict[str, Any],
+    build_attempts_used: int,
+    max_build_attempts_per_round: int,
+) -> str:
+    request_path = _resolve_current_review_repair_request_path(pack_dir, current_record)
+    if request_path is None or not request_path.exists():
+        return ""
+    repair_request = read_json_safely(request_path, {})
+    if not isinstance(repair_request, dict):
+        return ""
+    failed_hash = _semantic_failed_review_subject_hash(repair_request)
+    if not failed_hash:
+        return ""
+    candidate_hash = _current_build_ready_candidate_hash(pack_dir, current_record)
+    if not candidate_hash or candidate_hash != failed_hash:
+        return ""
+    return (
+        f"Auto-loop built the same candidate after a semantic review failure for {task_id}. "
+        "This is not a hard failure, but the candidate cannot be sent back to semantic review unchanged. "
+        "The current Codex agent must repair `draft.lean` or the related Lean proof artifact, then continue "
+        f"this same-session auto-loop. Build attempts used in this round: "
+        f"{build_attempts_used}/{max_build_attempts_per_round}."
+    )
 
 
 def _initialize_auto_loop_state(
@@ -1021,9 +1093,9 @@ async def run_codex_auto_loop(
     settings,
     *,
     review_subject: str = "current",
-    max_auto_rounds: int = 6,
-    nonprogress_limit: int = 2,
-    max_build_attempts_per_round: int = 3,
+    max_auto_rounds: int = PHASE2_AUTO_LOOP_REVIEW_ROUNDS,
+    nonprogress_limit: int = PHASE2_AUTO_LOOP_NONPROGRESS_LIMIT,
+    max_build_attempts_per_round: int = PHASE2_AUTO_LOOP_BUILD_ATTEMPTS_PER_REVIEW,
 ) -> tuple[bool, str]:
     task = ensure_task_registered(resolve_phase2_task(task_id, ledger, settings), ledger)
     task_id = task["block_id"]
@@ -1279,6 +1351,20 @@ async def run_codex_auto_loop(
                 f"Build attempts used in this round: {build_attempts_used}/{state['max_build_attempts_per_round']}. "
                 f"Latest detail: {detail}"
             )
+
+        current_record = ledger.ledger.get("tasks", {}).get(task_id, {})
+        current_record = current_record if isinstance(current_record, dict) else {}
+        same_candidate_detail = _same_candidate_after_semantic_failure_detail(
+            task_id=task_id,
+            pack_dir=pack_dir,
+            current_record=current_record,
+            build_attempts_used=build_attempts_used,
+            max_build_attempts_per_round=state["max_build_attempts_per_round"],
+        )
+        if same_candidate_detail:
+            _set_current_auto_loop_metadata(task_id, ledger, current_auto_loop_phase="authoring", current_auto_loop_status="active")
+            refresh_pack_runtime_view(task, ledger, settings, pack_dir)
+            return True, same_candidate_detail
 
         _set_current_auto_loop_metadata(task_id, ledger, current_auto_loop_phase="review_prepared", current_auto_loop_status="active")
         refresh_pack_runtime_view(task, ledger, settings, pack_dir)
