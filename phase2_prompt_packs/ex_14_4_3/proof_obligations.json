@@ -22,20 +22,20 @@
       "kind": "source_step",
       "source_ref": "T_{n,m}=X_{n,0}+...+X_{n,m-1}; X_{n,i} is geometric with success probability p_{n,i}=1-i/n; X_{n,0}=1.",
       "depends_on": [],
-      "lean_landing": "ex_14_4_3_CouponTriangularArraySetup; ex_14_4_3_successProbability; import ToyApollo.Output.prob_6_3",
-      "status": "obsolete",
+      "lean_landing": "ex_14_4_3_CouponTriangularArraySetup; ex_14_4_3_stageProbabilityMeasure; ex_14_4_3_centeredCouponStageLaw",
+      "status": "proved",
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "Reuses the Chapter 6 coupon collector formalization rather than rebuilding geometric waiting times; the setup fields are concrete proof obligations, not arbitrary Prop placeholders.",
-      "last_review_evidence": "The candidate imports prob_6_3 and uses Prob63Support.stageSuccessProb, couponCollectorValueReal, and concrete setup fields for stage laws, independence, and sum-law representation.",
-      "expected_theorem_signature": "",
+      "last_review_evidence": "The setup names the coupon type count N=n+2, targetDistinct=(N+1)/2, concrete stage laws, centered stage laws, row-length transport, row-law identification, source independence, source stage-sum representation, and textbook normalization.",
+      "expected_theorem_signature": "A source setup tying row laws to centered coupon-stage geometric laws for targetDistinct=(N+1)/2.",
       "landing_kind": "support_predicate",
-      "proof_contract_status": "not_applicable",
-      "proof_contract_notes": "Step 5.6: coupon decomposition/setup is source data and Chapter 6 interface reuse, not a theorem-level proof obligation.",
-      "signature_match": "not_applicable",
-      "body_reassumption_check": "not_applicable",
-      "public_premise_check": "not_applicable"
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "This is representation/source data reused from prob_6_3. It does not expose moment, variance, or local Lyapunov proof obligations as caller premises.",
+      "signature_match": "passed",
+      "body_reassumption_check": "passed",
+      "public_premise_check": "passed"
     },
     {
       "id": "geometric_moment_formulas",
@@ -45,20 +45,20 @@
       "depends_on": [
         "coupon_geometric_decomposition"
       ],
-      "lean_landing": "ex_14_4_3_geometricMgf; ex_14_4_3_geometricMean; ex_14_4_3_geometricVariance; ex_14_4_3_geometricCenteredFourthMoment; ex_14_4_3_GeometricMomentFormulas",
-      "status": "partial",
-      "review_status": "needs_review",
+      "lean_landing": "ex_14_4_3_geometric_moment_formulas_verified",
+      "status": "proved",
+      "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "The moment formulas are explicit and packaged for the Lyapunov verification.",
-      "last_review_evidence": "MGF, mean, variance, centered fourth moment, and GeometricMomentFormulas are all explicit.",
-      "expected_theorem_signature": "theorem ex_14_4_3_geometric_moment_formulas_verified : theorem-level derivation of the geometric MGF, mean, variance, and centered fourth moment formulas for the coupon setup",
-      "landing_kind": "support_predicate",
-      "proof_contract_status": "open_math_debt",
-      "proof_contract_notes": "Step 5.6: formulas are currently packaged as structure fields. They are not marked proved until theorem-level derivations are contract-checked.",
-      "signature_match": "unverified",
-      "body_reassumption_check": "unverified",
-      "public_premise_check": "unverified"
+      "last_review_evidence": "ex_14_4_3_geometric_moment_formulas_verified calls ex_14_4_3_stageMeasure_mgf_eq, Prob63Support.stageWaitIntegral_eq, ex_14_4_3_centeredCouponStageLaw_second_moment_eq, and ex_14_4_3_centeredCouponStageLaw_lyapunovMoment_eq. The MGF theorem reduces concrete stage masses to geometricPMFReal and applies ex_14_4_3_geometric_mgf_hasSum.",
+      "expected_theorem_signature": "(n : Nat) -> Fin (ex_14_4_3_targetDistinct n) -> ex_14_4_3_GeometricMomentFormulasForStage n i",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The moment formulas are proved from concrete geometric stage laws and supporting series/integral theorems, not supplied by the caller or by rfl over a record.",
+      "signature_match": "passed",
+      "body_reassumption_check": "passed",
+      "public_premise_check": "passed"
     },
     {
       "id": "lyapunov_fourth_moment_bound",
@@ -68,13 +68,13 @@
       "depends_on": [
         "geometric_moment_formulas"
       ],
-      "lean_landing": "ex_14_4_3_LyapunovVerification; ex_14_4_3_lyapunov_condition_internal",
-      "status": "open",
-      "review_status": "needs_review",
+      "lean_landing": "ex_14_4_3_lyapunov_condition_from_fourth_moment_riemann_sum; ex_14_4_3_lyapunov_condition_from_proved_bounds",
+      "status": "proved",
+      "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "The analytic Riemann-sum details are named in the verification structure, but this remains open_math_debt because the final Lyapunov condition is now isolated in private axiom ex_14_4_3_lyapunov_condition_internal.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support lands only on non-theorem declarations.\n[phase2-public-interface] 2026-05-23: removed the public theorem parameter hLyapunov. The non-beyond-book Lyapunov verification is no longer a caller obligation, but still must be replaced by theorem-level fourth-moment/Riemann-sum evidence.",
-      "last_review_evidence": "The public hLyapunov parameter has been removed. ex_14_4_3_asymptoticNormality now applies thm_14_8 through Or.inr (ex_14_4_3_lyapunov_condition_internal C), so the proof remains open private axiom debt rather than a public proof package.",
+      "last_review_evidence": "ex_14_4_3_row_lyapunov_sum_eq_coupon_fourth_sum and ex_14_4_3_totalVariance_eq_geometricVariance_sum prove the row numerator and variance alignments; ex_14_4_3_fourth_moment_row_sum_is_O_n and ex_14_4_3_variance_scale_lower_bound supply numerator/denominator growth; ex_14_4_3_lyapunov_condition_from_proved_bounds proves thm_14_8_LyapunovCondition.",
       "source_output_alignment": {
         "audited_at": "2026-05-19",
         "audit_class": "C_support_predicate_or_structure_only",
@@ -94,13 +94,13 @@
       "ledger_task_id": "obl_ex_14_4_3_lyapunov_fourth_moment_bound",
       "obligation_fingerprint": "24e8ef50fb7f579eac8e871464f4e617c193be502b634b0b7b03b00e024a1718",
       "discharged_by_task": "obl_ex_14_4_3_lyapunov_fourth_moment_bound",
-      "expected_theorem_signature": "theorem ex_14_4_3_lyapunov_condition_from_fourth_moment_riemann_sum : ex_14_4_3_GeometricMomentFormulas C → thm_14_8_LyapunovCondition C.theoremSetup",
-      "landing_kind": "private_axiom",
-      "proof_contract_status": "open_math_debt",
-      "proof_contract_notes": "Step 5.6: local Lyapunov verification remains open because the current landing includes private axiom ex_14_4_3_lyapunov_condition_internal.",
-      "signature_match": "failed",
-      "body_reassumption_check": "failed",
-      "public_premise_check": "failed"
+      "expected_theorem_signature": "(C : ex_14_4_3_CouponTriangularArraySetup) -> thm_14_8_LyapunovCondition C.theoremSetup",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The proof uses parent-owned row Lyapunov and total variance alignment theorems, finite row bounds, and squeeze to zero. No caller-supplied local Lyapunov condition remains.",
+      "signature_match": "passed",
+      "body_reassumption_check": "passed",
+      "public_premise_check": "passed"
     },
     {
       "id": "apply_triangular_array_clt",
@@ -110,20 +110,20 @@
       "depends_on": [
         "lyapunov_fourth_moment_bound"
       ],
-      "lean_landing": "ex_14_4_3_asymptoticNormality; ex_14_4_3",
-      "status": "partial",
-      "review_status": "needs_review",
+      "lean_landing": "ex_14_4_3_textbook_normalized_clt; ex_14_4_3",
+      "status": "proved",
+      "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "The final theorem invokes thm_14_8 through the Lyapunov branch. It explicitly inherits the sole allowed beyond-book exception through H : thm_14_8_ProofBeyondBook C.theoremSetup; the non-beyond-book Lyapunov verification remains a separate open obligation isolated in a private axiom.",
-      "last_review_evidence": "ex_14_4_3_asymptoticNormality applies thm_14_8 through Or.inr (ex_14_4_3_lyapunov_condition_internal C). The former public hLyapunov parameter is gone; only the inherited H : thm_14_8_ProofBeyondBook C.theoremSetup remains public.",
-      "expected_theorem_signature": "theorem ex_14_4_3_asymptotic_normality_from_verified_lyapunov : verified local Lyapunov condition plus thm_14_8 beyond-book package → ex_14_4_3 asymptotic normality",
+      "last_review_evidence": "ex_14_4_3_asymptoticNormality applies thm_14_8 C.theoremSetup H (Or.inr (ex_14_4_3_lyapunov_condition_from_proved_bounds C)); ex_14_4_3_textbook_normalized_clt packages this Tendsto result with C.textbook_normalization.",
+      "expected_theorem_signature": "(C : ex_14_4_3_CouponTriangularArraySetup) -> thm_14_8_ProofBeyondBook C.theoremSetup -> ex_14_4_3_TextbookNormalizedConvergence C",
       "landing_kind": "theorem",
-      "proof_contract_status": "open_math_debt",
-      "proof_contract_notes": "Step 5.6: final CLT application inherits the allowed thm_14_8 beyond-book package, but still depends on the local Lyapunov private axiom debt; no verified/passed contract is claimed.",
-      "signature_match": "unverified",
-      "body_reassumption_check": "unverified",
-      "public_premise_check": "unverified"
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The only nonlocal proof premise is the documented thm_14_8_ProofBeyondBook boundary. The final theorem is not an abstract C.normalizedCouponLaws conclusion alone; TextbookNormalizedConvergence includes TextbookNormalization.",
+      "signature_match": "passed",
+      "body_reassumption_check": "passed",
+      "public_premise_check": "passed"
     }
   ],
   "scaffold_hypotheses": [],
@@ -141,9 +141,97 @@
       "status": "covered",
       "summary": "Accepted on a fresh review basis under the user Tao-style staging principle.",
       "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-17T13:34:18.060532Z",
+      "verdict": "inconclusive",
+      "status": "unclear",
+      "summary": "reviewer field obligation_review.items signature_match must use the proof contract check enum",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-17T13:45:06.755535Z",
+      "verdict": "fail",
+      "status": "violated",
+      "summary": "The old private axiom blocker is removed, but the blocking Lyapunov obligation is still not covered by a verified theorem contract because its proof assumptions are public fields of the setup. The proof_obligations.json remains stale/open for the same route.",
+      "open_blockers": [
+        {
+          "obligation_id": "coupon_geometric_decomposition",
+          "issue": "covered"
+        },
+        {
+          "obligation_id": "geometric_moment_formulas",
+          "issue": "partial"
+        },
+        {
+          "obligation_id": "lyapunov_fourth_moment_bound",
+          "issue": "violated"
+        },
+        {
+          "obligation_id": "apply_triangular_array_clt",
+          "issue": "partial"
+        }
+      ]
+    },
+    {
+      "reviewed_at": "2026-06-18T02:10:50.700483Z",
+      "verdict": "fail",
+      "status": "violated",
+      "summary": "All four listed blocking obligations were checked. None is cleanly enough to pass the review basis: coupon setup is only partial public setup, geometric_moment_formulas remains a partial rfl record plus one fourth-moment theorem, Lyapunov depends on public model-alignment fields, and final CLT applies to an abstract normalized law instead of the source-normalized coupon collection variable.",
+      "open_blockers": [
+        {
+          "obligation_id": "geometric_moment_formulas",
+          "issue": "MGF, mean, and variance formulas are not theorem-level derivations from the geometric law; the record theorem is rfl over definitions."
+        },
+        {
+          "obligation_id": "lyapunov_fourth_moment_bound",
+          "issue": "Lyapunov proof depends on public C.source_row_lyapunov_sum_eq and C.source_totalVariance_eq_geometricVariance_sum."
+        },
+        {
+          "obligation_id": "apply_triangular_array_clt",
+          "issue": "Final theorem is abstract over C.normalizedCouponLaws and does not expose the source normalization by n log 2 and n(1-log 2)."
+        },
+        {
+          "obligation_id": "coupon_geometric_decomposition",
+          "issue": "partial"
+        },
+        {
+          "obligation_id": "geometric_moment_formulas",
+          "issue": "partial"
+        },
+        {
+          "obligation_id": "lyapunov_fourth_moment_bound",
+          "issue": "violated"
+        },
+        {
+          "obligation_id": "apply_triangular_array_clt",
+          "issue": "partial"
+        }
+      ]
+    },
+    {
+      "reviewed_at": "2026-06-18T03:34:48.264256Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All four blocking proof obligations listed in proof_obligations.json are covered by current candidate_v8 theorem-level evidence. The old proof_obligations statuses are stale relative to the v8 candidate and Math Gate v7 go.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-18T15:26:50.307127Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All four blocking proof obligations in proof_obligations.json are covered by current theorem-level evidence in the split official output. Older notes inside proof_obligations.json that mention a private axiom or public-field debt are stale relative to the inspected parent/support Lean files.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-18T16:15:44.840585Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All four blocking proof obligations in proof_obligations.json are covered by current theorem-level evidence in the split official output. Older notes inside proof_obligations.json that mention a private axiom or public-field debt are stale relative to the inspected parent/support Lean files.",
+      "open_blockers": []
     }
   ],
-  "last_reviewed_at": "2026-05-20T13:27:45.368993Z",
+  "last_reviewed_at": "2026-06-18T16:15:44.840585Z",
   "source_output_alignment_audit": {
     "audited_at": "2026-05-19",
     "accepted_debt_count": 1,

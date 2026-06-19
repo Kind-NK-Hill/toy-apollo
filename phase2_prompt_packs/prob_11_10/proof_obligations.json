@@ -30,8 +30,8 @@
       "source_ref": "",
       "depends_on": [],
       "lean_landing": "prob_11_10_continuousCDF",
-      "status": "partial",
-      "review_status": "needs_review",
+      "status": "obsolete",
+      "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "",
@@ -39,7 +39,7 @@
       "expected_theorem_signature": "prob_11_10_continuousCDF F represents the continuous cdf assumption.",
       "landing_kind": "support_predicate",
       "proof_contract_status": "not_applicable",
-      "proof_contract_notes": "This is an interface predicate for a source assumption. It is source-facing because it expands to monotonicity, continuity, and the two cdf tail limits.",
+      "proof_contract_notes": "This is a source-facing interface predicate, not a proof obligation; it expands the continuous cdf assumption into monotonicity, continuity, and tail limits.",
       "body_reassumption_check": "not_applicable",
       "signature_match": "passed",
       "public_premise_check": "passed"
@@ -59,8 +59,8 @@
         "continuous_cdf_interface"
       ],
       "lean_landing": "prob_11_10_uniformCDFDeviation",
-      "status": "partial",
-      "review_status": "needs_review",
+      "status": "obsolete",
+      "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "",
@@ -68,7 +68,7 @@
       "expected_theorem_signature": "prob_11_10_uniformCDFDeviation X F n omega is the sup_x empirical-cdf error.",
       "landing_kind": "support_predicate",
       "proof_contract_status": "not_applicable",
-      "proof_contract_notes": "prob_11_10_uniformCDFDeviation is exactly the sSup of |empiricalCDFAt X x n omega - F x| over real thresholds.",
+      "proof_contract_notes": "The definition is exactly the sSup over real thresholds of |empiricalCDFAt X x n omega - F x|.",
       "body_reassumption_check": "not_applicable",
       "signature_match": "passed",
       "public_premise_check": "passed"
@@ -97,7 +97,7 @@
       "expected_theorem_signature": "For each x, the empirical cdf at x converges almost surely to F x under the indicator integrability, independence, identical-distribution, and mean assumptions.",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "prob_11_10_pointwise destructs the indicator-level assumptions at the fixed threshold x and applies ex_11_5_1. This is a legitimate reuse of the existing fixed-point empirical-cdf theorem, not a reassumption of uniform convergence.",
+      "proof_contract_notes": "prob_11_10_pointwise destructs the indicator assumptions at fixed x and applies ex_11_5_1; it does not assume uniform convergence.",
       "body_reassumption_check": "passed",
       "signature_match": "passed",
       "public_premise_check": "passed"
@@ -179,7 +179,7 @@
       "expected_theorem_signature": "A theorem-level proof that continuity/monotonicity of F and fixed-grid almost-sure convergence imply almost-sure convergence of the uniform empirical-cdf deviation to 0.",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "prob_11_10_polya_uniformization_from_pointwise no longer uses prob_11_10_continuous_grid_uniformization_internal or any private axiom. The proof body builds the finite grid, assembles grid-point a.s. convergence, proves the pathwise sandwich, bounds the sSup deviation, and derives convergence. hPointwise is obtained internally in prob_11_10 from prob_11_10_pointwise.",
+      "proof_contract_notes": "The theorem builds cdf tail cutoffs, a finite grid, finite a.s. event assembly, pathwise monotonicity and sandwiching, an sSup deviation bound, and convergence to zero. The current subject has no prob_11_10_continuous_grid_uniformization_internal private axiom.",
       "body_reassumption_check": "passed",
       "signature_match": "passed",
       "public_premise_check": "passed"
@@ -288,9 +288,23 @@
           "issue": "covered"
         }
       ]
+    },
+    {
+      "reviewed_at": "2026-06-01T04:06:45.868854Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All four listed obligations are covered or not-applicable as interface objects. The proof_obligations file still carries stale classification/scaffold text from the former private-axiom state, but the current Lean subject contains theorem-level uniformization evidence and no matching private axiom declaration.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-06T05:55:19.788990Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All listed obligations are covered or not-applicable as interface objects. Stale proof_obligations classification/scaffold text still mentions the former private axiom, but the current v10 Lean subject contains theorem-level uniformization and no matching private axiom declaration.",
+      "open_blockers": []
     }
   ],
-  "last_reviewed_at": "2026-05-28T05:06:21.719592Z",
+  "last_reviewed_at": "2026-06-06T05:55:19.788990Z",
   "source_output_alignment_audit": {
     "audited_at": "2026-05-19",
     "accepted_debt_count": 1,

@@ -11,11 +11,33 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from src.toy_apollo.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack, write_existing_output_review_pack  # noqa: E402
+from src.toy_apollo.phase2_proof_obligations import apply_obligation_review_to_file  # noqa: E402
 from src.toy_apollo.phase2_review_apply import apply_codex_review_result_once  # noqa: E402
+from src.toy_apollo.phase2_review_apply import _resolve_codex_review_input_path  # noqa: E402
 from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E402
 
 
 class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
+    def test_resolve_codex_review_input_path_accepts_cwd_relative_paths(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_relative_input_path"
+        try:
+            self._clean_root(root)
+            pack_dir = root / "phase2_prompt_packs" / "thm_relative"
+            pack_dir.mkdir(parents=True, exist_ok=True)
+            input_path = pack_dir / "semantic_review_input_v2.json"
+            result_path = pack_dir / "semantic_review_result_v2.json"
+            input_path.write_text("{}", encoding="utf-8")
+            relative_input = input_path.relative_to(REPO_ROOT)
+
+            resolved = _resolve_codex_review_input_path(
+                result_path,
+                {"review_input_file": str(relative_input)},
+            )
+
+            self.assertEqual(resolved, input_path.resolve())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def _write_single_open_obligation(self, pack_dir: Path, task_id: str) -> None:
         (pack_dir / "proof_obligations.json").write_text(
             json.dumps(
@@ -197,6 +219,111 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertTrue(output_path.exists())
             self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "COMPLETED")
             self.assertEqual(ledger.ledger["tasks"][task_id]["exported_symbols"], [task_id])
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_apply_resolves_review_input_when_path_exists_is_false(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_long_review_input"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_long_review_input"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass")
+            result_payload = json.loads(result_path.read_text(encoding="utf-8"))
+            review_input_path = Path(str(result_payload["review_input_file"]))
+            original_exists = Path.exists
+
+            def exists_side_effect(path_self):
+                if Path(path_self) == review_input_path:
+                    return False
+                return original_exists(path_self)
+
+            def promote_side_effect(*args, **kwargs):
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                output_path.write_text((pack_dir / "candidate_v1.lean").read_text(encoding="utf-8"), encoding="utf-8")
+                return True, "final build ok"
+
+            with patch.object(Path, "exists", exists_side_effect), patch(
+                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                side_effect=promote_side_effect,
+            ), patch(
+                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                side_effect=promote_side_effect,
+            ):
+                success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertTrue(success, detail)
+            self.assertTrue(output_path.exists())
+            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "COMPLETED")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_obligation_review_apply_copies_lean_landing_from_review_item(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_obligation_landing"
+        try:
+            self._clean_root(root)
+            root.mkdir(parents=True, exist_ok=True)
+            obligations_path = root / "proof_obligations.json"
+            obligations_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "phase2.proof_obligations.v1",
+                        "task_id": "obl_thm_7_8_t7_8_rs_exists",
+                        "classification": {"requires_decomposition": False},
+                        "obligations": [
+                            {
+                                "id": "t7_8_rs_exists",
+                                "title": "RS existence",
+                                "kind": "source_step",
+                                "source_ref": "focused child",
+                                "depends_on": [],
+                                "lean_landing": "",
+                                "status": "open",
+                                "review_status": "unreviewed",
+                                "blocking": True,
+                                "scaffold_hypotheses": [],
+                                "notes": "",
+                            }
+                        ],
+                        "scaffold_hypotheses": [],
+                        "review_history": [],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            review_result = {
+                "verdict": "pass",
+                "obligation_review": {
+                    "status": "covered",
+                    "items": [
+                        {
+                            "obligation_id": "t7_8_rs_exists",
+                            "status": "covered",
+                            "lean_landing": "theorem obl_thm_7_8_t7_8_rs_exists",
+                            "expected_theorem_signature": "theorem obl_thm_7_8_t7_8_rs_exists : True",
+                            "landing_kind": "theorem",
+                            "proof_contract_status": "verified",
+                            "body_reassumption_check": "passed",
+                            "signature_match": "passed",
+                            "public_premise_check": "passed",
+                        }
+                    ],
+                    "open_blockers": [],
+                },
+            }
+
+            updated = apply_obligation_review_to_file(obligations_path, review_result)
+
+            obligation = updated["obligations"][0]
+            self.assertEqual(obligation["lean_landing"], "theorem obl_thm_7_8_t7_8_rs_exists")
+            self.assertEqual(obligation["status"], "proved")
+            self.assertEqual(obligation["review_status"], "accepted")
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -680,6 +807,28 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_codex_review_apply_pass_requires_route_inspection(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_missing_route_inspection"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_missing_route_gate"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass")
+            result_payload = json.loads(result_path.read_text(encoding="utf-8"))
+            result_payload.pop("route_inspection", None)
+            result_path.write_text(json.dumps(result_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success)
+            self.assertIn("missing required fields: route_inspection", detail)
+            self.assertFalse(output_path.exists())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_codex_review_apply_rejects_candidate_hash_mismatch(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_candidate_hash_mismatch"
         try:
@@ -733,7 +882,16 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
             self.assertTrue(review_success, review_detail)
 
-            result_path = self._write_codex_review_result(pack_dir, verdict="inconclusive")
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="inconclusive",
+                proof_class="partial_source_route",
+                completion_class="partial_source_route",
+            )
+            payload = json.loads(result_path.read_text(encoding="utf-8"))
+            payload["summary"] = "The route is accepted; one medium lemma missing within an accepted route."
+            payload["findings"] = [{"severity": "warning", "category": "proof", "message": payload["summary"]}]
+            result_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
             success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
 
             self.assertFalse(success)
@@ -938,7 +1096,18 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertTrue(build_success, build_detail)
             review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
             self.assertTrue(review_success, review_detail)
-            result_path = self._write_codex_review_result(pack_dir, verdict="fail", source_claims=[], claim_mapping=[])
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="fail",
+                source_claims=[],
+                claim_mapping=[],
+                proof_class="partial_source_route",
+                completion_class="partial_source_route",
+            )
+            payload = json.loads(result_path.read_text(encoding="utf-8"))
+            payload["summary"] = "The route is accepted; one medium lemma missing within an accepted route."
+            payload["findings"] = [{"severity": "warning", "category": "proof", "message": payload["summary"]}]
+            result_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
             success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
 
@@ -1029,7 +1198,18 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertTrue(build_success, build_detail)
             self._seed_review_failures(pack_dir, task_id, 14)
             asyncio.run(write_codex_review_pack(task_id, ledger, settings))
-            result_path = self._write_codex_review_result(pack_dir, verdict="fail", source_claims=[], claim_mapping=[])
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="fail",
+                source_claims=[],
+                claim_mapping=[],
+                proof_class="partial_source_route",
+                completion_class="partial_source_route",
+            )
+            payload = json.loads(result_path.read_text(encoding="utf-8"))
+            payload["summary"] = "The route is accepted; one medium lemma missing within an accepted route."
+            payload["findings"] = [{"severity": "warning", "category": "proof", "message": payload["summary"]}]
+            result_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
             success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
 

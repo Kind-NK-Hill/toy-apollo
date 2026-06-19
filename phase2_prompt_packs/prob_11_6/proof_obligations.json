@@ -36,11 +36,11 @@
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "[phase2-step4-cleanup] 2026-05-24: filled lean_landing for proved metadata hygiene.\n[phase2-proof-production] 2026-05-28: replaced the comma-separated definition landing with theorem-level landing prob_11_6_scaledSum_def for contract validation.",
-      "last_review_evidence": "candidate_v6.lean lines 37-57 define prob_11_6_partialSum, prob_11_6_normalizer, prob_11_6_scaledSum, and prove prob_11_6_scaledSum_def by rfl.",
+      "last_review_evidence": "",
       "expected_theorem_signature": "Define S_n and S_n / n^(3/4) for the sequence X.",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "This is a theorem-level definitional landing for the source scaled sum. It has no proof-package premise and the body is rfl, so it does not reassume any proof step.",
+      "proof_contract_notes": "The landing is a theorem-level definitional equality by rfl and carries no proof-package or source-step premise.",
       "body_reassumption_check": "passed",
       "signature_match": "passed",
       "public_premise_check": "passed"
@@ -72,7 +72,7 @@
         }
       ],
       "notes": "[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.\n[clean-debt-public-surface] 2026-05-22: public theorem no longer requires prob_11_6_sixthMomentSupport; it now exposes the explicit sixth-moment bound. Still blocked as a proof debt because no theorem derives that bound from iid/zero-mean/uniform-bounded assumptions.\n[phase2-post-ch9-rework] 2026-05-23: public theorem no longer exposes the explicit sixth-moment bound either; the missing expansion is internalized as private axiom prob_11_6_sixthMomentSupport_internal and remains open_math_debt.\n[phase2-step2.5] 2026-05-24: reclassified as needs_decision because replacing the axiom requires a reusable independent-sum moment expansion layer plus measurability, integrability, a.e. bound, and mixed-term cancellation landings. The current `def_5_10_randomVariables` independence wrapper does not itself supply the strong measurability/integrability facts needed by Mathlib product-integral and boundedness APIs.\n[phase2-proof-production] 2026-05-28: discharged by theorem-level landing prob_11_6_sixthMomentSupport_of_uniformAEBound.",
-      "last_review_evidence": "candidate_v6.lean lines 501-582 prove prob_11_6_sixthMomentSupport_of_uniformAEBound by expansion, singleton cancellation, tuple counting, and uniform bound estimates.",
+      "last_review_evidence": "",
       "source_output_alignment": {
         "audited_at": "2026-05-19",
         "audit_class": "D_no_landing_search_required",
@@ -88,7 +88,7 @@
       "expected_theorem_signature": "From independence, zero mean, and uniform almost-sure boundedness, derive prob_11_6_sixthMomentSupport P X.",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "The theorem has the expected conclusion and derives it from source-facing hypotheses. It does not re-assume sixth-moment support and does not use a private axiom.",
+      "proof_contract_notes": "The theorem proves the source hint from source-facing assumptions. It does not assume prob_11_6_sixthMomentSupport, does not call prob_11_6_sixthMomentSupport_internal, and uses named expansion/cancellation/counting lemmas.",
       "body_reassumption_check": "passed",
       "signature_match": "passed",
       "public_premise_check": "passed"
@@ -112,7 +112,7 @@
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support has no theorem-level landing.\n[clean-debt-refresh] 2026-05-21: resolved with theorem-level landing prob_11_6_tailSummability_of_sixthMoment.\n[phase2-post-ch9-rework] 2026-05-23: landing is retained as a private theorem-level internal step so support-package parameters are not exported through public task-facing declarations.",
-      "last_review_evidence": "candidate_v6.lean lines 666-696 prove prob_11_6_tailSummability_of_sixthMoment from hSixth : prob_11_6_sixthMomentSupport P X.",
+      "last_review_evidence": "",
       "source_output_alignment": {
         "audited_at": "2026-05-19",
         "audit_class": "A_existing_theorem_candidate",
@@ -130,7 +130,7 @@
       "expected_theorem_signature": "prob_11_6_sixthMomentSupport P X -> prob_11_6_tailSummabilitySupport P X",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "This conditional downstream step is theorem-level and consumes the separately proved sixth-moment support inside the file.",
+      "proof_contract_notes": "The internal theorem consumes the separately proved sixth-moment support and derives summable normalized-tail probabilities by Markov, algebraic ratio comparison, and p-series summability; no public tail-support parameter remains in prob_11_6.",
       "body_reassumption_check": "passed",
       "signature_match": "passed",
       "public_premise_check": "passed"
@@ -155,11 +155,11 @@
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "[phase2-step4-cleanup] 2026-05-24: filled lean_landing for proved metadata hygiene.",
-      "last_review_evidence": "candidate_v6.lean lines 699-729 prove prob_11_6_of_tail_summability and assemble final theorem prob_11_6.",
+      "last_review_evidence": "",
       "expected_theorem_signature": "prob_11_6_tailSummabilitySupport P X -> ConvergesAlmostSurely P (prob_11_6_scaledSum X) (fun _ => 0)",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "The final theorem obtains hSixthSupport via prob_11_6_sixthMomentSupport_of_uniformAEBound and then applies the theorem-level tail and Borel-Cantelli route.",
+      "proof_contract_notes": "The final theorem derives hSixthSupport internally, obtains tail summability, and applies the Borel-Cantelli/Theorem 10.1 route.",
       "body_reassumption_check": "passed",
       "signature_match": "passed",
       "public_premise_check": "passed"
@@ -269,9 +269,23 @@
       "status": "covered",
       "summary": "All listed blocking obligations are covered by definitions or theorem-level landings. The v7-specific definitional landing is present, and the previous sixth_moment_support proof debt remains discharged by prob_11_6_sixthMomentSupport_of_uniformAEBound.",
       "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-01T04:30:13.648785Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All four blocking obligations in the current proof_obligations.json are proved/accepted with verified theorem-level contracts; the old sixth-moment private-axiom scaffold is marked discharged and is not used by the current Lean subject.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-06T05:45:20.965875Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All blocking obligations listed in proof_obligations.json are covered by verified theorem-level contracts; the historical sixth-moment scaffold is discharged and not used as an axiom.",
+      "open_blockers": []
     }
   ],
-  "last_reviewed_at": "2026-05-28T06:46:57.369648Z",
+  "last_reviewed_at": "2026-06-06T05:45:20.965875Z",
   "source_output_alignment_audit": {
     "audited_at": "2026-05-21",
     "accepted_debt_count": 1,

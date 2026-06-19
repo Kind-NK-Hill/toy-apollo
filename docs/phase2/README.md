@@ -1,7 +1,7 @@
 # Phase2
 
 Phase2 turns one task candidate into an official ToyApollo output only through
-three gates:
+three completion gates:
 
 1. Build gate: the candidate must build.
 2. Semantic review gate: an independent read-only reviewer judges textbook
@@ -12,6 +12,11 @@ three gates:
 Lean build success is not theorem completion. A reviewer verdict of `pass` is
 not task completion by itself. The review result must also carry a `proof_class`
 that projects through the source task role to `phase2_status=pass`.
+
+Some route-risk tasks have a separate pre-author Math Review Gate. That gate
+requires a natural language proof skeleton plus an independent three-round math
+review with verdict `go` before Lean author/build may start. Its `stop` verdict
+is a correct stop signal for rewrite planning, not a completion result.
 
 ## Default Workflow
 
@@ -24,6 +29,15 @@ python .\run_chapter.py --phase 2 --phase2-mode build-check --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject candidate
 python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks <task_id> --review-result <path>
 ```
+
+For Math Review Gate tasks, insert:
+
+```text
+natural language proof skeleton -> xhigh independent math review, 3 rounds -> theorem-shape go/stop
+```
+
+between `pack` and editing `draft.lean`. `build-check` enforces this for the
+triggered tasks.
 
 For an already buildable official output, use `review-now --review-subject
 existing`, then `review-apply`. A failed existing-output review does not
@@ -43,6 +57,13 @@ is repair evidence, not a completion state, unless it is recorded through
 - [review_criteria.md](review_criteria.md): strict semantic review criteria.
 - [artifacts.md](artifacts.md): authority files versus cache/report/history.
 - [tools.md](tools.md): short notes for diagnostics-only tools.
+- [foundational_support.md](foundational_support.md): maintenance planning for
+  super-long official output and `obl_*` output reassembly.
+- [../interface_dependency_policy.md](../interface_dependency_policy.md): the
+  textbook-first, bridge-then-Mathlib policy for shared mathematical
+  interfaces.
+- [rs_stieltjes_boundary.md](rs_stieltjes_boundary.md): containment rules for
+  Chapter 1 Riemann-Stieltjes core, problem support, and later LS-RS bridges.
 
 ## Non-Default Material
 

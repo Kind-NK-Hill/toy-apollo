@@ -14,10 +14,9 @@ Use these when operating or modifying Phase 2:
 - `phase2/review_criteria.md`
 - `phase2/artifacts.md`
 - `phase2/tools.md`
+- `phase2/foundational_support.md`
 
 `phase2/textbook_complete_targets.json` is a data artifact, not a policy entry.
-Legacy root-level Phase 2 Markdown files are compatibility redirects only. Do
-not use them as the default policy source.
 
 ## Current Generated Artifacts
 
@@ -34,11 +33,18 @@ refresh. Keep them in root `docs/` unless the tools are updated at the same time
 
 These are reports/cache. They do not decide Phase2 completion.
 
+Short-lived manifest files produced by cleanup tools should not be kept in this
+root directory unless a current tool reads them as input. Tools that need those
+manifests can regenerate them.
+
 ## Step And Temporary Docs
 
 Historical step plans, queues, decision records, postmortems, and one-off
 diagnostic reports are audit trail only. They are not stable runtime policy and
 should not appear in the default docs surface.
+
+Current handoff notes for an active run should live with generated run reports,
+for example under `phase2_prompt_packs/_reports/`, not in `docs/phase2/`.
 
 ## Policy Notes
 

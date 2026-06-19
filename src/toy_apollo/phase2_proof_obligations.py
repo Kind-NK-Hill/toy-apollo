@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from copy import deepcopy
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
@@ -54,6 +55,7 @@ PROOF_CONTRACT_STATUSES = {
 }
 CONTRACT_CHECK_STATUSES = {"unverified", "passed", "failed", "not_applicable"}
 PROOF_CONTRACT_FIELDS = (
+    "lean_landing",
     "expected_theorem_signature",
     "landing_kind",
     "proof_contract_status",
@@ -284,6 +286,13 @@ def maybe_ensure_proof_obligations_file(
     if not should_track_proof_obligations(pack_dir, task, current_record=current_record, tracking_level=tracking_level):
         return None
     return ensure_proof_obligations_file(pack_dir, task, current_record=current_record)
+
+
+def load_existing_proof_obligations_file(pack_dir: Path, task: dict[str, Any]) -> dict[str, Any] | None:
+    path = proof_obligation_path(pack_dir)
+    if not path.exists():
+        return None
+    return normalize_proof_obligations(read_json_safely(path, {}), task)
 
 
 def load_proof_obligations(pack_dir: Path, task: dict[str, Any]) -> dict[str, Any]:
@@ -652,6 +661,93 @@ def apply_obligation_review_to_file(path: Path, review_result: dict[str, Any]) -
     )
     payload["review_history"] = history
     payload["last_reviewed_at"] = utc_stamp()
+    write_json(path, payload)
+    return payload
+
+
+def seed_focused_child_obligations_from_review(
+    path: Path,
+    review_result: dict[str, Any],
+    *,
+    focus_obligation_ids: list[str],
+    owner_obligations_path: Path,
+) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    payload = read_json_safely(path, {})
+    if not isinstance(payload, dict):
+        return {}
+    task = {"block_id": payload.get("task_id", "")}
+    payload = normalize_proof_obligations(payload, task)
+    existing = payload.get("obligations", []) if isinstance(payload.get("obligations", []), list) else []
+    if existing:
+        return payload
+
+    review = review_result.get("obligation_review", {}) if isinstance(review_result.get("obligation_review", {}), dict) else {}
+    if str(review.get("status", "") or "").strip().lower() != "covered":
+        return payload
+    focus = {str(item).strip() for item in focus_obligation_ids if str(item).strip()}
+    if not focus:
+        return payload
+
+    owner_payload = read_json_safely(owner_obligations_path, {}) if owner_obligations_path.exists() else {}
+    owner_task = {"block_id": owner_payload.get("task_id", "")} if isinstance(owner_payload, dict) else {"block_id": ""}
+    owner_payload = normalize_proof_obligations(owner_payload, owner_task) if isinstance(owner_payload, dict) else {}
+    owner_by_id = {
+        str(item.get("id", "") or ""): item
+        for item in owner_payload.get("obligations", [])
+        if isinstance(item, dict) and str(item.get("id", "") or "")
+    }
+
+    seeded: list[dict[str, Any]] = []
+    for item in review.get("items", []) if isinstance(review.get("items", []), list) else []:
+        if not isinstance(item, dict):
+            continue
+        obligation_id = str(item.get("obligation_id", "") or item.get("id", "") or "").strip()
+        if obligation_id not in focus:
+            continue
+        if str(item.get("status", "") or "").strip().lower() != "covered":
+            continue
+        parent_item = owner_by_id.get(obligation_id, {})
+        seeded_item: dict[str, Any] = {
+            "id": obligation_id,
+            "title": str(parent_item.get("title", "") or obligation_id),
+            "kind": str(parent_item.get("kind", "") or "source_step"),
+            "source_ref": str(parent_item.get("source_ref", "") or item.get("source_ref", "") or ""),
+            "depends_on": deepcopy(parent_item.get("depends_on", []))
+            if isinstance(parent_item.get("depends_on", []), list)
+            else [],
+            "lean_landing": "",
+            "status": "partial",
+            "review_status": "needs_review",
+            "blocking": bool(parent_item.get("blocking", True)),
+            "scaffold_hypotheses": deepcopy(parent_item.get("scaffold_hypotheses", []))
+            if isinstance(parent_item.get("scaffold_hypotheses", []), list)
+            else [],
+            "notes": str(parent_item.get("notes", "") or ""),
+            "expected_theorem_signature": str(parent_item.get("expected_theorem_signature", "") or ""),
+            "landing_kind": str(parent_item.get("landing_kind", "") or "unknown"),
+            "proof_contract_status": str(parent_item.get("proof_contract_status", "") or "unverified"),
+            "proof_contract_notes": str(parent_item.get("proof_contract_notes", "") or ""),
+            "body_reassumption_check": str(parent_item.get("body_reassumption_check", "") or "unverified"),
+            "signature_match": str(parent_item.get("signature_match", "") or "unverified"),
+            "public_premise_check": str(parent_item.get("public_premise_check", "") or "unverified"),
+        }
+        copy_proof_contract_fields(seeded_item, item)
+        if str(item.get("lean_landing", "") or "").strip():
+            seeded_item["lean_landing"] = str(item.get("lean_landing", "") or "").strip()
+        if proof_contract_is_verified(seeded_item):
+            seeded_item["status"] = "proved"
+            seeded_item["review_status"] = "accepted"
+            for scaffold in seeded_item.get("scaffold_hypotheses", []):
+                if isinstance(scaffold, dict):
+                    scaffold["status"] = "discharged"
+        seeded_item["last_review_evidence"] = str(item.get("evidence", "") or item.get("summary", "") or "")
+        seeded.append(seeded_item)
+
+    if not seeded:
+        return payload
+    payload["obligations"] = seeded
     write_json(path, payload)
     return payload
 

@@ -20,9 +20,17 @@ from src.toy_apollo.phase2_pack_generation import (  # noqa: E402
 )
 from src.toy_apollo.phase2_prompt_pack import (  # noqa: E402
     _build_build_result_payload,
+    _run_staged_official_build,
     audit_completed_task_output,
     validate_candidate_hard_checks,
     verify_prompt_pack_candidate,
+)
+from src.toy_apollo.phase2_pack_shared.io import (  # noqa: E402
+    fs_path,
+    make_dirs,
+    path_exists,
+    read_file_safely,
+    write_text,
 )
 from src.ledger_manager import LedgerManager, TaskStatus  # noqa: E402
 from src.toy_apollo.phase2_semantic_review import (  # noqa: E402
@@ -33,7 +41,136 @@ from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E4
 
 
 class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
-    def _setup_proof_debt_dependency_task(self, root: Path, *, legacy_completed_debt: bool = False):
+    def test_staged_official_build_uses_short_backup_names_for_long_child_obligation_paths(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_staged_long_backup"
+        try:
+            self._clean_root(root)
+            plans_dir = root / "plans"
+            plans_dir.mkdir(parents=True, exist_ok=True)
+            settings = self._make_settings(root, plans_dir)
+            child_id = (
+                "obl_obl_obl_prob_14_12_obligation_5_obligation_5_limit_truncation_tail_"
+                "sequence_ui_supplies_subsequence_tail_bound"
+            )
+            owner_id = "obl_obl_prob_14_12_obligation_5_obligation_5_limit_truncation_tail"
+            pack_dir = settings.phase2_prompt_packs_dir / child_id
+            pack_dir.mkdir(parents=True, exist_ok=True)
+            owner_pack_dir = settings.phase2_prompt_packs_dir / owner_id
+            owner_pack_dir.mkdir(parents=True, exist_ok=True)
+            output_path = settings.toyapollo_output_dir / f"{owner_id}.lean"
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            old_code = f"import Mathlib\n\ntheorem {owner_id} : True := by\n  trivial\n"
+            new_code = old_code.replace("trivial", "trivial")
+            output_path.write_text(old_code, encoding="utf-8")
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "final build ok"),
+            ):
+                success, detail = _run_staged_official_build(
+                    child_id,
+                    "chapter14-problems",
+                    settings,
+                    pack_dir,
+                    new_code,
+                    attempt=2,
+                    mode="review-apply",
+                    restore_on_success=False,
+                    output_owner_task_id=owner_id,
+                )
+
+            self.assertTrue(success, detail)
+            self.assertEqual(output_path.read_text(encoding="utf-8"), new_code)
+            self.assertFalse((pack_dir / ".staging" / "review-apply-2").exists())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_staged_official_build_handles_long_owner_pack_staging_path(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_staged_long_owner_pack"
+        try:
+            self._clean_root(root)
+            plans_dir = root / "plans"
+            make_dirs(plans_dir, exist_ok=True)
+            settings = self._make_settings(root, plans_dir)
+            owner_id = (
+                "obl_obl_obl_obl_obl_prob_14_8_obligation_4_obligation_4_analytic_continuation_"
+                "vitali_montel_convergence_general_vitali_montel_foundation_montel_extract"
+            )
+            child_id = f"{owner_id}_compact_stage_sequence_data_5f911e86badd"
+            pack_dir = settings.phase2_prompt_packs_dir / child_id
+            owner_pack_dir = settings.phase2_prompt_packs_dir / owner_id
+            make_dirs(pack_dir, exist_ok=True)
+            make_dirs(owner_pack_dir, exist_ok=True)
+            output_path = settings.toyapollo_output_dir / f"{owner_id}.lean"
+            make_dirs(output_path.parent, exist_ok=True)
+            old_code = f"import Mathlib\n\ntheorem {owner_id} : True := by\n  trivial\n"
+            new_code = old_code + "\n-- landed through long owner staging path\n"
+            write_text(output_path, old_code)
+
+            staging_dir = owner_pack_dir / ".staging" / "review-apply-1"
+            self.assertGreater(len(str(staging_dir)), 260)
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "final build ok"),
+            ):
+                success, detail = _run_staged_official_build(
+                    child_id,
+                    "chapter14-problems",
+                    settings,
+                    pack_dir,
+                    new_code,
+                    attempt=1,
+                    mode="review-apply",
+                    restore_on_success=False,
+                    output_owner_task_id=owner_id,
+                )
+
+            self.assertTrue(success, detail)
+            self.assertEqual(read_file_safely(output_path), new_code)
+            self.assertFalse(path_exists(staging_dir))
+        finally:
+            shutil.rmtree(fs_path(root), ignore_errors=True)
+
+    def test_staged_official_build_recovers_empty_staging_dir_without_manifest(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_staged_empty_recovery"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_staging_empty_recovery"
+            _ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            stale_staging_dir = pack_dir / ".staging" / "review-apply-1"
+            stale_staging_dir.mkdir(parents=True, exist_ok=True)
+            candidate_code = f"import Mathlib\n\ntheorem {task_id} : True := by\n  trivial\n"
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(candidate_code, encoding="utf-8")
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "final build ok"),
+            ):
+                success, detail = _run_staged_official_build(
+                    task_id,
+                    "08_chap4_measurable_functions",
+                    settings,
+                    pack_dir,
+                    candidate_code,
+                    attempt=1,
+                    mode="review-apply",
+                    restore_on_success=False,
+                )
+
+            self.assertTrue(success, detail)
+            self.assertFalse(stale_staging_dir.exists())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def _setup_proof_debt_dependency_task(
+        self,
+        root: Path,
+        *,
+        legacy_completed_debt: bool = False,
+        downstream_type: str = "Problem",
+    ):
         self._clean_root(root)
         plans_dir = root / "plans"
         plans_dir.mkdir(parents=True, exist_ok=True)
@@ -51,7 +188,7 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
                     },
                     {
                         "block_id": task_id,
-                        "type": "Problem",
+                        "type": downstream_type,
                         "title": "Downstream problem",
                         "content": "Downstream task that depends on the upstream theorem.",
                         "dependencies": [dep_id],
@@ -66,7 +203,7 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             ledger.add_or_update_task(
                 {
                     "block_id": block_id,
-                    "type": "Theorem" if block_id == dep_id else "Problem",
+                    "type": "Theorem" if block_id == dep_id else downstream_type,
                     "title": block_id,
                     "content": "test task",
                     "source_plan": "chapter10-problems",
@@ -188,10 +325,48 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertEqual(review_input["review_basis"]["proof_obligations"], {})
             self.assertEqual(review_input["review_basis"]["proof_obligations_file"], "")
             self.assertEqual(review_input["review_basis"]["proof_obligation_summary"], {})
+            route_gate = review_input["review_basis"]["route_inspection_gate"]
+            self.assertEqual(route_gate["authority"], "review_context_only")
+            self.assertEqual(
+                route_gate["required_fields"],
+                [
+                    "source_route",
+                    "expected_answer_or_statement",
+                    "local_mathlib_search",
+                    "public_interface_check",
+                    "support_or_reassembly_decision",
+                    "stop_go_verdict",
+                ],
+            )
+            self.assertIn("semantic_fail_public_premise", route_gate["trigger_conditions"])
 
             review_template = json.loads((pack_dir / "semantic_review_result_template_v1.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                review_template["route_inspection"],
+                {
+                    "status": "unclear",
+                    "source_route": "",
+                    "expected_answer_or_statement": "",
+                    "local_mathlib_search": "",
+                    "public_interface_check": "",
+                    "support_or_reassembly_decision": "",
+                    "stop_go_verdict": "unclear",
+                    "notes": "",
+                },
+            )
             schema_hints = review_template["reviewer_schema_hints"]
             self.assertEqual(schema_hints["section_status_values"], ["covered", "partial", "missing", "violated", "unclear"])
+            self.assertEqual(
+                schema_hints["route_inspection_fields"],
+                [
+                    "source_route",
+                    "expected_answer_or_statement",
+                    "local_mathlib_search",
+                    "public_interface_check",
+                    "support_or_reassembly_decision",
+                    "stop_go_verdict",
+                ],
+            )
             self.assertIn("obligation_item_contract_fields", schema_hints)
             self.assertEqual(
                 schema_hints["obligation_item_contract_fields"]["proof_contract_status"],
@@ -209,13 +384,52 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
 
             review_prompt = (pack_dir / "semantic_review_prompt_v1.md").read_text(encoding="utf-8")
             self.assertIn("Status enum fields", review_prompt)
+            self.assertIn("textbook-first, bridge-then-Mathlib", review_prompt)
+            self.assertIn("A reviewed equivalence bridge may use Mathlib", review_prompt)
+            self.assertIn("adapter-only shortcut", review_prompt)
             self.assertIn("proof_contract_status = verified", review_prompt)
+            self.assertIn("route_inspection", review_prompt)
+            self.assertIn("source_route", review_prompt)
+            self.assertIn("public_interface_check", review_prompt)
             self.assertIn("downstream_adequacy.consumers_checked entries must be objects", review_prompt)
             self.assertIn("forbidden_weakenings entries use status not_present/present/not_applicable", review_prompt)
 
             review_context = (pack_dir / "semantic_review_context_v1.md").read_text(encoding="utf-8")
             self.assertIn("Proof obligation tracking: `Level 0", review_context)
             self.assertNotIn("## Proof Obligation Ledger", review_context)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_codex_review_pack_writes_template_for_long_nested_obligation_path(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_long_review_path"
+        try:
+            self._clean_root(root)
+            task_id = (
+                "obl_obl_obl_obl_obl_prob_14_1_obligation_1_obligation_1_"
+                "whitecountlaws_atom_mass_constant_mass_on_k_white_paths_"
+                "exchangeability_mass_to_rising_factorial_mass"
+            )
+            ledger, settings, pack_dir, _output_path = self._setup_trivial_phase2_task(root, task_id)
+
+            template_path = pack_dir / "semantic_review_result_template_v1.json"
+            self.assertGreater(len(str(template_path)), 260)
+            write_text(
+                pack_dir / "math_proof_skeleton_v1.md",
+                "# Math Proof Skeleton\n\nFixture route is approved so this test can exercise long review paths.",
+            )
+            write_text(
+                pack_dir / "math_review_result_v1.json",
+                json.dumps({"verdict": "go", "rounds": [{"round": 1}, {"round": 2}, {"round": 3}]}),
+            )
+
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            success, detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+
+            self.assertTrue(success, detail)
+            self.assertTrue(path_exists(template_path))
+            self.assertTrue(path_exists(pack_dir / "semantic_review_result_template.json"))
+            self.assertTrue(path_exists(pack_dir / "semantic_review_request_v1.json"))
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -424,6 +638,40 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_build_check_requires_math_review_go_for_risky_problem(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_math_gate"
+        try:
+            self._clean_root(root)
+            task_id = "prob_14_1"
+            draft = f"import Mathlib\n\ntheorem {task_id} : True := by\n  trivial\n"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(
+                root,
+                task_id,
+                candidate_code=draft,
+            )
+            ledger.update_runtime_metadata(
+                task_id,
+                phase2_status="fail",
+                phase2_status_reason="semantic_fail_public_premise: moved white-count law into setup",
+                latest_semantic_fail_triage_category="public_premise",
+            )
+
+            success, detail = asyncio.run(build_check_prompt_pack_candidate(task_id, ledger, settings))
+
+            self.assertFalse(success)
+            self.assertIn("Math Review Gate", detail)
+            self.assertIn("math_proof_skeleton_vN.md", detail)
+            self.assertFalse((pack_dir / "candidate_v1.lean").exists())
+            metadata = json.loads((pack_dir / "metadata.json").read_text(encoding="utf-8"))
+            self.assertTrue(metadata["math_review_gate_required"])
+            self.assertEqual(metadata["math_review_gate_status"], "missing_skeleton")
+            self.assertEqual(
+                ledger.ledger["tasks"][task_id]["math_review_gate_status"],
+                "missing_skeleton",
+            )
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_build_check_scans_all_official_targets_for_newer_divergent_output(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_multiple_official_targets"
         try:
@@ -507,6 +755,25 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, f"{dep_id}.*proof debt"):
                 write_prompt_pack(task_id, ledger, settings)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_write_prompt_pack_allows_explicit_allowed_exception_dependency(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_allowed_exception_dep"
+        try:
+            ledger, settings, task_id, dep_id = self._setup_proof_debt_dependency_task(root, downstream_type="Theorem")
+            ledger.update_runtime_metadata(
+                dep_id,
+                phase2_status="allowed_exception",
+                phase2_status_evidence_type="explicit_allowed_exception",
+                phase2_task_status="allowed_exception",
+                phase2_task_status_evidence_type="explicit_allowed_exception",
+            )
+
+            pack_dir = write_prompt_pack(task_id, ledger, settings)
+
+            self.assertTrue(pack_dir.exists())
+            self.assertTrue((pack_dir / "metadata.json").exists())
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -688,6 +955,44 @@ theorem thm_10_8 : True := by
         self.assertFalse(success)
         self.assertIn("self-imports", detail)
         self.assertEqual(diagnostics[0]["kind"], "self_import")
+
+    def test_hard_check_obligation_task_targets_focused_child_landing(self):
+        task = {
+            "block_id": "obl_thm_7_8_t7_8_simple_sandwich",
+            "type": "Phase2ObligationTask",
+            "parent_block_id": "thm_7_8",
+            "dependencies": [],
+        }
+        candidate = """
+import Mathlib
+
+theorem obl_thm_7_8_t7_8_simple_sandwich : True := by
+  trivial
+""".strip()
+
+        success, diagnostics, detail = validate_candidate_hard_checks(task, candidate)
+
+        self.assertTrue(success, detail)
+        self.assertEqual(diagnostics, [])
+
+    def test_hard_check_obligation_task_allows_unprefixed_focused_landing(self):
+        task = {
+            "block_id": "obl_thm_10_8_quantile_event_measurability",
+            "type": "Phase2ObligationTask",
+            "parent_block_id": "thm_10_8",
+            "dependencies": [],
+        }
+        candidate = """
+import Mathlib
+
+theorem thm_10_8_quantile_event_measurability : True := by
+  trivial
+""".strip()
+
+        success, diagnostics, detail = validate_candidate_hard_checks(task, candidate)
+
+        self.assertTrue(success, detail)
+        self.assertEqual(diagnostics, [])
 
     def test_hard_check_still_rejects_undeclared_task_import(self):
         task = {"block_id": "thm_10_8", "type": "Theorem_with_Proof", "dependencies": []}

@@ -95,7 +95,7 @@
       "expected_theorem_signature": "theorem thm_13_14_interval_fubini_from_joint_density : thm_13_14_jointDensityLaw P fXY -> required measurability/integrability hypotheses -> thm_13_14_intervalFubiniSupport P fXY g",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "The landing proves the interval support theorem. It uses explicit density/Fubini infrastructure and derives the final theorem's needed kernel-weighted integrability through thm_13_14_kernelWeighted_integrable_from_gWeighted rather than exposing it on thm_13_14.",
+      "proof_contract_notes": "The landing proves the interval support theorem. It uses explicit density/Fubini infrastructure and derives the final theorem's kernel-weighted integrability through thm_13_14_kernelWeighted_integrable_from_gWeighted rather than exposing it on thm_13_14.",
       "signature_match": "passed",
       "body_reassumption_check": "passed",
       "public_premise_check": "passed"
@@ -172,7 +172,7 @@
       "expected_theorem_signature": "theorem thm_13_14 : source-facing joint density, measurability, nonnegativity, L1 weighted integrability, and nonzero marginal assumptions -> thm_13_14_isConditionalExpectationVersion P g (thm_13_14_conditionalExpectationKernel fXY g)",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "The final assembly constructs the candidate's measurability, both integrability facts, interval Fubini support, and pi-lambda extension before proving the local conditional-expectation-version predicate. It does not consume hIntervals, hExtend, hKernelInt, or hKernelWeightedInt as public theorem premises.",
+      "proof_contract_notes": "The final assembly constructs candidate measurability, both integrability facts, interval Fubini support, and pi-lambda extension before proving the local conditional-expectation-version predicate. It does not consume hIntervals, hExtend, hKernelInt, or hKernelWeightedInt as public theorem premises.",
       "signature_match": "passed",
       "body_reassumption_check": "passed",
       "public_premise_check": "passed"
@@ -276,9 +276,30 @@
       "status": "covered",
       "summary": "All blocking obligations in proof_obligations.json are either definitional/not applicable or covered by verified theorem-level Lean landings. No scaffold hypotheses or open blockers remain.",
       "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-01T01:52:34.527519Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All five obligations in proof_obligations.json are accepted: one definitional row is not applicable for a theorem-level proof contract, and four proof rows have verified theorem-level landings with passed signature, body-reassumption, and public-premise checks. No scaffold hypotheses or open blockers remain.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-01T05:57:16.529075Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All five obligations in proof_obligations.json were checked. One definitional row is not applicable for theorem-level proof-contract fields; the four proof rows have theorem landings with verified proof contracts, passed signature checks, passed body-reassumption checks, and passed public-premise checks. No scaffold hypotheses or open blockers remain.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-06T02:38:11.929591Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All five obligations in proof_obligations.json were checked. The definitional row is not applicable for theorem-level proof-contract fields. The four proof rows have theorem landings with verified proof contracts and passed signature, body-reassumption, and public-premise checks. No scaffold hypotheses or open blockers remain.",
+      "open_blockers": []
     }
   ],
-  "last_reviewed_at": "2026-05-27T10:25:22.915979Z",
+  "last_reviewed_at": "2026-06-06T02:38:11.929591Z",
   "source_output_alignment_audit": {
     "audited_at": "2026-05-19",
     "accepted_debt_count": 2,

@@ -19,6 +19,20 @@ A valid review must:
   open-debt routes as clean proof completion;
 - state `proof_class` and `completion_class`.
 
+## Mathlib And Bridges
+
+For shared mathematical interfaces, follow
+[textbook-first, bridge-then-Mathlib](../interface_dependency_policy.md).
+
+Textbook fidelity does not forbid Mathlib. Mathlib may be used as reusable
+infrastructure or through reviewed equivalence bridges.
+
+A valid bridge must be more general than the current task, reusable outside it,
+and mapped by review to the specific source proof step it discharges.
+
+If a bridge has the same mathematical payload as the current task, review it as
+the task proof itself. It is not infrastructure.
+
 ## Pass
 
 A `pass` verdict requires:
@@ -42,7 +56,8 @@ Use `fail` or `inconclusive` when:
 - the source claim is missing or weakened;
 - a source proof step is hidden in an assumption;
 - a public theorem requires a new non-source premise;
-- the proof is a Mathlib-backed adapter for a proof-bearing source task;
+- the proof is a Mathlib-backed adapter-only shortcut for a proof-bearing
+  source task;
 - the result carries open math debt or proof debt;
 - direct downstream consumers would need extra assumptions;
 - freshness/hash evidence is stale or inconsistent.

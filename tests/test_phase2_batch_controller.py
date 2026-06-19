@@ -93,6 +93,49 @@ class Phase2BatchControllerTests(unittest.TestCase):
         self.assertIn("blocked_dependency", markdown)
         self.assertIn("| prob_14_8 | NONTERMINAL | blocked | blocked |", markdown)
 
+    def test_family_consumable_support_does_not_block_downstream_repair(self):
+        cases = [
+            (
+                "source_route_finite_interval_covered",
+                "finite_interval_completed_but_direct_downstream_blocked",
+            ),
+            (
+                "source_route_support_completed_downstream_blocked",
+                "not_completed_downstream_blocked",
+            ),
+        ]
+        for proof_class, completion_class in cases:
+            with self.subTest(proof_class=proof_class, completion_class=completion_class):
+                report = analyze_batch_state(
+                    {
+                        "batch_id": "family-support",
+                        "tasks": [
+                            {
+                                "task_id": "thm_7_8",
+                                "status": NONTERMINAL,
+                                "review_verdict": "fail",
+                                "proof_class": proof_class,
+                                "completion_class": completion_class,
+                                "proof_obligation_summary": {
+                                    "open_blocking_ids": [],
+                                    "needs_concrete_decomposition": False,
+                                },
+                            },
+                            {
+                                "task_id": "obl_thm_7_9_t7_9_finite_bridge_abs",
+                                "status": NONTERMINAL,
+                                "dependencies": ["thm_7_8"],
+                            },
+                        ],
+                    }
+                )
+
+                rows = {row.task_id: row for row in report.rows}
+                self.assertEqual(rows["thm_7_8"].task_status, "fail")
+                self.assertEqual(rows["thm_7_8"].proof_class, proof_class)
+                self.assertEqual(rows["obl_thm_7_9_t7_9_finite_bridge_abs"].blocked_dependency, "")
+                self.assertEqual(rows["obl_thm_7_9_t7_9_finite_bridge_abs"].task_status, "")
+
     def test_substantive_failure_count_is_conservative(self):
         budget = count_substantive_failures(
             [
@@ -321,6 +364,29 @@ class Phase2BatchControllerTests(unittest.TestCase):
         self.assertTrue(row.clean_or_allowed_exception)
         self.assertTrue(row.terminal)
         self.assertEqual(row.next_action, "none; allowed beyond-book exception")
+        self.assertTrue(report.all_clean_or_allowed_exception)
+
+    def test_cited_external_proof_exception_is_clean_or_allowed_for_textbook_objective(self):
+        report = analyze_batch_state(
+            {
+                "batch_id": "allowed-cited-external",
+                "tasks": [
+                    {
+                        "task_id": "thm_11_8",
+                        "type": "Theorem",
+                        "status": "COMPLETED",
+                        "phase2_status": "allowed_exception",
+                        "phase2_review_verdict": "pass",
+                        "phase2_proof_class": "cited_external_proof_exception",
+                    }
+                ],
+            }
+        )
+
+        row = report.rows[0]
+        self.assertTrue(row.allowed_beyond_book_exception)
+        self.assertTrue(row.clean_or_allowed_exception)
+        self.assertTrue(row.terminal)
         self.assertTrue(report.all_clean_or_allowed_exception)
 
     def test_legacy_completed_task_with_accepted_proof_debt_blocks_dependents(self):

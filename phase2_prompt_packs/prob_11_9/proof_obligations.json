@@ -30,8 +30,8 @@
       "source_ref": "",
       "depends_on": [],
       "lean_landing": "prob_11_9_asymptoticRegime",
-      "status": "covered",
-      "review_status": "accepted",
+      "status": "partial",
+      "review_status": "needs_review",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "[phase2-step4-cleanup] 2026-05-24: filled lean_landing for proved metadata hygiene.",
@@ -39,7 +39,7 @@
       "expected_theorem_signature": "def prob_11_9_asymptoticRegime (boxes k : Nat -> Nat) (a : Real) : Prop",
       "landing_kind": "support_predicate",
       "proof_contract_status": "not_applicable",
-      "proof_contract_notes": "This is a source-facing assumption predicate recording positive box counts, divergence of box counts, a > 0, and convergence of k_n / boxes_n to a. It is not a theorem-level proof obligation, and it does not hide the final conclusion.",
+      "proof_contract_notes": "Records the source assumptions: positive box counts, box-count divergence, a > 0, and k_n / boxes_n -> a. It does not assume the target convergence.",
       "body_reassumption_check": "not_applicable",
       "signature_match": "passed",
       "public_premise_check": "passed"
@@ -68,7 +68,7 @@
       "expected_theorem_signature": "theorem prob_11_9_emptyBoxCount_eq_sum_indicators: the concrete empty-box count equals the finite sum of one-box empty indicators.",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "The ratio definition is X n omega / boxes n, and the theorem landing proves the source step that the concrete empty-box count expands as a sum of empty-box indicators.",
+      "proof_contract_notes": "The theorem unfolds the concrete count and proves the finite indicator-sum identity directly.",
       "body_reassumption_check": "passed",
       "signature_match": "passed",
       "public_premise_check": "passed"
@@ -122,7 +122,7 @@
       "expected_theorem_signature": "Tendsto (fun n => meanDeviationMoment P (prob_11_9_emptyBoxRatio boxes X) (fun _ => Real.exp (-a)) 2 n) atTop (nhds 0) from a source-faithful finite independent uniform occupancy model.",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "The candidate contains theorem prob_11_9_occupancy_moment_calculation_internal at candidate_v7.lean:990 with a proof body. It uses prob_11_9_meanDeviationMoment_eq_formula and asymptotic limit lemmas; it is not declared as axiom/private axiom and does not simply re-assume the moment limit.",
+      "proof_contract_notes": "The landing is a theorem with a proof body. It derives p1 and p2 limits, computes the centered moment through prob_11_9_meanDeviationMoment_eq_formula, and returns the required Tendsto 0 statement; it is not an axiom or public hMoment assumption.",
       "body_reassumption_check": "passed",
       "signature_match": "passed",
       "public_premise_check": "passed"
@@ -154,7 +154,7 @@
       "expected_theorem_signature": "ConvergesInMeanSquare P (prob_11_9_emptyBoxRatio boxes X) (fun _ => Real.exp (-a)) -> ConvergesInProbability P (prob_11_9_emptyBoxRatio boxes X) (fun _ => Real.exp (-a))",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "The bridge consumes the proved ConvergesInMeanSquare result and ordinary measurability data, then applies thm_10_5. The final theorem obtains hMS from prob_11_9_quadratic_mean, whose moment input is now covered.",
+      "proof_contract_notes": "The bridge proves the eLpNorm limit from ConvergesInMeanSquare and applies thm_10_5. The final public theorem prob_11_9 obtains the hMS premise internally from prob_11_9_quadratic_mean.",
       "body_reassumption_check": "passed",
       "signature_match": "passed",
       "public_premise_check": "passed"
@@ -288,9 +288,28 @@
       "status": "covered",
       "summary": "All listed blocking obligations are covered in candidate_v7. The ledger entry for occupancy_moment_calculation is stale with respect to this candidate: prob_11_9_occupancy_moment_calculation_internal is now a theorem with a proof body, not a private axiom.",
       "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-01T04:30:44.088576Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All listed obligations are either theorem-level covered or, for the source assumption predicate, not applicable as a proof obligation. No open blocker remains for this official-output subject.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-06T09:56:46.057870Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All blocking proof obligations in proof_obligations.json are covered by the expected source-facing landings. The asymptotic regime is an allowed source assumption predicate; the remaining blocking obligations are theorem-level landings.",
+      "open_blockers": [
+        {
+          "obligation_id": "asymptotic_regime",
+          "issue": "covered"
+        }
+      ]
     }
   ],
-  "last_reviewed_at": "2026-05-28T09:29:15.895241Z",
+  "last_reviewed_at": "2026-06-06T09:56:46.057870Z",
   "source_output_alignment_audit": {
     "audited_at": "2026-05-28",
     "accepted_debt_count": 0,

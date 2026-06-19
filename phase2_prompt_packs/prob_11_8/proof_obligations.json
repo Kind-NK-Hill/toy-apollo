@@ -37,7 +37,7 @@
       "expected_theorem_signature": "Source-facing AR(1) assumption predicate recording X0 = 0, AR recursion, |rho| < 1, Gaussian innovation laws, and innovation independence.",
       "landing_kind": "support_predicate",
       "proof_contract_status": "not_applicable",
-      "proof_contract_notes": "This is an interface/support predicate, not a theorem-level proof landing. Its source-facing interface check passes, and it does not contain the previous public future-state/innovation independence, MemLp X, mean X, variance-bound, or covariance-decay proof package fields.",
+      "proof_contract_notes": "This item is the source-facing interface, not a theorem-level proof obligation. The interface does not publicly assume future-state/noise independence, X MemLp, X mean, variance-bound, or covariance-decay consequences.",
       "body_reassumption_check": "not_applicable",
       "signature_match": "passed",
       "public_premise_check": "passed"
@@ -88,7 +88,7 @@
       "expected_theorem_signature": "From source-facing prob_11_8_ar1Assumptions P X N rho sigma2, derive exists K a, prob_11_7_covarianceDecayAssumptions P X 0 K a.",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "The body destructs hAR into only source-facing facts, derives future innovation independence through prob_11_8_ar1_unroll and prob_11_8_ar1Past_indep_future, derives Gaussian moments through prob_11_8_gaussian_innovation_moments, proves X MemLp, zero means, variance recursion, uniform variance bound, and covariance decay internally, then returns the prob_11_7 covariance-decay package. It does not re-assume covariance decay or relocate the proof package into public premises.",
+      "proof_contract_notes": "The current body derives future independence, innovation moments, X MemLp, zero means, variance recursion, uniform variance bound, covariance recursion, and geometric covariance bound internally from hAR. It no longer lands on the historical private axiom or on public covariance-support premises.",
       "body_reassumption_check": "passed",
       "signature_match": "passed",
       "public_premise_check": "passed"
@@ -116,7 +116,7 @@
       "expected_theorem_signature": "Given source-facing AR(1) assumptions and internally obtained covariance decay, prove ConvergesInProbability P (fun n => thm_11_5_sampleMean X n) (fun _ => 0).",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "The final theorem exposes only the source-facing AR(1) assumption interface and the standard probability context. It does not ask callers for covariance decay, future innovation independence, X MemLp, X means, or a variance bound.",
+      "proof_contract_notes": "The final theorem exposes only hAR and standard probability context, obtains hDecay internally, and applies prob_11_7.",
       "body_reassumption_check": "passed",
       "signature_match": "passed",
       "public_premise_check": "passed"
@@ -223,9 +223,23 @@
       "status": "covered",
       "summary": "All blocking obligations are resolved for semantic-review purposes: ar1_assumptions is a non-proof-bearing source interface item, while covariance_decay_support and apply_prob_11_7 are theorem-level covered with verified proof contracts.",
       "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-01T04:30:34.364302Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All listed obligations were checked against the current v10 Lean subject. ar1_assumptions is a support/interface predicate and not a proof-bearing landing; covariance_decay_support and apply_prob_11_7 are theorem-level landings with verified proof-contract metadata and matching current Lean evidence.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-06T05:53:35.982695Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All listed obligations were checked against the current v11 Lean subject. ar1_assumptions is a support/interface predicate and not a proof-bearing landing; covariance_decay_support and apply_prob_11_7 are theorem-level landings with verified proof-contract metadata and matching current Lean evidence.",
+      "open_blockers": []
     }
   ],
-  "last_reviewed_at": "2026-05-28T07:46:45.220092Z",
+  "last_reviewed_at": "2026-06-06T05:53:35.982695Z",
   "source_output_alignment_audit": {
     "audited_at": "2026-05-19",
     "accepted_debt_count": 1,

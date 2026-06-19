@@ -12,6 +12,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from src.ledger_manager import LedgerManager, TaskStatus  # noqa: E402
 from src.toy_apollo.core.settings import Settings  # noqa: E402
+from src.toy_apollo.phase2_pack_shared.io import write_text  # noqa: E402
 from src.toy_apollo.phase2_prompt_pack import build_check_prompt_pack_candidate, write_prompt_pack  # noqa: E402
 from src.toy_apollo.phase2_semantic_review import (  # noqa: E402
     SEMANTIC_REVIEW_PROMPT_VERSION,
@@ -71,6 +72,16 @@ class Phase2ReviewTestSupport:
             },
             "source_claims": source_claims,
             "claim_mapping": claim_mapping,
+            "route_inspection": {
+                "status": "covered" if verdict == "pass" else "violated",
+                "source_route": "fake reviewer checked the source route" if verdict == "pass" else "",
+                "expected_answer_or_statement": "fake reviewer checked the expected statement" if verdict == "pass" else "",
+                "local_mathlib_search": "fake reviewer checked local and Mathlib routes" if verdict == "pass" else "",
+                "public_interface_check": "fake reviewer found no public-premise relocation" if verdict == "pass" else "",
+                "support_or_reassembly_decision": "no family reassembly needed for this fixture" if verdict == "pass" else "",
+                "stop_go_verdict": "go" if verdict == "pass" else "stop",
+                "notes": f"fake reviewer route inspection {verdict}",
+            },
             "spine_alignment": {
                 "status": "covered" if verdict == "pass" else "violated",
                 "summary": f"fake reviewer spine {verdict}",
@@ -177,7 +188,7 @@ class Phase2ReviewTestSupport:
         pack_dir = write_prompt_pack(task_id, ledger, settings)
         if completed:
             ledger.update_status(task_id, TaskStatus.COMPLETED)
-        (pack_dir / "draft.lean").write_text(candidate_code or official_code, encoding="utf-8")
+        write_text(pack_dir / "draft.lean", candidate_code or official_code)
         return ledger, settings, pack_dir, output_path
 
     def _append_direct_downstream_consumer(self, plans_dir: Path, dependency_id: str, consumer_id: str) -> None:
@@ -271,6 +282,16 @@ class Phase2ReviewTestSupport:
                     "claim_mapping": claim_mapping
                     if claim_mapping is not None
                     else [{"source_claim": "source claim", "lean_declaration": review_input["task"]["block_id"]}],
+                    "route_inspection": {
+                        "status": "covered" if verdict == "pass" else "violated",
+                        "source_route": "manual reviewer checked the source route" if verdict == "pass" else "",
+                        "expected_answer_or_statement": "manual reviewer checked the expected statement" if verdict == "pass" else "",
+                        "local_mathlib_search": "manual reviewer checked local and Mathlib routes" if verdict == "pass" else "",
+                        "public_interface_check": "manual reviewer found no public-premise relocation" if verdict == "pass" else "",
+                        "support_or_reassembly_decision": "no family reassembly needed for this fixture" if verdict == "pass" else "",
+                        "stop_go_verdict": "go" if verdict == "pass" else "stop",
+                        "notes": f"manual route inspection {verdict}",
+                    },
                     "spine_alignment": {
                         "status": "covered" if verdict == "pass" else "violated",
                         "summary": f"manual spine {verdict}",

@@ -42,10 +42,40 @@ def review_spine_contract(task: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def review_route_inspection_gate(task: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "authority": "review_context_only",
+        "completion_authority": "none; completion still lands only through review-apply with phase2_status=pass",
+        "required_fields": [
+            "source_route",
+            "expected_answer_or_statement",
+            "local_mathlib_search",
+            "public_interface_check",
+            "support_or_reassembly_decision",
+            "stop_go_verdict",
+        ],
+        "trigger_conditions": [
+            "semantic_fail_public_premise",
+            "needs_concrete_decomposition",
+            "nested_obl_obl_family",
+            "dirty_or_blocked_family",
+            "parent_route_source_mismatch",
+        ],
+        "policy": [
+            "`obl` is not a task factory or public import surface.",
+            "`proof_obligations.json` is checklist/review context only.",
+            "Family closure reports reassembly/audit state only; they do not complete a parent.",
+            "A parent/support route is clean only after build-check -> review-now -> review-apply.",
+        ],
+    }
+
+
 def review_allowed_abstractions(task: dict[str, Any]) -> list[str]:
     task_type = str(task.get("type", "") or "").strip().lower()
     lines = [
+        "Shared interfaces follow the textbook-first, bridge-then-Mathlib policy: define the textbook object first, prove or import a reviewed equivalence bridge, then use Mathlib through that bridge when it does not skip the source proof spine.",
         "可以在证明内部调用 Mathlib 或已有测度论/积分论引理，但导出的 theorem/definition statement 必须忠实对应教材对象。",
+        "允许 reviewed reusable bridge / equivalence theorem + Mathlib support；禁止 adapter-only shortcut 或 task-shaped bridge 冒充教材证明。",
     ]
     if task_type.startswith("theorem"):
         lines.extend(
@@ -89,9 +119,9 @@ def review_forbidden_weakenings(task: dict[str, Any]) -> list[str]:
     elif task_id == "thm_7_8":
         weakenings.extend(
             [
-                "禁止把有限区间 LS↔RS interface translation 弱化成纯 measure-side interval integral 等式，却无法支撑 thm_7_9 的 improper RS 主线。",
+                "禁止把有限区间 LS↔RS interface translation 弱化成纯 measure-side interval integral 等式；Theorem 7.8 本体必须导出 RSIntegrable witness 与 LS=RS value equality。",
                 "禁止把端点无原子条件扩张为教材外的结构性假设。",
-                "禁止让 direct downstream 在 `[-n,n]` 截断调用时额外补充新的端点原子假设；如果做不到无新增假设实例化，则 thm_7_8 不得通过。",
+                "禁止在 thm_7_8 里用下游 theorem-level 新假设伪装已经解决 thm_7_9 的 improper 截断消费问题；该问题应作为 thm_7_9 的独立 proof debt 跟踪。",
             ]
         )
     elif task_id == "thm_7_9":
@@ -141,8 +171,8 @@ def review_history_risks(task_id: str) -> list[str]:
             "历史版本曾用 `else 0` 作为 divergence fallback，导致定义在语义上掩盖了“积分不存在”。",
         ],
         "thm_7_8": [
-            "历史版本只给出有限区间上的局部 measure-side translation，review 通过后仍不足以支撑 thm_7_9。",
-            "历史版本要求额外端点无原子条件，导致 thm_7_9 的 `[-n,n]` 截断主线无法无新增假设复用。",
+            "历史版本只给出有限区间上的局部 measure-side translation，缺少 RSIntegrable witness 与 LS=RS value equality。",
+            "历史版本把 thm_7_9 的 `[-n,n]` 截断消费问题反向塞进 thm_7_8 的 pass gate，导致有限区间 theorem 已完成时仍被 whole-line improper proof debt 拖住。",
         ],
         "thm_7_12": [
             "历史主线风险是直接走 measure-side shortcut，跳过 thm_7_9 所需的 improper RS 接口。",
@@ -165,8 +195,8 @@ def review_downstream_checklist(task_id: str) -> list[str]:
             "必须检查 thm_7_12 能直接消费 thm_1_4 而不新增假设；若 downstream 需要补 density translation、endpoint 处理或其他教材外 theorem-level 新增假设，verdict 必须为 fail。",
         ],
         "thm_7_8": [
-            "必须检查 thm_7_9 能否在每个截断区间 `[-n,n]` 上直接实例化 thm_7_8，而不新增教材外 theorem-level 假设。",
-            "若候选版本只在局部区间语义下成立，但 closed-interval textbook 消费路径需要额外补端点条件，则 verdict 必须为 fail。",
+            "必须检查 thm_7_8 自身是否导出 finite-interval LS↔RS public interface：IntegrableOn、RSIntegrable witness、以及 LS=RS value equality。",
+            "若 thm_7_9 仍不能消费 thm_7_8，应在 downstream_adequacy 中记录为 thm_7_9 的独立 proof debt；只要 thm_7_8 本体接口忠实且没有把该债务变成自己的额外公共假设，不应反向阻止 thm_7_8 通过。",
         ],
         "def_1_4": [
             "必须检查 downstream 是否只能在收敛已证明的前提下读取 improper RS 的具体值。",

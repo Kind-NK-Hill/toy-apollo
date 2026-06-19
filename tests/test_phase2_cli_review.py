@@ -111,7 +111,7 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         args = process_target_mock.await_args.args[0]
         self.assertEqual(args.phase2_mode, "debt-fix")
 
-    def test_cli_promote_obligations_mode_allows_empty_task_filter(self):
+    def test_cli_promote_obligations_mode_is_rejected(self):
         from src.toy_apollo.cli import app as cli_app
 
         with patch.object(
@@ -125,13 +125,11 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 "promote-obligations",
             ],
         ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock:
-            code = cli_app.main()
+            with self.assertRaises(SystemExit) as raised:
+                cli_app.main()
 
-        self.assertEqual(code, 0)
-        process_target_mock.assert_awaited_once()
-        args = process_target_mock.await_args.args[0]
-        self.assertEqual(args.phase2_mode, "promote-obligations")
-        self.assertEqual(args.task_ids, [])
+        self.assertEqual(raised.exception.code, 2)
+        process_target_mock.assert_not_awaited()
 
     def test_cli_batch_plan_accepts_multiple_tasks(self):
         from src.toy_apollo.cli import app as cli_app
@@ -215,6 +213,31 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(args.batch_task_kinds, ["theorem", "definition"])
         self.assertEqual(args.batch_limit, 15)
         self.assertEqual(args.batch_workers, 5)
+
+    def test_cli_batch_plan_accepts_explicit_legacy_audit_mode(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        with patch.object(
+            sys,
+            "argv",
+            [
+                "toy-apollo",
+                "--phase",
+                "2",
+                "--phase2-mode",
+                "batch-plan",
+                "--tasks",
+                "obl_prob_14_1_obligation_1",
+                "--batch-include-legacy",
+            ],
+        ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock:
+            code = cli_app.main()
+
+        self.assertEqual(code, 0)
+        process_target_mock.assert_awaited_once()
+        args = process_target_mock.await_args.args[0]
+        self.assertEqual(args.phase2_mode, "batch-plan")
+        self.assertTrue(args.batch_include_legacy)
 
     def test_cli_auto_loop_accepts_limits_above_15_and_review_subject(self):
         from src.toy_apollo.cli import app as cli_app

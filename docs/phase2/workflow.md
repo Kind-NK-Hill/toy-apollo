@@ -6,6 +6,12 @@ The only default Phase2 workflow is:
 pack -> edit draft -> build-check -> review-now -> review-apply
 ```
 
+For tasks that trigger the Math Review Gate, the author/build entry is:
+
+```text
+pack -> natural language proof skeleton -> xhigh independent math review, 3 rounds -> theorem-shape go/stop -> edit draft -> build-check
+```
+
 ## 1. Pack
 
 ```powershell
@@ -16,7 +22,52 @@ This writes `phase2_prompt_packs/<task_id>/` with the task, source context,
 dependency context, draft, proof-obligation checklist when applicable, and
 review materials.
 
-## 2. Edit Draft
+## 2. Math Review Gate
+
+Most small tasks do not use this gate. It is mandatory before Lean author/build
+when a task carries a route-risk signal such as:
+
+- `semantic_fail_public_premise*` or another public-premise relocation signal;
+- `source_mismatch` or statement/source mismatch;
+- `needs_concrete_decomposition`;
+- nested `obl_obl_*`;
+- dirty or blocked family state;
+- parent theorem setup that exposes a core proof result as a public premise;
+- pilot large analysis/probability tasks such as `prob_14_1` and `prob_14_8`.
+
+The gate requires:
+
+- `math_proof_skeleton_vN.md`: source statement, textbook proof route, theorem
+  shape alignment, available Mathlib/local support, required parent-owned
+  support theorems, public setup fields to delete or demote, and minimal Lean
+  theorem skeletons;
+- `math_review_result_vN.json`: independent read-only xhigh math review across
+  three rounds: source statement, proof-route closure, and Lean theorem-shape
+  feasibility.
+
+The verdict controls only whether Lean author/build may start:
+
+- `go`: authoring may proceed to `draft.lean` and `build-check`;
+- `stop`: do not author Lean; report the minimal parent/support rewrite
+  direction first.
+
+The gate should stay compressed to four pre-author checks: source statement
+identified; parent theorem/interface has no public premise relocation; the math
+proof skeleton has been reviewed with verdict `go`; and any build-ready
+candidate still goes through independent semantic review plus `review-apply`.
+
+This gate is not completion authority. It must not edit `project_ledger.json` by
+hand, must not restore `promote-obligations`, must not create nested `obl`
+tasks, and must not replace semantic review or `review-apply`.
+
+The runtime records Math Review Gate evidence in pack metadata/status fields:
+`math_review_gate_required`, `math_review_gate_status`,
+`latest_math_proof_skeleton_file`, `latest_math_proof_skeleton_hash`,
+`latest_math_review_result_file`, `latest_math_review_result_hash`, and
+`latest_math_review_verdict`. These fields are evidence for author/build
+eligibility only.
+
+## 3. Edit Draft
 
 Edit:
 
@@ -27,7 +78,7 @@ phase2_prompt_packs/<task_id>/draft.lean
 Do not edit `project_ledger.json` by hand. Do not treat old candidate,
 classification, audit, or verify files as completion evidence.
 
-## 3. Build Gate
+## 4. Build Gate
 
 ```powershell
 python .\run_chapter.py --phase 2 --phase2-mode build-check --tasks <task_id>
@@ -37,7 +88,10 @@ The build gate writes `candidate_vN.lean` and `build_result_vN.json`. Passing
 this gate only means the candidate is technically ready for review. It does not
 mean the theorem/problem/exercise is complete.
 
-## 4. Semantic Review Gate
+For Math Review Gate tasks, `build-check` stops before writing a candidate until
+the latest math review verdict is `go`.
+
+## 5. Semantic Review Gate
 
 For a build-ready candidate:
 
@@ -56,7 +110,36 @@ source TeX, Lean subject, proof obligations, audit/classification/dependency
 evidence, downstream/import evidence, ledger status, and freshness/hash
 evidence. See [review_criteria.md](review_criteria.md).
 
-## 5. Apply Gate
+### Route Inspection Gate
+
+Route inspection is a small required section of semantic review, not a new
+completion authority. It is meant to stop wrong-route work early while keeping
+completion under the normal parent/support `review-apply` gate.
+
+Route inspection is especially mandatory when any of these signals appear:
+
+- `semantic_fail_public_premise*` or another public-premise relocation signal;
+- `needs_concrete_decomposition`;
+- nested `obl_obl_*` or dirty/blocked family state;
+- parent route and source statement/answer visibly disagree;
+- family closure says old `obl` material was absorbed but the parent/support
+  route has not been independently reviewed.
+
+The reviewer records:
+
+- `source_route`;
+- `expected_answer_or_statement`;
+- `local_mathlib_search`;
+- `public_interface_check`;
+- `support_or_reassembly_decision`;
+- `stop_go_verdict`.
+
+`obl` is no longer a task type or public import surface. `proof_obligations.json`
+is checklist/review context only. A family closure report may say what should be
+reassembled, renamed, or deleted, but it must not create child tasks, write clean
+status, or replace parent/support `build-check -> review-now -> review-apply`.
+
+## 6. Apply Gate
 
 ```powershell
 python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks <task_id> --review-result <path>
@@ -68,14 +151,16 @@ the semantic review is valid and `phase2_status=pass`.
 
 If reviewer verdict is `pass` but `phase2_status` is `fail`, `blocked`, or
 `allowed_exception`, `review-apply` records the result and does not promote a
-candidate as clean completion. `allowed_exception` is only for the explicit
-`thm_14_8` beyond-book case.
+candidate as clean completion. `allowed_exception` is only for explicit
+task/class pairs documented in [status_contract.md](status_contract.md), such as
+`thm_11_8`'s cited external Etemadi proof boundary and the `thm_14_8`
+beyond-book case.
 
 Failed or inconclusive existing-output review preserves official output by
 default and records repair-required evidence. Quarantine is explicit
 maintenance after downstream/import checks, not the default apply outcome.
 
-## 6. Repair Loop
+## 7. Repair Loop
 
 After a failed or inconclusive review, repair with the runtime loop:
 
@@ -104,7 +189,35 @@ A precise missing lemma, bridge theorem, or source-route gap is not a terminal
 success condition. It is the next repair target for the loop unless the current
 goal explicitly asks only for diagnosis.
 
-## 7. Batch Planning
+Semantic review failures are triaged before ordinary repair. If the failed
+review reads as a route/source/statement problem, such as a Mathlib-backed
+adapter, public-premise relocation, private axiom, open math debt, source
+mismatch, statement mismatch, or unclear semantic route failure, Phase2 writes:
+
+```text
+semantic_fail_triage_vN.json
+prepared_diagnoser_prompt_vN.txt
+```
+
+and pauses ordinary `auto-loop` repair with `diagnoser_required`. The diagnoser
+is read-only route diagnosis, not a second semantic reviewer and not an author.
+It must not edit Lean files, official output, or the ledger. If the review only
+reports a missing small/medium lemma inside an accepted route, Phase2 continues
+ordinary repair without generating another diagnoser prompt.
+
+`reviewer_required` and `diagnoser_required` are not user-blocked states when
+subagent tools are available. They mean the main worker must dispatch an
+independent read-only reviewer or diagnoser subagent, wait for the expected
+result artifact, and then resume `review-apply` or `auto-loop`. Ask the user
+only if no suitable subagent/tool is available, or if an external result is
+needed outside the local runtime.
+
+`math_review_gate_required` likewise means there is no ordinary author action.
+Write or refresh the natural language proof skeleton, dispatch an independent
+read-only math reviewer for the three required rounds, and resume author/build
+only if the verdict is `go`.
+
+## 8. Batch Planning
 
 For a group of tasks, first ask the runtime for a read-only scheduling view:
 
@@ -114,8 +227,33 @@ python .\run_chapter.py --phase 2 --phase2-mode batch-plan --tasks <task_id>,<ta
 
 `batch-plan` reads the ledger and existing Phase2 metadata, then tells the
 operator which tasks need fresh existing review, which should enter `auto-loop`,
-and which are blocked by upstream tasks. It is a scheduler/report only. It does
-not execute repair and cannot land completion.
+which need Math Review Gate evidence, and which are blocked by upstream tasks.
+It is a scheduler/report only. It does not execute repair and cannot land
+completion.
+
+By default, `batch-plan` hides legacy/audit rows from the ordinary
+author/review queue:
+
+- `obl_*` and nested `obl_obl_*` task ids;
+- historical obligation children after the parent has already landed
+  `phase2_status=pass` or the obligation has been absorbed into parent/support
+  proof work;
+- diagnostic `restore_or_rebuild_output` rows when a draft or build/review
+  candidate already exists.
+
+The rendered plan keeps a one-line `hidden legacy/audit items` summary so the
+operator can see that rows were quarantined without spending queue space on
+them. Use `--batch-include-legacy` only for explicit audit/legacy inspection.
+Parent pass does not make old child obligations active work again; they remain
+audit/quarantine evidence unless a parent-facing task reopens them through the
+normal build/review/apply loop.
+
+When `batch-plan` is run with `--batch-limit`/`--batch-workers`, its visible
+table is an executable worker queue. It filters out `reviewer_required` and
+`diagnoser_required`, and `math_review_gate_required` rows. An empty table
+therefore means there are no ordinary author actions; it does not mean the goal
+is blocked for user input. Inspect the underlying task states and dispatch
+reviewer/diagnoser/math-review subagents as needed.
 
 For a larger repair push, ask for a worker queue instead of manually picking
 tasks:
@@ -126,6 +264,9 @@ python .\run_chapter.py --phase 2 --phase2-mode batch-plan --tasks <task_id>,<ta
 
 This keeps Problem tasks out of the first queue, ranks candidates by downstream
 fanout after dependency analysis, and prints worker slots plus conflict groups.
+The default queue should be parent-facing failed/blocked tasks first; legacy
+child obligations are not worker assignments unless `--batch-include-legacy` is
+explicitly requested.
 The worker slots are for subagent coordination only. They do not create
 subagents, bypass review independence, or make batch planning a completion
 authority.
@@ -147,8 +288,11 @@ still lands only through `review-apply` with `phase2_status=pass`.
 - `review-pack`, `review-existing`, `review-existing-queue`: prepare review
   materials; not completion authority.
 - `debt-fix`: maintenance repair path for accepted proof debt; not proof.
-- `promote-obligations`: maintenance path that creates child obligation tasks;
-  child tasks still need the normal workflow.
+- foundational support: maintenance planning for splitting super-long official
+  output and absorbing proof-obligation material into stable support or parent files; see
+  [foundational_support.md](foundational_support.md). It may include already
+  passing official outputs when their size or historical `obl_*` imports create a
+  reuse problem, but it does not land completion by itself.
 - `soft-pack` and `soft-apply`: Problem soft-dependency selection only; not a
   Lean acceptance gate.
 

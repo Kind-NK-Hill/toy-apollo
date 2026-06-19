@@ -46,8 +46,16 @@ such as:
 - `textbook_proof_completed`
 - `textbook_problem_completed`
 - `textbook_exercise_completed`
+- `textbook_source_route_completed`
 - `source_route_proof_completed`
 - `source_faithful_proof_completed`
+- `source_route_theorem`
+
+Proof-obligation material is now reassembled into the parent file or stable
+support files before review. Historical `Phase2ObligationTask` child completions
+are not completion authority for the parent theorem/problem/exercise. A parent
+is clean only after the reassembled parent/support route passes its own semantic
+review.
 
 Definition/interface tasks may pass with:
 
@@ -77,6 +85,13 @@ These proof classes or markers are fail/blocker evidence for local completion:
 They may be useful evidence or repair targets, but they are not clean
 completion.
 
+`mathlib_backed_adapter_completed` means adapter-only completion: a
+proof-bearing source task was closed by importing or applying Mathlib without a
+reviewed source-step landing or reusable equivalence bridge. It does not mean
+that every proof using Mathlib fails. A proof-bearing task may still project to
+`pass` when Mathlib use is routed through the source proof spine and reviewed as
+reusable infrastructure or an explicit equivalence bridge.
+
 ## Blocked Rules
 
 Dependency-gate markers such as `dependency_blocked`,
@@ -86,5 +101,14 @@ which remains `fail`.
 
 ## Allowed Exception
 
-`allowed_exception` is reserved for the explicit `thm_14_8` beyond-book
-exception. It must not be generalized silently.
+`allowed_exception` is reserved for explicit task/class pairs and is not clean
+textbook completion:
+
+- `thm_11_8` with `cited_external_proof_exception`: the textbook explicitly
+  cites Etemadi's external proof, and the current Lean statement is
+  source-faithful and downstream-usable while the core proof remains an
+  accepted external-proof boundary.
+- `thm_14_8` with `beyond_book_exception`: the documented beyond-book
+  exception.
+
+It must not be generalized silently.

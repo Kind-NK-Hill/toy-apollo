@@ -142,6 +142,93 @@ class Phase2PackViewsTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_build_operator_prompt_blocks_lean_author_before_math_review_go(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_operator_prompt_math_gate"
+        try:
+            self._clean_root(root)
+            task_id = "prob_14_1"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            ledger.update_runtime_metadata(
+                task_id,
+                phase2_status="fail",
+                phase2_status_reason="semantic_fail_public_premise: moved the core urn law into setup",
+                latest_semantic_fail_triage_category="public_premise",
+            )
+
+            prompt = build_operator_prompt(
+                {"block_id": task_id, "content": "Solve the urn limit problem.", "type": "Problem"},
+                ledger,
+                settings,
+                pack_dir,
+            )
+
+            self.assertIn("Math Review Gate", prompt)
+            self.assertIn("natural language proof skeleton", prompt)
+            self.assertIn("independent read-only math reviewer", prompt)
+            self.assertIn("pre-author checklist", prompt)
+            self.assertIn("source statement identified", prompt)
+            self.assertIn("no public premise relocation", prompt)
+            self.assertIn("math proof skeleton reviewed go", prompt)
+            self.assertIn("independent semantic review after build", prompt)
+            self.assertNotIn("Return Lean code only", prompt)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_build_operator_prompt_for_blocking_proof_stop_lists_current_blocker(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_operator_prompt_math_blocking_proof"
+        try:
+            self._clean_root(root)
+            task_id = "prob_14_1"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            (pack_dir / "math_proof_skeleton_v8.md").write_text(
+                "# Math Proof Skeleton\n\nThe analytic convergence theorem is the remaining blocker.",
+                encoding="utf-8",
+            )
+            (pack_dir / "math_review_result_v8.json").write_text(
+                json.dumps(
+                    {
+                        "verdict": "stop",
+                        "stop_mode": "blocking_proof",
+                        "blocking_theorems": [
+                            "prob_14_1_stirling_beta_cdf_convergence_internal"
+                        ],
+                        "allowed_next_targets": [
+                            "gamma_ratio_global_power_bound",
+                            "left_tail_eventually_small",
+                            "scaled_mass_uniform_on_compact",
+                        ],
+                        "forbidden_work": ["ToyApollo/Output promotion", "semantic review"],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            ledger.update_runtime_metadata(
+                task_id,
+                phase2_status="fail",
+                phase2_status_reason="private_axiom_or_open_math_debt",
+            )
+
+            prompt = build_operator_prompt(
+                {"block_id": task_id, "content": "Solve the urn limit problem.", "type": "Problem"},
+                ledger,
+                settings,
+                pack_dir,
+            )
+
+            self.assertIn("blocking proof", prompt.lower())
+            self.assertIn("prob_14_1_stirling_beta_cdf_convergence_internal", prompt)
+            self.assertIn("gamma_ratio_global_power_bound", prompt)
+            self.assertIn("left_tail_eventually_small", prompt)
+            self.assertIn("scaled_mass_uniform_on_compact", prompt)
+            self.assertIn("pre-author checklist", prompt)
+            self.assertIn("source statement identified", prompt)
+            self.assertIn("no public premise relocation", prompt)
+            self.assertIn("math proof skeleton reviewed go", prompt)
+            self.assertIn("independent semantic review after build", prompt)
+            self.assertNotIn("Resume Lean author/build only after the Math Review Gate verdict is `go`", prompt)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_auto_loop_nonprogress_is_explained_in_runtime_views(self):
         history = {
             "attempts": [
