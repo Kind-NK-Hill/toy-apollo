@@ -1,0 +1,180 @@
+{
+  "schema_version": "phase2.proof_obligations.v1",
+  "task_id": "thm_7_8",
+  "generated_at": "2026-06-14T00:00:00Z",
+  "classification": {
+    "requires_decomposition": true,
+    "reason": "diagnoser_result_v1 requires source-facing finite-interval LS/RS bridge decomposition before ordinary parent repair",
+    "evidence": [
+      "diagnoser_result_v1 local_repair_allowed=false",
+      "current official proof exact-calls the bridge-debt axiom lsIntegral_eq_rsIntegral_stieltjesFunction",
+      "the previous source_proof_spine placeholder promoted to an unusable coarse child",
+      "the finite-interval LS/RS route must be rebuilt as independently reviewable support"
+    ],
+    "dependency_count": 1,
+    "source_length": 2230,
+    "structural_operation_count": 5
+  },
+  "obligations": [
+    {
+      "id": "t7_8_integrability",
+      "title": "Finite Stieltjes-measure integrability on the interval",
+      "kind": "source_step",
+      "source_ref": "Theorem 7.8 finite-interval setup: continuous g on [a,b] is measurable/bounded and integrable with respect to F.measure on Icc a b.",
+      "depends_on": [],
+      "lean_landing": "thm_7_8_integrability",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "Materialized from diagnoser obligation T7.8.integrability. The proof must not use lsIntegral_eq_rsIntegral_stieltjesFunction or rs_stieltjes_ch7_bridge_debt.",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "From ContinuousOn g (Set.Icc a b), prove IntegrableOn g (Set.Icc a b) F.measure for a StieltjesFunction F.",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The theorem proves integrability from ContinuousOn on compact Icc via hg.integrableOn_compact; it does not assume integrability or a bridge equality.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed",
+      "obligation_fingerprint": "c27d88405e281ac16ccb57b7137065b93c3f942d6421c36190098b0879307a88"
+    },
+    {
+      "id": "t7_8_rs_exists",
+      "title": "Construct the Riemann-Stieltjes integral using Theorem 1.1 support",
+      "kind": "source_step",
+      "source_ref": "Theorem 7.8 source route: continuous g on [a,b] is Riemann-Stieltjes integrable with respect to the nondecreasing Stieltjes function F.",
+      "depends_on": [
+        "t7_8_integrability"
+      ],
+      "lean_landing": "thm_7_8_rs_exists",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "Check the current thm_1_1 family signatures and local RSIntegrable API before implementation. The proof must use the strict a < b route and must not wrap lsIntegral_eq_rsIntegral_stieltjesFunction.",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "(F : StieltjesFunction R) {a b : R} {g : R -> R} (hab : a < b) (hg : ContinuousOn g (Icc a b)) : RSIntegrable g F a b",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The proof extends g from Icc a b, applies thm_1_1 on a strict interval, and transfers by rsIntegrable_congr_integrand_Icc. It does not assume RSIntegrable g F a b.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed",
+      "obligation_fingerprint": "6c39a65431324428c5a9b49e9ffbf4d44f44d59ca40eb6e50be2aa0729762e2a"
+    },
+    {
+      "id": "t7_8_simple_sandwich",
+      "title": "Lower and upper simple-function sandwich",
+      "kind": "source_step",
+      "source_ref": "Theorem 7.8 source proof: compare lower and upper Stieltjes sums with Lebesgue-Stieltjes simple functions over {a} and half-open cells.",
+      "depends_on": [
+        "t7_8_integrability",
+        "t7_8_rs_exists"
+      ],
+      "lean_landing": "thm_7_8_cellStepWithLeft_integral_sandwich; thm_7_8_lowerCellStepWithLeft_le_ae; thm_7_8_le_upperCellStepWithLeft_ae",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The F.measure {a} = 0 hypothesis must be localized to the left-endpoint contribution.",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "For every DarbouxRS.Partition P, use lower/upper source simple functions over {a} and half-open cells plus hAtom : F.measure {a} = 0 to derive lowerSum P g F <= LS interval integral <= upperSum P g F.",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The left endpoint is handled internally through hAtom and a.e. equality; the Darboux-sum sandwich is derived by integral monotonicity and cell-step integral identities.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed",
+      "obligation_fingerprint": "75b80d9d782abde24d629f13bd5f328b3f8fd558ac98b26cea219c21a7fe1fea"
+    },
+    {
+      "id": "t7_8_common_limit",
+      "title": "Common-limit squeeze from Stieltjes sums",
+      "kind": "source_step",
+      "source_ref": "Theorem 7.8 source proof: lower and upper Stieltjes sums have the RS common limit and squeeze the Lebesgue-Stieltjes integral to the same value.",
+      "depends_on": [
+        "t7_8_rs_exists",
+        "t7_8_simple_sandwich"
+      ],
+      "lean_landing": "thm_7_8_common_limit_squeeze_rsIntegral",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "This is the final finite-interval equality step before parent reassembly.",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "Given hRS : RSIntegrable g F a b and a lower/upper Darboux squeeze for every partition, prove the LS interval integral equals rsIntegral g F a b hRS.",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The helper uses rsIntegral_source_spec hRS and a common-limit squeeze. It does not call lsIntegral_eq_rsIntegral_stieltjesFunction.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed",
+      "obligation_fingerprint": "32654c63b9d2ec9639d6ef3cdadb6f71ff53c9be4fca2fff01a8b826212b20be"
+    },
+    {
+      "id": "t7_8_downstream_instantiation_support",
+      "title": "Downstream truncation instantiation support",
+      "kind": "source_step",
+      "source_ref": "Theorem 7.8 must be usable by later Chapter 7 truncation arguments, especially Theorem 7.9, without adding hidden endpoint assumptions.",
+      "depends_on": [
+        "t7_8_common_limit"
+      ],
+      "lean_landing": "thm_7_8_downstream_instantiation_support",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "This prevents landing a finite-interval bridge that cannot be instantiated for later truncations.",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "Given hgInt, hRS, and hSqueeze, package IntegrableOn plus an RSIntegrable witness and interval integral equality for downstream use.",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The theorem packages exactly prior child outputs and constructs the equality witness through thm_7_8_common_limit_squeeze_rsIntegral. It does not assume the final equality or use a bridge-debt declaration.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed",
+      "obligation_fingerprint": "304ee51b2ea86f115967729e96467b828b0cc0a6e487253aa9df613ed0a51ca8"
+    }
+  ],
+  "scaffold_hypotheses": [],
+  "review_history": [
+    {
+      "reviewed_at": "2026-06-13T15:03:15.966746Z",
+      "verdict": "fail",
+      "status": "violated",
+      "summary": "Blocking proof obligations are not covered because the candidate delegates the textbook proof to public bridge-debt axiom(s).",
+      "open_blockers": [
+        {
+          "obligation_id": "T7.8.integrability",
+          "issue": "violated"
+        },
+        {
+          "obligation_id": "T7.8.rs_exists",
+          "issue": "violated"
+        },
+        {
+          "obligation_id": "T7.8.simple_sandwich",
+          "issue": "violated"
+        },
+        {
+          "obligation_id": "T7.8.common_limit",
+          "issue": "violated"
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-06-14T00:00:00Z",
+      "action": "materialized_from_diagnoser",
+      "notes": "Replaced the placeholder source_proof_spine with five concrete obligations from diagnoser_result_v1."
+    },
+    {
+      "reviewed_at": "2026-06-17T03:08:26.456333Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All five blocking proof obligations in proof_obligations.json are proved, accepted, and independently matched to current Lean landings.",
+      "open_blockers": []
+    }
+  ],
+  "last_reviewed_at": "2026-06-17T03:08:26.456333Z"
+}

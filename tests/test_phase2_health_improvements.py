@@ -50,6 +50,60 @@ class Phase2HealthImprovementTests(unittest.TestCase):
             source = (REPO_ROOT / relative).read_text(encoding="utf-8")
             self.assertIn("import ToyApollo.Output.chapter13_stopping_support", source)
 
+    def test_prob_14_11_parent_delegates_large_support_body(self):
+        parent = REPO_ROOT / "ToyApollo" / "Output" / "prob_14_11.lean"
+        support = REPO_ROOT / "ToyApollo" / "Output" / "prob_14_11_support.lean"
+        self.assertTrue(support.exists())
+
+        parent_source = parent.read_text(encoding="utf-8")
+        support_source = support.read_text(encoding="utf-8")
+        self.assertIn("import ToyApollo.Output.prob_14_11_support", parent_source)
+        self.assertLessEqual(len(parent_source.splitlines()), 80)
+        self.assertRegex(parent_source, r"(?m)^theorem prob_14_11\b")
+        self.assertNotRegex(support_source, r"(?m)^theorem prob_14_11\b")
+
+        support_markers = [
+            "structure prob_14_11_CouponRatioTriangularArraySetup",
+            "def prob_14_11_couponProbabilitySpace",
+            "def prob_14_11_exactStandardizedRowSumLaws",
+            "def prob_14_11_theoremSetupExact",
+            "theorem prob_14_11_generalized_lyapunov_condition",
+            "def prob_14_11_ExactStandardizedConvergence",
+        ]
+        for marker in support_markers:
+            self.assertIn(marker, support_source)
+            self.assertNotIn(marker, parent_source)
+
+    def test_ex_14_4_2_does_not_export_nested_obligation_landings(self):
+        source = (REPO_ROOT / "ToyApollo" / "Output" / "ex_14_4_2.lean").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotRegex(
+            source,
+            r"(?m)^(?:theorem|lemma|def|structure|axiom)\s+obl_obl_ex_14_4_2_",
+        )
+
+    def test_thm_7_8_does_not_export_legacy_obligation_landings(self):
+        source = (REPO_ROOT / "ToyApollo" / "Output" / "thm_7_8.lean").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotRegex(
+            source,
+            r"(?m)^(?:theorem|lemma|def|structure|axiom)\s+obl_thm_7_8_",
+        )
+
+    def test_current_obligation_landings_do_not_use_retired_health_prefixes(self):
+        retired_prefixes = {
+            "ex_14_4_2": "obl_obl_ex_14_4_2_",
+            "thm_7_8": "obl_thm_7_8_",
+        }
+        for task_id, prefix in retired_prefixes.items():
+            path = REPO_ROOT / "phase2_prompt_packs" / task_id / "proof_obligations.json"
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            for obligation in payload.get("obligations", []):
+                landing = obligation.get("lean_landing", "")
+                self.assertNotIn(prefix, landing)
+
 
 if __name__ == "__main__":
     unittest.main()

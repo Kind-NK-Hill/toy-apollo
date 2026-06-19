@@ -1,0 +1,235 @@
+{
+  "schema_version": "phase2.proof_obligations.v1",
+  "task_id": "ex_14_4_2",
+  "generated_at": "2026-06-12T07:47:47Z",
+  "classification": {
+    "requires_decomposition": true,
+    "reason": "source-route repair: the CLT call is valid, but the Poisson-to-CLT route must be exposed as concrete theorem-level obligations rather than public setup fields",
+    "evidence": [
+      "source text states iid Poisson(1), finite sums have Poisson(n) law, Poisson(1) has variance one, then applies Theorem 14.7",
+      "diagnoser_result_v1 rejected candidate_v5 because hMean, hVariance, poisson_sum_characteristic, standardizedPoissonLaws_eq, and standardNormalLaw_eq were public setup fields",
+      "draft.lean now defines ex_14_4_2_poissonSourceLaw, ex_14_4_2_poissonMomentBridge, and ex_14_4_2_poissonFiniteSumBridge as named propositions instead of setup fields or opaque proof placeholders"
+    ],
+    "dependency_count": 1,
+    "source_length": 1490,
+    "structural_operation_count": 3
+  },
+  "obligations": [
+    {
+      "id": "record_poisson_source_law",
+      "title": "Represent the iid Poisson(1) source law without a setup field",
+      "kind": "source_step",
+      "source_ref": "Example 14.4.2: the source variables are iid Poisson random variables with mean 1.",
+      "depends_on": [],
+      "lean_landing": "ex_14_4_2_poissonSourceLaw",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The Poisson(1) law is no longer represented by mean/variance or characteristic-function setup fields. It is a named source proposition using ex_14_4_2_hasPoissonLaw, included in ex_14_4_2_resolvedSourceBridges so review can inspect it directly.",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "A source-facing proposition ex_14_4_2_poissonSourceLaw S stating ex_14_4_2_hasPoissonLaw S.P (S.X k) 1 for every k.",
+      "landing_kind": "support_predicate",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "This is exactly the textbook source hypothesis, not a relocated moment, finite-sum, standardized-law, or CLT bridge premise.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed",
+      "obligation_fingerprint": "eae69ad0dffbeb668e2aa01bb41f65abae60227a2d80a5345c37e1bd9a51511c"
+    },
+    {
+      "id": "derive_poisson_moments",
+      "title": "Derive Poisson(1) integrability, mean one, and variance one",
+      "kind": "source_step",
+      "source_ref": "First paragraph: Poisson random variable with mean 1 has finite mean",
+      "depends_on": [
+        "record_poisson_source_law"
+      ],
+      "lean_landing": "ex_14_4_2_poissonCanonicalIntegrability_proved; ex_14_4_2_poissonCanonicalSquareIntegrability_proved; ex_14_4_2_poissonCanonicalMeanOne_proved; ex_14_4_2_poissonCanonicalVarianceOne_proved; ex_14_4_2_canonicalPoissonMomentBridge_proved; ex_14_4_2_poissonMomentBridge_of_sourceLaw_final",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The candidate transfers integrability from the natural-valued Poisson(1) law to the real pushed-forward law and proves the focused child predicate directly, without exposing integrability as a public premise.",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "Theorems proving canonical Poisson(1) integrability, square integrability, mean one, and variance one, then transporting them from the source law to S.X 0.",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The canonical facts are proved from PMF/integral series calculations and then transported using hSource 0. The final theorem does not take integrability, mean, variance, or moment bridge premises.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed",
+      "obligation_fingerprint": "25ba552d50d736c7dbc701254b9755d7f00d6dad9214a045959bbef8dea9994c"
+    },
+    {
+      "id": "derive_poisson_finite_sum_law",
+      "title": "Derive the Poisson(n) law for finite sums of iid Poisson(1) variables",
+      "kind": "source_step",
+      "source_ref": "Example 14.4.2: finite sums of iid Poisson(1) variables are Poisson with summed parameter.",
+      "depends_on": [
+        "record_poisson_source_law"
+      ],
+      "lean_landing": "ex_14_4_2_independent_sum_has_poisson_law; ex_14_4_2_partialSum_hasPoissonLaw; ex_14_4_2_poissonFiniteSumBridge_of_sourceLaw",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "Prove the two-variable independent Poisson addition theorem through characteristic functions and the canonical real Poisson measure.",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "From independent X Y with Poisson laws lam and mu, prove X + Y has Poisson law lam + mu; then iterate over source partial sums.",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The two-variable theorem uses characteristic-function multiplication, canonical Poisson characteristic functions, parameter addition, and Measure.ext_of_charFun; the finite source bridge is derived by induction from hSource and independence.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed",
+      "obligation_fingerprint": "8298217ba8568b174d7b6f53256b14a2f3fdda5e35649be2585c8f8931b11ac1"
+    },
+    {
+      "id": "apply_lindeberg_levy_clt",
+      "title": "Apply Theorem 14.7 after the Poisson bridges are resolved",
+      "kind": "source_step",
+      "source_ref": "Example 14.4.2 first paragraph: use iid Poisson(1), its mean/variance, and finite-sum Poisson identification before applying CLT.",
+      "depends_on": [
+        "record_poisson_source_law",
+        "derive_poisson_moments",
+        "derive_poisson_finite_sum_law",
+        "thm_14_7"
+      ],
+      "lean_landing": "ex_14_4_2_normalApproximation; ex_14_4_2_weakLimit_by_CLT; ex_14_4_2_sourceRoute_of_sourceLaw; ex_14_4_2",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The missing sibling outputs are not imported. Their expected facts are represented as explicit local premises so this child remains an honest adapter instead of claiming to have proved source-law or finite-sum children.",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "After source-law, moment, and finite-sum bridges are resolved, apply thm_14_7 to obtain the standardized Poisson-source laws converging to the standard normal law.",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "ex_14_4_2_normalApproximation derives momentBridge from hSource, extracts integrability, square-integrability, mean-one, and variance-one, and calls thm_14_7 with mu = 1, sigma = 1, and 0 < 1.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed",
+      "obligation_fingerprint": "bc7935726374c67cfdc0fc40edfdf6ddb7b04ce6d8868c7d7477fe0c12132b97"
+    },
+    {
+      "id": "triangular_array_notation",
+      "title": "Introduce triangular array notation for Theorem 14.8",
+      "kind": "source_step",
+      "source_ref": "Second paragraph onward: rows indexed by n, row lengths k_n, variances sigma^2_{n,i}, total variance s_n^2 -> infinity.",
+      "depends_on": [],
+      "lean_landing": "ex_14_4_2_TriangularArrayNotation",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "This preserves the notation introduced before the triangular-array theorem.",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "A public interface recording k_n, sigma^2_{n,i}, s_n^2 as the row-variance sum, and s_n^2 -> infinity.",
+      "landing_kind": "support_constructor",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The structure records positive row lengths, row variances, total variance, row-sum equality, and totalVariance -> infinity; thm_14_8 imports and aliases this interface.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
+    }
+  ],
+  "scaffold_hypotheses": [],
+  "review_history": [
+    {
+      "reviewed_at": "2026-06-11T14:14:02.206287Z",
+      "verdict": "fail",
+      "status": "violated",
+      "summary": "candidate_v5 preserved candidate_v4's public-premise/open-debt state: Poisson moment facts, Poisson finite-sum characteristic facts, and standardized/normal transport facts were exposed through setup fields.",
+      "open_blockers": [
+        {
+          "obligation_id": "derive_poisson_moments",
+          "issue": "Derive Poisson(1) integrability, mean one, and variance one from Poisson source data; do not require them as setup fields."
+        },
+        {
+          "obligation_id": "derive_poisson_finite_sum_law",
+          "issue": "Derive the finite iid Poisson(1) sum law and characteristic-function identity; do not require them as setup fields."
+        },
+        {
+          "obligation_id": "apply_lindeberg_levy_clt",
+          "issue": "Define standardized laws directly and apply thm_14_7 only after source bridges are resolved."
+        }
+      ]
+    },
+    {
+      "reviewed_at": "2026-06-12T07:47:47Z",
+      "verdict": "open",
+      "status": "source_route_redesigned",
+      "summary": "The public setup fields and opaque proof placeholders have been removed from draft.lean. The remaining Poisson source law, moment bridge, and finite-sum bridge are explicit named propositions, and the CLT theorem is conditional on ex_14_4_2_resolvedSourceBridges.",
+      "open_blockers": [
+        {
+          "obligation_id": "record_poisson_source_law",
+          "issue": "Source proposition records the Poisson(1) law and should be reviewed for source fidelity."
+        },
+        {
+          "obligation_id": "derive_poisson_moments",
+          "issue": "Open math debt: prove integrability, mean one, and variance one from the Poisson(1) source law."
+        },
+        {
+          "obligation_id": "derive_poisson_finite_sum_law",
+          "issue": "Open math debt: prove finite iid Poisson(1) sums have Poisson(n+1) law and the matching characteristic function."
+        },
+        {
+          "obligation_id": "apply_lindeberg_levy_clt",
+          "issue": "Reassemble the final theorem after the source bridges are proved, so ex_14_4_2 is not conditional on unresolved bridge debt."
+        }
+      ]
+    },
+    {
+      "reviewed_at": "2026-06-12T08:06:19.143619Z",
+      "verdict": "fail",
+      "status": "violated",
+      "summary": "Of the five listed obligations, record_poisson_source_law and triangular_array_notation are covered, apply_lindeberg_levy_clt is only conditional, and the two core Poisson bridges remain open math debt. The blocking obligations derive_poisson_moments and derive_poisson_finite_sum_law are not theorem-level proofs and are still public prerequisites of ex_14_4_2.",
+      "open_blockers": [
+        {
+          "obligation_id": "derive_poisson_moments",
+          "issue": "Open math debt: prove integrability, square-integrability, mean one, and variance one from the Poisson(1) source law instead of requiring ex_14_4_2_poissonMomentBridge through hBridge."
+        },
+        {
+          "obligation_id": "derive_poisson_finite_sum_law",
+          "issue": "Open math debt: prove finite iid Poisson(1) sums have Poisson(n+1) law and the matching characteristic functions instead of requiring ex_14_4_2_poissonFiniteSumBridge through hBridge."
+        },
+        {
+          "obligation_id": "apply_lindeberg_levy_clt",
+          "issue": "The CLT application is only conditional. The final theorem ex_14_4_2 must be reassembled after the Poisson source bridges are proved, so hBridge is no longer a public premise."
+        },
+        {
+          "obligation_id": "record_poisson_source_law",
+          "issue": "covered"
+        },
+        {
+          "obligation_id": "derive_poisson_moments",
+          "issue": "violated"
+        },
+        {
+          "obligation_id": "derive_poisson_finite_sum_law",
+          "issue": "violated"
+        },
+        {
+          "obligation_id": "apply_lindeberg_levy_clt",
+          "issue": "partial"
+        }
+      ]
+    },
+    {
+      "reviewed_at": "2026-06-12T13:31:01.599310Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All listed blocking obligations are covered by source-facing Lean declarations. The only ledger item still marked partial, record_poisson_source_law, is appropriate as a reviewed source predicate and is not a hidden bridge premise.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-16T08:24:49.639648Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All five blocking obligations in proof_obligations.json are covered by candidate_v9. No scaffold hypotheses, nested obligations, promote-obligations recovery, or accepted open proof debt is used.",
+      "open_blockers": []
+    }
+  ],
+  "last_reviewed_at": "2026-06-16T08:24:49.639648Z"
+}
