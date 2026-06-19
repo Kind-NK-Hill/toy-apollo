@@ -73,22 +73,18 @@
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "The analytic Riemann-sum details are named in the verification structure, but this remains open_math_debt because the final Lyapunov condition is now isolated in private axiom ex_14_4_3_lyapunov_condition_internal.\n[clean-debt-audit] Reopened on 2026-05-21T02:15:59.912339Z: proved proof_debt_support lands only on non-theorem declarations.\n[phase2-public-interface] 2026-05-23: removed the public theorem parameter hLyapunov. The non-beyond-book Lyapunov verification is no longer a caller obligation, but still must be replaced by theorem-level fourth-moment/Riemann-sum evidence.",
+      "notes": "Current metadata normalization 2026-06-19: theorem-level Lyapunov evidence is represented by ex_14_4_3_lyapunov_condition_from_fourth_moment_riemann_sum and ex_14_4_3_lyapunov_condition_from_proved_bounds. Earlier audit notes about an internal placeholder route are superseded by the current split official output.",
       "last_review_evidence": "ex_14_4_3_row_lyapunov_sum_eq_coupon_fourth_sum and ex_14_4_3_totalVariance_eq_geometricVariance_sum prove the row numerator and variance alignments; ex_14_4_3_fourth_moment_row_sum_is_O_n and ex_14_4_3_variance_scale_lower_bound supply numerator/denominator growth; ex_14_4_3_lyapunov_condition_from_proved_bounds proves thm_14_8_LyapunovCondition.",
       "source_output_alignment": {
-        "audited_at": "2026-05-19",
-        "audit_class": "C_support_predicate_or_structure_only",
+        "audited_at": "2026-06-19",
+        "audit_class": "current_theorem_landing_verified",
         "family": "tail/moment/ui",
         "existing_local_declarations": [
-          {
-            "name": "ex_14_4_3_LyapunovVerification",
-            "kind": "structure",
-            "file": "ToyApollo/Output/ex_14_4_3.lean",
-            "line": 348
-          }
+          "ex_14_4_3_lyapunov_condition_from_fourth_moment_riemann_sum",
+          "ex_14_4_3_lyapunov_condition_from_proved_bounds"
         ],
         "missing_landing_names": [],
-        "next_action": "Do not count this as proof; replace the support predicate, structure, or field with theorem-level evidence.",
+        "next_action": "No metadata repair action; keep the theorem-level landing evidence visible.",
         "manual_review_required": false
       },
       "obligation_fingerprint": "24e8ef50fb7f579eac8e871464f4e617c193be502b634b0b7b03b00e024a1718",
@@ -113,7 +109,7 @@
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
-      "notes": "The final theorem invokes thm_14_8 through the Lyapunov branch. It explicitly inherits the sole allowed beyond-book exception through H : thm_14_8_ProofBeyondBook C.theoremSetup; the non-beyond-book Lyapunov verification remains a separate open obligation isolated in a private axiom.",
+      "notes": "The final theorem invokes thm_14_8 through the Lyapunov branch and explicitly inherits the documented thm_14_8_ProofBeyondBook boundary. The non-beyond-book Lyapunov verification is covered by parent-owned theorem-level evidence.",
       "last_review_evidence": "ex_14_4_3_asymptoticNormality applies thm_14_8 C.theoremSetup H (Or.inr (ex_14_4_3_lyapunov_condition_from_proved_bounds C)); ex_14_4_3_textbook_normalized_clt packages this Tendsto result with C.textbook_normalization.",
       "expected_theorem_signature": "(C : ex_14_4_3_CouponTriangularArraySetup) -> thm_14_8_ProofBeyondBook C.theoremSetup -> ex_14_4_3_TextbookNormalizedConvergence C",
       "landing_kind": "theorem",

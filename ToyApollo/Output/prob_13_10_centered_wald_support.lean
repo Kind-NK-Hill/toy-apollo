@@ -1,4 +1,5 @@
 import Mathlib
+import ToyApollo.Output.chapter13_stopping_support
 import ToyApollo.Output.prob_13_10_independent_count_support
 import ToyApollo.Output.prob_13_10_relaxed_optional_stopping_support
 
@@ -7,104 +8,75 @@ open scoped BigOperators ProbabilityTheory Topology
 
 noncomputable section
 
-/-- One-indexed finite history `(Y_1, ..., Y_n)` used by the random-walk
-support in part (c). -/
+/-- Problem-local name for the shared one-indexed finite history used by the
+random-walk support in part (c). -/
 def prob_13_10_oneIndexedHistory {Ω : Type*} (Y : ℕ → Ω → ℝ)
     (n : ℕ) : Ω → Fin n → ℝ :=
-  fun ω k => Y (k.1 + 1) ω
+  chapter13_oneIndexedHistory Y n
 
-/-- One-indexed natural filtration: `F_0 = ⊥`, and for positive `n`,
-`F_n = σ(Y_1, ..., Y_n)`. -/
+/-- Problem-local name for the shared one-indexed natural filtration:
+`F_0 = ⊥`, and for positive `n`, `F_n = σ(Y_1, ..., Y_n)`. -/
 @[reducible]
 def prob_13_10_oneIndexedNaturalFiltration {Ω : Type*}
-    (Y : ℕ → Ω → ℝ) : ℕ → MeasurableSpace Ω
-  | 0 => ⊥
-  | n + 1 =>
-      (inferInstance : MeasurableSpace (Fin (n + 1) → ℝ)).comap
-        (prob_13_10_oneIndexedHistory Y (n + 1))
+    (Y : ℕ → Ω → ℝ) : ℕ → MeasurableSpace Ω :=
+  chapter13_oneIndexedNaturalFiltration Y
 
 def prob_13_10_historyProjection {n m : ℕ} (h : n ≤ m) :
     (Fin m → ℝ) → (Fin n → ℝ) :=
-  fun v k => v (Fin.castLE h k)
+  chapter13_historyProjection h
 
 theorem prob_13_10_historyProjection_measurable {n m : ℕ} (h : n ≤ m) :
     Measurable (prob_13_10_historyProjection h) := by
-  exact measurable_pi_lambda _ fun k => measurable_pi_apply (Fin.castLE h k)
+  simpa [prob_13_10_historyProjection] using
+    chapter13_historyProjection_measurable h
 
 theorem prob_13_10_historyProjection_comp {Ω : Type*}
     (Y : ℕ → Ω → ℝ) {n m : ℕ} (h : n ≤ m) :
     prob_13_10_oneIndexedHistory Y n =
       prob_13_10_historyProjection h ∘
         prob_13_10_oneIndexedHistory Y m := by
-  funext ω k
-  simp [prob_13_10_oneIndexedHistory, prob_13_10_historyProjection]
+  simpa [prob_13_10_oneIndexedHistory, prob_13_10_historyProjection] using
+    chapter13_historyProjection_comp Y h
 
 theorem prob_13_10_history_measurable_self {Ω : Type*}
     (Y : ℕ → Ω → ℝ) (n : ℕ) :
     @Measurable Ω (Fin n → ℝ)
       (prob_13_10_oneIndexedNaturalFiltration Y n) _
       (prob_13_10_oneIndexedHistory Y n) := by
-  cases n with
-  | zero =>
-      have hconst :
-          prob_13_10_oneIndexedHistory Y 0 =
-            fun _ : Ω => (default : Fin 0 → ℝ) := by
-        funext ω k
-        exact Fin.elim0 k
-      rw [hconst]
-      exact measurable_const
-  | succ n =>
-      exact Measurable.of_comap_le le_rfl
+  simpa [prob_13_10_oneIndexedHistory,
+    prob_13_10_oneIndexedNaturalFiltration] using
+    chapter13_history_measurable_self Y n
 
 theorem prob_13_10_history_measurable_of_le {Ω : Type*}
     (Y : ℕ → Ω → ℝ) {n m : ℕ} (h : n ≤ m) :
     @Measurable Ω (Fin n → ℝ)
       (prob_13_10_oneIndexedNaturalFiltration Y m) _
       (prob_13_10_oneIndexedHistory Y n) := by
-  have hself := prob_13_10_history_measurable_self Y m
-  have hproj := prob_13_10_historyProjection_measurable h
-  have hcomp :
-      @Measurable Ω (Fin n → ℝ)
-        (prob_13_10_oneIndexedNaturalFiltration Y m) _
-        (prob_13_10_historyProjection h ∘
-          prob_13_10_oneIndexedHistory Y m) :=
-    hproj.comp hself
-  simpa [prob_13_10_historyProjection_comp Y h] using hcomp
+  simpa [prob_13_10_oneIndexedHistory,
+    prob_13_10_oneIndexedNaturalFiltration] using
+    chapter13_history_measurable_of_le Y h
 
 theorem prob_13_10_oneIndexedNaturalFiltration_mono {Ω : Type*}
     (Y : ℕ → Ω → ℝ) {n m : ℕ} (h : n ≤ m) :
     prob_13_10_oneIndexedNaturalFiltration Y n ≤
       prob_13_10_oneIndexedNaturalFiltration Y m := by
-  cases n with
-  | zero =>
-      exact bot_le
-  | succ n =>
-      exact (prob_13_10_history_measurable_of_le Y h).comap_le
+  simpa [prob_13_10_oneIndexedNaturalFiltration] using
+    chapter13_oneIndexedNaturalFiltration_mono Y h
 
 theorem prob_13_10_oneIndexedNaturalFiltration_sub_ambient {Ω : Type*}
     [𝓕 : MeasurableSpace Ω] (Y : ℕ → Ω → ℝ)
     (hY : ∀ n : ℕ, @Measurable Ω ℝ 𝓕 _ (Y n)) (n : ℕ) :
     prob_13_10_oneIndexedNaturalFiltration Y n ≤ 𝓕 := by
-  cases n with
-  | zero =>
-      exact bot_le
-  | succ n =>
-      have hhist :
-          @Measurable Ω (Fin (n + 1) → ℝ) 𝓕 _
-            (prob_13_10_oneIndexedHistory Y (n + 1)) := by
-        exact measurable_pi_lambda _ fun k => hY (k.1 + 1)
-      exact hhist.comap_le
+  simpa [prob_13_10_oneIndexedNaturalFiltration] using
+    chapter13_oneIndexedNaturalFiltration_sub_ambient Y hY n
 
 theorem prob_13_10_oneIndexedNaturalFiltration_isFiltration {Ω : Type*}
     [𝓕 : MeasurableSpace Ω] (Y : ℕ → Ω → ℝ)
     (hY : ∀ n : ℕ, @Measurable Ω ℝ 𝓕 _ (Y n)) :
     def_13_6_isFiltration (𝓕 := 𝓕)
       (prob_13_10_oneIndexedNaturalFiltration Y) := by
-  refine ⟨?_, ?_⟩
-  · intro n
-    exact prob_13_10_oneIndexedNaturalFiltration_sub_ambient Y hY n
-  · intro n m hnm
-    exact prob_13_10_oneIndexedNaturalFiltration_mono Y hnm
+  simpa [prob_13_10_oneIndexedNaturalFiltration] using
+    chapter13_oneIndexedNaturalFiltration_isFiltration Y hY
 
 /-- Partial sums `Y_1 + ... + Y_n`, with value `0` at time zero. -/
 def prob_13_10_partialSum {Ω : Type*} (Y : ℕ → Ω → ℝ) :
@@ -150,7 +122,7 @@ theorem prob_13_10_partialSum_adapted {Ω : Type*}
       apply Finset.sum_congr rfl
       intro x hx
       have hxle : x ≤ n := Nat.le_of_lt_succ (Finset.mem_range.mp hx)
-      simp [hxle]
+      simp [chapter13_oneIndexedHistory, hxle]
 
 theorem prob_13_10_partialSum_integrable {Ω : Type*}
     [MeasurableSpace Ω] {P : Measure Ω} {Y : ℕ → Ω → ℝ}
