@@ -82,7 +82,6 @@
         "next_action": "Re-open the source and ToyApollo/Output search, then assign a real Lean landing before repair.",
         "manual_review_required": false
       },
-      "ledger_task_id": "obl_prob_11_6_sixth_moment_support",
       "obligation_fingerprint": "3c73073d3a12790566facfd2362fc26f88d7fca3ee0c183f9a015a0a88e8db9e",
       "discharged_by_task": "prob_11_6",
       "expected_theorem_signature": "From independence, zero mean, and uniform almost-sure boundedness, derive prob_11_6_sixthMomentSupport P X.",
@@ -124,9 +123,7 @@
         "next_action": "Resolved by theorem-level landing; no public tail-summability support parameter remains.",
         "manual_review_required": false
       },
-      "ledger_task_id": "obl_prob_11_6_tail_summability_support",
       "obligation_fingerprint": "cbeac738cffacdd7298727f709cd8cff409fa8b92bcf275fbd625041e82a6a2a",
-      "discharged_by_task": "obl_prob_11_6_tail_summability_support",
       "expected_theorem_signature": "prob_11_6_sixthMomentSupport P X -> prob_11_6_tailSummabilitySupport P X",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",

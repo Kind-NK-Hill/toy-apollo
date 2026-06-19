@@ -1028,6 +1028,30 @@ class Phase2BatchRunnerTests(unittest.TestCase):
         self.assertIn("legacy_obligation=1", rendered)
         self.assertNotIn("| obl_prob_14_1_obligation_1 |", rendered)
 
+    def test_hidden_legacy_obligation_diagnoser_is_not_current_dispatch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            settings = self._settings(Path(tmp))
+            ledger = FakeLedger(
+                {
+                    "obl_prob_14_1_obligation_1": {
+                        "block_id": "obl_prob_14_1_obligation_1",
+                        "type": "Phase2ObligationTask",
+                        "status": NONTERMINAL,
+                        "phase2_status": "fail",
+                        "current_auto_loop_stop_reason": "diagnoser_required",
+                        "parent_block_id": "prob_14_1",
+                    },
+                }
+            )
+
+            plan = plan_batch_from_ledger(["obl_prob_14_1_obligation_1"], ledger, settings)
+            rendered = render_batch_runner_plan(plan)
+
+        self.assertEqual(plan.actions, ())
+        self.assertIn("legacy_obligation=1", rendered)
+        self.assertNotIn("subagent-dispatch-required", rendered)
+        self.assertNotIn("diagnoser_required=1", rendered)
+
     def test_legacy_mode_can_show_obligation_items_explicitly(self):
         with tempfile.TemporaryDirectory() as tmp:
             settings = self._settings(Path(tmp))
@@ -1093,7 +1117,7 @@ class Phase2BatchRunnerTests(unittest.TestCase):
         self.assertIn("diagnostic_restore_or_rebuild_output=1", rendered)
         self.assertNotIn("| thm_1_1 |", rendered)
 
-    def test_worker_queue_prioritizes_parent_failures_over_output_restore(self):
+    def test_worker_queue_hides_section_intro_restore_rows(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             settings = self._settings(root)
@@ -1145,10 +1169,12 @@ class Phase2BatchRunnerTests(unittest.TestCase):
             )
 
             plan = plan_batch_from_ledger(["intro_9_1", "thm_7_9"], ledger, settings, limit=2)
+            rendered = render_batch_runner_plan(plan)
 
-        self.assertEqual([action.task_id for action in plan.actions], ["thm_7_9", "intro_9_1"])
+        self.assertEqual([action.task_id for action in plan.actions], ["thm_7_9"])
         self.assertEqual(plan.actions[0].action, "foundation_absorb_required")
-        self.assertEqual(plan.actions[1].action, "restore_or_rebuild_output")
+        self.assertIn("section_intro_remark=1", rendered)
+        self.assertNotIn("| intro_9_1 |", rendered)
 
     def test_batch_run_skips_diagnoser_required_and_dispatches_next_executable_action(self):
         with tempfile.TemporaryDirectory() as tmp:

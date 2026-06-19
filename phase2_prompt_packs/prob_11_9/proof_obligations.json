@@ -116,7 +116,6 @@
         "next_action": "Re-open the source and ToyApollo/Output search, then assign a real Lean landing before repair.",
         "manual_review_required": false
       },
-      "ledger_task_id": "obl_prob_11_9_occupancy_moment_calculation",
       "obligation_fingerprint": "3b2c4b36ea1f7497b0d6a2a4ff49c7a60bf223ec27b8d901d93ebdf379a1776e",
       "discharged_by_task": "",
       "expected_theorem_signature": "Tendsto (fun n => meanDeviationMoment P (prob_11_9_emptyBoxRatio boxes X) (fun _ => Real.exp (-a)) 2 n) atTop (nhds 0) from a source-faithful finite independent uniform occupancy model.",

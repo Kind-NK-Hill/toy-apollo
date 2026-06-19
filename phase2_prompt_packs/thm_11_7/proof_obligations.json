@@ -147,7 +147,6 @@
         "next_action": "No fourth-moment tail-summability source-route action remains for thm_11_7.",
         "manual_review_required": false
       },
-      "ledger_task_id": "obl_thm_11_7_fourth_moment_expansion_tail_bound",
       "obligation_fingerprint": "c144341678e0befc9fc946267e1d4c802eccbe66afb7860f8707585e28e7c54f",
       "discharged_by_task": "",
       "expected_theorem_signature": "theorem thm_11_7_tail_summability_from_fourth_moment : def_5_10_randomVariables P X -> (forall i, P[X i] = mu) -> (exists c, thm_11_7_fourthMomentUniformBound P X mu c) -> thm_11_7_tailSummabilitySupport P X mu",

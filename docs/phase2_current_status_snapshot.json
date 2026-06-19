@@ -1,0 +1,225 @@
+{
+  "generated_at": "2026-06-19T02:58:47.181254Z",
+  "purpose": "Tracked summary of the local Phase2 runtime ledger. This snapshot is audit context only; review-apply plus phase2_status remains the completion authority.",
+  "ledger": {
+    "path": "project_ledger.json",
+    "exists": true,
+    "sha256": "4ca96aeb49ffa5717ba4b9ff37e4dde953d0efecc20b2deafdd396c4b14dfad5",
+    "size_bytes": 3270898
+  },
+  "summary": {
+    "task_count": 396,
+    "symbol_count": 3647,
+    "legacy_obligation_task_count": 0,
+    "legacy_obligation_symbol_owner_count": 0,
+    "status_counts": {
+      "COMPLETED": 344,
+      "COMPLETED_WITH_PROOF_DEBT": 1,
+      "DISCOVERED": 47,
+      "PACKED": 4
+    },
+    "phase2_status_counts": {
+      "allowed_exception": 2,
+      "blocked": 1,
+      "fail": 1,
+      "missing": 51,
+      "pass": 341
+    },
+    "task_type_counts": {
+      "Definition": 82,
+      "Example_Proof": 45,
+      "Problem": 133,
+      "Remark": 56,
+      "Theorem_Statement": 16,
+      "Theorem_with_Proof": 64
+    }
+  },
+  "exceptions": {
+    "fail": [
+      {
+        "task_id": "ex_1_3_2",
+        "type": "Example_Proof",
+        "status": "PACKED",
+        "phase2_status": "fail",
+        "phase2_status_reason": "proof_class open_math_debt_source_mismatch contains local open debt/adapter/weakening evidence"
+      }
+    ],
+    "blocked": [
+      {
+        "task_id": "thm_1_2",
+        "type": "Theorem_Statement",
+        "status": "PACKED",
+        "phase2_status": "blocked",
+        "phase2_status_reason": "proof_class dependency_blocked_pending_statement_decision is dependency-gate blocked without local open debt"
+      }
+    ],
+    "allowed_exception": [
+      {
+        "task_id": "thm_11_8",
+        "type": "Theorem_Statement",
+        "status": "COMPLETED",
+        "phase2_status": "allowed_exception",
+        "phase2_status_reason": "cited_external_proof_exception is the explicit allowed Phase2 exception for thm_11_8"
+      },
+      {
+        "task_id": "thm_14_8",
+        "type": "Theorem_Statement",
+        "status": "COMPLETED_WITH_PROOF_DEBT",
+        "phase2_status": "allowed_exception",
+        "phase2_status_reason": "beyond_book_exception is the explicit allowed Phase2 exception for thm_14_8"
+      }
+    ]
+  },
+  "missing_phase2_status_sample": [
+    {
+      "task_id": "intro_10",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_10_1",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_10_2",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_10_3",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_10_4",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_10_5",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_11",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_11_1",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_11_2",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_11_3",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_11_4",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_11_5",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_12",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_12_1",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_12_2",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_12_3",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_12_4",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_13",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_13_1",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_13_2",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_13_3",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_13_4",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_13_5",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_13_6",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    },
+    {
+      "task_id": "intro_14",
+      "type": "Remark",
+      "status": "DISCOVERED",
+      "phase2_status": ""
+    }
+  ]
+}

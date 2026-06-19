@@ -89,9 +89,7 @@
         "next_action": "Use the theorem-level Fubini/density evidence in final assembly; review whether the remaining weighted-integrability assumptions are acceptable source-facing formal hypotheses or should be derived from the original L1 density route.",
         "manual_review_required": false
       },
-      "ledger_task_id": "obl_thm_13_14_interval_fubini_calculation",
       "obligation_fingerprint": "25ae379a98e6aea726178bee3e615a86dc850102555053bd91500725f69157f4",
-      "discharged_by_task": "obl_thm_13_14_interval_fubini_calculation",
       "expected_theorem_signature": "theorem thm_13_14_interval_fubini_from_joint_density : thm_13_14_jointDensityLaw P fXY -> required measurability/integrability hypotheses -> thm_13_14_intervalFubiniSupport P fXY g",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
@@ -143,9 +141,7 @@
         "next_action": "Keep using the verified generator-extension theorem in final assembly; remaining review is about whether the weighted-integrability assumptions are faithful source-facing hypotheses.",
         "manual_review_required": false
       },
-      "ledger_task_id": "obl_thm_13_14_pi_lambda_extension",
       "obligation_fingerprint": "18a8136106155226b3c5c01764cfc924be7722b9a30dedf283aaffeed2c84c35",
-      "discharged_by_task": "obl_thm_13_14_pi_lambda_extension",
       "expected_theorem_signature": "theorem thm_13_14_pi_lambda_extension_from_intervals : interval cylinder identities plus finite signed/integrability structure -> thm_13_14_piLambdaExtensionSupport P g h",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",

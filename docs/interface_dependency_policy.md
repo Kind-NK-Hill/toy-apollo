@@ -63,8 +63,9 @@ files use Mathlib without skipping the source-side interface.
 
 Foundational support is different. It is maintenance planning for two project
 hygiene problems: splitting super-long official output files and absorbing
-`obl_*` obligation output into stable support or parent files. It does not by
-itself prove textbook fidelity, update the ledger, or replace Phase2 review.
+former `obl_*` obligation output into stable support or parent files. It does
+not by itself prove textbook fidelity, update the ledger, or replace Phase2
+review.
 
 Legacy files with names ending in `_bridge` are not automatically examples of
 the Tao-style interface bridge pattern. Some are historical proof-debt support

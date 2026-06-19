@@ -91,9 +91,7 @@
         "next_action": "Do not count this as proof; replace the support predicate, structure, or field with theorem-level evidence.",
         "manual_review_required": false
       },
-      "ledger_task_id": "obl_ex_14_4_3_lyapunov_fourth_moment_bound",
       "obligation_fingerprint": "24e8ef50fb7f579eac8e871464f4e617c193be502b634b0b7b03b00e024a1718",
-      "discharged_by_task": "obl_ex_14_4_3_lyapunov_fourth_moment_bound",
       "expected_theorem_signature": "(C : ex_14_4_3_CouponTriangularArraySetup) -> thm_14_8_LyapunovCondition C.theoremSetup",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",

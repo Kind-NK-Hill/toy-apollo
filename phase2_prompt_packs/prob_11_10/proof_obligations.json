@@ -173,7 +173,6 @@
         "next_action": "Replace prob_11_10_continuous_grid_uniformization_internal with theorem-level finite-grid Glivenko-Cantelli evidence before marking this obligation proved.",
         "manual_review_required": false
       },
-      "ledger_task_id": "obl_prob_11_10_continuous_grid_uniformization",
       "obligation_fingerprint": "bd737a934fd532aaab1de3d730c2b002e390c0e3460601820bba02cccbfd4cc3",
       "discharged_by_task": "",
       "expected_theorem_signature": "A theorem-level proof that continuity/monotonicity of F and fixed-grid almost-sure convergence imply almost-sure convergence of the uniform empirical-cdf deviation to 0.",

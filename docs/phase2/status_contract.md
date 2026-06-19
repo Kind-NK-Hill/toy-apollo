@@ -39,9 +39,8 @@ tools, and verify reports are not status authorities.
 
 ## Pass Rules
 
-Proof-bearing tasks include theorem, problem, exercise, example, and internal
-Phase2 obligation-child tasks. They pass only with source-route proof classes
-such as:
+Proof-bearing tasks include theorem, problem, exercise, and example tasks. They
+pass only with source-route proof classes such as:
 
 - `textbook_proof_completed`
 - `textbook_problem_completed`

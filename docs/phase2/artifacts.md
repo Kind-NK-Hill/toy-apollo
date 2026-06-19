@@ -83,8 +83,8 @@ mechanism refactors separate from proof-obligation content repairs unless a
 mechanism regression test explicitly needs a fixture update.
 
 Legacy `obl_*` and nested `obl_obl_*` packs are historical audit evidence, not
-default author/review queue items. After the parent lands `phase2_status=pass`,
-absorbed child obligations stay quarantined unless an explicit audit/legacy
-mode is requested. They must not regain completion authority, create new nested
+default author/review queue items. Current ledgers should not retain those child
+task rows; old fixtures or imported legacy state may still be readable for
+audit. They must not regain completion authority, create new nested
 obligations, or bypass the parent/support `build-check -> review-now ->
 review-apply` chain.
