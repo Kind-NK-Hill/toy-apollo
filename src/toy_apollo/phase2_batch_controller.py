@@ -30,7 +30,15 @@ NONTERMINAL = "NONTERMINAL"
 TEXTBOOK_COMPLETE_OBJECTIVE = "textbook-complete"
 DIAGNOSTIC_OBJECTIVE = "diagnostic"
 OBJECTIVES = {TEXTBOOK_COMPLETE_OBJECTIVE, DIAGNOSTIC_OBJECTIVE}
-DEFAULT_ALLOWED_BEYOND_BOOK_TASKS = {"thm_14_8"}
+DEFAULT_ALLOWED_BEYOND_BOOK_TASKS = {"thm_11_8", "thm_14_8"}
+FAMILY_CONSUMABLE_PROOF_CLASSES = {
+    "source_route_finite_interval_covered",
+    "source_route_support_completed_downstream_blocked",
+}
+FAMILY_CONSUMABLE_COMPLETION_CLASSES = {
+    "finite_interval_completed_but_direct_downstream_blocked",
+    "not_completed_downstream_blocked",
+}
 
 REPORTING_TERMINAL_STATUSES = {
     COMPLETED,
@@ -519,6 +527,10 @@ def _normalize_report_status(raw: Any) -> str:
     return ""
 
 
+def _normalize_class_value(raw: Any) -> str:
+    return str(raw or "").strip().lower().replace("-", "_").replace("/", "_").replace(" ", "_")
+
+
 def _task_level_projection_from_raw(task_id: str, raw_task: dict[str, Any]) -> tuple[str, str, str, str, str]:
     task_status = _normalize_task_level_status(raw_task.get("phase2_status", raw_task.get("phase2_task_status")))
     task_status_reason = str(
@@ -527,15 +539,21 @@ def _task_level_projection_from_raw(task_id: str, raw_task: dict[str, Any]) -> t
     task_status_evidence_type = str(
         raw_task.get("phase2_status_evidence_type", raw_task.get("phase2_task_status_evidence_type", "")) or ""
     ).strip()
-    review_verdict = str(raw_task.get("phase2_review_verdict", "") or "").strip().lower()
-    proof_class = str(raw_task.get("phase2_proof_class", "") or raw_task.get("completion_class", "") or "").strip()
+    review_verdict = str(raw_task.get("phase2_review_verdict", "") or raw_task.get("review_verdict", "") or "").strip().lower()
+    proof_class = str(
+        raw_task.get("phase2_proof_class", "")
+        or raw_task.get("proof_class", "")
+        or raw_task.get("completion_class", "")
+        or ""
+    ).strip()
+    completion_class = raw_task.get("phase2_completion_class", raw_task.get("completion_class", ""))
     if not task_status and (review_verdict or proof_class):
         projection = classify_phase2_task_status(
             task_id=task_id,
             task_type=str(raw_task.get("type", "") or raw_task.get("task_type", "") or ""),
             review_verdict=review_verdict,
             proof_class=proof_class,
-            completion_class=raw_task.get("phase2_completion_class", ""),
+            completion_class=completion_class,
         )
         task_status = projection.task_status
         task_status_reason = projection.reason
@@ -571,6 +589,8 @@ def _phase2_blocking_roots(
         report_status = _normalize_report_status(
             raw_task.get("phase2_status", raw_task.get("phase2_task_status"))
         )
+        if task_status == "fail" and _task_has_family_consumable_support(raw_task):
+            continue
         if task_status in {"fail", "blocked"}:
             roots.add(task_id)
         elif report_status in {"needs_fresh_review", "needs_class_normalization"}:
@@ -590,6 +610,26 @@ def _phase2_blocking_roots(
         ):
             roots.add(task_id)
     return roots
+
+
+def _task_has_family_consumable_support(raw_task: dict[str, Any]) -> bool:
+    proof_class = _normalize_class_value(
+        raw_task.get("phase2_proof_class", "")
+        or raw_task.get("proof_class", "")
+        or raw_task.get("completion_class", "")
+    )
+    completion_class = _normalize_class_value(
+        raw_task.get("phase2_completion_class", "")
+        or raw_task.get("completion_class", "")
+    )
+    if proof_class not in FAMILY_CONSUMABLE_PROOF_CLASSES:
+        return False
+    if completion_class not in FAMILY_CONSUMABLE_COMPLETION_CLASSES:
+        return False
+    summary = raw_task.get("proof_obligation_summary")
+    if not isinstance(summary, dict):
+        return False
+    return not summary.get("open_blocking_ids") and not summary.get("needs_concrete_decomposition")
 
 
 def _proof_debt_roots(
@@ -786,9 +826,12 @@ def _is_allowed_beyond_book_exception(
     status: str,
     allowed_beyond_book_tasks: set[str],
 ) -> bool:
-    if status != COMPLETED_WITH_PROOF_DEBT:
-        return False
     if canonicalize_block_id(task_id) not in allowed_beyond_book_tasks:
+        return False
+    task_status = _normalize_task_level_status(raw_task.get("phase2_status", raw_task.get("phase2_task_status")))
+    if task_status == "allowed_exception":
+        return True
+    if status != COMPLETED_WITH_PROOF_DEBT:
         return False
     current_class = str(raw_task.get("current_class", "") or raw_task.get("primary_class", "") or "").strip()
     if current_class == "beyond_book_exception":

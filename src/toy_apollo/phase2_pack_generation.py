@@ -69,6 +69,12 @@ async def write_existing_output_review_pack(task_id: str, ledger, settings, *, f
     return await _impl(task_id, ledger, settings, force_new_attempt=force_new_attempt)
 
 
+async def write_existing_support_review_pack(task_id: str, ledger, settings, *, force_new_attempt: bool = False) -> tuple[bool, str]:
+    from .phase2_prompt_pack import write_existing_support_review_pack as _impl
+
+    return await _impl(task_id, ledger, settings, force_new_attempt=force_new_attempt)
+
+
 async def write_existing_output_review_queue(task_ids: list[str], ledger, settings) -> tuple[bool, str]:
     from .phase2_prompt_pack import write_existing_output_review_queue as _impl
 

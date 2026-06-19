@@ -42,6 +42,7 @@ AUTO_LOOP_STOP_REASONS = {
     "build_budget_exhausted",
     "freshness_error",
     "hard_failure",
+    "diagnoser_required",
 }
 
 

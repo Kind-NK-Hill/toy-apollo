@@ -13,9 +13,11 @@ from src.ledger_manager import LedgerManager, TaskStatus
 from .phase2_failure_budget import PHASE2_FAILURE_STREAK_LIMIT
 from .phase2_pack_shared.io import read_json_safely, write_json
 from .phase2_proof_obligations import (
-    PASSING_OBLIGATION_STATUSES,
     normalize_proof_obligations,
+    needs_concrete_decomposition,
+    placeholder_obligation_ids,
     proof_obligation_path,
+    proof_contract_is_verified,
     summarize_proof_obligations,
 )
 
@@ -23,6 +25,7 @@ from .phase2_proof_obligations import (
 OBLIGATION_TASK_TYPE = "Phase2ObligationTask"
 OBLIGATION_TASK_ID_PREFIX = "obl"
 OBLIGATION_TASK_PROMOTABLE_STATUSES = {"accepted_as_proof_debt", "open", "partial", "blocked", "in_progress"}
+MAX_OBLIGATION_TASK_ID_LENGTH = 120
 
 
 @dataclass(frozen=True)
@@ -37,7 +40,15 @@ def obligation_task_id(parent_task_id: str, obligation_id: str) -> str:
     parent = canonicalize_block_id(parent_task_id)
     raw_obligation = re.sub(r"[^A-Za-z0-9_]+", "_", str(obligation_id or "")).strip("_").lower()
     raw_obligation = re.sub(r"_+", "_", raw_obligation) or "obligation"
-    return canonicalize_block_id(f"{OBLIGATION_TASK_ID_PREFIX}_{parent}_{raw_obligation}")
+    full_id = canonicalize_block_id(f"{OBLIGATION_TASK_ID_PREFIX}_{parent}_{raw_obligation}")
+    if len(full_id) <= MAX_OBLIGATION_TASK_ID_LENGTH:
+        return full_id
+    digest = hashlib.sha1(f"{parent}:{raw_obligation}".encode("utf-8")).hexdigest()[:12]
+    parent_budget = 42
+    obligation_budget = MAX_OBLIGATION_TASK_ID_LENGTH - len(OBLIGATION_TASK_ID_PREFIX) - len(digest) - 3 - parent_budget
+    parent_part = parent[:parent_budget].strip("_") or "parent"
+    obligation_part = raw_obligation[:max(obligation_budget, 16)].strip("_") or "obligation"
+    return canonicalize_block_id(f"{OBLIGATION_TASK_ID_PREFIX}_{parent_part}_{obligation_part}_{digest}")
 
 
 def is_obligation_task(task: dict[str, Any] | None) -> bool:
@@ -50,6 +61,14 @@ def promote_obligation_tasks_for_task(
     settings,
 ) -> ObligationPromotionReport:
     parent_task_id = canonicalize_block_id(parent_task_id)
+    # Legacy quarantine: `obl` is no longer a task factory or public import
+    # surface. Keep the old implementation below unreachable until historical
+    # reconciliation code is deleted; new work must absorb obligations into the
+    # parent file or stable non-`obl` support and pass normal parent review/apply.
+    return ObligationPromotionReport(
+        parent_task_id=parent_task_id,
+        skipped=["obligation child promotion is disabled; absorb proof obligations into parent/support files"],
+    )
     parent_task = _resolve_parent_task(parent_task_id, ledger, settings)
     parent_task = _with_runtime_soft_imports(parent_task_id, parent_task, ledger)
     pack_dir = settings.phase2_prompt_packs_dir / parent_task_id
@@ -76,6 +95,7 @@ def promote_obligation_tasks_for_task(
             if obligation_id:
                 skipped.append(obligation_id)
             continue
+        previous_child_id = canonicalize_block_id(str(obligation.get("ledger_task_id", "") or ""))
         child_id = obligation_task_id(parent_task_id, obligation_id)
         existed = child_id in ledger.ledger.get("tasks", {})
         child_deps = _child_dependencies(parent_deps, parent_task_id, obligation, promotable_ids)
@@ -102,6 +122,14 @@ def promote_obligation_tasks_for_task(
         else:
             created.append(child_id)
 
+        if previous_child_id and previous_child_id != child_id:
+            _mark_superseded_child_obligation(
+                previous_child_id=previous_child_id,
+                child_id=child_id,
+                parent_task_id=parent_task_id,
+                obligation_id=obligation_id,
+                ledger=ledger,
+            )
         if obligation.get("ledger_task_id") != child_id:
             obligation["ledger_task_id"] = child_id
             changed = True
@@ -114,6 +142,33 @@ def promote_obligation_tasks_for_task(
         write_json(obligations_path, payload)
     _update_parent_obligation_summary(parent_task_id, ledger, obligations_path, payload)
     return ObligationPromotionReport(parent_task_id=parent_task_id, created=created, updated=updated, skipped=skipped)
+
+
+def _mark_superseded_child_obligation(
+    *,
+    previous_child_id: str,
+    child_id: str,
+    parent_task_id: str,
+    obligation_id: str,
+    ledger: LedgerManager,
+) -> None:
+    previous = ledger.ledger.get("tasks", {}).get(previous_child_id)
+    if not isinstance(previous, dict):
+        return
+    if str(previous.get("parent_task_id", "") or "") != parent_task_id:
+        return
+    if str(previous.get("obligation_id", "") or "") != obligation_id:
+        return
+    ledger.update_status(
+        previous_child_id,
+        TaskStatus.ORPHANED,
+        error=f"Superseded by shortened obligation child id {child_id}.",
+    )
+    ledger.update_runtime_metadata(
+        previous_child_id,
+        superseded_by_obligation_task_id=child_id,
+        obligation_task_state="superseded_by_short_id",
+    )
 
 
 def promote_all_obligation_tasks(
@@ -133,18 +188,11 @@ def promote_all_obligation_tasks(
 
     created: list[str] = []
     updated: list[str] = []
-    skipped: list[str] = []
-    parents_scanned: list[str] = []
-    for parent_id in parent_ids:
-        try:
-            report = promote_obligation_tasks_for_task(parent_id, ledger, settings)
-        except FileNotFoundError:
-            skipped.append(parent_id)
-            continue
-        parents_scanned.append(parent_id)
-        created.extend(report.created)
-        updated.extend(report.updated)
-        skipped.extend(f"{parent_id}:{item}" for item in report.skipped)
+    skipped: list[str] = [
+        f"{parent_id}:obligation child promotion is disabled; absorb proof obligations into parent/support files"
+        for parent_id in parent_ids
+    ]
+    parents_scanned: list[str] = list(parent_ids)
     return {
         "parents_scanned": parents_scanned,
         "created": created,
@@ -178,32 +226,33 @@ def reconcile_obligation_tasks_for_task(parent_task_id: str, ledger: LedgerManag
             continue
         child_status = str(child.get("status", "") or "")
         if child_status == TaskStatus.COMPLETED.value:
-            proved.append(child_id)
-            if obligation.get("status") != "proved":
-                obligation["status"] = "proved"
-                changed = True
-            if obligation.get("review_status") != "accepted":
-                obligation["review_status"] = "accepted"
-                changed = True
-            if obligation.get("discharged_by_task") != child_id:
-                obligation["discharged_by_task"] = child_id
-                changed = True
-            evidence = f"Discharged by ledger obligation task {child_id}."
-            if obligation.get("last_review_evidence") != evidence:
-                obligation["last_review_evidence"] = evidence
-                changed = True
-            for scaffold in obligation.get("scaffold_hypotheses", []):
-                if isinstance(scaffold, dict) and scaffold.get("status") != "discharged":
-                    scaffold["status"] = "discharged"
-                    changed = True
-            child_payload = _child_completed_obligation_payload(
+            child_obligations_path = proof_obligation_path(settings.phase2_prompt_packs_dir / child_id)
+            existing_child_payload = _load_existing_child_obligation_payload(child_obligations_path, child)
+            child_payload = existing_child_payload or _child_completed_obligation_payload(
                 child_id=child_id,
                 parent_task_id=parent_task_id,
                 obligation=obligation,
             )
-            child_obligations_path = proof_obligation_path(settings.phase2_prompt_packs_dir / child_id)
-            if child_obligations_path.parent.exists():
+            child_discharge = _child_concrete_discharge_obligation(child_payload, obligation)
+            if existing_child_payload is None and child_obligations_path.parent.exists():
                 write_json(child_obligations_path, child_payload)
+            if child_discharge is None:
+                open_children.append(child_id)
+                ledger.update_runtime_metadata(
+                    child_id,
+                    obligation_task_state="needs_concrete_obligations",
+                    reconciled_parent_task_id=parent_task_id,
+                    proof_obligations_file=str(child_obligations_path),
+                    proof_obligation_summary=summarize_proof_obligations(child_payload),
+                )
+                continue
+
+            proved.append(child_id)
+            changed = _absorb_child_discharge_into_parent_obligation(
+                obligation=obligation,
+                child_obligation=child_discharge,
+                child_id=child_id,
+            ) or changed
             ledger.update_runtime_metadata(
                 child_id,
                 obligation_task_state="closed",
@@ -217,10 +266,6 @@ def reconcile_obligation_tasks_for_task(parent_task_id: str, ledger: LedgerManag
     if changed:
         write_json(obligations_path, payload)
     summary = _update_parent_obligation_summary(parent_task_id, ledger, obligations_path, payload)
-    if _parent_can_be_marked_clean(summary):
-        parent_status = str(ledger.ledger.get("tasks", {}).get(parent_task_id, {}).get("status", "") or "")
-        if parent_status == TaskStatus.COMPLETED_WITH_PROOF_DEBT.value:
-            ledger.update_status(parent_task_id, TaskStatus.COMPLETED)
     return {"proved": proved, "open": open_children}
 
 
@@ -502,6 +547,101 @@ def _child_completed_obligation_payload(
         "scaffold_hypotheses": [],
         "review_history": [],
     }
+
+
+def _load_existing_child_obligation_payload(path: Path, child_task: dict[str, Any]) -> dict[str, Any] | None:
+    if not path.exists():
+        return None
+    return normalize_proof_obligations(read_json_safely(path, {}), child_task)
+
+
+def _child_concrete_discharge_obligation(
+    child_payload: dict[str, Any],
+    parent_obligation: dict[str, Any],
+) -> dict[str, Any] | None:
+    if needs_concrete_decomposition(child_payload):
+        return None
+    if placeholder_obligation_ids(child_payload):
+        return None
+    obligations = child_payload.get("obligations", []) if isinstance(child_payload.get("obligations", []), list) else []
+    parent_obligation_id = str(parent_obligation.get("id", "") or "").strip()
+    matching = [
+        item
+        for item in obligations
+        if isinstance(item, dict) and str(item.get("id", "") or "").strip() == parent_obligation_id
+    ]
+    fallback = [item for item in obligations if isinstance(item, dict) and item not in matching]
+    for item in [*matching, *fallback]:
+        if _is_reviewed_concrete_child_obligation(item):
+            return item
+    return None
+
+
+def _is_reviewed_concrete_child_obligation(item: dict[str, Any]) -> bool:
+    if str(item.get("status", "") or "").strip() != "proved":
+        return False
+    if str(item.get("review_status", "") or "").strip() != "accepted":
+        return False
+    if not proof_contract_is_verified(item):
+        return False
+    if not str(item.get("source_ref", "") or "").strip():
+        return False
+    if not str(item.get("lean_landing", "") or "").strip():
+        return False
+    if not str(item.get("expected_theorem_signature", "") or "").strip():
+        return False
+    landing_kind = str(item.get("landing_kind", "") or "").strip()
+    return landing_kind not in {"", "empty", "unknown"}
+
+
+def _set_if_changed(target: dict[str, Any], key: str, value: Any) -> bool:
+    if target.get(key) == value:
+        return False
+    target[key] = value
+    return True
+
+
+def _absorb_child_discharge_into_parent_obligation(
+    *,
+    obligation: dict[str, Any],
+    child_obligation: dict[str, Any],
+    child_id: str,
+) -> bool:
+    changed = False
+    for field in (
+        "source_ref",
+        "lean_landing",
+        "expected_theorem_signature",
+        "landing_kind",
+        "proof_contract_status",
+        "body_reassumption_check",
+        "signature_match",
+        "public_premise_check",
+        "proof_contract_notes",
+        "notes",
+    ):
+        value = child_obligation.get(field)
+        if isinstance(value, str) and not value.strip():
+            continue
+        if value is None:
+            continue
+        changed = _set_if_changed(obligation, field, value) or changed
+    if isinstance(child_obligation.get("source_output_alignment"), dict):
+        changed = _set_if_changed(
+            obligation,
+            "source_output_alignment",
+            child_obligation["source_output_alignment"],
+        ) or changed
+    changed = _set_if_changed(obligation, "status", "proved") or changed
+    changed = _set_if_changed(obligation, "review_status", "accepted") or changed
+    changed = _set_if_changed(obligation, "discharged_by_task", child_id) or changed
+    evidence = f"Discharged by ledger obligation task {child_id} using child-local proof obligation evidence."
+    changed = _set_if_changed(obligation, "last_review_evidence", evidence) or changed
+    for scaffold in obligation.get("scaffold_hypotheses", []):
+        if isinstance(scaffold, dict) and scaffold.get("status") != "discharged":
+            scaffold["status"] = "discharged"
+            changed = True
+    return changed
 
 
 def _parent_can_be_marked_clean(summary: dict[str, Any]) -> bool:

@@ -16,12 +16,21 @@ from .phase2_pack_shared.artifacts import (
     select_latest_existing_task_file,
     stale_candidate_official_output_message,
 )
-from .phase2_pack_shared.io import read_file_safely, read_json_safely, sha256_json, sha256_text
+from .phase2_pack_shared.io import (
+    copy_file,
+    path_exists,
+    read_file_safely,
+    read_json_safely,
+    sha256_json,
+    sha256_text,
+    unlink_path,
+)
 from .phase2_pack_shared.review_basis_parts import (
     review_allowed_abstractions,
     review_downstream_checklist,
     review_forbidden_weakenings,
     review_history_risks,
+    review_route_inspection_gate,
     review_spine_contract,
 )
 from .phase2_semantic_review import (
@@ -32,6 +41,7 @@ from .phase2_semantic_review import (
 from .phase2_output_binding import Phase2OutputBinding, resolve_phase2_output_binding
 from .phase2_proof_obligations import (
     PROOF_OBLIGATIONS_FILE_NAME,
+    load_existing_proof_obligations_file,
     maybe_ensure_proof_obligations_file,
     summarize_proof_obligations,
 )
@@ -89,9 +99,9 @@ def _sync_current_review_aliases(
     ):
         if source is None:
             continue
-        if alias.exists():
-            alias.unlink()
-        shutil.copyfile(source, alias)
+        if path_exists(alias):
+            unlink_path(alias)
+        copy_file(source, alias)
 
 
 def _clear_current_review_metadata(task_id: str, ledger: LedgerManager) -> None:
@@ -184,14 +194,14 @@ def _collect_direct_downstream_consumers(task_id: str, settings) -> list[dict[st
 
 
 def _hash_file(path: Path | None) -> str:
-    if path is None or not path.exists():
+    if path is None or not path_exists(path):
         return ""
     text = read_file_safely(path)
     return sha256_text(text) if text else ""
 
 
 def _subject_imports(subject_file: Path | None) -> list[str]:
-    if subject_file is None or not subject_file.exists():
+    if subject_file is None or not path_exists(subject_file):
         return []
     imports: list[str] = []
     for line in read_file_safely(subject_file).splitlines():
@@ -428,11 +438,22 @@ def build_semantic_review_basis(
         else current_record if isinstance(current_record, dict) else {},
         tracking_level=2,
     )
+    if output_binding.is_obligation_task:
+        proof_obligations_owner_file = output_binding.proof_obligations_file.as_posix()
+    elif proof_obligations is not None:
+        proof_obligations_owner_file = str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME)
+    else:
+        proof_obligations_owner_file = ""
     proof_obligations_file = (
         output_binding.proof_obligations_file.as_posix()
         if output_binding.is_obligation_task
         else str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME)
     ) if proof_obligations is not None else ""
+    if output_binding.is_obligation_task:
+        child_proof_obligations = load_existing_proof_obligations_file(pack_dir, task)
+        if child_proof_obligations is not None:
+            proof_obligations = child_proof_obligations
+            proof_obligations_file = str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME)
     downstream = sorted(
         _collect_direct_downstream_consumers(output_binding.output_owner_task_id, settings),
         key=lambda item: (
@@ -480,12 +501,15 @@ def build_semantic_review_basis(
             "subject_imports": _subject_imports(subject_file_path),
         },
         "direct_downstream_consumers": downstream,
+        "route_inspection_gate": review_route_inspection_gate(task),
         "spine_review_contract": review_spine_contract(task),
         "proof_obligations_file": proof_obligations_file,
+        "proof_obligations_owner_file": proof_obligations_owner_file,
         "proof_obligations": proof_obligations if proof_obligations is not None else {},
         "proof_obligation_summary": proof_obligation_summary,
         "proof_obligations_evidence": {
             "proof_obligations_file": proof_obligations_file,
+            "proof_obligations_owner_file": proof_obligations_owner_file,
             "proof_obligations": proof_obligations if proof_obligations is not None else {},
             "proof_obligation_summary": proof_obligation_summary,
             "authority": "review_evidence_only",
@@ -550,7 +574,7 @@ def _validate_review_input_freshness(
     task_id = task["block_id"]
     source_plan = str(task.get("source_plan", "unknown") or "unknown")
     review_subject_kind = str(review_input.get("review_subject_kind", "") or "candidate")
-    if review_subject_kind not in {"candidate", "official_output"}:
+    if review_subject_kind not in {"candidate", "official_output", "existing_support"}:
         return "review input review_subject_kind is invalid", {}
     if canonicalize_block_id(str(review_input.get("task", {}).get("block_id", "") or "")) != task_id:
         return f"review input task id mismatch: expected {task_id}", {}
@@ -586,12 +610,15 @@ def _validate_review_input_freshness(
         )
         if stale_official_message:
             return stale_official_message, {}
-    else:
+    elif review_subject_kind == "official_output":
         current_output = select_latest_existing_task_file(task_id, source_plan, settings)
         current_output_code = read_file_safely(current_output) if current_output and current_output.exists() else ""
         current_review_subject_hash = sha256_text(current_output_code) if current_output_code else ""
         if current_review_subject_hash != recorded_subject_hash:
             return "official output changed since review-existing generation", {}
+    else:
+        if recorded_subject_hash and current_review_subject_hash != recorded_subject_hash:
+            return "support landing changed since review-support generation", {}
 
     expected_review_basis_hash = str(review_input.get("review_basis_hash", "") or "")
     if not expected_review_basis_hash:
@@ -673,7 +700,7 @@ def _load_current_codex_review_request(
         (template_path, "review template"),
         (subject_file_path, "review subject file"),
     ):
-        if not path.exists():
+        if not path_exists(path):
             return f"Current codex review request {label} is missing; regenerate semantic review materials.", {}
 
     review_input = read_json_safely(input_path, {})
@@ -709,6 +736,6 @@ def _load_current_codex_review_request(
         "context_path": context_path,
         "template_path": template_path,
         "expected_result_path": expected_result_path,
-        "result_exists": expected_result_path.exists(),
+        "result_exists": path_exists(expected_result_path),
         **freshness,
     }

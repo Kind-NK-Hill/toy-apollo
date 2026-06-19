@@ -48,6 +48,7 @@ from .phase2_review_apply import (
 from .phase2_review_request import _load_current_codex_review_request, _resolve_review_binding_path
 from .phase2_review_request import _clear_current_review_metadata
 from .phase2_semantic_review import SEMANTIC_REVIEW_PROMPT_VERSION, SEMANTIC_REVIEW_RUBRIC_VERSION
+from .phase2_semantic_fail_triage import classify_semantic_failure, write_semantic_fail_triage_artifacts
 from .phase2_proof_obligations import proof_obligation_path, summarize_proof_obligations
 from .phase2_failure_budget import (
     PHASE2_AUTO_LOOP_BUILD_ATTEMPTS_PER_REVIEW,
@@ -62,6 +63,7 @@ from .phase2_pack_generation import (
     resolve_phase2_task,
     write_codex_review_pack as prepare_candidate_review,
     write_existing_output_review_pack as prepare_existing_review,
+    write_existing_support_review_pack as prepare_support_review,
     write_prompt_pack as prepare_prompt_dir,
 )
 
@@ -240,6 +242,99 @@ def _same_candidate_after_semantic_failure_detail(
     )
 
 
+def _request_path_attempt(request_path: Path) -> int:
+    match = re.fullmatch(r"review_repair_request_v(\d+)\.json", request_path.name)
+    if match:
+        return int(match.group(1))
+    return 0
+
+
+def _resolve_repair_path(pack_dir: Path, raw_path: Any) -> Path | None:
+    raw = str(raw_path or "").strip()
+    if not raw:
+        return None
+    path = Path(raw).expanduser()
+    if not path.is_absolute():
+        path = (pack_dir / path).resolve()
+    return path
+
+
+def _triage_requires_diagnoser(triage: Any) -> bool:
+    if not isinstance(triage, dict):
+        return False
+    return bool(triage.get("needs_diagnoser", False)) and not bool(triage.get("local_repair_allowed", True))
+
+
+def _same_candidate_diagnoser_stop_detail(
+    *,
+    task: dict[str, Any],
+    ledger: LedgerManager,
+    settings,
+    pack_dir: Path,
+    current_record: dict[str, Any],
+) -> str:
+    task_id = task["block_id"]
+    request_path = _resolve_current_review_repair_request_path(pack_dir, current_record)
+    if request_path is None or not request_path.exists():
+        return ""
+    repair_request = read_json_safely(request_path, {})
+    if not isinstance(repair_request, dict):
+        return ""
+
+    triage_result = repair_request.get("semantic_fail_triage", {})
+    if not _triage_requires_diagnoser(triage_result):
+        review_result_path = _resolve_repair_path(pack_dir, repair_request.get("failed_review_result_file", ""))
+        review_result = read_json_safely(review_result_path, {}) if review_result_path else {}
+        if not isinstance(review_result, dict):
+            review_result = {}
+        _, _, needs_diagnoser = classify_semantic_failure(review_result)
+        if not needs_diagnoser:
+            return ""
+
+        review_input_path = _resolve_repair_path(pack_dir, repair_request.get("failed_review_input_file", ""))
+        review_input = read_json_safely(review_input_path, {}) if review_input_path else {}
+        if not isinstance(review_input, dict):
+            review_input = {}
+        failed_subject_path = (
+            _resolve_repair_path(pack_dir, repair_request.get("failed_review_subject_file", ""))
+            or _resolve_repair_path(pack_dir, repair_request.get("next_draft_seed_file", ""))
+            or (pack_dir / DRAFT_FILE_NAME)
+        )
+        attempt = _request_path_attempt(request_path) or next_review_repair_attempt(pack_dir)
+        triage_result = write_semantic_fail_triage_artifacts(
+            task=task,
+            pack_dir=pack_dir,
+            review_input=review_input,
+            review_result=review_result,
+            repair_request=repair_request,
+            failed_review_subject_file=failed_subject_path,
+            attempt=attempt,
+        )
+        repair_request["semantic_fail_triage"] = triage_result
+        write_json(request_path, repair_request)
+
+    if not _triage_requires_diagnoser(triage_result):
+        return ""
+
+    ledger.update_runtime_metadata(
+        task_id,
+        latest_semantic_fail_triage_file=str(triage_result.get("triage_path", "")),
+        latest_semantic_fail_triage_category=str(triage_result.get("category", "")),
+        latest_semantic_fail_triage_needs_diagnoser=bool(triage_result.get("needs_diagnoser", False)),
+        latest_semantic_fail_triage_local_repair_allowed=bool(triage_result.get("local_repair_allowed", False)),
+        latest_diagnoser_prompt_file=str(triage_result.get("prompt_path", "")),
+        latest_diagnosis_state=str(triage_result.get("diagnosis_state", "")),
+    )
+    prompt_path = str(triage_result.get("prompt_path", "") or "").strip()
+    category = str(triage_result.get("category", "") or "").strip()
+    prompt_note = f" Diagnoser prompt: {prompt_path}" if prompt_path else ""
+    return (
+        f"Auto-loop stopped for {task_id}: the rebuilt candidate is unchanged after semantic failure, "
+        f"and semantic-fail triage category `{category}` requires read-only diagnoser before ordinary repair."
+        f"{prompt_note}"
+    )
+
+
 def _initialize_auto_loop_state(
     task_id: str,
     ledger: LedgerManager,
@@ -323,6 +418,22 @@ def _complete_auto_loop(
     )
     refresh_pack_runtime_view(task, ledger, settings, pack_dir)
     return True, detail
+
+
+def _repair_ready_requires_diagnoser(repair_ready: dict[str, Any] | None) -> tuple[bool, dict[str, Any]]:
+    if not isinstance(repair_ready, dict):
+        return False, {}
+    request_payload = repair_ready.get("request_payload", {})
+    if not isinstance(request_payload, dict):
+        return False, {}
+    triage = request_payload.get("semantic_fail_triage", {})
+    if not isinstance(triage, dict):
+        return False, {}
+    return (
+        bool(triage.get("needs_diagnoser", False))
+        and not bool(triage.get("local_repair_allowed", True)),
+        triage,
+    )
 
 
 def _extract_effective_failed_review_result(payload: Any) -> dict[str, Any]:
@@ -939,7 +1050,7 @@ async def run_codex_review_now(
         pack_dir = prepare_prompt_dir(task_id, ledger, settings, task=task)
 
     review_subject = str(review_subject or "current").strip().lower() or "current"
-    if review_subject not in {"current", "existing", "candidate"}:
+    if review_subject not in {"current", "existing", "candidate", "support"}:
         return False, f"Unsupported review-now subject: {review_subject}"
 
     request_info: dict[str, Any] = {}
@@ -962,6 +1073,13 @@ async def run_codex_review_now(
 
     if review_subject == "existing":
         success, detail = await prepare_existing_review(task_id, ledger, settings, force_new_attempt=True)
+        if not success:
+            return False, detail
+        validation_error, request_info = _load_current_codex_review_request(task=task, ledger=ledger, settings=settings, pack_dir=pack_dir)
+        if validation_error:
+            return False, validation_error
+    elif review_subject == "support":
+        success, detail = await prepare_support_review(task_id, ledger, settings, force_new_attempt=True)
         if not success:
             return False, detail
         validation_error, request_info = _load_current_codex_review_request(task=task, ledger=ledger, settings=settings, pack_dir=pack_dir)
@@ -1161,6 +1279,22 @@ async def run_codex_auto_loop(
                     reason="freshness_error",
                     detail=f"Auto-loop stopped for {task_id}: {outcome.detail}",
                 )
+            requires_diagnoser, triage = _repair_ready_requires_diagnoser(outcome.repair_ready)
+            if requires_diagnoser:
+                prompt_path = str(triage.get("prompt_path", "") or "").strip()
+                category = str(triage.get("category", "") or "").strip()
+                prompt_note = f" Diagnoser prompt: {prompt_path}" if prompt_path else ""
+                return _stop_auto_loop(
+                    task=task,
+                    ledger=ledger,
+                    settings=settings,
+                    pack_dir=pack_dir,
+                    reason="diagnoser_required",
+                    detail=(
+                        f"Auto-loop stopped for {task_id}: semantic-fail triage category `{category}` "
+                        f"requires read-only route/source diagnosis before ordinary repair.{prompt_note}"
+                    ),
+                )
             if outcome.next_action == "review_fix":
                 repair_success, repair_detail = await run_codex_review_fix(task_id, ledger, settings)
                 if not repair_success:
@@ -1303,6 +1437,20 @@ async def run_codex_auto_loop(
                     )
                 refresh_pack_runtime_view(task, ledger, settings, pack_dir)
                 continue
+            if review_subject == "support":
+                _set_current_auto_loop_metadata(task_id, ledger, current_auto_loop_phase="review_prepared", current_auto_loop_status="active")
+                success, detail = await run_codex_review_now(task_id, ledger, settings, review_subject="support")
+                if not success:
+                    return _stop_auto_loop(
+                        task=task,
+                        ledger=ledger,
+                        settings=settings,
+                        pack_dir=pack_dir,
+                        reason=_auto_loop_stop_reason_for_detail(detail),
+                        detail=f"Auto-loop stopped for {task_id}: {detail}",
+                    )
+                refresh_pack_runtime_view(task, ledger, settings, pack_dir)
+                continue
             if review_subject == "candidate":
                 _set_current_auto_loop_metadata(task_id, ledger, current_auto_loop_phase="review_prepared", current_auto_loop_status="active")
                 success, detail = await run_codex_review_now(task_id, ledger, settings, review_subject="candidate")
@@ -1362,6 +1510,22 @@ async def run_codex_auto_loop(
             max_build_attempts_per_round=state["max_build_attempts_per_round"],
         )
         if same_candidate_detail:
+            diagnoser_detail = _same_candidate_diagnoser_stop_detail(
+                task=task,
+                ledger=ledger,
+                settings=settings,
+                pack_dir=pack_dir,
+                current_record=current_record,
+            )
+            if diagnoser_detail:
+                return _stop_auto_loop(
+                    task=task,
+                    ledger=ledger,
+                    settings=settings,
+                    pack_dir=pack_dir,
+                    reason="diagnoser_required",
+                    detail=diagnoser_detail,
+                )
             _set_current_auto_loop_metadata(task_id, ledger, current_auto_loop_phase="authoring", current_auto_loop_status="active")
             refresh_pack_runtime_view(task, ledger, settings, pack_dir)
             return True, same_candidate_detail

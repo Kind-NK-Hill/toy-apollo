@@ -31,7 +31,7 @@ from .phase2_pack_shared.artifacts import (
     select_latest_verify_result,
     official_output_candidate_divergence,
 )
-from .phase2_pack_shared.io import read_file_safely, read_json_safely, sha256_text, write_json
+from .phase2_pack_shared.io import path_exists, read_file_safely, read_json_safely, sha256_text, write_json, write_text
 from .phase2_pack_shared.review_basis_parts import (
     build_legacy_intent_contract,
     review_allowed_abstractions,
@@ -45,6 +45,7 @@ from .phase2_pack_shared.runtime_state import (
     count_consecutive_primary_failures,
     recommended_action_for_kind,
 )
+from .phase2_math_review_gate import math_review_gate_state
 from .phase2_proof_obligations import (
     maybe_ensure_proof_obligations_file,
     render_proof_obligations_markdown,
@@ -82,6 +83,11 @@ def _auto_loop_stop_reason_note(stop_reason: str) -> str:
         return (
             "Semantic non-progress means the loop has repeated the same semantic review failure "
             "or the same candidate content across auto-loop rounds without a meaningful fix."
+        )
+    if reason == "diagnoser_required":
+        return (
+            "Semantic-fail triage classified the failure as a route/source/statement problem. "
+            "Use the prepared diagnoser prompt before ordinary repair."
         )
     return ""
 
@@ -138,44 +144,89 @@ def build_operator_prompt(
         and auto_loop_state["phase"] in {"review_prepared", "reviewing", "applying"}
         and bool(str(current_record.get("current_review_input_file", "") or "").strip())
     )
+    math_gate_state = math_review_gate_state(
+        task_id,
+        current_record if isinstance(current_record, dict) else {},
+        pack_dir=pack_dir,
+    )
+    math_gate_blocks_author = (not review_mode_active) and math_gate_state.blocks_authoring()
+    if review_mode_active:
+        role_line = "You are Codex's independent read-only semantic reviewer for exactly one Lean task in this repository."
+        rule_lines = [
+            "1. Return semantic review JSON only.",
+            "2. Read `semantic_review_input.json`, `semantic_review_prompt.md`, `semantic_review_context.md`, and `semantic_review_result_template.json` before writing the result.",
+            "3. Write the verdict into the exact `semantic_review_result_vM.json` path requested by the current review request.",
+            "4. Keep the binding fields unchanged; do not review a different candidate or invent a different task binding.",
+            "5. Judge semantic fidelity, proof spine, interface contract, and downstream adequacy; do not edit `draft.lean` in reviewer mode.",
+            "6. You must be independent from the authoring pass for this candidate. Fill `reviewer_independence` truthfully.",
+            "7. If you authored or edited this candidate, stop and hand the review to a different read-only reviewer subagent or configured reviewer runner.",
+        ]
+    elif math_gate_blocks_author:
+        if math_gate_state.stop_mode == "blocking_proof":
+            role_line = "You are Codex's local blocking proof operator for exactly one Lean task in this repository."
+            rule_lines = [
+                "1. Work only on the blocking theorem targets listed by the Math Review Gate.",
+                "2. You may edit `draft.lean` or scratch support files only when the edit directly serves an allowed next target.",
+                "3. Do not write into `ToyApollo/Output`, request semantic review, or promote completion while any listed blocker remains.",
+                "4. Do not author unrelated parent assembly, adapters, or convenience lemmas that do not shorten the listed blocker path.",
+                "5. If a blocking target stalls, report the exact theorem name, current Lean goal, missing support lemma, and next replacement route.",
+            ]
+        else:
+            role_line = "You are Codex's local Math Review Gate operator for exactly one Lean task in this repository."
+            rule_lines = [
+                "1. Do not write Lean proof code, edit `draft.lean`, or write into `ToyApollo/Output` while this gate blocks.",
+                "2. Write or update the natural language proof skeleton artifact before any Lean author/build work.",
+                "3. Use an independent read-only math reviewer for three rounds: source statement, proof route closure, and Lean theorem-shape feasibility.",
+                "4. Write the review verdict into `math_review_result_vN.json` with verdict `go` or `stop`.",
+                "5. Resume Lean author/build only after the Math Review Gate verdict is `go`.",
+                "6. If the verdict is `stop`, report the minimal parent/support rewrite direction instead of authoring Lean.",
+            ]
+    else:
+        role_line = "You are Codex's local authoring agent for exactly one Lean task in this repository."
+        rule_lines = [
+            "1. Return Lean code only.",
+            "2. Edit `draft.lean` as the working file. Do not treat `target_stub.lean` as the final output.",
+            "3. Reuse the imports listed in `imports.lean`.",
+            "4. Prefer only `verified` entries from `search_manifest.json` when choosing names, imports, and APIs.",
+            "5. Read `failure_summary.md` before the next attempt and avoid repeating the same failure mode.",
+            "6. Do not redefine any object already provided by Mathlib or uploaded local dependencies.",
+            "7. Do not rewrite dependency files.",
+            "8. Produce complete Lean code with no `sorry`.",
+            "9. Run `build-check` after each meaningful edit loop; do not enter semantic review until the candidate is build-ready.",
+            "10. Preserve the original TeX statement faithfully; use `review-now --review-subject candidate` after `build-check` passes.",
+            "11. Use `review-now --review-subject existing` only for auditing an already runnable official output.",
+            "12. Use `verify` only when a stable external reviewer runner is configured.",
+        ]
     lines = [
         f"# Operator Prompt for {task_id}",
         "",
-        (
-            "You are Codex's independent read-only semantic reviewer for exactly one Lean task in this repository."
-            if review_mode_active
-            else "You are Codex's local authoring agent for exactly one Lean task in this repository."
-        ),
+        role_line,
         "",
         "Rules:",
-        *(
-            [
-                "1. Return semantic review JSON only.",
-                "2. Read `semantic_review_input.json`, `semantic_review_prompt.md`, `semantic_review_context.md`, and `semantic_review_result_template.json` before writing the result.",
-                "3. Write the verdict into the exact `semantic_review_result_vM.json` path requested by the current review request.",
-                "4. Keep the binding fields unchanged; do not review a different candidate or invent a different task binding.",
-                "5. Judge semantic fidelity, proof spine, interface contract, and downstream adequacy; do not edit `draft.lean` in reviewer mode.",
-                "6. You must be independent from the authoring pass for this candidate. Fill `reviewer_independence` truthfully.",
-                "7. If you authored or edited this candidate, stop and hand the review to a different read-only reviewer subagent or configured reviewer runner.",
-            ]
-            if review_mode_active
-            else [
-                "1. Return Lean code only.",
-                "2. Edit `draft.lean` as the working file. Do not treat `target_stub.lean` as the final output.",
-                "3. Reuse the imports listed in `imports.lean`.",
-                "4. Prefer only `verified` entries from `search_manifest.json` when choosing names, imports, and APIs.",
-                "5. Read `failure_summary.md` before the next attempt and avoid repeating the same failure mode.",
-                "6. Do not redefine any object already provided by Mathlib or uploaded local dependencies.",
-                "7. Do not rewrite dependency files.",
-                "8. Produce complete Lean code with no `sorry`.",
-                "9. Run `build-check` after each meaningful edit loop; do not enter semantic review until the candidate is build-ready.",
-                "10. Preserve the original TeX statement faithfully; use `review-now --review-subject candidate` after `build-check` passes.",
-                "11. Use `review-now --review-subject existing` only for auditing an already runnable official output.",
-                "12. Use `verify` only when a stable external reviewer runner is configured.",
-            ]
-        ),
+        *rule_lines,
     ]
     if ledger is not None and pack_dir is not None:
+        if math_gate_blocks_author:
+            lines.extend(
+                [
+                    "",
+                    "## Math Review Gate",
+                    "",
+                    f"- Status: `{math_gate_state.status}`",
+                    f"- Verdict: `{math_gate_state.verdict or '(none)'}`",
+                    f"- Stop mode: `{math_gate_state.stop_mode or '(none)'}`",
+                    f"- Triggers: `{', '.join(math_gate_state.triggers) or '(none)'}`",
+                    f"- Proof skeleton: `{math_gate_state.proof_skeleton_file or '(missing)'}`",
+                    f"- Math review result: `{math_gate_state.review_result_file or '(missing)'}`",
+                    f"- Reason: {math_gate_state.reason}",
+                ]
+            )
+            if math_gate_state.blocking_theorems:
+                lines.append(f"- Current blocker: `{', '.join(math_gate_state.blocking_theorems)}`")
+            if math_gate_state.allowed_next_targets:
+                lines.append(f"- Allowed next targets: `{', '.join(math_gate_state.allowed_next_targets)}`")
+            if math_gate_state.forbidden_work:
+                lines.append(f"- Forbidden work: `{', '.join(math_gate_state.forbidden_work)}`")
         route_note = _official_output_route_note(
             task,
             current_record if isinstance(current_record, dict) else {},
@@ -269,6 +320,8 @@ def build_operator_prompt(
             "- `imports.lean`: required imports",
             "- `target_stub.lean`: the baseline output shape",
             "- `draft.lean`: the current editable working file",
+            "- `math_proof_skeleton_v*.md`: source-faithful natural language proof skeletons for Math Review Gate tasks",
+            "- `math_review_result_v*.json`: independent math reviewer verdicts for Math Review Gate tasks",
             "- `build_result_v*.json` / `build_feedback.txt`: technical build loop outputs",
             "- `semantic_review_*.json/md`: reviewer artifacts written by `review-pack`/`review-existing`/`review-apply` or runner-backed `verify`/`audit`",
             "- `semantic_review_context*.md`: the full review context that reviewers must treat as binding for interface/downstream adequacy",
@@ -323,6 +376,11 @@ def build_context_markdown(task: dict[str, Any], ledger: LedgerManager, settings
         current_record if isinstance(current_record, dict) else {},
         settings,
         pack_dir,
+    )
+    math_gate_state = math_review_gate_state(
+        task_id,
+        current_record if isinstance(current_record, dict) else {},
+        pack_dir=pack_dir,
     )
     stale_ready = (
         str(current_record.get("latest_build_ready_candidate_kind", "") or "") == ""
@@ -425,6 +483,24 @@ def build_context_markdown(task: dict[str, Any], ledger: LedgerManager, settings
         lines.append("- Latest build status: `(no build checks yet)`")
     if isinstance(latest_build_result, dict) and latest_build_result:
         lines.append(f"- Latest build disposition: `{latest_build_result.get('disposition', '') or '(none)'}`")
+
+    lines.extend(["", "## Math Review Gate", ""])
+    lines.append(f"- Required: `{str(math_gate_state.required).lower()}`")
+    lines.append(f"- Status: `{math_gate_state.status}`")
+    lines.append(f"- Verdict: `{math_gate_state.verdict or '(none)'}`")
+    lines.append(f"- Stop mode: `{math_gate_state.stop_mode or '(none)'}`")
+    lines.append(f"- Triggers: `{', '.join(math_gate_state.triggers) or '(none)'}`")
+    lines.append(f"- Proof skeleton: `{math_gate_state.proof_skeleton_file or '(none)'}`")
+    lines.append(f"- Proof skeleton hash: `{math_gate_state.proof_skeleton_hash or '(none)'}`")
+    lines.append(f"- Math review result: `{math_gate_state.review_result_file or '(none)'}`")
+    lines.append(f"- Math review result hash: `{math_gate_state.review_result_hash or '(none)'}`")
+    if math_gate_state.blocking_theorems:
+        lines.append(f"- Current blocker: `{', '.join(math_gate_state.blocking_theorems)}`")
+    if math_gate_state.allowed_next_targets:
+        lines.append(f"- Allowed next targets: `{', '.join(math_gate_state.allowed_next_targets)}`")
+    if math_gate_state.forbidden_work:
+        lines.append(f"- Forbidden work: `{', '.join(math_gate_state.forbidden_work)}`")
+    lines.append(f"- Gate reason: {math_gate_state.reason}")
 
     lines.extend(["", "## Review State", ""])
     if current_review_input_file:
@@ -697,6 +773,19 @@ def _render_review_repair_summary(
         f"- Failed review subject: `{repair_request.get('failed_review_subject_file', '')}`",
         f"- Next draft seed: `{repair_request.get('next_draft_seed_file', '')}`",
     ]
+    triage = repair_request.get("semantic_fail_triage", {})
+    if isinstance(triage, dict) and triage:
+        lines.extend(
+            [
+                f"- Semantic-fail triage category: `{triage.get('category', '')}`",
+                f"- Needs diagnoser: `{bool(triage.get('needs_diagnoser', False))}`",
+                f"- Local repair allowed: `{bool(triage.get('local_repair_allowed', True))}`",
+                f"- Diagnosis state: `{triage.get('diagnosis_state', '')}`",
+            ]
+        )
+        prompt_path = str(triage.get("prompt_path", "") or "").strip()
+        if prompt_path:
+            lines.append(f"- Diagnoser prompt: `{prompt_path}`")
     if archive_file:
         lines.append(f"- Archived prior draft: `{archive_file}`")
     if warning_lines:
@@ -727,15 +816,24 @@ def _render_review_repair_summary(
         lines.extend(["", "## Downstream Blockers", ""])
         for item in downstream_blockers:
             lines.append(f"- {item}")
-    lines.extend(
-        [
-            "",
-            "## Next Step",
-            "",
-            "- Edit `draft.lean` from the seeded file, remove the semantic defect, then rerun `build-check`.",
-            "- Do not answer this repair cycle with a syntax-only patch if the semantic mismatch would remain.",
-        ]
-    )
+    lines.extend(["", "## Next Step", ""])
+    if isinstance(triage, dict) and bool(triage.get("needs_diagnoser", False)) and not bool(
+        triage.get("local_repair_allowed", True)
+    ):
+        lines.extend(
+            [
+                "- Pause ordinary author repair and use the prepared diagnoser prompt/result first.",
+                "- The diagnoser is read-only and must not edit Lean, official output, or ledger state.",
+                "- Resume `auto-loop` only after the route/source/statement decision is clear.",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                "- Edit `draft.lean` from the seeded file, remove the semantic defect, then rerun `build-check`.",
+                "- Do not answer this repair cycle with a syntax-only patch if the semantic mismatch would remain.",
+            ]
+        )
     return "\n".join(lines).rstrip() + "\n"
 
 
@@ -786,11 +884,20 @@ def build_failure_summary_markdown(
         repair_request_file = str(latest_overall.get("repair_request_file", "") or "").strip()
         if repair_request_file:
             lines.append(f"- Active repair request: `{repair_request_file}`")
+        triage_category = str(latest_overall.get("semantic_fail_triage_category", "") or "").strip()
+        if triage_category:
+            lines.append(f"- Latest semantic-fail triage category: `{triage_category}`")
+            lines.append(f"- Latest semantic-fail needs diagnoser: `{bool(latest_overall.get('semantic_fail_needs_diagnoser', False))}`")
+            prompt_file = str(latest_overall.get("diagnoser_prompt_file", "") or "").strip()
+            if prompt_file:
+                lines.append(f"- Latest diagnoser prompt: `{prompt_file}`")
         lines.extend(["", "## Recent Attempts", ""])
         for attempt in all_attempts[-5:]:
             stage = str(attempt.get("stage", "legacy_verify") or "legacy_verify")
             if stage == "semantic_review":
-                lines.append(f"- Attempt `{attempt.get('attempt', '?')}`: `semantic_review` / verdict `{attempt.get('review_verdict', 'unknown')}` / task `{attempt.get('task_status', '')}` / class `{attempt.get('proof_class', '')}` / `{attempt.get('disposition', 'unknown')}` / `{attempt.get('candidate_file', '(unknown)')}`")
+                triage = str(attempt.get("semantic_fail_triage_category", "") or "")
+                triage_suffix = f" / triage `{triage}`" if triage else ""
+                lines.append(f"- Attempt `{attempt.get('attempt', '?')}`: `semantic_review` / verdict `{attempt.get('review_verdict', 'unknown')}` / task `{attempt.get('task_status', '')}` / class `{attempt.get('proof_class', '')}` / `{attempt.get('disposition', 'unknown')}`{triage_suffix} / `{attempt.get('candidate_file', '(unknown)')}`")
             else:
                 lines.append(f"- Attempt `{attempt.get('attempt', '?')}`: `{'success' if attempt.get('success') else 'failure'}` / `{attempt.get('primary_failure_kind', 'none')}` / `{attempt.get('candidate_file', '(unknown)')}`")
         lines.extend(["", "## Recommended Next Action", ""])
@@ -799,6 +906,8 @@ def build_failure_summary_markdown(
             lines.append("- The latest semantic review/apply path succeeded. Use Latest task status, not verdict alone, before calling this textbook complete. If `draft.lean` changes again, rerun `build-check` before any new review.")
         elif primary_failure_kind == "semantic_review_invalid":
             lines.append("- The latest semantic review artifact was stale or invalid. Regenerate a fresh request with `review-now` before applying another review result.")
+        elif latest_overall.get("semantic_fail_needs_diagnoser", False):
+            lines.append("- Use the prepared diagnoser prompt/result before ordinary repair; this failure was classified as route/source/statement triage.")
         else:
             lines.append("- Read `review_repair_request.json` and the failed semantic review artifacts, run `review-fix`, then return to the repair-mode `build-check` loop.")
         return "\n".join(lines).rstrip() + "\n"
@@ -881,7 +990,7 @@ def _sync_stale_build_ready_candidate(task_id: str, ledger: LedgerManager, setti
     if not ready_hash:
         return False
     draft_path = pack_dir / DRAFT_FILE_NAME
-    draft_hash = sha256_text(read_file_safely(draft_path)) if draft_path.exists() else ""
+    draft_hash = sha256_text(read_file_safely(draft_path)) if path_exists(draft_path) else ""
     if draft_hash == ready_hash:
         return False
 
@@ -906,6 +1015,11 @@ def refresh_pack_runtime_view(task: dict[str, Any], ledger: LedgerManager, setti
     latest_repair_request = list_versioned_json_files(pack_dir, REVIEW_REPAIR_REQUEST_PREFIX)
     latest_repair_summary = list_versioned_md_files(pack_dir, REVIEW_REPAIR_SUMMARY_PREFIX)
     latest_snapshot = select_latest_official_snapshot(pack_dir)
+    math_gate_state = math_review_gate_state(
+        task_id,
+        current_record if isinstance(current_record, dict) else {},
+        pack_dir=pack_dir,
+    )
     ledger.update_runtime_metadata(
         task_id,
         latest_semantic_review_input_file=str(latest_review_paths["input"]) if latest_review_paths["input"].exists() else "",
@@ -917,6 +1031,7 @@ def refresh_pack_runtime_view(task: dict[str, Any], ledger: LedgerManager, setti
         latest_official_snapshot_file=str(latest_snapshot) if latest_snapshot is not None else str(current_record.get("latest_official_snapshot_file", "") or ""),
         latest_build_result_file=str(current_record.get("latest_build_result_file", "") or select_latest_build_result(pack_dir) or ""),
         latest_verify_result_file=str(current_record.get("latest_verify_result_file", "") or select_latest_verify_result(pack_dir) or ""),
+        **math_gate_state.as_metadata(),
     )
     current_record = ledger.ledger.get("tasks", {}).get(task_id, {})
     metadata_path = pack_dir / "metadata.json"
@@ -939,6 +1054,7 @@ def refresh_pack_runtime_view(task: dict[str, Any], ledger: LedgerManager, setti
     metadata["pack_candidate_state"] = str(current_record.get("pack_candidate_state", "draft") or "draft")
     metadata["latest_operation_kind"] = str(current_record.get("latest_operation_kind", "") or "")
     metadata["latest_operation_file"] = str(current_record.get("latest_operation_file", "") or "")
+    metadata.update(math_review_gate_state(task_id, current_record, pack_dir=pack_dir).as_metadata())
     for field in (
         "latest_build_candidate_kind", "latest_build_candidate_file", "latest_build_candidate_hash",
         "latest_build_ready_candidate_kind", "latest_build_ready_candidate_file", "latest_build_ready_candidate_hash",
@@ -953,22 +1069,23 @@ def refresh_pack_runtime_view(task: dict[str, Any], ledger: LedgerManager, setti
         "current_auto_loop_max_build_attempts_per_round", "current_auto_loop_nonprogress_limit", "current_auto_loop_consecutive_nonprogress",
         "current_auto_loop_phase", "current_auto_loop_status", "current_auto_loop_stop_reason", "current_auto_loop_last_candidate_hash",
         "current_auto_loop_last_review_fingerprint", "current_auto_loop_last_repair_request_file",
+        "phase2_status", "phase2_status_reason", "phase2_status_evidence_type",
+        "phase2_task_status", "phase2_task_status_reason", "phase2_task_status_evidence_type",
+        "phase2_review_verdict", "phase2_completion_class", "phase2_proof_class",
+        "latest_official_review_requires_repair", "latest_official_review_detail",
     ):
         metadata[field] = str(current_record.get(field, "") or "")
     for key, path in latest_review_paths.items():
-        metadata[f"latest_semantic_review_{key}_file"] = str(path) if path.exists() else ""
-    metadata["latest_semantic_review_context_file"] = str(latest_review_context) if latest_review_context.exists() else ""
-    metadata["latest_semantic_review_request_file"] = str(latest_review_request) if latest_review_request.exists() else ""
-    metadata["latest_review_repair_request_alias_file"] = str(latest_review_repair_request_path(pack_dir)) if latest_review_repair_request_path(pack_dir).exists() else ""
-    metadata["latest_review_repair_summary_alias_file"] = str(latest_review_repair_summary_path(pack_dir)) if latest_review_repair_summary_path(pack_dir).exists() else ""
+        metadata[f"latest_semantic_review_{key}_file"] = str(path) if path_exists(path) else ""
+    metadata["latest_semantic_review_context_file"] = str(latest_review_context) if path_exists(latest_review_context) else ""
+    metadata["latest_semantic_review_request_file"] = str(latest_review_request) if path_exists(latest_review_request) else ""
+    metadata["latest_review_repair_request_alias_file"] = str(latest_review_repair_request_path(pack_dir)) if path_exists(latest_review_repair_request_path(pack_dir)) else ""
+    metadata["latest_review_repair_summary_alias_file"] = str(latest_review_repair_summary_path(pack_dir)) if path_exists(latest_review_repair_summary_path(pack_dir)) else ""
     if latest_snapshot is not None:
         metadata["latest_official_snapshot_file"] = str(latest_snapshot)
     write_json(metadata_path, metadata)
     history = load_attempt_history(pack_dir, task_id)
     auto_loop_state = auto_loop_state_from_record(current_record)
-    (pack_dir / FAILURE_SUMMARY_FILE_NAME).write_text(
-        build_failure_summary_markdown(task_id, history, auto_loop_state=auto_loop_state),
-        encoding="utf-8",
-    )
-    (pack_dir / "operator_prompt.md").write_text(build_operator_prompt(task, ledger, settings, pack_dir), encoding="utf-8")
-    (pack_dir / "context.md").write_text(build_context_markdown(task, ledger, settings, pack_dir), encoding="utf-8")
+    write_text(pack_dir / FAILURE_SUMMARY_FILE_NAME, build_failure_summary_markdown(task_id, history, auto_loop_state=auto_loop_state))
+    write_text(pack_dir / "operator_prompt.md", build_operator_prompt(task, ledger, settings, pack_dir))
+    write_text(pack_dir / "context.md", build_context_markdown(task, ledger, settings, pack_dir))

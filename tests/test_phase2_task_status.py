@@ -39,6 +39,85 @@ class Phase2TaskStatusClassifierTest(unittest.TestCase):
 
         self.assertEqual(result.task_status, "pass")
 
+    def test_source_route_theorem_passes_proof_bearing_task(self):
+        result = classify_phase2_task_status(
+            task_id="obl_obl_prob_14_12_obligation_5_obligation_5",
+            task_type="Phase2ObligationTask",
+            review_verdict="pass",
+            proof_class="source_route_theorem",
+        )
+
+        self.assertEqual(result.task_status, "pass")
+        self.assertIn("source-route completion", result.reason)
+
+    def test_source_route_theorem_slash_lemma_class_normalizes_to_pass(self):
+        result = classify_phase2_task_status(
+            task_id="obl_obl_thm_7_9_t7_9_improper_filter_bookkeeping_recover_value",
+            task_type="Phase2ObligationTask",
+            review_verdict="pass",
+            proof_class="source_route_theorem/lemma",
+        )
+
+        self.assertEqual(result.task_status, "pass")
+        self.assertEqual(result.proof_class, "source_route_theorem_lemma")
+
+    def test_textbook_source_route_completion_passes_problem(self):
+        result = classify_phase2_task_status(
+            task_id="prob_14_12",
+            task_type="Problem",
+            review_verdict="pass",
+            proof_class="textbook_source_route_completed",
+        )
+
+        self.assertEqual(result.task_status, "pass")
+        self.assertIn("source-route completion", result.reason)
+
+    def test_focused_support_predicate_passes_only_obligation_child_task(self):
+        child = classify_phase2_task_status(
+            task_id="obl_ex_14_4_1_record_bernoulli_source_law",
+            task_type="Phase2ObligationTask",
+            review_verdict="pass",
+            proof_class="source_route_support_predicate_completed",
+            completion_class="focused_child_obligation_completed",
+        )
+
+        self.assertEqual(child.task_status, "pass")
+        self.assertIn("focused completion", child.reason)
+
+        parent = classify_phase2_task_status(
+            task_id="ex_14_4_1",
+            task_type="Exercise",
+            review_verdict="pass",
+            proof_class="source_route_support_predicate_completed",
+            completion_class="focused_child_obligation_completed",
+        )
+
+        self.assertEqual(parent.task_status, "fail")
+        self.assertIn("not a task-level pass", parent.reason)
+
+    def test_focused_source_route_theorem_passes_only_obligation_child_task(self):
+        child = classify_phase2_task_status(
+            task_id="obl_obl_prob_14_12_obligation_5_obligation_5_bounded_truncations",
+            task_type="Phase2ObligationTask",
+            review_verdict="pass",
+            proof_class="focused_child_source_route_theorem",
+            completion_class="focused_obligation_closed",
+        )
+
+        self.assertEqual(child.task_status, "pass")
+        self.assertIn("focused completion", child.reason)
+
+        parent = classify_phase2_task_status(
+            task_id="prob_14_12",
+            task_type="Problem",
+            review_verdict="pass",
+            proof_class="focused_child_source_route_theorem",
+            completion_class="focused_obligation_closed",
+        )
+
+        self.assertEqual(parent.task_status, "fail")
+        self.assertIn("not a task-level pass", parent.reason)
+
     def test_definition_bridge_can_pass_definition_task(self):
         for proof_class in ("textbook_definition_completed", "source_faithful_definition_bridge_completed", "interface_bridge_completed"):
             with self.subTest(proof_class=proof_class):
@@ -51,6 +130,35 @@ class Phase2TaskStatusClassifierTest(unittest.TestCase):
 
                 self.assertEqual(result.task_status, "pass")
                 self.assertFalse(result.needs_class_normalization)
+
+    def test_textual_remark_completion_passes_remark_task(self):
+        for proof_class in (
+            "textbook_remark_completed",
+            "source_faithful_non_theorem_artifact",
+            "non_proof_textual_remark_carrier",
+        ):
+            with self.subTest(proof_class=proof_class):
+                result = classify_phase2_task_status(
+                    task_id="rem_9_2_computing_moments",
+                    task_type="Remark",
+                    review_verdict="pass",
+                    proof_class=proof_class,
+                )
+
+                self.assertEqual(result.task_status, "pass")
+                self.assertEqual(result.task_role, "remark")
+                self.assertFalse(result.needs_class_normalization)
+
+    def test_intro_prefix_can_pass_as_textual_remark_task(self):
+        result = classify_phase2_task_status(
+            task_id="intro_9_2",
+            task_type="",
+            review_verdict="pass",
+            proof_class="source_faithful_textual_remark_completed",
+        )
+
+        self.assertEqual(result.task_status, "pass")
+        self.assertEqual(result.task_role, "remark")
 
     def test_mathlib_adapter_pass_review_fails_proof_bearing_task(self):
         for task_id, task_type in (("thm_14_6", "Theorem"), ("prob_14_12", "Problem")):
@@ -98,16 +206,25 @@ class Phase2TaskStatusClassifierTest(unittest.TestCase):
 
         self.assertEqual(result.task_status, "blocked")
 
-    def test_allowed_exception_is_only_for_thm_14_8(self):
-        result = classify_phase2_task_status(
+    def test_allowed_exception_is_only_for_explicit_tasks_and_classes(self):
+        thm_14_8 = classify_phase2_task_status(
             task_id="thm_14_8",
             task_type="Theorem",
             review_verdict="pass",
             proof_class="beyond_book_exception",
         )
 
-        self.assertEqual(result.task_status, "allowed_exception")
-        self.assertEqual(result.as_metadata()["phase2_status"], "allowed_exception")
+        self.assertEqual(thm_14_8.task_status, "allowed_exception")
+        self.assertEqual(thm_14_8.as_metadata()["phase2_status"], "allowed_exception")
+
+        thm_11_8 = classify_phase2_task_status(
+            task_id="thm_11_8",
+            task_type="Theorem",
+            review_verdict="pass",
+            proof_class="cited_external_proof_exception",
+        )
+
+        self.assertEqual(thm_11_8.task_status, "allowed_exception")
 
         ordinary = classify_phase2_task_status(
             task_id="prob_14_8",
@@ -117,6 +234,15 @@ class Phase2TaskStatusClassifierTest(unittest.TestCase):
         )
 
         self.assertEqual(ordinary.task_status, "fail")
+
+        wrong_class = classify_phase2_task_status(
+            task_id="thm_11_8",
+            task_type="Theorem",
+            review_verdict="pass",
+            proof_class="beyond_book_exception",
+        )
+
+        self.assertEqual(wrong_class.task_status, "fail")
 
     def test_open_debt_beats_dependency_blocked(self):
         result = classify_phase2_task_status(
@@ -158,6 +284,16 @@ class Phase2TaskStatusClassifierTest(unittest.TestCase):
             },
             "source_claims": [{"claim": "source proof"}],
             "claim_mapping": [{"source_claim": "source proof", "lean_declaration": "thm_11_7"}],
+            "route_inspection": {
+                "status": "covered",
+                "source_route": "source proof",
+                "expected_answer_or_statement": "thm_11_7",
+                "local_mathlib_search": "not needed",
+                "public_interface_check": "covered",
+                "support_or_reassembly_decision": "candidate is direct parent theorem",
+                "stop_go_verdict": "go",
+                "notes": "covered",
+            },
             "spine_alignment": {
                 "status": "covered",
                 "summary": "covered",

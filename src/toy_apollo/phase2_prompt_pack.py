@@ -31,6 +31,19 @@ from .phase2_failure_budget import (
     phase2_failure_counters_from_history,
 )
 from .phase2_pack_shared.artifacts import select_latest_existing_task_file, stale_candidate_official_output_message
+from .phase2_pack_shared.io import (
+    append_text as _append_text,
+    copy_file as _copy_file,
+    fs_path as _fs_path,
+    make_dirs as _make_dirs,
+    path_exists as _path_exists,
+    read_file_safely as _shared_read_file_safely,
+    read_json_safely as _shared_read_json_safely,
+    unlink_path as _unlink_path,
+    write_json as _shared_write_json,
+    write_text as _shared_write_text,
+)
+from .phase2_math_review_gate import math_review_gate_blocker
 from .phase2_output_binding import resolve_phase2_output_binding
 from .phase2_semantic_review import (
     SEMANTIC_REVIEW_PROMPT_VERSION,
@@ -217,6 +230,7 @@ AUTO_LOOP_STOP_REASONS = {
     "build_budget_exhausted",
     "freshness_error",
     "hard_failure",
+    "diagnoser_required",
 }
 
 
@@ -484,7 +498,13 @@ def _merge_effective_task_imports(task: dict[str, Any], task_id: str, ledger: Le
     record = ledger.ledger.get("tasks", {}).get(canonical_task_id, {})
     snapshot = record.get("candidate_snapshot", {}) if isinstance(record, dict) else {}
     is_obligation_task = str(merged.get("type", "") or "").strip() == "Phase2ObligationTask"
-    if is_obligation_task or not pack_has_import_manifest:
+    if is_obligation_task and pack_has_import_manifest:
+        snapshot_soft_imports = canonicalize_id_list(
+            snapshot.get("soft_imports", []) if isinstance(snapshot, dict) else []
+        )
+        soft_imports = canonicalize_id_list(soft_imports + snapshot_soft_imports)
+        import_union = canonicalize_id_list(hard_deps + soft_imports + import_union)
+    elif is_obligation_task or not pack_has_import_manifest:
         hard_deps, soft_imports, import_union = _merge_task_import_fields(
             task_id=canonical_task_id,
             hard_deps=hard_deps,
@@ -553,6 +573,15 @@ def _clear_phase2_runtime_fields(task_id: str, ledger: LedgerManager) -> None:
         "latest_semantic_review_result_file": "",
         "latest_semantic_review_report_file": "",
         "latest_semantic_review_context_file": "",
+        "latest_math_proof_skeleton_file": "",
+        "latest_math_proof_skeleton_hash": "",
+        "latest_math_review_result_file": "",
+        "latest_math_review_result_hash": "",
+        "latest_math_review_verdict": "",
+        "latest_math_review_reason": "",
+        "latest_math_review_triggers": [],
+        "math_review_gate_required": False,
+        "math_review_gate_status": "",
         "latest_official_snapshot_file": "",
         "latest_operation_kind": "",
         "latest_operation_file": "",
@@ -901,10 +930,7 @@ def render_dependency_decision_context_markdown(context: dict[str, Any]) -> str:
 def write_dependency_decision_context(pack_dir: Path, task: dict[str, Any], settings) -> dict[str, Any]:
     context = build_dependency_decision_context(task, settings)
     _write_json(pack_dir / DEPENDENCY_DECISION_CONTEXT_JSON, context)
-    (pack_dir / DEPENDENCY_DECISION_CONTEXT_MD).write_text(
-        render_dependency_decision_context_markdown(context),
-        encoding="utf-8",
-    )
+    _shared_write_text(pack_dir / DEPENDENCY_DECISION_CONTEXT_MD, render_dependency_decision_context_markdown(context))
     return context
 
 
@@ -1199,6 +1225,14 @@ def _ledger_record_has_accepted_proof_debt(record: dict[str, Any]) -> bool:
     return False
 
 
+def _ledger_record_is_explicit_allowed_exception(record: dict[str, Any]) -> bool:
+    phase2_status = str(record.get("phase2_status") or record.get("phase2_task_status") or "").strip()
+    evidence_type = str(
+        record.get("phase2_status_evidence_type") or record.get("phase2_task_status_evidence_type") or ""
+    ).strip()
+    return phase2_status == "allowed_exception" and evidence_type == "explicit_allowed_exception"
+
+
 def _ledger_record_dependencies(record: dict[str, Any]) -> list[str]:
     deps: list[str] = []
     deps.extend(canonicalize_id_list(record.get("dependencies", [])))
@@ -1223,6 +1257,9 @@ def hard_dependency_proof_debt_blockers(task: dict[str, Any], ledger: LedgerMana
         seen.add(dep_id)
         dep_record = task_map.get(dep_id, {})
         if not isinstance(dep_record, dict):
+            continue
+        if _ledger_record_is_explicit_allowed_exception(dep_record):
+            stack.extend(reversed(_ledger_record_dependencies(dep_record)))
             continue
         if _ledger_record_has_accepted_proof_debt(dep_record) or str(dep_record.get("status", "") or "") == "DEPENDENCY_PROOF_DEBT":
             blockers.append(dep_id)
@@ -1280,6 +1317,10 @@ def _read_lock_payload(lock_path: Path) -> dict[str, Any] | None:
     return payload if isinstance(payload, dict) else None
 
 
+def _remove_tree(path: Path) -> None:
+    shutil.rmtree(_fs_path(path), ignore_errors=True)
+
+
 def _restore_staging_manifest(manifest_path: Path) -> bool:
     manifest = _read_json_safely(manifest_path, None)
     if not isinstance(manifest, dict):
@@ -1295,25 +1336,43 @@ def _restore_staging_manifest(manifest_path: Path) -> bool:
             backup_path = Path(str(entry.get("backup_path", "") or ""))
             original_existed = bool(entry.get("original_existed", False))
             if original_existed:
-                if not backup_path.exists():
+                if not _path_exists(backup_path):
                     return False
-                target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(backup_path, target)
+                _make_dirs(target.parent, exist_ok=True)
+                _copy_file(backup_path, target)
                 original_atime_ns = entry.get("original_atime_ns")
                 original_mtime_ns = entry.get("original_mtime_ns")
                 if isinstance(original_atime_ns, int) and isinstance(original_mtime_ns, int):
-                    os.utime(target, ns=(original_atime_ns, original_mtime_ns))
-            elif target.exists():
-                target.unlink()
+                    os.utime(_fs_path(target), ns=(original_atime_ns, original_mtime_ns))
+            elif _path_exists(target):
+                _unlink_path(target)
     except Exception:
         return False
 
     try:
         staging_dir = manifest_path.parent
-        shutil.rmtree(staging_dir, ignore_errors=True)
+        _remove_tree(staging_dir)
     except Exception:
         return False
     return True
+
+
+def _remove_empty_staging_dir_without_manifest(staging_dir: Path) -> None:
+    if not os.path.isdir(_fs_path(staging_dir)):
+        return
+    if _path_exists(staging_dir / "staging_manifest.json"):
+        return
+    try:
+        with os.scandir(_fs_path(staging_dir)) as entries:
+            if next(entries, None) is not None:
+                return
+        os.rmdir(_fs_path(staging_dir))
+    except FileNotFoundError:
+        return
+
+
+def _staging_backup_path(staging_dir: Path, index: int, target: Path) -> Path:
+    return staging_dir / f"backup_{index}{target.suffix}"
 
 
 def _recover_stale_mutation_lock(task_id: str, pack_dir: Path, payload: dict[str, Any] | None) -> None:
@@ -1322,11 +1381,17 @@ def _recover_stale_mutation_lock(task_id: str, pack_dir: Path, payload: dict[str
         staging_dir = str(payload.get("staging_dir", "") or "").strip()
         if staging_dir:
             manifest = Path(staging_dir) / "staging_manifest.json"
-            if manifest.exists():
+            if _path_exists(manifest):
                 candidates.append(manifest)
-    for manifest in sorted(_task_staging_root(pack_dir).glob("*/staging_manifest.json")):
-        if manifest not in candidates:
-            candidates.append(manifest)
+    staging_root = _task_staging_root(pack_dir)
+    if os.path.isdir(_fs_path(staging_root)):
+        with os.scandir(_fs_path(staging_root)) as entries:
+            for entry in entries:
+                if not entry.is_dir():
+                    continue
+                manifest = Path(entry.path) / "staging_manifest.json"
+                if _path_exists(manifest) and manifest not in candidates:
+                    candidates.append(manifest)
 
     for manifest in candidates:
         if not _restore_staging_manifest(manifest):
@@ -1337,7 +1402,7 @@ def _recover_stale_mutation_lock(task_id: str, pack_dir: Path, payload: dict[str
 
 def _acquire_task_local_lock(task_id: str, pack_dir: Path, mode: str) -> tuple[Path, dict[str, Any]]:
     lock_path = _task_lock_path(pack_dir)
-    if lock_path.exists():
+    if _path_exists(lock_path):
         payload = _read_lock_payload(lock_path)
         if (
             payload is None
@@ -1345,8 +1410,8 @@ def _acquire_task_local_lock(task_id: str, pack_dir: Path, mode: str) -> tuple[P
             or not _pid_is_running(int(payload.get("pid") or 0))
         ):
             _recover_stale_mutation_lock(task_id, pack_dir, payload)
-            if lock_path.exists():
-                lock_path.unlink()
+            if _path_exists(lock_path):
+                _unlink_path(lock_path)
         else:
             raise RuntimeError(
                 "Phase 2 mutation lock is active for "
@@ -1368,8 +1433,8 @@ def _rewrite_task_lock(lock_path: Path, payload: dict[str, Any]) -> None:
 
 
 def _release_task_local_lock(lock_path: Path) -> None:
-    if lock_path.exists():
-        lock_path.unlink()
+    if _path_exists(lock_path):
+        _unlink_path(lock_path)
 
 
 def _run_staged_official_build(
@@ -1386,10 +1451,11 @@ def _run_staged_official_build(
 ) -> tuple[bool, str]:
     output_owner_task_id = canonicalize_block_id(output_owner_task_id or task_id)
     lock_pack_dir = settings.phase2_prompt_packs_dir / output_owner_task_id if output_owner_task_id != task_id else pack_dir
-    lock_pack_dir.mkdir(parents=True, exist_ok=True)
+    _make_dirs(lock_pack_dir, exist_ok=True)
     lock_path, lock_payload = _acquire_task_local_lock(output_owner_task_id, lock_pack_dir, mode)
-    staging_dir = _task_staging_root(pack_dir) / f"{mode}-{attempt}"
-    staging_dir.mkdir(parents=True, exist_ok=False)
+    staging_dir = _task_staging_root(lock_pack_dir) / f"{mode}-{attempt}"
+    _remove_empty_staging_dir_without_manifest(staging_dir)
+    _make_dirs(staging_dir, exist_ok=False)
     lock_payload["staging_dir"] = str(staging_dir)
     _rewrite_task_lock(lock_path, lock_payload)
 
@@ -1404,16 +1470,16 @@ def _run_staged_official_build(
     restore_completed = False
     try:
         for index, target in enumerate(iter_official_output_targets(output_owner_task_id, source_plan, settings), start=1):
-            target.parent.mkdir(parents=True, exist_ok=True)
-            original_existed = target.exists()
-            backup_path = staging_dir / f"backup_{index}_{target.name}"
+            _make_dirs(target.parent, exist_ok=True)
+            original_existed = _path_exists(target)
+            backup_path = _staging_backup_path(staging_dir, index, target)
             original_atime_ns = 0
             original_mtime_ns = 0
             if original_existed:
-                stat = target.stat()
+                stat = os.stat(_fs_path(target))
                 original_atime_ns = stat.st_atime_ns
                 original_mtime_ns = stat.st_mtime_ns
-                shutil.copyfile(target, backup_path)
+                _copy_file(target, backup_path)
             manifest["targets"].append(
                 {
                     "target": str(target),
@@ -1426,7 +1492,7 @@ def _run_staged_official_build(
         _write_json(manifest_path, manifest)
 
         for entry in manifest["targets"]:
-            Path(str(entry["target"])).write_text(candidate_code, encoding="utf-8")
+            _shared_write_text(Path(str(entry["target"])), candidate_code)
 
         success, output = _run_official_module_build(output_owner_task_id, settings)
         if not success or restore_on_success:
@@ -1436,7 +1502,7 @@ def _run_staged_official_build(
                     f"Phase 2 staging restore failed for {output_owner_task_id} after {mode}; manual recovery required."
                 )
         else:
-            shutil.rmtree(staging_dir, ignore_errors=True)
+            _remove_tree(staging_dir)
             restore_completed = True
         return success, output
     finally:
@@ -1462,7 +1528,7 @@ def _sync_stale_build_ready_candidate(task_id: str, ledger: LedgerManager, setti
     if not ready_hash:
         return False
     draft_path = pack_dir / DRAFT_FILE_NAME
-    draft_hash = _sha256_text(_read_file_safely(draft_path)) if draft_path.exists() else ""
+    draft_hash = _sha256_text(_read_file_safely(draft_path)) if _path_exists(draft_path) else ""
     if draft_hash == ready_hash:
         return False
 
@@ -1556,7 +1622,8 @@ def validate_candidate_hard_checks(
     ledger: LedgerManager | None = None,
 ) -> tuple[bool, list[dict[str, Any]], str]:
     task_id = canonicalize_block_id(str(task.get("block_id", "")))
-    target_task_id = _hard_check_target_task_id(task, ledger)
+    target_task_ids = _hard_check_target_task_ids(task, ledger)
+    target_task_id = target_task_ids[0] if target_task_ids else task_id
     if not candidate_code.strip():
         detail = "Candidate file is empty."
         return False, _hard_check_diagnostic("empty_candidate", detail), detail
@@ -1569,13 +1636,25 @@ def validate_candidate_hard_checks(
         detail = "Candidate introduces a top-level axiom placeholder, so the result is not a real formalization."
         return False, _hard_check_diagnostic("axiom_placeholder", detail), detail
 
-    exported_kind = _candidate_decl_kind(target_task_id, candidate_code)
+    exported_kind = None
+    exported_target_task_id = target_task_id
+    for candidate_target in target_task_ids:
+        exported_kind = _candidate_decl_kind(candidate_target, candidate_code)
+        if exported_kind is not None:
+            exported_target_task_id = candidate_target
+            break
     if exported_kind is None:
-        detail = f"Candidate does not declare the target task id `{target_task_id}` as a top-level def/theorem/lemma."
+        rendered_targets = "`, `".join(target_task_ids)
+        detail = (
+            "Candidate does not declare the target task id "
+            f"`{rendered_targets}` as a top-level def/theorem/lemma."
+        )
         return False, _hard_check_diagnostic("missing_target_declaration", detail), detail
 
     imported_modules = _candidate_local_imports(candidate_code)
-    self_import_names = {target_task_id, *legacy_ids_for(target_task_id)}
+    self_import_names = set(target_task_ids)
+    for candidate_target in target_task_ids:
+        self_import_names.update(legacy_ids_for(candidate_target))
     if any(module in self_import_names for module in imported_modules):
         detail = f"Candidate self-imports ToyApollo.Output.{target_task_id}, which would bypass verification."
         return False, _hard_check_diagnostic("self_import", detail), detail
@@ -1588,8 +1667,8 @@ def validate_candidate_hard_checks(
         return False, _hard_check_diagnostic_with_symbols("undeclared_local_import", detail, undeclared), detail
 
     task_type = str(task.get("type", "")).strip().lower()
-    if ("theorem" in task_type or target_task_id.startswith("thm_")) and exported_kind == "def":
-        prop_def_re = re.compile(rf"(?ms)^\s*(?:noncomputable\s+)?def\s+{re.escape(target_task_id)}\b.*?:\s*Prop\s*:=\s*")
+    if ("theorem" in task_type or exported_target_task_id.startswith("thm_")) and exported_kind == "def":
+        prop_def_re = re.compile(rf"(?ms)^\s*(?:noncomputable\s+)?def\s+{re.escape(exported_target_task_id)}\b.*?:\s*Prop\s*:=\s*")
         if prop_def_re.search(candidate_code):
             detail = "Theorem-like task exports only a Prop-valued definition instead of a theorem/lemma."
             return False, _hard_check_diagnostic("theorem_declared_as_prop_def", detail), detail
@@ -1597,26 +1676,20 @@ def validate_candidate_hard_checks(
     return True, [], ""
 
 
-def _hard_check_target_task_id(task: dict[str, Any], ledger: LedgerManager | None = None) -> str:
+def _hard_check_target_task_ids(task: dict[str, Any], ledger: LedgerManager | None = None) -> list[str]:
     task_id = canonicalize_block_id(str(task.get("block_id", "")))
+    targets = [task_id] if task_id else []
     merged = dict(task)
     if ledger is not None:
         record = ledger.ledger.get("tasks", {}).get(task_id, {})
         if isinstance(record, dict):
             merged = dict(record)
             merged.update(task)
-    if str(merged.get("type", "") or "") == "Phase2ObligationTask":
-        target = canonicalize_block_id(
-            str(
-                merged.get("target_task_id", "")
-                or merged.get("parent_task_id", "")
-                or merged.get("parent_block_id", "")
-                or ""
-            )
-        )
-        if target:
-            return target
-    return task_id
+    if str(merged.get("type", "") or "") == "Phase2ObligationTask" and task_id.startswith("obl_"):
+        focused_id = task_id.removeprefix("obl_")
+        if focused_id and focused_id not in targets:
+            targets.append(focused_id)
+    return targets
 
 
 def _is_vacuous_candidate(task: dict[str, Any], candidate_code: str) -> bool:
@@ -1911,22 +1984,15 @@ def build_obligation_target_stub(existing_code: str | None, fallback_stub: str) 
 
 
 def _read_file_safely(path: Path) -> str:
-    try:
-        return path.read_text(encoding="utf-8", errors="replace")
-    except Exception:
-        return ""
+    return _shared_read_file_safely(path)
 
 
 def _read_json_safely(path: Path, default: Any) -> Any:
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return default
+    return _shared_read_json_safely(path, default)
 
 
 def _write_json(path: Path, payload: Any) -> None:
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    _shared_write_json(path, payload)
 
 
 def _build_semantic_review_request(
@@ -3085,6 +3151,28 @@ def build_semantic_review_context_markdown(task: dict[str, Any], ledger: LedgerM
         "This file is the authoritative review context for `review-pack` and `review-existing`.",
         "A local build is not enough: the reviewer must check statement fidelity, proof spine adequacy, interface contract, and downstream adequacy against this context.",
         "",
+    ]
+    source_decision_path = pack_dir / "source_decision_resolution.json"
+    if source_decision_path.is_file():
+        source_decision = _read_json_safely(source_decision_path, {})
+        if isinstance(source_decision, dict):
+            lines.extend(
+                [
+                    "## Resolved Source/Statement Decision",
+                    "",
+                    f"- Decision file: `{source_decision_path}`",
+                    f"- Status: `{source_decision.get('status', '')}`",
+                    f"- Decision: {str(source_decision.get('decision', '') or '').strip()}",
+                ]
+            )
+            corrected_statement = str(source_decision.get("corrected_statement", "") or "").strip()
+            if corrected_statement:
+                lines.append(f"- Corrected statement: {corrected_statement}")
+            reason = str(source_decision.get("reason", "") or "").strip()
+            if reason:
+                lines.append(f"- Reason: {reason}")
+            lines.append("")
+    lines.extend([
         "## Original Task Text",
         "",
         f"- Type: `{task.get('type', '')}`",
@@ -3095,7 +3183,7 @@ def build_semantic_review_context_markdown(task: dict[str, Any], ledger: LedgerM
         "",
         "## Upstream Textbook Chain",
         "",
-    ]
+    ])
     if not hard_deps and not soft_imports:
         lines.append("- No declared upstream textbook tasks.")
     else:
@@ -3632,9 +3720,9 @@ def _sync_current_review_aliases(
     ):
         if source is None:
             continue
-        if alias.exists():
-            alias.unlink()
-        shutil.copyfile(source, alias)
+        if _path_exists(alias):
+            _unlink_path(alias)
+        _copy_file(source, alias)
 
 
 def _sync_current_review_repair_aliases(
@@ -3653,9 +3741,9 @@ def _sync_current_review_repair_aliases(
     ):
         if source is None:
             continue
-        if alias.exists():
-            alias.unlink()
-        shutil.copyfile(source, alias)
+        if _path_exists(alias):
+            _unlink_path(alias)
+        _copy_file(source, alias)
 
 
 def _semantic_review_attempt_from_path(path: Path, prefix: str) -> int | None:
@@ -3698,6 +3786,7 @@ def _find_matching_existing_review_materials(
     task_id: str,
     subject_hash: str,
     review_basis_hash: str,
+    subject_kind: str = "official_output",
 ) -> dict[str, Any]:
     matching_without_result: dict[str, Any] | None = None
     matching_with_result: dict[str, Any] | None = None
@@ -3724,7 +3813,7 @@ def _find_matching_existing_review_materials(
         rubric_version = int(review_input.get("rubric_version") or 0)
         if (
             input_task_id != task_id
-            or input_subject_kind != "official_output"
+            or input_subject_kind != subject_kind
             or input_hash != subject_hash
             or not input_basis_hash
             or input_basis_hash != review_basis_hash
@@ -3772,6 +3861,7 @@ def _prepare_existing_output_review_materials(
     mode: str,
     build_output: str,
     force_new_attempt: bool = False,
+    review_subject_kind: str = "official_output",
 ) -> dict[str, Any]:
     task_id = task["block_id"]
     candidate_code = _read_file_safely(output_path)
@@ -3780,18 +3870,29 @@ def _prepare_existing_output_review_materials(
         task,
         ledger,
         settings,
-        review_subject_kind="official_output",
+        review_subject_kind=review_subject_kind,
         review_subject_hash=candidate_hash,
         review_subject_file=output_path,
     )
     review_basis_hash = _sha256_json(review_basis)
-    attempt_info = _find_matching_existing_review_materials(pack_dir, task_id, candidate_hash, review_basis_hash)
+    attempt_info = _find_matching_existing_review_materials(
+        pack_dir,
+        task_id,
+        candidate_hash,
+        review_basis_hash,
+        subject_kind=review_subject_kind,
+    )
     current_materials = None if force_new_attempt else (attempt_info["matching_with_result"] or attempt_info["matching_without_result"])
     reused = current_materials is not None
     if not reused:
         review_attempt = _next_review_attempt(pack_dir)
-        snapshot_path = _next_official_snapshot_path(pack_dir, review_attempt)
-        snapshot_path.write_text(candidate_code, encoding="utf-8")
+        snapshot_path = (
+            output_path
+            if review_subject_kind == "existing_support"
+            else _next_official_snapshot_path(pack_dir, review_attempt)
+        )
+        if review_subject_kind != "existing_support":
+            snapshot_path.write_text(candidate_code, encoding="utf-8")
         semantic_review = _write_codex_handoff_review_artifacts(
             task=task,
             ledger=ledger,
@@ -3802,7 +3903,7 @@ def _prepare_existing_output_review_materials(
             candidate_code=candidate_code,
             build_summary={"final_build": {"success": True, "output": build_output}},
             mode=mode,
-            review_subject_kind="official_output",
+            review_subject_kind=review_subject_kind,
         )
         current_materials = {
             "attempt": review_attempt,
@@ -3815,8 +3916,12 @@ def _prepare_existing_output_review_materials(
         }
     else:
         review_attempt = int(current_materials["attempt"])
-        snapshot_path = _next_official_snapshot_path(pack_dir, review_attempt)
-        if not snapshot_path.exists():
+        snapshot_path = (
+            output_path
+            if review_subject_kind == "existing_support"
+            else _next_official_snapshot_path(pack_dir, review_attempt)
+        )
+        if review_subject_kind != "existing_support" and not snapshot_path.exists():
             snapshot_path.write_text(candidate_code, encoding="utf-8")
         request_path = _review_request_path(pack_dir, review_attempt)
         if not request_path.exists():
@@ -3826,7 +3931,7 @@ def _prepare_existing_output_review_materials(
                     task_id=task_id,
                     origin=mode,
                     attempt=review_attempt,
-                    review_subject_kind="official_output",
+                    review_subject_kind=review_subject_kind,
                     review_subject_file=str(snapshot_path),
                     review_subject_hash=str(review_input.get("review_subject_hash", "") or candidate_hash),
                     review_basis_hash=str(review_input.get("review_basis_hash", "") or review_basis_hash),
@@ -4156,6 +4261,176 @@ def _run_official_module_build(task_id: str, settings) -> tuple[bool, str]:
     return proc.returncode == 0, output
 
 
+def _run_lean_module_build(module_name: str, settings) -> tuple[bool, str]:
+    proc = subprocess.run(
+        ["lake", "build", module_name],
+        cwd=str(settings.runtime_root),
+        capture_output=True,
+        text=True,
+    )
+    output = "\n".join([part for part in (proc.stdout, proc.stderr) if part])
+    return proc.returncode == 0, output
+
+
+def _module_name_from_lean_file(path: Path, settings) -> str:
+    try:
+        rel = path.resolve().relative_to(Path(settings.runtime_root).resolve())
+    except ValueError:
+        return ""
+    if rel.suffix != ".lean":
+        return ""
+    return ".".join(rel.with_suffix("").parts)
+
+
+def _resolve_support_landing_file(raw_path: str, *, pack_dir: Path, settings) -> Path:
+    path = Path(raw_path).expanduser()
+    if path.is_absolute():
+        return path
+    candidates = [
+        Path(settings.runtime_root) / path,
+        pack_dir / path,
+        Path.cwd() / path,
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate.resolve()
+    return (Path(settings.runtime_root) / path).resolve()
+
+
+def _support_review_target_from_obligations(pack_dir: Path, settings) -> dict[str, str]:
+    obligations_path = pack_dir / PROOF_OBLIGATIONS_FILE_NAME
+    payload = _read_json_safely(obligations_path, {})
+    obligations = payload.get("obligations", []) if isinstance(payload, dict) else []
+    if not isinstance(obligations, list):
+        obligations = []
+    for item in obligations:
+        if not isinstance(item, dict):
+            continue
+        landing_file_raw = str(item.get("landing_file", "") or "").strip()
+        landing_source = str(item.get("landing_source", "") or "").strip()
+        if not landing_file_raw and landing_source != "existing_support":
+            continue
+        if not landing_file_raw:
+            continue
+        landing_file = _resolve_support_landing_file(landing_file_raw, pack_dir=pack_dir, settings=settings)
+        landing_module = str(item.get("landing_module", "") or "").strip() or _module_name_from_lean_file(landing_file, settings)
+        landing_decl = str(item.get("landing_decl", "") or item.get("lean_landing", "") or "").strip()
+        return {
+            "file": str(landing_file),
+            "module": landing_module,
+            "decl": landing_decl,
+            "obligation_id": str(item.get("id", "") or "").strip(),
+        }
+    return {}
+
+
+async def write_existing_support_review_pack(
+    task_id: str,
+    ledger: LedgerManager,
+    settings,
+    *,
+    force_new_attempt: bool = False,
+) -> tuple[bool, str]:
+    task = ensure_task_registered(resolve_phase2_task(task_id, ledger, settings), ledger)
+    task_id = task["block_id"]
+    pack_dir = settings.phase2_prompt_packs_dir / task_id
+    if not _path_exists(pack_dir):
+        pack_dir = write_prompt_pack(task_id, ledger, settings, task=task)
+
+    target = _support_review_target_from_obligations(pack_dir, settings)
+    if not target:
+        return False, (
+            "No existing support landing was declared. Add landing_source=existing_support "
+            "and landing_file to a proof_obligations.json item first."
+        )
+    output_path = Path(target["file"])
+    if not output_path.exists():
+        return False, f"Support landing file does not exist: {output_path}"
+    module_name = str(target.get("module", "") or "")
+    if not module_name:
+        return False, f"Could not infer Lean module name for support landing file: {output_path}"
+    candidate_code = _read_file_safely(output_path)
+
+    sanity_success, sanity_output = _run_lean_module_build(module_name, settings)
+    if not sanity_success:
+        _clear_current_review_metadata(task_id, ledger)
+        diagnostics = _parse_diagnostics(sanity_output, "final_build_failed", "review_support_sanity_build")
+        _write_review_compat_summary(
+            task_id=task_id,
+            ledger=ledger,
+            task=task,
+            settings=settings,
+            pack_dir=pack_dir,
+            mode="review-support",
+            candidate_path=output_path,
+            candidate_code=candidate_code,
+            detail_text=sanity_output or f"lake build {module_name} failed before review-support.",
+            diagnostics=diagnostics,
+            disposition="review_support_build_failed_no_review",
+            semantic_review=None,
+            state_transition="none",
+        )
+        return False, sanity_output or f"lake build {module_name} failed before review-support."
+
+    prepared = _prepare_existing_output_review_materials(
+        task=task,
+        ledger=ledger,
+        settings=settings,
+        pack_dir=pack_dir,
+        output_path=output_path,
+        mode="review-support",
+        build_output=sanity_output,
+        force_new_attempt=force_new_attempt,
+        review_subject_kind="existing_support",
+    )
+    snapshot_path = prepared["snapshot_path"]
+    ledger.update_runtime_metadata(task_id, latest_support_snapshot_file=str(snapshot_path))
+    _set_current_review_metadata(
+        task_id,
+        ledger,
+        input_file=str(prepared["input_path"]),
+        prompt_file=str(prepared["prompt_path"]),
+        template_file=str(prepared["template_path"]),
+        context_file=str(prepared["context_path"]),
+        request_file=str(prepared.get("request_path") or ""),
+        backend_id="codex-handoff",
+        expected_result_file=str(prepared["result_path"] if prepared["result_path"] is not None else next_semantic_review_artifact_paths(pack_dir, prepared["attempt"])["result"]),
+        subject_kind="existing_support",
+        subject_file=str(snapshot_path),
+        subject_hash=str(prepared["candidate_hash"]),
+        origin="review-support",
+    )
+    semantic_review = {
+        "verdict": "inconclusive",
+        "runner": {"status": "codex_handoff_pending"},
+        "summary": "Existing support landing frozen for semantic review.",
+        "recommended_disposition": "manual_review",
+        "review_input_file": str(prepared["input_path"]),
+        "review_prompt_file": str(prepared["prompt_path"]),
+        "review_context_file": str(prepared["context_path"]),
+        "review_result_template_file": str(prepared["template_path"]),
+        "expected_review_result_file": str(prepared["result_path"]) if prepared["result_path"] is not None else str(next_semantic_review_artifact_paths(pack_dir, prepared["attempt"])["result"]),
+        "cache_hit": False,
+        "reviewer_backend_id": "codex-handoff",
+    }
+    _write_review_compat_summary(
+        task_id=task_id,
+        ledger=ledger,
+        task=task,
+        settings=settings,
+        pack_dir=pack_dir,
+        mode="review-support",
+        candidate_path=snapshot_path,
+        candidate_code=str(prepared["candidate_code"]),
+        detail_text="Existing support landing frozen for semantic review; apply a filled semantic_review_result JSON with review-apply.",
+        diagnostics=[],
+        disposition="review_support_required",
+        semantic_review=semantic_review,
+        state_transition="none",
+    )
+    return True, "Existing support landing frozen for semantic review; apply a filled semantic_review_result JSON with review-apply."
+
+
 def _next_quarantine_dir(pack_dir: Path) -> Path:
     existing = []
     for path in pack_dir.glob("rejected_official_v*"):
@@ -4243,7 +4518,7 @@ def audit_completed_task_output(task_id: str, ledger: LedgerManager, settings) -
     audit_original_status = str(ledger.ledger.get("tasks", {}).get(task_id, {}).get("status", ""))
 
     pack_dir = settings.phase2_prompt_packs_dir / task_id
-    if not pack_dir.exists():
+    if not _path_exists(pack_dir):
         pack_dir = write_prompt_pack(task_id, ledger, settings, task=task)
 
     source_plan = str(task.get("source_plan", "unknown") or "unknown")
@@ -4493,7 +4768,7 @@ def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[
     task["soft_imports"] = canonicalize_id_list(task.get("soft_imports", []) + snapshot.get("soft_imports", []))
     task["final_import_union"] = _task_final_import_union(task)
     _raise_if_hard_dependency_has_proof_debt(task, ledger)
-    pack_dir.mkdir(parents=True, exist_ok=True)
+    _make_dirs(pack_dir, exist_ok=True)
     soft_confirmed = ledger.has_confirmed_soft_imports(task_id)
     if str(task.get("type", "")).strip().lower() == "problem" and not soft_confirmed:
         raise ValueError(
@@ -4543,17 +4818,17 @@ def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[
     has_valid_ready = bool(str(current_record.get("latest_build_ready_candidate_file", "") or ""))
     next_pack_state = current_state if has_valid_ready and current_state in {"build_ready", "review_pending", "review_rejected"} else "draft"
 
-    should_seed_draft = not draft_path.exists()
-    if output_binding.is_obligation_task and draft_path.exists():
+    should_seed_draft = not _path_exists(draft_path)
+    if output_binding.is_obligation_task and _path_exists(draft_path):
         should_seed_draft = not has_top_level_declaration(_read_file_safely(draft_path))
 
     if should_seed_draft:
         if latest_pack_candidate is not None:
-            draft_path.write_text(_read_file_safely(latest_pack_candidate), encoding="utf-8")
-        elif latest_candidate and Path(latest_candidate).exists():
-            draft_path.write_text(_read_file_safely(Path(latest_candidate)), encoding="utf-8")
+            _shared_write_text(draft_path, _read_file_safely(latest_pack_candidate))
+        elif latest_candidate and _path_exists(Path(latest_candidate)):
+            _shared_write_text(draft_path, _read_file_safely(Path(latest_candidate)))
         else:
-            draft_path.write_text(target_stub_text, encoding="utf-8")
+            _shared_write_text(draft_path, target_stub_text)
 
     task_payload = {
         "block_id": task["block_id"],
@@ -4597,18 +4872,15 @@ def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[
     _write_json(pack_dir / "metadata.json", metadata_payload)
     _write_json(search_manifest_path, search_manifest)
     write_dependency_decision_context(pack_dir, task_payload, settings)
-    failure_summary_path.write_text(failure_summary_text, encoding="utf-8")
-    (pack_dir / "operator_prompt.md").write_text(build_operator_prompt(task), encoding="utf-8")
-    (pack_dir / "context.md").write_text(build_context_markdown(task, ledger, settings, pack_dir), encoding="utf-8")
-    (pack_dir / "search_notes.md").write_text(build_search_notes(task, ledger, settings, search_manifest), encoding="utf-8")
-    (pack_dir / "imports.lean").write_text("\n".join(import_lines).strip() + "\n", encoding="utf-8")
-    target_stub_path.write_text(target_stub_text, encoding="utf-8")
-    (pack_dir / "build_feedback.txt").write_text("", encoding="utf-8")
-    if not (pack_dir / "verification_report.md").exists():
-        (pack_dir / "verification_report.md").write_text(
-            f"# Verification Report for {task_id}\n\n",
-            encoding="utf-8",
-        )
+    _shared_write_text(failure_summary_path, failure_summary_text)
+    _shared_write_text(pack_dir / "operator_prompt.md", build_operator_prompt(task))
+    _shared_write_text(pack_dir / "context.md", build_context_markdown(task, ledger, settings, pack_dir))
+    _shared_write_text(pack_dir / "search_notes.md", build_search_notes(task, ledger, settings, search_manifest))
+    _shared_write_text(pack_dir / "imports.lean", "\n".join(import_lines).strip() + "\n")
+    _shared_write_text(target_stub_path, target_stub_text)
+    _shared_write_text(pack_dir / "build_feedback.txt", "")
+    if not _path_exists(pack_dir / "verification_report.md"):
+        _shared_write_text(pack_dir / "verification_report.md", f"# Verification Report for {task_id}\n\n")
     if not active_official_output:
         ledger.update_status(task_id, TaskStatus.PACKED)
     ledger.mark_packed(
@@ -4633,12 +4905,12 @@ def resolve_candidate_path(pack_dir: Path, candidate_arg: str | None = None) -> 
         candidate_path = Path(candidate_arg).expanduser()
         if not candidate_path.is_absolute():
             candidate_path = (Path.cwd() / candidate_path).resolve()
-        if not candidate_path.exists():
+        if not _path_exists(candidate_path):
             raise FileNotFoundError(f"Candidate file not found: {candidate_path}")
         return candidate_path
 
     draft_path = pack_dir / DRAFT_FILE_NAME
-    if draft_path.exists():
+    if _path_exists(draft_path):
         return draft_path
 
     candidate_path = select_latest_candidate(pack_dir)
@@ -4990,6 +5262,13 @@ def _record_semantic_review_attempt(
         primary_failure_kind = "semantic_review_inconclusive"
     else:
         primary_failure_kind = "semantic_review_blocked"
+    triage_result = {}
+    if isinstance(repair_ready, dict):
+        request_payload = repair_ready.get("request_payload", {})
+        if isinstance(request_payload, dict):
+            raw_triage = request_payload.get("semantic_fail_triage", {})
+            if isinstance(raw_triage, dict):
+                triage_result = raw_triage
     history = _append_attempt_history(
         pack_dir,
         task_id,
@@ -5011,11 +5290,16 @@ def _record_semantic_review_attempt(
             "review_summary": str(semantic_review.get("summary", "") or ""),
             "review_subject_kind": review_subject_kind,
             "repair_request_file": str(repair_ready.get("request_path", "") if repair_ready else ""),
+            "semantic_fail_triage_file": str(triage_result.get("triage_path", "") or ""),
+            "semantic_fail_triage_category": str(triage_result.get("category", "") or ""),
+            "semantic_fail_needs_diagnoser": bool(triage_result.get("needs_diagnoser", False)),
+            "diagnoser_prompt_file": str(triage_result.get("prompt_path", "") or ""),
+            "diagnosis_state": str(triage_result.get("diagnosis_state", "") or ""),
             **(auto_loop_metadata or {}),
         },
         stage="semantic_review",
     )
-    (pack_dir / FAILURE_SUMMARY_FILE_NAME).write_text(build_failure_summary_markdown(task_id, history), encoding="utf-8")
+    _shared_write_text(pack_dir / FAILURE_SUMMARY_FILE_NAME, build_failure_summary_markdown(task_id, history))
     return history
 
 
@@ -5081,20 +5365,29 @@ def _backfill_semantic_repair_history_from_request(
 
 def _append_verification_report(pack_dir: Path, verify_result: dict[str, Any], detail: str) -> None:
     report_path = pack_dir / "verification_report.md"
-    with open(report_path, "a", encoding="utf-8") as f:
-        stamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")
-        f.write(f"## Verification {stamp}\n\n")
-        f.write(f"- Attempt: `{verify_result.get('attempt')}`\n")
-        f.write(f"- Candidate: `{Path(str(verify_result.get('candidate_file', ''))).name}`\n")
-        f.write(f"- Success: `{verify_result.get('success', False)}`\n")
-        f.write(f"- Primary failure kind: `{verify_result.get('primary_failure_kind', 'none') or 'none'}`\n")
-        blocking = verify_result.get("blocking_symbols", [])
-        if isinstance(blocking, list) and blocking:
-            f.write(f"- Blocking symbols: `{', '.join(blocking)}`\n")
-        f.write(f"- Verify result file: `{Path(str(verify_result.get('verify_result_file', ''))).name}`\n\n")
-        f.write("```text\n")
-        f.write((detail or "(no detail)").strip())
-        f.write("\n```\n\n")
+    stamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+    lines = [
+        f"## Verification {stamp}",
+        "",
+        f"- Attempt: `{verify_result.get('attempt')}`",
+        f"- Candidate: `{Path(str(verify_result.get('candidate_file', ''))).name}`",
+        f"- Success: `{verify_result.get('success', False)}`",
+        f"- Primary failure kind: `{verify_result.get('primary_failure_kind', 'none') or 'none'}`",
+    ]
+    blocking = verify_result.get("blocking_symbols", [])
+    if isinstance(blocking, list) and blocking:
+        lines.append(f"- Blocking symbols: `{', '.join(blocking)}`")
+    lines.extend(
+        [
+            f"- Verify result file: `{Path(str(verify_result.get('verify_result_file', ''))).name}`",
+            "",
+            "```text",
+            (detail or "(no detail)").strip(),
+            "```",
+            "",
+        ]
+    )
+    _append_text(report_path, "\n".join(lines))
 
 
 def _sha256_text(text: str) -> str:
@@ -5103,17 +5396,26 @@ def _sha256_text(text: str) -> str:
 
 def _append_build_report(pack_dir: Path, build_result: dict[str, Any], detail: str) -> None:
     report_path = pack_dir / "verification_report.md"
-    with open(report_path, "a", encoding="utf-8") as f:
-        stamp = _utc_now_z()
-        f.write(f"## Build Check {stamp}\n\n")
-        f.write(f"- Attempt: `{build_result.get('attempt')}`\n")
-        f.write(f"- Candidate: `{Path(str(build_result.get('candidate_file', ''))).name}`\n")
-        f.write(f"- Success: `{build_result.get('success', False)}`\n")
-        f.write(f"- Primary failure kind: `{build_result.get('primary_failure_kind', 'none') or 'none'}`\n")
-        f.write(f"- Build result file: `{Path(str(build_result.get('build_result_file', ''))).name}`\n\n")
-        f.write("```text\n")
-        f.write((detail or "(no detail)").strip())
-        f.write("\n```\n\n")
+    stamp = _utc_now_z()
+    _append_text(
+        report_path,
+        "\n".join(
+            [
+                f"## Build Check {stamp}",
+                "",
+                f"- Attempt: `{build_result.get('attempt')}`",
+                f"- Candidate: `{Path(str(build_result.get('candidate_file', ''))).name}`",
+                f"- Success: `{build_result.get('success', False)}`",
+                f"- Primary failure kind: `{build_result.get('primary_failure_kind', 'none') or 'none'}`",
+                f"- Build result file: `{Path(str(build_result.get('build_result_file', ''))).name}`",
+                "",
+                "```text",
+                (detail or "(no detail)").strip(),
+                "```",
+                "",
+            ]
+        ),
+    )
 
 
 async def build_check_prompt_pack_candidate(
@@ -5134,6 +5436,15 @@ async def build_check_prompt_pack_candidate(
     if not pack_dir.exists():
         pack_dir = write_prompt_pack(task_id, ledger, settings, task=task)
     _sync_stale_build_ready_candidate(task_id, ledger, settings, pack_dir)
+    current_record = ledger.ledger.get("tasks", {}).get(task_id, {})
+    math_gate_reason = math_review_gate_blocker(
+        task_id,
+        current_record if isinstance(current_record, dict) else {},
+        pack_dir=pack_dir,
+    )
+    if math_gate_reason:
+        _refresh_pack_runtime_view(task, ledger, settings, pack_dir)
+        return False, math_gate_reason
 
     source_candidate_path = resolve_candidate_path(pack_dir, candidate_arg)
     candidate_code = _read_file_safely(source_candidate_path)
@@ -5153,7 +5464,7 @@ async def build_check_prompt_pack_candidate(
         return False, stale_official_message
     build_feedback_path = pack_dir / "build_feedback.txt"
     attempt, snapshot_path = _next_candidate_path(pack_dir)
-    snapshot_path.write_text(candidate_code, encoding="utf-8")
+    _shared_write_text(snapshot_path, candidate_code)
     build_result_path = _next_build_result_path(pack_dir, attempt)
     built_at = _utc_now_z()
     existing_completed_output = _has_active_official_output(task_id, source_plan, ledger, settings)
@@ -5196,8 +5507,8 @@ async def build_check_prompt_pack_candidate(
         _write_json(build_result_path, build_result)
         history = _append_attempt_history(pack_dir, task_id, build_result, stage="build")
         failure_counters = phase2_failure_counters_from_history(history)
-        (pack_dir / FAILURE_SUMMARY_FILE_NAME).write_text(build_failure_summary_markdown(task_id, history), encoding="utf-8")
-        build_feedback_path.write_text("" if success else detail_text, encoding="utf-8")
+        _shared_write_text(pack_dir / FAILURE_SUMMARY_FILE_NAME, build_failure_summary_markdown(task_id, history))
+        _shared_write_text(build_feedback_path, "" if success else detail_text)
 
         runtime_updates: dict[str, Any] = {
             "build_attempts": attempt,
@@ -5259,7 +5570,11 @@ async def build_check_prompt_pack_candidate(
             hard_checks_success=False,
         )
 
-    temp_module_basename = f"PackBuildCheck_{re.sub(r'[^A-Za-z0-9_]', '_', task_id)}_{attempt}"
+    sanitized_task_id = re.sub(r"[^A-Za-z0-9_]", "_", task_id)
+    temp_module_basename = f"PackBuildCheck_{sanitized_task_id}_{attempt}"
+    if len(temp_module_basename) > 96:
+        digest = hashlib.sha256(task_id.encode("utf-8")).hexdigest()[:16]
+        temp_module_basename = f"PackBuildCheck_{digest}_{attempt}"
     temp_module_file = settings.toyapollo_output_dir / f"{temp_module_basename}.lean"
     temp_module_name = f"ToyApollo.Output.{temp_module_basename}"
     settings.toyapollo_output_dir.mkdir(parents=True, exist_ok=True)
@@ -5368,7 +5683,7 @@ def _write_codex_handoff_review_artifacts(
     context_path = next_semantic_review_context_path(pack_dir, attempt)
     request_path = _review_request_path(pack_dir, attempt)
     context_markdown = build_semantic_review_context_markdown(task, ledger, settings, pack_dir)
-    context_path.write_text(context_markdown, encoding="utf-8")
+    _shared_write_text(context_path, context_markdown)
     review_basis = build_semantic_review_basis(
         task,
         ledger,
@@ -5403,7 +5718,7 @@ def _write_codex_handoff_review_artifacts(
     )
     prompt_text = render_semantic_review_prompt(review_input)
     _write_json(paths["input"], review_input)
-    paths["prompt"].write_text(prompt_text, encoding="utf-8")
+    _shared_write_text(paths["prompt"], prompt_text)
 
     template_path = _result_template_path(pack_dir, attempt)
     expected_result_path = paths["result"]
@@ -5432,6 +5747,16 @@ def _write_codex_handoff_review_artifacts(
         },
         "source_claims": [],
         "claim_mapping": [],
+        "route_inspection": {
+            "status": "unclear",
+            "source_route": "",
+            "expected_answer_or_statement": "",
+            "local_mathlib_search": "",
+            "public_interface_check": "",
+            "support_or_reassembly_decision": "",
+            "stop_go_verdict": "unclear",
+            "notes": "",
+        },
         "spine_alignment": {
             "status": "unclear",
             "summary": "",
@@ -5474,6 +5799,22 @@ def _write_codex_handoff_review_artifacts(
                 "attestation": "<short statement that this was an independent read-only review>",
             },
             "section_status_values": ["covered", "partial", "missing", "violated", "unclear"],
+            "route_inspection_fields": [
+                "source_route",
+                "expected_answer_or_statement",
+                "local_mathlib_search",
+                "public_interface_check",
+                "support_or_reassembly_decision",
+                "stop_go_verdict",
+            ],
+            "route_inspection_stop_go_values": [
+                "go",
+                "stop",
+                "needs_reassembly",
+                "needs_route_redesign",
+                "unclear",
+                "not_applicable",
+            ],
             "obligation_item_status_values": [
                 "covered",
                 "partial",
@@ -5540,9 +5881,9 @@ def _write_codex_handoff_review_artifacts(
     )
     for key in ("input", "prompt"):
         latest_path = latest[key]
-        if latest_path.exists():
-            latest_path.unlink()
-        shutil.copyfile(paths[key], latest_path)
+        if _path_exists(latest_path):
+            _unlink_path(latest_path)
+        _copy_file(paths[key], latest_path)
 
     return {
         "verdict": "inconclusive",
@@ -5647,7 +5988,7 @@ async def write_codex_review_pack(task_id: str, ledger: LedgerManager, settings,
         return False, "No build-ready candidate is available for review-pack; run build-check first."
 
     candidate_path = Path(ready_file)
-    if not candidate_path.exists():
+    if not _path_exists(candidate_path):
         ledger.update_runtime_metadata(
             task_id,
             latest_build_ready_candidate_kind="",
@@ -5750,7 +6091,7 @@ async def write_existing_output_review_pack(
     if proof_debt_blocker:
         return False, proof_debt_blocker
     pack_dir = settings.phase2_prompt_packs_dir / task_id
-    if not pack_dir.exists():
+    if not _path_exists(pack_dir):
         pack_dir = write_prompt_pack(task_id, ledger, settings, task=task)
 
     source_plan = str(task.get("source_plan", "unknown") or "unknown")

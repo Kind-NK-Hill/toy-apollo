@@ -13,12 +13,15 @@ TASK_STATUS_ALLOWED_EXCEPTION = "allowed_exception"
 
 PROOF_BEARING_ROLE = "proof_bearing"
 DEFINITION_INTERFACE_ROLE = "definition_interface"
+REMARK_ROLE = "remark"
 UNKNOWN_ROLE = "unknown"
 
 PROOF_BEARING_TYPE_MARKERS = ("theorem", "problem", "exercise", "example", "obligation")
 DEFINITION_INTERFACE_TYPE_MARKERS = ("definition", "notation", "interface", "bridge")
+REMARK_TYPE_MARKERS = ("remark",)
 PROOF_BEARING_ID_PREFIXES = ("thm_", "prob_", "ex_")
 DEFINITION_INTERFACE_ID_PREFIXES = ("def_", "notation_", "interface_", "bridge_")
+REMARK_ID_PREFIXES = ("rem_", "intro_")
 
 LOCAL_DEFECT_MARKERS = (
     "open_math_debt",
@@ -41,10 +44,11 @@ PROOF_BEARING_PASS_PREFIXES = (
     "textbook_proof_completed",
     "textbook_problem_completed",
     "textbook_exercise_completed",
+    "textbook_source_route_completed",
     "source_route_proof_completed",
     "source_faithful_proof_completed",
     "normal_proof_source_route",
-    "source_route_",
+    "source_route_theorem",
 )
 DEFINITION_INTERFACE_PASS_PREFIXES = (
     "textbook_definition_completed",
@@ -53,13 +57,28 @@ DEFINITION_INTERFACE_PASS_PREFIXES = (
     "source_faithful_notation_bridge_completed",
     "interface_bridge_completed",
 )
+REMARK_PASS_PREFIXES = (
+    "textbook_remark_completed",
+    "source_faithful_textual_remark_completed",
+    "source_faithful_non_theorem_artifact",
+    "non_proof_textual_remark_carrier",
+)
 BRIDGE_CLASSES = (
     "interface_bridge_completed",
     "source_faithful_definition_bridge_completed",
     "source_faithful_notation_bridge_completed",
 )
-ALLOWED_EXCEPTION_TASKS = {"thm_14_8"}
-ALLOWED_EXCEPTION_CLASSES = {"beyond_book_exception"}
+OBLIGATION_CHILD_PASS_CLASSES = (
+    "focused_child_obligation_completed",
+    "focused_child_source_route_theorem",
+    "focused_obligation_closed",
+    "source_route_support_predicate_completed",
+    "source_route_support_completed",
+)
+ALLOWED_EXCEPTION_TASK_CLASSES = {
+    "thm_11_8": {"cited_external_proof_exception"},
+    "thm_14_8": {"beyond_book_exception"},
+}
 
 
 @dataclass(frozen=True)
@@ -156,7 +175,7 @@ def classify_phase2_task_status(
             evidence_type="review_verdict_not_pass",
         )
 
-    if canonical_task_id in ALLOWED_EXCEPTION_TASKS and normalized_proof_class in ALLOWED_EXCEPTION_CLASSES:
+    if normalized_proof_class in ALLOWED_EXCEPTION_TASK_CLASSES.get(canonical_task_id, set()):
         return Phase2TaskStatusClassification(
             task_id=canonical_task_id,
             task_type=normalized_task_type,
@@ -168,6 +187,21 @@ def classify_phase2_task_status(
             evidence_type="explicit_allowed_exception",
         )
 
+    if _is_obligation_child_task(canonical_task_id, normalized_task_type) and (
+        normalized_proof_class in OBLIGATION_CHILD_PASS_CLASSES
+        or _normalize_class(completion_class) in OBLIGATION_CHILD_PASS_CLASSES
+    ):
+        return Phase2TaskStatusClassification(
+            task_id=canonical_task_id,
+            task_type=normalized_task_type,
+            task_role=task_role,
+            review_verdict=verdict,
+            proof_class=normalized_proof_class,
+            task_status=TASK_STATUS_PASS,
+            reason=f"{normalized_proof_class} is focused completion for an internal Phase2 obligation-child task",
+            evidence_type="fresh_review_task_projection",
+        )
+
     if task_role == DEFINITION_INTERFACE_ROLE and _starts_with_any(normalized_proof_class, DEFINITION_INTERFACE_PASS_PREFIXES):
         return Phase2TaskStatusClassification(
             task_id=canonical_task_id,
@@ -177,6 +211,18 @@ def classify_phase2_task_status(
             proof_class=normalized_proof_class,
             task_status=TASK_STATUS_PASS,
             reason=f"{normalized_proof_class} is task-level completion for a definition/interface/notation task",
+            evidence_type="fresh_review_task_projection",
+        )
+
+    if task_role == REMARK_ROLE and _starts_with_any(normalized_proof_class, REMARK_PASS_PREFIXES):
+        return Phase2TaskStatusClassification(
+            task_id=canonical_task_id,
+            task_type=normalized_task_type,
+            task_role=task_role,
+            review_verdict=verdict,
+            proof_class=normalized_proof_class,
+            task_status=TASK_STATUS_PASS,
+            reason=f"{normalized_proof_class} is task-level completion for a non-proof remark task",
             evidence_type="fresh_review_task_projection",
         )
 
@@ -222,21 +268,34 @@ def infer_phase2_task_role(task_id: str, task_type: str = "") -> str:
         return PROOF_BEARING_ROLE
     if any(marker in normalized_type for marker in DEFINITION_INTERFACE_TYPE_MARKERS):
         return DEFINITION_INTERFACE_ROLE
+    if any(marker in normalized_type for marker in REMARK_TYPE_MARKERS):
+        return REMARK_ROLE
 
     canonical_task_id = canonicalize_block_id(str(task_id or ""))
     if canonical_task_id.startswith(PROOF_BEARING_ID_PREFIXES):
         return PROOF_BEARING_ROLE
     if canonical_task_id.startswith(DEFINITION_INTERFACE_ID_PREFIXES):
         return DEFINITION_INTERFACE_ROLE
+    if canonical_task_id.startswith(REMARK_ID_PREFIXES):
+        return REMARK_ROLE
     return UNKNOWN_ROLE
 
 
+def _is_obligation_child_task(task_id: str, task_type: str = "") -> bool:
+    normalized_type = str(task_type or "").strip().lower().replace("-", "_").replace(" ", "_")
+    canonical_task_id = canonicalize_block_id(str(task_id or ""))
+    return normalized_type in {"phase2obligationtask", "phase2_obligation_task"} or canonical_task_id.startswith("obl_")
+
+
 def _normalize_class(value: Any) -> str:
-    return str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
+    return str(value or "").strip().lower().replace("-", "_").replace("/", "_").replace(" ", "_")
 
 
 def _starts_with_any(value: str, prefixes: tuple[str, ...]) -> bool:
-    return any(value == prefix or value.startswith(prefix + "_") for prefix in prefixes)
+    return any(
+        value == prefix or value.startswith(prefix if prefix.endswith("_") else prefix + "_")
+        for prefix in prefixes
+    )
 
 
 def _has_local_defect(proof_class: str) -> bool:

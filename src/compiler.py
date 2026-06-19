@@ -63,15 +63,19 @@ class LeanREPL:
         try:
             # Command: lake exe repl < input.json
             # IMPORTANT: Must run from project root so lake can find lakefile.toml
-            command = f"lake exe repl < {input_filename}"
-            process = subprocess.Popen(
-                command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                shell=True,
-                cwd=str(self.project_dir),
-            )
+            command = ["lake", "exe", "repl"]
+            input_handle = open(input_file, "r", encoding="utf-8")
+            try:
+                process = subprocess.Popen(
+                    command,
+                    stdin=input_handle,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    cwd=str(self.project_dir),
+                )
+            finally:
+                input_handle.close()
 
             try:
                 stdout, stderr = process.communicate(timeout=self.timeout_seconds)
@@ -85,7 +89,7 @@ class LeanREPL:
                     cleanup_detail = cleanup_detail.rstrip(".") + "; forced final process kill()."
                 return {
                     "error": (
-                        f"Command '{command}' timed out after {self.timeout_seconds} seconds; "
+                        f"Command '{' '.join(command)}' timed out after {self.timeout_seconds} seconds; "
                         f"cleanup: {cleanup_detail}"
                     ),
                     "stdout": stdout,
@@ -214,7 +218,6 @@ class LeanCompiler:
             ["lake", "build", self.validation_target], 
             capture_output=True, 
             text=True, 
-            shell=True,
             cwd=self.root_dir 
         )
         full_output = (result.stdout or "") + "\n" + (result.stderr or "")
@@ -244,7 +247,6 @@ class LeanCompiler:
             ["lake", "build", module_name],
             capture_output=True,
             text=True,
-            shell=True,
             cwd=self.root_dir
         )
         full_output = (result.stdout or "") + "\n" + (result.stderr or "")

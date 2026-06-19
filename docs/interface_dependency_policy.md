@@ -51,6 +51,26 @@ The policy is:
 
 > first textbook, then interface translation, then Mathlib.
 
+This policy is for shared mathematical interfaces and recurring textbook
+notation. It is not a requirement that every local lemma go through a full
+textbook-definition, bridge, and Mathlib cycle.
+
+## Term Boundaries
+
+An interface bridge is a theorem-level translation between a textbook-facing
+project object and a Mathlib-facing object or API. Its purpose is to let later
+files use Mathlib without skipping the source-side interface.
+
+Foundational support is different. It is maintenance planning for two project
+hygiene problems: splitting super-long official output files and absorbing
+`obl_*` obligation output into stable support or parent files. It does not by
+itself prove textbook fidelity, update the ledger, or replace Phase2 review.
+
+Legacy files with names ending in `_bridge` are not automatically examples of
+the Tao-style interface bridge pattern. Some are historical proof-debt support
+or holding files. Treat each such file by its actual role and review evidence,
+not by the word `bridge` in its name.
+
 ## What We Found Locally
 
 The current Chapter 1-8 output is mostly close to this practice:
@@ -76,7 +96,9 @@ Examples of project definitions already present:
 - `improperRSIntegral`
 - `totalVariationDistance`
 
-Examples of existing legacy proof-debt support or core files:
+Examples of existing legacy support, historical proof-debt support, or
+foundation-like core files that are not automatically Tao-style interface
+bridge examples:
 
 - `rs_stieltjes_bridge`
 - `cantor_distribution_bridge`

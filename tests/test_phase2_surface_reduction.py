@@ -143,8 +143,18 @@ class Phase2SurfaceReductionTests(unittest.TestCase):
                 "docs/phase2/review_criteria.md",
                 "docs/phase2/artifacts.md",
                 "docs/phase2/tools.md",
+                "docs/phase2/rs_stieltjes_boundary.md",
             },
         )
+
+    def test_phase2_docs_link_interface_policy_for_mathlib_bridge_boundary(self):
+        readme = (REPO_ROOT / "docs" / "phase2" / "README.md").read_text(encoding="utf-8")
+        review_criteria = (REPO_ROOT / "docs" / "phase2" / "review_criteria.md").read_text(encoding="utf-8")
+        rs_boundary = (REPO_ROOT / "docs" / "phase2" / "rs_stieltjes_boundary.md").read_text(encoding="utf-8")
+
+        self.assertIn("../interface_dependency_policy.md", readme)
+        self.assertIn("../interface_dependency_policy.md", review_criteria)
+        self.assertIn("textbook-first, bridge-then-Mathlib", rs_boundary)
 
     def test_ordinary_rg_hides_phase2_archives_packs_and_generated_reports(self):
         result = subprocess.run(

@@ -652,7 +652,18 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
             self.assertTrue(build_success, build_detail)
             asyncio.run(write_codex_review_pack(task_id, ledger, settings))
-            result_path = self._write_codex_review_result(pack_dir, verdict="fail", source_claims=[], claim_mapping=[])
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="fail",
+                source_claims=[],
+                claim_mapping=[],
+                proof_class="partial_source_route",
+                completion_class="partial_source_route",
+            )
+            payload = json.loads(result_path.read_text(encoding="utf-8"))
+            payload["summary"] = "The route is accepted; one medium lemma missing within an accepted route."
+            payload["findings"] = [{"severity": "warning", "category": "proof", "message": payload["summary"]}]
+            result_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
             asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
             candidate_path = Path(str(ledger.ledger["tasks"][task_id]["current_review_repair_seed_file"]))
             os.utime(candidate_path, (1000, 1000))
@@ -687,7 +698,18 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
             self.assertTrue(build_success, build_detail)
             asyncio.run(write_codex_review_pack(task_id, ledger, settings))
-            result_path = self._write_codex_review_result(pack_dir, verdict="fail", source_claims=[], claim_mapping=[])
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="fail",
+                source_claims=[],
+                claim_mapping=[],
+                proof_class="partial_source_route",
+                completion_class="partial_source_route",
+            )
+            payload = json.loads(result_path.read_text(encoding="utf-8"))
+            payload["summary"] = "The route is accepted; one medium lemma missing within an accepted route."
+            payload["findings"] = [{"severity": "warning", "category": "proof", "message": payload["summary"]}]
+            result_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
             asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
             seed_path = Path(str(ledger.ledger["tasks"][task_id]["current_review_repair_seed_file"]))
             os.utime(seed_path, (1000, 1000))
@@ -747,7 +769,18 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
             self.assertTrue(build_success, build_detail)
             asyncio.run(write_codex_review_pack(task_id, ledger, settings))
-            result_path = self._write_codex_review_result(pack_dir, verdict="fail", source_claims=[], claim_mapping=[])
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="fail",
+                source_claims=[],
+                claim_mapping=[],
+                proof_class="partial_source_route",
+                completion_class="partial_source_route",
+            )
+            payload = json.loads(result_path.read_text(encoding="utf-8"))
+            payload["summary"] = "The route is accepted; one medium lemma is missing within the accepted route."
+            payload["findings"] = [{"severity": "warning", "category": "proof", "message": payload["summary"]}]
+            result_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
             asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
             task_record_before = ledger.ledger["tasks"][task_id]
             self.assertEqual(int(task_record_before.get("current_auto_loop_round") or 0), 0)
@@ -792,6 +825,85 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
                 if item.get("stage") == "build" and int(item.get("auto_loop_round") or 0) == 2
             ]
             self.assertEqual(len(round_two_builds), 1)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_auto_loop_stops_same_candidate_legacy_open_debt_with_diagnoser_triage(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_same_candidate_legacy_open_debt"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_loop_same_candidate_legacy_open_debt"
+            from src.toy_apollo.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
+
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="fail",
+                source_claims=[],
+                claim_mapping=[],
+                proof_class="open_math_debt",
+                completion_class="open_math_debt",
+            )
+            payload = json.loads(result_path.read_text(encoding="utf-8"))
+            payload["summary"] = "The proof still relies on a private axiom and remains open_math_debt."
+            payload["findings"] = [{"severity": "error", "category": "proof", "message": payload["summary"]}]
+            result_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+            asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            request_path = pack_dir / "review_repair_request_v1.json"
+            request_payload = json.loads(request_path.read_text(encoding="utf-8"))
+            request_payload.pop("semantic_fail_triage", None)
+            request_path.write_text(json.dumps(request_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+            for stale_path in list(pack_dir.glob("semantic_fail_triage*.json")) + list(pack_dir.glob("prepared_diagnoser_prompt*.txt")):
+                stale_path.unlink()
+            ledger.update_runtime_metadata(
+                task_id,
+                latest_semantic_fail_triage_file="",
+                latest_semantic_fail_triage_category="",
+                latest_semantic_fail_triage_needs_diagnoser=False,
+                latest_semantic_fail_triage_local_repair_allowed=False,
+                latest_diagnoser_prompt_file="",
+                latest_diagnosis_state="",
+            )
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                new=AsyncMock(return_value=(True, "repl ok")),
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                new=AsyncMock(return_value=(True, "temp build ok")),
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                return_value=(True, "final build ok"),
+            ):
+                success, detail = asyncio.run(
+                    run_codex_auto_loop(
+                        task_id,
+                        ledger,
+                        settings,
+                        review_subject="current",
+                        max_auto_rounds=6,
+                        nonprogress_limit=2,
+                        max_build_attempts_per_round=3,
+                    )
+                )
+
+            self.assertFalse(success)
+            self.assertIn("diagnoser", detail.lower())
+            task_record = ledger.ledger["tasks"][task_id]
+            self.assertEqual(task_record.get("current_auto_loop_phase"), "stopped")
+            self.assertEqual(task_record.get("current_auto_loop_status"), "stopped")
+            self.assertEqual(task_record.get("current_auto_loop_stop_reason"), "diagnoser_required")
+            triage = json.loads((pack_dir / "semantic_fail_triage.json").read_text(encoding="utf-8"))
+            self.assertEqual(triage["category"], "private_axiom_or_open_math_debt")
+            self.assertTrue(triage["needs_diagnoser"])
+            self.assertFalse(triage["local_repair_allowed"])
+            self.assertTrue(Path(triage["prompt_path"]).exists())
+            self.assertTrue(task_record["latest_semantic_fail_triage_needs_diagnoser"])
+            self.assertFalse(task_record["latest_semantic_fail_triage_local_repair_allowed"])
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -878,7 +990,18 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
             self.assertTrue(build_success, build_detail)
             asyncio.run(write_codex_review_pack(task_id, ledger, settings))
-            result_path = self._write_codex_review_result(pack_dir, verdict="fail", source_claims=[], claim_mapping=[])
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="fail",
+                source_claims=[],
+                claim_mapping=[],
+                proof_class="partial_source_route",
+                completion_class="partial_source_route",
+            )
+            payload = json.loads(result_path.read_text(encoding="utf-8"))
+            payload["summary"] = "The route is accepted; one medium lemma missing within an accepted route."
+            payload["findings"] = [{"severity": "warning", "category": "proof", "message": payload["summary"]}]
+            result_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
             with patch(
                 "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
@@ -931,7 +1054,18 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
 
             self.assertTrue(success, detail)
             self.assertIn("semantic_review_result", detail)
-            second_result_path = self._write_codex_review_result(pack_dir, verdict="fail", source_claims=[], claim_mapping=[])
+            second_result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="fail",
+                source_claims=[],
+                claim_mapping=[],
+                proof_class="partial_source_route",
+                completion_class="partial_source_route",
+            )
+            second_payload = json.loads(second_result_path.read_text(encoding="utf-8"))
+            second_payload["summary"] = "The route is accepted; one medium lemma missing within an accepted route."
+            second_payload["findings"] = [{"severity": "warning", "category": "proof", "message": second_payload["summary"]}]
+            second_result_path.write_text(json.dumps(second_payload, indent=2, ensure_ascii=False), encoding="utf-8")
             self.assertNotEqual(str(result_path), str(second_result_path))
 
             success, detail = asyncio.run(
@@ -948,5 +1082,51 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
 
             self.assertFalse(success)
             self.assertIn("non-progress", detail.lower())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_auto_loop_pauses_when_semantic_fail_triage_requires_diagnoser(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_diagnoser_required"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_loop_diagnoser_required"
+            from src.toy_apollo.phase2_prompt_pack import write_codex_review_pack
+
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="fail",
+                source_claims=[],
+                claim_mapping=[],
+                proof_class="open_math_debt",
+                completion_class="open_math_debt",
+            )
+            payload = json.loads(result_path.read_text(encoding="utf-8"))
+            payload["summary"] = "The final theorem depends on a private axiom and remains open_math_debt."
+            payload["findings"] = [{"severity": "error", "category": "proof", "message": payload["summary"]}]
+            result_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+            success, detail = asyncio.run(
+                run_codex_auto_loop(
+                    task_id,
+                    ledger,
+                    settings,
+                    review_subject="candidate",
+                    max_auto_rounds=3,
+                    nonprogress_limit=2,
+                    max_build_attempts_per_round=3,
+                )
+            )
+
+            self.assertFalse(success)
+            self.assertIn("diagnoser", detail.lower())
+            task_record = ledger.ledger["tasks"][task_id]
+            self.assertEqual(task_record["current_auto_loop_stop_reason"], "diagnoser_required")
+            triage = json.loads((pack_dir / "semantic_fail_triage.json").read_text(encoding="utf-8"))
+            self.assertTrue(triage["needs_diagnoser"])
+            self.assertTrue(Path(triage["prompt_path"]).exists())
         finally:
             shutil.rmtree(root, ignore_errors=True)
