@@ -22,6 +22,7 @@ python .\run_chapter.py --phase 2 --phase2-mode batch-plan --tasks <task_id>,<ta
 python tools/validate_phase2_completion_classification.py --require-proof-contract
 python tools/validate_phase2_obligation_contracts.py --write-report
 python tools/audit_phase2_clean_debt_surface.py --write-report --fail-on-errors
+python tools/snapshot_phase2_current_status.py --write
 python .\run_chapter.py --phase 2 --phase2-mode verify --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode audit --tasks <task_id>
 ```
@@ -47,12 +48,13 @@ and must not let two workers edit the same task pack or official output. A
 the natural language proof skeleton and independent read-only math reviewer
 first.
 
-The default `batch-plan` view is parent-facing. It hides legacy `obl_*` and
-nested `obl_obl_*` rows, absorbed obligation children for parents that already
-landed `phase2_status=pass`, and diagnostic restore/rebuild rows that should
-not displace real author/review work. The plan prints a `hidden legacy/audit
-items` summary line. Use `--batch-include-legacy` only when deliberately
-auditing quarantined obligation history.
+The default `batch-plan` view is parent-facing. Current ledgers should not keep
+legacy `obl_*` child tasks, but the scheduler can quarantine legacy `obl_*` and
+nested `obl_obl_*` rows when reading old fixtures or imported state. It also
+hides diagnostic restore/rebuild rows that should not displace real
+author/review work. The plan prints a `hidden legacy/audit items` summary line.
+Use `--batch-include-legacy` only when deliberately auditing quarantined
+obligation history.
 
 `restore_or_rebuild_output` is default-queue work only when the parent has no
 official output and no usable draft/build/review candidate. If a candidate
@@ -62,6 +64,10 @@ The other commands can find stale evidence, missing contracts, public-surface
 debt, classification inconsistencies, and review/build diagnostics. These tools
 are not completion authorities. Their results must feed semantic review or
 repair.
+
+`tools/snapshot_phase2_current_status.py --write` creates a small tracked
+summary of the ignored runtime ledger. It is audit context for git history only;
+it must not be used to declare completion outside `review-apply`.
 
 ## Maintenance
 
@@ -82,7 +88,6 @@ support file, then return to the auto-loop/build/review/apply workflow.
 `foundation-scan` and `foundation-propose` are reserved names for future
 foundational-support planning tools. They are not current CLI modes. When they
 exist, they must remain maintenance planning/report tools: they may identify
-super-long official files and historical `obl_*` output dependencies, or propose a
-specific reorganization, but they must not write `phase2_status`, replace
-semantic review, or invoke the diagnoser. See
-[foundational_support.md](foundational_support.md).
+super-long official files and historical `obl_*` declaration dependencies, or
+propose a specific reorganization, but they must not write `phase2_status`,
+replace semantic review, or invoke the diagnoser.

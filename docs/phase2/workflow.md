@@ -30,7 +30,7 @@ when a task carries a route-risk signal such as:
 - `semantic_fail_public_premise*` or another public-premise relocation signal;
 - `source_mismatch` or statement/source mismatch;
 - `needs_concrete_decomposition`;
-- nested `obl_obl_*`;
+- historical nested `obl_obl_*` evidence in an imported legacy ledger;
 - dirty or blocked family state;
 - parent theorem setup that exposes a core proof result as a public premise;
 - pilot large analysis/probability tasks such as `prob_14_1` and `prob_14_8`.
@@ -120,7 +120,7 @@ Route inspection is especially mandatory when any of these signals appear:
 
 - `semantic_fail_public_premise*` or another public-premise relocation signal;
 - `needs_concrete_decomposition`;
-- nested `obl_obl_*` or dirty/blocked family state;
+- historical nested `obl_obl_*` evidence or dirty/blocked family state;
 - parent route and source statement/answer visibly disagree;
 - family closure says old `obl` material was absorbed but the parent/support
   route has not been independently reviewed.
@@ -231,8 +231,10 @@ which need Math Review Gate evidence, and which are blocked by upstream tasks.
 It is a scheduler/report only. It does not execute repair and cannot land
 completion.
 
-By default, `batch-plan` hides legacy/audit rows from the ordinary
-author/review queue:
+By default, `batch-plan` omits legacy/audit rows from the ordinary
+author/review queue. Current ledgers should not retain `obl_*` child tasks, but
+the scheduler remains able to quarantine them when reading old fixtures or
+imported legacy state:
 
 - `obl_*` and nested `obl_obl_*` task ids;
 - historical obligation children after the parent has already landed
@@ -289,10 +291,10 @@ still lands only through `review-apply` with `phase2_status=pass`.
   materials; not completion authority.
 - `debt-fix`: maintenance repair path for accepted proof debt; not proof.
 - foundational support: maintenance planning for splitting super-long official
-  output and absorbing proof-obligation material into stable support or parent files; see
-  [foundational_support.md](foundational_support.md). It may include already
-  passing official outputs when their size or historical `obl_*` imports create a
-  reuse problem, but it does not land completion by itself.
+  output and absorbing proof-obligation material into stable support or parent
+  files. It may include already passing official outputs when their size or
+  historical `obl_*` declarations create a reuse problem, but it does not land
+  completion by itself.
 - `soft-pack` and `soft-apply`: Problem soft-dependency selection only; not a
   Lean acceptance gate.
 

@@ -34,3 +34,5 @@ plans/legacy/
 inputs/legacy/
 plans/offload_candidates_legacy.json
 project_ledger.backup.json
+docs/phase2_current_status_snapshot.md
+docs/phase2_current_status_snapshot.json

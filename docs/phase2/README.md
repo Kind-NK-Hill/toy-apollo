@@ -57,8 +57,6 @@ is repair evidence, not a completion state, unless it is recorded through
 - [review_criteria.md](review_criteria.md): strict semantic review criteria.
 - [artifacts.md](artifacts.md): authority files versus cache/report/history.
 - [tools.md](tools.md): short notes for diagnostics-only tools.
-- [foundational_support.md](foundational_support.md): maintenance planning for
-  super-long official output and `obl_*` output reassembly.
 - [../interface_dependency_policy.md](../interface_dependency_policy.md): the
   textbook-first, bridge-then-Mathlib policy for shared mathematical
   interfaces.

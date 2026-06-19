@@ -149,9 +149,11 @@ def render_batch_runner_plan(plan: BatchRunnerPlan) -> str:
             )
         )
     if not plan.actions:
+        hidden_actions = set(plan.hidden_actions)
         dispatch_required = [
             action
             for action in plan.all_actions
+            if action not in hidden_actions
             if action.action
             in {
                 "reviewer_required",
@@ -834,6 +836,8 @@ def _hidden_actions_summary_line(hidden_actions: tuple[BatchRunnerAction, ...]) 
 def _default_hidden_action_category(action: BatchRunnerAction) -> str:
     if _is_legacy_obligation_task_id(action.task_id) or action.task_kind == "obligation":
         return "legacy_obligation"
+    if _is_section_intro_remark(action):
+        return "section_intro_remark"
     if action.action == "diagnostic_restore_or_rebuild_output":
         return "diagnostic_restore_or_rebuild_output"
     return ""
@@ -871,6 +875,11 @@ def _task_kind(task_id: str, raw_task: dict[str, Any]) -> str:
 def _is_legacy_obligation_task_id(task_id: str) -> bool:
     canonical = canonicalize_block_id(str(task_id or ""))
     return canonical.startswith("obl_")
+
+
+def _is_section_intro_remark(action: BatchRunnerAction) -> bool:
+    task_id = canonicalize_block_id(str(action.task_id or ""))
+    return task_id.startswith("intro_") and action.task_kind == "remark"
 
 
 def _normalize_kind(raw: str) -> str:

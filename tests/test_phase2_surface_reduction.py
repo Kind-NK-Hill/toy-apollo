@@ -177,6 +177,8 @@ class Phase2SurfaceReductionTests(unittest.TestCase):
             "docs/phase2_completion_classification.json",
             "docs/phase2_ch10_14_clean_debt_surface_audit.md",
             "docs/phase2_ch10_14_clean_debt_surface_audit.json",
+            "docs/phase2_current_status_snapshot.md",
+            "docs/phase2_current_status_snapshot.json",
             "docs/phase2_unfinished_tasks_audit.md",
             "docs/phase2_unfinished_tasks_audit.json",
             "docs/phase2_source_output_alignment_audit.md",
