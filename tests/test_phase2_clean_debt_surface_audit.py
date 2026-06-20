@@ -83,6 +83,26 @@ theorem thm_10_9 {h : SomeSupport} : True := by
                 ],
             )
 
+    def test_prob63support_namespace_is_not_a_proof_package_parameter(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            output = root / "ToyApollo" / "Output"
+            output.mkdir(parents=True)
+            (root / "phase2_prompt_packs").mkdir()
+            (output / "ex_14_4_3.lean").write_text(
+                """
+theorem ex_14_4_3_geometric_mgf_hasSum :
+    (fun m : Nat => Prob63Support.scalarStageWait m) = id := by
+  rfl
+""",
+                encoding="utf-8",
+            )
+
+            payload = findings_payload(scan_public_surface(root, 10, 14))
+
+            self.assertNotIn("error", payload["severity_counts"])
+            self.assertEqual([], payload["findings"])
+
     def test_support_proof_from_support_parameter_is_review(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -419,6 +439,48 @@ structure prob_14_2_GammaCLTSetup where
 
             self.assertEqual(payload["severity_counts"]["error"], 1)
             self.assertEqual(payload["findings"][0]["category"], "proved_obligation_lands_on_structure_field")
+
+    def test_verified_source_setup_field_landing_is_not_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            output = root / "ToyApollo" / "Output"
+            pack = root / "phase2_prompt_packs" / "prob_14_11"
+            output.mkdir(parents=True)
+            pack.mkdir(parents=True)
+            (output / "prob_14_11.lean").write_text(
+                """
+structure prob_14_11_CouponRatioTriangularArraySetup where
+  ratio_tendsto : True
+""",
+                encoding="utf-8",
+            )
+            (pack / "proof_obligations.json").write_text(
+                json.dumps(
+                    {
+                        "task_id": "prob_14_11",
+                        "obligations": [
+                            {
+                                "id": "ratio",
+                                "kind": "source_step",
+                                "status": "proved",
+                                "lean_landing": (
+                                    "prob_14_11_CouponRatioTriangularArraySetup."
+                                    "ratio_tendsto"
+                                ),
+                                "proof_contract_status": "verified",
+                                "signature_match": "passed",
+                                "body_reassumption_check": "passed",
+                                "public_premise_check": "passed",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            payload = findings_payload(scan_obligations(root, 10, 14))
+
+            self.assertNotIn("error", payload["severity_counts"])
 
     def test_child_obligation_pack_is_in_scope_through_parent_task(self):
         with tempfile.TemporaryDirectory() as tmp:
