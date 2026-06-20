@@ -20,6 +20,7 @@ CLEAN_DEBT_JSON = "docs/phase2_ch10_14_clean_debt_surface_audit.json"
 METADATA_FIX_MANIFEST = "docs/phase2_unfinished_metadata_status_fix_manifest.json"
 LEDGER_SUMMARY_SYNC_MANIFEST = "docs/phase2_unfinished_ledger_summary_sync_manifest.json"
 ALLOWED_PROOF_BEYOND_BOOK = "thm_14_8_ProofBeyondBook"
+ALLOWED_EXCEPTION_TASKS = {"thm_11_8", "thm_14_8"}
 PASSING_OBLIGATION_STATUSES = {"proved", "obsolete", "accepted_as_proof_debt"}
 PLACEHOLDER_OBLIGATION_ID = "source_proof_spine"
 
@@ -147,6 +148,110 @@ def landing_has_theorem_or_lemma(
     return False
 
 
+def alignment_has_theorem_or_lemma_landing(
+    obligation: dict[str, Any],
+    declarations: dict[str, str],
+    projection_wrappers: dict[str, str],
+) -> bool:
+    alignment = obligation.get("source_output_alignment")
+    if not isinstance(alignment, dict):
+        return False
+    missing = alignment.get("missing_landing_names") or []
+    if isinstance(missing, str):
+        missing = [missing] if missing.strip() else []
+    if missing:
+        return False
+    raw = alignment.get("existing_local_declarations") or []
+    if not isinstance(raw, list):
+        return False
+    for item in raw:
+        if isinstance(item, dict):
+            name = str(item.get("name") or "")
+        else:
+            name = str(item or "")
+        if not name:
+            continue
+        if declarations.get(name) in {"theorem", "lemma"} and name not in projection_wrappers:
+            return True
+    return False
+
+
+def latest_review_entry(pack: dict[str, Any]) -> dict[str, Any]:
+    reviews = pack.get("review_history") or []
+    if not isinstance(reviews, list):
+        return {}
+    candidates = [item for item in reviews if isinstance(item, dict)]
+    if not candidates:
+        return {}
+
+    def review_key(item: dict[str, Any]) -> datetime:
+        raw = str(item.get("reviewed_at") or "")
+        try:
+            return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        except ValueError:
+            return datetime.min.replace(tzinfo=UTC)
+
+    return max(candidates, key=review_key)
+
+
+def latest_review_marks_obligation_covered(pack: dict[str, Any], obligation_id: str) -> bool:
+    review = latest_review_entry(pack)
+    if str(review.get("verdict") or "").strip() != "pass":
+        return False
+    if str(review.get("status") or "").strip() != "covered":
+        return False
+    blockers = review.get("open_blockers") or []
+    if not isinstance(blockers, list):
+        return False
+    for item in blockers:
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("obligation_id") or "") != obligation_id:
+            continue
+        if str(item.get("issue") or "").strip() == "covered":
+            return True
+    return False
+
+
+def source_predicate_is_review_covered(
+    pack: dict[str, Any],
+    obligation: dict[str, Any],
+) -> bool:
+    if str(obligation.get("kind") or "").strip() != "source_step":
+        return False
+    if str(obligation.get("status") or "").strip() != "partial":
+        return False
+    if str(obligation.get("landing_kind") or "").strip() != "support_predicate":
+        return False
+    if str(obligation.get("proof_contract_status") or "").strip() != "not_applicable":
+        return False
+    return latest_review_marks_obligation_covered(pack, obligation_id(obligation))
+
+
+def obligation_is_allowed_exception(task_id: str, obligation: dict[str, Any]) -> bool:
+    if str(obligation.get("status") or "").strip() != "accepted_as_proof_debt":
+        return False
+    landing = obligation_landing(obligation)
+    proof_contract_status = str(obligation.get("proof_contract_status") or "").strip()
+    notes = str(obligation.get("proof_contract_notes") or "").lower()
+    if task_id == "thm_14_8":
+        return ALLOWED_PROOF_BEYOND_BOOK in landing or proof_contract_status == "beyond_book_exception"
+    if task_id == "thm_11_8":
+        return (
+            proof_contract_status == "beyond_book_exception"
+            and ("etemadi" in notes or "external" in notes or "strong_law" in landing)
+        )
+    return False
+
+
+def task_is_allowed_exception(task_id: str, task: dict[str, Any], opens: list[str]) -> bool:
+    return (
+        task_id in ALLOWED_EXCEPTION_TASKS
+        and str(task.get("phase2_status") or "").strip() == "allowed_exception"
+        and not opens
+    )
+
+
 def landing_analysis(
     landing: str,
     declarations: dict[str, str],
@@ -205,6 +310,8 @@ def landing_analysis(
 
 
 def obligation_is_unresolved(
+    task_id: str,
+    pack: dict[str, Any],
     obligation: dict[str, Any],
     declarations: dict[str, str],
     projection_wrappers: dict[str, str],
@@ -218,13 +325,20 @@ def obligation_is_unresolved(
 
     if status == "obsolete":
         return False
+    if obligation_is_allowed_exception(task_id, obligation):
+        return False
     if status == "proved" and review_status == "accepted":
         if kind == "proof_debt_support":
-            return not landing_has_theorem_or_lemma(landing, declarations, projection_wrappers)
+            return not (
+                landing_has_theorem_or_lemma(landing, declarations, projection_wrappers)
+                or alignment_has_theorem_or_lemma_landing(
+                    obligation, declarations, projection_wrappers
+                )
+            )
+        return False
+    if source_predicate_is_review_covered(pack, obligation):
         return False
     if status == "accepted_as_proof_debt":
-        if ALLOWED_PROOF_BEYOND_BOOK in landing:
-            return False
         return True
     if status in {"open", "in_progress", "partial", "blocked", "missing", "violated", ""}:
         return True
@@ -245,7 +359,7 @@ def open_obligations(
         opens: list[str] = []
         for obligation in pack["obligations"]:
             if isinstance(obligation, dict) and obligation_is_unresolved(
-                obligation, declarations, projection_wrappers
+                task_id, pack, obligation, declarations, projection_wrappers
             ):
                 oid = obligation_id(obligation)
                 if oid:
@@ -365,7 +479,9 @@ def obligation_details(
         oid = obligation_id(obligation)
         if wanted and oid not in wanted:
             continue
-        if wanted or obligation_is_unresolved(obligation, declarations, projection_wrappers):
+        if wanted or obligation_is_unresolved(
+            task_id, pack, obligation, declarations, projection_wrappers
+        ):
             child_task_id = str(obligation.get("ledger_task_id") or obligation.get("discharged_by_task") or "")
             child_task = ledger_tasks.get(child_task_id)
             if not isinstance(child_task, dict):
@@ -475,6 +591,8 @@ def action_bucket_for(reasons: list[str]) -> str:
     reason_set = set(reasons)
     if "build_failed" in reason_set or "build_timeout" in reason_set:
         return "build_repair"
+    if "allowed_exception_boundary" in reason_set:
+        return "allowed_exception_boundary"
     if "missing_output" in reason_set:
         return "missing_output"
     if "critical_ch6_bridge_verify" in reason_set and len(reason_set) == 1:
@@ -504,6 +622,7 @@ NEXT_ACTIONS = {
     "obligation_resolution": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields.",
     "allowed_beyond_book_hygiene": "Keep only the documented thm_14_8 beyond-book exception and make inherited uses explicit.",
     "proof_debt_review": "Review accepted proof debt and either retire it or document it as the allowed beyond-book exception.",
+    "allowed_exception_boundary": "Keep the explicit allowed exception visible, but do not count it as unfinished proof debt.",
     "build_repair": "Fix Lean build failures before semantic cleanup.",
     "missing_output": "Regenerate or recover the missing output file before any proof-debt decision.",
     "status_review": "Inspect ledger history and latest verification artifacts to decide whether this is stale metadata or a real unfinished task.",
@@ -518,6 +637,7 @@ REPAIR_BUCKET_ORDER = [
     "obligation_resolution",
     "allowed_beyond_book_hygiene",
     "proof_debt_review",
+    "allowed_exception_boundary",
     "build_repair",
     "missing_output",
     "status_review",
@@ -853,17 +973,20 @@ def classify_task(
     opens = open_obligations(root, task_id, task, declarations, projection_wrappers)
     open_details = obligation_details(root, task_id, opens, declarations, projection_wrappers)
     accepted_count = accepted_proof_debt_count(task)
+    allowed_exception_boundary = task_is_allowed_exception(task_id, task, opens)
     reasons: list[str] = []
 
     if not task:
         reasons.append("missing_ledger_entry")
+    elif allowed_exception_boundary:
+        reasons.append("allowed_exception_boundary")
     elif status != "COMPLETED":
         reasons.append(f"ledger_status:{status}")
-    if status == "COMPLETED_WITH_PROOF_DEBT":
+    if status == "COMPLETED_WITH_PROOF_DEBT" and not allowed_exception_boundary:
         reasons.append("completed_with_proof_debt")
     if opens:
         reasons.append("open_obligations")
-    if accepted_count:
+    if accepted_count and not allowed_exception_boundary:
         reasons.append("accepted_proof_debt")
     if task_id in public_error_tasks:
         reasons.append("public_surface_error")
@@ -893,6 +1016,7 @@ def classify_task(
         and not opens
         and accepted_count == 0
         and task_id not in public_error_tasks
+        and not allowed_exception_boundary
         and not any(reason in true_blockers for reason in reasons)
     ):
         reasons.append("metadata_drift_status_only")
@@ -1029,7 +1153,14 @@ def build_inventory(
         for item in items
         if item.get("reasons") == ["critical_ch6_bridge_verify"]
     )
-    blocking_unfinished_count = len(items) - verification_only_count
+    allowed_exception_boundary_count = sum(
+        1
+        for item in items
+        if item.get("action_bucket") == "allowed_exception_boundary"
+    )
+    blocking_unfinished_count = (
+        len(items) - verification_only_count - allowed_exception_boundary_count
+    )
     orphan_outputs = orphan_outputs_payload(root, output_ids, ledger_task_ids)
     return {
         "generated_at": utc_stamp(),
@@ -1046,6 +1177,12 @@ def build_inventory(
             "unfinished_or_verify_count": len(items),
             "blocking_unfinished_count": blocking_unfinished_count,
             "verification_only_count": verification_only_count,
+            "allowed_exception_boundary_count": allowed_exception_boundary_count,
+            "interpretation_notes": [
+                "blocking_unfinished_count excludes verification-only items and explicit allowed-exception boundaries.",
+                "allowed_exception_boundary items remain visible and are not ordinary clean proof completion.",
+                "A zero blocking_unfinished_count does not claim external or beyond-book mathematics has been locally proved.",
+            ],
             "orphan_output_count": len(orphan_outputs),
             "reason_counts": dict(sorted(reason_counts.items())),
             "bucket_counts": dict(sorted(bucket_counts.items())),
@@ -1080,6 +1217,7 @@ def markdown_report(payload: dict[str, Any]) -> str:
         f"- Unfinished or verify count: `{payload['summary']['unfinished_or_verify_count']}`",
         f"- Blocking unfinished count: `{payload['summary'].get('blocking_unfinished_count', payload['summary']['unfinished_or_verify_count'])}`",
         f"- Verification-only count: `{payload['summary'].get('verification_only_count', 0)}`",
+        f"- Allowed-exception boundary count: `{payload['summary'].get('allowed_exception_boundary_count', 0)}`",
         f"- Orphan output count: `{payload['summary']['orphan_output_count']}`",
         "",
         "## Reason Counts",
@@ -1087,6 +1225,11 @@ def markdown_report(payload: dict[str, Any]) -> str:
     ]
     for reason, count in payload["summary"]["reason_counts"].items():
         lines.append(f"- `{reason}`: {count}")
+    notes = payload["summary"].get("interpretation_notes") or []
+    if notes:
+        lines.extend(["", "## Interpretation Notes", ""])
+        for note in notes:
+            lines.append(f"- {note}")
     if payload["summary"].get("open_obligation_kind_counts"):
         lines.extend(["", "## Open Obligation Kinds", ""])
         for kind, count in payload["summary"]["open_obligation_kind_counts"].items():

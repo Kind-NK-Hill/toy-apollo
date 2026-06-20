@@ -16,13 +16,14 @@ sum core. That direction is acceptable for Definition 1.2 and Theorem 1.3
 style properties, but it should not absorb later examples, problem
 calculations, or Lebesgue-Stieltjes theory.
 
-`ToyApollo/Output/rs_stieltjes_bridge.lean` grew because it became a holding
-file for four different kinds of work:
+`ToyApollo/Output/rs_stieltjes_bridge.lean` historically grew because it became
+a holding file for four different kinds of work:
 
 - reusable Mathlib/Stieltjes measure wrappers;
 - finite-interval Darboux RS support duplicated or extending `def_1_2`;
 - Chapter 1 example and Problem 1.8 floor/jump calculations;
-- Chapter 7 and future Lebesgue-Stieltjes/improper/probability bridge axioms.
+- Chapter 7 and future Lebesgue-Stieltjes/improper/probability bridge axioms,
+  now retired to tombstone modules.
 
 The current direction is therefore partially right but badly organized. Do not
 expand `rs_stieltjes_bridge.lean` by proving every RS fact from scratch unless
@@ -63,21 +64,25 @@ Chapter 7 or future bridge files should own:
 
 ## Current Debt Classification
 
-Eliminate before treating affected Chapter 1 tasks as clean:
+Already eliminated from the active Chapter 1 public surface:
 
-- `rsIntegrable_of_bounded_finite_discontinuities`, currently public axiom for
-  Theorem 1.1;
-- `rsIntegral_sqrt_floor_add_id_0_2`, currently public axiom for Problem 1.8(b);
+- `rsIntegrable_of_bounded_finite_discontinuities`, replaced by proof-bodied
+  Theorem 1.1 support;
+- `rsIntegral_sqrt_floor_add_id_0_2`, replaced by proof-bodied Problem 1.8(b)
+  support;
+
+Still requires task-owned repair or blocker evidence before clean completion:
+
 - `rsIntegral_eq_integral_deriv` and `rsIntegral_integration_by_parts`, because
-  current downstream files still call those names;
+  downstream files historically called those names;
 - `rsIntegrable_interval_concat` and `rsIntegral_interval_concat` for Theorem
   1.2 need blocker evidence before repair. The raw PDF states the interval
   concatenation clause without an extra endpoint-continuity condition, but under
   the current closed-interval Darboux definition the unconditional statement is
   unsafe when `alpha` and `f` jump together at the split point.
 
-May remain as later Chapter 7/future bridge debt, but must not block Chapter 1
-Definition 1.2 repair:
+Retired from `ToyApollo.Output` as public axiom debt. Do not re-export or wrap
+these old bridge names as completion evidence:
 
 - `lsIntegral_eq_rsIntegral_stieltjesFunction`;
 - `improperRS_abs_iff_integrable_abs_stieltjes`;
@@ -85,23 +90,30 @@ Definition 1.2 repair:
 - `rsIntegrable_iff_ae_continuous_stieltjes`;
 - `rsIntegrable_completion_integral_eq`.
 
+The corresponding compatibility modules are tombstones only. Problem 7.3 has
+proof-bodied task support for its completion claims. The old Theorem 7.9 and
+7.12 bridge signatures were under-specified; future public wrappers for those
+routes need source-facing hypothesis packages plus the Math Review Gate.
+
 ## Minimal Repair Order
 
 1. Keep `def_1_2.lean` focused on the textbook Darboux/tagged interface and
    the first core RS laws already proved there.
 2. Split Chapter 1 example/problem support out of `rs_stieltjes_bridge.lean`
    only when editing those proofs anyway; do not delete the proof work.
-3. Split Chapter 7/future LS-RS axioms into a clearly named future bridge file
-   before repairing Chapter 7 tasks.
+3. Keep the Chapter 7/future LS-RS compatibility modules as no-declaration
+   tombstones. Do not restore the old bridge-debt names as wrappers; future
+   public LS-RS support needs source-facing hypothesis packages plus the Math
+   Review Gate.
 4. Do not attempt an unconditional interval-concatenation repair for Theorem
    1.2. First record a source-route mismatch/blocker note against the raw PDF
    and current Darboux definition. A corrected lemma with endpoint-continuity or
    no-common-jump hypotheses may be useful support, but it cannot by itself land
    the original Theorem 1.2 clause as clean pass.
-5. After the Theorem 1.2 blocker is recorded, continue with independent Chapter
-   1 repairs that do not depend on the false unconditional concat surface:
-   Theorem 1.4 derivative bridge, Problem 1.9 integration by parts, Theorem 1.1
-   finite-discontinuity bridge, then Problem 1.8(b).
+5. After the Theorem 1.2 blocker is recorded, continue only with independent
+   repairs that do not depend on the false unconditional concat surface. The
+   Theorem 1.1 finite-discontinuity route and Problem 1.8(b) sqrt/floor route
+   already have proof-bodied support and should stay guarded against regression.
 6. Prefer Mathlib interval/Lebesgue/Stieltjes APIs through explicit bridge
    theorems whenever the source proof is intentionally textbook-level but not
    meant to rebuild measure theory.

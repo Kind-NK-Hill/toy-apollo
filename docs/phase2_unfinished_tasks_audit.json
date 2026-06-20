@@ -1,56 +1,54 @@
 {
-  "generated_at": "2026-06-19T02:58:15.803214Z",
+  "generated_at": "2026-06-20T13:08:42.163091Z",
   "scope": {
     "start_chapter": 9,
     "end_chapter": 14,
     "include_tasks": [
       "thm_6_7__lemma_1"
     ],
-    "check_build": false,
-    "build_timeout_seconds": 120,
+    "check_build": true,
+    "build_timeout_seconds": 360,
     "only_tasks": [],
     "only_buckets": []
   },
   "summary": {
-    "unfinished_or_verify_count": 9,
-    "blocking_unfinished_count": 8,
+    "unfinished_or_verify_count": 3,
+    "blocking_unfinished_count": 0,
     "verification_only_count": 1,
-    "orphan_output_count": 49,
+    "allowed_exception_boundary_count": 2,
+    "interpretation_notes": [
+      "blocking_unfinished_count excludes verification-only items and explicit allowed-exception boundaries.",
+      "allowed_exception_boundary items remain visible and are not ordinary clean proof completion.",
+      "A zero blocking_unfinished_count does not claim external or beyond-book mathematics has been locally proved."
+    ],
+    "orphan_output_count": 50,
     "reason_counts": {
-      "completed_with_proof_debt": 1,
-      "critical_ch6_bridge_verify": 1,
-      "ledger_status:COMPLETED_WITH_PROOF_DEBT": 1,
-      "open_obligations": 7,
-      "public_surface_error": 3
+      "allowed_exception_boundary": 2,
+      "critical_ch6_bridge_verify": 1
     },
     "bucket_counts": {
-      "critical_bridge_verification": 1,
-      "obligation_resolution": 5,
-      "public_surface_and_obligations": 2,
-      "public_surface_cleanup": 1
+      "allowed_exception_boundary": 2,
+      "critical_bridge_verification": 1
     },
-    "build_status_counts": {},
+    "build_status_counts": {
+      "ok": 3
+    },
     "status_counts": {
-      "COMPLETED": 8,
+      "COMPLETED": 2,
       "COMPLETED_WITH_PROOF_DEBT": 1
     },
     "chapter_counts": {
       "6": 1,
-      "10": 1,
-      "11": 2,
-      "13": 1,
-      "14": 4
+      "11": 1,
+      "14": 1
     },
-    "open_obligation_kind_counts": {
-      "proof_debt_support": 14,
-      "source_step": 6
-    },
+    "open_obligation_kind_counts": {},
     "open_interface_obligation_count": 0,
-    "structural_field_landing_count": 10,
+    "structural_field_landing_count": 0,
     "theorem_wrapper_structural_count": 0,
     "empty_landing_count": 0,
     "ledger_only_child_obligation_count": 0,
-    "clean_debt_error_task_count": 3
+    "clean_debt_error_task_count": 0
   },
   "items": [
     {
@@ -67,104 +65,13 @@
       ],
       "action_bucket": "critical_bridge_verification",
       "next_action": "Build-check the Chapter 6 bridge and keep it in the report as a critical dependency, even though it is already completed.",
-      "build": null
-    },
-    {
-      "task_id": "prob_10_10",
-      "chapter": 10,
-      "status": "COMPLETED",
-      "file": "ToyApollo/Output/prob_10_10.lean",
-      "output_exists": true,
-      "open_blocking_ids": [
-        "distribution_stability_under_probability_perturbation"
-      ],
-      "open_obligation_details": [
-        {
-          "id": "distribution_stability_under_probability_perturbation",
-          "name": "",
-          "title": "Show o_P(1) perturbations preserve distribution convergence",
-          "kind": "proof_debt_support",
-          "status": "proved",
-          "review_status": "accepted",
-          "lean_landing": "h_add_perturbation_support, h_mul_perturbation_support",
-          "landing_analysis": {
-            "names": [
-              "h_add_perturbation_support",
-              "h_mul_perturbation_support"
-            ],
-            "known_declarations": [],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [],
-            "missing_names": [
-              "h_add_perturbation_support",
-              "h_mul_perturbation_support"
-            ],
-            "has_theorem_or_lemma": false,
-            "problem": "missing_theorem_or_lemma_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        }
-      ],
-      "accepted_proof_debt_count": 0,
-      "reasons": [
-        "open_obligations"
-      ],
-      "action_bucket": "obligation_resolution",
-      "next_action": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields.",
-      "build": null
-    },
-    {
-      "task_id": "prob_11_9",
-      "chapter": 11,
-      "status": "COMPLETED",
-      "file": "ToyApollo/Output/prob_11_9.lean",
-      "output_exists": true,
-      "open_blocking_ids": [
-        "asymptotic_regime"
-      ],
-      "open_obligation_details": [
-        {
-          "id": "asymptotic_regime",
-          "name": "",
-          "title": "asymptotic_regime",
-          "kind": "source_step",
-          "status": "partial",
-          "review_status": "needs_review",
-          "lean_landing": "prob_11_9_asymptoticRegime",
-          "landing_analysis": {
-            "names": [
-              "prob_11_9_asymptoticRegime"
-            ],
-            "known_declarations": [
-              {
-                "name": "prob_11_9_asymptoticRegime",
-                "kind": "def"
-              }
-            ],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [],
-            "missing_names": [],
-            "has_theorem_or_lemma": false,
-            "problem": "non_theorem_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        }
-      ],
-      "accepted_proof_debt_count": 0,
-      "reasons": [
-        "open_obligations"
-      ],
-      "action_bucket": "obligation_resolution",
-      "next_action": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields.",
-      "build": null
+      "build": {
+        "checked": true,
+        "status": "ok",
+        "exit_code": 0,
+        "stderr_tail": "",
+        "stdout_tail": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\ToyApollo\\Output\\thm_6_7__lemma_1.lean:44:8: warning: The declaration 'thm_6_7__lemma_1' contains '__', which does not follow the mathlib naming conventions. Consider using single underscores instead.\n\nNote: This linter can be disabled with `set_option linter.style.nameCheck false`\n"
+      }
     },
     {
       "task_id": "thm_11_8",
@@ -172,769 +79,21 @@
       "status": "COMPLETED",
       "file": "ToyApollo/Output/thm_11_8.lean",
       "output_exists": true,
-      "open_blocking_ids": [
-        "etemadi_external_proof_bridge"
-      ],
-      "open_obligation_details": [
-        {
-          "id": "etemadi_external_proof_bridge",
-          "name": "",
-          "title": "Etemadi external proof bridge",
-          "kind": "source_step",
-          "status": "accepted_as_proof_debt",
-          "review_status": "accepted",
-          "lean_landing": "ProbabilityTheory.strong_law_ae",
-          "landing_analysis": {
-            "names": [
-              "ProbabilityTheory.strong_law_ae"
-            ],
-            "known_declarations": [],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [],
-            "missing_names": [
-              "ProbabilityTheory.strong_law_ae"
-            ],
-            "has_theorem_or_lemma": false,
-            "problem": "missing_theorem_or_lemma_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        }
-      ],
-      "accepted_proof_debt_count": 0,
-      "reasons": [
-        "open_obligations"
-      ],
-      "action_bucket": "obligation_resolution",
-      "next_action": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields.",
-      "build": null
-    },
-    {
-      "task_id": "thm_13_12",
-      "chapter": 13,
-      "status": "COMPLETED",
-      "file": "ToyApollo/Output/thm_13_12.lean",
-      "output_exists": true,
-      "open_blocking_ids": [
-        "countable_partition_and_generated_sigma"
-      ],
-      "open_obligation_details": [
-        {
-          "id": "countable_partition_and_generated_sigma",
-          "name": "",
-          "title": "countable_partition_and_generated_sigma",
-          "kind": "source_step",
-          "status": "partial",
-          "review_status": "needs_review",
-          "lean_landing": "thm_13_12_countablePartition, thm_13_12_generatedByPartition",
-          "landing_analysis": {
-            "names": [
-              "thm_13_12_countablePartition",
-              "thm_13_12_generatedByPartition"
-            ],
-            "known_declarations": [
-              {
-                "name": "thm_13_12_countablePartition",
-                "kind": "def"
-              },
-              {
-                "name": "thm_13_12_generatedByPartition",
-                "kind": "def"
-              }
-            ],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [],
-            "missing_names": [],
-            "has_theorem_or_lemma": false,
-            "problem": "non_theorem_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        }
-      ],
-      "accepted_proof_debt_count": 0,
-      "reasons": [
-        "open_obligations"
-      ],
-      "action_bucket": "obligation_resolution",
-      "next_action": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields.",
-      "build": null
-    },
-    {
-      "task_id": "prob_14_1",
-      "chapter": 14,
-      "status": "COMPLETED",
-      "file": "ToyApollo/Output/prob_14_1.lean",
-      "output_exists": true,
       "open_blocking_ids": [],
       "open_obligation_details": [],
       "accepted_proof_debt_count": 0,
       "reasons": [
-        "public_surface_error"
+        "allowed_exception_boundary"
       ],
-      "action_bucket": "public_surface_cleanup",
-      "next_action": "Remove public Support/Spine parameters or make support-consuming helpers private; no open obligation is recorded.",
-      "build": null
-    },
-    {
-      "task_id": "thm_14_5",
-      "chapter": 14,
-      "status": "COMPLETED",
-      "file": "ToyApollo/Output/thm_14_5.lean",
-      "output_exists": true,
-      "open_blocking_ids": [
-        "characteristic_at_zero",
-        "fubini_identity",
-        "inner_integral_identity",
-        "averaged_kernel_identity",
-        "kernel_tail_lower_bound",
-        "tail_bound_by_averaged_characteristic",
-        "continuity_small_u_bound",
-        "dominated_convergence_bound",
-        "finite_prefix_tail_bound",
-        "uniform_tail_bound"
-      ],
-      "open_obligation_details": [
-        {
-          "id": "characteristic_at_zero",
-          "name": "",
-          "title": "Characteristic functions give c(0)=1",
-          "kind": "proof_debt_support",
-          "status": "proved",
-          "review_status": "accepted",
-          "lean_landing": "thm_14_5_SourceProofSpine.characteristic_at_zero (structure field only; theorem-level source proof still missing)",
-          "landing_analysis": {
-            "names": [
-              "thm_14_5_SourceProofSpine.characteristic_at_zero",
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "known_declarations": [
-              {
-                "name": "thm_14_5_SourceProofSpine",
-                "kind": "structure"
-              }
-            ],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [
-              "thm_14_5_SourceProofSpine.characteristic_at_zero"
-            ],
-            "missing_names": [
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "has_theorem_or_lemma": false,
-            "problem": "structure_field_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        },
-        {
-          "id": "fubini_identity",
-          "name": "",
-          "title": "Fubini identity (14.3)",
-          "kind": "proof_debt_support",
-          "status": "proved",
-          "review_status": "accepted",
-          "lean_landing": "thm_14_5_SourceProofSpine.fubini_identity (structure field only; theorem-level source proof still missing)",
-          "landing_analysis": {
-            "names": [
-              "thm_14_5_SourceProofSpine.fubini_identity",
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "known_declarations": [
-              {
-                "name": "thm_14_5_SourceProofSpine",
-                "kind": "structure"
-              }
-            ],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [
-              "thm_14_5_SourceProofSpine.fubini_identity"
-            ],
-            "missing_names": [
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "has_theorem_or_lemma": false,
-            "problem": "structure_field_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        },
-        {
-          "id": "inner_integral_identity",
-          "name": "",
-          "title": "Inner integral computation (14.4)",
-          "kind": "proof_debt_support",
-          "status": "proved",
-          "review_status": "accepted",
-          "lean_landing": "thm_14_5_SourceProofSpine.inner_integral_identity (structure field only; theorem-level source proof still missing)",
-          "landing_analysis": {
-            "names": [
-              "thm_14_5_SourceProofSpine.inner_integral_identity",
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "known_declarations": [
-              {
-                "name": "thm_14_5_SourceProofSpine",
-                "kind": "structure"
-              }
-            ],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [
-              "thm_14_5_SourceProofSpine.inner_integral_identity"
-            ],
-            "missing_names": [
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "has_theorem_or_lemma": false,
-            "problem": "structure_field_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        },
-        {
-          "id": "averaged_kernel_identity",
-          "name": "",
-          "title": "Combine (14.3) and (14.4) into (14.5)",
-          "kind": "proof_debt_support",
-          "status": "proved",
-          "review_status": "accepted",
-          "lean_landing": "thm_14_5_SourceProofSpine.averaged_kernel_identity (structure field only; theorem-level source proof still missing)",
-          "landing_analysis": {
-            "names": [
-              "thm_14_5_SourceProofSpine.averaged_kernel_identity",
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "known_declarations": [
-              {
-                "name": "thm_14_5_SourceProofSpine",
-                "kind": "structure"
-              }
-            ],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [
-              "thm_14_5_SourceProofSpine.averaged_kernel_identity"
-            ],
-            "missing_names": [
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "has_theorem_or_lemma": false,
-            "problem": "structure_field_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        },
-        {
-          "id": "kernel_tail_lower_bound",
-          "name": "",
-          "title": "Kernel lower bound on the tail",
-          "kind": "proof_debt_support",
-          "status": "proved",
-          "review_status": "accepted",
-          "lean_landing": "thm_14_5_SourceProofSpine.kernel_tail_lower_bound (structure field only; theorem-level source proof still missing)",
-          "landing_analysis": {
-            "names": [
-              "thm_14_5_SourceProofSpine.kernel_tail_lower_bound",
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "known_declarations": [
-              {
-                "name": "thm_14_5_SourceProofSpine",
-                "kind": "structure"
-              }
-            ],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [
-              "thm_14_5_SourceProofSpine.kernel_tail_lower_bound"
-            ],
-            "missing_names": [
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "has_theorem_or_lemma": false,
-            "problem": "structure_field_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        },
-        {
-          "id": "tail_bound_by_averaged_characteristic",
-          "name": "",
-          "title": "Tail probability bound (14.6)",
-          "kind": "proof_debt_support",
-          "status": "proved",
-          "review_status": "accepted",
-          "lean_landing": "thm_14_5_SourceProofSpine.tail_bound_by_averaged_characteristic (structure field only; theorem-level source proof still missing)",
-          "landing_analysis": {
-            "names": [
-              "thm_14_5_SourceProofSpine.tail_bound_by_averaged_characteristic",
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "known_declarations": [
-              {
-                "name": "thm_14_5_SourceProofSpine",
-                "kind": "structure"
-              }
-            ],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [
-              "thm_14_5_SourceProofSpine.tail_bound_by_averaged_characteristic"
-            ],
-            "missing_names": [
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "has_theorem_or_lemma": false,
-            "problem": "structure_field_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        },
-        {
-          "id": "continuity_small_u_bound",
-          "name": "",
-          "title": "Choose small u0 using continuity at zero",
-          "kind": "proof_debt_support",
-          "status": "proved",
-          "review_status": "accepted",
-          "lean_landing": "thm_14_5_SourceProofSpine.continuity_small_u_bound (structure field only; theorem-level source proof still missing)",
-          "landing_analysis": {
-            "names": [
-              "thm_14_5_SourceProofSpine.continuity_small_u_bound",
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "known_declarations": [
-              {
-                "name": "thm_14_5_SourceProofSpine",
-                "kind": "structure"
-              }
-            ],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [
-              "thm_14_5_SourceProofSpine.continuity_small_u_bound"
-            ],
-            "missing_names": [
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "has_theorem_or_lemma": false,
-            "problem": "structure_field_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        },
-        {
-          "id": "dominated_convergence_bound",
-          "name": "",
-          "title": "Dominated convergence for c(t)-phi_n(t)",
-          "kind": "proof_debt_support",
-          "status": "proved",
-          "review_status": "accepted",
-          "lean_landing": "thm_14_5_SourceProofSpine.dominated_convergence_bound (structure field only; theorem-level source proof still missing)",
-          "landing_analysis": {
-            "names": [
-              "thm_14_5_SourceProofSpine.dominated_convergence_bound",
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "known_declarations": [
-              {
-                "name": "thm_14_5_SourceProofSpine",
-                "kind": "structure"
-              }
-            ],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [
-              "thm_14_5_SourceProofSpine.dominated_convergence_bound"
-            ],
-            "missing_names": [
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "has_theorem_or_lemma": false,
-            "problem": "structure_field_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        },
-        {
-          "id": "finite_prefix_tail_bound",
-          "name": "",
-          "title": "Handle finitely many early indices",
-          "kind": "proof_debt_support",
-          "status": "proved",
-          "review_status": "accepted",
-          "lean_landing": "thm_14_5_SourceProofSpine.finite_prefix_tail_bound (structure field only; theorem-level source proof still missing)",
-          "landing_analysis": {
-            "names": [
-              "thm_14_5_SourceProofSpine.finite_prefix_tail_bound",
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "known_declarations": [
-              {
-                "name": "thm_14_5_SourceProofSpine",
-                "kind": "structure"
-              }
-            ],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [
-              "thm_14_5_SourceProofSpine.finite_prefix_tail_bound"
-            ],
-            "missing_names": [
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "has_theorem_or_lemma": false,
-            "problem": "structure_field_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        },
-        {
-          "id": "uniform_tail_bound",
-          "name": "",
-          "title": "Assemble the uniform tail bound",
-          "kind": "proof_debt_support",
-          "status": "proved",
-          "review_status": "accepted",
-          "lean_landing": "thm_14_5_SourceProofSpine.uniform_tail_bound (structure field only; theorem-level source proof still missing)",
-          "landing_analysis": {
-            "names": [
-              "thm_14_5_SourceProofSpine.uniform_tail_bound",
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "known_declarations": [
-              {
-                "name": "thm_14_5_SourceProofSpine",
-                "kind": "structure"
-              }
-            ],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [
-              "thm_14_5_SourceProofSpine.uniform_tail_bound"
-            ],
-            "missing_names": [
-              "structure",
-              "field",
-              "only",
-              "theorem",
-              "level",
-              "source",
-              "proof",
-              "still",
-              "missing"
-            ],
-            "has_theorem_or_lemma": false,
-            "problem": "structure_field_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        }
-      ],
-      "accepted_proof_debt_count": 0,
-      "reasons": [
-        "open_obligations",
-        "public_surface_error"
-      ],
-      "action_bucket": "public_surface_and_obligations",
-      "next_action": "First remove public Support/Spine parameters, then close the named proof obligations with theorem-level landings.",
-      "build": null
-    },
-    {
-      "task_id": "thm_14_7",
-      "chapter": 14,
-      "status": "COMPLETED",
-      "file": "ToyApollo/Output/thm_14_7.lean",
-      "output_exists": true,
-      "open_blocking_ids": [
-        "center_and_standardize",
-        "quadratic_characteristic_expansion",
-        "independent_sum_characteristic"
-      ],
-      "open_obligation_details": [
-        {
-          "id": "center_and_standardize",
-          "name": "",
-          "title": "Center and standardize the iid sequence",
-          "kind": "proof_debt_support",
-          "status": "proved",
-          "review_status": "accepted",
-          "lean_landing": "thm_14_7_LindebergLevySetup.mean, thm_14_7_LindebergLevySetup.sigma, thm_14_7_LindebergLevySetup.standardizedLaws",
-          "landing_analysis": {
-            "names": [
-              "thm_14_7_LindebergLevySetup.mean",
-              "thm_14_7_LindebergLevySetup.sigma",
-              "thm_14_7_LindebergLevySetup.standardizedLaws"
-            ],
-            "known_declarations": [],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [],
-            "missing_names": [
-              "thm_14_7_LindebergLevySetup.mean",
-              "thm_14_7_LindebergLevySetup.sigma",
-              "thm_14_7_LindebergLevySetup.standardizedLaws"
-            ],
-            "has_theorem_or_lemma": false,
-            "problem": "missing_theorem_or_lemma_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        },
-        {
-          "id": "quadratic_characteristic_expansion",
-          "name": "",
-          "title": "Quadratic expansion of the one-step characteristic function",
-          "kind": "proof_debt_support",
-          "status": "proved",
-          "review_status": "accepted",
-          "lean_landing": "thm_14_7_quadraticCharacteristicExpansion; thm_14_7_quadratic_characteristic_expansion_internal",
-          "landing_analysis": {
-            "names": [
-              "thm_14_7_quadraticCharacteristicExpansion",
-              "thm_14_7_quadratic_characteristic_expansion_internal"
-            ],
-            "known_declarations": [
-              {
-                "name": "thm_14_7_quadraticCharacteristicExpansion",
-                "kind": "def"
-              }
-            ],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [],
-            "missing_names": [
-              "thm_14_7_quadratic_characteristic_expansion_internal"
-            ],
-            "has_theorem_or_lemma": false,
-            "problem": "missing_theorem_or_lemma_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        },
-        {
-          "id": "independent_sum_characteristic",
-          "name": "",
-          "title": "Independence gives the product characteristic function",
-          "kind": "proof_debt_support",
-          "status": "proved",
-          "review_status": "accepted",
-          "lean_landing": "thm_14_7_LindebergLevySetup.c, thm_14_7_LindebergLevySetup.c_definition",
-          "landing_analysis": {
-            "names": [
-              "thm_14_7_LindebergLevySetup.c",
-              "thm_14_7_LindebergLevySetup.c_definition"
-            ],
-            "known_declarations": [],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [],
-            "missing_names": [
-              "thm_14_7_LindebergLevySetup.c",
-              "thm_14_7_LindebergLevySetup.c_definition"
-            ],
-            "has_theorem_or_lemma": false,
-            "problem": "missing_theorem_or_lemma_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        }
-      ],
-      "accepted_proof_debt_count": 0,
-      "reasons": [
-        "open_obligations",
-        "public_surface_error"
-      ],
-      "action_bucket": "public_surface_and_obligations",
-      "next_action": "First remove public Support/Spine parameters, then close the named proof obligations with theorem-level landings.",
-      "build": null
+      "action_bucket": "allowed_exception_boundary",
+      "next_action": "Keep the explicit allowed exception visible, but do not count it as unfinished proof debt.",
+      "build": {
+        "checked": true,
+        "status": "ok",
+        "exit_code": 0,
+        "stderr_tail": "",
+        "stdout_tail": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\ToyApollo\\Output\\thm_11_8.lean:81:6: warning: try 'simp' instead of 'simpa'\n\nNote: This linter can be disabled with `set_option linter.unnecessarySimpa false`\nD:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\ToyApollo\\Output\\thm_11_8.lean:88:8: warning: try 'simp' instead of 'simpa'\n\nNote: This linter can be disabled with `set_option linter.unnecessarySimpa false`\n"
+      }
     },
     {
       "task_id": "thm_14_8",
@@ -942,122 +101,21 @@
       "status": "COMPLETED_WITH_PROOF_DEBT",
       "file": "ToyApollo/Output/thm_14_8.lean",
       "output_exists": true,
-      "open_blocking_ids": [
-        "triangular_array_setup",
-        "lindeberg_condition",
-        "lyapunov_condition"
-      ],
-      "open_obligation_details": [
-        {
-          "id": "triangular_array_setup",
-          "name": "",
-          "title": "Triangular-array notation and normalization",
-          "kind": "source_step",
-          "status": "partial",
-          "review_status": "needs_review",
-          "lean_landing": "thm_14_8_TriangularArraySetup",
-          "landing_analysis": {
-            "names": [
-              "thm_14_8_TriangularArraySetup"
-            ],
-            "known_declarations": [
-              {
-                "name": "thm_14_8_TriangularArraySetup",
-                "kind": "structure"
-              }
-            ],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [],
-            "missing_names": [],
-            "has_theorem_or_lemma": false,
-            "problem": "non_theorem_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        },
-        {
-          "id": "lindeberg_condition",
-          "name": "",
-          "title": "Lindeberg tail-integral condition",
-          "kind": "source_step",
-          "status": "partial",
-          "review_status": "needs_review",
-          "lean_landing": "thm_14_8_lindebergTailIntegral; thm_14_8_LindebergCondition",
-          "landing_analysis": {
-            "names": [
-              "thm_14_8_lindebergTailIntegral",
-              "thm_14_8_LindebergCondition"
-            ],
-            "known_declarations": [
-              {
-                "name": "thm_14_8_lindebergTailIntegral",
-                "kind": "def"
-              },
-              {
-                "name": "thm_14_8_LindebergCondition",
-                "kind": "def"
-              }
-            ],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [],
-            "missing_names": [],
-            "has_theorem_or_lemma": false,
-            "problem": "non_theorem_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        },
-        {
-          "id": "lyapunov_condition",
-          "name": "",
-          "title": "Lyapunov moment condition",
-          "kind": "source_step",
-          "status": "partial",
-          "review_status": "needs_review",
-          "lean_landing": "thm_14_8_lyapunovMoment; thm_14_8_LyapunovCondition",
-          "landing_analysis": {
-            "names": [
-              "thm_14_8_lyapunovMoment",
-              "thm_14_8_LyapunovCondition"
-            ],
-            "known_declarations": [
-              {
-                "name": "thm_14_8_lyapunovMoment",
-                "kind": "def"
-              },
-              {
-                "name": "thm_14_8_LyapunovCondition",
-                "kind": "def"
-              }
-            ],
-            "theorem_or_lemma": [],
-            "projection_wrapper_theorems": [],
-            "structure_fields": [],
-            "missing_names": [],
-            "has_theorem_or_lemma": false,
-            "problem": "non_theorem_landing"
-          },
-          "is_interface": false,
-          "child_task_id": "",
-          "child_status": "",
-          "child_has_output": false
-        }
-      ],
+      "open_blocking_ids": [],
+      "open_obligation_details": [],
       "accepted_proof_debt_count": 0,
       "reasons": [
-        "ledger_status:COMPLETED_WITH_PROOF_DEBT",
-        "completed_with_proof_debt",
-        "open_obligations"
+        "allowed_exception_boundary"
       ],
-      "action_bucket": "obligation_resolution",
-      "next_action": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields.",
-      "build": null
+      "action_bucket": "allowed_exception_boundary",
+      "next_action": "Keep the explicit allowed exception visible, but do not count it as unfinished proof debt.",
+      "build": {
+        "checked": true,
+        "status": "ok",
+        "exit_code": 0,
+        "stderr_tail": "",
+        "stdout_tail": ""
+      }
     }
   ],
   "repair_batches": [
@@ -1070,33 +128,13 @@
       "next_action": "Build-check the Chapter 6 bridge and keep it in the report as a critical dependency, even though it is already completed."
     },
     {
-      "bucket": "public_surface_and_obligations",
+      "bucket": "allowed_exception_boundary",
       "count": 2,
       "task_ids": [
-        "thm_14_5",
-        "thm_14_7"
-      ],
-      "next_action": "First remove public Support/Spine parameters, then close the named proof obligations with theorem-level landings."
-    },
-    {
-      "bucket": "public_surface_cleanup",
-      "count": 1,
-      "task_ids": [
-        "prob_14_1"
-      ],
-      "next_action": "Remove public Support/Spine parameters or make support-consuming helpers private; no open obligation is recorded."
-    },
-    {
-      "bucket": "obligation_resolution",
-      "count": 5,
-      "task_ids": [
-        "prob_10_10",
-        "prob_11_9",
         "thm_11_8",
-        "thm_13_12",
         "thm_14_8"
       ],
-      "next_action": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields."
+      "next_action": "Keep the explicit allowed exception visible, but do not count it as unfinished proof debt."
     }
   ],
   "orphan_outputs": [
@@ -1599,6 +637,20 @@
       "has_prompt_pack": false,
       "imported_by": [
         "ex_14_4_3"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "chapter": 14,
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "prob_14_11"
       ],
       "reasons": [
         "missing_ledger_entry"

@@ -1,0 +1,333 @@
+{
+  "schema_version": "phase2.semantic_review.result.v7",
+  "task_id": "prob_1_4",
+  "mode": "review-existing",
+  "attempt": 9,
+  "prompt_version": 9,
+  "rubric_version": 9,
+  "review_input_hash": "25e457af6a7a751a49f6b3790bf2c23bed9eb807bfadb299d20916516909374c",
+  "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_1_4\\semantic_review_input_v9.json",
+  "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_1_4\\semantic_review_prompt_v9.md",
+  "review_context_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_1_4\\semantic_review_context_v9.md",
+  "expected_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_1_4\\semantic_review_result_v9.json",
+  "candidate_hash": "cfa5641582c6daa854f81a13f54bd3ebf714c3cba0693ccf8c543c7d08242f21",
+  "verdict": "pass",
+  "confidence": "high",
+  "summary": "现有 official output 语义通过。ToyApollo.Output.prob_1_4 现在是只导入 ToyApollo.Output.prob_1_4_dirichlet_gamma_support 的 public entry module；P1 shared-support 拆分把原 DirichletGammaDensity 的证明体拆到 ProductDensity/SimplexChart/ProjectedDensity，并由 DirichletGammaDensity 重新导出。直接读取和 #check 证明关键公共声明名、最终密度 theorem statement、source normalization law、simplex support 和证明含义没有被弱化；最终 ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive 只有 hn/halpha/hbeta 源侧正性假设，并在内部 discharge Jacobian 与 integral bridge。",
+  "proof_class": "source_route_proof_completed_dirichlet_gamma_density",
+  "completion_class": "source_route_proof_completed_dirichlet_gamma_density",
+  "reviewer_independence": {
+    "role": "independent_read_only_reviewer",
+    "read_only": true,
+    "did_edit_candidate": false,
+    "used_current_review_request": true,
+    "attestation": "本次为独立只读 semantic review；未修改 Lean 源码、ledger、phase2_status，也未运行 review-apply；只写入本 result JSON。"
+  },
+  "source_claims": [
+    {
+      "claim_id": "source_prob_1_4_extend_gamma",
+      "source": "inputs/39_chap1_problems.tex Problem 1.4 and Problem 1.3 context",
+      "claim": "把上一题的两个独立同 scale Gamma 变量推广到 n 个独立 Gamma 变量。"
+    },
+    {
+      "claim_id": "source_dirichlet_normalization_law",
+      "source": "inputs/37_chap1_mixed_singular.tex Example 1.2.2",
+      "claim": "令 V = sum_i X_i 且 Y_i = X_i / V，所得随机向量服从 Dirichlet law，并以概率 1 落在非负且坐标和为 1 的 simplex 上。"
+    },
+    {
+      "claim_id": "source_projected_pdf_eq_1_4",
+      "source": "inputs/37_chap1_mixed_singular.tex equation (1.4)",
+      "claim": "前 n-1 个坐标的投影分布具有 Dirichlet pdf：Gamma(sum alpha_i) / prod Gamma(alpha_i) 乘以前 n-1 坐标幂和最后坐标 1 - sum y_i 的幂，并限制在 projected simplex 上。"
+    },
+    {
+      "claim_id": "source_density_derivation_spine",
+      "source": "Problem 1.4 directive to derive the pdf",
+      "claim": "pdf 推导必须从独立 Gamma product density 经 projected-simplex/total-mass change of variables，保留 Jacobian 因子 s^(n-1)，再计算一维 total-mass Gamma integral 并化简常数。"
+    },
+    {
+      "claim_id": "p1_shared_support_invariance",
+      "source": "current ToyApollo.Output.prob_1_4 import chain and ToyApollo.Support.DirichletGamma* split",
+      "claim": "P1 shared-support 拆分不得改变公共 theorem/definition 名称、最终 statement、公共前提或证明含义。"
+    }
+  ],
+  "claim_mapping": [
+    {
+      "claim_id": "source_prob_1_4_extend_gamma",
+      "lean_landing": "gammaScaleLaw; IndependentGammaFamily; gammaProductLaw; independent_gamma_joint_hasLaw; gammaProductLaw_eq_withDensity_gammaProductPDFReal",
+      "status": "covered",
+      "evidence": "ToyApollo.Support.DirichletGamma 定义 shape/scale Gamma law、共同 scale 的 IndependentGammaFamily 和 product Gamma law；ToyApollo.Support.DirichletGammaProductDensity/ProjectedDensity 给出 product Gamma Lebesgue density 展示。"
+    },
+    {
+      "claim_id": "source_dirichlet_normalization_law",
+      "lean_landing": "sourceNormalizedVector; normalizedGammaVector; DirichletLaw; ProjectedDirichletLaw; independent_gamma_normalized_hasLaw_dirichlet; projected_normalized_hasLaw_projectedDirichlet; DirichletLaw_simplex_probability_one; prob_1_4",
+      "status": "covered",
+      "evidence": "#check prob_1_4 显示其结论包含 normalizedGammaVector has law DirichletLaw、projectedNormalizedGammaVector has law ProjectedDirichletLaw，以及 DirichletLaw simplex probability one。"
+    },
+    {
+      "claim_id": "source_projected_pdf_eq_1_4",
+      "lean_landing": "dirichletNormalizer; simplexLastCoord; DirichletSimplex; DirichletPDF; DirichletPDF_formula_on_simplex; ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive",
+      "status": "covered",
+      "evidence": "#check ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive 返回 ProjectedDirichletLaw alpha beta = volume.withDensity (fun x => ENNReal.ofReal (DirichletPDF alpha x))，其公开前提只有 0 < n、positive alpha 和 positive beta。"
+    },
+    {
+      "claim_id": "source_density_derivation_spine",
+      "lean_landing": "projectedSimplexTotalMap_lintegral_image_eq_lintegral_totalPow_mul_chart; ProjectedDirichletJacobianBridge_of_positive; normalizedGammaDirichletDensity_eq_DirichletPDF_on_simplex; gammaDirichlet_totalMass_gamma_kernel_integral; gammaDirichlet_kernel_constant_collapse; NormalizedGammaIntegralBridge_of_positive",
+      "status": "covered",
+      "evidence": "拆分后的 SimplexChart/ProjectedDensity 中仍有 chart/Jacobian、source integral、Gamma kernel integral 和常数化简 landings；最终 positive density theorem 内部调用 ProjectedDirichletJacobianBridge_of_positive，并由 positive helper 内部提供 NormalizedGammaIntegralBridge_of_positive。"
+    },
+    {
+      "claim_id": "p1_shared_support_invariance",
+      "lean_landing": "ToyApollo.Output.prob_1_4 -> ToyApollo.Output.prob_1_4_dirichlet_gamma_support -> ToyApollo.Support.DirichletGammaDensity -> ToyApollo.Support.DirichletGammaProjectedDensity -> ToyApollo.Support.DirichletGammaSimplexChart -> ToyApollo.Support.DirichletGammaProductDensity -> ToyApollo.Support.DirichletGamma",
+      "status": "covered",
+      "evidence": "rg declaration scan shows key public names after split仍存在；#check 关键声明签名通过；lake env lean ToyApollo\\Output\\prob_1_4.lean 退出码 0。"
+    }
+  ],
+  "route_inspection": {
+    "status": "covered",
+    "source_route": "n 个独立 common-scale Gamma 变量 -> finite product Gamma law -> total-mass normalization -> full Dirichlet pushforward law -> first n-1 coordinate projection -> projected simplex/total-mass chart -> Jacobian s^(n-1) -> total-mass Gamma integral -> Dirichlet pdf equation (1.4)。",
+    "expected_answer_or_statement": "最终应公开提供 source-faithful 的 normalized Gamma HasLaw/support theorem，并公开提供在 0 < n、∀ i, 0 < alpha i、0 < beta 下 ProjectedDirichletLaw alpha beta = volume.withDensity (fun x => ENNReal.ofReal (DirichletPDF alpha x))。",
+    "local_mathlib_search": "运行 rg 检查 reviewed files 中的 sorry/admit/axiom/opaque/unsafe/gamma_beta_bridge/ToyApollo.Output.thm_1_2；未发现这些 forbidden shortcut。只发现 hJacobian/hIntegral 出现在 helper theorem ProjectedDirichletLaw_eq_withDensity_DirichletPDF_of_bridges/of_jacobian_positive 的 bridge-premise 位置，最终 positive theorem 不公开这些前提。",
+    "public_interface_check": "#check ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive 显示公开前提仅为 hn、halpha、hbeta。#check prob_1_4 显示公共 theorem 名称仍为 prob_1_4，结论仍是 normalized law、projected law、full simplex probability one。没有把 Jacobian/integral source step 移成最终 theorem 的公共 premise。",
+    "support_or_reassembly_decision": "接受当前 shared-support reassembly：DirichletGammaDensity 作为 compatibility re-export，证明体拆到 ProductDensity/SimplexChart/ProjectedDensity，ToyApollo.Output.prob_1_4 通过 support owner re-export 获得同一公共接口。拆分改变了内部 import 形态，但没有改变 statement、公共名称或证明含义。",
+    "stop_go_verdict": "go",
+    "notes": "两个 output_lean_files 副本仍是旧的展开式单文件文本，不是新 wrapper/import 形态；它们包含同名关键声明，未构成本次 official module semantic blocker。"
+  },
+  "spine_alignment": {
+    "status": "covered",
+    "summary": "source proof spine 有具体 Lean 落点，且拆分后仍是 theorem-bodied landings；bridge predicate 不是最终公开 theorem 的未 discharge 公共假设。",
+    "obligations_checked": [
+      {
+        "obligation": "独立 Gamma 坐标组成 finite product Gamma law。",
+        "lean_landing": "independent_gamma_joint_hasLaw; gammaProductLaw_eq_withDensity_gammaProductPDFReal",
+        "route_class": "source-route theorem/lemma",
+        "status": "covered"
+      },
+      {
+        "obligation": "按 total mass 归一化并得到 Dirichlet pushforward law 与 projected law。",
+        "lean_landing": "independent_gamma_normalized_hasLaw_dirichlet; projected_normalized_hasLaw_projectedDirichlet; prob_1_4",
+        "route_class": "source-route theorem/lemma",
+        "status": "covered"
+      },
+      {
+        "obligation": "证明 full/projected simplex support。",
+        "lean_landing": "DirichletLaw_simplex_probability_one; ProjectedDirichletLaw_projectedSimplex_probability_one; prob_1_4_simplex",
+        "route_class": "source-route theorem/lemma",
+        "status": "covered"
+      },
+      {
+        "obligation": "执行 projected-simplex/total-mass change of variables 并保留 Jacobian s^(n-1)。",
+        "lean_landing": "projectedScaleTotalMap_lintegral_image_eq_lintegral_totalPow_mul_chart; projectedSimplexTotalMap_lintegral_image_eq_lintegral_totalPow_mul_chart; ProjectedDirichletJacobianBridge_of_positive",
+        "route_class": "source-route theorem/lemma with Mathlib-backed measure/change-of-variables infrastructure",
+        "status": "covered"
+      },
+      {
+        "obligation": "计算 total-mass Gamma integral 并把常数化简为 Dirichlet normalizer。",
+        "lean_landing": "gammaDirichlet_totalMass_gamma_kernel_integral; gammaDirichlet_rate_scale_cancel; gammaDirichlet_kernel_constant_collapse; normalizedGammaDirichletDensity_eq_DirichletPDF_on_simplex; NormalizedGammaIntegralBridge_of_positive",
+        "route_class": "source-route theorem/lemma",
+        "status": "covered"
+      },
+      {
+        "obligation": "发布 projected Dirichlet pdf theorem，且不暴露 Jacobian/integral bridge 公共前提。",
+        "lean_landing": "ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive",
+        "route_class": "source-route theorem/lemma",
+        "status": "covered"
+      }
+    ],
+    "missing_obligations": [],
+    "shortcut_assessment": "未发现 adapter-only shortcut。Bridge-premise helper theorem 存在，但最终 positive theorem 内部提供 ProjectedDirichletJacobianBridge_of_positive，并通过 positive helper 内部提供 NormalizedGammaIntegralBridge_of_positive。"
+  },
+  "obligation_review": {
+    "status": "covered",
+    "summary": "review basis 表明这是 Level 0 ordinary Phase2 path，没有 task-local proof_obligations.json；因此按 source-derived obligations 直接审查。所有 source-side obligations 均有 theorem/definition-bodied landing。",
+    "items": [
+      {
+        "obligation_id": "source_gamma_product_law",
+        "status": "covered",
+        "expected_theorem_signature": "From coordinate Gamma HasLaw hypotheses and iIndepFun, prove HasLaw of the Fin n vector for gammaProductLaw alpha beta, plus product Gamma law as a Lebesgue withDensity theorem.",
+        "lean_landing": "independent_gamma_joint_hasLaw; gammaProductLaw_eq_withDensity_gammaProductPDFReal",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The joint law theorem uses coordinate HasLaw and independence; the product density theorem expands through finite product densities rather than assuming a task-shaped Dirichlet conclusion."
+      },
+      {
+        "obligation_id": "source_normalization_pushforward_law",
+        "status": "covered",
+        "expected_theorem_signature": "HasLaw of sourceNormalizedVector / normalizedGammaVector as DirichletLaw, and projected HasLaw as ProjectedDirichletLaw.",
+        "lean_landing": "independent_gamma_normalized_hasLaw_dirichlet; projected_normalized_hasLaw_projectedDirichlet; prob_1_4",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "#check prob_1_4 confirms the public statement includes both normalized and projected HasLaw conclusions. The proof composes product Gamma law with source normalization/projection maps."
+      },
+      {
+        "obligation_id": "source_simplex_support",
+        "status": "covered",
+        "expected_theorem_signature": "Dirichlet law and projected law are supported on the appropriate simplex under positive shape and scale assumptions.",
+        "lean_landing": "DirichletLaw_simplex_probability_one; ProjectedDirichletLaw_projectedSimplex_probability_one; prob_1_4_simplex",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Support follows from Gamma positivity, positive total mass and normalization algebra; no arbitrary witness or existence-only shell was found."
+      },
+      {
+        "obligation_id": "source_projected_chart_jacobian",
+        "status": "covered",
+        "expected_theorem_signature": "ProjectedDirichletJacobianBridge alpha beta under hn, positive alpha_i, and positive beta, proving the projected law as the setwise source total-mass density integral.",
+        "lean_landing": "ProjectedDirichletJacobianBridge_of_positive",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "#check confirms the theorem proves the bridge from source positivity assumptions. Its body uses ProjectedDirichletLaw_eq_lintegral_gammaProductPDFReal_projectedSimplexTotalMap_image and projectedSimplexTotalMap image integral lemmas, rather than taking Jacobian as a final theorem premise."
+      },
+      {
+        "obligation_id": "source_normalized_gamma_integral_evaluation",
+        "status": "covered",
+        "expected_theorem_signature": "NormalizedGammaIntegralBridge alpha beta under hn, positive alpha_i, and positive beta, i.e. normalizedGammaDirichletDensity alpha beta x = DirichletPDF alpha x for all projected x.",
+        "lean_landing": "NormalizedGammaIntegralBridge_of_positive",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "#check confirms the theorem proves the integral bridge from source positivity assumptions. The support file contains on-simplex Gamma kernel evaluation and off-simplex zero handling."
+      },
+      {
+        "obligation_id": "source_projected_dirichlet_density",
+        "status": "covered",
+        "expected_theorem_signature": "ProjectedDirichletLaw alpha beta = (volume : Measure (Fin (n - 1) -> Real)).withDensity (fun x => ENNReal.ofReal (DirichletPDF alpha x)) under hn, positive alpha_i, and positive beta.",
+        "lean_landing": "ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "#check confirms final public theorem has only source positivity assumptions. The body supplies ProjectedDirichletJacobianBridge_of_positive; the integral bridge is supplied internally by the positive helper theorem."
+      }
+    ],
+    "open_blockers": [],
+    "scaffold_assessment": [
+      {
+        "item": "ProjectedDirichletJacobianBridge",
+        "status": "completed_reusable_bridge",
+        "evidence": "ProjectedDirichletJacobianBridge_of_positive discharges it from source positivity assumptions."
+      },
+      {
+        "item": "NormalizedGammaIntegralBridge",
+        "status": "completed_reusable_bridge",
+        "evidence": "NormalizedGammaIntegralBridge_of_positive discharges it via normalizedGammaDirichletDensity_eq_DirichletPDF_on_simplex and off-simplex zero lemmas."
+      },
+      {
+        "item": "P1 shared-support split",
+        "status": "mechanical_reassembly_preserving_public_interface",
+        "evidence": "DirichletGammaDensity is now a re-export; key declarations moved into ProductDensity/SimplexChart/ProjectedDensity and remain visible through import ToyApollo.Output.prob_1_4."
+      }
+    ]
+  },
+  "evidence_review": {
+    "status": "covered",
+    "summary": "已检查 source TeX、v9 request/input/context/template、official snapshot、actual ToyApollo output、support split 文件、build/verify metadata、ledger/classification/dependency 状态、hash 和只读 Lean 验证。Build success 只作为必要条件，语义结论基于 statement/proof-spine/interface 检查。",
+    "items": [
+      {
+        "evidence_class": "source_tex",
+        "status": "covered",
+        "evidence": "读取 inputs/39_chap1_problems.tex Problem 1.4，以及 inputs/37_chap1_mixed_singular.tex Example 1.2.2/equation (1.4)。源任务要求 n 个 independent Gamma variables 的 normalization route，并推出 projected Dirichlet pdf。"
+      },
+      {
+        "evidence_class": "lean_subject",
+        "status": "covered",
+        "evidence": "读取 official_snapshot_v9.lean、ToyApollo/Output/prob_1_4.lean、ToyApollo/Output/prob_1_4_dirichlet_gamma_support.lean、ToyApollo/Support/DirichletGamma.lean、DirichletGammaDensity.lean、DirichletGammaProductDensity.lean、DirichletGammaSimplexChart.lean、DirichletGammaProjectedDensity.lean。#check 关键公共声明均成功。"
+      },
+      {
+        "evidence_class": "proof_obligations",
+        "status": "not_applicable",
+        "evidence": "review basis 明确没有 task-local proof_obligations.json；本 review 仍把 source-derived obligations 明确列入 obligation_review.items。"
+      },
+      {
+        "evidence_class": "audit",
+        "status": "not_applicable",
+        "evidence": "review basis 中 latest_audit_result_file 为空；未使用 audit 作为 completion authority。"
+      },
+      {
+        "evidence_class": "classification",
+        "status": "covered",
+        "evidence": "docs/phase2_completion_classification.json 中无 prob_1_4 entry；本次 proof_class/completion_class 根据当前 source-route proof spine 与 v9 直接检查给出，不依赖分类表自动判定。"
+      },
+      {
+        "evidence_class": "dependency_status",
+        "status": "covered",
+        "evidence": "dependency_decision_context.json 显示 hard_dependencies、soft_imports、final_import_union 均为空，missing_decision_records 为空。新增/拆分 import 均为 ToyApollo.Support 内部 support 模块，不是外部 textbook task dependency；未发现 gamma_beta_bridge 或 ToyApollo.Output.thm_1_2。"
+      },
+      {
+        "evidence_class": "downstream",
+        "status": "covered",
+        "evidence": "semantic_review_context_v9 与 review_basis 均列出 direct_downstream_consumers=[]。当前最终 density theorem 不需要下游额外提供 Jacobian/integral theorem-level hypotheses。"
+      },
+      {
+        "evidence_class": "ledger_status",
+        "status": "covered",
+        "evidence": "project_ledger.json 与 metadata.json 显示当前 review-existing pack 指向 v9 request/input/result，ledger status COMPLETED，metadata phase2_status=pass；verify_result_v18 是冻结 official output 等待手工 review-apply 的 pending artifact。ledger/phase2_status 未作为语义 pass 的替代。"
+      },
+      {
+        "evidence_class": "hashes",
+        "status": "covered",
+        "evidence": "Get-FileHash 显示 ToyApollo/Output/prob_1_4.lean SHA256 为 cfa5641582c6daa854f81a13f54bd3ebf714c3cba0693ccf8c543c7d08242f21，匹配 request/input candidate_hash。official_snapshot_v9.lean 的 raw PowerShell byte hash 因换行/冻结格式不同为 c9ae02...，但文本内容与 actual official output 同义且 request 的 hash 与 actual official output 一致。"
+      }
+    ],
+    "blocking_issues": []
+  },
+  "interface_contract": {
+    "status": "covered",
+    "summary": "公共接口保留了 textbook-facing objects：shape/scale Gamma law、IndependentGammaFamily、normalization map、DirichletLaw、ProjectedDirichletLaw、DirichletSimplex、DirichletPDF、prob_1_4、prob_1_4_simplex，以及最终 ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive。P1 拆分改变 support import 组织，但没有改变这些公共名称、statement 或最终 theorem 的公共前提。",
+    "mismatches": []
+  },
+  "downstream_adequacy": {
+    "status": "covered",
+    "summary": "当前 context 无直接 downstream consumers。若未来下游导入 ToyApollo.Output.prob_1_4，可获得最终 projected Dirichlet pdf theorem，且无需额外公开 Jacobian/integral bridge 前提。",
+    "consumers_checked": [],
+    "blocking_issues": []
+  },
+  "forbidden_weakenings": [
+    {
+      "rule": "禁止把教材中的公共接口偷换成纯存在性壳、占位定义或只记录 witness 的结构。",
+      "status": "not_present",
+      "evidence": "当前文件保留具体 Gamma/Dirichlet law、normalization map、simplex predicate、DirichletPDF、withDensity theorem 和 proof-bodied support theorem。"
+    },
+    {
+      "rule": "禁止把应当供下游复用的 theorem 改写成只够当前文件自证的 theorem-specific wrapper。",
+      "status": "not_present",
+      "evidence": "关键 landings 是可复用声明：ProjectedDirichletJacobianBridge_of_positive、NormalizedGammaIntegralBridge_of_positive、ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive，以及 support 中的 chart/integral/constant lemmas。"
+    },
+    {
+      "rule": "禁止把 source proof step 移入最终 public theorem premise。",
+      "status": "not_present",
+      "evidence": "最终 ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive 只公开 hn/halpha/hbeta。hJacobian/hIntegral 只在 helper theorem 中出现，最终 theorem 内部 discharge。"
+    },
+    {
+      "rule": "禁止用 adapter-only shortcut 或旧 gamma_beta_bridge/thm_1_2 绕开 Dirichlet pdf 推导。",
+      "status": "not_present",
+      "evidence": "rg 未发现 gamma_beta_bridge 或 ToyApollo.Output.thm_1_2；proof spine 明确落在 product density、simplex chart/Jacobian、Gamma integral 和 constant collapse lemmas。"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "minor",
+      "status": "non_blocking",
+      "title": "secondary output_lean_files copies are not in the new wrapper/import shape",
+      "evidence": "output_lean_files/general/prob_1_4.lean and output_lean_files/39_chap1_problems/prob_1_4.lean still contain the old monolithic expanded text with the same key declarations, while ToyApollo/Output/prob_1_4.lean is now a thin wrapper importing ToyApollo.Output.prob_1_4_dirichlet_gamma_support.",
+      "impact": "不影响本次 official module semantic pass，因为 reviewed official module imports and #check expose the same public theorem names/statements. 若这些副本需要机械镜像最新 split import shape，可在后续非 review 阶段同步。"
+    }
+  ],
+  "recommended_disposition": "accept",
+  "needs_class_normalization": false,
+  "cache_class": "semantic_verdict",
+  "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_1_4\\semantic_review_result_v9.json"
+}

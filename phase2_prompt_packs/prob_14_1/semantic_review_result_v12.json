@@ -1,0 +1,281 @@
+{
+  "schema_version": "phase2.semantic_review.result.v7",
+  "task_id": "prob_14_1",
+  "mode": "review-existing",
+  "attempt": 12,
+  "prompt_version": 9,
+  "rubric_version": 9,
+  "review_input_hash": "b7110b16f31887493dabeb26467f997dacf5879dc3ff42daf20bb49e7f0a7e6f",
+  "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_1\\semantic_review_input_v12.json",
+  "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_1\\semantic_review_prompt_v12.md",
+  "review_context_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_1\\semantic_review_context_v12.md",
+  "expected_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_1\\semantic_review_result_v12.json",
+  "candidate_hash": "e366cd9121ba4fa2a9227781e88255b37582c2d49804b7545f4a556ed3763102",
+  "verdict": "pass",
+  "confidence": "high",
+  "summary": "通过。现有 prob_14_1 输出语义上覆盖教材 Problem 14.1 的两个主张：有限 Polya urn 白球计数的 beta-binomial 质量公式，以及 X_i / i 到 Beta(w,b) 的分布收敛。P3 tail support 拆分只改变模块边界：主定理仍为 ToyApollo/Output/prob_14_1.lean:40 的 theorem prob_14_1，最终收口仍经 prob_14_1_support_result；tail/Riemann/endpoint 支撑以 import 链重组，没有把证明债务重新放进公共 setup 字段。对 prob_14_10/11/12 的 targeted status/diff/import 检查未发现误改或误引入 prob_14_1 tail support。",
+  "reviewer_independence": {
+    "role": "independent_read_only_reviewer",
+    "read_only": true,
+    "did_edit_candidate": false,
+    "used_current_review_request": true,
+    "attestation": "本次仅执行只读检查和 Lean 验证，未修改候选 Lean 源码、ledger 或 phase2_status；只写入本 result JSON。"
+  },
+  "source_claims": [
+    {
+      "id": "claim_a_finite_mass",
+      "source": "Problem 14.1(a): 对 1 <= k <= i，P(X_i = k) 等于组合数乘以 white/black rising factorial 再除以总 rising factorial。",
+      "expected_lean": "从 Problem 13.11 的 Polya urn 路径模型构造 white-count law，并导出对应 atom mass formula。",
+      "status": "covered"
+    },
+    {
+      "id": "claim_b_scaled_law",
+      "source": "Problem 14.1(b): 缩放变量 X_i / i 的 law 是 white-count law 经 x |-> x / i 的 pushforward。",
+      "expected_lean": "给出 prob_14_1_scaledCountLaw / prob_14_1_whiteFractionLaws，并证明 scaled atom 接口。",
+      "status": "covered"
+    },
+    {
+      "id": "claim_b_beta_limit",
+      "source": "Problem 14.1(b) and hint: 使用 Stirling/Gamma ratio 与 Riemann-sum/CDF 路线得到 X_i/i 分布收敛到 Beta(w,b)。",
+      "expected_lean": "先证明 grid CDF limit 和 CDF convergence，再经 def_14_1/thm_14_2 风格接口得到 Tendsto 与 def_14_1。",
+      "status": "covered"
+    }
+  ],
+  "claim_mapping": [
+    {
+      "claim_id": "claim_a_finite_mass",
+      "lean_declarations": [
+        "prob_14_1_polyaWhiteCountLaw_atom",
+        "prob_14_1_finite_polya_white_count_mass",
+        "prob_14_1_white_count_mass",
+        "prob_14_1_support_result",
+        "prob_14_1"
+      ],
+      "status": "covered",
+      "evidence": "ToyApollo/Output/prob_14_1_finite_law_support.lean:13 的 setup 只含 w,b,w_pos,b_pos；:868 构造 whiteCountLaws；:811/:891/:899 分别给出 internally constructed white-count law 的 atom theorem、part (a) Prop theorem 与公开 mass theorem。ToyApollo/Output/prob_14_1_tail_support.lean:48 和 ToyApollo/Output/prob_14_1.lean:40 将其收口到最终 theorem。"
+    },
+    {
+      "claim_id": "claim_b_scaled_law",
+      "lean_declarations": [
+        "prob_14_1_scaledCountLaw",
+        "prob_14_1_whiteFractionLaws",
+        "prob_14_1_scaled_count_law_atom",
+        "prob_14_1_white_fraction_mass"
+      ],
+      "status": "covered",
+      "evidence": "ToyApollo/Output/prob_14_1_asymptotic_support.lean:977 证明 scaled atom 的 pushforward 等式，ToyApollo/Output/prob_14_1_finite_law_support.lean:907 将其与 finite mass theorem 组合为 white fraction atom mass。"
+    },
+    {
+      "claim_id": "claim_b_beta_limit",
+      "lean_declarations": [
+        "prob_14_1_gridCdfLimit_standardBeta",
+        "prob_14_1_gridCdfLimit_setup",
+        "prob_14_1_stirling_beta_cdf_convergence",
+        "prob_14_1_white_fraction_converges_to_beta",
+        "prob_14_1_support_result",
+        "prob_14_1"
+      ],
+      "status": "covered",
+      "evidence": "ToyApollo/Output/prob_14_1_tail_riemann_support.lean:180/:973 给出 compact interior uniform asymptotics 与 Icc grid-sum-to-beta-law；ToyApollo/Output/prob_14_1_tail_endpoint_support.lean:66/:372/:507 给出 tail/endpoints 与 interior CDF tendsto；ToyApollo/Output/prob_14_1_tail_support.lean:20/:29/:40/:48 依次给出 setup grid limit、Stirling/Beta CDF convergence、weak convergence 和最终 conjunction。"
+    }
+  ],
+  "route_inspection": {
+    "status": "covered",
+    "source_route": "教材路线是 finite Polya urn count formula -> scaled white-fraction law -> Stirling/Gamma asymptotics and Riemann-sum CDF convergence -> weak/distribution convergence to Beta(w,b)。",
+    "expected_answer_or_statement": "最终公开 theorem prob_14_1 应断言所有 i,k 的白球计数 atom formula，并断言 prob_14_1_whiteFractionLaws S.whiteCountLaws 在 atTop 下 Tendsto 到 S.beta.law，同时给出 def_14_1 表述。",
+    "local_mathlib_search": "未依赖新的外部搜索；直接审查当前 ToyApollo declarations，并运行 lake env lean ToyApollo\\Output\\prob_14_1.lean。未发现 axiom/constant/sorry/admit 形式的占位证明。",
+    "public_interface_check": "最终 landing theorem 名称保留为 prob_14_1；ToyApollo/Output/prob_14_1.lean:1 仍 import proof_support，:40 仍声明 theorem prob_14_1。PolyaUrnBetaSetup 只携带参数与 positivity，不携带 mass/convergence proof 字段。",
+    "support_or_reassembly_decision": "P3 tail support 拆分为 proof_support facade -> tail_support -> tail_endpoint_support -> tail_riemann_support -> grid_cdf_support -> finite_law_support -> asymptotic_support；这是模块边界重组，语义落点和 theorem 名称未丢失。",
+    "stop_go_verdict": "go",
+    "notes": "output_lean_files/general 与 chapter14-problems 的 prob_14_1 镜像仍保留 theorem prob_14_1、prob_14_1_stirling_beta_cdf_convergence、prob_14_1_white_fraction_converges_to_beta 等 final landing 名称。"
+  },
+  "spine_alignment": {
+    "status": "covered",
+    "summary": "证明主干与 source-facing 目标一致：finite path/count construction 支撑 part (a)；scaled law/pushforward 支撑 X_i/i；Gamma/Stirling local asymptotics、Riemann-sum、tail/endpoint control 支撑 Beta CDF convergence；CDF-to-weak bridge 支撑最终 Tendsto/def_14_1。没有把关键步骤隐藏为公共假设。",
+    "obligations_checked": [
+      "obligation_1",
+      "obligation_2",
+      "obligation_3",
+      "obligation_4",
+      "obligation_5"
+    ],
+    "missing_obligations": [],
+    "shortcut_assessment": "covered: 未发现 theorem-specific wrapper 替代 source proof spine；未发现 public setup field 承载 finite mass 或 Stirling CDF convergence；未发现 private axiom/open_math_debt/sorry/admit。"
+  },
+  "obligation_review": {
+    "status": "covered",
+    "summary": "五个 obligation 均已按当前 review basis 检查；blocking obligations 1-4 均有可审查的 theorem/interface 落点，非 blocking obligation 5 也由 theorem bridge 覆盖。",
+    "items": [
+      {
+        "obligation_id": "obligation_1",
+        "title": "finite Polya urn count formula",
+        "status": "covered",
+        "expected_theorem_signature": "A theorem deriving the beta-binomial white-count mass formula for the first i draws from the concrete Polya urn model of prob_13_11, for 1 <= i and k <= i.",
+        "lean_landing": "prob_14_1_polyaWhiteCountLaw_atom; prob_14_1_finite_polya_white_count_mass; prob_14_1_white_count_mass",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Landing derives the atom formula for internally constructed prob_14_1_polyaWhiteCountLaw; setup has no mass-formula field."
+      },
+      {
+        "obligation_id": "obligation_2",
+        "title": "scaled white fraction law",
+        "status": "covered",
+        "expected_theorem_signature": "theorem prob_14_1_scaled_count_law_atom (nu : ProbabilityMeasure Real) {i k : Nat} (hi : 1 <= i) : (prob_14_1_scaledCountLaw nu i : Measure Real) {x : Real | x = (k : Real) / (i : Real)} = (nu : Measure Real) {x : Real | x = (k : Real)}",
+        "lean_landing": "prob_14_1_scaled_count_law_atom; prob_14_1_white_fraction_mass",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Scaled atom theorem proves the map/preimage atom equality, then combines with part (a); it does not assume the scaled atom conclusion."
+      },
+      {
+        "obligation_id": "obligation_3",
+        "title": "Beta law interface",
+        "status": "covered",
+        "expected_theorem_signature": "An explicit interface identifying the limiting law as a Beta(w,b) probability law with density data.",
+        "lean_landing": "prob_14_1_BetaLawData; prob_14_1_standardBetaLawData",
+        "landing_kind": "support_constructor",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Beta law is constructed canonically from w,b positivity via S.beta, not supplied as an arbitrary witness or convergence proof."
+      },
+      {
+        "obligation_id": "obligation_4",
+        "title": "Stirling to Beta CDF convergence",
+        "status": "covered",
+        "expected_theorem_signature": "A theorem deriving CDF convergence of the scaled beta-binomial/Polya white-fraction laws to the Beta(w,b) CDF from Stirling's approximation or an equivalent locally verified asymptotic route.",
+        "lean_landing": "prob_14_1_gridCdfLimit_standardBeta; prob_14_1_gridCdfLimit_setup; prob_14_1_stirling_beta_cdf_convergence",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Current route consumes internally proved gamma/local asymptotics, Riemann-sum, compact-core, endpoint and grid-CDF support. hGrid appears only as a local theorem parameter in bridge lemmas and is discharged by prob_14_1_gridCdfLimit_setup in the public setup theorem."
+      },
+      {
+        "obligation_id": "obligation_5",
+        "title": "CDF convergence to weak convergence",
+        "status": "covered",
+        "expected_theorem_signature": "CDF convergence at continuity points of the limiting law implies Tendsto of the probability laws, hence the Definition 14.1 weak convergence formulation.",
+        "lean_landing": "prob_14_1_cdfConvergence_to_weak; prob_14_1_white_fraction_converges_to_beta",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "prob_14_1_white_fraction_converges_to_beta is downstream of prob_14_1_stirling_beta_cdf_convergence and does not assume weak convergence."
+      }
+    ],
+    "open_blockers": [],
+    "scaffold_assessment": [
+      {
+        "status": "not_applicable",
+        "evidence": "proof_obligations.json records no scaffold_hypotheses."
+      }
+    ]
+  },
+  "evidence_review": {
+    "status": "covered",
+    "summary": "已读取 request/input/template/context/proof_obligations，审查当前 Lean declarations/import chain，运行 Lean 只读验证，并核对 prob_14_10/11/12 targeted status/diff/import。",
+    "items": [
+      {
+        "evidence_class": "source_tex",
+        "status": "covered",
+        "evidence": "semantic_review_context_v12.md 中 Original Task Text 明确要求 part (a) finite white-count formula 和 part (b) X_i/i -> Beta(w,b)。"
+      },
+      {
+        "evidence_class": "lean_subject",
+        "status": "covered",
+        "evidence": "ToyApollo/Output/prob_14_1.lean:40 declares theorem prob_14_1 with finite mass formula, Tendsto, and def_14_1 conclusion; lake env lean ToyApollo\\Output\\prob_14_1.lean exited successfully with no output."
+      },
+      {
+        "evidence_class": "proof_obligations",
+        "status": "covered",
+        "evidence": "proof_obligations.json lists obligations 1-5 as proved/accepted, open blocking obligations none; direct Lean inspection corroborates theorem/interface landings."
+      },
+      {
+        "evidence_class": "audit",
+        "status": "covered",
+        "evidence": "Historical v9 blockers about setup-field projections are no longer present: current prob_14_1_PolyaUrnBetaSetup carries only w,b,w_pos,b_pos, and mass/CDF convergence land in theorems."
+      },
+      {
+        "evidence_class": "classification",
+        "status": "covered",
+        "evidence": "Classification remains normal proof with explicit textbook support interfaces. Current source route has finite law support, grid CDF support, tail endpoint support, and final convergence assembly."
+      },
+      {
+        "evidence_class": "dependency_status",
+        "status": "covered",
+        "evidence": "Imports follow the expected chain: prob_14_1_asymptotic_support imports Mathlib, prob_13_11, def_14_1, thm_14_2; subsequent support modules import only prob_14_1-local predecessors."
+      },
+      {
+        "evidence_class": "downstream",
+        "status": "covered",
+        "evidence": "Review context reports no direct downstream consumers. Public theorem names remain stable for future consumers, including final theorem prob_14_1 and convergence landings."
+      },
+      {
+        "evidence_class": "ledger_status",
+        "status": "covered",
+        "evidence": "Context records Current ledger status COMPLETED; no ledger or phase2_status file was modified during this review."
+      },
+      {
+        "evidence_class": "hashes",
+        "status": "covered",
+        "evidence": "Request/candidate hash e366cd9121ba4fa2a9227781e88255b37582c2d49804b7545f4a556ed3763102 matches ToyApollo/Output/prob_14_1.lean. official_snapshot_v12.lean is linewise identical to the subject but has a different raw file hash, consistent with newline/byte normalization; this was treated as non-semantic and not a blocker."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "interface_contract": {
+    "status": "covered",
+    "summary": "公开接口忠实保留 textbook-facing parent theorem：prob_14_1 的结论包含 finite mass formula、weak/Tendsto convergence 和 def_14_1 convergence-in-distribution 表述。setup 不再把 source proof obligations 作为公共字段；tail support split 未重命名最终 theorem。",
+    "mismatches": []
+  },
+  "downstream_adequacy": {
+    "status": "covered",
+    "summary": "当前计划中无 direct downstream consumers；若未来消费者依赖 prob_14_1、prob_14_1_white_count_mass、prob_14_1_stirling_beta_cdf_convergence 或 prob_14_1_white_fraction_converges_to_beta，现有声明均为 theorem/interface landing 而非 fresh theorem-level hypotheses。",
+    "consumers_checked": [
+      {
+        "block_id": "(none)",
+        "status": "not_applicable",
+        "evidence": "semantic_review_context_v12.md reports no direct downstream consumers."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "forbidden_weakenings": [
+    {
+      "kind": "public_setup_field_for_source_claim",
+      "status": "not_present",
+      "evidence": "prob_14_1_PolyaUrnBetaSetup has only w,b,w_pos,b_pos; whiteCountLaws and beta are definitions, not proof-premise fields."
+    },
+    {
+      "kind": "placeholder_or_arbitrary_witness",
+      "status": "not_present",
+      "evidence": "Targeted rg found no axiom/opaque/constant/sorry/admit in prob_14_1 main/support files."
+    },
+    {
+      "kind": "adapter_only_shortcut",
+      "status": "not_present",
+      "evidence": "Part (a) lands in concrete finite path/count laws; part (b) lands in local asymptotics, Riemann-sum, endpoint tail, grid CDF and CDF-to-weak theorems."
+    },
+    {
+      "kind": "renamed_or_lost_final_landing_theorem",
+      "status": "not_present",
+      "evidence": "ToyApollo/Output/prob_14_1.lean:40 still declares theorem prob_14_1; support facade and tail split preserve the final landing theorem name."
+    },
+    {
+      "kind": "unrelated_prob_14_10_11_12_tail_support_mutation",
+      "status": "not_present",
+      "evidence": "git status/diff targeted to prob_14_10/11/12 files was empty, and targeted import search found no prob_14_1 tail/proof support imports in prob_14_10/11/12."
+    }
+  ],
+  "findings": [],
+  "recommended_disposition": "accept"
+}

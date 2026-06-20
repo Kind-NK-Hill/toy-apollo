@@ -1,0 +1,392 @@
+{
+  "schema_version": "phase2.semantic_review.result.v7",
+  "task_id": "ex_1_2_2",
+  "mode": "review-existing",
+  "attempt": 12,
+  "prompt_version": 9,
+  "rubric_version": 9,
+  "review_input_hash": "5dfefd64c76564d7f9bcaa7575cbf740a26207d79ba426f0840383f2ea50dd03",
+  "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_1_2_2\\semantic_review_input_v12.json",
+  "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_1_2_2\\semantic_review_prompt_v12.md",
+  "review_context_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_1_2_2\\semantic_review_context_v12.md",
+  "expected_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_1_2_2\\semantic_review_result_v12.json",
+  "candidate_hash": "7e5412f053fc74a6d4c63ce5fc76f5f7e50cd583b056c22e30db157f68c360cc",
+  "verdict": "pass",
+  "confidence": "high",
+  "summary": "The current official output is semantically faithful to Example 1.2.2. The seven blocking source-route obligations are covered by theorem landings; the P2 bridge for the projected density theorem correctly reuses the P1 shared support theorem ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive while preserving ex122 review-facing declarations such as Ex122ProjectedDensityObligations and the Beta-specific route ending at ex122_independent_gamma_firstCoord_hasLaw_betaMeasure_two. No blocking, major, or minor semantic findings were found.",
+  "proof_class": "source_route_completion_with_reusable_shared_bridge",
+  "completion_class": "covered",
+  "reviewer_independence": {
+    "role": "independent_read_only_reviewer",
+    "read_only": true,
+    "did_edit_candidate": false,
+    "used_current_review_request": true,
+    "attestation": "I performed an independent read-only review using the v12 request, input, template, context, Lean declarations, and read-only Lean verification; I did not edit the candidate, ledger, or phase2 status."
+  },
+  "source_claims": [
+    {
+      "id": "gamma_product_law_from_independence",
+      "claim": "Independent Gamma(alpha_i, beta) coordinate variables have the joint product Gamma law."
+    },
+    {
+      "id": "normalization_pushforward_to_dirichlet_law",
+      "claim": "The normalized vector Y_i = X_i / sum_j X_j has the Dirichlet law with parameters alpha_i."
+    },
+    {
+      "id": "simplex_support_probability_one",
+      "claim": "The normalized Dirichlet vector lies in the nonnegative affine simplex with probability one."
+    },
+    {
+      "id": "zero_volume_singularity",
+      "claim": "That affine simplex has zero ambient Lebesgue volume, giving the singular-support statement."
+    },
+    {
+      "id": "projected_COV_preimage_identity",
+      "claim": "The lower-dimensional projection route is justified by a measurable-set COV/preimage lintegral identity for the projected normalization map."
+    },
+    {
+      "id": "projected_density_equation_1_4",
+      "claim": "The projected first n-1 coordinates have the displayed Dirichlet density measure of equation (1.4)."
+    },
+    {
+      "id": "beta_special_case_n_eq_2",
+      "claim": "When n = 2, the first normalized Gamma coordinate has the Beta(alpha1, alpha2) law."
+    }
+  ],
+  "claim_mapping": [
+    {
+      "source_claim_id": "gamma_product_law_from_independence",
+      "lean_declaration": "ex122_independent_gamma_joint_hasLaw",
+      "assumptions": "P is a probability measure; each coordinate has HasLaw (ex122GammaScaleLaw (alpha i) beta); the coordinate functions are iIndepFun.",
+      "conclusion": "HasLaw (fun omega i => X i omega) (ex122GammaProductLaw alpha beta) P.",
+      "assessment": "covered; the theorem derives the product law via the shared independent_gamma_joint_hasLaw route and does not assume the joint law."
+    },
+    {
+      "source_claim_id": "normalization_pushforward_to_dirichlet_law",
+      "lean_declaration": "ex122_independent_gamma_normalized_hasLaw_dirichlet",
+      "assumptions": "Same coordinate Gamma HasLaw and iIndepFun assumptions as the source construction.",
+      "conclusion": "HasLaw (fun omega => ex122NormalizedVector (fun i => X i omega)) (ex122DirichletLaw alpha beta) P.",
+      "assessment": "covered; the theorem composes the product-law theorem with the normalization pushforward definition."
+    },
+    {
+      "source_claim_id": "simplex_support_probability_one",
+      "lean_declaration": "ex122DirichletLaw_simplex_probability_one",
+      "assumptions": "alpha is coordinatewise positive and beta is positive.",
+      "conclusion": "ex122DirichletLaw alpha beta (ex122DirichletSimplex n) = 1.",
+      "assessment": "covered; the public assumptions are exactly source positivity hypotheses."
+    },
+    {
+      "source_claim_id": "zero_volume_singularity",
+      "lean_declaration": "ex122DirichletSimplex_volume_zero",
+      "assumptions": "No public mathematical premise beyond n.",
+      "conclusion": "The ambient volume of ex122DirichletSimplex n is zero.",
+      "assessment": "covered; the proof routes through the shared affine-hyperplane volume-zero theorem."
+    },
+    {
+      "source_claim_id": "projected_COV_preimage_identity",
+      "lean_declaration": "ex122ProjectedCOVLIntegralPreimageIdentity_of_pos",
+      "assumptions": "alpha is coordinatewise positive and beta is positive.",
+      "conclusion": "For every measurable target set, the projected normalization preimage lintegral equals the COV-density lintegral.",
+      "assessment": "covered; no hCOV-style theorem-level premise is exposed."
+    },
+    {
+      "source_claim_id": "projected_density_equation_1_4",
+      "lean_declaration": "ex122ProjectedDirichletLaw_eq_projectedDensityMeasure_of_pos",
+      "assumptions": "alpha is coordinatewise positive and beta is positive.",
+      "conclusion": "ex122ProjectedDirichletLaw alpha beta = ex122ProjectedDensityMeasure alpha.",
+      "assessment": "covered; the final P2 bridge uses the P1 shared theorem ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive and keeps Ex122ProjectedDensityObligations as review-facing support rather than a public premise."
+    },
+    {
+      "source_claim_id": "beta_special_case_n_eq_2",
+      "lean_declaration": "ex122_independent_gamma_firstCoord_hasLaw_betaMeasure_two",
+      "assumptions": "alpha1, alpha2, and beta are positive; coordinates have the two-parameter Gamma scale laws; the two coordinates are independent.",
+      "conclusion": "The first normalized coordinate has law ProbabilityTheory.betaMeasure alpha1 alpha2.",
+      "assessment": "covered; the Beta-specific route is preserved through ex122ProjectedDirichletLawFirstCoordTwo_eq_betaMeasure and related two-dimensional declarations."
+    }
+  ],
+  "route_inspection": {
+    "status": "covered",
+    "source_route": "Gamma coordinate laws plus independence -> Gamma product law -> normalization pushforward Dirichlet law -> simplex support and zero-volume singularity; projected normalization -> COV/preimage identity and shared projected-density theorem -> equation (1.4); n = 2 specialization -> Beta law.",
+    "expected_answer_or_statement": "A source-facing Example 1.2.2 interface proving the normalized-Gamma Dirichlet law, simplex support probability one, zero ambient simplex volume, projected density equation (1.4), and the n = 2 Beta special case.",
+    "local_mathlib_search": "Local inspection found the final projected-density bridge at ToyApollo/Output/ex_1_2_2_dirichlet_gamma_beta.lean:452 using ToyApollo.Support.DirichletGammaProjectedDensity.ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive at line 1108. This shared theorem is proved through ProjectedDirichletJacobianBridge_of_positive and NormalizedGammaIntegralBridge_of_positive, not by a task-only adapter.",
+    "public_interface_check": "The public theorem ex122ProjectedDirichletLaw_eq_projectedDensityMeasure_of_pos exposes only alpha/beta positivity hypotheses. The conditional Ex122ProjectedDensityObligations route remains available as review-facing support but is not a public premise of the final theorem. The Beta theorem exposes only source Gamma law, positivity, and independence assumptions.",
+    "support_or_reassembly_decision": "Go: accept the reassembly. The P2 bridge reuses P1 shared support for the general projected-density equality while retaining ex122 declarations for review traceability and the separate Beta-specific route.",
+    "stop_go_verdict": "go",
+    "notes": "Read-only Lean verification with lake env lean ToyApollo\\Output\\ex_1_2_2.lean exited with code 0."
+  },
+  "spine_alignment": {
+    "status": "covered",
+    "summary": "The source proof spine is represented by explicit theorem landings for independence-to-product law, normalization-to-Dirichlet law, simplex support, zero ambient volume, COV/preimage identity, projected density, and n = 2 Beta specialization.",
+    "obligations_checked": [
+      "gamma_product_law_from_independence -> ex122_independent_gamma_joint_hasLaw, source-route theorem",
+      "normalization_pushforward_to_dirichlet_law -> ex122_independent_gamma_normalized_hasLaw_dirichlet, source-route theorem",
+      "simplex_support_probability_one -> ex122DirichletLaw_simplex_probability_one, source-route theorem using shared support",
+      "zero_volume_singularity -> ex122DirichletSimplex_volume_zero, source-route theorem using shared affine simplex support",
+      "projected_COV_preimage_identity -> ex122ProjectedCOVLIntegralPreimageIdentity_of_pos, source-route theorem",
+      "projected_density_equation_1_4 -> ex122ProjectedDirichletLaw_eq_projectedDensityMeasure_of_pos, source-route bridge using reusable P1 support",
+      "beta_special_case_n_eq_2 -> ex122_independent_gamma_firstCoord_hasLaw_betaMeasure_two, source-route theorem preserving the Beta-specific route"
+    ],
+    "missing_obligations": [],
+    "shortcut_assessment": "No adapter-only shortcut was found. The projected-density theorem uses a reusable shared bridge with theorem-level proof support, and the review-facing ex122 support declarations remain present."
+  },
+  "obligation_review": {
+    "status": "covered",
+    "summary": "All seven blocking proof obligations are covered by theorem landings with verified proof contracts; no scaffold hypotheses or open blockers are present.",
+    "items": [
+      {
+        "obligation_id": "gamma_product_law_from_independence",
+        "status": "covered",
+        "expected_theorem_signature": "Independent coordinate variables with HasLaw to Gamma(alpha_i,beta) and iIndepFun have joint law ex122GammaProductLaw alpha beta.",
+        "lean_landing": "ex122_independent_gamma_joint_hasLaw",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "route_class": "source-route theorem using shared support",
+        "proof_contract_notes": "Declared at ToyApollo/Output/ex_1_2_2_dirichlet_gamma_core.lean:215 and proved via shared independent_gamma_joint_hasLaw; it assumes coordinate HasLaw and iIndepFun, not the joint law."
+      },
+      {
+        "obligation_id": "normalization_pushforward_to_dirichlet_law",
+        "status": "covered",
+        "expected_theorem_signature": "The normalized vector of independent Gamma variables has law ex122DirichletLaw alpha beta.",
+        "lean_landing": "ex122_independent_gamma_normalized_hasLaw_dirichlet",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "route_class": "source-route theorem using shared support",
+        "proof_contract_notes": "Declared at ToyApollo/Output/ex_1_2_2_dirichlet_gamma_core.lean:237 and proved via shared independent_gamma_normalized_hasLaw_dirichlet; it does not assume the normalized law."
+      },
+      {
+        "obligation_id": "simplex_support_probability_one",
+        "status": "covered",
+        "expected_theorem_signature": "For positive alpha and beta, ex122DirichletLaw alpha beta assigns mass 1 to ex122DirichletSimplex n.",
+        "lean_landing": "ex122DirichletLaw_simplex_probability_one",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "route_class": "source-route theorem using shared support",
+        "proof_contract_notes": "Declared at ToyApollo/Output/ex_1_2_2_dirichlet_gamma_core.lean:204; public premises are only positivity hypotheses and the theorem uses shared DirichletLaw_simplex_probability_one."
+      },
+      {
+        "obligation_id": "zero_volume_singularity",
+        "status": "covered",
+        "expected_theorem_signature": "The affine simplex ex122DirichletSimplex n has volume zero in the ambient Fin(n+1)->R space.",
+        "lean_landing": "ex122DirichletSimplex_volume_zero",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "route_class": "source-route theorem using shared affine-simplex support",
+        "proof_contract_notes": "Declared at ToyApollo/Output/ex_1_2_2_dirichlet_gamma_core.lean:86 and proved through DirichletFullSimplex_volume_zero_succ; it has no extra source-step premise."
+      },
+      {
+        "obligation_id": "projected_COV_preimage_identity",
+        "status": "covered",
+        "expected_theorem_signature": "For positive alpha and beta, every measurable projected target set satisfies the Gamma-product preimage lintegral identity for ex122ProjectedNormalize and ex122ProjectedCOVDensityENNReal.",
+        "lean_landing": "ex122ProjectedCOVLIntegralPreimageIdentity_of_pos",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "route_class": "source-route theorem",
+        "proof_contract_notes": "Declared at ToyApollo/Output/ex_1_2_2_dirichlet_gamma_chart.lean:1833 and proved from support reduction, positive projected chart identity, and COV-density lintegral conversion; no hCOV public premise is exposed."
+      },
+      {
+        "obligation_id": "projected_density_equation_1_4",
+        "status": "covered",
+        "expected_theorem_signature": "For all positive alpha : Fin (n+1)->R and positive beta, ex122ProjectedDirichletLaw alpha beta equals ex122ProjectedDensityMeasure alpha.",
+        "lean_landing": "ex122ProjectedDirichletLaw_eq_projectedDensityMeasure_of_pos",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "route_class": "source-route theorem using reusable P1 shared projected-density bridge",
+        "proof_contract_notes": "Declared at ToyApollo/Output/ex_1_2_2_dirichlet_gamma_beta.lean:452. Its public premises are only h_alpha and h_beta; its proof rewrites the ex122 density measure and uses the shared ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive theorem. Ex122ProjectedDensityObligations_of_pos remains present at line 445 for review-facing traceability but is not shifted to a public premise."
+      },
+      {
+        "obligation_id": "beta_special_case_n_eq_2",
+        "status": "covered",
+        "expected_theorem_signature": "For positive alpha1, alpha2, beta, the first normalized Gamma coordinate has law ProbabilityTheory.betaMeasure alpha1 alpha2.",
+        "lean_landing": "ex122_independent_gamma_firstCoord_hasLaw_betaMeasure_two",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "route_class": "source-route theorem with Beta-specific route",
+        "proof_contract_notes": "Declared at ToyApollo/Output/ex_1_2_2_dirichlet_gamma_beta.lean:1274. It uses the projected first-coordinate law and ex122ProjectedDirichletLawFirstCoordTwo_eq_betaMeasure, not a Beta-law public premise."
+      }
+    ],
+    "open_blockers": [],
+    "scaffold_assessment": []
+  },
+  "evidence_review": {
+    "status": "covered",
+    "summary": "The review used the v12 request/input/template, full v12 context and prompt, direct Lean declaration inspection, normalized hash checks, proof_obligations.json, and a read-only Lean check. No evidence class has a blocking issue.",
+    "items": [
+      {
+        "evidence_class": "source_tex",
+        "status": "covered",
+        "evidence": "Read semantic_review_context_v12.md and semantic_review_prompt_v12.md. The source claims are Gamma independence, normalized Dirichlet law, simplex support, zero-volume singularity, projected density equation (1.4), and n = 2 Beta specialization."
+      },
+      {
+        "evidence_class": "lean_subject",
+        "status": "covered",
+        "evidence": "official_snapshot_v12.lean and ToyApollo/Output/ex_1_2_2.lean are thin wrappers importing ToyApollo.Output.ex_1_2_2_dirichlet_gamma_support, which imports beta/chart/core support. Direct inspection found the expected declarations and no sorry/admit/axiom/opaque/unsafe marker in the active ex122 and DirichletGamma support stack. lake env lean ToyApollo\\Output\\ex_1_2_2.lean exited with code 0."
+      },
+      {
+        "evidence_class": "proof_obligations",
+        "status": "covered",
+        "evidence": "proof_obligations.json lists seven blocking obligations, all status proved and review accepted, with no scaffold hypotheses. Each listed landing was independently checked in the Lean files."
+      },
+      {
+        "evidence_class": "audit",
+        "status": "covered",
+        "evidence": "Review history contains earlier failures and later passes. I did not rely on history alone: I rechecked the current v12 context, current theorem declarations, P2 bridge route, absence of placeholder markers, and Lean verification."
+      },
+      {
+        "evidence_class": "classification",
+        "status": "covered",
+        "evidence": "The task is correctly classified as a complex proof requiring decomposition because the source has Gamma independence, normalization, singular support, projected density, and Beta-special-case claims. The current decomposition covers those source steps explicitly."
+      },
+      {
+        "evidence_class": "dependency_status",
+        "status": "covered",
+        "evidence": "The context lists no upstream textbook tasks. The active output imports shared support through ToyApollo.Support.DirichletGamma and ToyApollo.Support.DirichletGammaDensity/ProjectedDensity; the final projected-density bridge reuses shared ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive rather than adding a task-only public axiom."
+      },
+      {
+        "evidence_class": "downstream",
+        "status": "not_applicable",
+        "evidence": "The v12 context reports no direct downstream consumers. The public ex122 declarations are still theorem-level and reusable if later consumers are added."
+      },
+      {
+        "evidence_class": "ledger_status",
+        "status": "covered",
+        "evidence": "The context reports current ledger status COMPLETED and open blocking obligations none. This was treated as supporting evidence, not as a substitute for direct semantic inspection."
+      },
+      {
+        "evidence_class": "hashes",
+        "status": "covered",
+        "evidence": "The request/input candidate hash is 7e5412f053fc74a6d4c63ce5fc76f5f7e50cd583b056c22e30db157f68c360cc. PowerShell raw CRLF file hash for official_snapshot_v12.lean is 0cd99621bed73547775a1f6145e3542424ec63b256f548ff15877b9515f062c1, but LF-normalizing the same file gives the recorded candidate hash, and the JSON candidate.lean string also hashes to the recorded candidate hash. This is a newline normalization difference, not a semantic or subject mismatch."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "interface_contract": {
+    "status": "covered",
+    "summary": "The public interface remains source-facing: theorem landings use source-level Gamma scale law, normalization, Dirichlet law, projected density, and Beta measure declarations. The P2 bridge preserves ex122 review-facing declarations and the Beta-specific route while using shared support internally.",
+    "mismatches": []
+  },
+  "downstream_adequacy": {
+    "status": "covered",
+    "summary": "No direct downstream consumers are listed in the v12 context. The theorem statements avoid extra downstream theorem-level assumptions, so the interface is adequate for future reuse.",
+    "consumers_checked": [
+      {
+        "block_id": "no_direct_downstream_consumers",
+        "status": "not_applicable",
+        "evidence": "semantic_review_context_v12.md reports no direct downstream consumers."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "forbidden_weakenings": [
+    {
+      "weakening": "Replace textbook public interfaces with pure existence shells, placeholder definitions, or witness-only structures.",
+      "status": "not_present",
+      "evidence": "The output exposes theorem-level source claims for the Gamma product law, normalized Dirichlet law, simplex probability-one support, zero-volume support, projected density law, and Beta law; it is not witness-only."
+    },
+    {
+      "weakening": "Rewrite reusable downstream theorem obligations as theorem-specific wrappers usable only inside the current file.",
+      "status": "not_present",
+      "evidence": "The final projected-density bridge uses reusable shared support ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive and keeps ex122 review-facing declarations; it is not merely a task-shaped adapter."
+    }
+  ],
+  "findings": [],
+  "recommended_disposition": "accept",
+  "reviewer_schema_hints": {
+    "reviewer_independence_shape": {
+      "role": "independent_read_only_reviewer",
+      "read_only": true,
+      "did_edit_candidate": false,
+      "used_current_review_request": true,
+      "attestation": "<short statement that this was an independent read-only review>"
+    },
+    "section_status_values": [
+      "covered",
+      "partial",
+      "missing",
+      "violated",
+      "unclear"
+    ],
+    "route_inspection_fields": [
+      "source_route",
+      "expected_answer_or_statement",
+      "local_mathlib_search",
+      "public_interface_check",
+      "support_or_reassembly_decision",
+      "stop_go_verdict"
+    ],
+    "route_inspection_stop_go_values": [
+      "go",
+      "stop",
+      "needs_reassembly",
+      "needs_route_redesign",
+      "unclear",
+      "not_applicable"
+    ],
+    "obligation_item_status_values": [
+      "covered",
+      "partial",
+      "missing",
+      "violated",
+      "unclear",
+      "not_applicable",
+      "accepted_as_proof_debt"
+    ],
+    "obligation_item_contract_fields": {
+      "expected_theorem_signature": "<source-faithful theorem/lemma type expected for this obligation>",
+      "lean_landing": "<Lean theorem/lemma declaration proving the obligation>",
+      "landing_kind": "theorem | lemma | private_axiom | structure_field | support_predicate | support_constructor | adapter | public_premise | empty | unknown",
+      "proof_contract_status": "unverified | verified | failed | not_applicable | accepted_adapter | open_math_debt | beyond_book_exception",
+      "signature_match": "unverified | passed | failed | not_applicable",
+      "body_reassumption_check": "unverified | passed | failed | not_applicable",
+      "public_premise_check": "unverified | passed | failed | not_applicable",
+      "proof_contract_notes": "<why the landing satisfies or fails the contract>"
+    },
+    "evidence_item_shape": {
+      "evidence_class": "source_tex | lean_subject | proof_obligations | audit | classification | dependency_status | downstream | ledger_status | hashes",
+      "status": "covered | partial | missing | violated | unclear | not_applicable",
+      "evidence": "<what was checked and how conflicts/staleness were resolved>"
+    },
+    "required_evidence_classes": [
+      "source_tex",
+      "lean_subject",
+      "proof_obligations",
+      "audit",
+      "classification",
+      "dependency_status",
+      "downstream",
+      "ledger_status",
+      "hashes"
+    ],
+    "downstream_consumer_entry_shape": {
+      "block_id": "<direct downstream block_id>",
+      "status": "covered | not_applicable | blocked",
+      "evidence": "<why this exported interface is adequate or not applicable>"
+    },
+    "forbidden_weakening_status_values": [
+      "not_present",
+      "present",
+      "not_applicable"
+    ],
+    "pass_review_apply_command": "python .\\run_chapter.py --phase 2 --phase2-mode review-apply --tasks <task_id> --review-result <semantic_review_result_vM.json>"
+  }
+}

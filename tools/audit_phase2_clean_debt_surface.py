@@ -25,6 +25,11 @@ PROOF_PACKAGE_RE = re.compile(
     + PROOF_PACKAGE_SUFFIX
     + r"\b"
 )
+IGNORED_PROOF_PACKAGE_NAMES = {
+    # `Prob63Support` is the namespace/module prefix for the proved coupon
+    # collector support from Problem 6.3, not a proof-package parameter.
+    "Prob63Support",
+}
 PROOF_PACKAGE_PARAM_RE = re.compile(
     r"[\(\{\[][^\)\}\]]*:\s*[^\)\}\]]*\b"
     + LEAN_AUDIT_NAME_PREFIX
@@ -280,6 +285,16 @@ def is_allowed_beyond_book(header_or_landing: str, task_id: str = "") -> bool:
     return ALLOWED_PROOF_BEYOND_BOOK in header_or_landing
 
 
+def proof_package_names(source: str) -> list[str]:
+    return sorted(
+        {
+            name
+            for name in PROOF_PACKAGE_RE.findall(source)
+            if name not in IGNORED_PROOF_PACKAGE_NAMES
+        }
+    )
+
+
 def scan_public_surface(
     root: Path,
     start_chapter: int,
@@ -292,12 +307,12 @@ def scan_public_surface(
         task_id = path.stem
         for line, header in declaration_headers(read_text(path)):
             param_fragments = PROOF_PACKAGE_PARAM_RE.findall(header)
-            packages = sorted(set(PROOF_PACKAGE_RE.findall(" ".join(param_fragments))))
-            all_packages = sorted(set(PROOF_PACKAGE_RE.findall(header)))
+            packages = proof_package_names(" ".join(param_fragments))
+            all_packages = proof_package_names(header)
             header_without_params = header
             for fragment in param_fragments:
                 header_without_params = header_without_params.replace(fragment, " ")
-            return_packages = sorted(set(PROOF_PACKAGE_RE.findall(header_without_params)))
+            return_packages = proof_package_names(header_without_params)
             if packages:
                 if all(package == ALLOWED_PROOF_BEYOND_BOOK for package in packages):
                     category = (
@@ -420,6 +435,15 @@ def landing_is_projection_wrapper(raw: str, projection_wrappers: dict[str, str])
     return False
 
 
+def proof_contract_verified(obligation: dict[str, Any]) -> bool:
+    return (
+        str(obligation.get("proof_contract_status", "") or "").strip() == "verified"
+        and str(obligation.get("signature_match", "") or "").strip() == "passed"
+        and str(obligation.get("body_reassumption_check", "") or "").strip() == "passed"
+        and str(obligation.get("public_premise_check", "") or "").strip() == "passed"
+    )
+
+
 def scan_obligations(root: Path, start_chapter: int, end_chapter: int) -> list[Finding]:
     declarations = scan_declarations(root)
     projection_wrappers = theorem_projection_wrappers(root)
@@ -443,6 +467,8 @@ def scan_obligations(root: Path, start_chapter: int, end_chapter: int) -> list[F
             landing = str(obligation.get("lean_landing", "") or obligation.get("landing", "") or "")
             evidence = f"{obligation_id}: {landing}".strip()
             if kind != "proof_debt_support":
+                if proof_contract_verified(obligation):
+                    continue
                 if status == "proved" and landing_is_structure_field(landing, declarations):
                     findings.append(
                         Finding(

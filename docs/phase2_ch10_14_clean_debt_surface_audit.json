@@ -1,29 +1,33 @@
 {
   "severity_counts": {
-    "allowed": 9,
-    "error": 15,
-    "review": 68
+    "allowed": 10,
+    "review": 231
   },
   "category_counts": {
-    "allowed_beyond_book_obligation": 2,
+    "allowed_beyond_book_obligation": 1,
     "allowed_beyond_book_surface": 3,
-    "inherited_beyond_book_surface": 4,
-    "non_exception_accepted_debt": 4,
-    "proved_proof_debt_lands_on_structure_field": 11,
-    "public_proof_package_return_review": 25,
-    "public_setup_parameter_review": 43
+    "inherited_beyond_book_surface": 6,
+    "public_interface_bridge_parameter_review": 1,
+    "public_proof_package_return_review": 26,
+    "public_setup_parameter_review": 204
   },
-  "error_task_count": 3,
-  "error_tasks": [
-    "prob_14_1",
-    "thm_14_5",
-    "thm_14_7"
-  ],
+  "error_task_count": 0,
+  "error_tasks": [],
   "findings": [
+    {
+      "task_id": "def_12_1",
+      "file": "ToyApollo/Output/def_12_1.lean",
+      "line": 100,
+      "category": "public_proof_package_return_review",
+      "severity": "review",
+      "detail": "CauchySchwarzProductSupport",
+      "evidence": "theorem L2Function.cauchySchwarz_product_support {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} {X Y : Ω → ℝ} (hX : L2Function μ X) (hY : L2Function μ Y) : L2Function.CauchySchwarzProductSupport hX hY := by",
+      "action": "Review as theorem-level evidence for a support package; this is not a public support parameter by itself."
+    },
     {
       "task_id": "ex_10_3_2",
       "file": "ToyApollo/Output/ex_10_3_2.lean",
-      "line": 176,
+      "line": 187,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "ex_10_3_2_ContinuousRandomVariableSetup",
@@ -33,7 +37,7 @@
     {
       "task_id": "ex_10_3_2",
       "file": "ToyApollo/Output/ex_10_3_2.lean",
-      "line": 283,
+      "line": 294,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "ex_10_3_2_GaussianDensityConvergenceSetup",
@@ -161,19 +165,519 @@
       "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
     },
     {
-      "task_id": "ex_14_4_3",
-      "file": "ToyApollo/Output/ex_14_4_3.lean",
-      "line": 275,
-      "category": "public_proof_package_return_review",
+      "task_id": "ex_14_4_1",
+      "file": "ToyApollo/Output/ex_14_4_1.lean",
+      "line": 34,
+      "category": "public_setup_parameter_review",
       "severity": "review",
-      "detail": "Prob63Support",
-      "evidence": "def ex_14_4_3_couponMean (n : ℕ) : ℝ := Prob63Support.couponCollectorValueReal",
-      "action": "Review as theorem-level evidence for a support package; this is not a public support parameter by itself."
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1 {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (hSource : ex_14_4_1_bernoulliSourceLaw S) : Tendsto (ex_14_4_1_standardizedBinomialLaws S) atTop (𝓝 thm_14_7_standardNormalLaw) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_binomial_support",
+      "file": "ToyApollo/Output/ex_14_4_1_binomial_support.lean",
+      "line": 19,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1_legacy_apply_lindeberg_levy_clt {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (hBridge : ex_14_4_1_resolvedSourceBridges S) : ex_14_4_1_sourceConclusion S :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_binomial_support",
+      "file": "ToyApollo/Output/ex_14_4_1_binomial_support.lean",
+      "line": 41,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1_legacy_l2_apply_lindeberg_levy_clt_source_proof_spine {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (hBridge : ex_14_4_1_resolvedSourceBridges S) : ex_14_4_1_sourceConclusion S :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_binomial_support",
+      "file": "ToyApollo/Output/ex_14_4_1_binomial_support.lean",
+      "line": 346,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1_legacy_source_successPattern_weight {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (hSource : ex_14_4_1_bernoulliSourceLaw S) (n : ℕ) (a : Finset (Fin (n + 1))) : (S.P (ex_14_4_1_legacy_successPatternEvent S.X n a)).toReal = S.p ^ a.card * (1 - S.p) ^ ((n + 1) - a.card) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_binomial_support",
+      "file": "ToyApollo/Output/ex_14_4_1_binomial_support.lean",
+      "line": 389,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1_legacy_prefix_support_ae {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (hSource : ex_14_4_1_bernoulliSourceLaw S) (n : ℕ) : ∀ᵐ ω ∂S.P, ∀ i : Fin (n + 1), S.X i.val ω = 0 ∨ S.X i.val ω = 1 := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_binomial_support",
+      "file": "ToyApollo/Output/ex_14_4_1_binomial_support.lean",
+      "line": 409,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1_legacy_successPatternEvent_nullMeasurable {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (n : ℕ) (a : Finset (Fin (n + 1))) : NullMeasurableSet (ex_14_4_1_legacy_successPatternEvent S.X n a) S.P := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_binomial_support",
+      "file": "ToyApollo/Output/ex_14_4_1_binomial_support.lean",
+      "line": 452,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1_legacy_atom_event_ae_eq_pattern_union {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (hSource : ex_14_4_1_bernoulliSourceLaw S) (n k : ℕ) : {ω | ex_14_4_1_partialSum S.X n ω = (k : ℝ)} =ᵐ[S.P] ⋃ a ∈ (Finset.univ : Finset (Fin (n + 1))).powersetCard k, ex_14_4_1_legacy_successPatternEvent S.X n a := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_binomial_support",
+      "file": "ToyApollo/Output/ex_14_4_1_binomial_support.lean",
+      "line": 485,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1_legacy_atom_measure_eq_pattern_sum {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (hSource : ex_14_4_1_bernoulliSourceLaw S) (n k : ℕ) : S.P {ω | ex_14_4_1_partialSum S.X n ω = (k : ℝ)} = ∑ a ∈ (Finset.univ : Finset (Fin (n + 1))).powersetCard k, S.P (ex_14_4_1_legacy_successPatternEvent S.X n a) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_binomial_support",
+      "file": "ToyApollo/Output/ex_14_4_1_binomial_support.lean",
+      "line": 521,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1_legacy_assemble_binomial_finite_sum_atom_formula {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (hSource : ex_14_4_1_bernoulliSourceLaw S) : ∀ n k : ℕ, (S.P {ω | ex_14_4_1_partialSum S.X n ω = (k : ℝ)}).toReal = ex_14_4_1_binomialPMF S.p (n + 1) k := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_binomial_support",
+      "file": "ToyApollo/Output/ex_14_4_1_binomial_support.lean",
+      "line": 562,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1_legacy_l2_derive_binomial_finite_sum_law_source_proof_spine {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (hSource : ex_14_4_1_bernoulliSourceLaw S) : ∀ n k : ℕ, (S.P {ω | ex_14_4_1_partialSum S.X n ω = (k : ℝ)}).toReal = ex_14_4_1_binomialPMF S.p (n + 1) k :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_binomial_support",
+      "file": "ToyApollo/Output/ex_14_4_1_binomial_support.lean",
+      "line": 572,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1_legacy_derive_binomial_finite_sum_law {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (hSource : ex_14_4_1_bernoulliSourceLaw S) : ex_14_4_1_binomialFiniteSumBridge S :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_binomial_support",
+      "file": "ToyApollo/Output/ex_14_4_1_binomial_support.lean",
+      "line": 594,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1_legacy_l3_derive_binomial_finite_sum_law_source_proof_spine_assemble_binomial_finite_sum_atom_formula {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (hSource : ex_14_4_1_bernoulliSourceLaw S) : ∀ n k : ℕ, (S.P {ω | ex_14_4_1_partialSum S.X n ω = (k : ℝ)}).toReal = ex_14_4_1_binomialPMF S.p (n + 1) k :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_source_support",
+      "file": "ToyApollo/Output/ex_14_4_1_source_support.lean",
+      "line": 102,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "def ex_14_4_1_bernoulliSourceLaw {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_source_support",
+      "file": "ToyApollo/Output/ex_14_4_1_source_support.lean",
+      "line": 111,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1_bernoulliSourceLaw_of_zero_atomLaw {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (hAtom0 : ex_14_4_1_hasBernoulliAtomLaw S.P (S.X 0) S.p) : ex_14_4_1_bernoulliSourceLaw S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_source_support",
+      "file": "ToyApollo/Output/ex_14_4_1_source_support.lean",
+      "line": 325,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "def ex_14_4_1_binomialSumLaws {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) : ℕ → ProbabilityMeasure ℝ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_source_support",
+      "file": "ToyApollo/Output/ex_14_4_1_source_support.lean",
+      "line": 336,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "def ex_14_4_1_standardizedBinomialLaws {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) : ℕ → ProbabilityMeasure ℝ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_source_support",
+      "file": "ToyApollo/Output/ex_14_4_1_source_support.lean",
+      "line": 347,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "def ex_14_4_1_bernoulliMomentBridge {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_source_support",
+      "file": "ToyApollo/Output/ex_14_4_1_source_support.lean",
+      "line": 358,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1_bernoulliMomentBridge_of_sourceLaw {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (hSource : ex_14_4_1_bernoulliSourceLaw S) : ex_14_4_1_bernoulliMomentBridge S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_source_support",
+      "file": "ToyApollo/Output/ex_14_4_1_source_support.lean",
+      "line": 378,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "def ex_14_4_1_binomialFiniteSumBridge {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_source_support",
+      "file": "ToyApollo/Output/ex_14_4_1_source_support.lean",
+      "line": 389,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "def ex_14_4_1_resolvedSourceBridges {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_source_support",
+      "file": "ToyApollo/Output/ex_14_4_1_source_support.lean",
+      "line": 397,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "def ex_14_4_1_sourceConclusion {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_source_support",
+      "file": "ToyApollo/Output/ex_14_4_1_source_support.lean",
+      "line": 405,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "def ex_14_4_1_sourceRoute {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_source_support",
+      "file": "ToyApollo/Output/ex_14_4_1_source_support.lean",
+      "line": 413,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1_normalApproximation_of_resolvedSourceBridges {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (hBridge : ex_14_4_1_resolvedSourceBridges S) : ex_14_4_1_sourceConclusion S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_source_support",
+      "file": "ToyApollo/Output/ex_14_4_1_source_support.lean",
+      "line": 432,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1_normalApproximation_of_sourceLaw {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (hSource : ex_14_4_1_bernoulliSourceLaw S) : ex_14_4_1_sourceConclusion S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_source_support",
+      "file": "ToyApollo/Output/ex_14_4_1_source_support.lean",
+      "line": 451,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1_weakLimit_by_CLT_of_resolvedSourceBridges {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (hBridge : ex_14_4_1_resolvedSourceBridges S) : thm_14_1_weakLimit (ex_14_4_1_standardizedBinomialLaws S) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_source_support",
+      "file": "ToyApollo/Output/ex_14_4_1_source_support.lean",
+      "line": 459,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1_sourceRoute_of_resolvedSourceBridges {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (hBridge : ex_14_4_1_resolvedSourceBridges S) : ex_14_4_1_sourceRoute S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_1_source_support",
+      "file": "ToyApollo/Output/ex_14_4_1_source_support.lean",
+      "line": 472,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_1_BernoulliSourceSetup",
+      "evidence": "theorem ex_14_4_1_support_result {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_1_BernoulliSourceSetup Ω) (hSource : ex_14_4_1_bernoulliSourceLaw S) : Tendsto (ex_14_4_1_standardizedBinomialLaws S) atTop (𝓝 thm_14_7_standardNormalLaw) :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 528,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_PoissonSourceSetup",
+      "evidence": "def ex_14_4_2_poissonSourceLaw {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 578,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_PoissonSourceSetup",
+      "evidence": "def ex_14_4_2_poissonSumLaws {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) : ℕ → ProbabilityMeasure ℝ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 589,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_PoissonSourceSetup",
+      "evidence": "def ex_14_4_2_poissonMomentBridge {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 627,
+      "category": "public_interface_bridge_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_canonicalPoissonMomentBridge",
+      "evidence": "theorem ex_14_4_2_poissonMomentBridge_of_sourceLaw {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) (hSource : ex_14_4_2_poissonSourceLaw S) (hCanonical : ex_14_4_2_canonicalPoissonMomentBridge) : ex_14_4_2_poissonMomentBridge S := by",
+      "action": "Review as interface translation; bridge parameters are not proof debt unless they carry unproved mathematics."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 627,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_PoissonSourceSetup",
+      "evidence": "theorem ex_14_4_2_poissonMomentBridge_of_sourceLaw {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) (hSource : ex_14_4_2_poissonSourceLaw S) (hCanonical : ex_14_4_2_canonicalPoissonMomentBridge) : ex_14_4_2_poissonMomentBridge S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 677,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_PoissonSourceSetup",
+      "evidence": "theorem ex_14_4_2_poissonMomentBridge_of_sourceLaw_final {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) (hSource : ex_14_4_2_poissonSourceLaw S) : ex_14_4_2_poissonMomentBridge S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 685,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_PoissonSourceSetup",
+      "evidence": "theorem ex_14_4_2_poissonMomentBridge_of_sourceLaw_and_canonical_parts {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) (hSource : ex_14_4_2_poissonSourceLaw S) (hIntegrable : ex_14_4_2_poissonCanonicalIntegrability) (hSquareIntegrable : ex_14_4_2_poissonCanonicalSquareIntegrability) (hMean : ex_14_4_2_poissonCanonicalMeanOne) (hVariance : ex_14_4_2_poissonCanonicalVarianceOne) : ex_14_4_2_poissonMomentBridge S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 700,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_PoissonSourceSetup",
+      "evidence": "def ex_14_4_2_poissonFiniteSumBridge {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 711,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_PoissonSourceSetup",
+      "evidence": "theorem ex_14_4_2_partialSum_hasPoissonLaw {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) (hSource : ex_14_4_2_poissonSourceLaw S) : ∀ n : ℕ, ex_14_4_2_hasPoissonLaw S.P (ex_14_4_2_partialSum S.X n) (((n + 1 : ℕ) : NNReal)) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 745,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_PoissonSourceSetup",
+      "evidence": "theorem ex_14_4_2_poissonFiniteSumBridge_of_sourceLaw {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) (hSource : ex_14_4_2_poissonSourceLaw S) : ex_14_4_2_poissonFiniteSumBridge S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 759,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_PoissonSourceSetup",
+      "evidence": "def ex_14_4_2_standardizedPoissonLaws {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) : ℕ → ProbabilityMeasure ℝ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 768,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_PoissonSourceSetup",
+      "evidence": "def ex_14_4_2_resolvedSourceBridges {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 777,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_PoissonSourceSetup",
+      "evidence": "theorem ex_14_4_2_resolvedSourceBridges_of_sourceLaw {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) (hSource : ex_14_4_2_poissonSourceLaw S) : ex_14_4_2_resolvedSourceBridges S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 789,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_PoissonSourceSetup",
+      "evidence": "def ex_14_4_2_sourceConclusion {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 797,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_PoissonSourceSetup",
+      "evidence": "def ex_14_4_2_sourceRoute {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 818,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_PoissonSourceSetup",
+      "evidence": "theorem ex_14_4_2_normalApproximation {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) (hSource : ex_14_4_2_poissonSourceLaw S) : ex_14_4_2_sourceConclusion S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 837,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_PoissonSourceSetup",
+      "evidence": "theorem ex_14_4_2_weakLimit_by_CLT {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) (hSource : ex_14_4_2_poissonSourceLaw S) : thm_14_1_weakLimit (ex_14_4_2_standardizedPoissonLaws S) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 845,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_PoissonSourceSetup",
+      "evidence": "theorem ex_14_4_2_sourceRoute_of_sourceLaw {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) (hSource : ex_14_4_2_poissonSourceLaw S) : ex_14_4_2_sourceRoute S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_2",
+      "file": "ToyApollo/Output/ex_14_4_2.lean",
+      "line": 859,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_2_PoissonSourceSetup",
+      "evidence": "theorem ex_14_4_2 {Ω : Type*} [MeasurableSpace Ω] (S : ex_14_4_2_PoissonSourceSetup Ω) (hSource : ex_14_4_2_poissonSourceLaw S) : Tendsto (ex_14_4_2_standardizedPoissonLaws S) atTop (𝓝 thm_14_7_standardNormalLaw) :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
     },
     {
       "task_id": "ex_14_4_3",
       "file": "ToyApollo/Output/ex_14_4_3.lean",
-      "line": 380,
+      "line": 308,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_3_CouponTriangularArraySetup",
+      "evidence": "theorem ex_14_4_3_row_lyapunov_sum_eq_coupon_fourth_sum (C : ex_14_4_3_CouponTriangularArraySetup) : ∀ n : ℕ, (∑ i : Fin (C.theoremSetup.arrayNotation.rowLength n), thm_14_8_lyapunovMoment (C.theoremSetup.rowLaws n i) 2) = ∑ i : Fin (ex_14_4_3_targetDistinct n), ex_14_4_3_geometricCenteredFourthMoment (ex_14_4_3_successProbability n i) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_3",
+      "file": "ToyApollo/Output/ex_14_4_3.lean",
+      "line": 326,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_3_CouponTriangularArraySetup",
+      "evidence": "theorem ex_14_4_3_totalVariance_eq_geometricVariance_sum (C : ex_14_4_3_CouponTriangularArraySetup) : ∀ n : ℕ, C.theoremSetup.arrayNotation.totalVariance n = ∑ i : Fin (ex_14_4_3_targetDistinct n), ex_14_4_3_geometricVariance (ex_14_4_3_successProbability n i) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_3",
+      "file": "ToyApollo/Output/ex_14_4_3.lean",
+      "line": 346,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_3_CouponTriangularArraySetup",
+      "evidence": "theorem ex_14_4_3_variance_scale_lower_bound (C : ex_14_4_3_CouponTriangularArraySetup) : ∀ᶠ n : ℕ in atTop, (ex_14_4_3_couponTypes n : ℝ) / 64 ≤ C.theoremSetup.arrayNotation.totalVariance n := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_3",
+      "file": "ToyApollo/Output/ex_14_4_3.lean",
+      "line": 455,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_3_CouponTriangularArraySetup",
+      "evidence": "theorem ex_14_4_3_lyapunov_condition_from_fourth_moment_riemann_sum (C : ex_14_4_3_CouponTriangularArraySetup) : thm_14_8_LyapunovCondition C.theoremSetup := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_3",
+      "file": "ToyApollo/Output/ex_14_4_3.lean",
+      "line": 540,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_3_CouponTriangularArraySetup",
+      "evidence": "theorem ex_14_4_3_lyapunov_condition_from_proved_bounds (C : ex_14_4_3_CouponTriangularArraySetup) : thm_14_8_LyapunovCondition C.theoremSetup :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_3",
+      "file": "ToyApollo/Output/ex_14_4_3.lean",
+      "line": 548,
       "category": "inherited_beyond_book_surface",
       "severity": "allowed",
       "detail": "thm_14_8_ProofBeyondBook",
@@ -183,7 +687,7 @@
     {
       "task_id": "ex_14_4_3",
       "file": "ToyApollo/Output/ex_14_4_3.lean",
-      "line": 380,
+      "line": 548,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "ex_14_4_3_CouponTriangularArraySetup",
@@ -193,21 +697,61 @@
     {
       "task_id": "ex_14_4_3",
       "file": "ToyApollo/Output/ex_14_4_3.lean",
-      "line": 394,
+      "line": 562,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_3_CouponTriangularArraySetup",
+      "evidence": "def ex_14_4_3_TextbookNormalizedConvergence (C : ex_14_4_3_CouponTriangularArraySetup) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_3",
+      "file": "ToyApollo/Output/ex_14_4_3.lean",
+      "line": 569,
       "category": "inherited_beyond_book_surface",
       "severity": "allowed",
       "detail": "thm_14_8_ProofBeyondBook",
-      "evidence": "theorem ex_14_4_3 (C : ex_14_4_3_CouponTriangularArraySetup) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) :=",
+      "evidence": "theorem ex_14_4_3_textbook_normalized_clt (C : ex_14_4_3_CouponTriangularArraySetup) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : ex_14_4_3_TextbookNormalizedConvergence C := by",
       "action": "Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt."
     },
     {
       "task_id": "ex_14_4_3",
       "file": "ToyApollo/Output/ex_14_4_3.lean",
-      "line": 394,
+      "line": 569,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "ex_14_4_3_CouponTriangularArraySetup",
-      "evidence": "theorem ex_14_4_3 (C : ex_14_4_3_CouponTriangularArraySetup) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : Tendsto C.normalizedCouponLaws atTop (𝓝 C.standardNormalLaw) :=",
+      "evidence": "theorem ex_14_4_3_textbook_normalized_clt (C : ex_14_4_3_CouponTriangularArraySetup) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : ex_14_4_3_TextbookNormalizedConvergence C := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "ex_14_4_3",
+      "file": "ToyApollo/Output/ex_14_4_3.lean",
+      "line": 578,
+      "category": "inherited_beyond_book_surface",
+      "severity": "allowed",
+      "detail": "thm_14_8_ProofBeyondBook",
+      "evidence": "theorem ex_14_4_3 (C : ex_14_4_3_CouponTriangularArraySetup) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : ex_14_4_3_TextbookNormalizedConvergence C :=",
+      "action": "Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt."
+    },
+    {
+      "task_id": "ex_14_4_3",
+      "file": "ToyApollo/Output/ex_14_4_3.lean",
+      "line": 578,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "ex_14_4_3_CouponTriangularArraySetup",
+      "evidence": "theorem ex_14_4_3 (C : ex_14_4_3_CouponTriangularArraySetup) (H : thm_14_8_ProofBeyondBook C.theoremSetup) : ex_14_4_3_TextbookNormalizedConvergence C :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_10_7",
+      "file": "ToyApollo/Output/prob_10_7.lean",
+      "line": 297,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "Prob_10_7_SourceSetup",
+      "evidence": "theorem prob_10_7 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ] (X : Ω → ℝ) (U : ℕ → Ω → ℝ) (hSetup : Prob_10_7_SourceSetup μ X U) : RarePerturbationAnswer μ X U := by",
       "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
     },
     {
@@ -281,9 +825,9 @@
       "action": "Review as theorem-level evidence for a support package; this is not a public support parameter by itself."
     },
     {
-      "task_id": "prob_11_9",
-      "file": "ToyApollo/Output/prob_11_9.lean",
-      "line": 1116,
+      "task_id": "prob_11_9_probability_support",
+      "file": "ToyApollo/Output/prob_11_9_probability_support.lean",
+      "line": 11,
       "category": "public_proof_package_return_review",
       "severity": "review",
       "detail": "prob_11_9_meanSquareELpNormSupport",
@@ -291,9 +835,9 @@
       "action": "Review as theorem-level evidence for a support package; this is not a public support parameter by itself."
     },
     {
-      "task_id": "prob_11_9",
-      "file": "ToyApollo/Output/prob_11_9.lean",
-      "line": 1161,
+      "task_id": "prob_11_9_probability_support",
+      "file": "ToyApollo/Output/prob_11_9_probability_support.lean",
+      "line": 56,
       "category": "public_proof_package_return_review",
       "severity": "review",
       "detail": "prob_11_9_meanSquareELpNormSupport",
@@ -301,49 +845,609 @@
       "action": "Review as theorem-level evidence for a support package; this is not a public support parameter by itself."
     },
     {
-      "task_id": "prob_14_11",
-      "file": "ToyApollo/Output/prob_14_11.lean",
-      "line": 91,
-      "category": "inherited_beyond_book_surface",
-      "severity": "allowed",
-      "detail": "thm_14_8_ProofBeyondBook",
-      "evidence": "theorem prob_14_11_asymptoticNormality (S : prob_14_11_CouponRatioTriangularArraySetup) (H : thm_14_8_ProofBeyondBook S.theoremSetup) : Tendsto S.normalizedCouponLaws atTop (𝓝 S.standardNormalLaw) := by",
-      "action": "Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt."
-    },
-    {
-      "task_id": "prob_14_11",
-      "file": "ToyApollo/Output/prob_14_11.lean",
-      "line": 91,
+      "task_id": "prob_14_1",
+      "file": "ToyApollo/Output/prob_14_1.lean",
+      "line": 40,
       "category": "public_setup_parameter_review",
       "severity": "review",
-      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
-      "evidence": "theorem prob_14_11_asymptoticNormality (S : prob_14_11_CouponRatioTriangularArraySetup) (H : thm_14_8_ProofBeyondBook S.theoremSetup) : Tendsto S.normalizedCouponLaws atTop (𝓝 S.standardNormalLaw) := by",
+      "detail": "prob_14_1_PolyaUrnBetaSetup",
+      "evidence": "theorem prob_14_1 (S : prob_14_1_PolyaUrnBetaSetup) : (∀ i k : ℕ, 1 ≤ i → k ≤ i → (S.whiteCountLaws i : Measure ℝ) {x : ℝ | x = (k : ℝ)} = ENNReal.ofReal (prob_14_1_polyaWhiteMassFormula S.w S.b i k)) ∧ Tendsto (prob_14_1_whiteFractionLaws S.whiteCountLaws) atTop (𝓝 S.beta.law) ∧ def_14_1 (prob_14_1_whiteFractionLaws S.whiteCountLaws) S.beta.law := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_10",
+      "file": "ToyApollo/Output/prob_14_10.lean",
+      "line": 124,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_10_BoundedMomentSetup",
+      "evidence": "theorem prob_14_10_polynomial_integral_tendsto (S : prob_14_10_BoundedMomentSetup) (hMom : prob_14_10_momentConvergence S.laws S.targetLaw) (p : ℝ[X]) : Tendsto (fun n : ℕ => ∫ x, p.eval x ∂(S.laws n : Measure ℝ)) atTop (𝓝 (∫ x, p.eval x ∂(S.targetLaw : Measure ℝ))) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_10",
+      "file": "ToyApollo/Output/prob_14_10.lean",
+      "line": 197,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_10_BoundedMomentSetup",
+      "evidence": "theorem prob_14_10_integral_tendsto_of_uniform_polynomial_approx (S : prob_14_10_BoundedMomentSetup) (hMom : prob_14_10_momentConvergence S.laws S.targetLaw) {f : ℝ → ℝ} (hf_source : ∀ n : ℕ, Integrable f (S.laws n : Measure ℝ)) (hf_target : Integrable f (S.targetLaw : Measure ℝ)) (happrox : ∀ η : ℝ, 0 < η → ∃ p : ℝ[X], ∀ x : ℝ, |x| ≤ S.c → ‖p.eval x - f x‖ < η) : Tendsto (fun n : ℕ => ∫ x, f x ∂(S.laws n : Measure ℝ)) atTop (𝓝 (∫ x, f x ∂(S.targetLaw : Measure ℝ))) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_10",
+      "file": "ToyApollo/Output/prob_14_10.lean",
+      "line": 327,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_10_BoundedMomentSetup",
+      "evidence": "theorem prob_14_10_mgf_converges_from_moments (S : prob_14_10_BoundedMomentSetup) (hMom : prob_14_10_momentConvergence S.laws S.targetLaw) (t : ℝ) : Tendsto (fun n : ℕ => prob_14_8_mgfOfLaw (S.laws n) t) atTop (𝓝 (prob_14_8_mgfOfLaw S.targetLaw t)) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_10",
+      "file": "ToyApollo/Output/prob_14_10.lean",
+      "line": 344,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_10_BoundedMomentSetup, prob_14_8_MgfConvergenceSetup",
+      "evidence": "def prob_14_10_moments_to_mgf_setup (S : prob_14_10_BoundedMomentSetup) (hMom : prob_14_10_momentConvergence S.laws S.targetLaw) : {T : prob_14_8_MgfConvergenceSetup // T.laws = S.laws ∧ T.targetLaw = S.targetLaw} := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_10",
+      "file": "ToyApollo/Output/prob_14_10.lean",
+      "line": 368,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_10_BoundedMomentSetup",
+      "evidence": "theorem prob_14_10_weak_convergence_to_moments_under_boundedness (S : prob_14_10_BoundedMomentSetup) (hD : def_14_1 S.laws S.targetLaw) : prob_14_10_momentConvergence S.laws S.targetLaw := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_10",
+      "file": "ToyApollo/Output/prob_14_10.lean",
+      "line": 392,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_10_BoundedMomentSetup",
+      "evidence": "theorem prob_14_10_distribution_to_moments (S : prob_14_10_BoundedMomentSetup) (hD : def_14_1 S.laws S.targetLaw) : prob_14_10_momentConvergence S.laws S.targetLaw :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_10",
+      "file": "ToyApollo/Output/prob_14_10.lean",
+      "line": 405,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_10_BoundedMomentSetup",
+      "evidence": "theorem prob_14_10_moments_to_distribution (S : prob_14_10_BoundedMomentSetup) (hMom : prob_14_10_momentConvergence S.laws S.targetLaw) : def_14_1 S.laws S.targetLaw := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_10",
+      "file": "ToyApollo/Output/prob_14_10.lean",
+      "line": 426,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_10_BoundedMomentSetup",
+      "evidence": "theorem prob_14_10 (S : prob_14_10_BoundedMomentSetup) : def_14_1 S.laws S.targetLaw ↔ prob_14_10_momentConvergence S.laws S.targetLaw := by",
       "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
     },
     {
       "task_id": "prob_14_11",
       "file": "ToyApollo/Output/prob_14_11.lean",
-      "line": 104,
+      "line": 24,
       "category": "inherited_beyond_book_surface",
       "severity": "allowed",
       "detail": "thm_14_8_ProofBeyondBook",
-      "evidence": "theorem prob_14_11 (S : prob_14_11_CouponRatioTriangularArraySetup) (H : thm_14_8_ProofBeyondBook S.theoremSetup) : Tendsto S.normalizedCouponLaws atTop (𝓝 S.standardNormalLaw) ∧ Tendsto (fun n : ℕ => S.couponMean n / (S.couponTypes n : ℝ)) atTop (𝓝 (-Real.log (1 - S.r))) ∧ Tendsto (fun n : ℕ => S.theoremSetup.sn n ^ 2 / (S.couponTypes n : ℝ)) atTop (𝓝 (S.r / (1 - S.r) + Real.log (1 - S.r))) := by",
+      "evidence": "theorem prob_14_11 (S : prob_14_11_CouponRatioTriangularArraySetup) (H : thm_14_8_ProofBeyondBook (prob_14_11_theoremSetupExact S)) : prob_14_11_ExactStandardizedConvergence S := by",
       "action": "Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt."
     },
     {
       "task_id": "prob_14_11",
       "file": "ToyApollo/Output/prob_14_11.lean",
-      "line": 104,
+      "line": 24,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_11_CouponRatioTriangularArraySetup",
-      "evidence": "theorem prob_14_11 (S : prob_14_11_CouponRatioTriangularArraySetup) (H : thm_14_8_ProofBeyondBook S.theoremSetup) : Tendsto S.normalizedCouponLaws atTop (𝓝 S.standardNormalLaw) ∧ Tendsto (fun n : ℕ => S.couponMean n / (S.couponTypes n : ℝ)) atTop (𝓝 (-Real.log (1 - S.r))) ∧ Tendsto (fun n : ℕ => S.theoremSetup.sn n ^ 2 / (S.couponTypes n : ℝ)) atTop (𝓝 (S.r / (1 - S.r) + Real.log (1 - S.r))) := by",
+      "evidence": "theorem prob_14_11 (S : prob_14_11_CouponRatioTriangularArraySetup) (H : thm_14_8_ProofBeyondBook (prob_14_11_theoremSetupExact S)) : prob_14_11_ExactStandardizedConvergence S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 98,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "lemma prob_14_11_targetDistinct_pos (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) : 1 ≤ S.targetDistinct n :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 103,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "lemma prob_14_11_targetDistinct_le_couponTypes (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) : S.targetDistinct n ≤ S.couponTypes n :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 108,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "lemma prob_14_11_couponTypes_pos (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) : 0 < S.couponTypes n :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 115,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_asymptoticVarianceScale_pos (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) : 0 < prob_14_11_asymptoticVarianceScale S.r (S.couponTypes n) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 123,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_successProbability (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) (i : Fin (S.targetDistinct n)) : ℝ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 129,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_couponProbabilitySpace (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) : ProbabilityMeasure (Prob63Support.CouponStageΩ (S.targetDistinct n)) :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 161,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_couponCollectionLaws (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) : ProbabilityMeasure ℝ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 170,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_normalizedCouponLaws (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) : ProbabilityMeasure ℝ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 183,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_textbook_normalization (S : prob_14_11_CouponRatioTriangularArraySetup) : prob_14_11_TextbookNormalization S.r S.couponTypes (prob_14_11_couponCollectionLaws S) (prob_14_11_normalizedCouponLaws S) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 192,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_centeredCouponStageLaw (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) (i : Fin (S.targetDistinct n)) : ProbabilityMeasure ℝ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 216,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_source_rows_are_independent (S : prob_14_11_CouponRatioTriangularArraySetup) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 228,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_source_rows_are_independent_proof (S : prob_14_11_CouponRatioTriangularArraySetup) : prob_14_11_source_rows_are_independent S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 276,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_centeredCouponStageLaw_mean_eq_zero (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) (i : Fin (S.targetDistinct n)) : ∫ x, x ∂((prob_14_11_centeredCouponStageLaw S n i : ProbabilityMeasure ℝ) : Measure ℝ) = 0 := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 330,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_centeredCouponStageLaw_second_moment_eq (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) (i : Fin (S.targetDistinct n)) : ∫ x, x ^ 2 ∂((prob_14_11_centeredCouponStageLaw S n i : ProbabilityMeasure ℝ) : Measure ℝ) = ex_14_4_3_geometricVariance (prob_14_11_successProbability S n i) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 352,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_centeredCouponStageLaw_lyapunovMoment_eq (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) (i : Fin (S.targetDistinct n)) : thm_14_8_lyapunovMoment (prob_14_11_centeredCouponStageLaw S n i) 2 = ex_14_4_3_geometricCenteredFourthMoment (prob_14_11_successProbability S n i) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 373,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_rowVariance (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) (i : Fin (S.targetDistinct n)) : ℝ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 378,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_totalVariance (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) : ℝ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 383,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_exactMeanSum (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) : ℝ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 390,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_centeredRowSumValue (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) (ω : Prob63Support.CouponStageΩ (S.targetDistinct n)) : ℝ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 399,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_exactStandardizedRowSumValue (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) (ω : Prob63Support.CouponStageΩ (S.targetDistinct n)) : ℝ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 406,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_centeredRowSumValue_eq_couponCollectionTimeReal_sub_meanSum (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) (ω : Prob63Support.CouponStageΩ (S.targetDistinct n)) : prob_14_11_centeredRowSumValue S n ω = Prob63Support.couponCollectionTimeReal (S.couponTypes n) (S.targetDistinct n) ω - prob_14_11_exactMeanSum S n := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 419,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_exactToTextbookScale (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) : ℝ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 426,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_exactToTextbookShift (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) : ℝ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 433,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_exactStandardizedRowSumLaws (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) : ProbabilityMeasure ℝ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 443,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_exact_standardized_sum_law_representation (S : prob_14_11_CouponRatioTriangularArraySetup) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 451,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_exact_standardized_sum_law_representation_proof (S : prob_14_11_CouponRatioTriangularArraySetup) : prob_14_11_exact_standardized_sum_law_representation S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 460,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_source_standardized_sum_law_representation (S : prob_14_11_CouponRatioTriangularArraySetup) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 466,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_source_standardized_sum_law_representation_proof (S : prob_14_11_CouponRatioTriangularArraySetup) : prob_14_11_source_standardized_sum_law_representation S :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 473,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_geometricVariance_ge_index_ratio (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) (i : Fin (S.targetDistinct n)) : ((i.1 : ℝ) / (S.couponTypes n : ℝ)) ≤ ex_14_4_3_geometricVariance (prob_14_11_successProbability S n i) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 526,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_geometricVariance_row_sum_ge_index_sum (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) : (∑ i : Fin (S.targetDistinct n), ((i.1 : ℝ) / (S.couponTypes n : ℝ))) ≤ prob_14_11_totalVariance S n := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 536,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_variance_scale_eventual_lower_bound (S : prob_14_11_CouponRatioTriangularArraySetup) : ∀ᶠ n : ℕ in atTop, (S.r ^ 2 / 64) * (S.couponTypes n : ℝ) ≤ prob_14_11_totalVariance S n := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 634,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_totalVariance_tendsto_atTop (S : prob_14_11_CouponRatioTriangularArraySetup) : Tendsto (prob_14_11_totalVariance S) atTop atTop := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 645,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_totalVariance_pos (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) : 0 < prob_14_11_totalVariance S n := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 673,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_textbookNormalizedValue_eq_affine_exactStandardizedValue (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) (ω : Prob63Support.CouponStageΩ (S.targetDistinct n)) : prob_14_11_normalizedCouponValue S.r (S.couponTypes n) (Prob63Support.couponCollectionTimeReal (S.couponTypes n) (S.targetDistinct n) ω) = prob_14_11_exactToTextbookScale S n * prob_14_11_exactStandardizedRowSumValue S n ω + prob_14_11_exactToTextbookShift S n := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 697,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_normalizedCouponLaws_eq_affine_exactStandardizedRowSumLaws (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) : prob_14_11_normalizedCouponLaws S n = ProbabilityMeasure.map (prob_14_11_exactStandardizedRowSumLaws S n) ((by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 750,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_arrayNotation (S : prob_14_11_CouponRatioTriangularArraySetup) : thm_14_8_TriangularArrayNotation where",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 762,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_theoremSetup (S : prob_14_11_CouponRatioTriangularArraySetup) : thm_14_8_TriangularArraySetup where",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 787,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_theoremSetupExact (S : prob_14_11_CouponRatioTriangularArraySetup) : thm_14_8_TriangularArraySetup where",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 812,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup, prob_14_11_theoremSetup",
+      "evidence": "theorem prob_14_11_row_lyapunov_sum_eq_coupon_fourth_sum (S : prob_14_11_CouponRatioTriangularArraySetup) : ∀ n : ℕ, (∑ i : Fin ((prob_14_11_theoremSetup S).arrayNotation.rowLength n), thm_14_8_lyapunovMoment ((prob_14_11_theoremSetup S).rowLaws n i) 2) = ∑ i : Fin (S.targetDistinct n), ex_14_4_3_geometricCenteredFourthMoment (prob_14_11_successProbability S n i) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 825,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_totalVariance_eq_geometricVariance_sum (S : prob_14_11_CouponRatioTriangularArraySetup) : ∀ n : ℕ, (prob_14_11_theoremSetup S).arrayNotation.totalVariance n = ∑ i : Fin (S.targetDistinct n), ex_14_4_3_geometricVariance (prob_14_11_successProbability S n i) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 874,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_successProbability_eventually_compact (S : prob_14_11_CouponRatioTriangularArraySetup) : ∀ᶠ n : ℕ in atTop, ∀ i : Fin (S.targetDistinct n), (1 - S.r) / 2 ≤ prob_14_11_successProbability S n i ∧ prob_14_11_successProbability S n i ≤ 1 := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 923,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_fourth_moment_row_sum_is_O_couponTypes (S : prob_14_11_CouponRatioTriangularArraySetup) : ∀ᶠ n : ℕ in atTop, (∑ i : Fin (S.targetDistinct n), ex_14_4_3_geometricCenteredFourthMoment (prob_14_11_successProbability S n i)) ≤ (10 / (((1 - S.r) / 2) ^ 4)) * (S.couponTypes n : ℝ) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 952,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_generalized_lyapunov_condition (S : prob_14_11_CouponRatioTriangularArraySetup) : thm_14_8_LyapunovCondition (prob_14_11_theoremSetup S) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 1053,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_generalized_lyapunov_condition_exact (S : prob_14_11_CouponRatioTriangularArraySetup) : thm_14_8_LyapunovCondition (prob_14_11_theoremSetupExact S) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 1061,
+      "category": "inherited_beyond_book_surface",
+      "severity": "allowed",
+      "detail": "thm_14_8_ProofBeyondBook",
+      "evidence": "theorem prob_14_11_exact_standardized_clt (S : prob_14_11_CouponRatioTriangularArraySetup) (H : thm_14_8_ProofBeyondBook (prob_14_11_theoremSetupExact S)) : Tendsto (prob_14_11_exactStandardizedRowSumLaws S) atTop (𝓝 S.standardNormalLaw) := by",
+      "action": "Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 1061,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_exact_standardized_clt (S : prob_14_11_CouponRatioTriangularArraySetup) (H : thm_14_8_ProofBeyondBook (prob_14_11_theoremSetupExact S)) : Tendsto (prob_14_11_exactStandardizedRowSumLaws S) atTop (𝓝 S.standardNormalLaw) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 1074,
+      "category": "inherited_beyond_book_surface",
+      "severity": "allowed",
+      "detail": "thm_14_8_ProofBeyondBook",
+      "evidence": "theorem prob_14_11_asymptoticNormality (S : prob_14_11_CouponRatioTriangularArraySetup) (H : thm_14_8_ProofBeyondBook (prob_14_11_theoremSetupExact S)) : Tendsto (prob_14_11_exactStandardizedRowSumLaws S) atTop (𝓝 S.standardNormalLaw) :=",
+      "action": "Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 1074,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "theorem prob_14_11_asymptoticNormality (S : prob_14_11_CouponRatioTriangularArraySetup) (H : thm_14_8_ProofBeyondBook (prob_14_11_theoremSetupExact S)) : Tendsto (prob_14_11_exactStandardizedRowSumLaws S) atTop (𝓝 S.standardNormalLaw) :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_11_support",
+      "file": "ToyApollo/Output/prob_14_11_support.lean",
+      "line": 1085,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_11_CouponRatioTriangularArraySetup",
+      "evidence": "def prob_14_11_ExactStandardizedConvergence (S : prob_14_11_CouponRatioTriangularArraySetup) : Prop :=",
       "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
     },
     {
       "task_id": "prob_14_12",
       "file": "ToyApollo/Output/prob_14_12.lean",
-      "line": 247,
+      "line": 209,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_12_TightnessSetup",
@@ -353,27 +1457,167 @@
     {
       "task_id": "prob_14_12",
       "file": "ToyApollo/Output/prob_14_12.lean",
-      "line": 364,
-      "category": "public_setup_parameter_review",
-      "severity": "review",
-      "detail": "prob_14_12_MeanConvergenceSetup",
-      "evidence": "theorem prob_14_12_uniformIntegrable_probability_to_mean {Ω : Type*} [MeasurableSpace Ω] (S : prob_14_12_MeanConvergenceSetup Ω) : prob_14_12_convergesInMean S.μ S.Xseq S.X := by",
-      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
-    },
-    {
-      "task_id": "prob_14_12",
-      "file": "ToyApollo/Output/prob_14_12.lean",
-      "line": 375,
+      "line": 237,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_12_MeanConvergenceSetup, prob_14_12_TightnessSetup",
-      "evidence": "theorem prob_14_12 {Ω : Type*} [MeasurableSpace Ω] (T : prob_14_12_TightnessSetup Ω) (M : prob_14_12_MeanConvergenceSetup Ω) : def_14_3 T.laws ∧ prob_14_12_convergesInMean M.μ M.Xseq M.X :=",
+      "evidence": "theorem prob_14_12 {Ω : Type*} [MeasurableSpace Ω] (T : prob_14_12_TightnessSetup Ω) (M : prob_14_12_MeanConvergenceSetup Ω) : def_14_3 T.laws ∧ prob_14_12_convergesInMean M.μ M.Xseq M.X := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_1_finite_law_support",
+      "file": "ToyApollo/Output/prob_14_1_finite_law_support.lean",
+      "line": 23,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_1_PolyaUrnBetaSetup",
+      "evidence": "def beta (S : prob_14_1_PolyaUrnBetaSetup) : prob_14_1_BetaLawData S.w S.b :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_1_finite_law_support",
+      "file": "ToyApollo/Output/prob_14_1_finite_law_support.lean",
+      "line": 868,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_1_PolyaUrnBetaSetup",
+      "evidence": "noncomputable def whiteCountLaws (S : prob_14_1_PolyaUrnBetaSetup) : ℕ → ProbabilityMeasure ℝ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_1_finite_law_support",
+      "file": "ToyApollo/Output/prob_14_1_finite_law_support.lean",
+      "line": 876,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_1_PolyaUrnBetaSetup",
+      "evidence": "def prob_14_1_finitePolyaWhiteCountMass (S : prob_14_1_PolyaUrnBetaSetup) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_1_finite_law_support",
+      "file": "ToyApollo/Output/prob_14_1_finite_law_support.lean",
+      "line": 884,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_1_PolyaUrnBetaSetup",
+      "evidence": "def prob_14_1_stirlingBetaCdfConvergence (S : prob_14_1_PolyaUrnBetaSetup) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_1_finite_law_support",
+      "file": "ToyApollo/Output/prob_14_1_finite_law_support.lean",
+      "line": 891,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_1_PolyaUrnBetaSetup",
+      "evidence": "theorem prob_14_1_finite_polya_white_count_mass (S : prob_14_1_PolyaUrnBetaSetup) : prob_14_1_finitePolyaWhiteCountMass S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_1_finite_law_support",
+      "file": "ToyApollo/Output/prob_14_1_finite_law_support.lean",
+      "line": 899,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_1_PolyaUrnBetaSetup",
+      "evidence": "theorem prob_14_1_white_count_mass (S : prob_14_1_PolyaUrnBetaSetup) {i k : ℕ} (hi : 1 ≤ i) (hk : k ≤ i) : (S.whiteCountLaws i : Measure ℝ) {x : ℝ | x = (k : ℝ)} = ENNReal.ofReal (prob_14_1_polyaWhiteMassFormula S.w S.b i k) :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_1_finite_law_support",
+      "file": "ToyApollo/Output/prob_14_1_finite_law_support.lean",
+      "line": 907,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_1_PolyaUrnBetaSetup",
+      "evidence": "theorem prob_14_1_white_fraction_mass (S : prob_14_1_PolyaUrnBetaSetup) {i k : ℕ} (hi : 1 ≤ i) (hk : k ≤ i) : (prob_14_1_whiteFractionLaws S.whiteCountLaws i : Measure ℝ) {x : ℝ | x = (k : ℝ) / (i : ℝ)} = ENNReal.ofReal (prob_14_1_polyaWhiteMassFormula S.w S.b i k) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_1_finite_law_support",
+      "file": "ToyApollo/Output/prob_14_1_finite_law_support.lean",
+      "line": 920,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_1_PolyaUrnBetaSetup",
+      "evidence": "theorem prob_14_1_measure_atom_eq_ofReal_polyaWhiteMassFormula_of_path_sum (S : prob_14_1_PolyaUrnBetaSetup) {i k : ℕ} (h_atom_sum : (S.whiteCountLaws i : Measure ℝ) {x : ℝ | x = (k : ℝ)} = ENNReal.ofReal (((prob_14_1_allBoolPathsOfLength i).filter (fun path => prob_14_1_whiteDrawCount path = k)).sum (fun path => prob_14_1_polyaPathProbability S.w S.b path))) : (S.whiteCountLaws i : Measure ℝ) {x : ℝ | x = (k : ℝ)} = ENNReal.ofReal (prob_14_1_polyaWhiteMassFormula S.w S.b i k) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_1_grid_cdf_support",
+      "file": "ToyApollo/Output/prob_14_1_grid_cdf_support.lean",
+      "line": 110,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_1_PolyaUrnBetaSetup",
+      "evidence": "theorem prob_14_1_white_count_grid_support (S : prob_14_1_PolyaUrnBetaSetup) : ∀ᶠ i in atTop, 1 ≤ i ∧ (S.whiteCountLaws i : Measure ℝ) (prob_14_1_countGridSet i)ᶜ = 0 := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_1_grid_cdf_support",
+      "file": "ToyApollo/Output/prob_14_1_grid_cdf_support.lean",
+      "line": 1253,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_1_PolyaUrnBetaSetup",
+      "evidence": "theorem prob_14_1_cdfConvergence_of_setup_finiteMass_countSupport_gridCdfLimit (S : prob_14_1_PolyaUrnBetaSetup) (hMass : prob_14_1_finitePolyaWhiteCountMass S) (hCountSupport : ∀ᶠ i in atTop, 1 ≤ i ∧ (S.whiteCountLaws i : Measure ℝ) (prob_14_1_countGridSet i)ᶜ = 0) (hGrid : prob_14_1_gridCdfLimit S.w S.b S.beta) : prob_14_1_cdfConvergence (prob_14_1_whiteFractionLaws S.whiteCountLaws) S.beta.law := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_1_grid_cdf_support",
+      "file": "ToyApollo/Output/prob_14_1_grid_cdf_support.lean",
+      "line": 1288,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_1_PolyaUrnBetaSetup",
+      "evidence": "theorem prob_14_1_stirling_beta_cdf_convergence_from_gridCdfLimit (S : prob_14_1_PolyaUrnBetaSetup) (hGrid : prob_14_1_gridCdfLimit S.w S.b S.beta) : prob_14_1_stirlingBetaCdfConvergence S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_1_tail_support",
+      "file": "ToyApollo/Output/prob_14_1_tail_support.lean",
+      "line": 1528,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_1_PolyaUrnBetaSetup",
+      "evidence": "theorem prob_14_1_gridCdfLimit_setup (S : prob_14_1_PolyaUrnBetaSetup) : prob_14_1_gridCdfLimit S.w S.b S.beta := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_1_tail_support",
+      "file": "ToyApollo/Output/prob_14_1_tail_support.lean",
+      "line": 1537,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_1_PolyaUrnBetaSetup",
+      "evidence": "theorem prob_14_1_stirling_beta_cdf_convergence (S : prob_14_1_PolyaUrnBetaSetup) : prob_14_1_cdfConvergence (prob_14_1_whiteFractionLaws S.whiteCountLaws) S.beta.law :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_1_tail_support",
+      "file": "ToyApollo/Output/prob_14_1_tail_support.lean",
+      "line": 1548,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_1_PolyaUrnBetaSetup",
+      "evidence": "theorem prob_14_1_white_fraction_converges_to_beta (S : prob_14_1_PolyaUrnBetaSetup) : Tendsto (prob_14_1_whiteFractionLaws S.whiteCountLaws) atTop (𝓝 S.beta.law) :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_1_tail_support",
+      "file": "ToyApollo/Output/prob_14_1_tail_support.lean",
+      "line": 1556,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_1_PolyaUrnBetaSetup",
+      "evidence": "theorem prob_14_1_support_result (S : prob_14_1_PolyaUrnBetaSetup) : (∀ i k : ℕ, 1 ≤ i → k ≤ i → (S.whiteCountLaws i : Measure ℝ) {x : ℝ | x = (k : ℝ)} = ENNReal.ofReal (prob_14_1_polyaWhiteMassFormula S.w S.b i k)) ∧ Tendsto (prob_14_1_whiteFractionLaws S.whiteCountLaws) atTop (𝓝 S.beta.law) ∧ def_14_1 (prob_14_1_whiteFractionLaws S.whiteCountLaws) S.beta.law := by",
       "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
     },
     {
       "task_id": "prob_14_3",
       "file": "ToyApollo/Output/prob_14_3.lean",
-      "line": 56,
+      "line": 59,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_3_GaussianVarianceEscapeSetup",
@@ -383,7 +1627,7 @@
     {
       "task_id": "prob_14_3",
       "file": "ToyApollo/Output/prob_14_3.lean",
-      "line": 64,
+      "line": 67,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_3_GaussianVarianceEscapeSetup",
@@ -393,7 +1637,7 @@
     {
       "task_id": "prob_14_3",
       "file": "ToyApollo/Output/prob_14_3.lean",
-      "line": 156,
+      "line": 159,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_3_GaussianVarianceEscapeSetup",
@@ -403,17 +1647,7 @@
     {
       "task_id": "prob_14_3",
       "file": "ToyApollo/Output/prob_14_3.lean",
-      "line": 168,
-      "category": "public_setup_parameter_review",
-      "severity": "review",
-      "detail": "prob_14_3_GaussianVarianceEscapeSetup",
-      "evidence": "theorem prob_14_3_tight_to_limitCharacteristic (S : prob_14_3_GaussianVarianceEscapeSetup) (hTight : thm_14_1_tight S.gaussianLaws) : thm_14_1_limitIsCharacteristic prob_14_3_limitCharacteristic := by",
-      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
-    },
-    {
-      "task_id": "prob_14_3",
-      "file": "ToyApollo/Output/prob_14_3.lean",
-      "line": 201,
+      "line": 170,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_3_GaussianVarianceEscapeSetup",
@@ -423,7 +1657,7 @@
     {
       "task_id": "prob_14_3",
       "file": "ToyApollo/Output/prob_14_3.lean",
-      "line": 210,
+      "line": 178,
       "category": "public_setup_parameter_review",
       "severity": "review",
       "detail": "prob_14_3_GaussianVarianceEscapeSetup",
@@ -468,6 +1702,406 @@
       "severity": "review",
       "detail": "prob_14_4_ShrinkingGaussianSetup",
       "evidence": "theorem prob_14_4 (S : prob_14_4_ShrinkingGaussianSetup) : Tendsto S.gaussianLaws atTop (𝓝 prob_14_4_limitDistribution) ∧ thm_14_1_weakLimit S.gaussianLaws ∧ thm_14_1_limitIsCharacteristic prob_14_4_limitCharacteristic := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8",
+      "file": "ToyApollo/Output/prob_14_8.lean",
+      "line": 36,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8 (S : prob_14_8_MgfConvergenceSetup) : def_14_3 S.laws ∧ Tendsto S.laws atTop (𝓝 S.targetLaw) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 48,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_real_axis_complexMGF_convergence_at (S : prob_14_8_MgfConvergenceSetup) {t : ℝ} (ht : t ∈ Icc (-S.δ) S.δ) : Tendsto (fun n : ℕ => complexMGF (fun x : ℝ => x) (S.laws n : Measure ℝ) (t : ℂ)) atTop (𝓝 (complexMGF (fun x : ℝ => x) (S.targetLaw : Measure ℝ) (t : ℂ))) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 69,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_mgf_defined_interval_to_strip_domain (S : prob_14_8_MgfConvergenceSetup) : (∀ n : ℕ, ∀ t : ℝ, -S.δ < t → t < S.δ → t ∈ interior (integrableExpSet id (S.laws n : Measure ℝ))) ∧ (∀ t : ℝ, -S.δ < t → t < S.δ → t ∈ interior (integrableExpSet id (S.targetLaw : Measure ℝ))) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 92,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "def prob_14_8_complexMGFStrip (S : prob_14_8_MgfConvergenceSetup) : Set ℂ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 97,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_complexMGFStrip_isOpen (S : prob_14_8_MgfConvergenceSetup) : IsOpen (prob_14_8_complexMGFStrip S) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 104,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_complexMGFStrip_isPreconnected (S : prob_14_8_MgfConvergenceSetup) : IsPreconnected (prob_14_8_complexMGFStrip S) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 116,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_zero_mem_complexMGFStrip (S : prob_14_8_MgfConvergenceSetup) : (0 : ℂ) ∈ prob_14_8_complexMGFStrip S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 122,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_imaginary_axis_mem_complexMGFStrip (S : prob_14_8_MgfConvergenceSetup) (t : ℝ) : t * Complex.I ∈ prob_14_8_complexMGFStrip S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 129,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_compact_subset_strip_subset_substrip (S : prob_14_8_MgfConvergenceSetup) {K : Set ℂ} (hK : IsCompact K) (hKU : K ⊆ prob_14_8_complexMGFStrip S) : ∃ eta : ℝ, 0 < eta ∧ eta < S.δ ∧ ∀ z ∈ K, |z.re| ≤ eta := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 153,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_complexMGF_analytic_on_common_strip (S : prob_14_8_MgfConvergenceSetup) : (∀ n : ℕ, AnalyticOnNhd ℂ (fun z : ℂ => complexMGF id (S.laws n : Measure ℝ) z) (prob_14_8_complexMGFStrip S)) ∧ AnalyticOnNhd ℂ (fun z : ℂ => complexMGF id (S.targetLaw : Measure ℝ) z) (prob_14_8_complexMGFStrip S) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 235,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_target_complexMGF_substrip_bound (S : prob_14_8_MgfConvergenceSetup) {eta : ℝ} (heta_pos : 0 < eta) (heta_delta : eta < S.δ) : ∃ C : ℝ, ∀ z : ℂ, |z.re| ≤ eta → ‖complexMGF id (S.targetLaw : Measure ℝ) z‖ ≤ C := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 254,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_eventual_sequence_complexMGF_substrip_bound (S : prob_14_8_MgfConvergenceSetup) {eta : ℝ} (heta_pos : 0 < eta) (heta_delta : eta < S.δ) : ∃ N : ℕ, ∃ C : ℝ, ∀ n : ℕ, N ≤ n → ∀ z : ℂ, |z.re| ≤ eta → ‖complexMGF id (S.laws n : Measure ℝ) z‖ ≤ C := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 297,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_finite_prefix_complexMGF_substrip_bound (S : prob_14_8_MgfConvergenceSetup) {eta : ℝ} (heta_pos : 0 < eta) (heta_delta : eta < S.δ) : ∀ N : ℕ, ∃ C : ℝ, ∀ n : ℕ, n < N → ∀ z : ℂ, |z.re| ≤ eta → ‖complexMGF id (S.laws n : Measure ℝ) z‖ ≤ C := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 336,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "def prob_14_8_uniformComplexMGFSubstripBound (S : prob_14_8_MgfConvergenceSetup) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 347,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_uniform_strip_bounds (S : prob_14_8_MgfConvergenceSetup) : prob_14_8_uniformComplexMGFSubstripBound S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 373,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_uniformComplexMGFCompactBound (S : prob_14_8_MgfConvergenceSetup) {K : Set ℂ} (hK : IsCompact K) (hKU : K ⊆ prob_14_8_complexMGFStrip S) : ∃ C : ℝ, (∀ z : ℂ, z ∈ K → ‖complexMGF id (S.targetLaw : Measure ℝ) z‖ ≤ C) ∧ (∀ n : ℕ, ∀ z : ℂ, z ∈ K → ‖complexMGF id (S.laws n : Measure ℝ) z‖ ≤ C) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 394,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "def prob_14_8_realAxisAccumulationRealSequence (S : prob_14_8_MgfConvergenceSetup) : ℕ → ℝ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 400,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "def prob_14_8_realAxisAccumulationSequence (S : prob_14_8_MgfConvergenceSetup) : ℕ → ℂ :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 404,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_realAxisAccumulationSequence_real_pos (S : prob_14_8_MgfConvergenceSetup) (n : ℕ) : 0 < prob_14_8_realAxisAccumulationRealSequence S n := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 411,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_realAxisAccumulationSequence_real_mem_interval (S : prob_14_8_MgfConvergenceSetup) (n : ℕ) : prob_14_8_realAxisAccumulationRealSequence S n ∈ Set.Ioo (-S.δ) S.δ := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 433,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_realAxisAccumulationSequence_ne_zero (S : prob_14_8_MgfConvergenceSetup) (n : ℕ) : prob_14_8_realAxisAccumulationSequence S n ≠ 0 := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 446,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_realAxisAccumulationSequence_tendsto_zero (S : prob_14_8_MgfConvergenceSetup) : Tendsto (prob_14_8_realAxisAccumulationSequence S) atTop (𝓝 0) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 467,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "def prob_14_8_realAxisAccumulationConvergenceInput (S : prob_14_8_MgfConvergenceSetup) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 480,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_real_axis_accumulation_convergence_input (S : prob_14_8_MgfConvergenceSetup) : prob_14_8_realAxisAccumulationConvergenceInput S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 499,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_locally_uniform_subseq_limit_eq_target (S : prob_14_8_MgfConvergenceSetup) {f : ℂ → ℂ} {φ : ℕ → ℕ} (hφ : StrictMono φ) (hlim : TendstoLocallyUniformlyOn (fun k z => complexMGF id (S.laws (φ k) : Measure ℝ) z) f atTop (prob_14_8_complexMGFStrip S)) (hf : AnalyticOnNhd ℂ f (prob_14_8_complexMGFStrip S)) : Set.EqOn f (fun z : ℂ => complexMGF id (S.targetLaw : Measure ℝ) z) (prob_14_8_complexMGFStrip S) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 532,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_complexMGF_subseq_locallyUniform_limit (S : prob_14_8_MgfConvergenceSetup) {φ : ℕ → ℕ} (_hφ : StrictMono φ) : ∃ f : ℂ → ℂ, ∃ ψ : ℕ → ℕ, StrictMono ψ ∧ TendstoLocallyUniformlyOn (fun k z => complexMGF id (S.laws (φ (ψ k)) : Measure ℝ) z) f atTop (prob_14_8_complexMGFStrip S) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 553,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_eventualTailBound_from_mgf (S : prob_14_8_MgfConvergenceSetup) : ∀ ε : ℝ, 0 < ε → ∃ M0 : ℝ, 0 ≤ M0 ∧ ∃ N : ℕ, ∀ n : ℕ, N ≤ n → thm_14_5_tailMass (S.laws n) M0 < ε := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 654,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_uniformTailBound_from_mgf (S : prob_14_8_MgfConvergenceSetup) : thm_14_5_uniformTailBound S.laws := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 671,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_tight (S : prob_14_8_MgfConvergenceSetup) : def_14_3 S.laws := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 679,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_converges_in_distribution_of_characteristic_convergence (S : prob_14_8_MgfConvergenceSetup) (hChar : thm_14_1_pointwiseCharFunConvergence S.laws (fun t : ℝ => thm_14_1_characteristicFunction S.targetLaw t)) : Tendsto S.laws atTop (𝓝 S.targetLaw) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 694,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_characteristic_convergence_from_imaginary_axis_complexMGF (S : prob_14_8_MgfConvergenceSetup) (hImag : ∀ t : ℝ, Tendsto (fun n : ℕ => complexMGF id (S.laws n : Measure ℝ) (t * Complex.I)) atTop (𝓝 (complexMGF id (S.targetLaw : Measure ℝ) (t * Complex.I)))) : thm_14_1_pointwiseCharFunConvergence S.laws (fun t : ℝ => thm_14_1_characteristicFunction S.targetLaw t) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 710,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_distribution_convergence_from_imaginary_axis_complexMGF (S : prob_14_8_MgfConvergenceSetup) (hImag : ∀ t : ℝ, Tendsto (fun n : ℕ => complexMGF id (S.laws n : Measure ℝ) (t * Complex.I)) atTop (𝓝 (complexMGF id (S.targetLaw : Measure ℝ) (t * Complex.I)))) : Tendsto S.laws atTop (𝓝 S.targetLaw) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 724,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_tight_and_distribution_from_imaginary_axis_complexMGF (S : prob_14_8_MgfConvergenceSetup) (hImag : ∀ t : ℝ, Tendsto (fun n : ℕ => complexMGF id (S.laws n : Measure ℝ) (t * Complex.I)) atTop (𝓝 (complexMGF id (S.targetLaw : Measure ℝ) (t * Complex.I)))) : def_14_3 S.laws ∧ Tendsto S.laws atTop (𝓝 S.targetLaw) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 738,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "def prob_14_8_remaining_imaginary_axis_complexMGF_convergence (S : prob_14_8_MgfConvergenceSetup) : Prop :=",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 750,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_imaginary_axis_complexMGF_convergence_of_subseq_locallyUniform (S : prob_14_8_MgfConvergenceSetup) (hExtract : ∀ φ : ℕ → ℕ, StrictMono φ → ∃ f : ℂ → ℂ, ∃ ψ : ℕ → ℕ, StrictMono ψ ∧ TendstoLocallyUniformlyOn (fun k z => complexMGF id (S.laws (φ (ψ k)) : Measure ℝ) z) f atTop (prob_14_8_complexMGFStrip S)) : prob_14_8_remaining_imaginary_axis_complexMGF_convergence S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 799,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_imaginary_axis_complexMGF_convergence_from_mgf_setup (S : prob_14_8_MgfConvergenceSetup) : prob_14_8_remaining_imaginary_axis_complexMGF_convergence S := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 808,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_characteristic_convergence_from_mgf_setup_of_remaining (S : prob_14_8_MgfConvergenceSetup) (hRemaining : prob_14_8_remaining_imaginary_axis_complexMGF_convergence S) : thm_14_1_pointwiseCharFunConvergence S.laws (fun t : ℝ => thm_14_1_characteristicFunction S.targetLaw t) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 820,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_distribution_convergence_from_mgf_setup_of_remaining (S : prob_14_8_MgfConvergenceSetup) (hRemaining : prob_14_8_remaining_imaginary_axis_complexMGF_convergence S) : Tendsto S.laws atTop (𝓝 S.targetLaw) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 830,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_tight_and_distribution_from_characteristic_convergence (S : prob_14_8_MgfConvergenceSetup) (hChar : thm_14_1_pointwiseCharFunConvergence S.laws (fun t : ℝ => thm_14_1_characteristicFunction S.targetLaw t)) : def_14_3 S.laws ∧ Tendsto S.laws atTop (𝓝 S.targetLaw) := by",
+      "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
+    },
+    {
+      "task_id": "prob_14_8_mgf_support",
+      "file": "ToyApollo/Output/prob_14_8_mgf_support.lean",
+      "line": 842,
+      "category": "public_setup_parameter_review",
+      "severity": "review",
+      "detail": "prob_14_8_MgfConvergenceSetup",
+      "evidence": "theorem prob_14_8_support_result (S : prob_14_8_MgfConvergenceSetup) : def_14_3 S.laws ∧ Tendsto S.laws atTop (𝓝 S.targetLaw) := by",
       "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
     },
     {
@@ -603,17 +2237,17 @@
     {
       "task_id": "thm_13_12",
       "file": "ToyApollo/Output/thm_13_12.lean",
-      "line": 418,
+      "line": 495,
       "category": "public_proof_package_return_review",
       "severity": "review",
       "detail": "thm_13_12_countablePartitionVersionSupport",
-      "evidence": "theorem thm_13_12_countablePartitionVersionSupport {Ω : Type*} [𝓕 : MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P] {𝓖 : SigmaField Ω} {h𝓖 : IsSubSigmaField 𝓖 𝓕} {A : ℕ → Set Ω} {X : Ω → ℝ} (hPartition : thm_13_12_countablePartition A) (hGenerated : thm_13_12_generatedByPartition 𝓖 A) (hX : @AmbientIntegrable Ω 𝓕 P X) : @def_13_3 Ω 𝓕 P 𝓖 h𝓖 X (@thm_13_12_countablePartitionConditionalExpectation Ω 𝓕 P A X) := by",
+      "evidence": "theorem thm_13_12_countablePartitionVersionSupport {Ω : Type*} [𝓕 : MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P] {𝓖 : SigmaField Ω} {h𝓖 : IsSubSigmaField 𝓖 𝓕} {A : ℕ → Set Ω} {X : Ω → ℝ} (hPartition : thm_13_12_countablePartition A) (hGenerated : thm_13_12_generatedByPartition 𝓖 A) (hX : @AmbientIntegrable Ω 𝓕 P X) : @def_13_3 Ω 𝓕 P 𝓖 h𝓖 X (@thm_13_12_countablePartitionConditionalExpectation Ω 𝓕 P _ A X) := by",
       "action": "Review as theorem-level evidence for a support package; this is not a public support parameter by itself."
     },
     {
       "task_id": "thm_13_13",
       "file": "ToyApollo/Output/thm_13_13.lean",
-      "line": 177,
+      "line": 171,
       "category": "public_proof_package_return_review",
       "severity": "review",
       "detail": "thm_13_13_atomIntegralSupport",
@@ -623,7 +2257,7 @@
     {
       "task_id": "thm_13_13",
       "file": "ToyApollo/Output/thm_13_13.lean",
-      "line": 187,
+      "line": 181,
       "category": "public_proof_package_return_review",
       "severity": "review",
       "detail": "thm_13_13_atomIntegralSupport",
@@ -668,6 +2302,16 @@
       "severity": "review",
       "detail": "thm_13_14_piLambdaExtensionSupport",
       "evidence": "theorem thm_13_14_piLambdaExtensionSupport_from_integrable (P : Measure (ℝ × ℝ)) (g h : ℝ → ℝ) (hGInt : Integrable (fun z : ℝ × ℝ => g z.1) P) (hHInt : Integrable (fun z : ℝ × ℝ => h z.2) P) : thm_13_14_piLambdaExtensionSupport P g h := by",
+      "action": "Review as theorem-level evidence for a support package; this is not a public support parameter by itself."
+    },
+    {
+      "task_id": "thm_14_3",
+      "file": "ToyApollo/Output/thm_14_3.lean",
+      "line": 231,
+      "category": "public_proof_package_return_review",
+      "severity": "review",
+      "detail": "thm_14_3_CosSinProofSpine, thm_14_3_cosSinProofSpine",
+      "evidence": "theorem thm_14_3_cosSinProofSpine {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ] (Xseq : ℕ → Ω → ℝ) (X : Ω → ℝ) (hXseq : ∀ n : ℕ, Measurable (Xseq n)) (hX : Measurable X) (hWeak : def_14_2 μ Xseq X hXseq hX) : thm_14_3_CosSinProofSpine μ Xseq X where",
       "action": "Review as theorem-level evidence for a support package; this is not a public support parameter by itself."
     },
     {
@@ -769,166 +2413,6 @@
       "detail": "thm_14_8_TriangularArraySetup",
       "evidence": "theorem thm_14_8 (S : thm_14_8_TriangularArraySetup) (H : thm_14_8_ProofBeyondBook S) (h : thm_14_8_condition S) : thm_14_8_conclusion S := by",
       "action": "Review whether this setup argument is only task data or is carrying unproved source/proof obligations through public fields."
-    },
-    {
-      "task_id": "obl_thm_14_8_beyond_book_proof_obligations",
-      "file": "phase2_prompt_packs/obl_thm_14_8_beyond_book_proof_obligations/proof_obligations.json",
-      "line": 0,
-      "category": "allowed_beyond_book_obligation",
-      "severity": "allowed",
-      "detail": "beyond_book_proof_obligations",
-      "evidence": "beyond_book_proof_obligations: thm_14_8_ProofBeyondBook; thm_14_8_of_lindeberg; thm_14_8_of_lyapunov; thm_14_8",
-      "action": "Keep visible as the only permitted beyond-book exception; do not generalize this pattern."
-    },
-    {
-      "task_id": "prob_14_1",
-      "file": "phase2_prompt_packs/prob_14_1/proof_obligations.json",
-      "line": 0,
-      "category": "non_exception_accepted_debt",
-      "severity": "error",
-      "detail": "obligation_1",
-      "evidence": "obligation_1:",
-      "action": "Promote this to an explicit task to clear; only ProofBeyondBook may remain accepted."
-    },
-    {
-      "task_id": "prob_14_1",
-      "file": "phase2_prompt_packs/prob_14_1/proof_obligations.json",
-      "line": 0,
-      "category": "non_exception_accepted_debt",
-      "severity": "error",
-      "detail": "obligation_4",
-      "evidence": "obligation_4:",
-      "action": "Promote this to an explicit task to clear; only ProofBeyondBook may remain accepted."
-    },
-    {
-      "task_id": "thm_14_5",
-      "file": "phase2_prompt_packs/thm_14_5/proof_obligations.json",
-      "line": 0,
-      "category": "proved_proof_debt_lands_on_structure_field",
-      "severity": "error",
-      "detail": "characteristic_at_zero",
-      "evidence": "characteristic_at_zero: thm_14_5_SourceProofSpine.characteristic_at_zero (structure field only; theorem-level source proof still missing)",
-      "action": "Do not count a support/spine field projection as proof; replace it with a theorem/lemma landing."
-    },
-    {
-      "task_id": "thm_14_5",
-      "file": "phase2_prompt_packs/thm_14_5/proof_obligations.json",
-      "line": 0,
-      "category": "proved_proof_debt_lands_on_structure_field",
-      "severity": "error",
-      "detail": "fubini_identity",
-      "evidence": "fubini_identity: thm_14_5_SourceProofSpine.fubini_identity (structure field only; theorem-level source proof still missing)",
-      "action": "Do not count a support/spine field projection as proof; replace it with a theorem/lemma landing."
-    },
-    {
-      "task_id": "thm_14_5",
-      "file": "phase2_prompt_packs/thm_14_5/proof_obligations.json",
-      "line": 0,
-      "category": "proved_proof_debt_lands_on_structure_field",
-      "severity": "error",
-      "detail": "inner_integral_identity",
-      "evidence": "inner_integral_identity: thm_14_5_SourceProofSpine.inner_integral_identity (structure field only; theorem-level source proof still missing)",
-      "action": "Do not count a support/spine field projection as proof; replace it with a theorem/lemma landing."
-    },
-    {
-      "task_id": "thm_14_5",
-      "file": "phase2_prompt_packs/thm_14_5/proof_obligations.json",
-      "line": 0,
-      "category": "proved_proof_debt_lands_on_structure_field",
-      "severity": "error",
-      "detail": "averaged_kernel_identity",
-      "evidence": "averaged_kernel_identity: thm_14_5_SourceProofSpine.averaged_kernel_identity (structure field only; theorem-level source proof still missing)",
-      "action": "Do not count a support/spine field projection as proof; replace it with a theorem/lemma landing."
-    },
-    {
-      "task_id": "thm_14_5",
-      "file": "phase2_prompt_packs/thm_14_5/proof_obligations.json",
-      "line": 0,
-      "category": "proved_proof_debt_lands_on_structure_field",
-      "severity": "error",
-      "detail": "kernel_tail_lower_bound",
-      "evidence": "kernel_tail_lower_bound: thm_14_5_SourceProofSpine.kernel_tail_lower_bound (structure field only; theorem-level source proof still missing)",
-      "action": "Do not count a support/spine field projection as proof; replace it with a theorem/lemma landing."
-    },
-    {
-      "task_id": "thm_14_5",
-      "file": "phase2_prompt_packs/thm_14_5/proof_obligations.json",
-      "line": 0,
-      "category": "proved_proof_debt_lands_on_structure_field",
-      "severity": "error",
-      "detail": "tail_bound_by_averaged_characteristic",
-      "evidence": "tail_bound_by_averaged_characteristic: thm_14_5_SourceProofSpine.tail_bound_by_averaged_characteristic (structure field only; theorem-level source proof still missing)",
-      "action": "Do not count a support/spine field projection as proof; replace it with a theorem/lemma landing."
-    },
-    {
-      "task_id": "thm_14_5",
-      "file": "phase2_prompt_packs/thm_14_5/proof_obligations.json",
-      "line": 0,
-      "category": "proved_proof_debt_lands_on_structure_field",
-      "severity": "error",
-      "detail": "continuity_small_u_bound",
-      "evidence": "continuity_small_u_bound: thm_14_5_SourceProofSpine.continuity_small_u_bound (structure field only; theorem-level source proof still missing)",
-      "action": "Do not count a support/spine field projection as proof; replace it with a theorem/lemma landing."
-    },
-    {
-      "task_id": "thm_14_5",
-      "file": "phase2_prompt_packs/thm_14_5/proof_obligations.json",
-      "line": 0,
-      "category": "proved_proof_debt_lands_on_structure_field",
-      "severity": "error",
-      "detail": "dominated_convergence_bound",
-      "evidence": "dominated_convergence_bound: thm_14_5_SourceProofSpine.dominated_convergence_bound (structure field only; theorem-level source proof still missing)",
-      "action": "Do not count a support/spine field projection as proof; replace it with a theorem/lemma landing."
-    },
-    {
-      "task_id": "thm_14_5",
-      "file": "phase2_prompt_packs/thm_14_5/proof_obligations.json",
-      "line": 0,
-      "category": "proved_proof_debt_lands_on_structure_field",
-      "severity": "error",
-      "detail": "finite_prefix_tail_bound",
-      "evidence": "finite_prefix_tail_bound: thm_14_5_SourceProofSpine.finite_prefix_tail_bound (structure field only; theorem-level source proof still missing)",
-      "action": "Do not count a support/spine field projection as proof; replace it with a theorem/lemma landing."
-    },
-    {
-      "task_id": "thm_14_5",
-      "file": "phase2_prompt_packs/thm_14_5/proof_obligations.json",
-      "line": 0,
-      "category": "proved_proof_debt_lands_on_structure_field",
-      "severity": "error",
-      "detail": "uniform_tail_bound",
-      "evidence": "uniform_tail_bound: thm_14_5_SourceProofSpine.uniform_tail_bound (structure field only; theorem-level source proof still missing)",
-      "action": "Do not count a support/spine field projection as proof; replace it with a theorem/lemma landing."
-    },
-    {
-      "task_id": "thm_14_7",
-      "file": "phase2_prompt_packs/thm_14_7/proof_obligations.json",
-      "line": 0,
-      "category": "proved_proof_debt_lands_on_structure_field",
-      "severity": "error",
-      "detail": "center_and_standardize",
-      "evidence": "center_and_standardize: thm_14_7_LindebergLevySetup.mean, thm_14_7_LindebergLevySetup.sigma, thm_14_7_LindebergLevySetup.standardizedLaws",
-      "action": "Do not count a support/spine field projection as proof; replace it with a theorem/lemma landing."
-    },
-    {
-      "task_id": "thm_14_7",
-      "file": "phase2_prompt_packs/thm_14_7/proof_obligations.json",
-      "line": 0,
-      "category": "non_exception_accepted_debt",
-      "severity": "error",
-      "detail": "quadratic_characteristic_expansion",
-      "evidence": "quadratic_characteristic_expansion: thm_14_7_quadraticCharacteristicExpansion; thm_14_7_quadratic_characteristic_expansion_internal",
-      "action": "Promote this to an explicit task to clear; only ProofBeyondBook may remain accepted."
-    },
-    {
-      "task_id": "thm_14_7",
-      "file": "phase2_prompt_packs/thm_14_7/proof_obligations.json",
-      "line": 0,
-      "category": "non_exception_accepted_debt",
-      "severity": "error",
-      "detail": "independent_sum_characteristic",
-      "evidence": "independent_sum_characteristic: thm_14_7_LindebergLevySetup.c, thm_14_7_LindebergLevySetup.c_definition",
-      "action": "Promote this to an explicit task to clear; only ProofBeyondBook may remain accepted."
     },
     {
       "task_id": "thm_14_8",

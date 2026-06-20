@@ -12,6 +12,7 @@ from tools.audit_phase2_unfinished_tasks import (  # noqa: E402
     apply_metadata_drift_fixes,
     build_inventory,
     has_blocking_unfinished,
+    markdown_report,
     sync_ledger_proof_obligation_summaries,
 )
 
@@ -373,6 +374,278 @@ theorem prob_14_8_mgf_convergence_gives_characteristic_convergence
                         "projection": "S.mgf_to_characteristic_convergence",
                     }
                 ],
+            )
+
+    def test_alignment_theorem_landings_clear_stale_proof_debt_landing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            output = root / "ToyApollo" / "Output"
+            output.mkdir(parents=True)
+            (root / "docs").mkdir()
+            (root / "phase2_prompt_packs" / "prob_10_10").mkdir(parents=True)
+            (output / "prob_10_10.lean").write_text(
+                """
+theorem prob_10_10_add_distribution_stability : True := by exact True.intro
+theorem prob_10_10_mul_distribution_stability : True := by exact True.intro
+theorem prob_10_10 : True := by exact True.intro
+""",
+                encoding="utf-8",
+            )
+            (root / "project_ledger.json").write_text(
+                json.dumps(
+                    {
+                        "tasks": {
+                            "prob_10_10": {
+                                "block_id": "prob_10_10",
+                                "type": "Problem",
+                                "status": "COMPLETED",
+                            }
+                        },
+                        "symbols": {},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "phase2_prompt_packs" / "prob_10_10" / "proof_obligations.json").write_text(
+                json.dumps(
+                    {
+                        "obligations": [
+                            {
+                                "id": "distribution_stability_under_probability_perturbation",
+                                "kind": "proof_debt_support",
+                                "status": "proved",
+                                "review_status": "accepted",
+                                "blocking": True,
+                                "lean_landing": "h_add_perturbation_support, h_mul_perturbation_support",
+                                "source_output_alignment": {
+                                    "audit_class": "A_existing_theorem_candidate",
+                                    "existing_local_declarations": [
+                                        {
+                                            "name": "prob_10_10_add_distribution_stability",
+                                            "kind": "theorem",
+                                        },
+                                        {
+                                            "name": "prob_10_10_mul_distribution_stability",
+                                            "kind": "theorem",
+                                        },
+                                    ],
+                                    "missing_landing_names": [],
+                                },
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            payload = build_inventory(
+                root,
+                start_chapter=9,
+                end_chapter=14,
+                include_tasks=[],
+                check_build=False,
+            )
+
+            self.assertNotIn("prob_10_10", {item["task_id"] for item in payload["items"]})
+
+    def test_review_covered_support_predicate_source_step_is_not_open(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            output = root / "ToyApollo" / "Output"
+            output.mkdir(parents=True)
+            (root / "docs").mkdir()
+            (root / "phase2_prompt_packs" / "prob_11_9").mkdir(parents=True)
+            (output / "prob_11_9.lean").write_text(
+                """
+def prob_11_9_asymptoticRegime : Prop := True
+theorem prob_11_9 : True := by exact True.intro
+""",
+                encoding="utf-8",
+            )
+            (root / "project_ledger.json").write_text(
+                json.dumps(
+                    {
+                        "tasks": {
+                            "prob_11_9": {
+                                "block_id": "prob_11_9",
+                                "type": "Problem",
+                                "status": "COMPLETED",
+                            }
+                        },
+                        "symbols": {},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "phase2_prompt_packs" / "prob_11_9" / "proof_obligations.json").write_text(
+                json.dumps(
+                    {
+                        "obligations": [
+                            {
+                                "id": "asymptotic_regime",
+                                "kind": "source_step",
+                                "status": "partial",
+                                "review_status": "needs_review",
+                                "blocking": True,
+                                "lean_landing": "prob_11_9_asymptoticRegime",
+                                "landing_kind": "support_predicate",
+                                "proof_contract_status": "not_applicable",
+                                "proof_contract_notes": "Source assumption predicate.",
+                            }
+                        ],
+                        "review_history": [
+                            {
+                                "reviewed_at": "2026-06-06T09:56:46.057870Z",
+                                "verdict": "pass",
+                                "status": "covered",
+                                "open_blockers": [
+                                    {
+                                        "obligation_id": "asymptotic_regime",
+                                        "issue": "covered",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            payload = build_inventory(
+                root,
+                start_chapter=9,
+                end_chapter=14,
+                include_tasks=[],
+                check_build=False,
+            )
+
+            self.assertNotIn("prob_11_9", {item["task_id"] for item in payload["items"]})
+
+    def test_unreviewed_support_predicate_source_step_still_counts_open(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            output = root / "ToyApollo" / "Output"
+            output.mkdir(parents=True)
+            (root / "docs").mkdir()
+            (root / "phase2_prompt_packs" / "prob_11_9").mkdir(parents=True)
+            (output / "prob_11_9.lean").write_text(
+                """
+def prob_11_9_asymptoticRegime : Prop := True
+theorem prob_11_9 : True := by exact True.intro
+""",
+                encoding="utf-8",
+            )
+            (root / "project_ledger.json").write_text(
+                json.dumps(
+                    {
+                        "tasks": {
+                            "prob_11_9": {
+                                "block_id": "prob_11_9",
+                                "type": "Problem",
+                                "status": "COMPLETED",
+                            }
+                        },
+                        "symbols": {},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "phase2_prompt_packs" / "prob_11_9" / "proof_obligations.json").write_text(
+                json.dumps(
+                    {
+                        "obligations": [
+                            {
+                                "id": "asymptotic_regime",
+                                "kind": "source_step",
+                                "status": "partial",
+                                "review_status": "needs_review",
+                                "blocking": True,
+                                "lean_landing": "prob_11_9_asymptoticRegime",
+                                "landing_kind": "support_predicate",
+                                "proof_contract_status": "not_applicable",
+                            }
+                        ],
+                        "review_history": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            payload = build_inventory(
+                root,
+                start_chapter=9,
+                end_chapter=14,
+                include_tasks=[],
+                check_build=False,
+            )
+
+            by_id = {item["task_id"]: item for item in payload["items"]}
+            self.assertIn("open_obligations", by_id["prob_11_9"]["reasons"])
+            self.assertEqual(by_id["prob_11_9"]["open_blocking_ids"], ["asymptotic_regime"])
+
+    def test_allowed_exception_boundary_is_visible_but_not_blocking(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            output = root / "ToyApollo" / "Output"
+            output.mkdir(parents=True)
+            (root / "docs").mkdir()
+            (root / "phase2_prompt_packs" / "thm_11_8").mkdir(parents=True)
+            (output / "thm_11_8.lean").write_text(
+                "theorem thm_11_8 : True := by exact True.intro\n",
+                encoding="utf-8",
+            )
+            (root / "project_ledger.json").write_text(
+                json.dumps(
+                    {
+                        "tasks": {
+                            "thm_11_8": {
+                                "block_id": "thm_11_8",
+                                "type": "Theorem",
+                                "status": "COMPLETED",
+                                "phase2_status": "allowed_exception",
+                            }
+                        },
+                        "symbols": {},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "phase2_prompt_packs" / "thm_11_8" / "proof_obligations.json").write_text(
+                json.dumps(
+                    {
+                        "obligations": [
+                            {
+                                "id": "etemadi_external_proof_bridge",
+                                "kind": "source_step",
+                                "status": "accepted_as_proof_debt",
+                                "review_status": "accepted",
+                                "blocking": True,
+                                "lean_landing": "ProbabilityTheory.strong_law_ae",
+                                "proof_contract_status": "beyond_book_exception",
+                                "proof_contract_notes": "Explicit cited Etemadi external-proof exception.",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            payload = build_inventory(
+                root,
+                start_chapter=9,
+                end_chapter=14,
+                include_tasks=[],
+                check_build=False,
+            )
+
+            by_id = {item["task_id"]: item for item in payload["items"]}
+            self.assertEqual(by_id["thm_11_8"]["reasons"], ["allowed_exception_boundary"])
+            self.assertEqual(by_id["thm_11_8"]["action_bucket"], "allowed_exception_boundary")
+            self.assertEqual(payload["summary"]["blocking_unfinished_count"], 0)
+            report = markdown_report(payload)
+            self.assertIn(
+                "A zero blocking_unfinished_count does not claim external or beyond-book mathematics has been locally proved.",
+                report,
             )
 
     def test_fail_gate_ignores_verification_only_bridge(self):

@@ -1,0 +1,507 @@
+{
+  "schema_version": "phase2.semantic_review.result.v7",
+  "task_id": "ex_13_6_5",
+  "mode": "review-existing",
+  "attempt": 16,
+  "prompt_version": 9,
+  "rubric_version": 9,
+  "review_input_hash": "1649c7cf871e6a3720f5af314b6a94abb9058574bbde3160cffa5094e94cc186",
+  "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_13_6_5\\semantic_review_input_v16.json",
+  "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_13_6_5\\semantic_review_prompt_v16.md",
+  "review_context_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_13_6_5\\semantic_review_context_v16.md",
+  "expected_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_13_6_5\\semantic_review_result_v16.json",
+  "candidate_hash": "58bf96ab722e3b58bdcdc758609b70673b5c3c8d463f5cec70194365a593413a",
+  "verdict": "pass",
+  "confidence": "high",
+  "summary": "通过。现有输出语义匹配 Example 13.6.5 的 source-facing 目标：三键 iid 打字过程、abab/aabb 两个首次出现等待时间、赌博团队终端收益、Theorem 13.18 optional-stopping 路线、90/81 期望结论、aabb 更短以及模拟样例一致性均有 Lean landing。重点核查的 P4 word-pattern common support 只抽取了四字 word 的公共 prefix/measurability/entrant-net 支撑；abab/aabb 的 pattern-specific prefix bridge、terminal survivor/payoff theorem names 和 final expectation route 仍然保留，未发现 prefix statement drift 或 public-premise relocation。",
+  "proof_class": "source_route_proof_completion",
+  "completion_class": "source_route_with_reviewed_common_support",
+  "reviewer_independence": {
+    "role": "independent_read_only_reviewer",
+    "read_only": true,
+    "did_edit_candidate": false,
+    "used_current_review_request": true,
+    "attestation": "本次审查为独立只读语义审查；未修改 Lean 源码、ledger 或 phase2_status，只写入本 result JSON。"
+  },
+  "source_claims": [
+    {
+      "id": "alphabet_and_patterns",
+      "claim": "猴子在三键 alphabet {a,b,c} 上 iid 打字，两个目标模式是 abab 与 aabb。",
+      "expected_statement": "Lean 中应有三键类型、两个具体 pattern、长度为 4 的检查，以及与 typed path/first occurrence 的连接。"
+    },
+    {
+      "id": "fair_bet",
+      "claim": "每轮押一个字母，猜中得 3m、猜错损失赌注，因此单步押注是公平游戏。",
+      "expected_statement": "对任意 stake m，单键收益的期望为 0，并能提升到 iid key process 的条件期望零。"
+    },
+    {
+      "id": "abab_terminal_payoff",
+      "claim": "abab 首次出现时，四连胜 gambler 和两连胜 overlap gambler 仍在场，团队终端收益为 (T-2)(-1)+(81-1)+(9-1)=90-T。",
+      "expected_statement": "应有 abab-specific survivor/payoff theorem 和 concrete stopped-value identity，而不是只靠公共 wrapper 假设。"
+    },
+    {
+      "id": "aabb_terminal_payoff",
+      "claim": "aabb 首次出现时只有四连胜 gambler 仍在场，团队终端收益为 (T-1)(-1)+(81-1)=81-T。",
+      "expected_statement": "应有 aabb-specific survivor/payoff theorem 和 concrete stopped-value identity，且不误用 abab 的 overlap 结构。"
+    },
+    {
+      "id": "optional_stopping_zero_gain",
+      "claim": "赌博团队构成满足 Theorem 13.18 第三条件的 stopped martingale，因此团队终端期望收益为 0。",
+      "expected_statement": "应通过具体 iid entrant-bankroll process、stopping time、integrability、bounded increments、sigma-finiteness 调用 thm_13_18。"
+    },
+    {
+      "id": "expected_waiting_times",
+      "claim": "由 0=90-E[T_abab] 和 0=81-E[T_aabb] 得到 E[T_abab]=90、E[T_aabb]=81，因此 aabb 期望等待时间更短。",
+      "expected_statement": "最终 public theorem 的前两个 conjunct 应是 actual iid waiting-time integral equalities。"
+    },
+    {
+      "id": "simulation_check",
+      "claim": "Python 模拟样例 89.1899 与 81.2196 只是与理论值一致的经验确认。",
+      "expected_statement": "Lean 可记录样例值接近理论值，但不能把模拟当成期望定理的证明。"
+    }
+  ],
+  "claim_mapping": [
+    {
+      "source_claim_id": "alphabet_and_patterns",
+      "status": "covered",
+      "lean_declarations": [
+        "ex_13_6_5_Key",
+        "ex_13_6_5_pattern_abab",
+        "ex_13_6_5_pattern_aabb",
+        "ex_13_6_5_pattern_abab_length",
+        "ex_13_6_5_pattern_aabb_length",
+        "ex_13_6_5_ababWordFin",
+        "ex_13_6_5_aabbWordFin"
+      ],
+      "assumptions": "closed definitions/theorems; no theorem-level source assumption added",
+      "conclusion": "三键 alphabet 与两个四字 pattern 被直接建模。"
+    },
+    {
+      "source_claim_id": "fair_bet",
+      "status": "covered",
+      "lean_declarations": [
+        "ex_13_6_5_fairBetNetGain",
+        "ex_13_6_5_fairBet_expected_zero",
+        "ex_13_6_5_keyFairBetNet_integral_zero",
+        "ex_13_6_5_keyFairBetNet_condExp_before_zero"
+      ],
+      "assumptions": "closed arithmetic plus iid key/filtration facts from support; no public premise relocation",
+      "conclusion": "单步 fair bet 的零期望被证明，并用于 martingale increment route。"
+    },
+    {
+      "source_claim_id": "abab_terminal_payoff",
+      "status": "covered",
+      "lean_declarations": [
+        "ex_13_6_5_ababSurvivorWinLengths",
+        "ex_13_6_5_abab_terminalSurvivorWinLengthsFromPattern",
+        "ex_13_6_5_ababTerminalTeamGain_sourceFormula",
+        "ex_13_6_5_ababTerminalTeamGain_eq",
+        "ex_13_6_5_ababConcreteEntrantTerminalNet_four_win_of_occursAt",
+        "ex_13_6_5_ababConcreteEntrantTerminalNet_two_win_of_occursAt",
+        "ex_13_6_5_ababConcreteEntrantTerminalNet_other_loses",
+        "ex_13_6_5_ababConcreteIIDEntrantBankrollProcess_eq_of_occursAt",
+        "ex_13_6_5_abab_concrete_iid_entrant_bankroll_process",
+        "ex_13_6_5_abab_concrete_stoppedValue_eq_terminalTeamGain_ae"
+      ],
+      "assumptions": "hT is the local first-occurrence equality inside the concrete theorem; final public theorem is closed",
+      "conclusion": "abab 的 [4,2] survivor structure、90-T payoff 和 concrete stopped-value identity 均保持 pattern-specific route。"
+    },
+    {
+      "source_claim_id": "aabb_terminal_payoff",
+      "status": "covered",
+      "lean_declarations": [
+        "ex_13_6_5_aabbSurvivorWinLengths",
+        "ex_13_6_5_aabb_terminalSurvivorWinLengthsFromPattern",
+        "ex_13_6_5_aabbTerminalTeamGain_sourceFormula",
+        "ex_13_6_5_aabbTerminalTeamGain_eq",
+        "ex_13_6_5_aabbConcreteEntrantTerminalNet_four_win_of_occursAt",
+        "ex_13_6_5_aabbConcreteEntrantTerminalNet_other_loses",
+        "ex_13_6_5_aabbConcreteIIDEntrantBankrollProcess_eq_of_occursAt",
+        "ex_13_6_5_aabb_concrete_iid_entrant_bankroll_process",
+        "ex_13_6_5_aabb_concrete_stoppedValue_eq_terminalTeamGain_ae"
+      ],
+      "assumptions": "hT is the local first-occurrence equality inside the concrete theorem; final public theorem is closed",
+      "conclusion": "aabb 的 [4] survivor structure、81-T payoff 和 concrete stopped-value identity 均保持 pattern-specific route。"
+    },
+    {
+      "source_claim_id": "optional_stopping_zero_gain",
+      "status": "covered",
+      "lean_declarations": [
+        "ex_13_6_5_ababConcreteIIDEntrantBankrollProcess_martingaleBefore",
+        "ex_13_6_5_aabbConcreteIIDEntrantBankrollProcess_martingaleBefore",
+        "ex_13_6_5_ababConcreteIIDEntrantBankrollProcess_bounded_increments",
+        "ex_13_6_5_aabbConcreteIIDEntrantBankrollProcess_bounded_increments",
+        "ex_13_6_5_ababWaitingTime_integrable",
+        "ex_13_6_5_aabbWaitingTime_integrable",
+        "ex_13_6_5_typingNaturalFiltrationBefore_sigmaFinite",
+        "ex_13_6_5_teamGain_zero_from_optionalStopping"
+      ],
+      "assumptions": "generic helper takes a process record, but ex_13_6_5_abab_expectedWaitingTime_concrete and ex_13_6_5_aabb_expectedWaitingTime_concrete instantiate all fields locally with concrete iid facts",
+      "conclusion": "Theorem 13.18 的零 stopped-gain route 被实际用于两个具体模式。"
+    },
+    {
+      "source_claim_id": "expected_waiting_times",
+      "status": "covered",
+      "lean_declarations": [
+        "ex_13_6_5_abab_expectedWaitingTime_concrete",
+        "ex_13_6_5_aabb_expectedWaitingTime_concrete",
+        "ex_13_6_5_aabb_shorter_than_abab",
+        "ex_13_6_5"
+      ],
+      "assumptions": "final ex_13_6_5 is closed",
+      "conclusion": "final theorem 首两个 conjunct 分别是 actual iid integral waiting-time equalities 90 和 81。"
+    },
+    {
+      "source_claim_id": "simulation_check",
+      "status": "covered",
+      "lean_declarations": [
+        "ex_13_6_5_sampleAverage_abab",
+        "ex_13_6_5_sampleAverage_aabb",
+        "ex_13_6_5_sampleOutput_consistent"
+      ],
+      "assumptions": "closed numeric check",
+      "conclusion": "模拟输出只作为一致性记录，未用于证明理论期望结论。"
+    }
+  ],
+  "route_inspection": {
+    "status": "covered",
+    "source_route": "教材路线是 fair one-letter bets -> entrant team martingale -> first occurrence stopping time -> terminal payoff accounting for abab/aabb -> optional stopping gives zero expected team gain -> algebra solves E[T].",
+    "expected_answer_or_statement": "E[T_abab]=90, E[T_aabb]=81, and 81<90, with terminal gains 90-T and 81-T and simulation values recorded only as consistency evidence.",
+    "local_mathlib_search": "未依赖 Mathlib shortcut 替代教材证明；Mathlib/MeasureTheory 只用于 measurability、integral、conditional expectation、finite-sum algebra 和 Theorem 13.18 support route。",
+    "public_interface_check": "final theorem ex_13_6_5 is closed. The generic ex_13_6_5_GamblingTeamProcess helper has fields, but the public concrete expectation theorems instantiate them internally; no downstream/user-facing theorem requires fresh hypotheses absent from source.",
+    "support_or_reassembly_decision": "P4 word-pattern common support is acceptable as reusable support: ex_13_6_5_wordFinPrefixMatches and its measurability lemmas are bridged back by ex_13_6_5_ababPrefixMatches_iff_wordFin and ex_13_6_5_aabbPrefixMatches_iff_wordFin. The terminal payoff and final expectation route remain pattern-specific.",
+    "stop_go_verdict": "go",
+    "notes": "重点检查确认 AABB/ABAB theorem names and final route preserved: ex_13_6_5_abab_concrete_iid_entrant_bankroll_process and ex_13_6_5_aabb_concrete_iid_entrant_bankroll_process are consumed by the respective AE stopped-value bridges and concrete expected waiting-time theorems."
+  },
+  "spine_alignment": {
+    "status": "covered",
+    "summary": "source proof spine is preserved at an appropriate abstraction level. The shared word-prefix support is only an internal reusable bridge; it does not replace the two pattern-specific terminal payoff proofs or final optional-stopping assembly.",
+    "obligations_checked": [
+      {
+        "obligation_id": "alphabet_and_patterns",
+        "route_class": "source-route definitions/theorems",
+        "lean_landing": "ex_13_6_5_Key; ex_13_6_5_pattern_abab; ex_13_6_5_pattern_aabb; length theorems",
+        "assessment": "covered"
+      },
+      {
+        "obligation_id": "fair_bet",
+        "route_class": "source-route theorem",
+        "lean_landing": "ex_13_6_5_fairBet_expected_zero and conditional expectation lift",
+        "assessment": "covered"
+      },
+      {
+        "obligation_id": "concrete_gambler_payoff_components",
+        "route_class": "source-route finite payoff theorem",
+        "lean_landing": "ex_13_6_5_fourWins_netGain; ex_13_6_5_twoWins_netGain; survivor length declarations",
+        "assessment": "covered"
+      },
+      {
+        "obligation_id": "abab_terminal_payoff",
+        "route_class": "source-route pattern-specific theorem",
+        "lean_landing": "ex_13_6_5_ababConcreteIIDEntrantBankrollProcess_eq_of_occursAt -> ex_13_6_5_abab_concrete_iid_entrant_bankroll_process -> AE bridge",
+        "assessment": "covered"
+      },
+      {
+        "obligation_id": "aabb_terminal_payoff",
+        "route_class": "source-route pattern-specific theorem",
+        "lean_landing": "ex_13_6_5_aabbConcreteIIDEntrantBankrollProcess_eq_of_occursAt -> ex_13_6_5_aabb_concrete_iid_entrant_bankroll_process -> AE bridge",
+        "assessment": "covered"
+      },
+      {
+        "obligation_id": "optional_stopping_zero_gain",
+        "route_class": "Theorem 13.18 bridge/proof-debt support instantiated by concrete source route",
+        "lean_landing": "ex_13_6_5_teamGain_zero_from_optionalStopping applied in concrete expectation theorems",
+        "assessment": "covered"
+      },
+      {
+        "obligation_id": "expected_waiting_times",
+        "route_class": "source-route final assembly",
+        "lean_landing": "ex_13_6_5_abab_expectedWaitingTime_concrete; ex_13_6_5_aabb_expectedWaitingTime_concrete; ex_13_6_5",
+        "assessment": "covered"
+      },
+      {
+        "obligation_id": "simulation_check",
+        "route_class": "source-output numeric consistency record",
+        "lean_landing": "ex_13_6_5_sampleOutput_consistent",
+        "assessment": "covered"
+      }
+    ],
+    "missing_obligations": [],
+    "shortcut_assessment": "no_adapter_only_shortcut_detected"
+  },
+  "obligation_review": {
+    "status": "covered",
+    "summary": "All eight obligations from proof_obligations.json/context were checked. No open blocking obligation or scaffold hypothesis remains. The P4 prefix bridge is statement-preserving and the final route still lands on pattern-specific theorems.",
+    "items": [
+      {
+        "obligation_id": "alphabet_and_patterns",
+        "status": "covered",
+        "expected_theorem_signature": "Definitions for the three-key alphabet and both patterns, plus length checks showing both patterns have length 4.",
+        "lean_landing": "ex_13_6_5_Key; ex_13_6_5_pattern_abab; ex_13_6_5_pattern_aabb; ex_13_6_5_pattern_abab_length; ex_13_6_5_pattern_aabb_length",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Closed definitions and rfl/finite-list length checks match the source alphabet and two target words."
+      },
+      {
+        "obligation_id": "fair_bet",
+        "status": "covered",
+        "expected_theorem_signature": "For every real stake m, (1/3)*gain(m,true) + (2/3)*gain(m,false) = 0.",
+        "lean_landing": "ex_13_6_5_fairBetNetGain; ex_13_6_5_fairBet_expected_zero; ex_13_6_5_keyFairBetNet_integral_zero; ex_13_6_5_keyFairBetNet_condExp_before_zero",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The fair-bet arithmetic is proved directly and lifted to iid coordinate/filtration facts without adding a source-level premise."
+      },
+      {
+        "obligation_id": "concrete_gambler_payoff_components",
+        "status": "covered",
+        "expected_theorem_signature": "Four consecutive wins net 80, two consecutive wins net 8, with abab survivor lengths [4,2] and aabb survivor lengths [4].",
+        "lean_landing": "ex_13_6_5_gamblerNetAfterWins; ex_13_6_5_fourWins_netGain; ex_13_6_5_twoWins_netGain; ex_13_6_5_ababSurvivorWinLengths; ex_13_6_5_aabbSurvivorWinLengths; ex_13_6_5_abab_terminalSurvivorWinLengthsFromPattern; ex_13_6_5_aabb_terminalSurvivorWinLengthsFromPattern",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Finite payoff constants and pattern-specific survivor lists are explicit. The common suffix-prefix computation lands back in abab/aabb-specific survivor declarations."
+      },
+      {
+        "obligation_id": "abab_terminal_payoff",
+        "status": "covered",
+        "expected_theorem_signature": "Closed theorem proving abab terminal gain 90 - T and its stopped-value identity for the concrete iid entrant process.",
+        "lean_landing": "ex_13_6_5_ababTerminalTeamGain_sourceFormula; ex_13_6_5_ababTerminalTeamGain_eq; ex_13_6_5_ababConcreteEntrantTerminalNet_four_win_of_occursAt; ex_13_6_5_ababConcreteEntrantTerminalNet_two_win_of_occursAt; ex_13_6_5_ababConcreteEntrantTerminalNet_other_loses; ex_13_6_5_ababConcreteIIDEntrantBankrollProcess_eq_of_occursAt; ex_13_6_5_abab_concrete_iid_entrant_bankroll_process; ex_13_6_5_abab_concrete_stoppedValue_eq_terminalTeamGain_ae",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Pattern-specific theorem proves four-win/two-win survivors and all other entrants lose, then sums to 90-T and bridges to thm_13_18_stoppedValueReal. No public premise assumes the terminal payoff."
+      },
+      {
+        "obligation_id": "aabb_terminal_payoff",
+        "status": "covered",
+        "expected_theorem_signature": "Closed theorem proving aabb terminal gain 81 - T and its stopped-value identity for the concrete iid entrant process.",
+        "lean_landing": "ex_13_6_5_aabbTerminalTeamGain_sourceFormula; ex_13_6_5_aabbTerminalTeamGain_eq; ex_13_6_5_aabbConcreteEntrantTerminalNet_four_win_of_occursAt; ex_13_6_5_aabbConcreteEntrantTerminalNet_other_loses; ex_13_6_5_aabbConcreteIIDEntrantBankrollProcess_eq_of_occursAt; ex_13_6_5_aabb_concrete_iid_entrant_bankroll_process; ex_13_6_5_aabb_concrete_stoppedValue_eq_terminalTeamGain_ae",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Pattern-specific theorem rules out the one-, two-, and three-prefix survivors for aabb, proves only the four-win survivor remains, sums to 81-T, and bridges to the stopped-value identity."
+      },
+      {
+        "obligation_id": "optional_stopping_zero_gain",
+        "status": "covered",
+        "expected_theorem_signature": "Apply Theorem 13.18 to concrete iid gambling-team martingales with bounded increments and integrable waiting times.",
+        "lean_landing": "ex_13_6_5_ababConcreteIIDEntrantBankrollProcess_martingaleBefore; ex_13_6_5_aabbConcreteIIDEntrantBankrollProcess_martingaleBefore; ex_13_6_5_ababConcreteIIDEntrantBankrollProcess_bounded_increments; ex_13_6_5_aabbConcreteIIDEntrantBankrollProcess_bounded_increments; ex_13_6_5_ababWaitingTime_integrable; ex_13_6_5_aabbWaitingTime_integrable; ex_13_6_5_typingNaturalFiltrationBefore_sigmaFinite; ex_13_6_5_teamGain_zero_from_optionalStopping",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Generic optional-stopping helper uses Theorem 13.18, and the concrete expectation theorems locally build G using concrete iid martingales, stopping-time facts, integrability, update, bounded-gain, and sigma-finiteness facts."
+      },
+      {
+        "obligation_id": "expected_waiting_times",
+        "status": "covered",
+        "expected_theorem_signature": "Closed source-facing theorem whose first two conjuncts are the actual iid expected waiting-time conclusions for abab and aabb.",
+        "lean_landing": "ex_13_6_5_abab_expectedWaitingTime_concrete; ex_13_6_5_aabb_expectedWaitingTime_concrete; ex_13_6_5",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The final theorem is closed and begins with the two concrete iid waiting-time integral equalities."
+      },
+      {
+        "obligation_id": "simulation_check",
+        "status": "covered",
+        "expected_theorem_signature": "The sample values 89.1899 and 81.2196 are within 1 of the theoretical constants 90 and 81.",
+        "lean_landing": "ex_13_6_5_sampleAverage_abab; ex_13_6_5_sampleAverage_aabb; ex_13_6_5_sampleOutput_consistent",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Closed norm_num check; not used as proof of the expectation theorems."
+      }
+    ],
+    "open_blockers": [],
+    "scaffold_assessment": []
+  },
+  "evidence_review": {
+    "status": "covered",
+    "summary": "Read semantic_review_request_v16.json, semantic_review_input_v16.json, semantic_review_result_template_v16.json, semantic_review_prompt_v16.md, semantic_review_context_v16.md, proof_obligations.json, and relevant Lean output/support files. Ran lake env lean ToyApollo\\Output\\ex_13_6_5.lean successfully. rg found no sorry/admit/axiom/opaque/unsafe in the reviewed task/support chain.",
+    "items": [
+      {
+        "evidence_class": "source_tex",
+        "status": "covered",
+        "evidence": "Source text requires fair-game construction, abab terminal equation 90-E[T], aabb terminal equation 81-E[T], Theorem 13.18 optional stopping, conclusion E[T_abab]=90 and E[T_aabb]=81, and simulation consistency."
+      },
+      {
+        "evidence_class": "lean_subject",
+        "status": "covered",
+        "evidence": "Checked ToyApollo/Output/ex_13_6_5.lean plus ex_13_6_5_base_support.lean, ex_13_6_5_word_pattern_support.lean, ex_13_6_5_abab_support.lean, ex_13_6_5_aabb_support.lean, and ex_13_6_5_optional_stopping_support.lean. Key final declarations match the source route."
+      },
+      {
+        "evidence_class": "proof_obligations",
+        "status": "covered",
+        "evidence": "proof_obligations.json lists eight obligations, no remaining blockers, and no scaffold hypotheses. Each obligation has a concrete Lean landing checked against the current output/support files."
+      },
+      {
+        "evidence_class": "audit",
+        "status": "covered",
+        "evidence": "Historical audit shows earlier wrapper/process blockers were fixed in later reviews. Current read-only audit checked that concrete entrant-bankroll process theorems are consumed by the final route and that generic process helpers do not become public theorem-level assumptions."
+      },
+      {
+        "evidence_class": "classification",
+        "status": "covered",
+        "evidence": "Classification says this task requires decomposition across fair-game construction, two pattern-specific terminal payoff calculations, optional stopping, algebraic extraction, and simulation check. Current Lean output provides those separate landings."
+      },
+      {
+        "evidence_class": "dependency_status",
+        "status": "covered",
+        "evidence": "Hard dependency thm_13_18 is used through thm_13_18_canonical. Soft import ex_13_6_5_optional_stopping_support is output-present but ledger-missing per context; this is dependency metadata debt, not a semantic blocker, because the imported file exists and lake env lean succeeds."
+      },
+      {
+        "evidence_class": "downstream",
+        "status": "covered",
+        "evidence": "Review context reports no direct downstream consumers. Public interface remains reusable and closed for the main theorem."
+      },
+      {
+        "evidence_class": "ledger_status",
+        "status": "covered",
+        "evidence": "Context records current ledger status COMPLETED and build candidate state draft. I did not modify ledger or phase2_status."
+      },
+      {
+        "evidence_class": "hashes",
+        "status": "covered",
+        "evidence": "Template candidate_hash 58bf96ab722e3b58bdcdc758609b70673b5c3c8d463f5cec70194365a593413a was preserved. Raw Get-FileHash values for current official_snapshot_v16.lean and ToyApollo/Output/ex_13_6_5.lean differ from each other and from the template hash, but Compare-Object reports the snapshot and current output are linewise identical; semantic review therefore used the current request/template binding plus actual linewise Lean content."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "interface_contract": {
+    "status": "covered",
+    "summary": "The exported interface remains source-facing and reusable. The final theorem is closed; concrete expected-waiting-time theorems expose actual iid integrals. P4 prefix bridge statements preserve pattern-specific meaning via iff theorems and do not drift into a weaker word-only public interface.",
+    "mismatches": []
+  },
+  "downstream_adequacy": {
+    "status": "covered",
+    "summary": "No direct downstream consumers are listed. If future downstream tasks consume ex_13_6_5, the first two conjuncts provide the actual iid expected waiting-time conclusions without extra hypotheses.",
+    "consumers_checked": [
+      {
+        "block_id": "none",
+        "status": "not_applicable",
+        "evidence": "semantic_review_context_v16.md reports no direct downstream consumers in current plans."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "forbidden_weakenings": [
+    {
+      "id": "no_pure_existence_or_placeholder_interface",
+      "status": "not_present",
+      "evidence": "No reviewed target is replaced by an existential shell, witness-only structure, fallback default, or placeholder. Main conclusions are concrete equalities."
+    },
+    {
+      "id": "no_theorem_specific_wrapper_only",
+      "status": "not_present",
+      "evidence": "Generic helpers exist, but final concrete route uses named abab/aabb concrete entrant-bankroll processes, terminal payoff proofs, and optional-stopping instantiations. The P4 common word support is bridged back to pattern-specific prefix statements."
+    },
+    {
+      "id": "no_public_premise_relocation",
+      "status": "not_present",
+      "evidence": "Concrete public theorem ex_13_6_5 and concrete expectation theorems have no added theorem-level hypotheses. Generic helper premises are filled internally before reaching public conclusions."
+    },
+    {
+      "id": "no_prefix_statement_drift",
+      "status": "not_present",
+      "evidence": "ex_13_6_5_ababPrefixMatches_iff_wordFin and ex_13_6_5_aabbPrefixMatches_iff_wordFin prove equivalence between original pattern prefix predicates and wordFin prefix predicate for wins <= 4; calls to common measurability support pass through those bridges."
+    }
+  ],
+  "findings": [],
+  "recommended_disposition": "accept",
+  "reviewer_schema_hints": {
+    "reviewer_independence_shape": {
+      "role": "independent_read_only_reviewer",
+      "read_only": true,
+      "did_edit_candidate": false,
+      "used_current_review_request": true,
+      "attestation": "<short statement that this was an independent read-only review>"
+    },
+    "section_status_values": [
+      "covered",
+      "partial",
+      "missing",
+      "violated",
+      "unclear"
+    ],
+    "route_inspection_fields": [
+      "source_route",
+      "expected_answer_or_statement",
+      "local_mathlib_search",
+      "public_interface_check",
+      "support_or_reassembly_decision",
+      "stop_go_verdict"
+    ],
+    "route_inspection_stop_go_values": [
+      "go",
+      "stop",
+      "needs_reassembly",
+      "needs_route_redesign",
+      "unclear",
+      "not_applicable"
+    ],
+    "obligation_item_status_values": [
+      "covered",
+      "partial",
+      "missing",
+      "violated",
+      "unclear",
+      "not_applicable",
+      "accepted_as_proof_debt"
+    ],
+    "obligation_item_contract_fields": {
+      "expected_theorem_signature": "<source-faithful theorem/lemma type expected for this obligation>",
+      "lean_landing": "<Lean theorem/lemma declaration proving the obligation>",
+      "landing_kind": "theorem | lemma | private_axiom | structure_field | support_predicate | support_constructor | adapter | public_premise | empty | unknown",
+      "proof_contract_status": "unverified | verified | failed | not_applicable | accepted_adapter | open_math_debt | beyond_book_exception",
+      "signature_match": "unverified | passed | failed | not_applicable",
+      "body_reassumption_check": "unverified | passed | failed | not_applicable",
+      "public_premise_check": "unverified | passed | failed | not_applicable",
+      "proof_contract_notes": "<why the landing satisfies or fails the contract>"
+    },
+    "evidence_item_shape": {
+      "evidence_class": "source_tex | lean_subject | proof_obligations | audit | classification | dependency_status | downstream | ledger_status | hashes",
+      "status": "covered | partial | missing | violated | unclear | not_applicable",
+      "evidence": "<what was checked and how conflicts/staleness were resolved>"
+    },
+    "required_evidence_classes": [
+      "source_tex",
+      "lean_subject",
+      "proof_obligations",
+      "audit",
+      "classification",
+      "dependency_status",
+      "downstream",
+      "ledger_status",
+      "hashes"
+    ],
+    "downstream_consumer_entry_shape": {
+      "block_id": "<direct downstream block_id>",
+      "status": "covered | not_applicable | blocked",
+      "evidence": "<why this exported interface is adequate or not applicable>"
+    },
+    "forbidden_weakening_status_values": [
+      "not_present",
+      "present",
+      "not_applicable"
+    ],
+    "pass_review_apply_command": "python .\\run_chapter.py --phase 2 --phase2-mode review-apply --tasks <task_id> --review-result <semantic_review_result_vM.json>"
+  }
+}
