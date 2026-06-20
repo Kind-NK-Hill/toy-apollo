@@ -1,0 +1,52 @@
+{
+  "task_id": "thm_11_7",
+  "attempt": 14,
+  "candidate_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_11_7\\official_snapshot_v8.lean",
+  "candidate_hash": "cc54edcc5321ae942169107129810bfa9180134853dbbd3907f8451e2d3a3b38",
+  "verified_at": "2026-06-20T21:27:10.681785Z",
+  "success": true,
+  "repl": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed is source-route completion for a proof-bearing task)."
+  },
+  "temp_build": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed is source-route completion for a proof-bearing task)."
+  },
+  "final_build": {
+    "success": true,
+    "output": "Existing official output was already validated before review."
+  },
+  "diagnostics": [],
+  "primary_failure_kind": "",
+  "blocking_symbols": [],
+  "raw_outputs": {
+    "repl": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed is source-route completion for a proof-bearing task).",
+    "temp_build": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed is source-route completion for a proof-bearing task).",
+    "final_build": "Existing official output was already validated before review."
+  },
+  "mode": "review-apply",
+  "disposition": "official_output_review_pass",
+  "state_transition": "none",
+  "semantic_review": {
+    "verdict": "pass",
+    "proof_class": "source_route_proof_completed",
+    "completion_class": "textbook_proof_completed",
+    "phase2_status": "pass",
+    "phase2_status_reason": "source_route_proof_completed is source-route completion for a proof-bearing task",
+    "task_status": "pass",
+    "task_status_reason": "source_route_proof_completed is source-route completion for a proof-bearing task",
+    "needs_class_normalization": false,
+    "runner_status": "codex_handoff_applied",
+    "summary": "The v8 official snapshot preserves the Theorem 11.7 source-facing parent after the P9 split: the task text, private final assembly helper, and exported theorem remain in ToyApollo.Output.thm_11_7, while the fourth-moment, centering, tail-summability, and supporting proof-spine landings move to ToyApollo.Output.thm_11_7_support. The public theorem still exposes only the source assumptions hInd, hMean, and hFourth, derives tail summability internally, applies Borel-Cantelli through thm_5_8, and closes with thm_10_1. No public-premise relocation, private axiom, placeholder, or adapter-only shortcut was found.",
+    "recommended_disposition": "accept",
+    "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_11_7\\semantic_review_result_v8.json",
+    "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_11_7\\semantic_review_input_v8.json",
+    "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_11_7\\semantic_review_prompt_v8.md",
+    "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_11_7\\semantic_review_report_v8.md",
+    "cache_key": "bf60310eeaa15471f567427bd12d12705d5cb3684c6bb561f1cef58a0b48ab4b",
+    "cache_hit": false,
+    "reviewer_backend_id": "codex-handoff"
+  },
+  "verify_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_11_7\\verify_result_v14.json"
+}

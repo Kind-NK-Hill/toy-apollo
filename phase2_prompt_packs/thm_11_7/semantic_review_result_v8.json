@@ -1,0 +1,349 @@
+{
+  "schema_version": "phase2.semantic_review.result.v7",
+  "task_id": "thm_11_7",
+  "mode": "review-existing",
+  "attempt": 8,
+  "prompt_version": 9,
+  "rubric_version": 9,
+  "review_input_hash": "b74584e02ab7ea3ceb10b565ef56967bab1d9fef93b20a39105dbcafed644b43",
+  "cache_key": "bf60310eeaa15471f567427bd12d12705d5cb3684c6bb561f1cef58a0b48ab4b",
+  "reviewer_backend_id": "codex-handoff",
+  "runner": {
+    "status": "codex_handoff_applied",
+    "result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_11_7\\semantic_review_result_v8.json"
+  },
+  "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_11_7\\semantic_review_input_v8.json",
+  "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_11_7\\semantic_review_prompt_v8.md",
+  "review_context_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_11_7\\semantic_review_context_v8.md",
+  "expected_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_11_7\\semantic_review_result_v8.json",
+  "candidate_hash": "cc54edcc5321ae942169107129810bfa9180134853dbbd3907f8451e2d3a3b38",
+  "verdict": "pass",
+  "confidence": "high",
+  "summary": "The v8 official snapshot preserves the Theorem 11.7 source-facing parent after the P9 split: the task text, private final assembly helper, and exported theorem remain in ToyApollo.Output.thm_11_7, while the fourth-moment, centering, tail-summability, and supporting proof-spine landings move to ToyApollo.Output.thm_11_7_support. The public theorem still exposes only the source assumptions hInd, hMean, and hFourth, derives tail summability internally, applies Borel-Cantelli through thm_5_8, and closes with thm_10_1. No public-premise relocation, private axiom, placeholder, or adapter-only shortcut was found.",
+  "proof_class": "source_route_proof_completed",
+  "completion_class": "textbook_proof_completed",
+  "reviewer_independence": {
+    "role": "independent_read_only_reviewer",
+    "read_only": true,
+    "did_edit_candidate": false,
+    "used_current_review_request": true,
+    "attestation": "Independent read-only semantic review of the v8 request, context, official snapshot, split parent, and support module; no Lean, ledger, status, or review-apply files were edited."
+  },
+  "source_claims": [
+    {
+      "claim_id": "source_independence",
+      "source_text": "The variables X_i are independent random variables.",
+      "expected_formal_content": "The public theorem assumes def_5_10_randomVariables P X and does not strengthen the statement to iid variables."
+    },
+    {
+      "claim_id": "source_mean_and_fourth_moment",
+      "source_text": "The variables have common mean mu and uniformly bounded fourth moments.",
+      "expected_formal_content": "The public theorem assumes forall i, P[X i] = mu and exists c, thm_11_7_fourthMomentUniformBound P X mu c; the support predicate records the uncentered fourth-moment package."
+    },
+    {
+      "claim_id": "source_centering_reduction",
+      "source_text": "Without loss of generality, reduce to the centered case by considering X_i - mu.",
+      "expected_formal_content": "Centered fourth-moment support is derived internally in the support module from the uncentered public package."
+    },
+    {
+      "claim_id": "source_fourth_moment_bound",
+      "source_text": "Expand E[S_n^4], cancel mixed terms using independence, bound paired square terms, and obtain an O(n^2) fourth-moment estimate.",
+      "expected_formal_content": "The support module contains theorem-level landings for expansion, cancellation, paired-square bounds, and thm_11_7_fourth_moment_sum_bound."
+    },
+    {
+      "claim_id": "source_tail_summability",
+      "source_text": "Use Markov's inequality and the fourth-moment estimate to show sum_n P(|S_n|/n > epsilon) < infinity.",
+      "expected_formal_content": "thm_11_7_tail_summability_from_fourth_moment derives thm_11_7_tailSummabilitySupport from the source assumptions."
+    },
+    {
+      "claim_id": "source_borel_cantelli_and_as_convergence",
+      "source_text": "Apply Borel-Cantelli and Theorem 10.1 to conclude S_n/n converges to mu almost surely.",
+      "expected_formal_content": "The parent module's private thm_11_7_from_tailSummability applies thm_5_8 and thm_10_1; public thm_11_7 supplies its tail support internally."
+    }
+  ],
+  "claim_mapping": [
+    {
+      "claim_id": "source_independence",
+      "lean_declarations": [
+        "thm_11_7"
+      ],
+      "assumptions": [
+        "hInd : def_5_10_randomVariables P X"
+      ],
+      "conclusion": "Independence remains a source-facing public assumption in the final theorem and is not replaced by an iid premise."
+    },
+    {
+      "claim_id": "source_mean_and_fourth_moment",
+      "lean_declarations": [
+        "thm_11_7_fourthMomentUniformBound",
+        "thm_11_7"
+      ],
+      "assumptions": [
+        "hMean : forall i, P[X i] = mu",
+        "hFourth : exists c, thm_11_7_fourthMomentUniformBound P X mu c"
+      ],
+      "conclusion": "The public assumptions match the textbook common mean and uniform fourth-moment assumptions."
+    },
+    {
+      "claim_id": "source_centering_reduction",
+      "lean_declarations": [
+        "thm_11_7_centeredFourthMomentUniformBound_of_fourthMomentUniformBound",
+        "thm_11_7_tail_summability_from_fourth_moment"
+      ],
+      "assumptions": [
+        "hMean",
+        "hFourth"
+      ],
+      "conclusion": "Centered support is derived inside ToyApollo.Output.thm_11_7_support and is not exposed as an extra public theorem premise."
+    },
+    {
+      "claim_id": "source_fourth_moment_bound",
+      "lean_declarations": [
+        "thm_11_7_centeredPartialSum_fourth_expand",
+        "thm_11_7_centered_pair_product_integral_eq_zero",
+        "thm_11_7_centered_singleton_pair_product_integral_eq_zero",
+        "thm_11_7_centered_four_distinct_product_integral_eq_zero",
+        "thm_11_7_paired_square_bound",
+        "thm_11_7_fourth_moment_sum_bound"
+      ],
+      "assumptions": [
+        "def_5_10_randomVariables P X",
+        "forall i, P[X i] = mu",
+        "centered fourth-moment support derived from hFourth"
+      ],
+      "conclusion": "The source fourth-moment calculation remains theorem-level support after the split rather than becoming an adapter-only wrapper."
+    },
+    {
+      "claim_id": "source_tail_summability",
+      "lean_declarations": [
+        "thm_11_7_markov_fourth_tail_bound",
+        "thm_11_7_fourth_moment_ratio_eq_pseries_term",
+        "thm_11_7_pseries_tail_bound",
+        "thm_11_7_tail_summability_from_partial_sum_bound",
+        "thm_11_7_tail_summability_from_fourth_moment"
+      ],
+      "assumptions": [
+        "source public assumptions of thm_11_7_tail_summability_from_fourth_moment"
+      ],
+      "conclusion": "Tail summability is derived internally from the fourth-moment source route."
+    },
+    {
+      "claim_id": "source_borel_cantelli_and_as_convergence",
+      "lean_declarations": [
+        "thm_11_7_from_tailSummability",
+        "thm_11_7"
+      ],
+      "assumptions": [
+        "thm_11_7_tailSummabilitySupport P X mu, supplied internally by thm_11_7_tail_summability_from_fourth_moment"
+      ],
+      "conclusion": "The final parent theorem combines tail summability, thm_5_8, and thm_10_1 to prove ConvergesAlmostSurely for thm_11_5_sampleMean."
+    }
+  ],
+  "route_inspection": {
+    "status": "covered",
+    "source_route": "source assumptions -> uncentered-to-centered reduction -> fourth-moment expansion and mixed-term cancellation -> O(n^2) partial-sum fourth-moment bound -> Markov/p-series tail summability -> Borel-Cantelli -> thm_10_1 almost-sure convergence",
+    "expected_answer_or_statement": "theorem thm_11_7 : def_5_10_randomVariables P X -> (forall i, P[X i] = mu) -> (exists c, thm_11_7_fourthMomentUniformBound P X mu c) -> ConvergesAlmostSurely P (fun n => thm_11_5_sampleMean X n) (fun _ => mu)",
+    "local_mathlib_search": "The proof uses local chapter interfaces def_5_10, def_9_1, thm_5_8, thm_10_1, thm_11_1, and thm_11_5 with Mathlib support inside theorem-level source-route landings; no stronger black-box theorem replaces the textbook proof spine.",
+    "public_interface_check": "The public theorem in ToyApollo/Output/thm_11_7.lean lines 229-236 exposes only hInd, hMean, and hFourth; tail summability is not a public premise and is supplied by thm_11_7_tail_summability_from_fourth_moment.",
+    "support_or_reassembly_decision": "P9 is a support extraction only: ToyApollo/Output/thm_11_7_support.lean contains the reusable proof-spine declarations, while ToyApollo/Output/thm_11_7.lean retains the task text, private final assembly helper, and exported thm_11_7.",
+    "stop_go_verdict": "go",
+    "notes": "The context's historical line references to thm_11_7.lean are stale after the split, but the same declaration names are present in thm_11_7_support.lean and the parent still reassembles the source-facing theorem."
+  },
+  "spine_alignment": {
+    "status": "covered",
+    "summary": "The split preserves the source spine: all proof-bearing support declarations are still present under the same public names in thm_11_7_support, and the parent still performs the Borel-Cantelli/Theorem 10.1 final assembly for the exported theorem.",
+    "obligations_checked": [
+      "independent_sequence_interface lands as public hInd : def_5_10_randomVariables P X in thm_11_7 at ToyApollo/Output/thm_11_7.lean:231.",
+      "sample_average_interface lands in the conclusion via thm_11_5_sampleMean X n at ToyApollo/Output/thm_11_7.lean:234.",
+      "mean_and_fourth_moment_interface lands as hMean and hFourth in thm_11_7 at ToyApollo/Output/thm_11_7.lean:232-233; uncentered fourth-moment support is defined in thm_11_7_support.lean:28.",
+      "source_centering_reduction lands in thm_11_7_centeredFourthMomentUniformBound_of_fourthMomentUniformBound at thm_11_7_support.lean:176.",
+      "fourth_moment_expansion_tail_bound lands in thm_11_7_centeredPartialSum_fourth_expand, cancellation lemmas, thm_11_7_fourth_moment_sum_bound at thm_11_7_support.lean:362, and tail-summability landings at thm_11_7_support.lean:899 and :930.",
+      "borel_cantelli_limsup_step lands in private thm_11_7_from_tailSummability at ToyApollo/Output/thm_11_7.lean:206, which applies thm_5_8.",
+      "almost_sure_convergence_bridge lands in thm_11_7_from_tailSummability and public thm_11_7 at ToyApollo/Output/thm_11_7.lean:229, which calls thm_10_1 through the final assembly."
+    ],
+    "missing_obligations": [],
+    "shortcut_assessment": "No adapter-only shortcut found. The P9 split moved support declarations without weakening the parent theorem or replacing source proof obligations with public assumptions."
+  },
+  "obligation_review": {
+    "status": "covered",
+    "summary": "All six blocking obligations are covered or not applicable as source-facing interface obligations. The three proof-bearing obligations have theorem-level landings with verified contracts, now split between the support module and the final parent assembly.",
+    "items": [
+      {
+        "obligation_id": "independent_sequence_interface",
+        "status": "not_applicable",
+        "evidence": "Source-facing assumption is exposed directly as hInd : def_5_10_randomVariables P X in public thm_11_7.",
+        "expected_theorem_signature": "Public source assumption def_5_10_randomVariables P X.",
+        "lean_landing": "def_5_10_randomVariables P X; public hInd in thm_11_7",
+        "landing_kind": "support_predicate",
+        "proof_contract_status": "not_applicable",
+        "signature_match": "not_applicable",
+        "body_reassumption_check": "not_applicable",
+        "public_premise_check": "not_applicable",
+        "proof_contract_notes": "This is a source hypothesis, not a theorem to prove; it is not strengthened to iid."
+      },
+      {
+        "obligation_id": "sample_average_interface",
+        "status": "not_applicable",
+        "evidence": "The conclusion of thm_11_7 uses ConvergesAlmostSurely P (fun n => thm_11_5_sampleMean X n) (fun _ => mu), reusing the Chapter 11 sample-mean interface.",
+        "expected_theorem_signature": "Reuse thm_11_5_sampleMean for S_n/n.",
+        "lean_landing": "thm_11_5_sampleMean in the conclusion of thm_11_7",
+        "landing_kind": "support_predicate",
+        "proof_contract_status": "not_applicable",
+        "signature_match": "not_applicable",
+        "body_reassumption_check": "not_applicable",
+        "public_premise_check": "not_applicable",
+        "proof_contract_notes": "Interface reuse only; no alternate public sample-average theorem is required."
+      },
+      {
+        "obligation_id": "mean_and_fourth_moment_interface",
+        "status": "not_applicable",
+        "evidence": "thm_11_7 exposes hMean and hFourth as source assumptions; thm_11_7_fourthMomentUniformBound is uncentered and centered support is derived internally.",
+        "expected_theorem_signature": "Public assumptions P[X i] = mu and exists c, thm_11_7_fourthMomentUniformBound P X mu c.",
+        "lean_landing": "hMean : forall i, P[X i] = mu; hFourth : exists c, thm_11_7_fourthMomentUniformBound P X mu c",
+        "landing_kind": "support_predicate",
+        "proof_contract_status": "not_applicable",
+        "signature_match": "not_applicable",
+        "body_reassumption_check": "not_applicable",
+        "public_premise_check": "not_applicable",
+        "proof_contract_notes": "The public fourth-moment interface is source-facing and uncentered; no centered fourth-moment premise is exposed."
+      },
+      {
+        "obligation_id": "fourth_moment_expansion_tail_bound",
+        "status": "covered",
+        "evidence": "thm_11_7_support.lean contains thm_11_7_fourth_moment_sum_bound at line 362, thm_11_7_tail_summability_from_partial_sum_bound at line 899, and thm_11_7_tail_summability_from_fourth_moment at line 930. The public theorem uses this internal support, not a public tail-summability premise.",
+        "expected_theorem_signature": "theorem thm_11_7_tail_summability_from_fourth_moment : def_5_10_randomVariables P X -> (forall i, P[X i] = mu) -> (exists c, thm_11_7_fourthMomentUniformBound P X mu c) -> thm_11_7_tailSummabilitySupport P X mu",
+        "lean_landing": "thm_11_7_fourth_moment_sum_bound; thm_11_7_tail_summability_from_partial_sum_bound; thm_11_7_tail_summability_from_fourth_moment",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The tail-summability theorem takes only source assumptions and derives thm_11_7_tailSummabilitySupport internally; no private axiom or caller-supplied h_tail_summability is used."
+      },
+      {
+        "obligation_id": "borel_cantelli_limsup_step",
+        "status": "covered",
+        "evidence": "ToyApollo/Output/thm_11_7.lean line 206 defines private theorem thm_11_7_from_tailSummability; its body applies thm_5_8 to almostSureDeviationEvent using hTail epsilon hepsilon.",
+        "expected_theorem_signature": "private theorem thm_11_7_from_tailSummability : thm_11_7_tailSummabilitySupport P X mu -> ConvergesAlmostSurely P (fun n => thm_11_5_sampleMean X n) (fun _ => mu)",
+        "lean_landing": "thm_11_7_from_tailSummability",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The tail premise is private/internal to final assembly and is supplied by thm_11_7_tail_summability_from_fourth_moment in public thm_11_7."
+      },
+      {
+        "obligation_id": "almost_sure_convergence_bridge",
+        "status": "covered",
+        "evidence": "thm_11_7_from_tailSummability calls thm_10_1, and public thm_11_7 at line 229 invokes thm_11_7_from_tailSummability with internally derived tail support.",
+        "expected_theorem_signature": "theorem thm_11_7 : def_5_10_randomVariables P X -> (forall i, P[X i] = mu) -> (exists c, thm_11_7_fourthMomentUniformBound P X mu c) -> ConvergesAlmostSurely P (fun n => thm_11_5_sampleMean X n) (fun _ => mu)",
+        "lean_landing": "thm_11_7_from_tailSummability; thm_11_7",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The final theorem has only source assumptions and no added downstream-facing convergence or tail-summability premise."
+      }
+    ],
+    "open_blockers": [],
+    "scaffold_assessment": []
+  },
+  "evidence_review": {
+    "status": "covered",
+    "summary": "Required evidence classes were checked against the v8 request, v8 context, proof obligations, official snapshot, current split files, and a fresh Lean/forbidden-scan check. Stale historical line references are reconciled by declaration name and current split location.",
+    "items": [
+      {
+        "evidence_class": "source_tex",
+        "status": "covered",
+        "evidence": "semantic_review_context_v8.md includes Theorem 11.7 with the proof route: centering, fourth-moment expansion, Cauchy-Schwarz estimate, Markov tail bound, Borel-Cantelli, and Theorem 10.1."
+      },
+      {
+        "evidence_class": "lean_subject",
+        "status": "covered",
+        "evidence": "official_snapshot_v8.lean and ToyApollo/Output/thm_11_7.lean contain the task text, private thm_11_7_from_tailSummability at line 206, and public thm_11_7 at line 229. ToyApollo/Output/thm_11_7_support.lean contains the support declarations named in the public interface summary."
+      },
+      {
+        "evidence_class": "proof_obligations",
+        "status": "covered",
+        "evidence": "proof_obligations.json lists six blocking obligations, no open blockers, and verified contract fields for the three proof-bearing obligations; the P9 split changes file location but not declaration names or public contracts."
+      },
+      {
+        "evidence_class": "audit",
+        "status": "covered",
+        "evidence": "Historical audit entries record earlier private-axiom or public-tail-premise states, but current v8 code has no private axiom and no public tail-summability premise. The current split preserves theorem-level landings in thm_11_7_support and final assembly in thm_11_7."
+      },
+      {
+        "evidence_class": "classification",
+        "status": "covered",
+        "evidence": "docs/phase2/status_contract.md treats textbook_proof_completed/source_route_proof_completed as pass-projecting classes; the v8 review uses those legal classes and does not downgrade the task to interface_bridge_completed."
+      },
+      {
+        "evidence_class": "dependency_status",
+        "status": "covered",
+        "evidence": "The v8 context reports def_5_10, def_9_1, thm_5_8, thm_10_1, thm_11_1, and thm_11_5 as available via completed or output-present fallback dependencies. The current parent imports thm_11_7_support, whose imports provide these dependencies."
+      },
+      {
+        "evidence_class": "downstream",
+        "status": "not_applicable",
+        "evidence": "semantic_review_context_v8.md reports no direct downstream consumers in current plans; downstream adequacy is therefore covered with an explicit empty consumer list."
+      },
+      {
+        "evidence_class": "ledger_status",
+        "status": "covered",
+        "evidence": "semantic_review_context_v8.md reports current task ledger status COMPLETED and output owner task_id thm_11_7. This independent review did not edit the ledger or run review-apply."
+      },
+      {
+        "evidence_class": "hashes",
+        "status": "covered",
+        "evidence": "semantic_review_request_v8.json and semantic_review_input_v8.json identify candidate hash cc54edcc5321ae942169107129810bfa9180134853dbbd3907f8451e2d3a3b38; the result preserves that binding field."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "interface_contract": {
+    "status": "covered",
+    "summary": "The public interface is source-faithful: def_5_10_randomVariables, common mean, and uncentered fourth-moment uniform bound are assumptions; the conclusion is convergence of thm_11_5_sampleMean to mu. The split does not expose h_tail_summability, a centered-moment package, iid, a private proof object, or extra downstream assumptions.",
+    "mismatches": []
+  },
+  "downstream_adequacy": {
+    "status": "covered",
+    "summary": "No direct downstream consumers were found in the v8 review context, and the exported theorem name thm_11_7 plus support declaration names remain available through the parent import.",
+    "consumers_checked": [],
+    "blocking_issues": []
+  },
+  "forbidden_weakenings": [
+    {
+      "weakening": "Replace textbook public interface with a pure existence shell, placeholder definition, or witness-only structure.",
+      "status": "not_present",
+      "evidence": "thm_11_7 exports concrete source assumptions and a ConvergesAlmostSurely conclusion, not a witness shell."
+    },
+    {
+      "weakening": "Rewrite a downstream-reusable theorem into a theorem-specific wrapper only sufficient for this file.",
+      "status": "not_present",
+      "evidence": "Reusable support declarations keep their existing names in thm_11_7_support, including thm_11_7_tail_summability_from_fourth_moment and thm_11_7_fourth_moment_sum_bound."
+    },
+    {
+      "weakening": "Add theorem-level assumptions to mask upstream interface gaps.",
+      "status": "not_present",
+      "evidence": "The public theorem has only hInd, hMean, and hFourth source assumptions; tail summability and centered fourth-moment support are derived internally."
+    },
+    {
+      "weakening": "Use an adapter-only shortcut instead of landing the proof spine for a proof-bearing textbook theorem.",
+      "status": "not_present",
+      "evidence": "The support module contains theorem-level landings for the fourth-moment estimate, tail summability, Markov/p-series bridge, and mixed-term cancellation; the parent contains Borel-Cantelli and Theorem 10.1 assembly."
+    },
+    {
+      "weakening": "Introduce sorry, admit, unsafe, axiom, obl_ declarations, or obligation-output imports in the reviewed P9 files.",
+      "status": "not_present",
+      "evidence": "Fresh forbidden scan over ToyApollo/Output/thm_11_7.lean, ToyApollo/Output/thm_11_7_support.lean, and official_snapshot_v8.lean returned no matches."
+    }
+  ],
+  "findings": [],
+  "recommended_disposition": "accept",
+  "needs_class_normalization": false,
+  "cache_class": "semantic_verdict",
+  "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_11_7\\semantic_review_result_v8.json",
+  "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_11_7\\semantic_review_report_v8.md"
+}

@@ -1,0 +1,301 @@
+{
+  "schema_version": "phase2.semantic_review.result.v7",
+  "task_id": "prob_7_3",
+  "mode": "review-existing",
+  "attempt": 4,
+  "prompt_version": 9,
+  "rubric_version": 9,
+  "review_input_hash": "24da1ced83844f4aaf48d6d95d22092e5316ff06ff308218e976c42b601a604b",
+  "cache_key": "88eadf1b41312d866f7ea99bf77cf7d803aebd49041947f265fc2a34b71169fe",
+  "reviewer_backend_id": "codex-handoff",
+  "runner": {
+    "status": "codex_handoff_applied",
+    "result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_7_3\\semantic_review_result_v4.json"
+  },
+  "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_7_3\\semantic_review_input_v4.json",
+  "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_7_3\\semantic_review_prompt_v4.md",
+  "review_context_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_7_3\\semantic_review_context_v4.md",
+  "expected_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_7_3\\semantic_review_result_v4.json",
+  "candidate_hash": "f8b1394731b28e7c9408a68f2b2e71cd78d90fc45c969127d1451201bffcbab7",
+  "verdict": "pass",
+  "confidence": "high",
+  "summary": "The current official output remains source-faithful after the P5 partition-support split. prob_7_3_partition_support.lean is now a compatibility wrapper importing prob_7_3_partition_protected_support; prob_7_3_partition_atom_support carries the atom-free endpoint and compact positive-layer support; prob_7_3_partition_protected_support carries protected endpoint, endpoint-finset, and clean-cell partition support. The public theorem statement still matches the resolved strict finite-interval statement: hab, boundedness on Icc a b, and alpha.measure {a} = 0 imply the part (a) RSIntegrable iff relative a.e. continuity under alpha.measure.restrict (Icc a b), plus the part (b) completion integrability and completed integral equality over Icc a b. Fresh lake env lean ToyApollo/Output/prob_7_3.lean passed; scans found no sorry/admit/axiom/unsafe, no ToyApollo.Output.obl_* import, no obl_* declaration, and no calls to the forbidden RS bridge-debt names.",
+  "proof_class": "source_faithful_proof_completed",
+  "completion_class": "parent_owned_rs_lebesgue_criterion_and_completion_transfer",
+  "reviewer_independence": {
+    "role": "independent_read_only_reviewer",
+    "read_only": true,
+    "did_edit_candidate": false,
+    "used_current_review_request": true,
+    "attestation": "I reviewed the v4 request, context, template, proof obligations, current official output, P5 split files, and relevant source-spine landings read-only; I wrote only this result file."
+  },
+  "source_claims": [
+    {
+      "id": "source_part_a",
+      "source_ref": "Problem 7.3(a)",
+      "claim": "For bounded f on [a,b] and Stieltjes measure function alpha with mu({a}) = 0, f is Riemann-Stieltjes integrable on [a,b] iff f is continuous mu-almost everywhere on the interval."
+    },
+    {
+      "id": "source_part_b_integrability",
+      "source_ref": "Problem 7.3(b), integrability clause",
+      "claim": "If f is Riemann-Stieltjes integrable on [a,b], then f is integrable with respect to the completion of the induced Lebesgue-Stieltjes measure over [a,b]."
+    },
+    {
+      "id": "source_part_b_integral_equality",
+      "source_ref": "Problem 7.3(b), equality clause",
+      "claim": "If f is Riemann-Stieltjes integrable on [a,b], then the Riemann-Stieltjes integral equals the completed Lebesgue-Stieltjes integral over [a,b]."
+    }
+  ],
+  "claim_mapping": [
+    {
+      "source_claim_id": "source_part_a",
+      "lean_declaration": "prob_7_3_partA_rsIntegrable_iff_ae_continuous; public theorem prob_7_3 first conjunct",
+      "assumptions": "hab : a < b, hBounded : exists M, forall x in Icc a b, abs (f x) <= M, hAtom : alpha.measure {a} = 0",
+      "conclusion": "RSIntegrable f alpha a b iff forall-ae x under alpha.measure.restrict (Icc a b), ContinuousWithinAt f (Icc a b) x",
+      "status": "covered"
+    },
+    {
+      "source_claim_id": "source_part_b_integrability",
+      "lean_declaration": "prob_7_3_partB_completion_integrable_integral_eq; public theorem prob_7_3 second conjunct first component",
+      "assumptions": "same source assumptions plus hRS : RSIntegrable f alpha a b",
+      "conclusion": "IntegrableOn (fun x : NullMeasurableSpace Real alpha.measure => f x) (Icc a b) alpha.measure.completion",
+      "status": "covered"
+    },
+    {
+      "source_claim_id": "source_part_b_integral_equality",
+      "lean_declaration": "prob_7_3_partB_completion_integrable_integral_eq; public theorem prob_7_3 second conjunct second component",
+      "assumptions": "same source assumptions plus hRS : RSIntegrable f alpha a b",
+      "conclusion": "rsIntegral f alpha a b hRS equals the set integral over Icc a b of the NullMeasurableSpace-lifted function against alpha.measure.completion",
+      "status": "covered"
+    }
+  ],
+  "route_inspection": {
+    "status": "covered",
+    "source_route": "The route remains the accepted parent-owned route: large-oscillation layers characterize relative discontinuity; RSIntegrable gives small Darboux gaps and forces each large-oscillation layer null through compact layer extraction, atom-free fine partitions, protected cell covers, and partition-oscillation lower bounds; layer-null then gives a.e. continuity. Conversely, a.e. continuity gives null large-oscillation layers, small open neighborhoods of closed layers, compact-complement uniform small oscillation, DarbouxGapSmall, and hence RSIntegrable. Part (b) derives AEStronglyMeasurable and ordinary IntegrableOn from part (a), boundedness, and finite restricted measure; proves the Ioc Darboux sandwich equality; uses hAtom to pass from Ioc to Icc; and transfers integrability and the set integral to Measure.completion using trim APIs.",
+    "expected_answer_or_statement": "The public theorem prob_7_3 states Problem 7.3(a)(b) for StieltjesFunction alpha on a strict interval a < b, with relative continuity under alpha.measure.restrict (Icc a b) and completed integral over Icc a b under alpha.measure.completion.",
+    "local_mathlib_search": "Mathlib and existing ToyApollo support are used for standard measure, compactness, finite-measure, Darboux common-limit, endpoint, trim, and integral APIs. The inspected route does not replace the source proof with a stronger adapter-only Mathlib theorem or task-shaped bridge.",
+    "public_interface_check": "The public theorem exposes only hab, hBounded, and hAtom. It does not add public AEStronglyMeasurable, IntegrableOn, DarbouxGapSmall, atom-free endpoint, sigma-finiteness, completion trim, or bridge-debt premises.",
+    "support_or_reassembly_decision": "The P5 refactor is structural only. prob_7_3_partition_support.lean is a facade importing prob_7_3_partition_protected_support; prob_7_3_partition_atom_support imports the oscillation layer and contains the atom-free/fine-partition and compact positive-layer support; prob_7_3_partition_protected_support imports atom support and contains protected endpoint, endpoint-finset, and clean-cell partition support. prob_7_3.lean still proves the parent theorem by simpa from prob_7_3_support_result, which reassembles prob_7_3_partA_rsIntegrable_iff_ae_continuous and prob_7_3_partB_completion_integrable_integral_eq.",
+    "stop_go_verdict": "go",
+    "notes": "Fresh v4 checks confirmed the compatibility wrapper and split imports, ran lake env lean ToyApollo/Output/prob_7_3.lean successfully, and found no forbidden tokens or old RS bridge-debt names in the prob_7_3 family or v4 snapshot."
+  },
+  "spine_alignment": {
+    "status": "covered",
+    "summary": "The source proof spine remains present at theorem-level granularity after the P5 split: relative oscillation/discontinuity, atom-free partition endpoint support, protected-cell partition support, forward contradiction from Darboux gaps, reverse Darboux estimate from a.e. continuity, endpoint atom correction, and completion transfer.",
+    "obligations_checked": [
+      {
+        "source_step": "strict finite-interval statement and relative continuity surface",
+        "lean_evidence": "prob_7_3_partA_strict_statement, prob_7_3_statement_alignment_strict_interval, and public theorem prob_7_3",
+        "status": "covered"
+      },
+      {
+        "source_step": "relative discontinuity is controlled by countable large-oscillation layers",
+        "lean_evidence": "prob_7_3_relativeDiscontinuitySet_null_of_largeOscillationSet_nulls, prob_7_3_largeOscillationSet_subset_relativeDiscontinuitySetOn, prob_7_3_ae_continuity_iff_largeOscillationSet_nulls",
+        "status": "covered"
+      },
+      {
+        "source_step": "RS integrability implies a.e. continuity",
+        "lean_evidence": "prob_7_3_darbouxGapSmall_of_rsIntegrable, prob_7_3_exists_fine_partition_atom_free_internal_endpoints, prob_7_3_rsIntegrable_forces_largeOscillationSet_null, prob_7_3_rsIntegrable_implies_ae_continuity",
+        "status": "covered"
+      },
+      {
+        "source_step": "a.e. continuity implies RS integrability",
+        "lean_evidence": "prob_7_3_largeOscillationSet_nulls_imply_darbouxGapSmall and prob_7_3_ae_continuity_implies_rsIntegrable",
+        "status": "covered"
+      },
+      {
+        "source_step": "part (b) ordinary measurability and LS integrability",
+        "lean_evidence": "prob_7_3_ae_continuity_implies_aestronglyMeasurable_restrict_Icc and prob_7_3_integrableOn_Icc_of_ae_continuous_bounded",
+        "status": "covered"
+      },
+      {
+        "source_step": "Ioc Darboux sandwich and left endpoint atom correction recover the Icc RS/LS equality",
+        "lean_evidence": "prob_7_3_ioc_integral_eq_rsIntegral_of_integrableOn and prob_7_3_integral_Icc_eq_rsIntegral",
+        "status": "covered"
+      },
+      {
+        "source_step": "completion integrability and completed integral equality",
+        "lean_evidence": "prob_7_3_integrableOn_completion_of_integrableOn, prob_7_3_setIntegral_completion_eq, prob_7_3_partB_completion_integrable_integral_eq",
+        "status": "covered"
+      }
+    ],
+    "missing_obligations": [],
+    "shortcut_assessment": "No adapter-only shortcut or bridge-debt wrapper was found in the current prob_7_3 route. Splitting the old proof_support file into parent-owned layers did not change the source-facing proof route."
+  },
+  "obligation_review": {
+    "status": "covered",
+    "summary": "All four blocking proof obligations remain discharged by verified theorem landings with source-facing signatures and without public-premise relocation; the P5 partition split did not change these landings.",
+    "items": [
+      {
+        "obligation_id": "p7_3_a_rs_lebesgue_criterion",
+        "status": "covered",
+        "expected_theorem_signature": "For bounded f on [a,b], prove RSIntegrable f alpha a b iff f is continuous alpha.measure-a.e. on Set.Icc a b, with the hAtom endpoint convention accounted for.",
+        "lean_landing": "prob_7_3_partA_rsIntegrable_iff_ae_continuous",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "route_class": "source-route theorem",
+        "proof_contract_notes": "The theorem has the expected assumptions hab, hAtom, and hBounded and proves both directions through prob_7_3_rsIntegrable_implies_ae_continuity and prob_7_3_ae_continuity_implies_rsIntegrable, not by re-assuming the criterion or calling rsIntegrable_iff_ae_continuous_stieltjes."
+      },
+      {
+        "obligation_id": "p7_3_support_measure_completion_compatibility",
+        "status": "covered",
+        "expected_theorem_signature": "Provide reviewed support for restricting alpha.measure to Set.Icc a b, using alpha.measure {a} = 0 where needed, and transferring integrals/integrability through Measure.completion.",
+        "lean_landing": "prob_7_3_integral_Icc_eq_rsIntegral; prob_7_3_integrableOn_completion_of_integrableOn; prob_7_3_setIntegral_completion_eq",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "route_class": "source-route theorem with Mathlib-backed completion API",
+        "proof_contract_notes": "The endpoint atom correction is internal to prob_7_3_integral_Icc_eq_rsIntegral. Completion transfer is proved through trim/restrict_trim/integral_trim_ae in prob_7_3_integrableOn_completion_of_integrableOn and prob_7_3_setIntegral_completion_eq, not exposed as a public premise."
+      },
+      {
+        "obligation_id": "p7_3_b_completion_integrability",
+        "status": "covered",
+        "expected_theorem_signature": "From RSIntegrable f alpha a b, prove f restricted to Set.Icc a b is integrable with respect to alpha.measure.completion.",
+        "lean_landing": "prob_7_3_partB_completion_integrable_integral_eq",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "route_class": "source-route theorem",
+        "proof_contract_notes": "The proof derives ordinary IntegrableOn through prob_7_3_integral_Icc_eq_rsIntegral and transfers it via prob_7_3_integrableOn_completion_of_integrableOn. It does not call or wrap rsIntegrable_completion_integral_eq."
+      },
+      {
+        "obligation_id": "p7_3_b_completion_integral_equality",
+        "status": "covered",
+        "expected_theorem_signature": "Prove rsIntegral f alpha a b hRS equals the completed Lebesgue-Stieltjes integral of f over Set.Icc a b.",
+        "lean_landing": "prob_7_3_partB_completion_integrable_integral_eq",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "route_class": "source-route theorem",
+        "proof_contract_notes": "The equality is assembled from prob_7_3_integral_Icc_eq_rsIntegral and prob_7_3_setIntegral_completion_eq, keeping the final domain as Icc a b under alpha.measure.completion."
+      }
+    ],
+    "open_blockers": [],
+    "scaffold_assessment": []
+  },
+  "evidence_review": {
+    "status": "covered",
+    "summary": "The required evidence classes were checked against the v4 request and the current official output. Fresh typecheck of ToyApollo/Output/prob_7_3.lean passed. Raw official_snapshot_v4.lean hash differs from ToyApollo/Output/prob_7_3.lean because of line endings, but normalized text is equal and the official output hash matches the v4 request candidate hash.",
+    "items": [
+      {
+        "evidence_class": "source_tex",
+        "status": "covered",
+        "evidence": "The source TeX asks for exactly the RS integrability iff a.e. continuity criterion and the completed Lebesgue-Stieltjes integrability/equality under boundedness and mu({a}) = 0."
+      },
+      {
+        "evidence_class": "lean_subject",
+        "status": "covered",
+        "evidence": "Inspected ToyApollo/Output/prob_7_3.lean, prob_7_3_completion_support.lean, prob_7_3_forward_support.lean, prob_7_3_partition_atom_support.lean, prob_7_3_partition_protected_support.lean, prob_7_3_partition_support.lean, and official_snapshot_v4.lean. The public theorem prob_7_3 has the source-facing statement, and the P5 split is a compatibility wrapper plus parent-owned partition support layers rather than a statement change."
+      },
+      {
+        "evidence_class": "proof_obligations",
+        "status": "covered",
+        "evidence": "proof_obligations.json lists four blocking obligations, all status proved and review accepted. Each was rechecked against its current Lean landing after the P5 split."
+      },
+      {
+        "evidence_class": "audit",
+        "status": "covered",
+        "evidence": "Searched the prob_7_3 family and official_snapshot_v4.lean for sorry, admit, axiom, unsafe, ToyApollo.Output.obl_* imports, obl_* declarations, rsIntegrable_iff_ae_continuous_stieltjes, and rsIntegrable_completion_integral_eq; no matches were found. Fresh lake env lean ToyApollo/Output/prob_7_3.lean exited 0."
+      },
+      {
+        "evidence_class": "classification",
+        "status": "covered",
+        "evidence": "The task remains a proof-bearing source-route completion. The class source_faithful_proof_completed and completion class parent_owned_rs_lebesgue_criterion_and_completion_transfer are still supported by the inspected theorem route after the P5 split."
+      },
+      {
+        "evidence_class": "dependency_status",
+        "status": "covered",
+        "evidence": "The review context lists no upstream textbook dependencies. The checked prob_7_3 files import the existing ToyApollo support chain and the new P5 split modules; no ToyApollo.Output.obl_* import appears."
+      },
+      {
+        "evidence_class": "downstream",
+        "status": "covered",
+        "evidence": "The review context records no direct downstream consumers. The public statement remains source-facing and does not require downstream consumers to add non-source hypotheses."
+      },
+      {
+        "evidence_class": "ledger_status",
+        "status": "covered",
+        "evidence": "The v4 context records current ledger status COMPLETED and no open blocking obligations. This review did not edit ledger state or run review-apply."
+      },
+      {
+        "evidence_class": "hashes",
+        "status": "covered",
+        "evidence": "ToyApollo/Output/prob_7_3.lean SHA256 is f8b1394731b28e7c9408a68f2b2e71cd78d90fc45c969127d1451201bffcbab7, matching the v4 review request candidate hash. official_snapshot_v4.lean has a different raw SHA256 but is normalized-text equal to the official output, consistent with line-ending-only difference."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "interface_contract": {
+    "status": "covered",
+    "summary": "The public interface is still exactly source-facing: prob_7_3 assumes a < b, boundedness on Icc a b, and alpha.measure {a} = 0, and concludes the part (a) iff plus part (b) completed-measure integrability and integral equality. The P5 split did not add theorem-level assumptions or absorb a source obligation into a public premise.",
+    "mismatches": []
+  },
+  "downstream_adequacy": {
+    "status": "covered",
+    "summary": "No direct downstream consumers are listed. The exported parent theorem and compatibility import wrapper remain reusable without adding new downstream assumptions.",
+    "consumers_checked": [],
+    "blocking_issues": []
+  },
+  "forbidden_weakenings": [
+    {
+      "forbidden": "Do not convert the textbook public interface into a pure existential shell, placeholder definition, or witness-only structure.",
+      "status": "not_present",
+      "evidence": "prob_7_3 is a theorem with the two source conclusions directly in its public statement; no witness-only or placeholder shell is exported."
+    },
+    {
+      "forbidden": "Do not rewrite reusable theorem obligations into theorem-specific wrappers that only self-prove this file.",
+      "status": "not_present",
+      "evidence": "The P5 split exposes reusable atom-free endpoint, compact positive-layer, protected endpoint, endpoint-finset, clean-cell partition, oscillation, forward, endpoint, and completion-transfer theorems. prob_7_3_support_result only reassembles landed source steps."
+    },
+    {
+      "forbidden": "Do not introduce sorry, admit, axiom, or unsafe in the checked output family.",
+      "status": "not_present",
+      "evidence": "Search across the prob_7_3 family and official_snapshot_v4.lean found no occurrences of sorry, admit, axiom, or unsafe."
+    },
+    {
+      "forbidden": "Do not import ToyApollo.Output.obl_* or add nested obl_* support.",
+      "status": "not_present",
+      "evidence": "The checked files have no ToyApollo.Output.obl_* import and no obl_* call or declaration."
+    },
+    {
+      "forbidden": "Do not call or wrap rsIntegrable_iff_ae_continuous_stieltjes.",
+      "status": "not_present",
+      "evidence": "The forbidden theorem name is absent from the checked prob_7_3 files."
+    },
+    {
+      "forbidden": "Do not call or wrap rsIntegrable_completion_integral_eq.",
+      "status": "not_present",
+      "evidence": "The forbidden theorem name is absent from the checked prob_7_3 files."
+    },
+    {
+      "forbidden": "Do not move source obligations into public premises.",
+      "status": "not_present",
+      "evidence": "The public theorem does not assume a.e. continuity, IntegrableOn, AEStronglyMeasurable, DarbouxGapSmall, completion compatibility, atom-free partitions, or any bridge-debt hypothesis."
+    },
+    {
+      "forbidden": "Do not replace the closed interval completion statement by an Ioc-only statement.",
+      "status": "not_present",
+      "evidence": "Ioc appears only internally for the Darboux sandwich; prob_7_3_integral_Icc_eq_rsIntegral applies the left endpoint atom correction, and the public completion integral is over Icc a b."
+    },
+    {
+      "forbidden": "Do not infer ordinary Borel measurability of f from a.e. continuity as a replacement for the required route.",
+      "status": "not_present",
+      "evidence": "The route uses prob_7_3_ae_continuity_implies_aestronglyMeasurable_restrict_Icc and IntegrableOn.of_bound on the restricted measure; ordinary Measurable f is not added as a premise."
+    }
+  ],
+  "findings": [],
+  "recommended_disposition": "accept_existing_official_output",
+  "needs_class_normalization": false,
+  "cache_class": "semantic_verdict",
+  "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_7_3\\semantic_review_result_v4.json",
+  "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_7_3\\semantic_review_report_v4.md"
+}

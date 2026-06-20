@@ -24,13 +24,13 @@
       "depends_on": [
         "def_5_10"
       ],
-      "lean_landing": "def_5_10_randomVariables P X",
+      "lean_landing": "def_5_10_randomVariables P X; public hInd in thm_11_7",
       "status": "obsolete",
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "Reuse the local independence interface and do not strengthen the theorem to identically distributed variables.",
-      "last_review_evidence": "Source-facing assumption is exposed directly as hInd : def_5_10_randomVariables P X in thm_11_7.",
+      "last_review_evidence": "Source-facing assumption is exposed directly as hInd : def_5_10_randomVariables P X in public thm_11_7.",
       "expected_theorem_signature": "Public source assumption def_5_10_randomVariables P X.",
       "landing_kind": "support_predicate",
       "proof_contract_status": "not_applicable",
@@ -47,7 +47,7 @@
       "depends_on": [
         "thm_11_5"
       ],
-      "lean_landing": "",
+      "lean_landing": "thm_11_5_sampleMean in the conclusion of thm_11_7",
       "status": "obsolete",
       "review_status": "accepted",
       "blocking": true,
@@ -70,7 +70,7 @@
       "depends_on": [
         "def_9_1"
       ],
-      "lean_landing": "P[X i] = mu and thm_11_7_fourthMomentUniformBound P X mu c",
+      "lean_landing": "hMean : forall i, P[X i] = mu; hFourth : exists c, thm_11_7_fourthMomentUniformBound P X mu c",
       "status": "obsolete",
       "review_status": "accepted",
       "blocking": true,
@@ -94,13 +94,13 @@
         "def_9_1",
         "thm_11_1"
       ],
-      "lean_landing": "thm_11_7_fourth_moment_sum_bound; thm_11_7_tail_summability_from_fourth_moment; thm_11_7_tail_summability_from_partial_sum_bound; thm_11_7_from_tailSummability; thm_11_7",
+      "lean_landing": "thm_11_7_fourth_moment_sum_bound; thm_11_7_tail_summability_from_partial_sum_bound; thm_11_7_tail_summability_from_fourth_moment",
       "status": "proved",
       "review_status": "accepted",
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "Step 7/8 completion on 2026-05-25, self-corrected on 2026-05-26: the public fourth-moment package was restored to the uncentered textbook assumption, while `thm_11_7_centeredFourthMomentUniformBound_of_fourthMomentUniformBound` derives the centered `L^4`/moment package internally. The finite fourth-moment partial-sum estimate is theorem-level evidence via `thm_11_7_fourth_moment_sum_bound`; `thm_11_7_tail_summability_from_fourth_moment` derives `thm_11_7_tailSummabilitySupport`, and public `thm_11_7` no longer exposes `h_tail_summability` or an equivalent proof premise.",
-      "last_review_evidence": "official_snapshot_v7.lean contains thm_11_7_fourth_moment_sum_bound at line 550, thm_11_7_tail_summability_from_partial_sum_bound at line 1087, and thm_11_7_tail_summability_from_fourth_moment at line 1118. The final public theorem uses the latter, not a public tail premise.",
+      "last_review_evidence": "thm_11_7_support.lean contains thm_11_7_fourth_moment_sum_bound at line 362, thm_11_7_tail_summability_from_partial_sum_bound at line 899, and thm_11_7_tail_summability_from_fourth_moment at line 930. The public theorem uses this internal support, not a public tail-summability premise.",
       "source_output_alignment": {
         "audited_at": "2026-05-19",
         "audit_class": "A_theorem_landing_complete",
@@ -171,11 +171,11 @@
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "The final assembly theorem applies `thm_5_8` to `almostSureDeviationEvent` using `thm_11_7_tailSummabilitySupport`.",
-      "last_review_evidence": "official_snapshot_v7.lean line 1137 defines private theorem thm_11_7_from_tailSummability; its body applies thm_5_8 to almostSureDeviationEvent using hTail epsilon hepsilon.",
+      "last_review_evidence": "ToyApollo/Output/thm_11_7.lean line 206 defines private theorem thm_11_7_from_tailSummability; its body applies thm_5_8 to almostSureDeviationEvent using hTail epsilon hepsilon.",
       "expected_theorem_signature": "private theorem thm_11_7_from_tailSummability : thm_11_7_tailSummabilitySupport P X mu -> ConvergesAlmostSurely P (fun n => thm_11_5_sampleMean X n) (fun _ => mu)",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "The tail premise is private/internal to assembly and is supplied by thm_11_7_tail_summability_from_fourth_moment in public thm_11_7.",
+      "proof_contract_notes": "The tail premise is private/internal to final assembly and is supplied by thm_11_7_tail_summability_from_fourth_moment in public thm_11_7.",
       "signature_match": "passed",
       "body_reassumption_check": "passed",
       "public_premise_check": "passed"
@@ -194,7 +194,7 @@
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "`thm_11_7_from_tailSummability` uses `thm_10_1` after the Borel-Cantelli step, and public `thm_11_7` now supplies its tail support internally from the fourth-moment source assumptions.",
-      "last_review_evidence": "thm_11_7_from_tailSummability calls thm_10_1, and public thm_11_7 at line 1160 invokes thm_11_7_from_tailSummability with internally derived tail support.",
+      "last_review_evidence": "thm_11_7_from_tailSummability calls thm_10_1, and public thm_11_7 at line 229 invokes thm_11_7_from_tailSummability with internally derived tail support.",
       "expected_theorem_signature": "theorem thm_11_7 : def_5_10_randomVariables P X -> (forall i, P[X i] = mu) -> (exists c, thm_11_7_fourthMomentUniformBound P X mu c) -> ConvergesAlmostSurely P (fun n => thm_11_5_sampleMean X n) (fun _ => mu)",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
@@ -307,9 +307,16 @@
       "status": "covered",
       "summary": "All six blocking obligations are covered or not applicable as source-facing interface obligations; the three proof-bearing obligations have verified theorem contracts with passed signature, body-reassumption, and public-premise checks.",
       "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-20T21:27:09.307800Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All six blocking obligations are covered or not applicable as source-facing interface obligations. The three proof-bearing obligations have theorem-level landings with verified contracts, now split between the support module and the final parent assembly.",
+      "open_blockers": []
     }
   ],
-  "last_reviewed_at": "2026-06-06T01:37:16.422645Z",
+  "last_reviewed_at": "2026-06-20T21:27:09.307800Z",
   "source_output_alignment_audit": {
     "audited_at": "2026-05-19",
     "accepted_debt_count": 1,
