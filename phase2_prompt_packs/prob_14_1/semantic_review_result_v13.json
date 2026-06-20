@@ -1,0 +1,330 @@
+{
+  "schema_version": "phase2.semantic_review.result.v7",
+  "task_id": "prob_14_1",
+  "mode": "review-existing",
+  "attempt": 13,
+  "prompt_version": 9,
+  "rubric_version": 9,
+  "review_input_hash": "e206742db907a0b9ffcf243933a46d6e6d3629d0823c00a33f333486f11de537",
+  "cache_key": "75c7518f128b72cab6ca1522611929b07b534d0a0c4f24dace1d1c5cc2a979a0",
+  "reviewer_backend_id": "codex-handoff",
+  "runner": {
+    "status": "codex_handoff_applied",
+    "result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_1\\semantic_review_result_v13.json"
+  },
+  "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_1\\semantic_review_input_v13.json",
+  "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_1\\semantic_review_prompt_v13.md",
+  "review_context_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_1\\semantic_review_context_v13.md",
+  "expected_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_1\\semantic_review_result_v13.json",
+  "candidate_hash": "e366cd9121ba4fa2a9227781e88255b37582c2d49804b7545f4a556ed3763102",
+  "verdict": "pass",
+  "confidence": "high",
+  "summary": "The v13 official output faithfully states and proves Problem 14.1 at the accepted abstraction layer. The setup contains only the urn parameters and positivity; the white-count law, Beta law, finite beta-binomial mass formula, scaled law, Stirling/Riemann grid CDF limit, and CDF-to-weak convergence are all supplied by current theorem or interface landings rather than public premise relocation.",
+  "proof_class": "source_route_proof_completed",
+  "completion_class": "source_route_proof_completed",
+  "reviewer_independence": {
+    "role": "independent_read_only_reviewer",
+    "read_only": true,
+    "did_edit_candidate": false,
+    "used_current_review_request": true,
+    "attestation": "I independently reviewed the fresh v13 request and current Lean evidence read-only; I did not author or edit the candidate."
+  },
+  "source_claims": [
+    {
+      "id": "polya_urn_model",
+      "claim": "Problem 14.1 continues the Polya urn model from Problem 13.11 with positive initial white and black parameters w and b and first-i draw white counts X_i."
+    },
+    {
+      "id": "finite_white_count_mass",
+      "claim": "For i >= 1 and k in the displayed finite range, P(X_i = k) is the beta-binomial mass: choose(i,k) times the white and black rising factorials divided by the total rising factorial."
+    },
+    {
+      "id": "scaled_fraction_law",
+      "claim": "The random variable X_i / i is represented by scaling the finite white-count law by x -> x / i."
+    },
+    {
+      "id": "beta_limit",
+      "claim": "Using the Stirling/asymptotic route, X_i / i converges in distribution to the Beta(w,b) law."
+    }
+  ],
+  "claim_mapping": [
+    {
+      "source_claim_id": "polya_urn_model",
+      "lean_declarations": [
+        "prob_14_1_PolyaUrnBetaSetup",
+        "prob_14_1_PolyaUrnBetaSetup.whiteCountLaws",
+        "prob_14_1_polyaFinPathPMF",
+        "prob_14_1_polyaWhiteCountLaw"
+      ],
+      "assumptions": "The public setup assumes only w : Real, b : Real, and proofs 0 < w and 0 < b. The finite white-count laws are defined from the internal finite Polya path PMF, not supplied as arbitrary data.",
+      "conclusion": "The Lean model supplies the source Polya urn count laws used by the final theorem.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "finite_white_count_mass",
+      "lean_declarations": [
+        "prob_14_1_polyaWhiteMassFormula",
+        "prob_14_1_polyaPathProbability_eq_count_formula",
+        "prob_14_1_allBoolPathsOfLength_card_whiteDrawCount_eq_choose",
+        "prob_14_1_polyaWhiteCountMass_sum_fin_paths",
+        "prob_14_1_polyaWhiteCountLaw_atom",
+        "prob_14_1_finite_polya_white_count_mass",
+        "prob_14_1_white_count_mass"
+      ],
+      "assumptions": "Uses the setup positivity and finite-path construction; no public mass-formula field is present.",
+      "conclusion": "The theorem proves the displayed beta-binomial atom formula for S.whiteCountLaws i. It is slightly stronger than the source range because it also handles k = 0 when k <= i.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "scaled_fraction_law",
+      "lean_declarations": [
+        "prob_14_1_scaledCountLaw",
+        "prob_14_1_whiteFractionLaws",
+        "prob_14_1_scaled_count_law_atom",
+        "prob_14_1_white_fraction_mass"
+      ],
+      "assumptions": "The scaling bridge assumes i >= 1 to avoid division by zero.",
+      "conclusion": "The atom of the scaled law at k / i is exactly the atom of the count law at k, then part (a) supplies its beta-binomial value.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "beta_limit",
+      "lean_declarations": [
+        "prob_14_1_standardBetaLawData",
+        "prob_14_1_scaled_polya_mass_tendsto_betaDensity_of_total_count_sequence",
+        "prob_14_1_compact_interior_uniform_scaled_polya_mass_tendsto_betaDensity",
+        "prob_14_1_Icc_grid_sum_tendsto_beta_law_Icc",
+        "prob_14_1_leftTailMass_and_beta_Iic_uniform_small",
+        "prob_14_1_interior_gridCdf_tendsto",
+        "prob_14_1_rightTailMass_uniform_small",
+        "prob_14_1_gridCdfLimit_standardBeta",
+        "prob_14_1_gridCdfLimit_setup",
+        "prob_14_1_stirling_beta_cdf_convergence",
+        "prob_14_1_cdfConvergence_to_weak",
+        "prob_14_1_white_fraction_converges_to_beta",
+        "prob_14_1_support_result",
+        "prob_14_1"
+      ],
+      "assumptions": "Uses the setup positivity, the internally proved finite mass/support facts, the canonical Beta(w,b) law data, and the existing def_14_1 / thm_14_2 bridge.",
+      "conclusion": "The final theorem proves both Tendsto of the white-fraction laws to S.beta.law and def_14_1 for convergence in distribution.",
+      "assessment": "covered"
+    }
+  ],
+  "route_inspection": {
+    "status": "covered",
+    "source_route": "Source-route proof through finite Polya paths and Stirling/Riemann beta-binomial CDF convergence.",
+    "expected_answer_or_statement": "For positive urn parameters w,b, the first-i white-count law has the displayed beta-binomial mass formula and the scaled counts X_i / i converge in distribution to Beta(w,b).",
+    "local_mathlib_search": "Mathlib is used for measure/probability infrastructure, betaMeasure, beta density, weak topology, filters, and integration. The task-specific source steps land in prob_14_1_* theorem chains rather than an adapter-only theorem.",
+    "public_interface_check": "prob_14_1_PolyaUrnBetaSetup has only w, b, w_pos, and b_pos. S.beta and S.whiteCountLaws are definitions. The old public-premise relocation route for mass or CDF convergence is absent in v13.",
+    "support_or_reassembly_decision": "The facade theorem reassembles verified support landings: finite mass from path counting, scaled-law atom pushforward, standard Beta law data, grid CDF convergence, and CDF-to-weak convergence.",
+    "stop_go_verdict": "go",
+    "notes": "The current route is not the stale v12/v9 setup-field route; direct Lean inspection confirms theorem-level landings."
+  },
+  "spine_alignment": {
+    "status": "covered",
+    "summary": "The proof spine required by the source text is preserved: finite path probability depends only on counts, path layers are counted by choose(i,k), layer sums produce the beta-binomial mass, local asymptotics and Riemann sums produce Beta CDF convergence, and the Chapter 14 weak-convergence bridge yields convergence in distribution.",
+    "obligations_checked": [
+      {
+        "obligation_id": "obligation_1",
+        "source_step": "Finite Polya urn count formula.",
+        "lean_landing": "prob_14_1_polyaWhiteCountLaw_atom; prob_14_1_finite_polya_white_count_mass; prob_14_1_white_count_mass",
+        "route_class": "source-route theorem/lemma",
+        "evidence": "Derived from finite color paths, path probability count formula, choose-counting of white positions, and the finite layer sum theorem."
+      },
+      {
+        "obligation_id": "obligation_2",
+        "source_step": "Scaled white fraction law.",
+        "lean_landing": "prob_14_1_scaled_count_law_atom; prob_14_1_white_fraction_mass",
+        "route_class": "source-route theorem/lemma",
+        "evidence": "The map x -> x / i has singleton preimage {k}; the beta-binomial mass is then imported from part (a)."
+      },
+      {
+        "obligation_id": "obligation_3",
+        "source_step": "Beta(w,b) limiting law interface.",
+        "lean_landing": "prob_14_1_BetaLawData; prob_14_1_standardBetaLawData",
+        "route_class": "interface bridge",
+        "evidence": "The Beta law is canonically constructed from ProbabilityTheory.betaMeasure with density representation and positive normalizing constant."
+      },
+      {
+        "obligation_id": "obligation_4",
+        "source_step": "Stirling/asymptotic CDF convergence.",
+        "lean_landing": "prob_14_1_gridCdfLimit_standardBeta; prob_14_1_gridCdfLimit_setup; prob_14_1_stirling_beta_cdf_convergence",
+        "route_class": "source-route theorem/lemma",
+        "evidence": "The route passes through local beta-binomial mass asymptotics, compact interior uniform convergence, Riemann-sum convergence, endpoint tail controls, and grid CDF convergence."
+      },
+      {
+        "obligation_id": "obligation_5",
+        "source_step": "CDF convergence to weak/convergence-in-distribution statement.",
+        "lean_landing": "prob_14_1_cdfConvergence_to_weak; prob_14_1_white_fraction_converges_to_beta",
+        "route_class": "source-route theorem/lemma",
+        "evidence": "The theorem consumes CDF convergence and applies the Chapter 14 weak-convergence interface, then final support_result also proves def_14_1."
+      }
+    ],
+    "missing_obligations": [],
+    "shortcut_assessment": "No adapter-only shortcut or public-premise relocation was found in the v13 route."
+  },
+  "obligation_review": {
+    "status": "covered",
+    "summary": "All listed obligations are covered by current theorem/interface landings with verified contracts. No blocking proof obligation remains open under the v13 basis.",
+    "items": [
+      {
+        "obligation_id": "obligation_1",
+        "status": "covered",
+        "blocking": true,
+        "expected_theorem_signature": "A theorem deriving the beta-binomial white-count mass formula for the first i draws from the concrete Polya urn model of prob_13_11, for 1 <= i and k <= i.",
+        "lean_landing": "prob_14_1_polyaWhiteCountLaw_atom; prob_14_1_finite_polya_white_count_mass; prob_14_1_white_count_mass",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The setup has no mass-formula field. The landing derives the atom formula for the internally constructed prob_14_1_polyaWhiteCountLaw using finite path counting and layer summation.",
+        "route_class": "source-route theorem/lemma"
+      },
+      {
+        "obligation_id": "obligation_2",
+        "status": "covered",
+        "blocking": true,
+        "expected_theorem_signature": "theorem prob_14_1_scaled_count_law_atom (nu : ProbabilityMeasure Real) {i k : Nat} (hi : 1 <= i) : (prob_14_1_scaledCountLaw nu i : Measure Real) {x : Real | x = (k : Real) / (i : Real)} = (nu : Measure Real) {x : Real | x = (k : Real)}",
+        "lean_landing": "prob_14_1_scaled_count_law_atom; prob_14_1_white_fraction_mass",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The scaled atom theorem proves the map/preimage atom equality and does not assume the scaled atom conclusion.",
+        "route_class": "source-route theorem/lemma"
+      },
+      {
+        "obligation_id": "obligation_3",
+        "status": "covered",
+        "blocking": true,
+        "expected_theorem_signature": "An explicit interface identifying the limiting law as a Beta(w,b) probability law with density data.",
+        "lean_landing": "prob_14_1_BetaLawData; prob_14_1_standardBetaLawData",
+        "landing_kind": "support_constructor",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The Beta law is constructed canonically from w,b positivity through betaMeasure and density data; it is not an arbitrary convergence witness.",
+        "route_class": "interface bridge"
+      },
+      {
+        "obligation_id": "obligation_4",
+        "status": "covered",
+        "blocking": true,
+        "expected_theorem_signature": "A theorem deriving CDF convergence of the scaled beta-binomial/Polya white-fraction laws to the Beta(w,b) CDF from Stirling's approximation or an equivalent locally verified asymptotic route.",
+        "lean_landing": "prob_14_1_gridCdfLimit_standardBeta; prob_14_1_gridCdfLimit_setup; prob_14_1_stirling_beta_cdf_convergence",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The public setup theorem discharges hGrid via prob_14_1_gridCdfLimit_setup, which itself is built from local asymptotics, Riemann sums, compact-core and endpoint-tail support.",
+        "route_class": "source-route theorem/lemma"
+      },
+      {
+        "obligation_id": "obligation_5",
+        "status": "covered",
+        "blocking": false,
+        "expected_theorem_signature": "CDF convergence at continuity points of the limiting law implies Tendsto of the probability laws, hence the Definition 14.1 weak convergence formulation.",
+        "lean_landing": "prob_14_1_cdfConvergence_to_weak; prob_14_1_white_fraction_converges_to_beta",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The bridge consumes prob_14_1_stirling_beta_cdf_convergence and does not assume weak convergence. The final result also derives def_14_1 via def_14_1_iff_tendsto.",
+        "route_class": "source-route theorem/lemma"
+      }
+    ],
+    "open_blockers": [],
+    "scaffold_assessment": []
+  },
+  "evidence_review": {
+    "status": "covered",
+    "summary": "Required evidence classes were checked against the fresh v13 request, context, official snapshot, proof obligations, and current Lean support files.",
+    "items": [
+      {
+        "evidence_class": "source_tex",
+        "status": "covered",
+        "evidence": "The source claims are Problem 14.1(a)'s finite beta-binomial mass formula and Problem 14.1(b)'s convergence in distribution to Beta(w,b)."
+      },
+      {
+        "evidence_class": "lean_subject",
+        "status": "covered",
+        "evidence": "official_snapshot_v13.lean imports prob_14_1_proof_support and states prob_14_1 with finite atom formula, Tendsto to S.beta.law, and def_14_1."
+      },
+      {
+        "evidence_class": "proof_obligations",
+        "status": "covered",
+        "evidence": "All five obligations listed in the v13 context were checked against current Lean landings. Obligations 1-4 are blocking and covered; obligation 5 is nonblocking and covered."
+      },
+      {
+        "evidence_class": "audit",
+        "status": "covered",
+        "evidence": "Older proof_obligations review history contains stale fail/pass conflicts, including v9 public-field blockers. Direct v13 Lean inspection resolves the conflict: the setup now has only w,b and positivity fields, and current theorem landings replace the stale public-field route."
+      },
+      {
+        "evidence_class": "classification",
+        "status": "covered",
+        "evidence": "The task is a normal proof with explicit source-route theorem and interface support, so the task-level pass class is source_route_proof_completed, not interface_bridge_completed."
+      },
+      {
+        "evidence_class": "dependency_status",
+        "status": "covered",
+        "evidence": "The support chain imports prob_13_11, def_14_1, and thm_14_2 through prob_14_1_asymptotic_support. The v13 sanity precondition reports ToyApollo.Output.prob_14_1 builds successfully."
+      },
+      {
+        "evidence_class": "downstream",
+        "status": "covered",
+        "evidence": "The review context lists no direct downstream consumers. The exported theorem still provides reusable finite mass and convergence conclusions."
+      },
+      {
+        "evidence_class": "ledger_status",
+        "status": "covered",
+        "evidence": "The context records ledger status COMPLETED. This was treated as supporting metadata only; completion was judged from source and Lean evidence."
+      },
+      {
+        "evidence_class": "hashes",
+        "status": "covered",
+        "evidence": "The LF-normalized official snapshot hash matches candidate_hash e366cd9121ba4fa2a9227781e88255b37582c2d49804b7545f4a556ed3763102, and the request review_basis_hash is the current v13 basis 188d843fee6f1456615ccf157ec083b4feab200cc7051dd4b562103d7f3d753b."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "interface_contract": {
+    "status": "covered",
+    "summary": "The public interface is source-faithful: setup parameters are the urn parameters with positivity, S.whiteCountLaws is derived internally, S.beta is the canonical Beta(w,b) law, and the final theorem exports the finite formula plus convergence in distribution.",
+    "mismatches": []
+  },
+  "downstream_adequacy": {
+    "status": "covered",
+    "summary": "No direct downstream consumers are listed in the v13 context; the exported public theorem and support declarations are adequate for the task surface.",
+    "consumers_checked": [],
+    "blocking_issues": []
+  },
+  "forbidden_weakenings": [
+    {
+      "weakening": "Replace the textbook public interface with a pure existential shell, placeholder definition, or witness-only structure.",
+      "status": "not_present",
+      "evidence": "prob_14_1_BetaLawData contains concrete law and density data, while prob_14_1_PolyaUrnBetaSetup only contains urn parameters and positivity."
+    },
+    {
+      "weakening": "Rewrite reusable source proof obligations into a theorem-specific wrapper that only self-proves the current final statement.",
+      "status": "not_present",
+      "evidence": "The proof support exposes reusable theorem landings for finite mass, scaled atom mapping, grid CDF convergence, and CDF-to-weak convergence."
+    },
+    {
+      "weakening": "Move finite mass or Stirling-to-Beta convergence into public theorem premises.",
+      "status": "not_present",
+      "evidence": "The final theorem has only S : prob_14_1_PolyaUrnBetaSetup as an argument; the setup has no mass or convergence proof fields."
+    }
+  ],
+  "findings": [],
+  "recommended_disposition": "accept",
+  "needs_class_normalization": false,
+  "cache_class": "semantic_verdict",
+  "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_1\\semantic_review_result_v13.json",
+  "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_1\\semantic_review_report_v13.md"
+}

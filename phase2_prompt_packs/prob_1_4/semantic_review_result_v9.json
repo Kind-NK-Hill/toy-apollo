@@ -6,6 +6,12 @@
   "prompt_version": 9,
   "rubric_version": 9,
   "review_input_hash": "25e457af6a7a751a49f6b3790bf2c23bed9eb807bfadb299d20916516909374c",
+  "cache_key": "1552110e10d51577767b0672008aba06f71c88f7192b6a593a4a8af7fad21a12",
+  "reviewer_backend_id": "codex-handoff",
+  "runner": {
+    "status": "codex_handoff_applied",
+    "result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_1_4\\semantic_review_result_v9.json"
+  },
   "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_1_4\\semantic_review_input_v9.json",
   "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_1_4\\semantic_review_prompt_v9.md",
   "review_context_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_1_4\\semantic_review_context_v9.md",
@@ -329,5 +335,6 @@
   "recommended_disposition": "accept",
   "needs_class_normalization": false,
   "cache_class": "semantic_verdict",
-  "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_1_4\\semantic_review_result_v9.json"
+  "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_1_4\\semantic_review_result_v9.json",
+  "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_1_4\\semantic_review_report_v9.md"
 }

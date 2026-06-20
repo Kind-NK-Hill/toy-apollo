@@ -1,0 +1,52 @@
+{
+  "task_id": "prob_1_4",
+  "attempt": 19,
+  "candidate_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_1_4\\official_snapshot_v9.lean",
+  "candidate_hash": "cfa5641582c6daa854f81a13f54bd3ebf714c3cba0693ccf8c543c7d08242f21",
+  "verified_at": "2026-06-20T20:33:06.449271Z",
+  "success": true,
+  "repl": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed_dirichlet_gamma_density is source-route completion for a proof-bearing task)."
+  },
+  "temp_build": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed_dirichlet_gamma_density is source-route completion for a proof-bearing task)."
+  },
+  "final_build": {
+    "success": true,
+    "output": "Existing official output was already validated before review."
+  },
+  "diagnostics": [],
+  "primary_failure_kind": "",
+  "blocking_symbols": [],
+  "raw_outputs": {
+    "repl": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed_dirichlet_gamma_density is source-route completion for a proof-bearing task).",
+    "temp_build": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed_dirichlet_gamma_density is source-route completion for a proof-bearing task).",
+    "final_build": "Existing official output was already validated before review."
+  },
+  "mode": "review-apply",
+  "disposition": "official_output_review_pass",
+  "state_transition": "none",
+  "semantic_review": {
+    "verdict": "pass",
+    "proof_class": "source_route_proof_completed_dirichlet_gamma_density",
+    "completion_class": "source_route_proof_completed_dirichlet_gamma_density",
+    "phase2_status": "pass",
+    "phase2_status_reason": "source_route_proof_completed_dirichlet_gamma_density is source-route completion for a proof-bearing task",
+    "task_status": "pass",
+    "task_status_reason": "source_route_proof_completed_dirichlet_gamma_density is source-route completion for a proof-bearing task",
+    "needs_class_normalization": false,
+    "runner_status": "codex_handoff_applied",
+    "summary": "现有 official output 语义通过。ToyApollo.Output.prob_1_4 现在是只导入 ToyApollo.Output.prob_1_4_dirichlet_gamma_support 的 public entry module；P1 shared-support 拆分把原 DirichletGammaDensity 的证明体拆到 ProductDensity/SimplexChart/ProjectedDensity，并由 DirichletGammaDensity 重新导出。直接读取和 #check 证明关键公共声明名、最终密度 theorem statement、source normalization law、simplex support 和证明含义没有被弱化；最终 ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive 只有 hn/halpha/hbeta 源侧正性假设，并在内部 discharge Jacobian 与 integral bridge。",
+    "recommended_disposition": "accept",
+    "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_1_4\\semantic_review_result_v9.json",
+    "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_1_4\\semantic_review_input_v9.json",
+    "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_1_4\\semantic_review_prompt_v9.md",
+    "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_1_4\\semantic_review_report_v9.md",
+    "cache_key": "1552110e10d51577767b0672008aba06f71c88f7192b6a593a4a8af7fad21a12",
+    "cache_hit": false,
+    "reviewer_backend_id": "codex-handoff"
+  },
+  "verify_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_1_4\\verify_result_v19.json"
+}
