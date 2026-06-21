@@ -1210,6 +1210,58 @@ class Phase2BatchRunnerTests(unittest.TestCase):
         self.assertIn("section_intro_remark=1", rendered)
         self.assertNotIn("| intro_9_1 |", rendered)
 
+    def test_include_legacy_still_hides_skipped_source_statement_risks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            settings = self._settings(root)
+            triage_path = root / "phase2_prompt_packs" / "ex_1_3_2" / "semantic_fail_triage.json"
+            triage_path.parent.mkdir(parents=True)
+            triage_path.write_text(
+                json.dumps(
+                    {
+                        "needs_diagnoser": True,
+                        "local_repair_allowed": False,
+                        "category": "statement_or_source_mismatch",
+                        "prompt_path": str(triage_path.with_name("prepared_diagnoser_prompt.txt")),
+                    }
+                ),
+                encoding="utf-8",
+            )
+            ledger = FakeLedger(
+                {
+                    "thm_1_2": {
+                        "block_id": "thm_1_2",
+                        "type": "Theorem_Statement",
+                        "status": NONTERMINAL,
+                        "phase2_status": "blocked",
+                        "phase2_status_reason": "proof_class dependency_blocked_pending_statement_decision",
+                    },
+                    "ex_1_3_2": {
+                        "block_id": "ex_1_3_2",
+                        "type": "Example_Proof",
+                        "status": NONTERMINAL,
+                        "phase2_status": "fail",
+                        "latest_semantic_fail_triage_file": str(triage_path),
+                        "latest_semantic_fail_triage_needs_diagnoser": True,
+                    },
+                }
+            )
+
+            plan = plan_batch_from_ledger(
+                ["thm_1_2", "ex_1_3_2"],
+                ledger,
+                settings,
+                include_legacy=True,
+            )
+            rendered = render_batch_runner_plan(plan)
+
+        self.assertEqual(plan.actions, ())
+        self.assertEqual({action.task_id for action in plan.hidden_actions}, {"thm_1_2", "ex_1_3_2"})
+        self.assertIn("source_statement_risk=2", rendered)
+        self.assertNotIn("subagent-dispatch-required", rendered)
+        self.assertNotIn("| thm_1_2 |", rendered)
+        self.assertNotIn("| ex_1_3_2 |", rendered)
+
     def test_batch_run_skips_diagnoser_required_and_dispatches_next_executable_action(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
