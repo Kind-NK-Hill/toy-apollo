@@ -128,6 +128,8 @@ def render_batch_runner_plan(plan: BatchRunnerPlan) -> str:
         f"- objective: `{plan.report.objective}`",
         f"- all_clean_or_allowed_exception: `{str(plan.report.all_clean_or_allowed_exception).lower()}`",
         _hidden_actions_summary_line(plan.hidden_actions),
+        f"- ordinary_action_queue_clear: `{str(not plan.actions).lower()}`",
+        _source_statement_risk_exceptions_summary_line(plan.hidden_actions),
         "",
         "| worker | task_id | kind | fanout | conflict_group | phase2_status | report_status | action | command | reason |",
         "|---:|---|---|---:|---|---|---|---|---|---|",
@@ -831,6 +833,20 @@ def _hidden_actions_summary_line(hidden_actions: tuple[BatchRunnerAction, ...]) 
     )
     detail = ", ".join(f"{name}={count}" for name, count in sorted(counts.items()))
     return f"- hidden legacy/audit items: `{len(hidden_actions)}` ({detail})"
+
+
+def _source_statement_risk_exceptions_summary_line(hidden_actions: tuple[BatchRunnerAction, ...]) -> str:
+    task_ids = sorted(
+        action.task_id
+        for action in hidden_actions
+        if _default_hidden_action_category(action) == "source_statement_risk"
+    )
+    if not task_ids:
+        return "- deferred_source_statement_risk_exceptions: `0`"
+    return "- deferred_source_statement_risk_exceptions: `{count}` ({tasks})".format(
+        count=len(task_ids),
+        tasks=", ".join(f"`{task_id}`" for task_id in task_ids),
+    )
 
 
 def _default_hidden_action_category(action: BatchRunnerAction) -> str:
