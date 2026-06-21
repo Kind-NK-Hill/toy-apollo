@@ -1,0 +1,344 @@
+{
+  "schema_version": "phase2.semantic_review.result.v7",
+  "task_id": "prob_14_8",
+  "mode": "review-existing",
+  "attempt": 15,
+  "prompt_version": 9,
+  "rubric_version": 9,
+  "review_input_hash": "fbb2a230eff5e2406cdc4285709d277b3897ec1401ec587d3369b9f00c1b21f6",
+  "cache_key": "bbad5b5b4ebcdfbe629c035c70f1ac9ef92d641c9e84f9ae063cabdadf7836c5",
+  "reviewer_backend_id": "codex-handoff",
+  "runner": {
+    "status": "codex_handoff_applied",
+    "result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_8\\semantic_review_result_v15.json"
+  },
+  "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_8\\semantic_review_input_v15.json",
+  "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_8\\semantic_review_prompt_v15.md",
+  "review_context_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_8\\semantic_review_context_v15.md",
+  "expected_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_8\\semantic_review_result_v15.json",
+  "review_basis_hash": "7ba2a26822d6edf02fe49c8c4a9a05ba69d6e31ae0cf2f5740060ed8c5b3914b",
+  "candidate_hash": "68f103550da38762bed6b937f45d6f33cbb2b7393a556028a95c731f21b498f3",
+  "verdict": "pass",
+  "confidence": "high",
+  "proof_class": "source_route_proof_completed",
+  "completion_class": "source_route_proof_completed",
+  "phase2_status": "pass",
+  "phase2_status_reason": "The current official output keeps the source-facing MGF setup interface and proves both tightness and distribution convergence through theorem-level support.",
+  "task_status": "pass",
+  "task_status_reason": "Problem 14.8 is represented as S : prob_14_8_MgfConvergenceSetup, and prob_14_8_support_result internally supplies the MGF-to-tightness and MGF-to-characteristic-to-distribution route.",
+  "summary": "Pass. The reviewed official output declares theorem prob_14_8 (S : prob_14_8_MgfConvergenceSetup) : def_14_3 S.laws and Tendsto S.laws atTop (nhds S.targetLaw), proved by prob_14_8_support_result S. Direct inspection of the imported support chain shows the source MGF assumptions are carried by the setup fields, tightness is proved from endpoint MGF tail bounds, and distribution convergence is proved via common-strip analytic/Montel support, real-axis identification, imaginary-axis complex-MGF convergence, characteristic equality, and the characteristic-function continuity adapter. The final theorem exposes no hChar, hImag, or other added public premise; current ToyApollo/Output prob_14_8 support files contain no sorry/admit/axiom/unsafe or obl import.",
+  "reviewer_independence": {
+    "role": "independent_read_only_reviewer",
+    "read_only": true,
+    "did_edit_candidate": false,
+    "used_current_review_request": true,
+    "attestation": "I independently reviewed the v15 request, input, prompt, context, official output, current support files, proof obligation evidence, downstream consumer, and hashes. I did not edit Lean, ledger, phase2 status, or other project state, and wrote only this requested result JSON."
+  },
+  "source_claims": [
+    {
+      "claim_id": "source_hyp_mgf_defined_near_zero",
+      "claim": "For every sequence law and for the target law, the MGF is defined on the interval [-delta, delta]."
+    },
+    {
+      "claim_id": "source_hyp_mgf_pointwise_converges",
+      "claim": "For every t in [-delta, delta], the sequence MGFs converge pointwise to the target MGF."
+    },
+    {
+      "claim_id": "source_part_a_tightness",
+      "claim": "The sequence of laws is tight."
+    },
+    {
+      "claim_id": "source_bridge_mgf_to_characteristic",
+      "claim": "The MGF-neighborhood hypotheses supply characteristic-function convergence through the complex-MGF/imaginary-axis route."
+    },
+    {
+      "claim_id": "source_part_b_distribution_convergence",
+      "claim": "The sequence of laws converges in distribution to the target law."
+    }
+  ],
+  "claim_mapping": [
+    {
+      "source_claim_id": "source_hyp_mgf_defined_near_zero",
+      "lean_declarations": [
+        "prob_14_8_mgfDefinedOn",
+        "prob_14_8_MgfConvergenceSetup.mgf_defined",
+        "prob_14_8_MgfConvergenceSetup.target_mgf_defined"
+      ],
+      "assumptions": "S : prob_14_8_MgfConvergenceSetup, including S.delta_pos and integrability of exp (t*x) on Icc (-S.delta) S.delta for each law and the target law.",
+      "conclusion": "The source MGF-domain hypothesis is represented directly in the setup, not introduced as a downstream-only premise.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "source_hyp_mgf_pointwise_converges",
+      "lean_declarations": [
+        "prob_14_8_mgfOfLaw",
+        "prob_14_8_MgfConvergenceSetup.mgf_converges",
+        "prob_14_8_real_axis_complexMGF_convergence_at"
+      ],
+      "assumptions": "For t in Icc (-S.delta) S.delta, S.mgf_converges gives Tendsto of real MGFs.",
+      "conclusion": "Real-axis complex-MGF convergence is obtained by coercing the real MGF convergence into Complex.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "source_part_a_tightness",
+      "lean_declarations": [
+        "prob_14_8_eventualTailBound_from_mgf",
+        "prob_14_8_uniformTailBound_from_mgf",
+        "prob_14_8_tight"
+      ],
+      "assumptions": "Only S : prob_14_8_MgfConvergenceSetup.",
+      "conclusion": "The support proves a uniform tail bound from endpoint MGF control and then proves def_14_3 S.laws.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "source_bridge_mgf_to_characteristic",
+      "lean_declarations": [
+        "prob_14_8_complexMGF_analytic_on_common_strip",
+        "prob_14_8_uniform_strip_bounds",
+        "prob_14_8_montel_subseq_of_analytic_compact_bounds",
+        "prob_14_8_complexMGF_subseq_locallyUniform_limit",
+        "prob_14_8_locally_uniform_subseq_limit_eq_target",
+        "prob_14_8_imaginary_axis_complexMGF_convergence_from_mgf_setup",
+        "prob_14_8_characteristic_convergence_from_imaginary_axis_complexMGF"
+      ],
+      "assumptions": "Only S : prob_14_8_MgfConvergenceSetup for the final bridge; intermediate helper theorems with hImag/hRemaining discharge those premises internally before final assembly.",
+      "conclusion": "The MGF-to-characteristic bridge lands as theorem-level support, not as a public hChar assumption.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "source_part_b_distribution_convergence",
+      "lean_declarations": [
+        "prob_14_8_converges_in_distribution_of_characteristic_convergence",
+        "prob_14_8_distribution_convergence_from_imaginary_axis_complexMGF",
+        "prob_14_8_support_result",
+        "prob_14_8"
+      ],
+      "assumptions": "Characteristic convergence used by the adapter is supplied internally from the MGF setup by prob_14_8_imaginary_axis_complexMGF_convergence_from_mgf_setup.",
+      "conclusion": "The final theorem proves Tendsto S.laws atTop (nhds S.targetLaw), the distribution-convergence conclusion.",
+      "assessment": "covered"
+    }
+  ],
+  "route_inspection": {
+    "status": "covered",
+    "source_route": "The Lean route mirrors the source route at law level: MGF existence and convergence on a neighborhood of zero are encoded in prob_14_8_MgfConvergenceSetup. Endpoint MGF control gives an eventual then uniform tail bound and thm_14_5 supplies tightness. For distribution convergence, the support proves common-strip complex-MGF analyticity and compact bounds, extracts locally uniform subsequential limits by Montel/Ascoli, identifies limits from real-axis convergence and the identity theorem, upgrades subsequential uniqueness to full imaginary-axis complex-MGF convergence, converts that to characteristic convergence, and applies the characteristic-function continuity theorem.",
+    "expected_answer_or_statement": "A source-faithful public theorem consumes S : prob_14_8_MgfConvergenceSetup and proves def_14_3 S.laws and Tendsto S.laws atTop (nhds S.targetLaw), without public hChar, public hImag, or public remaining-complex-MGF premise.",
+    "local_mathlib_search": "The route uses Mathlib/ProbabilityTheory infrastructure for MGF, complexMGF, characteristic functions, analyticOnNhd, Ascoli/Montel-style compact extraction, identity-theorem reasoning, and ProbabilityMeasure.tendsto_iff_tendsto_charFun. These uses are attached to named source-route landings rather than replacing the source burden with a bare black-box theorem.",
+    "public_interface_check": "Passed. ToyApollo/Output/prob_14_8.lean declares theorem prob_14_8 (S : prob_14_8_MgfConvergenceSetup) : def_14_3 S.laws and Tendsto S.laws atTop (nhds S.targetLaw). The final theorem exposes no hChar, hImag, hRemaining, or imaginary-axis convergence premise.",
+    "support_or_reassembly_decision": "Go. The final file imports prob_14_8_proof_support, which imports prob_14_8_mgf_support; the support chain proves prob_14_8_support_result from S through the listed MGF, Montel, subsequence, characteristic, and distribution-convergence theorems.",
+    "stop_go_verdict": "go",
+    "notes": "Conditional helper adapters remain available, but the final theorem supplies their premises internally. Stale context/classification entries mentioning an older private axiom were resolved by direct inspection of current ToyApollo/Output files."
+  },
+  "spine_alignment": {
+    "status": "covered",
+    "summary": "The source proof spine is represented at theorem level. Source assumptions are in the setup; tightness, analytic MGF-to-characteristic convergence, and characteristic-to-distribution conversion all have named Lean landings.",
+    "obligations_checked": [
+      "MGF finite on neighborhood -> prob_14_8_mgfDefinedOn and prob_14_8_MgfConvergenceSetup.mgf_defined/target_mgf_defined",
+      "MGF pointwise convergence -> prob_14_8_MgfConvergenceSetup.mgf_converges and prob_14_8_real_axis_complexMGF_convergence_at",
+      "MGF to tightness -> prob_14_8_eventualTailBound_from_mgf, prob_14_8_uniformTailBound_from_mgf, prob_14_8_tight",
+      "Common-strip analyticity and bounds -> prob_14_8_mgf_defined_interval_to_strip_domain, prob_14_8_complexMGF_analytic_on_common_strip, prob_14_8_uniform_strip_bounds, prob_14_8_uniformComplexMGFCompactBound",
+      "Normal-family extraction -> prob_14_8_montel_subseq_of_analytic_compact_bounds and prob_14_8_complexMGF_subseq_locallyUniform_limit",
+      "Real-axis identification -> prob_14_8_real_axis_accumulation_convergence_input and prob_14_8_locally_uniform_subseq_limit_eq_target",
+      "Subsequence uniqueness to full imaginary-axis convergence -> prob_14_8_imaginary_axis_complexMGF_convergence_of_subseq_locallyUniform and prob_14_8_imaginary_axis_complexMGF_convergence_from_mgf_setup",
+      "Characteristic equality and distribution convergence -> prob_14_8_characteristic_eq_complexMGF, prob_14_8_characteristic_convergence_from_imaginary_axis_complexMGF, prob_14_8_converges_in_distribution_of_characteristic_convergence, prob_14_8_distribution_convergence_from_imaginary_axis_complexMGF, prob_14_8_support_result, prob_14_8"
+    ],
+    "missing_obligations": [],
+    "shortcut_assessment": "No adapter-only shortcut remains in the final theorem. Mathlib-backed adapters are used only after the source MGF-to-characteristic bridge has been landed through named theorem support."
+  },
+  "obligation_review": {
+    "status": "covered",
+    "summary": "All five blocking obligations are covered in the current official output/support chain. Older private-axiom and nested-obligation evidence in historical candidates is stale for the reviewed v15 official output.",
+    "items": [
+      {
+        "obligation_id": "obligation_1",
+        "status": "covered",
+        "route_class": "source premise",
+        "expected_theorem_signature": "MGFs are finite on the specified neighborhood for all laws and the target law.",
+        "lean_landing": "prob_14_8_mgfDefinedOn; prob_14_8_MgfConvergenceSetup.mgf_defined; prob_14_8_MgfConvergenceSetup.target_mgf_defined",
+        "landing_kind": "public_premise",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "This is exactly the source MGF-domain hypothesis represented in the setup; it is not an added theorem-level burden."
+      },
+      {
+        "obligation_id": "obligation_2",
+        "status": "covered",
+        "route_class": "source premise",
+        "expected_theorem_signature": "Pointwise convergence of the MGFs on the neighborhood.",
+        "lean_landing": "prob_14_8_mgfOfLaw; prob_14_8_MgfConvergenceSetup.mgf_converges; prob_14_8_real_axis_complexMGF_convergence_at",
+        "landing_kind": "public_premise",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The source convergence premise is represented directly and then converted to real-axis complex-MGF convergence."
+      },
+      {
+        "obligation_id": "obligation_3",
+        "status": "covered",
+        "route_class": "source-route theorem",
+        "expected_theorem_signature": "From the MGF setup, prove tightness of S.laws.",
+        "lean_landing": "prob_14_8_eventualTailBound_from_mgf; prob_14_8_uniformTailBound_from_mgf; prob_14_8_tight",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The current support derives endpoint exponential tail control from S.mgf_converges and S.mgf_defined, upgrades it to a uniform tail bound, and applies thm_14_5_of_uniformTailBound to obtain def_14_3 S.laws."
+      },
+      {
+        "obligation_id": "obligation_4",
+        "status": "covered",
+        "route_class": "source-route theorem with analytic bridge",
+        "expected_theorem_signature": "(S : prob_14_8_MgfConvergenceSetup) -> thm_14_1_pointwiseCharFunConvergence S.laws (fun t => thm_14_1_characteristicFunction S.targetLaw t)",
+        "lean_landing": "prob_14_8_complexMGF_analytic_on_common_strip; prob_14_8_uniform_strip_bounds; prob_14_8_montel_subseq_of_analytic_compact_bounds; prob_14_8_complexMGF_subseq_locallyUniform_limit; prob_14_8_locally_uniform_subseq_limit_eq_target; prob_14_8_imaginary_axis_complexMGF_convergence_from_mgf_setup; prob_14_8_characteristic_convergence_from_imaginary_axis_complexMGF",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The current support proves imaginary-axis complex-MGF convergence from S using Montel/subsequence/identity support, then converts it to pointwise characteristic convergence. No hChar, hImag, private axiom, or support-field premise is exposed by the final theorem."
+      },
+      {
+        "obligation_id": "obligation_5",
+        "status": "covered",
+        "route_class": "Mathlib-backed adapter after source bridge",
+        "expected_theorem_signature": "From thm_14_1_pointwiseCharFunConvergence S.laws (fun t => thm_14_1_characteristicFunction S.targetLaw t), prove Tendsto S.laws atTop (nhds S.targetLaw).",
+        "lean_landing": "prob_14_8_converges_in_distribution_of_characteristic_convergence; prob_14_8_distribution_convergence_from_imaginary_axis_complexMGF; prob_14_8_support_result; prob_14_8",
+        "landing_kind": "adapter",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The characteristic-to-distribution adapter is acceptable because obligation_4 supplies characteristic convergence internally from S before final assembly."
+      }
+    ],
+    "open_blockers": [],
+    "scaffold_assessment": [
+      {
+        "item": "forbidden_placeholders",
+        "status": "covered",
+        "assessment": "rg over current ToyApollo/Output prob_14_8, proof_support, mgf_support, montel_support, subseq_support, and chapter14_mgf_support found no sorry, admit, axiom, private axiom, or unsafe."
+      },
+      {
+        "item": "obl_import_or_alias",
+        "status": "covered",
+        "assessment": "Direct rg over current ToyApollo/Output prob_14_8*.lean found no ToyApollo.Output.obl import and no obl_obl declaration. The v15 context's recorded exported-symbol list includes stale nested obl names from older candidate_v17 snapshots, not from the current split support files."
+      },
+      {
+        "item": "stale_classification_history",
+        "status": "covered",
+        "assessment": "classification_history still records an older private axiom route. Current direct Lean inspection shows prob_14_8_imaginary_axis_complexMGF_convergence_from_mgf_setup and prob_14_8_support_result are theorem-backed and no current private axiom remains."
+      }
+    ]
+  },
+  "evidence_review": {
+    "status": "covered",
+    "summary": "All required evidence classes were checked. Direct Lean inspection plus a successful lake env lean sanity build support the pass verdict; stale historical classification/audit signals were resolved against current files.",
+    "items": [
+      {
+        "evidence_class": "source_tex",
+        "status": "covered",
+        "evidence": "semantic_review_context_v15.md and semantic_review_input_v15.json state Problem 14.8: MGF defined on [-delta, delta], pointwise MGF convergence to the target MGF, prove tightness and distribution convergence."
+      },
+      {
+        "evidence_class": "lean_subject",
+        "status": "covered",
+        "evidence": "official_snapshot_v15.lean and ToyApollo/Output/prob_14_8.lean declare theorem prob_14_8 (S : prob_14_8_MgfConvergenceSetup) : def_14_3 S.laws and Tendsto S.laws atTop (nhds S.targetLaw), proved by prob_14_8_support_result S. lake env lean ToyApollo/Output/prob_14_8.lean completed successfully."
+      },
+      {
+        "evidence_class": "proof_obligations",
+        "status": "covered",
+        "evidence": "The v15 proof_obligations evidence records five obligations, all proved/accepted and no open blockers. Direct support inspection found the listed landings for source assumptions, tightness, MGF-to-characteristic convergence, and distribution convergence."
+      },
+      {
+        "evidence_class": "audit",
+        "status": "covered",
+        "evidence": "The v15 request/input had no latest audit result file. Historical private-axiom and public-premise-relocation warnings were rechecked directly against current ToyApollo/Output files; no current blocker was found."
+      },
+      {
+        "evidence_class": "classification",
+        "status": "covered",
+        "evidence": "classification_history still contains an older open_math_debt entry mentioning a private axiom in ToyApollo/Output/prob_14_8.lean. Direct v15 official output and support inspection supersedes that stale evidence: the current final file is a facade over split theorem-level support and no current private axiom exists."
+      },
+      {
+        "evidence_class": "dependency_status",
+        "status": "covered",
+        "evidence": "The v15 input records def_14_3, thm_14_1, and thm_14_5 as completed soft imports. Current support imports Mathlib, thm_14_1, thm_14_5, def_14_3, chapter14_mgf_support, and prob_14_8 support files; no obl module is imported by the current final route."
+      },
+      {
+        "evidence_class": "downstream",
+        "status": "covered",
+        "evidence": "ToyApollo/Output/prob_14_10.lean imports ToyApollo.Output.prob_14_8, constructs a prob_14_8_MgfConvergenceSetup in prob_14_10_moments_to_mgf_setup, and uses (prob_14_8 T).2; it does not need a new hChar or hImag premise from prob_14_8."
+      },
+      {
+        "evidence_class": "ledger_status",
+        "status": "covered",
+        "evidence": "The v15 review context records ledger status COMPLETED and proof obligation summary with five proved/accepted obligations and no open blocking IDs. This review did not modify ledger/status files."
+      },
+      {
+        "evidence_class": "hashes",
+        "status": "covered",
+        "evidence": "Get-FileHash SHA256 for ToyApollo/Output/prob_14_8.lean is 68f103550da38762bed6b937f45d6f33cbb2b7393a556028a95c731f21b498f3, matching the request candidate_hash and official_output_hash. The snapshot file is line-identical to the official output but has a different raw byte hash because of line endings, so semantic review used the request/input candidate content and the matching official output hash."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "interface_contract": {
+    "status": "covered",
+    "summary": "The final public theorem matches the textbook-level interface at law level: source MGF setup in, tightness and distribution convergence out. The theorem does not add characteristic-function or imaginary-axis convergence as a public premise.",
+    "mismatches": []
+  },
+  "downstream_adequacy": {
+    "status": "covered",
+    "summary": "The direct downstream consumer can continue using prob_14_8 as a reusable MGF setup theorem and does not need extra hidden proof obligations.",
+    "consumers_checked": [
+      {
+        "block_id": "prob_14_10",
+        "status": "covered",
+        "evidence": "prob_14_10 imports ToyApollo.Output.prob_14_8, builds T : prob_14_8_MgfConvergenceSetup from bounded moment hypotheses, and calls (prob_14_8 T).2 for distribution convergence. This matches the source hint route."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "forbidden_weakenings": [
+    {
+      "rule": "Do not replace the textbook public interface with a pure existence shell, placeholder definition, or witness-only structure.",
+      "status": "not_present",
+      "evidence": "prob_14_8 is a theorem proving concrete tightness and distribution convergence from S : prob_14_8_MgfConvergenceSetup."
+    },
+    {
+      "rule": "Do not rewrite a downstream-reusable theorem into a theorem-specific wrapper only sufficient for the current file.",
+      "status": "not_present",
+      "evidence": "The support chain exposes reusable named landings for setup assumptions, tightness, analytic/Montel support, characteristic convergence, and distribution convergence; prob_14_10 uses the exported setup and theorem."
+    },
+    {
+      "rule": "Do not relocate hChar or imaginary-axis complex-MGF convergence into a public premise of the final theorem.",
+      "status": "not_present",
+      "evidence": "The final theorem takes only S : prob_14_8_MgfConvergenceSetup. hImag/hRemaining are proved internally by prob_14_8_imaginary_axis_complexMGF_convergence_from_mgf_setup before final assembly."
+    },
+    {
+      "rule": "No forbidden placeholders: sorry, admit, axiom, unsafe.",
+      "status": "not_present",
+      "evidence": "rg over the current ToyApollo/Output prob_14_8 support chain found no occurrences of these forbidden tokens."
+    },
+    {
+      "rule": "No ToyApollo.Output.obl_* import or top-level obl_* landing alias in the current final route.",
+      "status": "not_present",
+      "evidence": "Current prob_14_8.lean imports prob_14_8_proof_support, which imports prob_14_8_mgf_support; direct search found no ToyApollo.Output.obl import and no current obl_obl declarations in the support chain."
+    },
+    {
+      "rule": "Do not prove only tightness when the source also asks for distribution convergence.",
+      "status": "not_present",
+      "evidence": "prob_14_8 concludes both def_14_3 S.laws and Tendsto S.laws atTop (nhds S.targetLaw)."
+    }
+  ],
+  "findings": [],
+  "issues": [],
+  "recommended_disposition": "accept",
+  "needs_class_normalization": false,
+  "cache_class": "semantic_verdict",
+  "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_8\\semantic_review_result_v15.json",
+  "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_8\\semantic_review_report_v15.md"
+}

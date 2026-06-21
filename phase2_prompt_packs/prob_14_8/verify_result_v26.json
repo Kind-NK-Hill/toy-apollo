@@ -1,0 +1,52 @@
+{
+  "task_id": "prob_14_8",
+  "attempt": 26,
+  "candidate_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_8\\official_snapshot_v15.lean",
+  "candidate_hash": "68f103550da38762bed6b937f45d6f33cbb2b7393a556028a95c731f21b498f3",
+  "verified_at": "2026-06-21T11:23:28.706701Z",
+  "success": true,
+  "repl": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed is source-route completion for a proof-bearing task)."
+  },
+  "temp_build": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed is source-route completion for a proof-bearing task)."
+  },
+  "final_build": {
+    "success": true,
+    "output": "Existing official output was already validated before review."
+  },
+  "diagnostics": [],
+  "primary_failure_kind": "",
+  "blocking_symbols": [],
+  "raw_outputs": {
+    "repl": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed is source-route completion for a proof-bearing task).",
+    "temp_build": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed is source-route completion for a proof-bearing task).",
+    "final_build": "Existing official output was already validated before review."
+  },
+  "mode": "review-apply",
+  "disposition": "official_output_review_pass",
+  "state_transition": "none",
+  "semantic_review": {
+    "verdict": "pass",
+    "proof_class": "source_route_proof_completed",
+    "completion_class": "source_route_proof_completed",
+    "phase2_status": "pass",
+    "phase2_status_reason": "source_route_proof_completed is source-route completion for a proof-bearing task",
+    "task_status": "pass",
+    "task_status_reason": "source_route_proof_completed is source-route completion for a proof-bearing task",
+    "needs_class_normalization": false,
+    "runner_status": "codex_handoff_applied",
+    "summary": "Pass. The reviewed official output declares theorem prob_14_8 (S : prob_14_8_MgfConvergenceSetup) : def_14_3 S.laws and Tendsto S.laws atTop (nhds S.targetLaw), proved by prob_14_8_support_result S. Direct inspection of the imported support chain shows the source MGF assumptions are carried by the setup fields, tightness is proved from endpoint MGF tail bounds, and distribution convergence is proved via common-strip analytic/Montel support, real-axis identification, imaginary-axis complex-MGF convergence, characteristic equality, and the characteristic-function continuity adapter. The final theorem exposes no hChar, hImag, or other added public premise; current ToyApollo/Output prob_14_8 support files contain no sorry/admit/axiom/unsafe or obl import.",
+    "recommended_disposition": "accept",
+    "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_8\\semantic_review_result_v15.json",
+    "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_8\\semantic_review_input_v15.json",
+    "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_8\\semantic_review_prompt_v15.md",
+    "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_8\\semantic_review_report_v15.md",
+    "cache_key": "bbad5b5b4ebcdfbe629c035c70f1ac9ef92d641c9e84f9ae063cabdadf7836c5",
+    "cache_hit": false,
+    "reviewer_backend_id": "codex-handoff"
+  },
+  "verify_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_8\\verify_result_v26.json"
+}

@@ -1,0 +1,331 @@
+{
+  "schema_version": "phase2.semantic_review.result.v7",
+  "task_id": "prob_14_10",
+  "mode": "review-existing",
+  "attempt": 7,
+  "prompt_version": 9,
+  "rubric_version": 9,
+  "review_input_hash": "9750c2b26c1a21ce8aec7143f8716516f2170ec4b316da68e37f387d844f6093",
+  "cache_key": "35728e8c1be96448046cc4d30af802dcd498409746d4f5e520903f88193365df",
+  "reviewer_backend_id": "codex-handoff",
+  "runner": {
+    "status": "codex_handoff_applied",
+    "result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_10\\semantic_review_result_v7.json"
+  },
+  "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_10\\semantic_review_input_v7.json",
+  "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_10\\semantic_review_prompt_v7.md",
+  "review_context_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_10\\semantic_review_context_v7.md",
+  "expected_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_10\\semantic_review_result_v7.json",
+  "candidate_hash": "e60452a9c93a9bea3ded88ec8fd3f88bc937b0860b2692a1156069a70f62f82d",
+  "verdict": "pass",
+  "confidence": "high",
+  "proof_class": "source_faithful_proof_completed",
+  "completion_class": "source_route_proof_completed_bounded_moments_mgf",
+  "phase2_status": "pass",
+  "summary": "The v7 official output is faithful to Problem 14.10. It states the bounded law-level setup, the iff between weak convergence and convergence of all positive raw moments, proves the forward direction by clipped monomial test functions, and proves the reverse direction by deriving the MGF setup from moment convergence and bounded support before applying the accepted Problem 14.8 theorem. No public premise relocation, private axiom, sorry, admit, or placeholder route was found.",
+  "reviewer_independence": {
+    "role": "independent_read_only_reviewer",
+    "read_only": true,
+    "did_edit_candidate": false,
+    "used_current_review_request": true,
+    "attestation": "I reviewed the current v7 request, input, prompt, context, template, official snapshot, proof obligations, and dependency evidence independently; I did not edit Lean, ledger, status, or metadata files."
+  },
+  "source_claims": [
+    {
+      "claim_id": "bounded_setup",
+      "claim": "The sequence laws are uniformly bounded and the target law is bounded, represented with a common nonnegative support bound."
+    },
+    {
+      "claim_id": "distribution_convergence",
+      "claim": "The distribution convergence side of the iff is weak convergence of the laws to the target law."
+    },
+    {
+      "claim_id": "positive_moment_convergence",
+      "claim": "The moment side of the iff is convergence of every positive integer raw moment to the corresponding target raw moment."
+    },
+    {
+      "claim_id": "forward_direction",
+      "claim": "Weak convergence under the bounded setup implies convergence of every positive raw moment."
+    },
+    {
+      "claim_id": "reverse_direction",
+      "claim": "Convergence of all positive raw moments under boundedness implies distribution convergence, using Problem 14.8 through an MGF convergence setup."
+    }
+  ],
+  "claim_mapping": [
+    {
+      "source_claim_id": "bounded_setup",
+      "lean_declarations": [
+        "prob_14_10_BoundedMomentSetup"
+      ],
+      "assumptions": "S supplies laws, targetLaw, c, c_nonneg, uniformly_bounded, and target_bounded.",
+      "conclusion": "The common bounded support hypotheses needed for moments and MGF integrability are available without adding MGF convergence or the target theorem as a premise.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "distribution_convergence",
+      "lean_declarations": [
+        "def_14_1",
+        "def_14_1_iff_tendsto",
+        "prob_14_10"
+      ],
+      "assumptions": "S : prob_14_10_BoundedMomentSetup.",
+      "conclusion": "prob_14_10 states def_14_1 S.laws S.targetLaw on the distribution-convergence side of the iff.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "positive_moment_convergence",
+      "lean_declarations": [
+        "prob_14_10_momentOfLaw",
+        "prob_14_10_momentConvergence"
+      ],
+      "assumptions": "laws and targetLaw are probability measures on Real.",
+      "conclusion": "The predicate quantifies k : Nat with 1 <= k and requires Tendsto of integral x^k for laws n to the target integral x^k.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "forward_direction",
+      "lean_declarations": [
+        "prob_14_10_clippedPower",
+        "prob_14_10_integral_clippedPower_eq_moment",
+        "prob_14_10_weak_convergence_to_moments_under_boundedness",
+        "prob_14_10_distribution_to_moments"
+      ],
+      "assumptions": "S : prob_14_10_BoundedMomentSetup and hD : def_14_1 S.laws S.targetLaw.",
+      "conclusion": "The proof applies weak convergence to bounded continuous clipped monomials and identifies clipped integrals with raw moments on the support.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "reverse_direction",
+      "lean_declarations": [
+        "prob_14_10_integrable_polynomial_of_bounded",
+        "prob_14_10_polynomial_integral_tendsto",
+        "prob_14_10_exp_uniform_polynomial_approx",
+        "prob_14_10_mgf_converges_from_moments",
+        "prob_14_10_moments_to_mgf_setup",
+        "prob_14_10_moments_to_distribution"
+      ],
+      "assumptions": "S : prob_14_10_BoundedMomentSetup and hMom : prob_14_10_momentConvergence S.laws S.targetLaw.",
+      "conclusion": "The proof constructs a prob_14_8_MgfConvergenceSetup from bounded moment convergence, invokes (prob_14_8 T).2, rewrites laws and targetLaw back to S, and converts Tendsto to def_14_1.",
+      "assessment": "covered"
+    }
+  ],
+  "route_inspection": {
+    "status": "covered",
+    "source_route": "Forward: use weak convergence with clipped powers and bounded support to recover raw moment convergence. Reverse: moment convergence gives polynomial integral convergence; Stone-Weierstrass polynomial approximation of exp(t*x) on the bounded support gives MGF convergence; the constructed prob_14_8 setup yields distribution convergence by Problem 14.8.",
+    "expected_answer_or_statement": "theorem prob_14_10 (S : prob_14_10_BoundedMomentSetup) : def_14_1 S.laws S.targetLaw <-> prob_14_10_momentConvergence S.laws S.targetLaw",
+    "local_mathlib_search": "The candidate uses Mathlib and local support for bounded continuous functions, polynomial induction, Stone-Weierstrass approximation, integrability, and ProbabilityMeasure weak convergence. These calls are attached to source proof steps rather than replacing the theorem with a black-box shortcut.",
+    "public_interface_check": "The public setup contains only laws, target law, common bound, and bounded support mass-one hypotheses. It does not expose MGF convergence, polynomial approximation, distribution convergence, moment convergence, hChar, or the target iff as a public premise.",
+    "support_or_reassembly_decision": "Go. The reverse direction reassembles the required prob_14_8_MgfConvergenceSetup internally via prob_14_10_moments_to_mgf_setup before applying prob_14_8.",
+    "stop_go_verdict": "go",
+    "notes": "Historical obligation notes mentioning an old private axiom or old prob_14_8_converges_in_distribution route are stale for the current v7 official snapshot."
+  },
+  "spine_alignment": {
+    "status": "covered",
+    "summary": "The source proof spine lands in five checked components: bounded setup, positive moment predicate, weak convergence to moment convergence, moments to MGF convergence, and use of Problem 14.8.",
+    "obligations_checked": [
+      {
+        "obligation_id": "obligation_1",
+        "landing": "prob_14_10_BoundedMomentSetup",
+        "assessment": "The source boundedness hypotheses are represented directly as bounded support mass-one fields."
+      },
+      {
+        "obligation_id": "obligation_2",
+        "landing": "prob_14_10_momentOfLaw and prob_14_10_momentConvergence",
+        "assessment": "The source all-positive-moment condition is represented as raw monomial integral convergence for every k >= 1."
+      },
+      {
+        "obligation_id": "obligation_3",
+        "landing": "prob_14_10_weak_convergence_to_moments_under_boundedness",
+        "assessment": "The forward proof uses clipped monomials as bounded continuous tests and support equality to recover raw moments."
+      },
+      {
+        "obligation_id": "obligation_4",
+        "landing": "prob_14_10_polynomial_integral_tendsto, prob_14_10_exp_uniform_polynomial_approx, prob_14_10_mgf_converges_from_moments, prob_14_10_moments_to_mgf_setup",
+        "assessment": "The reverse proof derives MGF convergence from moment convergence and boundedness without a public or private axiom."
+      },
+      {
+        "obligation_id": "obligation_5",
+        "landing": "prob_14_10_moments_to_distribution and prob_14_10",
+        "assessment": "The proof uses the accepted hard dependency prob_14_8 after constructing its setup from the current hypotheses."
+      }
+    ],
+    "missing_obligations": [],
+    "shortcut_assessment": "No adapter-only shortcut remains. The only major dependency call is the textbook hint, Problem 14.8, and its input setup is constructed from the current source hypotheses."
+  },
+  "obligation_review": {
+    "status": "covered",
+    "summary": "All five blocking obligations are covered by current v7 Lean landings with verified contracts.",
+    "items": [
+      {
+        "obligation_id": "obligation_1",
+        "status": "covered",
+        "route_class": "source premise support predicate",
+        "expected_theorem_signature": "structure prob_14_10_BoundedMomentSetup where laws : Nat -> ProbabilityMeasure Real; targetLaw : ProbabilityMeasure Real; c : Real; c_nonneg : 0 <= c; uniformly_bounded : forall n, (laws n : Measure Real) {x | |x| <= c} = 1; target_bounded : (targetLaw : Measure Real) {x | |x| <= c} = 1",
+        "lean_landing": "prob_14_10_BoundedMomentSetup",
+        "landing_kind": "support_predicate",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The structure is the source-facing boundedness setup itself and contains no MGF-convergence premise or target conclusion."
+      },
+      {
+        "obligation_id": "obligation_2",
+        "status": "covered",
+        "route_class": "source predicate",
+        "expected_theorem_signature": "def prob_14_10_momentConvergence (laws : Nat -> ProbabilityMeasure Real) (targetLaw : ProbabilityMeasure Real) : Prop := forall k : Nat, 1 <= k -> Tendsto (fun n => prob_14_10_momentOfLaw (laws n) k) atTop (nhds (prob_14_10_momentOfLaw targetLaw k))",
+        "lean_landing": "prob_14_10_momentOfLaw, prob_14_10_momentConvergence",
+        "landing_kind": "support_predicate",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The predicate matches all positive raw moment convergence. The OCR omission of the exponent on the target side is resolved in the mathematically intended direction as E[X^k]."
+      },
+      {
+        "obligation_id": "obligation_3",
+        "status": "covered",
+        "route_class": "source-route theorem",
+        "expected_theorem_signature": "theorem prob_14_10_weak_convergence_to_moments_under_boundedness (S : prob_14_10_BoundedMomentSetup) (hD : def_14_1 S.laws S.targetLaw) : prob_14_10_momentConvergence S.laws S.targetLaw",
+        "lean_landing": "prob_14_10_weak_convergence_to_moments_under_boundedness",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The theorem applies def_14_1 to clipped monomials and uses prob_14_10_integral_clippedPower_eq_moment to identify the integrals with raw moments under bounded support."
+      },
+      {
+        "obligation_id": "obligation_4",
+        "status": "covered",
+        "route_class": "source-route theorem with Mathlib-backed approximation support",
+        "expected_theorem_signature": "def prob_14_10_moments_to_mgf_setup (S : prob_14_10_BoundedMomentSetup) (hMom : prob_14_10_momentConvergence S.laws S.targetLaw) : {T : prob_14_8_MgfConvergenceSetup // T.laws = S.laws /\\ T.targetLaw = S.targetLaw}",
+        "lean_landing": "prob_14_10_integrable_polynomial_of_bounded, prob_14_10_polynomial_integral_tendsto, prob_14_10_exp_uniform_polynomial_approx, prob_14_10_mgf_converges_from_moments, prob_14_10_moments_to_mgf_setup",
+        "landing_kind": "support_constructor",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The setup constructor supplies MGF integrability and convergence from boundedness plus moment convergence; current v7 contains theorem-level support and no private axiom."
+      },
+      {
+        "obligation_id": "obligation_5",
+        "status": "covered",
+        "route_class": "source-route theorem using hard dependency",
+        "expected_theorem_signature": "theorem prob_14_10_moments_to_distribution (S : prob_14_10_BoundedMomentSetup) (hMom : prob_14_10_momentConvergence S.laws S.targetLaw) : def_14_1 S.laws S.targetLaw",
+        "lean_landing": "prob_14_10_moments_to_distribution, prob_14_10",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The reverse direction constructs T by prob_14_10_moments_to_mgf_setup, applies (prob_14_8 T).2, rewrites laws and targetLaw to S, and converts Tendsto to def_14_1 with def_14_1_iff_tendsto."
+      }
+    ],
+    "open_blockers": [],
+    "scaffold_assessment": [
+      {
+        "item": "scaffold_hypotheses",
+        "status": "not_applicable",
+        "evidence": "The review context and proof_obligations list no scaffold hypotheses."
+      },
+      {
+        "item": "stale_historical_notes",
+        "status": "not_blocking",
+        "evidence": "Older proof_obligation notes mention a private axiom and an old prob_14_8_converges_in_distribution route, but the current v7 official snapshot has a theorem-level moments-to-MGF setup and uses (prob_14_8 T).2."
+      }
+    ]
+  },
+  "evidence_review": {
+    "status": "covered",
+    "summary": "All required evidence classes were checked and no blocking issue remains.",
+    "items": [
+      {
+        "evidence_class": "source_tex",
+        "status": "covered",
+        "evidence": "semantic_review_context_v7.md and semantic_review_prompt_v7.md state Problem 14.10: uniformly bounded X_n, bounded X, prove distribution convergence iff all positive moments converge, with Problem 14.8 as hint."
+      },
+      {
+        "evidence_class": "lean_subject",
+        "status": "covered",
+        "evidence": "official_snapshot_v7.lean was read. It contains the public theorem prob_14_10 with the expected iff, and focused rg scans found no axiom, sorry, admit, opaque placeholder, or private axiom marker."
+      },
+      {
+        "evidence_class": "proof_obligations",
+        "status": "covered",
+        "evidence": "proof_obligations.json lists five blocking obligations, all with accepted/verified contracts. Direct v7 Lean inspection confirms the current landings, including theorem-level moments-to-MGF support."
+      },
+      {
+        "evidence_class": "audit",
+        "status": "covered",
+        "evidence": "Historical audit warnings targeted the old lack of a theorem-level moments-to-MGF landing. The current v7 file replaces that route with prob_14_10_mgf_converges_from_moments and prob_14_10_moments_to_mgf_setup, so the old warning is stale."
+      },
+      {
+        "evidence_class": "classification",
+        "status": "covered",
+        "evidence": "The task is a proof-bearing source theorem. The current route is source_route_proof_completed_bounded_moments_mgf, not an interface-only bridge or accepted open debt."
+      },
+      {
+        "evidence_class": "dependency_status",
+        "status": "covered",
+        "evidence": "def_14_1 is completed and supplies def_14_1_iff_tendsto. prob_14_8 semantic_review_result.json is pass, and prob_14_8 exposes theorem prob_14_8 from prob_14_8_MgfConvergenceSetup to tightness and Tendsto distribution convergence."
+      },
+      {
+        "evidence_class": "downstream",
+        "status": "covered",
+        "evidence": "semantic_review_context_v7.md lists no direct downstream consumers for prob_14_10, so no downstream theorem needs additional assumptions beyond the exported source-facing iff."
+      },
+      {
+        "evidence_class": "ledger_status",
+        "status": "covered",
+        "evidence": "The review input records prob_14_10 as completed with build_result_v7 success. The verdict is based on direct request-bound candidate and context evidence, not ledger status alone."
+      },
+      {
+        "evidence_class": "hashes",
+        "status": "covered",
+        "evidence": "semantic_review_request_v7.json, semantic_review_input_v7.json, and the template agree on candidate hash e60452a9c93a9bea3ded88ec8fd3f88bc937b0860b2692a1156069a70f62f82d for official_snapshot_v7.lean."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "interface_contract": {
+    "status": "covered",
+    "summary": "The exported interface is source-facing: a bounded law setup and the desired weak-convergence/moment-convergence iff. It does not require callers to provide MGF convergence, polynomial convergence, Problem 14.8 setup, or any target conclusion.",
+    "mismatches": []
+  },
+  "downstream_adequacy": {
+    "status": "covered",
+    "summary": "No direct downstream consumers are registered in the v7 review context; the exported theorem has the expected reusable bounded-moments iff shape.",
+    "consumers_checked": [],
+    "blocking_issues": []
+  },
+  "forbidden_weakenings": [
+    {
+      "rule": "Do not replace the source public interface with a pure existence shell, placeholder definition, or witness-only structure.",
+      "status": "not_present",
+      "evidence": "prob_14_10 proves a concrete iff over def_14_1 and prob_14_10_momentConvergence from the bounded setup."
+    },
+    {
+      "rule": "Do not rewrite a downstream-reusable theorem into a theorem-specific wrapper only sufficient for the current file.",
+      "status": "not_present",
+      "evidence": "The support lemmas for clipped powers, polynomial integrals, exp approximation, MGF convergence, and Problem 14.8 setup are named theorem-level landings, not a single assumed wrapper."
+    },
+    {
+      "rule": "Do not relocate MGF convergence, distribution convergence, moment convergence, or the target theorem into public premises.",
+      "status": "not_present",
+      "evidence": "The only public premise of prob_14_10 is S : prob_14_10_BoundedMomentSetup; hMom is used only in the reverse helper theorem where it is exactly the source-side assumption of that implication."
+    },
+    {
+      "rule": "No axiom, private axiom, sorry, admit, unsafe, or placeholder marker may discharge a blocking source step.",
+      "status": "not_present",
+      "evidence": "A focused scan of official_snapshot_v7.lean found none of these markers."
+    }
+  ],
+  "findings": [],
+  "recommended_disposition": "review_apply",
+  "needs_class_normalization": false,
+  "cache_class": "semantic_verdict",
+  "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_10\\semantic_review_result_v7.json",
+  "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_10\\semantic_review_report_v7.md"
+}
