@@ -1,0 +1,52 @@
+{
+  "task_id": "prob_14_11",
+  "attempt": 18,
+  "candidate_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_11\\official_snapshot_v8.lean",
+  "candidate_hash": "59a35155f219056d00f54c56a0aa1534a3cd33995703bd34beea045816d0817e",
+  "verified_at": "2026-06-21T12:29:25.061308Z",
+  "success": true,
+  "repl": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed is source-route completion for a proof-bearing task)."
+  },
+  "temp_build": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed is source-route completion for a proof-bearing task)."
+  },
+  "final_build": {
+    "success": true,
+    "output": "Existing official output was already validated before review."
+  },
+  "diagnostics": [],
+  "primary_failure_kind": "",
+  "blocking_symbols": [],
+  "raw_outputs": {
+    "repl": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed is source-route completion for a proof-bearing task).",
+    "temp_build": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed is source-route completion for a proof-bearing task).",
+    "final_build": "Existing official output was already validated before review."
+  },
+  "mode": "review-apply",
+  "disposition": "official_output_review_pass",
+  "state_transition": "none",
+  "semantic_review": {
+    "verdict": "pass",
+    "proof_class": "source_route_proof_completed",
+    "completion_class": "textbook_problem_completed_exact_standardized",
+    "phase2_status": "pass",
+    "phase2_status_reason": "source_route_proof_completed is source-route completion for a proof-bearing task",
+    "task_status": "pass",
+    "task_status_reason": "source_route_proof_completed is source-route completion for a proof-bearing task",
+    "needs_class_normalization": false,
+    "runner_status": "codex_handoff_applied",
+    "summary": "Pass. The v8 hash-bound official subject proves the source-facing exact-standardized generalization of Example 14.4.3 for targetDistinct n / couponTypes n -> r, 0 < r < 1. The final theorem keeps the documented thm_14_8_ProofBeyondBook boundary, proves the local coupon triangular-array representation and Lyapunov condition in prob_14_11_support.lean, and does not assert the rejected fixed-r textbook-normalized convergence from ratio-only hypotheses. prob_14_11_support.lean now imports ToyApollo.Output.chapter14_coupon_geometric_support directly and has no code-level import or symbol use of ex_14_4_3 task-owned support.",
+    "recommended_disposition": "accept",
+    "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_11\\semantic_review_result_v8.json",
+    "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_11\\semantic_review_input_v8.json",
+    "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_11\\semantic_review_prompt_v8.md",
+    "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_11\\semantic_review_report_v8.md",
+    "cache_key": "5bafa5e7d6615bc3beb62e13e418b6d0be4220d97b9b30a420b5bf53a61151c1",
+    "cache_hit": false,
+    "reviewer_backend_id": "codex-handoff"
+  },
+  "verify_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_11\\verify_result_v18.json"
+}

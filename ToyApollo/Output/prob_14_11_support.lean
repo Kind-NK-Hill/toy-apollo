@@ -1,5 +1,5 @@
 import Mathlib
-import ToyApollo.Output.ex_14_4_3
+import ToyApollo.Output.chapter14_coupon_geometric_support
 import ToyApollo.Output.thm_14_8
 
 /-
@@ -209,7 +209,7 @@ def prob_14_11_centeredCouponStageLaw
     ((measurable_of_countable
       (fun m : ℕ =>
         Prob63Support.scalarStageWait m -
-          ex_14_4_3_geometricMean (prob_14_11_successProbability S n i))).aemeasurable)
+          chapter14_geometricMean (prob_14_11_successProbability S n i))).aemeasurable)
 
 /-- The centered row variables are independent under the canonical product
 coupon law. -/
@@ -220,7 +220,7 @@ def prob_14_11_source_rows_are_independent
       (fun i : Fin (S.targetDistinct n) =>
         fun ω : Prob63Support.CouponStageΩ (S.targetDistinct n) =>
           Prob63Support.scalarStageWait (ω i) -
-            ex_14_4_3_geometricMean (prob_14_11_successProbability S n i))
+            chapter14_geometricMean (prob_14_11_successProbability S n i))
       ((prob_14_11_couponProbabilitySpace S n : ProbabilityMeasure
         (Prob63Support.CouponStageΩ (S.targetDistinct n))) : Measure
           (Prob63Support.CouponStageΩ (S.targetDistinct n)))
@@ -233,7 +233,7 @@ theorem prob_14_11_source_rows_are_independent_proof
       (fun i : Fin (S.targetDistinct n) =>
         fun ω : Prob63Support.CouponStageΩ (S.targetDistinct n) =>
           Prob63Support.scalarStageWait (ω i) -
-            ex_14_4_3_geometricMean
+            chapter14_geometricMean
               (Prob63Support.stageSuccessProb (S.couponTypes n) i))
       (Prob63Support.couponLaw (S.couponTypes n) (S.targetDistinct n)
         (prob_14_11_targetDistinct_pos S n)
@@ -264,12 +264,12 @@ theorem prob_14_11_source_rows_are_independent_proof
       (X := fun i : Fin (S.targetDistinct n) =>
         fun m : ℕ =>
           Prob63Support.scalarStageWait m -
-            ex_14_4_3_geometricMean
+            chapter14_geometricMean
               (Prob63Support.stageSuccessProb (S.couponTypes n) i))
       (fun i => (measurable_of_countable
         (fun m : ℕ =>
           Prob63Support.scalarStageWait m -
-            ex_14_4_3_geometricMean
+            chapter14_geometricMean
               (Prob63Support.stageSuccessProb (S.couponTypes n) i))).aemeasurable))
 
 /-- The centered stage law has mean zero. -/
@@ -284,7 +284,7 @@ theorem prob_14_11_centeredCouponStageLaw_mean_eq_zero
     ((measurable_of_countable
       (fun m : ℕ =>
         Prob63Support.scalarStageWait m -
-          ex_14_4_3_geometricMean (prob_14_11_successProbability S n i))).aemeasurable)
+          chapter14_geometricMean (prob_14_11_successProbability S n i))).aemeasurable)
     (by fun_prop)]
   have hmean :=
     Prob63Support.stageWaitIntegral_eq
@@ -298,12 +298,12 @@ theorem prob_14_11_centeredCouponStageLaw_mean_eq_zero
           (prob_14_11_targetDistinct_pos S n)
           (prob_14_11_targetDistinct_le_couponTypes S n) i) -
       ∫ _a : ℕ,
-        ex_14_4_3_geometricMean (prob_14_11_successProbability S n i)
+        chapter14_geometricMean (prob_14_11_successProbability S n i)
         ∂Prob63Support.stageMeasure (S.couponTypes n) (S.targetDistinct n)
           (prob_14_11_targetDistinct_pos S n)
           (prob_14_11_targetDistinct_le_couponTypes S n) i = 0
   rw [hmean]
-  · unfold prob_14_11_successProbability ex_14_4_3_geometricMean
+  · unfold prob_14_11_successProbability chapter14_geometricMean
       Prob63Support.stageSuccessProb
     haveI : IsProbabilityMeasure
         (Prob63Support.stageMeasure (S.couponTypes n) (S.targetDistinct n)
@@ -332,17 +332,17 @@ theorem prob_14_11_centeredCouponStageLaw_second_moment_eq
     (n : ℕ) (i : Fin (S.targetDistinct n)) :
     ∫ x, x ^ 2 ∂((prob_14_11_centeredCouponStageLaw S n i :
         ProbabilityMeasure ℝ) : Measure ℝ) =
-      ex_14_4_3_geometricVariance (prob_14_11_successProbability S n i) := by
+      chapter14_geometricVariance (prob_14_11_successProbability S n i) := by
   unfold prob_14_11_centeredCouponStageLaw
   rw [ProbabilityMeasure.toMeasure_map]
   rw [integral_map
     ((measurable_of_countable
       (fun m : ℕ =>
         Prob63Support.scalarStageWait m -
-          ex_14_4_3_geometricMean (prob_14_11_successProbability S n i))).aemeasurable)
+          chapter14_geometricMean (prob_14_11_successProbability S n i))).aemeasurable)
     (by fun_prop)]
-  simpa [prob_14_11_successProbability, ex_14_4_3_geometricMean] using
-    (ex_14_4_3_stageMeasure_centered_second_moment_eq
+  simpa [prob_14_11_successProbability, chapter14_geometricMean] using
+    (chapter14_couponStageMeasure_centered_second_moment_eq
       (n := S.couponTypes n) (k := S.targetDistinct n)
       (prob_14_11_targetDistinct_pos S n)
       (prob_14_11_targetDistinct_le_couponTypes S n) i)
@@ -353,19 +353,19 @@ theorem prob_14_11_centeredCouponStageLaw_lyapunovMoment_eq
     (S : prob_14_11_CouponRatioTriangularArraySetup)
     (n : ℕ) (i : Fin (S.targetDistinct n)) :
     thm_14_8_lyapunovMoment (prob_14_11_centeredCouponStageLaw S n i) 2 =
-      ex_14_4_3_geometricCenteredFourthMoment
+      chapter14_geometricCenteredFourthMoment
         (prob_14_11_successProbability S n i) := by
   unfold thm_14_8_lyapunovMoment prob_14_11_centeredCouponStageLaw
   rw [ProbabilityMeasure.toMeasure_map]
-  simp_rw [ex_14_4_3_rpow_abs_four_eq_pow_four]
+  simp_rw [chapter14_rpow_abs_four_eq_pow_four]
   rw [integral_map
     ((measurable_of_countable
       (fun m : ℕ =>
         Prob63Support.scalarStageWait m -
-          ex_14_4_3_geometricMean (prob_14_11_successProbability S n i))).aemeasurable)
+          chapter14_geometricMean (prob_14_11_successProbability S n i))).aemeasurable)
     (by fun_prop)]
-  simpa [prob_14_11_successProbability, ex_14_4_3_geometricMean] using
-    (ex_14_4_3_stageMeasure_centered_fourth_moment_eq
+  simpa [prob_14_11_successProbability, chapter14_geometricMean] using
+    (chapter14_couponStageMeasure_centered_fourth_moment_eq
       (n := S.couponTypes n) (k := S.targetDistinct n)
       (prob_14_11_targetDistinct_pos S n)
       (prob_14_11_targetDistinct_le_couponTypes S n) i)
@@ -373,7 +373,7 @@ theorem prob_14_11_centeredCouponStageLaw_lyapunovMoment_eq
 def prob_14_11_rowVariance
     (S : prob_14_11_CouponRatioTriangularArraySetup)
     (n : ℕ) (i : Fin (S.targetDistinct n)) : ℝ :=
-  ex_14_4_3_geometricVariance (prob_14_11_successProbability S n i)
+  chapter14_geometricVariance (prob_14_11_successProbability S n i)
 
 def prob_14_11_totalVariance
     (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) : ℝ :=
@@ -383,7 +383,7 @@ def prob_14_11_totalVariance
 def prob_14_11_exactMeanSum
     (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) : ℝ :=
   ∑ i : Fin (S.targetDistinct n),
-    ex_14_4_3_geometricMean (prob_14_11_successProbability S n i)
+    chapter14_geometricMean (prob_14_11_successProbability S n i)
 
 /-- The exact centered coupon row sum used by Theorem 14.8:
 `T_n - E T_n`, written as a sum of centered stage waits. -/
@@ -393,7 +393,7 @@ def prob_14_11_centeredRowSumValue
   (ω : Prob63Support.CouponStageΩ (S.targetDistinct n)) : ℝ :=
   ∑ i : Fin (S.targetDistinct n),
     (Prob63Support.stageWaitReal i ω -
-      ex_14_4_3_geometricMean (prob_14_11_successProbability S n i))
+      chapter14_geometricMean (prob_14_11_successProbability S n i))
 
 /-- The exact row-sum standardization `(T_n - E T_n) / s_n`. -/
 def prob_14_11_exactStandardizedRowSumValue
@@ -474,7 +474,7 @@ theorem prob_14_11_geometricVariance_ge_index_ratio
     (S : prob_14_11_CouponRatioTriangularArraySetup)
     (n : ℕ) (i : Fin (S.targetDistinct n)) :
     ((i.1 : ℝ) / (S.couponTypes n : ℝ)) ≤
-      ex_14_4_3_geometricVariance (prob_14_11_successProbability S n i) := by
+      chapter14_geometricVariance (prob_14_11_successProbability S n i) := by
   have hp_pos : 0 < prob_14_11_successProbability S n i := by
     unfold prob_14_11_successProbability
     exact Prob63Support.stageSuccessProb_pos
@@ -518,9 +518,9 @@ theorem prob_14_11_geometricVariance_ge_index_ratio
     _ ≤ (1 - prob_14_11_successProbability S n i) *
           (1 / prob_14_11_successProbability S n i ^ 2) := by
         exact le_mul_of_one_le_right hgap_nonneg hinv_sq_ge_one
-    _ = ex_14_4_3_geometricVariance
+    _ = chapter14_geometricVariance
           (prob_14_11_successProbability S n i) := by
-        unfold ex_14_4_3_geometricVariance
+        unfold chapter14_geometricVariance
         ring
 
 theorem prob_14_11_geometricVariance_row_sum_ge_index_sum
@@ -815,7 +815,7 @@ theorem prob_14_11_row_lyapunov_sum_eq_coupon_fourth_sum
       (∑ i : Fin ((prob_14_11_theoremSetup S).arrayNotation.rowLength n),
         thm_14_8_lyapunovMoment ((prob_14_11_theoremSetup S).rowLaws n i) 2) =
         ∑ i : Fin (S.targetDistinct n),
-          ex_14_4_3_geometricCenteredFourthMoment
+          chapter14_geometricCenteredFourthMoment
             (prob_14_11_successProbability S n i) := by
   intro n
   simp only [prob_14_11_theoremSetup, prob_14_11_arrayNotation]
@@ -827,7 +827,7 @@ theorem prob_14_11_totalVariance_eq_geometricVariance_sum
     ∀ n : ℕ,
       (prob_14_11_theoremSetup S).arrayNotation.totalVariance n =
         ∑ i : Fin (S.targetDistinct n),
-          ex_14_4_3_geometricVariance
+          chapter14_geometricVariance
             (prob_14_11_successProbability S n i) := by
   intro n
   rfl
@@ -836,7 +836,7 @@ theorem prob_14_11_totalVariance_eq_geometricVariance_sum
 moment has a uniform explicit bound. -/
 theorem prob_14_11_centeredFourthMoment_bound_of_compact
     {a p : ℝ} (ha : 0 < a) (hap : a ≤ p) (hp_upper : p ≤ 1) :
-    ex_14_4_3_geometricCenteredFourthMoment p ≤ 10 / a ^ 4 := by
+    chapter14_geometricCenteredFourthMoment p ≤ 10 / a ^ 4 := by
   have hp_pos : 0 < p := lt_of_lt_of_le ha hap
   have hp_nonneg : 0 ≤ p := le_of_lt hp_pos
   have hp_four_pos : 0 < p ^ 4 := pow_pos hp_pos 4
@@ -863,7 +863,7 @@ theorem prob_14_11_centeredFourthMoment_bound_of_compact
       ((1 / p ^ 4 : ℝ) * (1 - p)) * (p ^ 2 - 9 * p + 9) ≤
         ((1 / a ^ 4) * 1) * 10 :=
     mul_le_mul hfirst hquad_le hquad_nonneg hfirst_upper_nonneg
-  unfold ex_14_4_3_geometricCenteredFourthMoment
+  unfold chapter14_geometricCenteredFourthMoment
   calc
     (1 / p ^ 4 * (1 - p)) * (p ^ 2 - 9 * p + 9)
         ≤ ((1 / a ^ 4) * 1) * 10 := hprod
@@ -924,14 +924,14 @@ theorem prob_14_11_fourth_moment_row_sum_is_O_couponTypes
     (S : prob_14_11_CouponRatioTriangularArraySetup) :
     ∀ᶠ n : ℕ in atTop,
       (∑ i : Fin (S.targetDistinct n),
-        ex_14_4_3_geometricCenteredFourthMoment
+        chapter14_geometricCenteredFourthMoment
           (prob_14_11_successProbability S n i)) ≤
         (10 / (((1 - S.r) / 2) ^ 4)) * (S.couponTypes n : ℝ) := by
   have ha_pos : 0 < (1 - S.r) / 2 := by linarith [S.r_lt_one]
   filter_upwards [prob_14_11_successProbability_eventually_compact S] with n hcompact
   calc
     (∑ i : Fin (S.targetDistinct n),
-      ex_14_4_3_geometricCenteredFourthMoment
+      chapter14_geometricCenteredFourthMoment
         (prob_14_11_successProbability S n i))
         ≤ ∑ _i : Fin (S.targetDistinct n),
             (10 / (((1 - S.r) / 2) ^ 4) : ℝ) := by
@@ -991,7 +991,7 @@ theorem prob_14_11_generalized_lyapunov_condition
         (∑ i : Fin (T.arrayNotation.rowLength n),
           thm_14_8_lyapunovMoment (T.rowLaws n i) 2) =
         ∑ i : Fin (S.targetDistinct n),
-          ex_14_4_3_geometricCenteredFourthMoment
+          chapter14_geometricCenteredFourthMoment
             (prob_14_11_successProbability S n i) by
           simpa [T] using prob_14_11_row_lyapunov_sum_eq_coupon_fourth_sum S n]
       simpa [K] using hnum_row

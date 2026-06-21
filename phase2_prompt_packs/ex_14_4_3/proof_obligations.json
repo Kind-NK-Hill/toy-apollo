@@ -28,7 +28,7 @@
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "Reuses the Chapter 6 coupon collector formalization rather than rebuilding geometric waiting times; the setup fields are concrete proof obligations, not arbitrary Prop placeholders.",
-      "last_review_evidence": "The setup names the coupon type count N=n+2, targetDistinct=(N+1)/2, concrete stage laws, centered stage laws, row-length transport, row-law identification, source independence, source stage-sum representation, and textbook normalization.",
+      "last_review_evidence": "The setup names couponTypes=N=n+2, targetDistinct=(N+1)/2, successProbability, concrete stage laws, centered stage laws, row-length transport, row-law identification, source independence, stage-sum representation, and textbook normalization.",
       "expected_theorem_signature": "A source setup tying row laws to centered coupon-stage geometric laws for targetDistinct=(N+1)/2.",
       "landing_kind": "support_predicate",
       "proof_contract_status": "verified",
@@ -51,11 +51,11 @@
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "The moment formulas are explicit and packaged for the Lyapunov verification.",
-      "last_review_evidence": "ex_14_4_3_geometric_moment_formulas_verified calls ex_14_4_3_stageMeasure_mgf_eq, Prob63Support.stageWaitIntegral_eq, ex_14_4_3_centeredCouponStageLaw_second_moment_eq, and ex_14_4_3_centeredCouponStageLaw_lyapunovMoment_eq. The MGF theorem reduces concrete stage masses to geometricPMFReal and applies ex_14_4_3_geometric_mgf_hasSum.",
+      "last_review_evidence": "chapter14_coupon_geometric_support.lean proves the geometric MGF and centered moment formulas; ex_14_4_3_coupon_stage_support.lean reuses those declarations for the concrete stage law; ex_14_4_3_geometric_moment_formulas_verified packages the concrete MGF, mean, variance, and centered fourth formula for each stage.",
       "expected_theorem_signature": "(n : Nat) -> Fin (ex_14_4_3_targetDistinct n) -> ex_14_4_3_GeometricMomentFormulasForStage n i",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "The moment formulas are proved from concrete geometric stage laws and supporting series/integral theorems, not supplied by the caller or by rfl over a record.",
+      "proof_contract_notes": "The formulas are proved from concrete geometric stage laws and generic chapter14 geometric series/integral support, not supplied by the caller or by rfl over a record.",
       "signature_match": "passed",
       "body_reassumption_check": "passed",
       "public_premise_check": "passed"
@@ -74,7 +74,7 @@
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "Current metadata normalization 2026-06-19: theorem-level Lyapunov evidence is represented by ex_14_4_3_lyapunov_condition_from_fourth_moment_riemann_sum and ex_14_4_3_lyapunov_condition_from_proved_bounds. Earlier audit notes about an internal placeholder route are superseded by the current split official output.",
-      "last_review_evidence": "ex_14_4_3_row_lyapunov_sum_eq_coupon_fourth_sum and ex_14_4_3_totalVariance_eq_geometricVariance_sum prove the row numerator and variance alignments; ex_14_4_3_fourth_moment_row_sum_is_O_n and ex_14_4_3_variance_scale_lower_bound supply numerator/denominator growth; ex_14_4_3_lyapunov_condition_from_proved_bounds proves thm_14_8_LyapunovCondition.",
+      "last_review_evidence": "ex_14_4_3_row_lyapunov_sum_eq_coupon_fourth_sum and ex_14_4_3_totalVariance_eq_geometricVariance_sum prove row numerator and variance alignments; ex_14_4_3_fourth_moment_row_sum_is_O_n and ex_14_4_3_variance_scale_lower_bound provide growth bounds; ex_14_4_3_lyapunov_condition_from_proved_bounds proves thm_14_8_LyapunovCondition.",
       "source_output_alignment": {
         "audited_at": "2026-06-19",
         "audit_class": "current_theorem_landing_verified",
@@ -110,7 +110,7 @@
       "blocking": true,
       "scaffold_hypotheses": [],
       "notes": "The final theorem invokes thm_14_8 through the Lyapunov branch and explicitly inherits the documented thm_14_8_ProofBeyondBook boundary. The non-beyond-book Lyapunov verification is covered by parent-owned theorem-level evidence.",
-      "last_review_evidence": "ex_14_4_3_asymptoticNormality applies thm_14_8 C.theoremSetup H (Or.inr (ex_14_4_3_lyapunov_condition_from_proved_bounds C)); ex_14_4_3_textbook_normalized_clt packages this Tendsto result with C.textbook_normalization.",
+      "last_review_evidence": "ex_14_4_3_asymptoticNormality applies thm_14_8 C.theoremSetup H (Or.inr (ex_14_4_3_lyapunov_condition_from_proved_bounds C)); ex_14_4_3_textbook_normalized_clt packages this Tendsto result with C.textbook_normalization; ex_14_4_3 preserves that final statement.",
       "expected_theorem_signature": "(C : ex_14_4_3_CouponTriangularArraySetup) -> thm_14_8_ProofBeyondBook C.theoremSetup -> ex_14_4_3_TextbookNormalizedConvergence C",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
@@ -223,9 +223,16 @@
       "status": "covered",
       "summary": "All four blocking proof obligations in proof_obligations.json are covered by current theorem-level evidence in the split official output. Older notes inside proof_obligations.json that mention a private axiom or public-field debt are stale relative to the inspected parent/support Lean files.",
       "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-21T12:29:20.297532Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All four blocking obligations listed by proof_obligations.json are covered by current theorem-level or support-predicate evidence. The current split support keeps reusable geometric formulas separate without changing the final ex_14_4_3 source-facing statement.",
+      "open_blockers": []
     }
   ],
-  "last_reviewed_at": "2026-06-18T16:15:44.840585Z",
+  "last_reviewed_at": "2026-06-21T12:29:20.297532Z",
   "source_output_alignment_audit": {
     "audited_at": "2026-05-19",
     "accepted_debt_count": 1,

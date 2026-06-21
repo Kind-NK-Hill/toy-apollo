@@ -1,0 +1,52 @@
+{
+  "task_id": "ex_14_4_3",
+  "attempt": 21,
+  "candidate_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_3\\official_snapshot_v11.lean",
+  "candidate_hash": "8f37f0632e76466e253cd5ec422e63d0486a9afcdabcbe5ce727f42f15a22bf7",
+  "verified_at": "2026-06-21T12:29:21.212450Z",
+  "success": true,
+  "repl": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed is source-route completion for a proof-bearing task)."
+  },
+  "temp_build": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed is source-route completion for a proof-bearing task)."
+  },
+  "final_build": {
+    "success": true,
+    "output": "Existing official output was already validated before review."
+  },
+  "diagnostics": [],
+  "primary_failure_kind": "",
+  "blocking_symbols": [],
+  "raw_outputs": {
+    "repl": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed is source-route completion for a proof-bearing task).",
+    "temp_build": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_proof_completed is source-route completion for a proof-bearing task).",
+    "final_build": "Existing official output was already validated before review."
+  },
+  "mode": "review-apply",
+  "disposition": "official_output_review_pass",
+  "state_transition": "none",
+  "semantic_review": {
+    "verdict": "pass",
+    "proof_class": "source_route_proof_completed",
+    "completion_class": "textbook_example_completed",
+    "phase2_status": "pass",
+    "phase2_status_reason": "source_route_proof_completed is source-route completion for a proof-bearing task",
+    "task_status": "pass",
+    "task_status_reason": "source_route_proof_completed is source-route completion for a proof-bearing task",
+    "needs_class_normalization": false,
+    "runner_status": "codex_handoff_applied",
+    "summary": "Pass. The official output preserves the source-facing Example 14.4.3 theorem statement: ex_14_4_3 still concludes ex_14_4_3_TextbookNormalizedConvergence C, which includes TextbookNormalization by the coupon-collection law mapped through (x - N log 2) / sqrt(N(1-log 2)) plus convergence to the standard normal law. The extracted chapter14_coupon_geometric_support.lean is task-neutral geometric waiting-time support, and ex_14_4_3_coupon_stage_support.lean binds those formulas to the half-coupon stage setup; neither file replaces the final source-facing theorem with a weaker abstract normalized-law statement.",
+    "recommended_disposition": "accept",
+    "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_3\\semantic_review_result_v11.json",
+    "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_3\\semantic_review_input_v11.json",
+    "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_3\\semantic_review_prompt_v11.md",
+    "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_3\\semantic_review_report_v11.md",
+    "cache_key": "8c6e31bed0f77a1fe78d4d22d7fe2239b950b60ace6497fd20beaf73d1104a4c",
+    "cache_hit": false,
+    "reviewer_backend_id": "codex-handoff"
+  },
+  "verify_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_3\\verify_result_v21.json"
+}

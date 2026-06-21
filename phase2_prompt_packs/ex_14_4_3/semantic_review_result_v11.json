@@ -1,0 +1,327 @@
+{
+  "schema_version": "phase2.semantic_review.result.v7",
+  "task_id": "ex_14_4_3",
+  "mode": "review-existing",
+  "attempt": 11,
+  "prompt_version": 9,
+  "rubric_version": 9,
+  "review_input_hash": "338268531b5a56f518ef82fa4fcdc27d004c3d36e668af74c085f99d3b278b70",
+  "cache_key": "8c6e31bed0f77a1fe78d4d22d7fe2239b950b60ace6497fd20beaf73d1104a4c",
+  "reviewer_backend_id": "codex-handoff",
+  "runner": {
+    "status": "codex_handoff_applied",
+    "result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_3\\semantic_review_result_v11.json"
+  },
+  "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_3\\semantic_review_input_v11.json",
+  "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_3\\semantic_review_prompt_v11.md",
+  "review_context_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_3\\semantic_review_context_v11.md",
+  "expected_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_3\\semantic_review_result_v11.json",
+  "candidate_hash": "8f37f0632e76466e253cd5ec422e63d0486a9afcdabcbe5ce727f42f15a22bf7",
+  "verdict": "pass",
+  "confidence": "high",
+  "proof_class": "source_route_proof_completed",
+  "completion_class": "textbook_example_completed",
+  "summary": "Pass. The official output preserves the source-facing Example 14.4.3 theorem statement: ex_14_4_3 still concludes ex_14_4_3_TextbookNormalizedConvergence C, which includes TextbookNormalization by the coupon-collection law mapped through (x - N log 2) / sqrt(N(1-log 2)) plus convergence to the standard normal law. The extracted chapter14_coupon_geometric_support.lean is task-neutral geometric waiting-time support, and ex_14_4_3_coupon_stage_support.lean binds those formulas to the half-coupon stage setup; neither file replaces the final source-facing theorem with a weaker abstract normalized-law statement.",
+  "reviewer_independence": {
+    "role": "independent_read_only_reviewer",
+    "read_only": true,
+    "did_edit_candidate": false,
+    "used_current_review_request": true,
+    "attestation": "I performed a fresh independent read-only semantic review of request v11. I did not author or edit the reviewed Lean, ledger, status, or prompt-pack inputs and wrote only this expected result JSON."
+  },
+  "source_claims": [
+    {
+      "claim_id": "coupon_geometric_decomposition",
+      "claim": "T_{N,m} for the coupon collector is represented as a sum of independent geometric waiting times X_{N,i}, with success probability p_{N,i}=1-i/N and X_{N,0}=1."
+    },
+    {
+      "claim_id": "geometric_moment_formulas",
+      "claim": "Each stage has the displayed geometric MGF, mean 1/p, variance (1-p)/p^2, and centered fourth moment p^{-4}(1-p)(p^2-9p+9)."
+    },
+    {
+      "claim_id": "lyapunov_delta_two",
+      "claim": "For m/N approaching 1/2, the fourth-moment row sum and variance-scale estimates imply Lyapunov's condition with delta=2."
+    },
+    {
+      "claim_id": "apply_triangular_array_clt",
+      "claim": "Applying Theorem 14.8 yields convergence of the coupon collection time normalized by N log 2 and N(1-log 2) to the standard normal law."
+    }
+  ],
+  "claim_mapping": [
+    {
+      "source_claim_id": "coupon_geometric_decomposition",
+      "lean_declarations": [
+        "ex_14_4_3_couponTypes",
+        "ex_14_4_3_targetDistinct",
+        "ex_14_4_3_successProbability",
+        "ex_14_4_3_stageProbabilityMeasure",
+        "ex_14_4_3_centeredCouponStageLaw",
+        "ex_14_4_3_CouponTriangularArraySetup"
+      ],
+      "assumptions": "The setup supplies source law/representation links, including row_length_matches, row_laws_are_centered_coupon_stage_laws, source_rows_are_independent, source_coupon_collection_law_is_stage_sum, source_normalized_law_represents_centered_T, and textbook_normalization. It does not expose MGF, variance, fourth-moment, total-variance, or Lyapunov proof obligations as caller premises.",
+      "conclusion": "The row laws used by the triangular-array theorem are identified with centered coupon-stage laws for targetDistinct=(N+1)/2 and successProbability=Prob63Support.stageSuccessProb.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "geometric_moment_formulas",
+      "lean_declarations": [
+        "chapter14_geometricMgf",
+        "chapter14_geometric_mgf_hasSum",
+        "chapter14_geometricMean",
+        "chapter14_geometricVariance",
+        "chapter14_geometricCenteredFourthMoment",
+        "chapter14_couponStageMeasure_mgf_eq",
+        "chapter14_couponStageMeasure_centered_second_moment_eq",
+        "chapter14_couponStageMeasure_centered_fourth_moment_eq",
+        "ex_14_4_3_geometric_moment_formulas_verified"
+      ],
+      "assumptions": "The generic support proves the geometric series, MGF, and centered second/fourth moment formulas under the natural positivity and convergence hypotheses. The ex_14_4_3 support file imports those chapter14_* declarations and reuses them through direct definitions, simpa wrappers, and concrete coupon-stage bridges.",
+      "conclusion": "The displayed MGF, mean, variance, and centered fourth moment formulas are available for each concrete coupon stage and are not merely caller-supplied facts.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "lyapunov_delta_two",
+      "lean_declarations": [
+        "ex_14_4_3_row_lyapunov_sum_eq_coupon_fourth_sum",
+        "ex_14_4_3_totalVariance_eq_geometricVariance_sum",
+        "ex_14_4_3_fourth_moment_row_sum_is_O_n",
+        "ex_14_4_3_variance_scale_lower_bound",
+        "ex_14_4_3_lyapunov_condition_from_fourth_moment_riemann_sum",
+        "ex_14_4_3_lyapunov_condition_from_proved_bounds"
+      ],
+      "assumptions": "The proof uses parent-owned row alignment and variance alignment theorems plus standard thm_14_8 setup fields such as sn_pos and sn_sq_eq_totalVariance. There is no caller-supplied local Lyapunov condition.",
+      "conclusion": "The local Lyapunov condition thm_14_8_LyapunovCondition C.theoremSetup is proved internally with delta=2.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "apply_triangular_array_clt",
+      "lean_declarations": [
+        "ex_14_4_3_asymptoticMeanScale",
+        "ex_14_4_3_asymptoticVarianceScale",
+        "ex_14_4_3_normalizedCouponValue",
+        "ex_14_4_3_TextbookNormalization",
+        "ex_14_4_3_TextbookNormalizedConvergence",
+        "ex_14_4_3_asymptoticNormality",
+        "ex_14_4_3_textbook_normalized_clt",
+        "ex_14_4_3"
+      ],
+      "assumptions": "The only nonlocal theorem premise is H : thm_14_8_ProofBeyondBook C.theoremSetup, which is the documented allowed boundary for Theorem 14.8 itself.",
+      "conclusion": "ex_14_4_3 concludes TextbookNormalizedConvergence, i.e. TextbookNormalization of the coupon-collection laws together with Tendsto of the normalized laws to the standard normal law.",
+      "assessment": "covered"
+    }
+  ],
+  "route_inspection": {
+    "status": "covered",
+    "source_route": "The official route follows the textbook proof spine: concrete coupon-stage laws from Prob63Support, generic geometric waiting-time formulas in chapter14_coupon_geometric_support.lean, ex_14_4_3-specific stage binding in ex_14_4_3_coupon_stage_support.lean, theorem-level Lyapunov verification in ex_14_4_3.lean, and final application of thm_14_8.",
+    "expected_answer_or_statement": "The final public result must remain a source-facing half-coupon CLT normalized by N log 2 and N(1-log 2), not an abstract arbitrary normalized-law theorem and not an iid thm_14_7 route.",
+    "local_mathlib_search": "The proof uses Mathlib/MeasureTheory infrastructure for PMF sums, integrals, probability-measure maps, finite sums, and Tendsto squeeze. These uses support source steps and do not replace the coupon geometric or Lyapunov proof spine with an adapter-only shortcut.",
+    "public_interface_check": "Passed. Direct search of the current parent/support files found no source_row_lyapunov_sum_eq, source_totalVariance_eq_geometricVariance_sum, lyapunovExpression_* fields, fourthMomentRiemannBound_tendsto_zero, caller-supplied MGF/mean/variance package, abstract C.normalizedCouponLaws conclusion without TextbookNormalization, sorry, admit, axiom, or opaque placeholder. The final theorem statement is unchanged at the source-facing level.",
+    "support_or_reassembly_decision": "The split support is semantically acceptable. chapter14_coupon_geometric_support.lean owns task-neutral geometric waiting-time formulas and does not import thm_14_8. ex_14_4_3_coupon_stage_support.lean imports that support and binds it to the half-coupon coupon-stage setup; it does not alter the ex_14_4_3 theorem statement.",
+    "stop_go_verdict": "go",
+    "notes": "ToyApollo/Output/ex_14_4_3.lean and phase2_prompt_packs/ex_14_4_3/official_snapshot_v11.lean are linewise identical in the inspected checkout. lake env lean ToyApollo/Output/ex_14_4_3.lean exited 0."
+  },
+  "spine_alignment": {
+    "status": "covered",
+    "summary": "The source proof spine lands in named declarations for the coupon setup, geometric moment computations, fourth-moment/variance bounds, local Lyapunov condition, and final triangular-array CLT application with textbook normalization.",
+    "obligations_checked": [
+      {
+        "obligation": "coupon_geometric_decomposition",
+        "source_step": "Represent coupon collection as independent geometric waits with p_{N,i}=1-i/N.",
+        "lean_landing": "ex_14_4_3_CouponTriangularArraySetup with row_laws_are_centered_coupon_stage_laws, plus ex_14_4_3_stageProbabilityMeasure and ex_14_4_3_centeredCouponStageLaw",
+        "status": "covered"
+      },
+      {
+        "obligation": "geometric_moment_formulas",
+        "source_step": "Compute the geometric MGF, mean, variance, and centered fourth moment.",
+        "lean_landing": "chapter14_geometric_mgf_hasSum, chapter14_couponStageMeasure_mgf_eq, chapter14_couponStageMeasure_centered_second_moment_eq, chapter14_couponStageMeasure_centered_fourth_moment_eq, and ex_14_4_3_geometric_moment_formulas_verified",
+        "status": "covered"
+      },
+      {
+        "obligation": "lyapunov_fourth_moment_bound",
+        "source_step": "Use delta=2, bound the fourth-moment row sum, and show the normalized Lyapunov ratio tends to zero.",
+        "lean_landing": "ex_14_4_3_lyapunov_condition_from_fourth_moment_riemann_sum and ex_14_4_3_lyapunov_condition_from_proved_bounds",
+        "status": "covered"
+      },
+      {
+        "obligation": "apply_triangular_array_clt",
+        "source_step": "Apply Theorem 14.8 to obtain the source-normalized normal limit.",
+        "lean_landing": "ex_14_4_3_asymptoticNormality, ex_14_4_3_textbook_normalized_clt, and ex_14_4_3",
+        "status": "covered"
+      }
+    ],
+    "missing_obligations": [],
+    "shortcut_assessment": "No adapter-only shortcut, theorem-specific public-premise relocation, or weakened abstract normalized-law theorem was found. The upstream thm_14_8 proof debt remains explicit and allowed; the local coupon and Lyapunov work is proved in parent/support declarations."
+  },
+  "obligation_review": {
+    "status": "covered",
+    "summary": "All four blocking obligations listed by proof_obligations.json are covered by current theorem-level or support-predicate evidence. The current split support keeps reusable geometric formulas separate without changing the final ex_14_4_3 source-facing statement.",
+    "items": [
+      {
+        "obligation_id": "coupon_geometric_decomposition",
+        "status": "covered",
+        "route_class": "source law-definition setup plus upstream coupon support",
+        "evidence": "The setup names couponTypes=N=n+2, targetDistinct=(N+1)/2, successProbability, concrete stage laws, centered stage laws, row-length transport, row-law identification, source independence, stage-sum representation, and textbook normalization.",
+        "expected_theorem_signature": "A source setup tying row laws to centered coupon-stage geometric laws for targetDistinct=(N+1)/2.",
+        "lean_landing": "ex_14_4_3_CouponTriangularArraySetup; ex_14_4_3_stageProbabilityMeasure; ex_14_4_3_centeredCouponStageLaw",
+        "landing_kind": "support_predicate",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "This is representation/source data reused from prob_6_3. It does not expose moment, variance, or local Lyapunov proof obligations as caller premises."
+      },
+      {
+        "obligation_id": "geometric_moment_formulas",
+        "status": "covered",
+        "route_class": "source-route theorem plus reusable bridge",
+        "evidence": "chapter14_coupon_geometric_support.lean proves the geometric MGF and centered moment formulas; ex_14_4_3_coupon_stage_support.lean reuses those declarations for the concrete stage law; ex_14_4_3_geometric_moment_formulas_verified packages the concrete MGF, mean, variance, and centered fourth formula for each stage.",
+        "expected_theorem_signature": "(n : Nat) -> Fin (ex_14_4_3_targetDistinct n) -> ex_14_4_3_GeometricMomentFormulasForStage n i",
+        "lean_landing": "ex_14_4_3_geometric_moment_formulas_verified",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The formulas are proved from concrete geometric stage laws and generic chapter14 geometric series/integral support, not supplied by the caller or by rfl over a record."
+      },
+      {
+        "obligation_id": "lyapunov_fourth_moment_bound",
+        "status": "covered",
+        "route_class": "source-route theorem",
+        "evidence": "ex_14_4_3_row_lyapunov_sum_eq_coupon_fourth_sum and ex_14_4_3_totalVariance_eq_geometricVariance_sum prove row numerator and variance alignments; ex_14_4_3_fourth_moment_row_sum_is_O_n and ex_14_4_3_variance_scale_lower_bound provide growth bounds; ex_14_4_3_lyapunov_condition_from_proved_bounds proves thm_14_8_LyapunovCondition.",
+        "expected_theorem_signature": "(C : ex_14_4_3_CouponTriangularArraySetup) -> thm_14_8_LyapunovCondition C.theoremSetup",
+        "lean_landing": "ex_14_4_3_lyapunov_condition_from_fourth_moment_riemann_sum; ex_14_4_3_lyapunov_condition_from_proved_bounds",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The proof uses parent-owned row Lyapunov and total variance alignment theorems, finite row bounds, and squeeze to zero. No caller-supplied local Lyapunov condition remains."
+      },
+      {
+        "obligation_id": "apply_triangular_array_clt",
+        "status": "covered",
+        "route_class": "source-route theorem with allowed beyond-book exception",
+        "evidence": "ex_14_4_3_asymptoticNormality applies thm_14_8 C.theoremSetup H (Or.inr (ex_14_4_3_lyapunov_condition_from_proved_bounds C)); ex_14_4_3_textbook_normalized_clt packages this Tendsto result with C.textbook_normalization; ex_14_4_3 preserves that final statement.",
+        "expected_theorem_signature": "(C : ex_14_4_3_CouponTriangularArraySetup) -> thm_14_8_ProofBeyondBook C.theoremSetup -> ex_14_4_3_TextbookNormalizedConvergence C",
+        "lean_landing": "ex_14_4_3_textbook_normalized_clt; ex_14_4_3",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The only nonlocal proof premise is the documented thm_14_8_ProofBeyondBook boundary. The final theorem is not an abstract C.normalizedCouponLaws conclusion alone; TextbookNormalizedConvergence includes TextbookNormalization."
+      }
+    ],
+    "open_blockers": [],
+    "scaffold_assessment": [
+      {
+        "item": "scaffold_hypotheses",
+        "status": "covered",
+        "assessment": "No scaffold hypotheses are recorded in the v11 review basis, and direct search of the reviewed files found no sorry, admit, axiom, or opaque placeholder."
+      }
+    ]
+  },
+  "evidence_review": {
+    "status": "covered",
+    "summary": "All required evidence classes were checked. The request hash matches the canonical candidate string embedded in semantic_review_input_v11.json; raw disk file hashes differ because the file serialization/line endings differ, while snapshot and official output are linewise identical. This is not a semantic blocker.",
+    "items": [
+      {
+        "evidence_class": "source_tex",
+        "status": "covered",
+        "evidence": "semantic_review_input_v11.json and semantic_review_context_v11.md contain the literal Example 14.4.3 coupon-collection source: geometric stage decomposition, MGF/moment formulas, Lyapunov delta=2 verification, and final source-normalized normal convergence."
+      },
+      {
+        "evidence_class": "lean_subject",
+        "status": "covered",
+        "evidence": "Inspected phase2_prompt_packs/ex_14_4_3/official_snapshot_v11.lean, ToyApollo/Output/ex_14_4_3.lean, ToyApollo/Output/ex_14_4_3_coupon_stage_support.lean, and ToyApollo/Output/chapter14_coupon_geometric_support.lean. lake env lean ToyApollo/Output/ex_14_4_3.lean exited 0."
+      },
+      {
+        "evidence_class": "proof_obligations",
+        "status": "covered",
+        "evidence": "proof_obligations.json lists four blocking obligations, all proved and review accepted in the current summary. Each was checked directly against current Lean landings and no open blocker remains."
+      },
+      {
+        "evidence_class": "audit",
+        "status": "covered",
+        "evidence": "source_decision_resolution.json requires the literal coupon-collection statement and forbids public relocation of row moment identities, total-variance identities, moment formulas, or local Lyapunov verification. Direct rg checks found those forbidden old public-premise names absent from the current parent/support files."
+      },
+      {
+        "evidence_class": "classification",
+        "status": "covered",
+        "evidence": "The task remains a proof-bearing complex example requiring decomposition. The current split matches that classification: generic geometric support, ex-specific coupon-stage support, parent-owned Lyapunov theorem support, and final theorem assembly."
+      },
+      {
+        "evidence_class": "dependency_status",
+        "status": "covered",
+        "evidence": "prob_6_3 and thm_14_7 are recorded completed; thm_14_8 is recorded COMPLETED_WITH_PROOF_DEBT. ex_14_4_3 uses the allowed H : thm_14_8_ProofBeyondBook boundary only after proving the local Lyapunov condition by Or.inr evidence."
+      },
+      {
+        "evidence_class": "downstream",
+        "status": "covered",
+        "evidence": "The direct downstream consumer prob_14_11 imports prob_14_11_support, which imports ToyApollo.Output.chapter14_coupon_geometric_support and reuses chapter14_geometricMean, chapter14_geometricVariance, chapter14_geometricCenteredFourthMoment, and concrete coupon-stage centered moment bridges. No extra theorem-level assumptions from ex_14_4_3 are needed."
+      },
+      {
+        "evidence_class": "ledger_status",
+        "status": "covered",
+        "evidence": "The v11 context records ex_14_4_3 ledger status COMPLETED with no open blocking obligations and prior accepted proof-obligation summary. This agrees with direct Lean inspection for the reviewed candidate."
+      },
+      {
+        "evidence_class": "hashes",
+        "status": "covered",
+        "evidence": "The canonical UTF-8 SHA256 of the candidate.lean string embedded in semantic_review_input_v11.json is 8f37f0632e76466e253cd5ec422e63d0486a9afcdabcbe5ce727f42f15a22bf7, matching the request. Raw disk SHA256 values of ToyApollo/Output/ex_14_4_3.lean and official_snapshot_v11.lean differ from that canonical hash, but Compare-Object over file lines showed the snapshot and official output are linewise identical; the raw mismatch is serialization/line-ending evidence, not a semantic mismatch."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "interface_contract": {
+    "status": "covered",
+    "summary": "The public interface remains source-facing. ex_14_4_3_TextbookNormalizedConvergence includes the textbook-normalized coupon-collection law and its Tendsto conclusion; ex_14_4_3 still concludes that Prop with only the documented thm_14_8_ProofBeyondBook premise. The extracted support does not weaken or replace this interface.",
+    "mismatches": []
+  },
+  "downstream_adequacy": {
+    "status": "covered",
+    "summary": "The direct downstream consumer is adequately supported. The newly extracted generic chapter14 coupon-geometric file gives prob_14_11 reusable geometric waiting-time formulas without forcing prob_14_11 to depend on theorem-specific ex_14_4_3 wrappers or new caller obligations.",
+    "consumers_checked": [
+      {
+        "block_id": "prob_14_11",
+        "status": "covered",
+        "evidence": "ToyApollo/Output/prob_14_11.lean imports ToyApollo.Output.prob_14_11_support; prob_14_11_support imports ToyApollo.Output.chapter14_coupon_geometric_support and reuses the generic chapter14 geometric mean, variance, centered-fourth, and coupon-stage moment bridge declarations. This confirms the split support is reusable and does not require changing ex_14_4_3's final theorem statement."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "forbidden_weakenings": [
+    {
+      "rule": "Do not replace the textbook public interface by a pure existence shell, placeholder definition, or witness-only structure.",
+      "status": "not_present",
+      "evidence": "ex_14_4_3_TextbookNormalizedConvergence includes TextbookNormalization and Tendsto; ex_14_4_3_TextbookNormalization explicitly maps couponCollectionLaws by ex_14_4_3_normalizedCouponValue using N log 2 and N(1-log 2)."
+    },
+    {
+      "rule": "Do not rewrite downstream-reusable theorem support into a theorem-specific wrapper only sufficient for the current file.",
+      "status": "not_present",
+      "evidence": "chapter14_coupon_geometric_support.lean is task-neutral and is imported by prob_14_11_support. ex_14_4_3_coupon_stage_support.lean reuses it for the half-coupon example rather than hiding the formulas in the final theorem."
+    },
+    {
+      "rule": "Do not expose row-law moment identities, total-variance identities, MGF/mean/variance formulas, or local Lyapunov verification as public caller obligations.",
+      "status": "not_present",
+      "evidence": "The forbidden old public-field names were absent in direct rg checks. The relevant identities are proved as theorems such as ex_14_4_3_row_lyapunov_sum_eq_coupon_fourth_sum, ex_14_4_3_totalVariance_eq_geometricVariance_sum, ex_14_4_3_geometric_moment_formulas_verified, and ex_14_4_3_lyapunov_condition_from_proved_bounds."
+    },
+    {
+      "rule": "Do not use an iid thm_14_7 route for this non-iid triangular-array example.",
+      "status": "not_present",
+      "evidence": "The parent proof applies thm_14_8 with Or.inr local Lyapunov evidence. thm_14_7 is not the final proof route."
+    },
+    {
+      "rule": "Do not use sorry, admit, axiom, opaque placeholders, or bridge-debt wrappers for the reviewed theorem.",
+      "status": "not_present",
+      "evidence": "Direct search of ToyApollo/Output/ex_14_4_3.lean, ToyApollo/Output/ex_14_4_3_coupon_stage_support.lean, and ToyApollo/Output/chapter14_coupon_geometric_support.lean found no sorry, admit, axiom, or opaque marker."
+    }
+  ],
+  "findings": [],
+  "recommended_disposition": "accept",
+  "needs_class_normalization": false,
+  "cache_class": "semantic_verdict",
+  "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_3\\semantic_review_result_v11.json",
+  "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_3\\semantic_review_report_v11.md"
+}

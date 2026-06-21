@@ -1,0 +1,350 @@
+{
+  "schema_version": "phase2.semantic_review.result.v7",
+  "task_id": "prob_14_11",
+  "mode": "review-existing",
+  "attempt": 8,
+  "prompt_version": 9,
+  "rubric_version": 9,
+  "review_input_hash": "5b8cc910cc086bf5b862b9fc6b74d7251626f201c073ae81e6df414fad19d350",
+  "cache_key": "5bafa5e7d6615bc3beb62e13e418b6d0be4220d97b9b30a420b5bf53a61151c1",
+  "reviewer_backend_id": "codex-handoff",
+  "runner": {
+    "status": "codex_handoff_applied",
+    "result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_11\\semantic_review_result_v8.json"
+  },
+  "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_11\\semantic_review_input_v8.json",
+  "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_11\\semantic_review_prompt_v8.md",
+  "review_context_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_11\\semantic_review_context_v8.md",
+  "expected_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_11\\semantic_review_result_v8.json",
+  "candidate_hash": "59a35155f219056d00f54c56a0aa1534a3cd33995703bd34beea045816d0817e",
+  "review_subject_kind": "official_output",
+  "review_subject_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_11\\official_snapshot_v8.lean",
+  "review_subject_hash": "59a35155f219056d00f54c56a0aa1534a3cd33995703bd34beea045816d0817e",
+  "review_basis_hash": "d3d98a7b0de93eec2946ea08f2b719e0a5e43dd9381e097fd84dd0adfe70b097",
+  "verdict": "pass",
+  "confidence": "high",
+  "proof_class": "source_route_proof_completed",
+  "completion_class": "textbook_problem_completed_exact_standardized",
+  "summary": "Pass. The v8 hash-bound official subject proves the source-facing exact-standardized generalization of Example 14.4.3 for targetDistinct n / couponTypes n -> r, 0 < r < 1. The final theorem keeps the documented thm_14_8_ProofBeyondBook boundary, proves the local coupon triangular-array representation and Lyapunov condition in prob_14_11_support.lean, and does not assert the rejected fixed-r textbook-normalized convergence from ratio-only hypotheses. prob_14_11_support.lean now imports ToyApollo.Output.chapter14_coupon_geometric_support directly and has no code-level import or symbol use of ex_14_4_3 task-owned support.",
+  "reviewer_independence": {
+    "role": "independent_read_only_reviewer",
+    "read_only": true,
+    "did_edit_candidate": false,
+    "used_current_review_request": true,
+    "attestation": "I performed an independent read-only review of semantic_review_request_v8, the v8 input/prompt/context/template, the hash-bound official snapshot, the current ToyApollo/Output official module and support files, proof obligations, dependency evidence, and read-only Lean/rg checks. I did not author or edit the candidate and wrote only this requested result JSON."
+  },
+  "source_claims": [
+    {
+      "id": "ratio_hypothesis",
+      "claim": "Problem 14.11 asks to generalize Example 14.4.3 from the half-coupon case to rows where targetDistinct n / couponTypes n tends to a fixed r with 0 < r < 1."
+    },
+    {
+      "id": "coupon_triangular_array",
+      "claim": "The generalized coupon collection time should be represented by independent centered geometric waiting stages on the canonical coupon product space."
+    },
+    {
+      "id": "exact_standardization",
+      "claim": "Under the accepted exact-standardized route, the valid source-facing conclusion centers by the exact finite-row mean and divides by the exact finite-row standard deviation; it does not derive fixed-r textbook centering/scaling from ratio-only data."
+    },
+    {
+      "id": "local_lyapunov",
+      "claim": "The generalized rows must satisfy the Lyapunov condition by local variance lower bounds and fourth-moment row-sum bounds."
+    },
+    {
+      "id": "apply_thm_14_8",
+      "claim": "Theorem 14.8, through its documented beyond-book proof boundary, yields convergence of the exact standardized row-sum laws to the standard normal law."
+    }
+  ],
+  "claim_mapping": [
+    {
+      "source_claim_id": "ratio_hypothesis",
+      "lean_declarations": [
+        "prob_14_11_CouponRatioTriangularArraySetup.r",
+        "prob_14_11_CouponRatioTriangularArraySetup.r_pos",
+        "prob_14_11_CouponRatioTriangularArraySetup.r_lt_one",
+        "prob_14_11_CouponRatioTriangularArraySetup.couponTypes_tendsto_atTop",
+        "prob_14_11_CouponRatioTriangularArraySetup.ratio_tendsto"
+      ],
+      "status": "covered_as_source_assumption",
+      "assumptions": "These fields are the source setup: the fixed r, 0 < r, r < 1, row growth, and targetDistinct/couponTypes -> r.",
+      "conclusion": "The source ratio condition is represented directly and is not confused with a proof obligation."
+    },
+    {
+      "source_claim_id": "coupon_triangular_array",
+      "lean_declarations": [
+        "prob_14_11_couponProbabilitySpace",
+        "prob_14_11_couponCollectionLaws",
+        "prob_14_11_centeredCouponStageLaw",
+        "prob_14_11_source_rows_are_independent_proof",
+        "prob_14_11_centeredRowSumValue_eq_couponCollectionTimeReal_sub_meanSum",
+        "prob_14_11_exactStandardizedRowSumValue",
+        "prob_14_11_exactStandardizedRowSumLaws",
+        "prob_14_11_exact_standardized_sum_law_representation_proof",
+        "prob_14_11_theoremSetupExact"
+      ],
+      "status": "covered",
+      "assumptions": "Only source-facing coupon ratio data, prob_6_3 coupon-stage infrastructure, and chapter-level geometric support are used.",
+      "conclusion": "The generalized triangular-array representation lands as local definitions and theorems, not as caller-supplied proof fields."
+    },
+    {
+      "source_claim_id": "exact_standardization",
+      "lean_declarations": [
+        "prob_14_11_exactMeanSum",
+        "prob_14_11_totalVariance",
+        "prob_14_11_exactStandardizedRowSumValue",
+        "prob_14_11_exactStandardizedRowSumLaws",
+        "prob_14_11_ExactStandardizedConvergence",
+        "prob_14_11"
+      ],
+      "status": "covered",
+      "assumptions": "No fixed-r textbook shift-to-zero, scale-to-one, or hidden CLT-scale tracking hypothesis is assumed.",
+      "conclusion": "The final theorem returns exact-standardized convergence and deliberately does not assert convergence of prob_14_11_normalizedCouponLaws from ratio-only data."
+    },
+    {
+      "source_claim_id": "local_lyapunov",
+      "lean_declarations": [
+        "prob_14_11_centeredCouponStageLaw_second_moment_eq",
+        "prob_14_11_centeredCouponStageLaw_lyapunovMoment_eq",
+        "prob_14_11_geometricVariance_ge_index_ratio",
+        "prob_14_11_variance_scale_eventual_lower_bound",
+        "prob_14_11_successProbability_eventually_compact",
+        "prob_14_11_centeredFourthMoment_bound_of_compact",
+        "prob_14_11_fourth_moment_row_sum_is_O_couponTypes",
+        "prob_14_11_generalized_lyapunov_condition",
+        "prob_14_11_generalized_lyapunov_condition_exact"
+      ],
+      "status": "covered",
+      "assumptions": "The proof uses the ratio limit, couponTypes_tendsto_atTop, and proved generic geometric moment formulas from chapter14_coupon_geometric_support; Lyapunov is not a public setup field.",
+      "conclusion": "The local Lyapunov condition for prob_14_11_theoremSetupExact is proved theorem-level."
+    },
+    {
+      "source_claim_id": "apply_thm_14_8",
+      "lean_declarations": [
+        "prob_14_11_exact_standardized_clt",
+        "prob_14_11_asymptoticNormality",
+        "prob_14_11"
+      ],
+      "status": "covered",
+      "assumptions": "H : thm_14_8_ProofBeyondBook (prob_14_11_theoremSetupExact S) is the explicit allowed upstream beyond-book boundary for Theorem 14.8.",
+      "conclusion": "The final convergence is obtained from thm_14_8 applied to the exact standardized row-sum laws with the locally proved Lyapunov branch."
+    }
+  ],
+  "route_inspection": {
+    "status": "covered",
+    "source_route": "Build the source coupon product row from targetDistinct and couponTypes; center each geometric waiting stage; prove row independence and exact row-sum representation; install prob_14_11_theoremSetupExact; prove variance lower bounds and fourth-moment row bounds; prove thm_14_8_LyapunovCondition; apply thm_14_8 through the documented ProofBeyondBook boundary.",
+    "expected_answer_or_statement": "theorem prob_14_11 (S : prob_14_11_CouponRatioTriangularArraySetup) (H : thm_14_8_ProofBeyondBook (prob_14_11_theoremSetupExact S)) : prob_14_11_ExactStandardizedConvergence S",
+    "local_mathlib_search": "Read-only rg and Lean checks covered imports, declarations, and forbidden shortcuts. `lake env lean ToyApollo/Output/prob_14_11.lean` exited 0. `rg` found no import ToyApollo.Output.ex_14_4_3 and no ex_14_4_3_ symbol use in the hash-bound subject, ToyApollo/Output/prob_14_11.lean, or ToyApollo/Output/prob_14_11_support.lean; the only ex_14_4_3 text in prob_14_11_support.lean is an explanatory comment. The proof uses Mathlib and Prob63Support through named source-step landings, not an adapter-only final shortcut.",
+    "public_interface_check": "Passed. prob_14_11_CouponRatioTriangularArraySetup contains source data only: r, r_pos, r_lt_one, couponTypes, targetDistinct, size/order hypotheses, couponTypes_tendsto_atTop, ratio_tendsto, and standardNormalLaw. It does not expose source_rows_are_independent, exact representation, moment formulas, variance bounds, or generalized_lyapunov_condition as public premises. The only theorem-level proof premise is the documented thm_14_8 beyond-book boundary.",
+    "support_or_reassembly_decision": "Go. prob_14_11_support.lean imports ToyApollo.Output.chapter14_coupon_geometric_support directly. The generic formulas chapter14_couponStageMeasure_centered_second_moment_eq and chapter14_couponStageMeasure_centered_fourth_moment_eq are used directly by prob_14_11_centeredCouponStageLaw_second_moment_eq and prob_14_11_centeredCouponStageLaw_lyapunovMoment_eq, so the task no longer obtains these formulas through ex_14_4_3_coupon_stage_support.",
+    "stop_go_verdict": "go",
+    "notes": "The hash-bound official subject and ToyApollo/Output official module are LF-normalized to candidate_hash 59a35155f219056d00f54c56a0aa1534a3cd33995703bd34beea045816d0817e. Byte-level file hashes differ because of line-ending/trailing-byte normalization and are non-semantic for this review."
+  },
+  "spine_alignment": {
+    "status": "covered",
+    "summary": "The source proof spine lands in named Lean declarations: ratio setup, canonical coupon row construction, row independence, exact standardized row-sum representation, moment formulas via chapter-level support, variance and fourth-moment bounds, Lyapunov, and final thm_14_8 application.",
+    "obligations_checked": [
+      {
+        "obligation": "obligation_1",
+        "source_step": "ratio m/n tends to r with 0 < r < 1",
+        "lean_landing": "prob_14_11_CouponRatioTriangularArraySetup.r_pos; r_lt_one; ratio_tendsto",
+        "status": "covered"
+      },
+      {
+        "obligation": "obligation_2",
+        "source_step": "generalized coupon triangular-array representation",
+        "lean_landing": "prob_14_11_couponProbabilitySpace; prob_14_11_source_rows_are_independent_proof; prob_14_11_centeredRowSumValue_eq_couponCollectionTimeReal_sub_meanSum; prob_14_11_exact_standardized_sum_law_representation_proof; prob_14_11_theoremSetupExact",
+        "status": "covered"
+      },
+      {
+        "obligation": "obligation_3",
+        "source_step": "fixed-r textbook mean/variance asymptotic transfer",
+        "lean_landing": "not applicable to prob_14_11_ExactStandardizedConvergence under the accepted exact-standardized route",
+        "status": "not_applicable"
+      },
+      {
+        "obligation": "obligation_4",
+        "source_step": "generalized Lyapunov verification",
+        "lean_landing": "prob_14_11_generalized_lyapunov_condition; prob_14_11_generalized_lyapunov_condition_exact",
+        "status": "covered"
+      },
+      {
+        "obligation": "obligation_5",
+        "source_step": "apply Theorem 14.8",
+        "lean_landing": "prob_14_11_exact_standardized_clt; prob_14_11_asymptoticNormality; prob_14_11",
+        "status": "covered"
+      }
+    ],
+    "missing_obligations": [],
+    "shortcut_assessment": "No adapter-only shortcut or theorem-specific black box replaces the source route. The exact-standardized conclusion is narrower than the rejected fixed-r textbook transfer but is the route explicitly required by the v8 context."
+  },
+  "obligation_review": {
+    "status": "covered",
+    "summary": "All active blocking obligations are covered by verified theorem/field landings. The obsolete mean/variance-scale transfer is correctly not applicable because reviving it would assert the forbidden fixed-r textbook route under ratio-only hypotheses.",
+    "items": [
+      {
+        "obligation_id": "obligation_1",
+        "name": "coupon_ratio_tends_to_r",
+        "status": "covered",
+        "route_class": "source hypothesis",
+        "evidence": "The setup fields r_pos, r_lt_one, couponTypes_tendsto_atTop, and ratio_tendsto match the source ratio setup.",
+        "expected_theorem_signature": "structure fields: 0 < r, r < 1, Tendsto (fun n => targetDistinct n / couponTypes n) atTop (nhds r)",
+        "lean_landing": "prob_14_11_CouponRatioTriangularArraySetup.r_pos; r_lt_one; ratio_tendsto",
+        "landing_kind": "support_predicate",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "This is source setup data, not a proof obligation moved to the caller."
+      },
+      {
+        "obligation_id": "obligation_2",
+        "name": "generalized_coupon_triangular_array",
+        "status": "covered",
+        "route_class": "source-route theorem",
+        "evidence": "prob_14_11_couponProbabilitySpace, prob_14_11_centeredCouponStageLaw, prob_14_11_source_rows_are_independent_proof, prob_14_11_centeredRowSumValue_eq_couponCollectionTimeReal_sub_meanSum, prob_14_11_exact_standardized_sum_law_representation_proof, and prob_14_11_theoremSetupExact construct the generalized row and exact standardized law from source setup data.",
+        "expected_theorem_signature": "theorem-level generalized coupon triangular-array representation from source-facing coupon ratio/setup data",
+        "lean_landing": "prob_14_11_source_rows_are_independent_proof; prob_14_11_centeredRowSumValue_eq_couponCollectionTimeReal_sub_meanSum; prob_14_11_exact_standardized_sum_law_representation_proof; prob_14_11_theoremSetupExact",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The public setup no longer has caller-supplied proof fields for independence or representation. These are theorem-level landings using concrete coupon-stage definitions."
+      },
+      {
+        "obligation_id": "obligation_3",
+        "name": "generalized_mean_variance_scales",
+        "status": "not_applicable",
+        "route_class": "obsolete_under_exact_standardized_route",
+        "evidence": "The final theorem targets prob_14_11_ExactStandardizedConvergence rather than fixed-r textbook-normalized convergence. The context explicitly marks this old transfer obligation obsolete to avoid the rejected v5 route.",
+        "expected_theorem_signature": "theorem-level generalized coupon mean and variance scale asymptotics proving fixed-r textbook transfer",
+        "lean_landing": "not applicable to prob_14_11_ExactStandardizedConvergence under Math Gate v6/v8",
+        "landing_kind": "empty",
+        "proof_contract_status": "not_applicable",
+        "body_reassumption_check": "not_applicable",
+        "signature_match": "not_applicable",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "No public premise or hidden hypothesis is used to obtain the fixed-r textbook transfer; the final theorem does not claim it."
+      },
+      {
+        "obligation_id": "obligation_4",
+        "name": "generalized_lyapunov_condition",
+        "status": "covered",
+        "route_class": "source-route theorem",
+        "evidence": "prob_14_11_generalized_lyapunov_condition proves thm_14_8_LyapunovCondition from compact success-probability bounds, fourth-moment row-sum bounds, and variance lower bounds. prob_14_11_generalized_lyapunov_condition_exact transfers the result to theoremSetupExact.",
+        "expected_theorem_signature": "theorem-level generalized coupon Lyapunov verification deriving thm_14_8_LyapunovCondition theoremSetup from the generalized coupon setup",
+        "lean_landing": "prob_14_11_generalized_lyapunov_condition; prob_14_11_generalized_lyapunov_condition_exact",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "No generalized_lyapunov_condition field exists in the public setup; the condition is proved locally."
+      },
+      {
+        "obligation_id": "obligation_5",
+        "name": "apply_triangular_array_clt",
+        "status": "covered",
+        "route_class": "source-route theorem with allowed beyond-book exception",
+        "evidence": "prob_14_11_exact_standardized_clt applies thm_14_8 to prob_14_11_theoremSetupExact using Or.inr (prob_14_11_generalized_lyapunov_condition_exact S). prob_14_11_asymptoticNormality and prob_14_11 expose the final exact-standardized convergence.",
+        "expected_theorem_signature": "theorem prob_14_11 (S) (H : thm_14_8_ProofBeyondBook (prob_14_11_theoremSetupExact S)) : prob_14_11_ExactStandardizedConvergence S",
+        "lean_landing": "prob_14_11_exact_standardized_clt; prob_14_11_asymptoticNormality; prob_14_11",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The public H premise is the documented thm_14_8 beyond-book boundary, not a local coupon proof obligation or hidden CLT-scale hypothesis."
+      }
+    ],
+    "open_blockers": [],
+    "scaffold_assessment": []
+  },
+  "evidence_review": {
+    "status": "covered",
+    "summary": "All required evidence classes were checked against the v8 request, context, proof obligations, Lean subject, dependency surfaces, and read-only command evidence. No blocking conflict was found.",
+    "items": [
+      {
+        "evidence_class": "source_tex",
+        "status": "covered",
+        "evidence": "The source text asks to generalize Example 14.4.3 to targetDistinct/couponTypes -> fixed r with 0 < r < 1. The final theorem's setup fields and exact-standardized conclusion match the accepted v8 route."
+      },
+      {
+        "evidence_class": "lean_subject",
+        "status": "covered",
+        "evidence": "The hash-bound official_snapshot_v8.lean imports ToyApollo.Output.prob_14_11_support and states theorem prob_14_11 (S) (H : thm_14_8_ProofBeyondBook (prob_14_11_theoremSetupExact S)) : prob_14_11_ExactStandardizedConvergence S. ToyApollo/Output/prob_14_11.lean is LF-normalized identical to the snapshot. `lake env lean ToyApollo/Output/prob_14_11.lean` exited 0."
+      },
+      {
+        "evidence_class": "proof_obligations",
+        "status": "covered",
+        "evidence": "phase2_prompt_packs/prob_14_11/proof_obligations.json lists five obligations: four proved and one obsolete/not_applicable. The blocking obligations have verified contracts and no open blockers or scaffold hypotheses."
+      },
+      {
+        "evidence_class": "audit",
+        "status": "covered",
+        "evidence": "The v8 review basis has no latest audit result file and no audit diagnostics. This was treated as absence of conflicting audit evidence, not as independent completion authority."
+      },
+      {
+        "evidence_class": "classification",
+        "status": "covered",
+        "evidence": "Classification says this is a normal proof generalizing Example 14.4.3 to a coupon-ratio triangular array. Historical classification references older open math debt, but the current v8 obligation/context evidence and Lean landings replace the old private-axiom route with theorem-level support."
+      },
+      {
+        "evidence_class": "dependency_status",
+        "status": "covered",
+        "evidence": "ex_14_4_3 remains a hard textbook dependency in the source chain and thm_14_8 remains the soft CLT dependency. At the Lean import surface for the v8 subject, prob_14_11_support.lean imports chapter14_coupon_geometric_support directly plus thm_14_8, and does not import ex_14_4_3 or ex_14_4_3_coupon_stage_support."
+      },
+      {
+        "evidence_class": "downstream",
+        "status": "covered",
+        "evidence": "The context reports no direct downstream consumers. The final interface is therefore checked for source fidelity and reusable public premises rather than for specific downstream caller compatibility."
+      },
+      {
+        "evidence_class": "ledger_status",
+        "status": "covered",
+        "evidence": "The context records task status COMPLETED and no open blocking obligations. This supports but does not decide the verdict; the verdict is based on the current Lean subject and obligation landings."
+      },
+      {
+        "evidence_class": "hashes",
+        "status": "covered",
+        "evidence": "LF-normalized SHA256 of official_snapshot_v8.lean and ToyApollo/Output/prob_14_11.lean is 59a35155f219056d00f54c56a0aa1534a3cd33995703bd34beea045816d0817e, matching candidate_hash. Byte-level SHA256 differs for local files because of line-ending/trailing-byte normalization; this is non-semantic for the hash-bound Lean text."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "interface_contract": {
+    "status": "covered",
+    "summary": "The public theorem has the accepted exact-standardized statement. Source setup data are public as fields; row independence, exact representation, moment formulas, variance bounds, and Lyapunov are proved in support declarations. The only public proof premise is the allowed thm_14_8_ProofBeyondBook boundary.",
+    "mismatches": []
+  },
+  "downstream_adequacy": {
+    "status": "covered",
+    "summary": "No direct downstream consumers are listed. The exported theorem and support declarations are adequate for the source task and do not force downstream users to provide new non-source theorem-level assumptions.",
+    "consumers_checked": [],
+    "blocking_issues": []
+  },
+  "forbidden_weakenings": [
+    {
+      "rule": "Do not replace the textbook public interface with a pure existential shell, placeholder definition, or witness-only structure.",
+      "status": "not_present",
+      "evidence": "The public setup and conclusion are concrete coupon-ratio and exact-standardized convergence objects, not an existential shell or placeholder."
+    },
+    {
+      "rule": "Do not rewrite reusable theorem obligations into theorem-specific wrappers only sufficient for the current file.",
+      "status": "not_present",
+      "evidence": "The proof route exposes named source landings for row representation, moment formulas, variance bounds, Lyapunov, and thm_14_8 application. The generic geometric formulas are in chapter14_coupon_geometric_support, a chapter-level shared support file."
+    }
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "title": "Non-subject mirror files are stale",
+      "evidence": "output_lean_files/general/prob_14_11.lean and output_lean_files/chapter14-problems/prob_14_11.lean still show older monolithic imports of ToyApollo.Output.ex_14_4_3. They are not the v8 hash-bound review subject and were not used as completion evidence."
+    }
+  ],
+  "recommended_disposition": "accept",
+  "needs_class_normalization": false,
+  "cache_class": "semantic_verdict",
+  "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_11\\semantic_review_result_v8.json",
+  "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_11\\semantic_review_report_v8.md"
+}

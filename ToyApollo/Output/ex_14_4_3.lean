@@ -402,8 +402,8 @@ theorem ex_14_4_3_geometric_moment_formulas_verified
         (ex_14_4_3_targetDistinct_pos n)
         (ex_14_4_3_targetDistinct_le_couponTypes n) i
     rw [hmean]
-    unfold ex_14_4_3_geometricMean ex_14_4_3_successProbability
-      Prob63Support.stageSuccessProb
+    unfold ex_14_4_3_geometricMean chapter14_geometricMean
+      ex_14_4_3_successProbability Prob63Support.stageSuccessProb
     have hN : ((ex_14_4_3_couponTypes n : ℕ) : ℝ) ≠ 0 := by
       unfold ex_14_4_3_couponTypes
       positivity
