@@ -1,0 +1,381 @@
+{
+  "schema_version": "phase2.semantic_review.result.v7",
+  "task_id": "thm_14_5",
+  "mode": "review-existing",
+  "attempt": 11,
+  "prompt_version": 9,
+  "rubric_version": 9,
+  "review_input_hash": "69aa174e1638f707c849dbfa153538e015725c8517237ccfad330088b2b1ddff",
+  "cache_key": "448ca1a42eae7787f39608b41f4019b8c41b287011f318900a50b2f979e027a1",
+  "reviewer_backend_id": "codex-handoff",
+  "runner": {
+    "status": "codex_handoff_applied",
+    "result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_5\\semantic_review_result_v11.json"
+  },
+  "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_5\\semantic_review_input_v11.json",
+  "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_5\\semantic_review_prompt_v11.md",
+  "review_context_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_5\\semantic_review_context_v11.md",
+  "expected_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_5\\semantic_review_result_v11.json",
+  "candidate_hash": "bf4fde5bfcfe1dd06435ff22a1c3035c30ec25c9185ef30151e82b985b4e19e6",
+  "verdict": "pass",
+  "confidence": "high",
+  "proof_class": "textbook_proof_completed",
+  "completion_class": "textbook_proof_completed",
+  "phase2_status_projection": {
+    "phase2_status": "pass",
+    "proof_class": "textbook_proof_completed",
+    "completion_class": "textbook_proof_completed",
+    "reason": "The v11 official output preserves the source theorem interface and assembles the final result through the theorem-level source-route uniform tail bound and the reviewed uniform-tail-to-Definition-14.3 bridge."
+  },
+  "summary": "The current v11 official output is faithful. The public theorem thm_14_5 assumes exactly characteristic-function convergence and continuity at zero, then proves def_14_3 Pseq by applying thm_14_5_of_uniformTailBound to thm_14_5_source_route_uniform_tail_bound. The imported support module contains theorem-level landings for the textbook proof spine: c(0)=1, Fubini, inner integral computation, averaged kernel identity, tail lower bound, averaged-characteristic tail estimate, continuity/DCT estimates, finite-prefix absorption, and uniform tail assembly. Stale adapter-route notes remain in older classification/proof-obligation metadata, but the current Lean route supersedes those stale records.",
+  "reviewer_independence": {
+    "role": "independent_read_only_reviewer",
+    "read_only": true,
+    "did_edit_candidate": false,
+    "used_current_review_request": true,
+    "attestation": "I reviewed the v11 request, context, input, official snapshot, and imported support files read-only; I did not edit Lean files, ledger, phase2 status, or prompt-pack files other than this result JSON."
+  },
+  "source_claims": [
+    {
+      "id": "claim_characteristic_limit_tight",
+      "text": "If the characteristic functions of probability laws P_n converge pointwise to c and c is continuous at zero, then the sequence P_n is tight."
+    },
+    {
+      "id": "claim_fourier_kernel_route",
+      "text": "The proof uses Fubini, computes the inner exponential integral, combines them into the averaged sine-kernel identity, and derives the tail probability bound."
+    },
+    {
+      "id": "claim_small_window_and_dct",
+      "text": "Continuity at zero and dominated convergence make the characteristic-function integral small for all sufficiently large n."
+    },
+    {
+      "id": "claim_finite_prefix_to_tightness",
+      "text": "The finitely many early measures are absorbed by increasing the cutoff, giving a uniform tail bound and hence Definition 14.3 tightness."
+    }
+  ],
+  "claim_mapping": [
+    {
+      "source_claim": "claim_characteristic_limit_tight",
+      "lean_declarations": [
+        "thm_14_5_characteristicConvergence",
+        "thm_14_5"
+      ],
+      "assumptions": "Pseq : Nat -> ProbabilityMeasure Real; c : Real -> Complex; hchar : thm_14_5_characteristicConvergence Pseq c; hcont : ContinuousAt c 0.",
+      "conclusion": "def_14_3 Pseq.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim": "claim_fourier_kernel_route",
+      "lean_declarations": [
+        "thm_14_5_source_route_fubini_identity",
+        "thm_14_5_source_route_inner_exp_integral_identity",
+        "thm_14_5_source_route_inner_integral_identity",
+        "thm_14_5_source_route_inner_integral_sinc_identity",
+        "thm_14_5_source_route_averaged_kernel_identity",
+        "thm_14_5_source_route_kernel_tail_lower_bound",
+        "thm_14_5_source_route_tail_bound_by_averaged_characteristic"
+      ],
+      "assumptions": "Local positivity/nonzero hypotheses for u, x, and r; no new public theorem-level premise on Pseq or c.",
+      "conclusion": "The source Fourier-kernel tail estimate is available as a theorem-level bound on thm_14_5_tailMass.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim": "claim_small_window_and_dct",
+      "lean_declarations": [
+        "thm_14_5_source_route_characteristic_at_zero",
+        "thm_14_5_source_route_continuity_small_u_bound",
+        "thm_14_5_source_route_dominated_convergence_bound",
+        "thm_14_5_source_route_eventual_tail_bound"
+      ],
+      "assumptions": "hchar and hcont from the public theorem statement.",
+      "conclusion": "For all sufficiently large n, a common cutoff has tail mass below epsilon.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim": "claim_finite_prefix_to_tightness",
+      "lean_declarations": [
+        "thm_14_5_source_route_single_tail_bound",
+        "thm_14_5_source_route_finite_prefix_tail_bound",
+        "thm_14_5_source_route_uniform_tail_bound",
+        "thm_14_5_of_uniformTailBound",
+        "thm_14_5"
+      ],
+      "assumptions": "Epsilon positivity, finite prefix index N, and the eventual tail estimate already proved from the source route.",
+      "conclusion": "thm_14_5_uniformTailBound Pseq, then def_14_3 Pseq.",
+      "assessment": "covered"
+    }
+  ],
+  "route_inspection": {
+    "status": "covered",
+    "source_route": "official_snapshot_v11.lean imports ToyApollo.Output.thm_14_5_support; final thm_14_5 applies thm_14_5_of_uniformTailBound to thm_14_5_source_route_uniform_tail_bound.",
+    "expected_answer_or_statement": "For Pseq : Nat -> ProbabilityMeasure Real and c : Real -> Complex, thm_14_5_characteristicConvergence Pseq c plus ContinuousAt c 0 implies def_14_3 Pseq.",
+    "local_mathlib_search": "Mathlib is used as analytic infrastructure and in reviewed bridges, but the final theorem route is not the older adapter-only isTightMeasureSet_of_tendsto_charFun route.",
+    "public_interface_check": "The public theorem exposes only Pseq, c, hchar, and hcont; none of the source proof obligations is moved into a public theorem-level premise.",
+    "support_or_reassembly_decision": "The v11 split into a short official theorem file plus imported support is acceptable because the imported support contains the theorem-level source-route landings and the final theorem assembles through them.",
+    "stop_go_verdict": "go",
+    "notes": "The raw Windows file SHA differs from the recorded hash because of CRLF line endings; the LF-normalized hash matches the request candidate_hash."
+  },
+  "spine_alignment": {
+    "status": "covered",
+    "summary": "The source proof spine lands in named Lean theorems in ToyApollo.Output.thm_14_5_support, and final thm_14_5 uses the uniform-tail source-route theorem rather than an adapter-only shortcut.",
+    "obligations_checked": [
+      "characteristic_at_zero -> thm_14_5_source_route_characteristic_at_zero",
+      "fubini_identity -> thm_14_5_source_route_fubini_identity",
+      "inner_integral_identity -> thm_14_5_source_route_inner_exp_integral_identity, thm_14_5_source_route_inner_integral_identity, and thm_14_5_source_route_inner_integral_sinc_identity",
+      "averaged_kernel_identity -> thm_14_5_source_route_averaged_kernel_identity, using the Fubini and inner-integral landings",
+      "kernel_tail_lower_bound -> thm_14_5_source_route_kernel_tail_lower_bound",
+      "tail_bound_by_averaged_characteristic -> thm_14_5_source_route_tail_bound_by_averaged_characteristic",
+      "continuity_small_u_bound -> thm_14_5_source_route_continuity_small_u_bound",
+      "dominated_convergence_bound -> thm_14_5_source_route_dominated_convergence_bound",
+      "eventual tail control -> thm_14_5_source_route_eventual_tail_bound",
+      "finite_prefix_tail_bound -> thm_14_5_source_route_single_tail_bound and thm_14_5_source_route_finite_prefix_tail_bound",
+      "uniform_tail_bound -> thm_14_5_source_route_uniform_tail_bound",
+      "tail_to_tightness -> thm_14_5_of_uniformTailBound and final thm_14_5"
+    ],
+    "missing_obligations": [],
+    "shortcut_assessment": "No blocking adapter-only shortcut remains in the final theorem route. Mathlib lemmas support local analytic and tightness bridge steps, but the textbook obligations have theorem-level Lean landings and are assembled into thm_14_5_source_route_uniform_tail_bound."
+  },
+  "obligation_review": {
+    "status": "covered",
+    "summary": "All eleven blocking proof obligations in the v11 review context are covered by theorem-level landings with verified proof-contract metadata and no public-premise relocation.",
+    "items": [
+      {
+        "obligation_id": "characteristic_at_zero",
+        "status": "covered",
+        "route_class": "source-route theorem",
+        "expected_theorem_signature": "theorem thm_14_5_source_route_characteristic_at_zero : theorem-level proof of c 0 = 1 from characteristic-function convergence",
+        "lean_landing": "thm_14_5_source_route_characteristic_at_zero",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Derives c 0 = 1 from hchar at zero and thm_14_5_characteristicFunction."
+      },
+      {
+        "obligation_id": "fubini_identity",
+        "status": "covered",
+        "route_class": "source-route theorem",
+        "expected_theorem_signature": "theorem thm_14_5_source_route_fubini_identity : theorem-level proof of the Fubini identity (14.3)",
+        "lean_landing": "thm_14_5_source_route_fubini_identity",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "States the interval integral of 1 - phi_n as an iterated integral and justifies the swap by integrability of the bounded exponential kernel."
+      },
+      {
+        "obligation_id": "inner_integral_identity",
+        "status": "covered",
+        "route_class": "source-route theorem",
+        "expected_theorem_signature": "theorem thm_14_5_source_route_inner_integral_identity : theorem-level proof of the inner integral computation (14.4)",
+        "lean_landing": "thm_14_5_source_route_inner_exp_integral_identity; thm_14_5_source_route_inner_integral_identity; thm_14_5_source_route_inner_integral_sinc_identity",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Computes the exponential integral and the 1 - exp inner integral; the sinc variant removes the x = 0 exception for integration."
+      },
+      {
+        "obligation_id": "averaged_kernel_identity",
+        "status": "covered",
+        "route_class": "source-route theorem",
+        "expected_theorem_signature": "theorem thm_14_5_source_route_averaged_kernel_identity : theorem-level proof combining (14.3) and (14.4) into (14.5)",
+        "lean_landing": "thm_14_5_source_route_averaged_kernel_identity",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The proof body uses the Fubini and inner-integral sinc landings before normalizing constants."
+      },
+      {
+        "obligation_id": "kernel_tail_lower_bound",
+        "status": "covered",
+        "route_class": "source-route theorem",
+        "expected_theorem_signature": "theorem thm_14_5_source_route_kernel_tail_lower_bound : theorem-level proof of the sine-kernel lower bound on the tail",
+        "lean_landing": "thm_14_5_source_route_kernel_tail_lower_bound",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Proves the normalized sinc lower bound on the tail event 2/u <= |x|."
+      },
+      {
+        "obligation_id": "tail_bound_by_averaged_characteristic",
+        "status": "covered",
+        "route_class": "source-route theorem",
+        "expected_theorem_signature": "theorem thm_14_5_source_route_tail_bound_by_averaged_characteristic : theorem-level proof of the 14.6-style tail bound",
+        "lean_landing": "thm_14_5_source_route_tail_bound_by_averaged_characteristic",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Uses the averaged-kernel identity and kernel lower bound in the body and states the source tail-mass estimate."
+      },
+      {
+        "obligation_id": "continuity_small_u_bound",
+        "status": "covered",
+        "route_class": "source-route theorem",
+        "expected_theorem_signature": "theorem thm_14_5_source_route_continuity_small_u_bound : theorem-level proof of the small-u estimate from continuity at zero",
+        "lean_landing": "thm_14_5_source_route_continuity_small_u_bound",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Uses hcont and the c 0 = 1 landing to make the limiting small-window integral tend to zero."
+      },
+      {
+        "obligation_id": "dominated_convergence_bound",
+        "status": "covered",
+        "route_class": "source-route theorem",
+        "expected_theorem_signature": "theorem thm_14_5_source_route_dominated_convergence_bound : theorem-level proof of the dominated convergence estimate for c(t)-phi_n(t)",
+        "lean_landing": "thm_14_5_source_route_dominated_convergence_bound",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Applies dominated convergence on the fixed interval using the uniform norm bound by 2 and pointwise characteristic convergence."
+      },
+      {
+        "obligation_id": "finite_prefix_tail_bound",
+        "status": "covered",
+        "route_class": "source-route theorem with standard one-measure support",
+        "expected_theorem_signature": "theorem thm_14_5_source_route_finite_prefix_tail_bound : theorem-level proof of the finite-prefix tail argument",
+        "lean_landing": "thm_14_5_source_route_single_tail_bound; thm_14_5_source_route_finite_prefix_tail_bound",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Formalizes finite early-index absorption by induction; the one-measure tightness ingredient is local support and not a new public premise."
+      },
+      {
+        "obligation_id": "uniform_tail_bound",
+        "status": "covered",
+        "route_class": "source-route theorem",
+        "expected_theorem_signature": "theorem thm_14_5_source_route_uniform_tail_bound : theorem-level proof assembling the source estimates into thm_14_5_uniformTailBound",
+        "lean_landing": "thm_14_5_source_route_eventual_tail_bound; thm_14_5_source_route_uniform_tail_bound",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Assembles the eventual tail estimate and finite-prefix control into thm_14_5_uniformTailBound."
+      },
+      {
+        "obligation_id": "tail_to_tightness",
+        "status": "covered",
+        "route_class": "interface bridge",
+        "expected_theorem_signature": "theorem thm_14_5_of_uniformTailBound : thm_14_5_uniformTailBound Pseq -> def_14_3 Pseq",
+        "lean_landing": "thm_14_5_of_uniformTailBound; thm_14_5",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The bridge maps the proven uniform tail bound to Definition 14.3; final thm_14_5 applies it to thm_14_5_source_route_uniform_tail_bound."
+      }
+    ],
+    "open_blockers": [],
+    "scaffold_assessment": []
+  },
+  "evidence_review": {
+    "status": "covered",
+    "summary": "All required evidence classes were checked. The current Lean files support pass; stale adapter-route metadata in older classification/audit strings is nonblocking because direct v11 Lean evidence shows source-route assembly.",
+    "items": [
+      {
+        "evidence_class": "source_tex",
+        "status": "covered",
+        "evidence": "Reviewed the Theorem 14.5 source text: characteristic convergence plus continuity at zero implies tightness via Fubini, inner integral computation, averaged sine-kernel identity, tail estimate, continuity/DCT, finite prefix, and uniform tail-to-tightness."
+      },
+      {
+        "evidence_class": "lean_subject",
+        "status": "covered",
+        "evidence": "Reviewed official_snapshot_v11.lean and ToyApollo/Output/thm_14_5.lean. The public theorem imports ToyApollo.Output.thm_14_5_support and proves def_14_3 Pseq by thm_14_5_of_uniformTailBound (thm_14_5_source_route_uniform_tail_bound Pseq c hchar hcont). The imported support contains the named source-route theorem landings and no sorry/admit/axiom markers were found."
+      },
+      {
+        "evidence_class": "proof_obligations",
+        "status": "covered",
+        "evidence": "The v11 context/proof obligations list eleven blocking obligations with status proved/review accepted and verified proof-contract fields. Older source_output_alignment strings still mention the former adapter route, but current Lean declarations provide the theorem-level landings."
+      },
+      {
+        "evidence_class": "audit",
+        "status": "covered",
+        "evidence": "No latest separate audit result file is supplied in the v11 review input. Historical clean-debt and adapter-route audit notes are stale relative to the current official snapshot and imported support route."
+      },
+      {
+        "evidence_class": "classification",
+        "status": "covered",
+        "evidence": "docs/phase2_completion_classification.json still records mathlib_backed_adapter_completed/source_route_open for thm_14_5. Direct v11 Lean evidence contradicts that older row because final thm_14_5 now assembles through thm_14_5_source_route_uniform_tail_bound."
+      },
+      {
+        "evidence_class": "dependency_status",
+        "status": "covered",
+        "evidence": "Hard dependency def_14_3 is COMPLETED and its official output exists. The reviewed theorem uses the def_14_3 interface through thm_14_5_of_uniformTailBound/chapter14_of_uniformTailBound."
+      },
+      {
+        "evidence_class": "downstream",
+        "status": "not_applicable",
+        "evidence": "The v11 review context and input list no direct downstream consumers for thm_14_5."
+      },
+      {
+        "evidence_class": "ledger_status",
+        "status": "covered",
+        "evidence": "The review basis records task status COMPLETED and output owner status COMPLETED. This supports availability, while the semantic verdict is based on the current Lean route."
+      },
+      {
+        "evidence_class": "hashes",
+        "status": "covered",
+        "evidence": "Request subject hash, template candidate_hash, and hash evidence official_output_hash agree on bf4fde5bfcfe1dd06435ff22a1c3035c30ec25c9185ef30151e82b985b4e19e6 under LF normalization. The raw Windows file SHA256 is 06a61f711a126563e69bdd366faed2ac80558f08a234752d47d34c3cd68733fc due to CRLF line endings; ToyApollo/Output/thm_14_5.lean has the same raw hash as the snapshot."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "interface_contract": {
+    "status": "covered",
+    "summary": "The public theorem statement is source-faithful: characteristic convergence to c and ContinuousAt c 0 imply def_14_3 Pseq, with no extra theorem-level assumptions or replacement by a weaker shell.",
+    "mismatches": []
+  },
+  "downstream_adequacy": {
+    "status": "covered",
+    "summary": "No direct downstream consumers were listed; the exported theorem thm_14_5 remains adequate for the source interface and for future consumers expecting def_14_3 Pseq.",
+    "consumers_checked": [],
+    "blocking_issues": []
+  },
+  "forbidden_weakenings": [
+    {
+      "rule": "No public interface replacement by an existential shell, placeholder definition, or witness-only structure.",
+      "status": "not_present",
+      "evidence": "thm_14_5 states def_14_3 Pseq directly from hchar and hcont; no placeholder or witness-only result replaces the theorem."
+    },
+    {
+      "rule": "No theorem-specific wrapper replacing reusable source obligations.",
+      "status": "not_present",
+      "evidence": "The proof spine is represented by named reusable support theorems for the source obligations, not only by the final theorem body."
+    },
+    {
+      "rule": "No extra theorem-level assumptions used to hide upstream interface gaps unless present in the source.",
+      "status": "not_present",
+      "evidence": "The public theorem assumes only Pseq, c, pointwise characteristic convergence, and continuity at zero."
+    }
+  ],
+  "findings": [
+    {
+      "severity": "nonblocking",
+      "summary": "Classification metadata is stale.",
+      "evidence": "The classification history still records the older Mathlib-backed adapter route, while v11 official output and ToyApollo.Output.thm_14_5_support assemble final thm_14_5 through the source-route uniform tail theorem."
+    }
+  ],
+  "recommended_disposition": "accept",
+  "cache_class": "semantic_verdict",
+  "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_5\\semantic_review_result_v11.json",
+  "needs_class_normalization": false,
+  "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_5\\semantic_review_report_v11.md"
+}

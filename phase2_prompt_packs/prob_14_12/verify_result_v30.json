@@ -1,0 +1,52 @@
+{
+  "task_id": "prob_14_12",
+  "attempt": 30,
+  "candidate_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_12\\official_snapshot_v16.lean",
+  "candidate_hash": "1fb01bbe2d499b77a7ce9a76522a2288e7d3d7a848c99663e0d3f43230c2e165",
+  "verified_at": "2026-06-21T11:06:40.484133Z",
+  "success": true,
+  "repl": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (textbook_problem_completed is source-route completion for a proof-bearing task)."
+  },
+  "temp_build": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (textbook_problem_completed is source-route completion for a proof-bearing task)."
+  },
+  "final_build": {
+    "success": true,
+    "output": "Existing official output was already validated before review."
+  },
+  "diagnostics": [],
+  "primary_failure_kind": "",
+  "blocking_symbols": [],
+  "raw_outputs": {
+    "repl": "Semantic review passed for the existing runnable official output. Task status: pass (textbook_problem_completed is source-route completion for a proof-bearing task).",
+    "temp_build": "Semantic review passed for the existing runnable official output. Task status: pass (textbook_problem_completed is source-route completion for a proof-bearing task).",
+    "final_build": "Existing official output was already validated before review."
+  },
+  "mode": "review-apply",
+  "disposition": "official_output_review_pass",
+  "state_transition": "none",
+  "semantic_review": {
+    "verdict": "pass",
+    "proof_class": "textbook_problem_completed",
+    "completion_class": "source_route_proof_completed",
+    "phase2_status": "pass",
+    "phase2_status_reason": "textbook_problem_completed is source-route completion for a proof-bearing task",
+    "task_status": "pass",
+    "task_status_reason": "textbook_problem_completed is source-route completion for a proof-bearing task",
+    "needs_class_normalization": false,
+    "runner_status": "codex_handoff_applied",
+    "summary": "The v16 official output is faithful. Direct inspection of the request-bound candidate, official snapshot, ToyApollo/Output/prob_14_12.lean, and the parent-owned mean/limit truncation support files shows a source-route proof of Problem 14.12: absolute-tail uniform-integrability interfaces, variable-to-law transfer, Markov tail tightness, bounded truncation convergence, sequence truncation tails, limit-tail transfer through an a.e. subsequence/Fatou/slack argument, and final three-term L1 assembly. No target conclusion is moved into a public premise, and no adapter-only Mathlib shortcut is used for the central mean-convergence step.",
+    "recommended_disposition": "accept",
+    "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_12\\semantic_review_result_v16.json",
+    "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_12\\semantic_review_input_v16.json",
+    "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_12\\semantic_review_prompt_v16.md",
+    "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_12\\semantic_review_report_v16.md",
+    "cache_key": "194860b2a2e5dd5d4541df4214c18d560bcddd095028f77abf430706976f2fd7",
+    "cache_hit": false,
+    "reviewer_backend_id": "codex-handoff"
+  },
+  "verify_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_12\\verify_result_v30.json"
+}

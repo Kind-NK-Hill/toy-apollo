@@ -1,0 +1,316 @@
+{
+  "schema_version": "phase2.semantic_review.result.v7",
+  "task_id": "prob_14_12",
+  "mode": "review-existing",
+  "attempt": 16,
+  "prompt_version": 9,
+  "rubric_version": 9,
+  "review_input_hash": "89a553239b5b43877613fedda425586ad4e8f69624e8c483988f4b8c40d1de68",
+  "cache_key": "194860b2a2e5dd5d4541df4214c18d560bcddd095028f77abf430706976f2fd7",
+  "reviewer_backend_id": "codex-handoff",
+  "runner": {
+    "status": "codex_handoff_applied",
+    "result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_12\\semantic_review_result_v16.json"
+  },
+  "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_12\\semantic_review_input_v16.json",
+  "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_12\\semantic_review_prompt_v16.md",
+  "review_context_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_12\\semantic_review_context_v16.md",
+  "expected_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_12\\semantic_review_result_v16.json",
+  "candidate_hash": "1fb01bbe2d499b77a7ce9a76522a2288e7d3d7a848c99663e0d3f43230c2e165",
+  "review_basis_hash": "c0867c3c0d1af3fe73848631d87f2185cabcf480b7000936a81da94027eef88c",
+  "verdict": "pass",
+  "confidence": "high",
+  "summary": "The v16 official output is faithful. Direct inspection of the request-bound candidate, official snapshot, ToyApollo/Output/prob_14_12.lean, and the parent-owned mean/limit truncation support files shows a source-route proof of Problem 14.12: absolute-tail uniform-integrability interfaces, variable-to-law transfer, Markov tail tightness, bounded truncation convergence, sequence truncation tails, limit-tail transfer through an a.e. subsequence/Fatou/slack argument, and final three-term L1 assembly. No target conclusion is moved into a public premise, and no adapter-only Mathlib shortcut is used for the central mean-convergence step.",
+  "proof_class": "textbook_problem_completed",
+  "completion_class": "source_route_proof_completed",
+  "reviewer_independence": {
+    "role": "independent_read_only_reviewer",
+    "read_only": true,
+    "did_edit_candidate": false,
+    "used_current_review_request": true,
+    "attestation": "Independent read-only semantic review of the v16 request; I did not edit Lean, ledger, status, or prompt-pack metadata, and wrote only this result JSON."
+  },
+  "source_claims": [
+    {
+      "id": "source_ui_definition",
+      "claim": "Uniform integrability is represented by a uniform absolute-tail expectation bound for every positive epsilon."
+    },
+    {
+      "id": "source_part_a",
+      "claim": "A uniformly integrable sequence of random variables is tight."
+    },
+    {
+      "id": "source_part_b",
+      "claim": "If a uniformly integrable sequence converges in probability, then it converges in mean."
+    }
+  ],
+  "claim_mapping": [
+    {
+      "source_claim_id": "source_ui_definition",
+      "lean_declarations": [
+        "prob_14_12_tailExpectation",
+        "prob_14_12_uniformIntegrableLaws",
+        "prob_14_12_variableTailExpectation",
+        "prob_14_12_uniformIntegrableVariables"
+      ],
+      "assumptions": "Law-level probability measures and variable-level measured spaces/measurability as needed for the corresponding tail integrals.",
+      "conclusion": "The Lean predicates state uniform ENNReal lintegral bounds for |X| on the tail event {|X| >= M}.",
+      "status": "covered"
+    },
+    {
+      "source_claim_id": "source_part_a",
+      "lean_declarations": [
+        "prob_14_12_variable_tailExpectation_eq_law_tailExpectation",
+        "prob_14_12_variable_ui_to_law_ui_of_distributions",
+        "prob_14_12_uniformTailBound_of_uniformIntegrableLaws",
+        "prob_14_12_markov_tail_uniform_integrability_to_tightness",
+        "prob_14_12_uniformIntegrable_tight"
+      ],
+      "assumptions": "A probability measure, measurable random variables, displayed laws as push-forwards, and variable-level uniform integrability.",
+      "conclusion": "The conclusion is def_14_3 S.laws, obtained by theorem-level law-transfer and Markov tail estimates before using thm_14_5_of_uniformTailBound.",
+      "status": "covered"
+    },
+    {
+      "source_claim_id": "source_part_b",
+      "lean_declarations": [
+        "prob_14_12_convergesInProbability",
+        "prob_14_12_convergesInMean",
+        "prob_14_12_sequence_truncation_tail",
+        "prob_14_12_bounded_truncations_convergeInMean_obligation",
+        "prob_14_12_limit_truncation_tail_obligation",
+        "prob_14_12_truncation_route_assembles_mean_obligation",
+        "prob_14_12_uniformIntegrable_probability_to_mean"
+      ],
+      "assumptions": "Finite measure, measurability of the sequence and limit, local uniform integrability, and local convergence in probability.",
+      "conclusion": "The conclusion is prob_14_12_convergesInMean mu Xseq X, assembled by the source truncation route rather than an adapter-only Mathlib Lp theorem.",
+      "status": "covered"
+    },
+    {
+      "source_claim_id": "source_part_a_and_b",
+      "lean_declarations": [
+        "prob_14_12"
+      ],
+      "assumptions": "The theorem takes separate source-level setup packages for the two textbook parts; these packages contain source data and standard measurability/finite-measure hypotheses, not target conclusions.",
+      "conclusion": "The public final theorem concludes def_14_3 T.laws and prob_14_12_convergesInMean M.mu M.Xseq M.X.",
+      "status": "covered"
+    }
+  ],
+  "route_inspection": {
+    "status": "covered",
+    "source_route": "Parent-owned source truncation route. Part (a) transfers variable UI to law UI and uses Markov tail bounds to get tightness. Part (b) uses sequence-tail control, bounded truncation convergence from convergence in probability on a finite measure space, limit-tail transfer through extracted a.e. subsequence/Fatou/slack, and final three-term L1 triangle assembly.",
+    "expected_answer_or_statement": "Problem 14.12: UI implies tightness, and UI plus convergence in probability implies convergence in mean.",
+    "local_mathlib_search": "Direct search of prob_14_12.lean, prob_14_12_mean_convergence_support.lean, and prob_14_12_limit_truncation_tail_support.lean found no sorry/admit/axiom markers and no exact forbidden adapter symbols UniformIntegrable, TendstoInMeasure, or tendsto_Lp_finite_of_tendstoInMeasure. Mathlib is used as background infrastructure only.",
+    "public_interface_check": "No public-premise relocation found. prob_14_12_TightnessSetup supplies probability, measurability, displayed push-forward laws, and UI; it does not assume tightness. prob_14_12_MeanConvergenceSetup supplies finite measure, measurability, UI, and convergence in probability; it does not assume convergence in mean.",
+    "support_or_reassembly_decision": "Use the current parent-owned support files prob_14_12_mean_convergence_support and prob_14_12_limit_truncation_tail_support. The current subject imports parent-owned support, not an old ToyApollo.Output.obl_* public surface.",
+    "stop_go_verdict": "go",
+    "notes": "The stale classification entry still describes an older adapter-backed route, but the v16 subject path directly lands the truncation proof spine."
+  },
+  "spine_alignment": {
+    "status": "covered",
+    "summary": "The source spine is explicit: tail-expectation UI definitions; variable-to-law transfer; Markov tail bound to tightness; bounded truncation convergence; sequence truncation tails; limit-tail transfer by subsequence/Fatou/slack; and final three-term L1 triangle assembly.",
+    "obligations_checked": [
+      "obligation_1 lands in prob_14_12_tailExpectation, prob_14_12_uniformIntegrableLaws, prob_14_12_variableTailExpectation, and prob_14_12_uniformIntegrableVariables.",
+      "obligation_2 lands in prob_14_12_variable_tailExpectation_eq_law_tailExpectation and prob_14_12_variable_ui_to_law_ui_of_distributions.",
+      "obligation_3 lands in prob_14_12_tailExpectation_antitone, prob_14_12_tailMeasure_le_tailExpectation, prob_14_12_tailMass_lt_of_tailExpectation_bound, prob_14_12_uniformTailBound_of_uniformIntegrableLaws, and prob_14_12_markov_tail_uniform_integrability_to_tightness.",
+      "obligation_4 lands in prob_14_12_convergesInProbability and prob_14_12_convergesInMean.",
+      "obligation_5 lands in prob_14_12_sequence_truncation_tail, prob_14_12_bounded_truncations_convergeInMean_obligation, prob_14_12_limit_truncation_tail_obligation, prob_14_12_truncation_route_assembles_mean_obligation, and prob_14_12_uniformIntegrable_probability_to_mean."
+    ],
+    "missing_obligations": [],
+    "shortcut_assessment": "No adapter-only shortcut was found in the current parent-owned route. Direct search found no target-conclusion public premise, old Mathlib adapter symbol, sorry, admit, or axiom in the subject and support files."
+  },
+  "obligation_review": {
+    "status": "covered",
+    "summary": "All five blocking obligations are covered by theorem-level or definition-level source-route landings. Historical child-obligation evidence has been repackaged under parent-owned support modules; the v16 subject imports those modules.",
+    "items": [
+      {
+        "obligation_id": "obligation_1",
+        "status": "covered",
+        "route_class": "source-route definition",
+        "expected_theorem_signature": "Definitions for law-level and variable-level uniform integrability using a uniform absolute-tail expectation bound.",
+        "lean_landing": [
+          "prob_14_12_tailExpectation",
+          "prob_14_12_uniformIntegrableLaws",
+          "prob_14_12_variableTailExpectation",
+          "prob_14_12_uniformIntegrableVariables"
+        ],
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The definitions expose the textbook absolute-tail expectation interface and do not assume the target theorem."
+      },
+      {
+        "obligation_id": "obligation_2",
+        "status": "covered",
+        "route_class": "interface bridge",
+        "expected_theorem_signature": "If displayed laws are push-forwards of the random variables and the variables are uniformly integrable, then the laws are uniformly integrable.",
+        "lean_landing": [
+          "prob_14_12_variable_tailExpectation_eq_law_tailExpectation",
+          "prob_14_12_variable_ui_to_law_ui_of_distributions",
+          "prob_14_12_uniformIntegrable_tight"
+        ],
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The transfer is theorem-level evidence using lintegral_map and concrete push-forward-law equality; it is not assumed as a setup field."
+      },
+      {
+        "obligation_id": "obligation_3",
+        "status": "covered",
+        "route_class": "source-route theorem",
+        "expected_theorem_signature": "Law-level uniform integrability implies the uniform tail bound and hence def_14_3 laws.",
+        "lean_landing": [
+          "prob_14_12_tailExpectation_antitone",
+          "prob_14_12_tailMeasure_le_tailExpectation",
+          "prob_14_12_tailMass_lt_of_tailExpectation_bound",
+          "prob_14_12_uniformTailBound_of_uniformIntegrableLaws",
+          "prob_14_12_markov_tail_uniform_integrability_to_tightness",
+          "prob_14_12_uniformIntegrable_tight"
+        ],
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The proof derives the Markov tail mass bound and uniform tail bound before invoking thm_14_5_of_uniformTailBound; it does not assume tightness."
+      },
+      {
+        "obligation_id": "obligation_4",
+        "status": "covered",
+        "route_class": "source-route definition",
+        "expected_theorem_signature": "Definitions for convergence in probability and convergence in mean in the local Chapter 10-style form.",
+        "lean_landing": [
+          "prob_14_12_convergesInProbability",
+          "prob_14_12_convergesInMean"
+        ],
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The predicates state epsilon-probability convergence and ENNReal L1 mean convergence; neither hides the conclusion as an assumption."
+      },
+      {
+        "obligation_id": "obligation_5",
+        "status": "covered",
+        "route_class": "source-route theorem",
+        "expected_theorem_signature": "From local uniform integrability and convergence in probability, prove prob_14_12_convergesInMean by the source truncation route.",
+        "lean_landing": [
+          "prob_14_12_sequence_truncation_tail",
+          "prob_14_12_bounded_truncations_convergeInMean_obligation",
+          "prob_14_12_limit_truncation_tail_obligation",
+          "prob_14_12_truncation_route_assembles_mean_obligation",
+          "prob_14_12_uniformIntegrable_probability_to_mean",
+          "prob_14_12"
+        ],
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "body_reassumption_check": "passed",
+        "signature_match": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The proof assembles sequence-tail control, bounded truncation convergence, limit-tail transfer by extracted a.e. subsequence/Fatou/slack, and the final three-term L1 triangle estimate. The public premises are finite measure, measurability, local UI, and convergence in probability; the theorem does not take prob_14_12_convergesInMean as a premise."
+      }
+    ],
+    "open_blockers": [],
+    "scaffold_assessment": []
+  },
+  "evidence_review": {
+    "status": "covered",
+    "summary": "All required evidence classes were inspected. Direct Lean inspection and proof-obligation mapping determine the pass verdict; build, ledger, audit, and classification artifacts are treated as supporting or stale context only.",
+    "items": [
+      {
+        "evidence_class": "source_tex",
+        "status": "covered",
+        "evidence": "Read semantic_review_input_v16.json, semantic_review_context_v16.md, and semantic_review_prompt_v16.md. The source asks for the uniform-integrability definition, part (a) tightness, and part (b) mean convergence from UI plus convergence in probability."
+      },
+      {
+        "evidence_class": "lean_subject",
+        "status": "covered",
+        "evidence": "Read official_snapshot_v16.lean, ToyApollo/Output/prob_14_12.lean, prob_14_12_mean_convergence_support.lean, and prob_14_12_limit_truncation_tail_support. The snapshot and ToyApollo/Output/prob_14_12.lean are line-identical, and the request-bound candidate string hashes to 1fb01bbe2d499b77a7ce9a76522a2288e7d3d7a848c99663e0d3f43230c2e165."
+      },
+      {
+        "evidence_class": "proof_obligations",
+        "status": "covered",
+        "evidence": "Read proof_obligations.json and review_basis.proof_obligations. It records five blocking obligations, all proved and review accepted, with verified proof contracts. Direct Lean inspection confirms actual v16 parent-owned landings for all five obligations."
+      },
+      {
+        "evidence_class": "audit",
+        "status": "not_applicable",
+        "evidence": "review_basis.audit_evidence has no latest audit result file, no disposition, and no diagnostics. No audit artifact was used as completion authority."
+      },
+      {
+        "evidence_class": "classification",
+        "status": "covered",
+        "evidence": "The classification history still labels prob_14_12 as mathlib_backed_adapter_completed, with evidence from an older route. Direct v16 inspection shows the current mean route lands in parent-owned truncation support, so that classification is stale and not blocking."
+      },
+      {
+        "evidence_class": "dependency_status",
+        "status": "covered",
+        "evidence": "def_14_3 and thm_14_5 are completed soft imports. The old obl_prob_14_12_obligation_5 hard dependency has no official output in dependency_status, but the current subject imports prob_14_12_mean_convergence_support and not an old ToyApollo.Output.obl_* public module."
+      },
+      {
+        "evidence_class": "downstream",
+        "status": "not_applicable",
+        "evidence": "The v16 review context lists no direct downstream consumers."
+      },
+      {
+        "evidence_class": "ledger_status",
+        "status": "covered",
+        "evidence": "The review basis records task/output-owner status COMPLETED and proof obligation summary with five proved, accepted obligations and no open blockers. Ledger status was treated as context, not sole completion authority."
+      },
+      {
+        "evidence_class": "hashes",
+        "status": "covered",
+        "evidence": "The request review_subject_hash and candidate.hash are 1fb01bbe2d499b77a7ce9a76522a2288e7d3d7a848c99663e0d3f43230c2e165. A direct SHA256 of semantic_review_input_v16.json candidate.lean matches this hash."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "interface_contract": {
+    "status": "covered",
+    "summary": "The final public statement remains the textbook two-part Problem 14.12 interface: tightness for displayed laws and mean convergence for the source sequence. Setup structures carry source data and standard measurability/finite-measure hypotheses, not the target conclusions.",
+    "mismatches": []
+  },
+  "downstream_adequacy": {
+    "status": "covered",
+    "summary": "No direct downstream consumers are listed. The exported theorem and support declarations are theorem-level and usable without old obligation-module imports.",
+    "consumers_checked": [],
+    "blocking_issues": []
+  },
+  "forbidden_weakenings": [
+    {
+      "rule": "Do not replace the textbook public interface with an existential shell, placeholder definition, or witness-only structure.",
+      "status": "not_present",
+      "evidence": "prob_14_12 concludes def_14_3 T.laws and prob_14_12_convergesInMean M.mu M.Xseq M.X, not an existential shell or placeholder."
+    },
+    {
+      "rule": "Do not rewrite theorem-level reusable evidence as a theorem-specific wrapper only sufficient for this file.",
+      "status": "not_present",
+      "evidence": "The support files expose reusable route components for bounded truncation convergence, sequence-tail control, limit-tail transfer, and final assembly."
+    },
+    {
+      "rule": "Do not introduce public premise relocation for tightness or mean convergence.",
+      "status": "not_present",
+      "evidence": "TightnessSetup does not assume def_14_3; MeanConvergenceSetup does not assume prob_14_12_convergesInMean. Both conclusions are proved by theorem-level evidence."
+    },
+    {
+      "rule": "Do not introduce sorry, admit, axiom, or private axiom.",
+      "status": "not_present",
+      "evidence": "Search over the subject and support files found no sorry, admit, or axiom marker."
+    },
+    {
+      "rule": "Do not restore the old Mathlib adapter route through UniformIntegrable, TendstoInMeasure, or tendsto_Lp_finite_of_tendstoInMeasure.",
+      "status": "not_present",
+      "evidence": "Search over the subject and support files found none of those exact adapter symbols. Part (b) is proved by the truncation-route assembly theorem."
+    }
+  ],
+  "findings": [],
+  "recommended_disposition": "accept",
+  "needs_class_normalization": false,
+  "cache_class": "semantic_verdict",
+  "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_12\\semantic_review_result_v16.json",
+  "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\prob_14_12\\semantic_review_report_v16.md"
+}

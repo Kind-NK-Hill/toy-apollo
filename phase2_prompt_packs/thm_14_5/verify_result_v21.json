@@ -1,0 +1,52 @@
+{
+  "task_id": "thm_14_5",
+  "attempt": 21,
+  "candidate_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_5\\official_snapshot_v11.lean",
+  "candidate_hash": "bf4fde5bfcfe1dd06435ff22a1c3035c30ec25c9185ef30151e82b985b4e19e6",
+  "verified_at": "2026-06-21T11:06:28.437368Z",
+  "success": true,
+  "repl": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (textbook_proof_completed is source-route completion for a proof-bearing task)."
+  },
+  "temp_build": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (textbook_proof_completed is source-route completion for a proof-bearing task)."
+  },
+  "final_build": {
+    "success": true,
+    "output": "Existing official output was already validated before review."
+  },
+  "diagnostics": [],
+  "primary_failure_kind": "",
+  "blocking_symbols": [],
+  "raw_outputs": {
+    "repl": "Semantic review passed for the existing runnable official output. Task status: pass (textbook_proof_completed is source-route completion for a proof-bearing task).",
+    "temp_build": "Semantic review passed for the existing runnable official output. Task status: pass (textbook_proof_completed is source-route completion for a proof-bearing task).",
+    "final_build": "Existing official output was already validated before review."
+  },
+  "mode": "review-apply",
+  "disposition": "official_output_review_pass",
+  "state_transition": "none",
+  "semantic_review": {
+    "verdict": "pass",
+    "proof_class": "textbook_proof_completed",
+    "completion_class": "textbook_proof_completed",
+    "phase2_status": "pass",
+    "phase2_status_reason": "textbook_proof_completed is source-route completion for a proof-bearing task",
+    "task_status": "pass",
+    "task_status_reason": "textbook_proof_completed is source-route completion for a proof-bearing task",
+    "needs_class_normalization": false,
+    "runner_status": "codex_handoff_applied",
+    "summary": "The current v11 official output is faithful. The public theorem thm_14_5 assumes exactly characteristic-function convergence and continuity at zero, then proves def_14_3 Pseq by applying thm_14_5_of_uniformTailBound to thm_14_5_source_route_uniform_tail_bound. The imported support module contains theorem-level landings for the textbook proof spine: c(0)=1, Fubini, inner integral computation, averaged kernel identity, tail lower bound, averaged-characteristic tail estimate, continuity/DCT estimates, finite-prefix absorption, and uniform tail assembly. Stale adapter-route notes remain in older classification/proof-obligation metadata, but the current Lean route supersedes those stale records.",
+    "recommended_disposition": "accept",
+    "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_5\\semantic_review_result_v11.json",
+    "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_5\\semantic_review_input_v11.json",
+    "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_5\\semantic_review_prompt_v11.md",
+    "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_5\\semantic_review_report_v11.md",
+    "cache_key": "448ca1a42eae7787f39608b41f4019b8c41b287011f318900a50b2f979e027a1",
+    "cache_hit": false,
+    "reviewer_backend_id": "codex-handoff"
+  },
+  "verify_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_5\\verify_result_v21.json"
+}
