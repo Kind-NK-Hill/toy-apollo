@@ -1258,6 +1258,11 @@ class Phase2BatchRunnerTests(unittest.TestCase):
         self.assertEqual(plan.actions, ())
         self.assertEqual({action.task_id for action in plan.hidden_actions}, {"thm_1_2", "ex_1_3_2"})
         self.assertIn("source_statement_risk=2", rendered)
+        self.assertIn("ordinary_action_queue_clear: `true`", rendered)
+        self.assertIn(
+            "deferred_source_statement_risk_exceptions: `2` (`ex_1_3_2`, `thm_1_2`)",
+            rendered,
+        )
         self.assertNotIn("subagent-dispatch-required", rendered)
         self.assertNotIn("| thm_1_2 |", rendered)
         self.assertNotIn("| ex_1_3_2 |", rendered)
