@@ -808,12 +808,11 @@ def _partition_default_visible_actions(
     *,
     include_legacy: bool,
 ) -> tuple[tuple[BatchRunnerAction, ...], tuple[BatchRunnerAction, ...]]:
-    if include_legacy:
-        return actions, ()
     visible: list[BatchRunnerAction] = []
     hidden: list[BatchRunnerAction] = []
     for action in actions:
-        if _default_hidden_action_category(action):
+        hidden_category = _default_hidden_action_category(action)
+        if hidden_category and (not include_legacy or _always_hide_action_category(hidden_category)):
             hidden.append(action)
         else:
             visible.append(action)
@@ -841,6 +840,10 @@ def _default_hidden_action_category(action: BatchRunnerAction) -> str:
     if action.action == "diagnostic_restore_or_rebuild_output":
         return "diagnostic_restore_or_rebuild_output"
     return ""
+
+
+def _always_hide_action_category(category: str) -> bool:
+    return category == "section_intro_remark"
 
 
 def _action_priority(action: str) -> int:

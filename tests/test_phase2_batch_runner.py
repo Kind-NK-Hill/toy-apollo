@@ -1176,6 +1176,40 @@ class Phase2BatchRunnerTests(unittest.TestCase):
         self.assertIn("section_intro_remark=1", rendered)
         self.assertNotIn("| intro_9_1 |", rendered)
 
+    def test_include_legacy_still_hides_section_intro_remarks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            settings = self._settings(root)
+            ledger = FakeLedger(
+                {
+                    "intro_9_1": {
+                        "block_id": "intro_9_1",
+                        "type": "Remark",
+                        "status": COMPLETED,
+                    },
+                    "obl_prob_14_1_obligation_1": {
+                        "block_id": "obl_prob_14_1_obligation_1",
+                        "type": "Phase2ObligationTask",
+                        "status": NONTERMINAL,
+                        "phase2_status": "fail",
+                        "parent_block_id": "prob_14_1",
+                    },
+                }
+            )
+
+            plan = plan_batch_from_ledger(
+                ["intro_9_1", "obl_prob_14_1_obligation_1"],
+                ledger,
+                settings,
+                include_legacy=True,
+            )
+            rendered = render_batch_runner_plan(plan)
+
+        self.assertIn("obl_prob_14_1_obligation_1", [action.task_id for action in plan.actions])
+        self.assertNotIn("intro_9_1", [action.task_id for action in plan.actions])
+        self.assertIn("section_intro_remark=1", rendered)
+        self.assertNotIn("| intro_9_1 |", rendered)
+
     def test_batch_run_skips_diagnoser_required_and_dispatches_next_executable_action(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
