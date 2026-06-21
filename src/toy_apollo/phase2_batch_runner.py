@@ -19,6 +19,7 @@ from .phase2_proof_obligations import summarize_proof_obligations
 DIAGNOSER_RESULT_PREFIX = "diagnoser_result"
 DIAGNOSER_RESULT_ALIAS = "diagnoser_result.json"
 SOURCE_DECISION_RESOLUTION_FILE = "source_decision_resolution.json"
+SOURCE_STATEMENT_RISK_SKIP_TASK_IDS = frozenset({"thm_1_2", "ex_1_3_2"})
 DIAGNOSER_RESULT_REQUIRED_FIELDS = frozenset(
     {
         "route_wrong",
@@ -833,6 +834,8 @@ def _hidden_actions_summary_line(hidden_actions: tuple[BatchRunnerAction, ...]) 
 
 
 def _default_hidden_action_category(action: BatchRunnerAction) -> str:
+    if _is_skipped_source_statement_risk(action):
+        return "source_statement_risk"
     if _is_legacy_obligation_task_id(action.task_id) or action.task_kind == "obligation":
         return "legacy_obligation"
     if _is_section_intro_remark(action):
@@ -843,7 +846,7 @@ def _default_hidden_action_category(action: BatchRunnerAction) -> str:
 
 
 def _always_hide_action_category(category: str) -> bool:
-    return category == "section_intro_remark"
+    return category in {"section_intro_remark", "source_statement_risk"}
 
 
 def _action_priority(action: str) -> int:
@@ -883,6 +886,18 @@ def _is_legacy_obligation_task_id(task_id: str) -> bool:
 def _is_section_intro_remark(action: BatchRunnerAction) -> bool:
     task_id = canonicalize_block_id(str(action.task_id or ""))
     return task_id.startswith("intro_") and action.task_kind == "remark"
+
+
+def _is_skipped_source_statement_risk(action: BatchRunnerAction) -> bool:
+    task_id = canonicalize_block_id(str(action.task_id or ""))
+    if task_id not in SOURCE_STATEMENT_RISK_SKIP_TASK_IDS:
+        return False
+    return action.action in {
+        "blocked",
+        "diagnoser_required",
+        "source_statement_decision_required",
+        "skip_blocked",
+    }
 
 
 def _normalize_kind(raw: str) -> str:
