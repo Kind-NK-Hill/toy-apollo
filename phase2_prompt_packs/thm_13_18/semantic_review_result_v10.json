@@ -1,0 +1,409 @@
+{
+  "schema_version": "phase2.semantic_review.result.v7",
+  "task_id": "thm_13_18",
+  "mode": "review-existing",
+  "attempt": 10,
+  "prompt_version": 9,
+  "rubric_version": 9,
+  "review_input_hash": "76d88ef1e9ade5a9f17c600858a29e1375a98c76c1001057b12ed1fd9a415d67",
+  "cache_key": "a232e920080c0169ceee8a8634784ed12d28700a852bc3746c7e9f00d3341f35",
+  "reviewer_backend_id": "codex-handoff",
+  "runner": {
+    "status": "codex_handoff_applied",
+    "result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_18\\semantic_review_result_v10.json"
+  },
+  "review_basis_hash": "8c253e02d79dbddc10d250908f6c00213ebde1a7b720c3dbed32077be4f0f049",
+  "review_subject_kind": "official_output",
+  "review_subject_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_18\\official_snapshot_v10.lean",
+  "review_subject_hash": "cd210a934cc43e159aaf4728ec3cb8220cf8c2b9d425d431212f7ce4f18806ee",
+  "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_18\\semantic_review_input_v10.json",
+  "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_18\\semantic_review_prompt_v10.md",
+  "review_context_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_18\\semantic_review_context_v10.md",
+  "expected_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_18\\semantic_review_result_v10.json",
+  "candidate_hash": "cd210a934cc43e159aaf4728ec3cb8220cf8c2b9d425d431212f7ce4f18806ee",
+  "verdict": "pass",
+  "confidence": "high",
+  "proof_class": "textbook_proof_completed",
+  "completion_class": "source_route_proof_completed",
+  "summary": "Pass. The parent/support split is an output-health refactor: ToyApollo.Output.thm_13_18 imports the support layer, preserves the source task text and public final theorems thm_13_18 and thm_13_18_canonical, and delegates to support declarations that still cover the stopped-value interface, finite stopped expectations from Theorem 13.17, bounded stopping case, uniform-bound DCT route, bounded-increment telescoping/DCT route, and final case assembly. No adapter-only shortcut, statement drift, public premise relocation, stale hash evidence, or downstream API regression was found.",
+  "reviewer_independence": {
+    "role": "independent_read_only_reviewer",
+    "read_only": true,
+    "did_edit_candidate": false,
+    "used_current_review_request": true,
+    "attestation": "I performed an independent read-only semantic review of the v10 request and only wrote this result JSON."
+  },
+  "source_claims": [
+    {
+      "id": "martingale_stopping_statement",
+      "claim": "For a martingale X_n and stopping time T, E[X_T] = E[X_0] when one of the three stated optional-stopping conditions holds."
+    },
+    {
+      "id": "stopped_value_finite_interface",
+      "claim": "Under the alternatives, T is finite almost surely, so X_T is well-defined almost surely and finite stopped processes converge pointwise to the stopped value."
+    },
+    {
+      "id": "finite_stopped_expectations",
+      "claim": "Theorem 13.17 supplies E[X^T_n] = E[X_0] for every finite n."
+    },
+    {
+      "id": "bounded_stopping_case",
+      "claim": "Case (i): if T is almost surely bounded by C, then X_T agrees almost surely with the stopped process at C and E[X_T] = E[X_C^T] = E[X_0]."
+    },
+    {
+      "id": "uniform_bound_case",
+      "claim": "Case (ii): if T is finite almost surely and |X_n| is uniformly bounded by K, dominated convergence gives lim_n E[X^T_n] = E[X_T]."
+    },
+    {
+      "id": "bounded_increment_case",
+      "claim": "Case (iii): if E[T] is finite and increments are uniformly bounded by c, the telescoping estimate gives an integrable dominator |X_0| + cT, so dominated convergence gives lim_n E[X^T_n] = E[X_T]."
+    },
+    {
+      "id": "canonical_stopped_value",
+      "claim": "The canonical version constructs X_T internally instead of requiring an arbitrary representative."
+    }
+  ],
+  "claim_mapping": [
+    {
+      "source_claim_id": "martingale_stopping_statement",
+      "lean_declarations": [
+        "thm_13_18",
+        "thm_13_18_canonical",
+        "thm_13_18_optionalStoppingCases",
+        "thm_13_18_optionalStoppingCasesCanonical"
+      ],
+      "assumptions": [
+        "hM : def_13_7 P F_n X",
+        "hT : def_13_8 F_n T",
+        "hSigmaFinite : forall n, SigmaFinite (P.trim ((def_13_7_isFiltration hM).1 n))",
+        "hOptional : one of the three source optional-stopping alternatives"
+      ],
+      "conclusion": "Integral equality of the stopped value and X 0.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "stopped_value_finite_interface",
+      "lean_declarations": [
+        "thm_13_18_stoppedValueAgreement",
+        "thm_13_18_stoppedValueReal",
+        "thm_13_18_stoppedValueReal_agreement",
+        "thm_13_18_stoppedValueReal_matches_option",
+        "thm_13_18_stoppedProcess_tendsto_of_agreement"
+      ],
+      "assumptions": [
+        "finite-a.s. or finite-event agreement assumptions contained in the case predicates"
+      ],
+      "conclusion": "The real stopped-value representative agrees with X n on events T = n and the stopped process tends to XT on the finite event.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "finite_stopped_expectations",
+      "lean_declarations": [
+        "thm_13_17_expectation_constant",
+        "thm_13_18"
+      ],
+      "assumptions": [
+        "hM",
+        "hT",
+        "hSigmaFinite"
+      ],
+      "conclusion": "The parent theorem constructs hConst : forall n, integral stoppedProcess n = integral X 0.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "bounded_stopping_case",
+      "lean_declarations": [
+        "thm_13_18_boundedStoppingCase",
+        "thm_13_18_boundedStopping_ae_eq",
+        "thm_13_18_boundedStopping_integral_eq",
+        "thm_13_18_bounded_case"
+      ],
+      "assumptions": [
+        "exists C, eventually T <= C",
+        "stopped-value agreement"
+      ],
+      "conclusion": "Integral XT = integral X 0 in bounded stopping case.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "uniform_bound_case",
+      "lean_declarations": [
+        "thm_13_18_uniformBoundCase",
+        "thm_13_18_stoppedProcess_uniformBound",
+        "thm_13_18_stoppedIntegralLimit_of_uniformBound",
+        "thm_13_18_uniformBound_case"
+      ],
+      "assumptions": [
+        "T finite a.s.",
+        "stopped-value agreement",
+        "exists K >= 0 with Integrable constant K and forall n, |X n| <= K a.s."
+      ],
+      "conclusion": "DCT limit plus finite stopped expectations imply integral XT = integral X 0.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "bounded_increment_case",
+      "lean_declarations": [
+        "thm_13_18_boundedIncrementCase",
+        "thm_13_18_telescoping_abs_bound",
+        "thm_13_18_stoppedProcess_boundedIncrement_domination",
+        "thm_13_18_stoppedIntegralLimit_of_integrableDomination",
+        "thm_13_18_boundedIncrement_case"
+      ],
+      "assumptions": [
+        "finite integrable representative tau for T",
+        "stopped-value agreement",
+        "exists c >= 0 bounding increments a.s."
+      ],
+      "conclusion": "The telescoping dominator is proved and DCT plus finite stopped expectations imply integral XT = integral X 0.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "canonical_stopped_value",
+      "lean_declarations": [
+        "thm_13_18_stoppedValueReal",
+        "thm_13_18_optionalStoppingCases_of_canonical",
+        "thm_13_18_canonical"
+      ],
+      "assumptions": [
+        "hOptional : thm_13_18_optionalStoppingCasesCanonical P X T"
+      ],
+      "conclusion": "The theorem proves the same expectation identity for the internally constructed stopped value.",
+      "assessment": "covered"
+    }
+  ],
+  "route_inspection": {
+    "status": "covered",
+    "source_route": "The formal route mirrors the textbook proof: construct/agreement for X_T, obtain finite stopped-expectation constancy from Theorem 13.17, split into the three optional-stopping cases, prove the bounded case by a.e. equality with a finite stopped process, prove case (ii) by DCT from the source uniform bound, prove case (iii) by telescoping domination and DCT, then assemble the final disjunction.",
+    "expected_answer_or_statement": "thm_13_18 proves integral XT dP = integral X 0 dP from martingale/stopping-time assumptions and one of the three optional-stopping alternatives; thm_13_18_canonical proves the same for thm_13_18_stoppedValueReal X T.",
+    "local_mathlib_search": "Mathlib is used for tendsto_integral_of_dominated_convergence and standard measure/integral infrastructure, but only inside source-step landings such as thm_13_18_stoppedIntegralLimit_of_uniformBound and thm_13_18_stoppedIntegralLimit_of_integrableDomination. This is not an adapter-only proof of the final theorem.",
+    "public_interface_check": "No public theorem statement drift found for thm_13_18 or thm_13_18_canonical in the reviewed subject. The parent imports ToyApollo.Output.thm_13_18_support, so support declarations remain available transitively to downstream files importing ToyApollo.Output.thm_13_18. The final theorem does not expose DCT limit, stopped-process uniform-bound, or telescoping domination as separate public final-premise packages.",
+    "support_or_reassembly_decision": "The split is acceptable: support owns the source proof spine and parent owns the source text plus final public theorems. The support declarations are public and reusable, not private wrappers.",
+    "stop_go_verdict": "go",
+    "notes": "The current prob_13_10_relaxed_optional_stopping_support failure described by the requester is upstream stopped-sum unfolding debt, not a missing thm_13_18 API after this refactor."
+  },
+  "spine_alignment": {
+    "status": "covered",
+    "summary": "The source proof spine remains visible after the split and lands in theorem-level support declarations that the parent imports.",
+    "obligations_checked": [
+      {
+        "source_step": "X_T is represented on the finite event",
+        "lean_landing": "thm_13_18_stoppedValueReal; thm_13_18_stoppedValueReal_agreement; thm_13_18_stoppedValueReal_matches_option; thm_13_18_stoppedProcess_tendsto_of_agreement",
+        "assessment": "covered"
+      },
+      {
+        "source_step": "Finite stopped expectations are constant by Theorem 13.17",
+        "lean_landing": "thm_13_18 constructs hConst using thm_13_17_expectation_constant",
+        "assessment": "covered"
+      },
+      {
+        "source_step": "Case (i) bounded stopping time",
+        "lean_landing": "thm_13_18_boundedStopping_ae_eq; thm_13_18_boundedStopping_integral_eq; thm_13_18_bounded_case",
+        "assessment": "covered"
+      },
+      {
+        "source_step": "Case (ii) uniform bound plus dominated convergence",
+        "lean_landing": "thm_13_18_stoppedProcess_uniformBound; thm_13_18_stoppedIntegralLimit_of_uniformBound; thm_13_18_uniformBound_case",
+        "assessment": "covered"
+      },
+      {
+        "source_step": "Case (iii) bounded increments, telescoping domination, dominated convergence",
+        "lean_landing": "thm_13_18_telescoping_abs_bound; thm_13_18_stoppedProcess_boundedIncrement_domination; thm_13_18_stoppedIntegralLimit_of_integrableDomination; thm_13_18_boundedIncrement_case",
+        "assessment": "covered"
+      },
+      {
+        "source_step": "Final case assembly",
+        "lean_landing": "thm_13_18; thm_13_18_canonical",
+        "assessment": "covered"
+      }
+    ],
+    "missing_obligations": [],
+    "shortcut_assessment": "No adapter-only shortcut found; the DCT and telescoping steps are proved in source-aligned support theorems."
+  },
+  "obligation_review": {
+    "status": "covered",
+    "summary": "All six blocking proof obligations are covered by theorem-level or source-interface landings with verified proof contract fields. No scaffold hypotheses or open blockers are recorded.",
+    "items": [
+      {
+        "obligation_id": "stopped_value_interface",
+        "status": "covered",
+        "expected_theorem_signature": "A theorem-level representative/agreement bridge proving that the canonical real stopped value agrees with X n on finite events T = n.",
+        "lean_landing": "thm_13_18_stoppedValueReal; thm_13_18_stoppedValueReal_agreement; thm_13_18_stoppedValueReal_matches_option; thm_13_18_canonical",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Finite-event agreement is proved locally; the canonical theorem guards the infinite fallback by finite-a.s. case assumptions."
+      },
+      {
+        "obligation_id": "finite_stopped_expectations",
+        "status": "covered",
+        "expected_theorem_signature": "def_13_7 P F_n X -> def_13_8 F_n T -> sigma-finiteness -> forall n, integral (def_13_9_stoppedProcess X T n) dP = integral (X 0) dP",
+        "lean_landing": "thm_13_18 using thm_13_17_expectation_constant",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The finite stopped-expectation identity is imported from current passing thm_13_17 and used internally in the parent theorem."
+      },
+      {
+        "obligation_id": "bounded_case",
+        "status": "covered",
+        "expected_theorem_signature": "T <= C a.s. and stopped-value agreement imply integral XT dP = integral (X 0) dP using the finite stopped-expectation theorem.",
+        "lean_landing": "thm_13_18_boundedStopping_ae_eq; thm_13_18_boundedStopping_integral_eq; thm_13_18_bounded_case",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The equality with the stopped process is derived from the bounded stopping-time source hypothesis."
+      },
+      {
+        "obligation_id": "uniform_bound_case",
+        "status": "covered",
+        "expected_theorem_signature": "Finite T a.s., stopped-value agreement, stopped-process measurability, and the source uniform bound |X_n| <= K imply the stopped-integral limit and then integral XT dP = integral X0 dP using finite stopped expectations.",
+        "lean_landing": "thm_13_18_stoppedProcess_uniformBound; thm_13_18_stoppedIntegralLimit_of_uniformBound; thm_13_18_uniformBound_case",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The stopped-process bound is derived from the source uniform bound. The retained Integrable constant condition is the formal DCT dominator side condition, not relocation of the stopped-process bound."
+      },
+      {
+        "obligation_id": "bounded_increment_case",
+        "status": "covered",
+        "expected_theorem_signature": "Integrable finite representative of T and bounded increments imply an integrable domination bound, then DCT and finite stopped expectations imply the final equality.",
+        "lean_landing": "thm_13_18_telescoping_abs_bound; thm_13_18_stoppedProcess_boundedIncrement_domination; thm_13_18_stoppedIntegralLimit_of_integrableDomination; thm_13_18_boundedIncrement_case",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The telescoping dominator is proved and does not remain open proof debt."
+      },
+      {
+        "obligation_id": "assemble_optional_stopping",
+        "status": "covered",
+        "expected_theorem_signature": "Given martingale, stopping time, formal sigma-finiteness context, and one of the three source alternatives, prove integral X_T dP = integral X_0 dP.",
+        "lean_landing": "thm_13_18; thm_13_18_canonical",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The parent theorem reassembles the three source routes without inheriting the old case(ii) stopped-process-bound public premise."
+      }
+    ],
+    "open_blockers": [],
+    "scaffold_assessment": [
+      {
+        "status": "covered",
+        "evidence": "proof_obligations.json records no scaffold hypotheses; rg found no sorry/admit/axiom/opaque declarations in the reviewed parent/support files."
+      }
+    ]
+  },
+  "evidence_review": {
+    "status": "covered",
+    "summary": "Required source, Lean subject, obligations, audit/classification/dependency/downstream/ledger/hash evidence were checked. No freshness or downstream blocker was found.",
+    "items": [
+      {
+        "evidence_class": "source_tex",
+        "status": "covered",
+        "evidence": "Read inputs\\chapter13-martingale-stopping-time.tex and confirmed the Theorem 13.18 statement and proof spine: stopped value, Theorem 13.17 finite stopped expectations, cases (i), (ii), and (iii), dominated convergence, and telescoping domination."
+      },
+      {
+        "evidence_class": "lean_subject",
+        "status": "covered",
+        "evidence": "Read ToyApollo\\Output\\thm_13_18.lean, ToyApollo\\Output\\thm_13_18_support.lean, and official_snapshot_v10.lean. Parent imports support and contains only source text plus thm_13_18/thm_13_18_canonical; support contains all recorded helper declarations. rg found no sorry/admit/axiom/opaque in parent/support."
+      },
+      {
+        "evidence_class": "proof_obligations",
+        "status": "covered",
+        "evidence": "Read phase2_prompt_packs\\thm_13_18\\proof_obligations.json. All six blocking obligations are proved/review accepted with verified proof contract status and passed signature/body/public premise checks."
+      },
+      {
+        "evidence_class": "audit",
+        "status": "covered",
+        "evidence": "The context records source_output_alignment_audit metadata and no current open blocking obligations. Historical failed notes for uniform_bound_case were superseded by later pass evidence and the current support theorem thm_13_18_stoppedProcess_uniformBound."
+      },
+      {
+        "evidence_class": "classification",
+        "status": "covered",
+        "evidence": "Classification/history evidence is consistent with textbook proof completion after the DCT and telescoping obligations were landed. It was used as supporting evidence only, not as completion authority."
+      },
+      {
+        "evidence_class": "dependency_status",
+        "status": "covered",
+        "evidence": "Hard dependency thm_13_17 is current pass/source_route_proof_completed/phase2_status=pass in phase2_prompt_packs\\thm_13_17\\semantic_review_result.json. The parent applies thm_13_17_expectation_constant and thm_13_17_stoppedProcess_integrable internally."
+      },
+      {
+        "evidence_class": "downstream",
+        "status": "covered",
+        "evidence": "Direct downstream consumers are ex_13_6_5 and prob_13_10. Current downstream files import ToyApollo.Output.thm_13_18 and continue to reference support names through the parent import. The requester-reported prob_13_10_relaxed_optional_stopping_support failure is at upstream prob_13_10_independent_count_support stopped-sum unfolding, not a missing or changed thm_13_18 declaration."
+      },
+      {
+        "evidence_class": "ledger_status",
+        "status": "covered",
+        "evidence": "The review context records ledger status COMPLETED and build candidate state draft. Ledger state was not treated as semantic completion authority."
+      },
+      {
+        "evidence_class": "hashes",
+        "status": "covered",
+        "evidence": "Project text hash for ToyApollo\\Output\\thm_13_18.lean and phase2_prompt_packs\\thm_13_18\\official_snapshot_v10.lean is cd210a934cc43e159aaf4728ec3cb8220cf8c2b9d425d431212f7ce4f18806ee, matching request review_subject_hash/candidate_hash. semantic_review_input_v10.json canonical sha256_json is 76d88ef1e9ade5a9f17c600858a29e1375a98c76c1001057b12ed1fd9a415d67, matching the template. Raw byte hashes differ because line endings are not the project hash rule."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "interface_contract": {
+    "status": "covered",
+    "summary": "The parent/support split preserves the public final theorem names and statements. Since ToyApollo.Output.thm_13_18 imports ToyApollo.Output.thm_13_18_support, downstream importers of the parent still have access to support declarations such as thm_13_18_stoppedValueReal and thm_13_18_stoppedIntegralLimit_of_integrableDomination.",
+    "mismatches": []
+  },
+  "downstream_adequacy": {
+    "status": "covered",
+    "summary": "The exported interface remains adequate for both direct downstream consumers. No downstream consumer needs a new theorem-level hypothesis because of this refactor.",
+    "consumers_checked": [
+      {
+        "block_id": "ex_13_6_5",
+        "status": "covered",
+        "evidence": "ex_13_6_5 and ex_13_6_5_waiting_time_support import ToyApollo.Output.thm_13_18 and reference thm_13_18_stoppedValueReal through the parent import. The requester reports ex_13_6_5_waiting_time_support builds."
+      },
+      {
+        "block_id": "prob_13_10",
+        "status": "covered",
+        "evidence": "prob_13_10_relaxed_optional_stopping_support imports ToyApollo.Output.thm_13_18 and references thm_13_18_stoppedIntegralLimit, thm_13_18_stoppedValueReal, thm_13_18_stoppedValueAgreement, thm_13_18_stoppedIntegralLimit_of_integrableDomination, and thm_13_18_constant_limit_of_stopped_expectations. These remain available via the parent import. The reported current failure is in upstream stopped-sum unfolding in prob_13_10_independent_count_support, not in thm_13_18 API."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "forbidden_weakenings": [
+    {
+      "rule": "禁止把教材中的公共接口偷换成纯存在性壳、占位定义或只记录 witness 的结构。",
+      "status": "not_present",
+      "evidence": "The final predicate is not a witness shell; thm_13_18 and thm_13_18_canonical prove explicit integral equalities, while support case predicates expose source alternatives."
+    },
+    {
+      "rule": "禁止把应当供下游复用的 theorem 改写成只够当前文件自证的 theorem-specific wrapper。",
+      "status": "not_present",
+      "evidence": "The support theorems for stopped-value agreement, DCT limits, telescoping domination, and case assembly remain public and are usable by downstream importers."
+    },
+    {
+      "rule": "禁止通过额外 theorem-level 假设来掩盖上游接口缺口，除非任务文本本身明确包含该假设。",
+      "status": "not_present",
+      "evidence": "The parent final theorems retain the same source-facing optional-stopping case interfaces. The old stopped-process uniform-bound and telescoping dominator obligations are derived in support rather than exposed as final public premises."
+    }
+  ],
+  "findings": [],
+  "recommended_disposition": "accept",
+  "review_apply": {
+    "can_review_apply": true,
+    "command": "python .\\run_chapter.py --phase 2 --phase2-mode review-apply --tasks thm_13_18 --review-result phase2_prompt_packs\\thm_13_18\\semantic_review_result_v10.json"
+  },
+  "needs_class_normalization": false,
+  "cache_class": "semantic_verdict",
+  "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_18\\semantic_review_result_v10.json",
+  "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_18\\semantic_review_report_v10.md"
+}

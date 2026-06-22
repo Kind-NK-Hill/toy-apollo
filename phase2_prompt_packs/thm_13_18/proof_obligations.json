@@ -1,0 +1,385 @@
+{
+  "schema_version": "phase2.proof_obligations.v1",
+  "task_id": "thm_13_18",
+  "generated_at": "2026-05-18T03:53:30.371631Z",
+  "classification": {
+    "requires_decomposition": true,
+    "reason": "The optional stopping theorem has three separate textbook hypotheses and two limit-transfer routes, so the formalization splits them into reviewable obligations before final assembly.",
+    "evidence": [
+      "source proof has cases (i), (ii), and (iii)",
+      "source proof uses Theorem 13.17 for finite stopped expectations",
+      "source proof uses dominated convergence in cases (ii) and (iii)"
+    ],
+    "dependency_count": 1,
+    "source_length": 1987,
+    "structural_operation_count": 0
+  },
+  "obligations": [
+    {
+      "id": "stopped_value_interface",
+      "title": "Stopped value representative",
+      "kind": "source_step",
+      "source_ref": "The proof says T is finite almost surely under the stated alternatives, so X_T is well-defined almost surely.",
+      "depends_on": [],
+      "lean_landing": "thm_13_18_stoppedValueReal; thm_13_18_stoppedValueReal_agreement; thm_13_18_stoppedValueReal_matches_option; thm_13_18_canonical",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The canonical real representative uses the textbook stopped value on finite T and an irrelevant fallback only on T = infinity. The old arbitrary-XT agreement interface remains for compatibility, but the canonical theorem constructs the representative internally.",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "A theorem-level representative/agreement bridge proving that the canonical real stopped value agrees with X n on finite events T = n.",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "Finite-event agreement is proved locally; the canonical theorem guards the infinite fallback by finite-a.s. case assumptions.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
+    },
+    {
+      "id": "finite_stopped_expectations",
+      "title": "Finite stopped expectations are constant",
+      "kind": "source_step",
+      "source_ref": "From Theorem 13.17, E[X^T_n] = E[X_0] for all n.",
+      "depends_on": [
+        "thm_13_17"
+      ],
+      "lean_landing": "thm_13_18 using thm_13_17_expectation_constant",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The stopped-process integrability and adaptedness facts are now proved inside thm_13_17, so thm_13_18 only imports the finite stopped-expectation identity.",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "def_13_7 P F_n X -> def_13_8 F_n T -> sigma-finiteness -> forall n, integral (def_13_9_stoppedProcess X T n) dP = integral (X 0) dP",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The finite stopped-expectation identity is imported from current passing thm_13_17 and used internally in the parent theorem.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
+    },
+    {
+      "id": "bounded_case",
+      "title": "Case (i): bounded stopping time",
+      "kind": "source_step",
+      "source_ref": "If T is bounded by C almost surely, the stopped value equals the stopped process at C almost surely, so E[X_T] = E[X^T_C] = E[X_0].",
+      "depends_on": [
+        "finite_stopped_expectations",
+        "stopped_value_interface"
+      ],
+      "lean_landing": "thm_13_18_boundedStopping_ae_eq; thm_13_18_boundedStopping_integral_eq; thm_13_18_bounded_case",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The bounded case is now proved from the source assumptions T <= C a.s. and stopped-value agreement: these imply XT = X^T_C a.e., hence the integrals agree, and Theorem 13.17 supplies E[X^T_C]=E[X_0].",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "T <= C a.s. and stopped-value agreement imply integral XT dP = integral (X 0) dP using the finite stopped-expectation theorem.",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The equality with the stopped process is derived from the bounded stopping-time source hypothesis.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
+    },
+    {
+      "id": "uniform_bound_case",
+      "title": "Case (ii): bounded martingale and dominated convergence",
+      "kind": "proof_debt_support",
+      "source_ref": "If T is finite almost surely and |X_n| <= K, then X^T_n -> X_T and dominated convergence gives lim E[X^T_n] = E[X_T].",
+      "depends_on": [
+        "finite_stopped_expectations",
+        "stopped_value_interface"
+      ],
+      "lean_landing": "thm_13_18_stoppedProcess_uniformBound; thm_13_18_stoppedIntegralLimit_of_uniformBound; thm_13_18_uniformBound_case",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The stopped-value representative is no longer debt in the canonical route. The remaining support is the DCT conclusion exposed as thm_13_18_stoppedIntegralLimit.",
+      "last_review_evidence": "",
+      "source_output_alignment": {
+        "audited_at": "2026-05-19",
+        "audit_class": "B_partial_theorem_plus_support_interface",
+        "family": "tail/moment/ui",
+        "existing_local_declarations": [
+          {
+            "name": "thm_13_18_uniformBoundCase",
+            "kind": "def",
+            "file": "ToyApollo/Output/thm_13_18.lean",
+            "line": 158
+          },
+          {
+            "name": "thm_13_18_uniformBoundCaseCanonical",
+            "kind": "def",
+            "file": "ToyApollo/Output/thm_13_18.lean",
+            "line": 205
+          },
+          {
+            "name": "thm_13_18_uniformBoundCase_of_canonical",
+            "kind": "theorem",
+            "file": "ToyApollo/Output/thm_13_18.lean",
+            "line": 250
+          },
+          {
+            "name": "thm_13_18_uniformBound_case",
+            "kind": "theorem",
+            "file": "ToyApollo/Output/thm_13_18.lean",
+            "line": 350
+          }
+        ],
+        "missing_landing_names": [],
+        "next_action": "Use the existing theorem part, then replace the remaining support interface with source-aligned local lemmas.",
+        "manual_review_required": true
+      },
+      "obligation_fingerprint": "184ed17b6763b88d05ce45322b6a67b5419267b2503b2e0b4c98815c231574e4",
+      "expected_theorem_signature": "Finite T a.s., stopped-value agreement, stopped-process measurability, and the source uniform bound |X_n| <= K imply the stopped-integral limit and then integral XT dP = integral X0 dP using finite stopped expectations.",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The stopped-process bound is derived from the source uniform bound. The retained Integrable constant condition is the formal DCT dominator side condition, not relocation of the stopped-process bound.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
+    },
+    {
+      "id": "bounded_increment_case",
+      "title": "Case (iii): integrable T and bounded increments",
+      "kind": "proof_debt_support",
+      "source_ref": "The telescoping estimate |X^T_n| <= |X_0| + cT gives an integrable dominating function, so dominated convergence again gives lim E[X^T_n] = E[X_T].",
+      "depends_on": [
+        "finite_stopped_expectations",
+        "stopped_value_interface"
+      ],
+      "lean_landing": "thm_13_18_telescoping_abs_bound; thm_13_18_stoppedProcess_boundedIncrement_domination; thm_13_18_stoppedIntegralLimit_of_integrableDomination; thm_13_18_boundedIncrement_case",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "This names the textbook telescoping/DCT obligation explicitly instead of replacing it with the final optional-stopping equality. The canonical route no longer treats the stopped-value representative as debt.",
+      "last_review_evidence": "",
+      "source_output_alignment": {
+        "audited_at": "2026-05-19",
+        "audit_class": "B_partial_theorem_plus_support_interface",
+        "family": "measure/fubini/dct",
+        "existing_local_declarations": [
+          {
+            "name": "thm_13_18_boundedIncrementCase",
+            "kind": "def",
+            "file": "ToyApollo/Output/thm_13_18.lean",
+            "line": 173
+          },
+          {
+            "name": "thm_13_18_boundedIncrementCaseCanonical",
+            "kind": "def",
+            "file": "ToyApollo/Output/thm_13_18.lean",
+            "line": 217
+          },
+          {
+            "name": "thm_13_18_boundedIncrementCase_of_canonical",
+            "kind": "theorem",
+            "file": "ToyApollo/Output/thm_13_18.lean",
+            "line": 260
+          },
+          {
+            "name": "thm_13_18_boundedIncrement_case",
+            "kind": "theorem",
+            "file": "ToyApollo/Output/thm_13_18.lean",
+            "line": 361
+          }
+        ],
+        "missing_landing_names": [],
+        "next_action": "Use the existing theorem part, then replace the remaining support interface with source-aligned local lemmas.",
+        "manual_review_required": true
+      },
+      "obligation_fingerprint": "b308fd4df52704e65665c0efa8bdd6c7644626623370b6211fd6342627feb388",
+      "expected_theorem_signature": "Integrable finite representative of T and bounded increments imply an integrable domination bound, then DCT and finite stopped expectations imply the final equality.",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The telescoping dominator is proved and does not remain open proof debt.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
+    },
+    {
+      "id": "assemble_optional_stopping",
+      "title": "Assemble the Martingale Stopping Theorem",
+      "kind": "source_step",
+      "source_ref": "In all three cases, combine the finite stopped expectation identity from Theorem 13.17 with the corresponding identification of E[X_T].",
+      "depends_on": [
+        "bounded_case",
+        "uniform_bound_case",
+        "bounded_increment_case"
+      ],
+      "lean_landing": "thm_13_18; thm_13_18_canonical",
+      "status": "proved",
+      "review_status": "accepted",
+      "blocking": true,
+      "scaffold_hypotheses": [],
+      "notes": "The final theorem consumes the disjunction of the three source cases; the canonical theorem constructs the stopped-value representative internally. Cases (ii) and (iii) still expose DCT support.",
+      "last_review_evidence": "",
+      "expected_theorem_signature": "Given martingale, stopping time, formal sigma-finiteness context, and one of the three source alternatives, prove integral X_T dP = integral X_0 dP.",
+      "landing_kind": "theorem",
+      "proof_contract_status": "verified",
+      "proof_contract_notes": "The parent theorem reassembles the three source routes without inheriting the old case(ii) stopped-process-bound public premise.",
+      "body_reassumption_check": "passed",
+      "signature_match": "passed",
+      "public_premise_check": "passed"
+    }
+  ],
+  "scaffold_hypotheses": [],
+  "review_history": [
+    {
+      "reviewed_at": "2026-05-18T04:03:38.112988Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All blocking obligations are represented by Lean declarations. Several measure-theoretic and analytic steps remain accepted as proof debt because the upstream stopped-process/DCT infrastructure is not yet exported.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-18T16:02:54.201Z",
+      "verdict": "pass",
+      "status": "covered_with_upstream_debt_removed",
+      "summary": "The inherited stopped-process support debt from thm_13_17 has been removed. The remaining accepted proof debt is limited to the stopped-value representative and the three textbook optional-stopping case bridges.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-18T16:06:14.742Z",
+      "verdict": "pass",
+      "status": "covered_with_reduced_debt",
+      "summary": "The bounded stopping case is now proved from T <= C a.s. plus stopped-value agreement. Remaining accepted proof debt is stopped-value representation and the two DCT routes for cases (ii) and (iii).",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-18T17:05:00.000Z",
+      "verdict": "pass",
+      "status": "covered_with_canonical_stopped_value",
+      "summary": "The stopped-value representative is now constructed internally by thm_13_18_stoppedValueReal and thm_13_18_canonical. Remaining accepted proof debt is limited to the two DCT routes for cases (ii) and (iii).",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-19T09:23:14.026729Z",
+      "verdict": "inconclusive",
+      "status": "unclear",
+      "summary": "reviewer field downstream_adequacy.status must be one of covered/partial/missing/violated/unclear",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-19T09:27:15.878291Z",
+      "verdict": "fail",
+      "status": "missing",
+      "summary": "The focused obligation uniform_bound_case remains accepted proof debt.",
+      "open_blockers": [
+        {
+          "obligation_id": "uniform_bound_case",
+          "issue": "The focused obligation is represented by thm_13_18_stoppedIntegralLimit, but that proposition is still an assumption of the case predicate."
+        }
+      ]
+    },
+    {
+      "reviewed_at": "2026-05-19T10:03:42.573715Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "uniform_bound_case is covered by local theorem-level DCT evidence.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-19T10:18:36.061214Z",
+      "verdict": "fail",
+      "status": "partial",
+      "summary": "bounded_increment_case remains open because telescoping domination is still a support assumption.",
+      "open_blockers": [
+        {
+          "obligation_id": "bounded_increment_case",
+          "issue": "DCT is proved from an integrable dominator, but the dominator itself is still assumed."
+        }
+      ]
+    },
+    {
+      "reviewed_at": "2026-05-19T10:40:39.190870Z",
+      "verdict": "inconclusive",
+      "status": "unclear",
+      "summary": "invalid reviewer output: pass verdict requires explicit downstream coverage for each direct downstream consumer with no blocking issues",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-05-19T10:42:55.943619Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "bounded_increment_case is covered by local theorem-level evidence and should be marked proved.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-01T08:03:23.634312Z",
+      "verdict": "fail",
+      "status": "partial",
+      "summary": "The six recorded obligations have Lean landings and the two previously promoted DCT/telescoping obligations have focused pass evidence. The finite_stopped_expectations and final assembly obligations are dependency-blocked because they rely on thm_13_17, whose current fresh applied semantic review is fail. The stored obligation contract fields also remain unverified in proof_obligations.json.",
+      "open_blockers": [
+        {
+          "obligation_id": "finite_stopped_expectations",
+          "issue": "partial"
+        },
+        {
+          "obligation_id": "bounded_case",
+          "issue": "partial"
+        },
+        {
+          "obligation_id": "uniform_bound_case",
+          "issue": "partial"
+        },
+        {
+          "obligation_id": "bounded_increment_case",
+          "issue": "partial"
+        },
+        {
+          "obligation_id": "assemble_optional_stopping",
+          "issue": "partial"
+        }
+      ]
+    },
+    {
+      "reviewed_at": "2026-06-06T04:11:23.147074Z",
+      "verdict": "fail",
+      "status": "violated",
+      "summary": "The stopped value, finite stopped expectations, bounded case, bounded-increment case, and final theorem mechanics are covered modulo the case (ii) interface. uniform_bound_case fails because the stopped-process uniform bound is a source-derived proof step exposed as a public premise.",
+      "open_blockers": [
+        {
+          "obligation_id": "uniform_bound_case",
+          "issue": "The stopped-process uniform bound forall n, |def_13_9_stoppedProcess X T n| <= K is required as a public premise in both the arbitrary-XT and canonical case (ii) predicates instead of being proved from the source assumption forall n, |X n| <= K."
+        },
+        {
+          "obligation_id": "assemble_optional_stopping",
+          "issue": "The final theorem and canonical theorem inherit the non-source case (ii) premise through thm_13_18_optionalStoppingCases and thm_13_18_optionalStoppingCasesCanonical."
+        },
+        {
+          "obligation_id": "uniform_bound_case",
+          "issue": "violated"
+        },
+        {
+          "obligation_id": "assemble_optional_stopping",
+          "issue": "violated"
+        }
+      ]
+    },
+    {
+      "reviewed_at": "2026-06-06T04:24:05.081517Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All six blocking obligations are covered. The proof_obligations.json blocked notes for uniform_bound_case and assemble_optional_stopping are stale relative to candidate_v4.",
+      "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-22T05:15:51.431995Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All six blocking proof obligations are covered by theorem-level or source-interface landings with verified proof contract fields. No scaffold hypotheses or open blockers are recorded.",
+      "open_blockers": []
+    }
+  ],
+  "last_reviewed_at": "2026-06-22T05:15:51.431995Z",
+  "source_output_alignment_audit": {
+    "audited_at": "2026-05-19",
+    "accepted_debt_count": 2,
+    "status": "metadata_attached"
+  }
+}

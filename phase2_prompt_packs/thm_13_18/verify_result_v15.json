@@ -1,0 +1,52 @@
+{
+  "task_id": "thm_13_18",
+  "attempt": 15,
+  "candidate_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_18\\official_snapshot_v10.lean",
+  "candidate_hash": "cd210a934cc43e159aaf4728ec3cb8220cf8c2b9d425d431212f7ce4f18806ee",
+  "verified_at": "2026-06-22T05:15:51.991261Z",
+  "success": true,
+  "repl": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (textbook_proof_completed is source-route completion for a proof-bearing task)."
+  },
+  "temp_build": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (textbook_proof_completed is source-route completion for a proof-bearing task)."
+  },
+  "final_build": {
+    "success": true,
+    "output": "Existing official output was already validated before review."
+  },
+  "diagnostics": [],
+  "primary_failure_kind": "",
+  "blocking_symbols": [],
+  "raw_outputs": {
+    "repl": "Semantic review passed for the existing runnable official output. Task status: pass (textbook_proof_completed is source-route completion for a proof-bearing task).",
+    "temp_build": "Semantic review passed for the existing runnable official output. Task status: pass (textbook_proof_completed is source-route completion for a proof-bearing task).",
+    "final_build": "Existing official output was already validated before review."
+  },
+  "mode": "review-apply",
+  "disposition": "official_output_review_pass",
+  "state_transition": "none",
+  "semantic_review": {
+    "verdict": "pass",
+    "proof_class": "textbook_proof_completed",
+    "completion_class": "source_route_proof_completed",
+    "phase2_status": "pass",
+    "phase2_status_reason": "textbook_proof_completed is source-route completion for a proof-bearing task",
+    "task_status": "pass",
+    "task_status_reason": "textbook_proof_completed is source-route completion for a proof-bearing task",
+    "needs_class_normalization": false,
+    "runner_status": "codex_handoff_applied",
+    "summary": "Pass. The parent/support split is an output-health refactor: ToyApollo.Output.thm_13_18 imports the support layer, preserves the source task text and public final theorems thm_13_18 and thm_13_18_canonical, and delegates to support declarations that still cover the stopped-value interface, finite stopped expectations from Theorem 13.17, bounded stopping case, uniform-bound DCT route, bounded-increment telescoping/DCT route, and final case assembly. No adapter-only shortcut, statement drift, public premise relocation, stale hash evidence, or downstream API regression was found.",
+    "recommended_disposition": "accept",
+    "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_18\\semantic_review_result_v10.json",
+    "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_18\\semantic_review_input_v10.json",
+    "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_18\\semantic_review_prompt_v10.md",
+    "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_18\\semantic_review_report_v10.md",
+    "cache_key": "a232e920080c0169ceee8a8634784ed12d28700a852bc3746c7e9f00d3341f35",
+    "cache_hit": false,
+    "reviewer_backend_id": "codex-handoff"
+  },
+  "verify_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_18\\verify_result_v15.json"
+}
