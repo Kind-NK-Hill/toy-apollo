@@ -50,7 +50,7 @@
       "scaffold_hypotheses": [],
       "notes": "The theorem records fY(y) as an integral and fX|Y as the quotient fXY/fY, with the candidate h(y) as the integral of g against the conditional density.",
       "last_review_evidence": "",
-      "expected_theorem_signature": "",
+      "expected_theorem_signature": "not assigned",
       "landing_kind": "support_predicate",
       "proof_contract_status": "not_applicable",
       "proof_contract_notes": "This row is source data and definitions rather than a theorem-level proof obligation; the definitions match the source formulas.",
@@ -66,7 +66,7 @@
       "depends_on": [
         "density_and_kernel_definitions"
       ],
-      "lean_landing": "phase2_measure_eq_withDensity_of_forall_measurable; phase2_setIntegral_withDensity_ofReal_eq; phase2_integrable_withDensity_ofReal_of_weighted; thm_13_14_measure_eq_withDensity; thm_13_14_setIntegral_jointDensity_eq; thm_13_14_setIntegral_verticalCylinder_prod_symm; thm_13_14_kernel_mul_marginal_eq_integral; thm_13_14_kernel_stronglyMeasurable; thm_13_14_gWeighted_abs_integrable; thm_13_14_marginalDensity_pos_of_nonneg_ne_zero; thm_13_14_kernel_abs_mul_marginal_le_integral_abs; thm_13_14_kernelWeighted_integrable_from_gWeighted; thm_13_14_interval_weighted_identity; thm_13_14_interval_fubini_from_joint_density",
+      "lean_landing": "thm_13_14_interval_fubini_from_joint_density",
       "status": "proved",
       "review_status": "accepted",
       "blocking": true,
@@ -93,7 +93,7 @@
       "expected_theorem_signature": "theorem thm_13_14_interval_fubini_from_joint_density : thm_13_14_jointDensityLaw P fXY -> required measurability/integrability hypotheses -> thm_13_14_intervalFubiniSupport P fXY g",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "The landing proves the interval support theorem. It uses explicit density/Fubini infrastructure and derives the final theorem's kernel-weighted integrability through thm_13_14_kernelWeighted_integrable_from_gWeighted rather than exposing it on thm_13_14.",
+      "proof_contract_notes": "The theorem proves the interval support predicate from density/Fubini infrastructure. Kernel-weighted integrability is derived by thm_13_14_kernelWeighted_integrable_from_gWeighted in final assembly rather than exposed on thm_13_14.",
       "signature_match": "passed",
       "body_reassumption_check": "passed",
       "public_premise_check": "passed"
@@ -106,7 +106,7 @@
       "depends_on": [
         "interval_fubini_calculation"
       ],
-      "lean_landing": "phase2_vectorMeasure_ext_of_Icc; thm_13_14_verticalCylinder_measurable; thm_13_14_closedIntervalCylinder_measurable; thm_13_14_piLambdaExtensionSupport_from_integrable",
+      "lean_landing": "thm_13_14_piLambdaExtensionSupport_from_integrable",
       "status": "proved",
       "review_status": "accepted",
       "blocking": true,
@@ -145,7 +145,7 @@
       "expected_theorem_signature": "theorem thm_13_14_pi_lambda_extension_from_intervals : interval cylinder identities plus finite signed/integrability structure -> thm_13_14_piLambdaExtensionSupport P g h",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "The route proves a reusable vector-measure generator extension on closed intervals, then applies it to the two y-coordinate vector measures. The final theorem supplies the required integrability facts internally.",
+      "proof_contract_notes": "The theorem converts interval identities into equality of pushed-forward vector measures, using the reusable closed-interval generator bridge phase2_vectorMeasure_ext_of_Icc.",
       "signature_match": "passed",
       "body_reassumption_check": "passed",
       "public_premise_check": "passed"
@@ -158,7 +158,7 @@
       "depends_on": [
         "pi_lambda_extension"
       ],
-      "lean_landing": "thm_13_14_integralIdentity; thm_13_14_isConditionalExpectationVersion; thm_13_14_kernel_stronglyMeasurable; thm_13_14_kernelWeighted_integrable_from_gWeighted; thm_13_14_from_intervalFubini_piLambda; thm_13_14",
+      "lean_landing": "thm_13_14_from_intervalFubini_piLambda; thm_13_14",
       "status": "proved",
       "review_status": "accepted",
       "blocking": true,
@@ -168,7 +168,7 @@
       "expected_theorem_signature": "theorem thm_13_14 : source-facing joint density, measurability, nonnegativity, L1 weighted integrability, and nonzero marginal assumptions -> thm_13_14_isConditionalExpectationVersion P g (thm_13_14_conditionalExpectationKernel fXY g)",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "The final assembly constructs candidate measurability, both integrability facts, interval Fubini support, and pi-lambda extension before proving the local conditional-expectation-version predicate. It does not consume hIntervals, hExtend, hKernelInt, or hKernelWeightedInt as public theorem premises.",
+      "proof_contract_notes": "The final assembly derives kernel measurability, both integrability facts, interval support, and pi-lambda extension internally before proving the conditional-expectation-version predicate.",
       "signature_match": "passed",
       "body_reassumption_check": "passed",
       "public_premise_check": "passed"
@@ -191,7 +191,7 @@
       "expected_theorem_signature": "theorem thm_13_14_identity : source-facing joint density, measurability, nonnegativity, identity weighted integrability, and nonzero marginal assumptions -> thm_13_14_isConditionalExpectationVersion P (fun x : R => x) (thm_13_14_identityConditionalExpectationKernel fXY)",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "The identity theorem is a direct specialization of thm_13_14. It does not expose separate interval, extension, or kernel-integrability proof packages.",
+      "proof_contract_notes": "The identity theorem is a direct specialization of thm_13_14 and does not expose separate interval, extension, or kernel-integrability proof premises.",
       "signature_match": "passed",
       "body_reassumption_check": "passed",
       "public_premise_check": "passed"
@@ -293,9 +293,16 @@
       "status": "covered",
       "summary": "All five obligations in proof_obligations.json were checked. The definitional row is not applicable for theorem-level proof-contract fields. The four proof rows have theorem landings with verified proof contracts and passed signature, body-reassumption, and public-premise checks. No scaffold hypotheses or open blockers remain.",
       "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-22T02:06:56.426354Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All five obligations in proof_obligations.json were checked against the split parent/support files. The definitional obligation is not applicable as a theorem-level proof contract. The four proof obligations have theorem landings with verified proof contract fields and no public-premise relocation in the final public theorem statements.",
+      "open_blockers": []
     }
   ],
-  "last_reviewed_at": "2026-06-06T02:38:11.929591Z",
+  "last_reviewed_at": "2026-06-22T02:06:56.426354Z",
   "source_output_alignment_audit": {
     "audited_at": "2026-05-19",
     "accepted_debt_count": 2,

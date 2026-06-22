@@ -1,0 +1,359 @@
+{
+  "schema_version": "phase2.semantic_review.result.v7",
+  "task_id": "thm_13_14",
+  "mode": "review-existing",
+  "attempt": 9,
+  "prompt_version": 9,
+  "rubric_version": 9,
+  "review_input_hash": "e378dbd6cf7f62ea9d040ec522330e0addf7903f7400657a904fa0a13e26febe",
+  "cache_key": "efed39c7b46790e4ef2b23baee320c0a24c5f12bd4358a48851da3e886847211",
+  "reviewer_backend_id": "codex-handoff",
+  "runner": {
+    "status": "codex_handoff_applied",
+    "result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_14\\semantic_review_result_v9.json"
+  },
+  "review_basis_hash": "c9651c03a19cb93766b1dbfb0477b3304f96849a8d479d70fa2c234ed391faa1",
+  "review_subject_kind": "official_output",
+  "review_subject_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_14\\official_snapshot_v9.lean",
+  "review_subject_hash": "4c59d11f4a930f4d7b7067dc54142fa246f84334776b057daa4eb0fb9cb29ee8",
+  "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_14\\semantic_review_input_v9.json",
+  "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_14\\semantic_review_prompt_v9.md",
+  "review_context_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_14\\semantic_review_context_v9.md",
+  "expected_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_14\\semantic_review_result_v9.json",
+  "candidate_hash": "4c59d11f4a930f4d7b7067dc54142fa246f84334776b057daa4eb0fb9cb29ee8",
+  "verdict": "pass",
+  "confidence": "high",
+  "proof_class": "textbook_proof_completed",
+  "completion_class": "source_route_proof_completed",
+  "summary": "Pass. The parent/support Lean route is source-route proof complete: the parent keeps the source text and final public theorems, imports the support layer, and the support layer proves the density, Fubini, kernel-integrability, pi-lambda, and final assembly spine at theorem level. The project text/LF hash for both the parent file and official snapshot matches the request-bound candidate/review_subject hash 4c59d11f4a930f4d7b7067dc54142fa246f84334776b057daa4eb0fb9cb29ee8; the differing raw-byte hash is only a CRLF artifact and is not stale evidence under src/toy_apollo/phase2_pack_shared/io.py sha256_text.",
+  "reviewer_independence": {
+    "role": "independent_read_only_reviewer",
+    "read_only": true,
+    "did_edit_candidate": false,
+    "used_current_review_request": true,
+    "attestation": "I reviewed the current request and source/Lean files read-only, and did not edit Lean, ledger, metadata, proof obligations, or source files."
+  },
+  "source_claims": [
+    {
+      "id": "joint_density_setup",
+      "claim": "P is a probability measure on R^2, X and Y are coordinate maps, fXY is the joint density with respect to Lebesgue measure, g is Borel and L1 along the source density route."
+    },
+    {
+      "id": "conditional_density_kernel",
+      "claim": "fY(y) is the x-fiber integral of fXY, fX|Y(x|y)=fXY(x,y)/fY(y), and h(y)=int g(x) fX|Y(x|y) dx is the candidate conditional expectation."
+    },
+    {
+      "id": "main_conditional_expectation",
+      "claim": "The candidate kernel h(Y) is a version of E[g(X)|Y] under the nonzero marginal simplification."
+    },
+    {
+      "id": "interval_fubini_step",
+      "claim": "For B=R x [a,b], the equality of set integrals follows by the joint-density rewrite, Fubini/product integration, marginal-density identity, and kernel algebra."
+    },
+    {
+      "id": "pi_lambda_extension",
+      "claim": "The closed-interval cylinder identity extends to all Borel y-cylinders by the pi-lambda/generator argument."
+    },
+    {
+      "id": "identity_case",
+      "claim": "The displayed E[X|Y] formula is the specialization g(x)=x."
+    }
+  ],
+  "claim_mapping": [
+    {
+      "source_claim_id": "joint_density_setup",
+      "lean_declarations": [
+        "thm_13_14_X",
+        "thm_13_14_Y",
+        "thm_13_14_jointDensityLaw",
+        "thm_13_14"
+      ],
+      "assumptions": [
+        "(P : Measure (R x R)) [IsProbabilityMeasure P]",
+        "hDensity : thm_13_14_jointDensityLaw P fXY",
+        "hGMeas : Measurable g",
+        "hDensityMeas : Measurable fXY",
+        "hDensityNonneg : forall z, 0 <= fXY z",
+        "hGWeightedInt : Integrable (fun z => fXY z * g z.1) volume"
+      ],
+      "conclusion": "The final theorem works over the coordinate probability space with the source-facing density law and L1 weighted-integrability route.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "conditional_density_kernel",
+      "lean_declarations": [
+        "thm_13_14_marginalDensity",
+        "thm_13_14_conditionalDensity",
+        "thm_13_14_conditionalExpectationKernel",
+        "thm_13_14_marginalDensity_eq",
+        "thm_13_14_conditionalDensity_eq"
+      ],
+      "assumptions": [
+        "hFY_ne_zero : forall y, thm_13_14_marginalDensity fXY y != 0"
+      ],
+      "conclusion": "The exported definitions match fY, fX|Y, and the textbook candidate h(y).",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "main_conditional_expectation",
+      "lean_declarations": [
+        "thm_13_14_isConditionalExpectationVersion",
+        "thm_13_14_from_intervalFubini_piLambda",
+        "thm_13_14"
+      ],
+      "assumptions": [
+        "source-facing density law, measurability, nonnegativity, weighted L1 integrability, and nonzero marginal"
+      ],
+      "conclusion": "thm_13_14_isConditionalExpectationVersion P g (thm_13_14_conditionalExpectationKernel fXY g), including kernel measurability, integrability of g(X), integrability of h(Y), and the set-integral identity on sigma(Y)-represented cylinders.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "interval_fubini_step",
+      "lean_declarations": [
+        "thm_13_14_measure_eq_withDensity",
+        "thm_13_14_setIntegral_jointDensity_eq",
+        "thm_13_14_setIntegral_verticalCylinder_prod_symm",
+        "thm_13_14_kernel_mul_marginal_eq_integral",
+        "thm_13_14_kernelWeighted_integrable_from_gWeighted",
+        "thm_13_14_interval_weighted_identity",
+        "thm_13_14_interval_fubini_from_joint_density"
+      ],
+      "assumptions": [
+        "density AEMeasurable/nonnegative formal prerequisites",
+        "hGWeightedInt",
+        "hFY_ne_zero"
+      ],
+      "conclusion": "thm_13_14_intervalFubiniSupport P fXY g",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "pi_lambda_extension",
+      "lean_declarations": [
+        "phase2_vectorMeasure_ext_of_Icc",
+        "thm_13_14_piLambdaExtensionSupport",
+        "thm_13_14_piLambdaExtensionSupport_from_integrable"
+      ],
+      "assumptions": [
+        "interval cylinder identities",
+        "Integrable (fun z => g z.1) P",
+        "Integrable (fun z => h z.2) P"
+      ],
+      "conclusion": "The integral identity holds for every Borel y-cylinder.",
+      "assessment": "covered"
+    },
+    {
+      "source_claim_id": "identity_case",
+      "lean_declarations": [
+        "thm_13_14_identityConditionalExpectationKernel",
+        "thm_13_14_identity"
+      ],
+      "assumptions": [
+        "same density assumptions as thm_13_14 with hXWeightedInt for g(x)=x"
+      ],
+      "conclusion": "thm_13_14_isConditionalExpectationVersion P (fun x => x) (thm_13_14_identityConditionalExpectationKernel fXY)",
+      "assessment": "covered"
+    }
+  ],
+  "route_inspection": {
+    "status": "covered",
+    "source_route": "Define the coordinate/density/kernel objects, prove the closed-interval Fubini identity, derive kernel measurability and kernel-weighted integrability from the g-weighted density route, extend by the closed-interval generator/pi-lambda route, then assemble the conditional-expectation-version criterion.",
+    "expected_answer_or_statement": "thm_13_14 concludes that the conditional-density integral kernel is a version of E[g(X)|Y]; thm_13_14_identity specializes the theorem to g(x)=x.",
+    "local_mathlib_search": "Mathlib use is routed through reviewed reusable bridges phase2_measure_eq_withDensity_of_forall_measurable, phase2_setIntegral_withDensity_ofReal_eq, phase2_integrable_withDensity_ofReal_of_weighted, and phase2_vectorMeasure_ext_of_Icc, plus local source-step theorems in the support file.",
+    "public_interface_check": "The public final theorem statements do not expose hIntervals, hExtend, hKernelInt, or hKernelWeightedInt. The parent imports the support layer, so existing top-level thm_13_14_* declarations remain available transitively to importers of ToyApollo.Output.thm_13_14. The remaining public assumptions are source-facing formal density regularity, weighted L1 integrability, and the source's nonzero marginal simplification.",
+    "support_or_reassembly_decision": "The parent/support split is semantically acceptable: support carries reusable theorem-level landings, and the parent keeps the source task text plus final theorem names and statements.",
+    "stop_go_verdict": "go",
+    "notes": "The semantic route is covered and the request-bound project text/LF hash matches the reviewed parent and official snapshot. The raw-byte hash differs only because of CRLF normalization."
+  },
+  "spine_alignment": {
+    "status": "covered",
+    "summary": "The source proof spine is preserved in the support file at theorem level and reassembled by the parent final theorem. No interval/Fubini, pi-lambda, or kernel-integrability proof package is shifted into the public final theorem premises.",
+    "obligations_checked": [
+      {
+        "source_step": "Density and kernel definitions",
+        "lean_landing": "thm_13_14_jointDensityLaw; thm_13_14_marginalDensity; thm_13_14_conditionalDensity; thm_13_14_conditionalExpectationKernel",
+        "assessment": "covered as definitions"
+      },
+      {
+        "source_step": "Closed-interval Fubini calculation",
+        "lean_landing": "thm_13_14_interval_fubini_from_joint_density via density rewrite, product Fubini, kernel algebra, and derived kernel-weighted integrability",
+        "assessment": "covered"
+      },
+      {
+        "source_step": "Pi-lambda/generator extension",
+        "lean_landing": "thm_13_14_piLambdaExtensionSupport_from_integrable using phase2_vectorMeasure_ext_of_Icc",
+        "assessment": "covered"
+      },
+      {
+        "source_step": "Conditional expectation criterion",
+        "lean_landing": "thm_13_14_from_intervalFubini_piLambda and thm_13_14",
+        "assessment": "covered"
+      },
+      {
+        "source_step": "Identity specialization",
+        "lean_landing": "thm_13_14_identity",
+        "assessment": "covered"
+      }
+    ],
+    "missing_obligations": [],
+    "shortcut_assessment": "No adapter-only shortcut found in the actual Lean route; bridges are mapped to density rewrite and vector-measure generator extension steps."
+  },
+  "obligation_review": {
+    "status": "covered",
+    "summary": "All five obligations in proof_obligations.json were checked against the split parent/support files. The definitional obligation is not applicable as a theorem-level proof contract. The four proof obligations have theorem landings with verified proof contract fields and no public-premise relocation in the final public theorem statements.",
+    "items": [
+      {
+        "obligation_id": "density_and_kernel_definitions",
+        "status": "not_applicable",
+        "lean_landing": "thm_13_14_jointDensityLaw; thm_13_14_marginalDensity; thm_13_14_conditionalDensity; thm_13_14_conditionalExpectationKernel",
+        "landing_kind": "support_predicate",
+        "expected_theorem_signature": "not assigned",
+        "proof_contract_status": "not_applicable",
+        "signature_match": "not_applicable",
+        "body_reassumption_check": "not_applicable",
+        "public_premise_check": "not_applicable",
+        "proof_contract_notes": "This row is source data and definitions rather than a theorem-level proof obligation; the definitions match the source formulas."
+      },
+      {
+        "obligation_id": "interval_fubini_calculation",
+        "status": "covered",
+        "expected_theorem_signature": "theorem thm_13_14_interval_fubini_from_joint_density : thm_13_14_jointDensityLaw P fXY -> required measurability/integrability hypotheses -> thm_13_14_intervalFubiniSupport P fXY g",
+        "lean_landing": "thm_13_14_interval_fubini_from_joint_density",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The theorem proves the interval support predicate from density/Fubini infrastructure. Kernel-weighted integrability is derived by thm_13_14_kernelWeighted_integrable_from_gWeighted in final assembly rather than exposed on thm_13_14."
+      },
+      {
+        "obligation_id": "pi_lambda_extension",
+        "status": "covered",
+        "expected_theorem_signature": "theorem thm_13_14_pi_lambda_extension_from_intervals : interval cylinder identities plus finite signed/integrability structure -> thm_13_14_piLambdaExtensionSupport P g h",
+        "lean_landing": "thm_13_14_piLambdaExtensionSupport_from_integrable",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The theorem converts interval identities into equality of pushed-forward vector measures, using the reusable closed-interval generator bridge phase2_vectorMeasure_ext_of_Icc."
+      },
+      {
+        "obligation_id": "conditional_expectation_criterion",
+        "status": "covered",
+        "expected_theorem_signature": "theorem thm_13_14 : source-facing joint density, measurability, nonnegativity, L1 weighted integrability, and nonzero marginal assumptions -> thm_13_14_isConditionalExpectationVersion P g (thm_13_14_conditionalExpectationKernel fXY g)",
+        "lean_landing": "thm_13_14_from_intervalFubini_piLambda; thm_13_14",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The final assembly derives kernel measurability, both integrability facts, interval support, and pi-lambda extension internally before proving the conditional-expectation-version predicate."
+      },
+      {
+        "obligation_id": "identity_case",
+        "status": "covered",
+        "expected_theorem_signature": "theorem thm_13_14_identity : source-facing joint density, measurability, nonnegativity, identity weighted integrability, and nonzero marginal assumptions -> thm_13_14_isConditionalExpectationVersion P (fun x : R => x) (thm_13_14_identityConditionalExpectationKernel fXY)",
+        "lean_landing": "thm_13_14_identityConditionalExpectationKernel; thm_13_14_identity",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The identity theorem is a direct specialization of thm_13_14 and does not expose separate interval, extension, or kernel-integrability proof premises."
+      }
+    ],
+    "open_blockers": [],
+    "scaffold_assessment": [
+      {
+        "status": "covered",
+        "evidence": "No scaffold hypotheses are recorded in proof_obligations.json, and rg found no sorry/admit/axiom declarations in the reviewed parent/support files."
+      }
+    ]
+  },
+  "evidence_review": {
+    "status": "covered",
+    "summary": "Source, Lean route, obligations, interface, downstream, local build, and hash/freshness evidence are covered. The project text/LF hash for the parent and official snapshot matches the request-bound hash; raw-byte SHA256 differs only because of CRLF line endings.",
+    "items": [
+      {
+        "evidence_class": "source_tex",
+        "status": "covered",
+        "evidence": "Read inputs\\chapter13-continuous-random-variable.tex and confirmed the source theorem text, Fubini proof, pi-lambda extension, and identity specialization."
+      },
+      {
+        "evidence_class": "lean_subject",
+        "status": "covered",
+        "evidence": "Read ToyApollo\\Output\\thm_13_14.lean and ToyApollo\\Output\\thm_13_14_support.lean. The parent keeps final theorem names and imports support; support contains the coordinate/density/kernel/Fubini/pi-lambda/final assembly theorem route. lake env lean passed for both files."
+      },
+      {
+        "evidence_class": "proof_obligations",
+        "status": "covered",
+        "evidence": "Read proof_obligations.json and checked all five obligations against the split files. Four proof obligations have theorem landings with verified proof-contract fields; one definitional row is not applicable."
+      },
+      {
+        "evidence_class": "audit",
+        "status": "covered",
+        "evidence": "The context/input audit evidence records prior debt-surface repairs and no current open blockers. This was treated as supporting evidence only, not as completion authority."
+      },
+      {
+        "evidence_class": "classification",
+        "status": "covered",
+        "evidence": "The context/input classification history marks thm_13_14 as textbook_proof_completed. The actual Lean route independently supports that classification semantically; classification was treated as supporting evidence only."
+      },
+      {
+        "evidence_class": "dependency_status",
+        "status": "covered",
+        "evidence": "No declared upstream textbook dependencies are listed for this task. The support imports ToyApollo.Phase2.DensityIntegralBridge and ToyApollo.Phase2.VectorMeasureBorelBridge as reviewed reusable infrastructure."
+      },
+      {
+        "evidence_class": "downstream",
+        "status": "covered",
+        "evidence": "The review context lists no direct downstream consumers. The parent import makes support declarations transitively available to importers of ToyApollo.Output.thm_13_14."
+      },
+      {
+        "evidence_class": "ledger_status",
+        "status": "covered",
+        "evidence": "The review context records ledger status COMPLETED and build candidate state review_pending. Ledger status was not treated as semantic completion authority."
+      },
+      {
+        "evidence_class": "hashes",
+        "status": "covered",
+        "evidence": "Request/template/input bind candidate/review_subject hash 4c59d11f4a930f4d7b7067dc54142fa246f84334776b057daa4eb0fb9cb29ee8. Using the project rule in src/toy_apollo/phase2_pack_shared/io.py, sha256_text(read_text(...)) gives 4c59d11f4a930f4d7b7067dc54142fa246f84334776b057daa4eb0fb9cb29ee8 for both ToyApollo\\Output\\thm_13_14.lean and phase2_prompt_packs\\thm_13_14\\official_snapshot_v9.lean. Their raw-byte SHA256 is 2a69c01ed525b0e9ca59ef2bb352aa85118f25675c6d19b3425787549171e326 only because CRLF bytes differ from the LF-normalized project text hash. This is fresh covered evidence, not stale evidence."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "interface_contract": {
+    "status": "covered",
+    "summary": "The output-health parent/support split preserves public names and final theorem statements semantically. The support theorem thm_13_14_from_intervalFubini_piLambda is public and callable by the parent. The parent retains thm_13_14 and thm_13_14_identity with source-facing assumptions and conclusions, and it does not expose proof-step packages as public final theorem premises.",
+    "mismatches": []
+  },
+  "downstream_adequacy": {
+    "status": "covered",
+    "summary": "No direct downstream consumers are listed in the review context. Existing importers of ToyApollo.Output.thm_13_14 still receive the support declarations transitively through the parent import.",
+    "consumers_checked": [],
+    "blocking_issues": []
+  },
+  "forbidden_weakenings": [
+    {
+      "rule": "Do not replace textbook public interfaces with pure existential shells, placeholder definitions, or witness-only structures.",
+      "status": "not_present",
+      "evidence": "The final predicate requires measurability, integrability, and set-integral identity fields, not a witness-only shell."
+    },
+    {
+      "rule": "Do not rewrite a theorem that should be reusable downstream into a theorem-specific wrapper only sufficient for the current file.",
+      "status": "not_present",
+      "evidence": "The support file exposes theorem-level reusable landings for density rewrite, interval Fubini support, kernel integrability, and pi-lambda extension."
+    },
+    {
+      "rule": "Do not hide upstream interface gaps behind extra theorem-level assumptions absent from the source.",
+      "status": "not_present",
+      "evidence": "The final theorem keeps source-facing formal assumptions for density regularity, weighted L1 integrability, and nonzero marginal; interval identities, extension support, and kernel integrability are derived internally."
+    }
+  ],
+  "findings": [],
+  "recommended_disposition": "accept",
+  "needs_class_normalization": false,
+  "cache_class": "semantic_verdict",
+  "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_14\\semantic_review_result_v9.json",
+  "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_14\\semantic_review_report_v9.md"
+}
