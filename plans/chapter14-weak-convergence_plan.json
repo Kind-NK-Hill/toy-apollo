@@ -79,9 +79,7 @@
         "type": "Remark",
         "title": "Total Variation Bridge to Theorem 10.6",
         "content": "Using the equivalent conditions in Theorem 14.2, we can show that convergence\n\nin total variation implies weak convergence and thus complete the proof of\n\nTheorem 10.6.",
-        "dependencies": [
-            "thm_14_2"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter14-weak-convergence"
     },

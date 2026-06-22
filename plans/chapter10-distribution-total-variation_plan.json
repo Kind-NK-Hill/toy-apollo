@@ -13,9 +13,7 @@
         "type": "Definition",
         "title": "Convergence in Distribution",
         "content": "\\begin{defbox}{10.4 (Convergence in Distribution)}\nLet $(F_n)_{n=1}^{\\infty}$ be a sequence of cumulative distribution functions, and let $F$ be another cumulative distribution function. We say that $(F_n)_{n=1}^{\\infty}$ converges in distribution, or in law, if\n\\[\n\\lim_{n\\to\\infty}F_n(x)=F(x)\n\\]\nat every continuity point of $F(x)$. We use the notation\n\\[\nF_n\\xrightarrow{D}F\n\\qquad\\text{or}\\qquad\nF_n\\xrightarrow{L}F\n\\]\nfor convergence in distribution.\n\nGiven a sequence of probability measures $\\mu_n$'s and another probability measure $\\mu$, all defined on the real number line, we say that $(\\mu_n)_{n=1}^{\\infty}$ converges to $\\mu$ in distribution if the corresponding Stieltjes measure functions\n\\[\nF_n(x)=\\mu_n((-\\infty,x])\n\\qquad\\text{and}\\qquad\nF(x)=\\mu((-\\infty,x])\n\\]\nconverge in distribution.\n\nA sequence of random variables $X_n$'s, for $n=1,2,3,\\ldots$, is said to be converging to a random variable $X$ in distribution, or in law, if the cumulative distribution functions of the $X_n$'s converge to the cumulative distribution function of $X$ in distribution.\n\\end{defbox}",
-        "dependencies": [
-            "intro_10_3"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter10-distribution-total-variation"
     },
@@ -36,10 +34,7 @@
         "type": "Remark",
         "title": "Total Variation Versus Distribution Convergence",
         "content": "There is an important difference between these two modes of convergence. In convergence in total variation distance, the probability measures must be defined on the same probability space, while in convergence in distribution, the probability measures may be defined on different probability spaces. In general, convergence in total variation implies convergence in distribution.",
-        "dependencies": [
-            "def_10_4",
-            "def_10_5"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter10-distribution-total-variation"
     },
@@ -62,9 +57,7 @@
         "type": "Remark",
         "title": "Discontinuity Points in Distribution Convergence",
         "content": "In the definition of convergence in distribution, we do not need to consider the discontinuity points of the target cdf $F(x)$. To see why, consider a sequence of positive real numbers $x_1,x_2,x_3,\\ldots$ converging to $0$ from the right. Let\n\\[\nF_n(x)=\\mathbf{1}_{[x_n,\\infty)}(x)\n\\]\nbe the cumulative distribution function of the Dirac measure that concentrates at the point $x_n$, for $n\\geq 1$. We naturally regard this sequence of probability distributions as converging to the Dirac measure that concentrates at $x=0$. We can check that $F_n(0)=0$ for all $n$, hence\n\\[\n\\lim_{n\\to\\infty}F_n(x)=\\mathbf{1}_{(0,\\infty)}(x).\n\\]\nThe limit is not a Stieltjes measure function as it is not continuous from the right at $x=0$. However, the target cdf is $F(x)=\\mathbf{1}_{[0,\\infty)}(x)$, whose value at $x=0$ is different from the limit $\\lim_{n\\to\\infty}F_n(x)$. Because the discontinuity point $x=0$ is neglected in the definition of convergence in distribution, we do have $F_n(x)\\to F(x)$ in distribution.",
-        "dependencies": [
-            "def_10_4"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter10-distribution-total-variation"
     },
@@ -85,10 +78,7 @@
         "type": "Remark",
         "title": "Pdf Convergence as a Practical Check",
         "content": "The last example is an example of convergence in distribution but not convergence in total variation.\n\nThe cumulative distribution function is used in the definition of convergence in distribution. However, in practice, we can also check convergence in distribution using probability density function, as demonstrated in the following example.",
-        "dependencies": [
-            "def_10_4",
-            "def_10_5"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter10-distribution-total-variation"
     },
@@ -112,10 +102,7 @@
         "type": "Remark",
         "title": "Probability Convergence Versus Distribution Convergence",
         "content": "The relationship between convergence in probability and convergence in distribution is given by the following example and theorem, which together say that convergence in probability is strictly stronger than convergence in distribution.",
-        "dependencies": [
-            "def_10_2",
-            "def_10_4"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter10-distribution-total-variation"
     },
@@ -148,11 +135,7 @@
         "type": "Remark",
         "title": "Skorokhod Representation Intro",
         "content": "There is a partial converse to Theorem 10.7: if $X_n$ converges in distribution to a constant $c$, then $X_n$ converges in probability to the same constant.\n\nWe conclude this section with Skorokhod's representation theorem, which provides a relationship between convergence in distribution and almost sure convergence.",
-        "dependencies": [
-            "thm_10_7",
-            "def_10_2",
-            "def_10_4"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter10-distribution-total-variation"
     },

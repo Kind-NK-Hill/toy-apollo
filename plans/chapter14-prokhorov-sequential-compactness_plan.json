@@ -4,9 +4,7 @@
         "type": "Remark",
         "title": "Prokhorov Theorem and Sequential Compactness",
         "content": "\\subsection*{14.3 Prokhorov Theorem and Sequential Compactness}\n\nIn the previous two sections, we proved that Condition 1 implies Condition 2, and\n\nCondition 3 implies Condition 4 in Levy's continuity theorem. The reason why Con-\n\ndition 2 implies Condition 3 is characteristic function's continuity (Theorem 9.3)It\n\nremains to prove that Condition 1 follows from Condition 4. The final step requires\n\nthe Prokhorov theorem, which we state without proof as follows.",
-        "dependencies": [
-            "thm_9_3"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter14-prokhorov-sequential-compactness"
     },

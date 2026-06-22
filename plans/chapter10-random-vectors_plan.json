@@ -24,9 +24,7 @@
         "type": "Remark",
         "title": "Euclidean Norm for Random Vectors",
         "content": "We measure distance in $\\mathbb{R}^d$ by the Euclidean norm and use the following notation:\n\\[\n\\lVert(x_1,x_2,\\ldots,x_d)\\rVert\n\\coloneqq\n\\sqrt{x_1^2+x_2^2+\\cdots+x_d^2}.\n\\]",
-        "dependencies": [
-            "thm_10_9"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter10-random-vectors"
     },
@@ -48,9 +46,7 @@
         "type": "Remark",
         "title": "Componentwise Convergence Intro",
         "content": "The next theorem gives the relation between convergence as a random vector and convergence in each individual component.",
-        "dependencies": [
-            "def_10_6"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter10-random-vectors"
     },
@@ -73,9 +69,7 @@
         "type": "Remark",
         "title": "Componentwise Check for Random Vectors",
         "content": "Using Theorem 10.10, we can check whether a sequence of random vectors converges in probability by considering the convergence of each component.",
-        "dependencies": [
-            "thm_10_10"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter10-random-vectors"
     }

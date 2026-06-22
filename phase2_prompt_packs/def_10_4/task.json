@@ -1,0 +1,10 @@
+{
+  "block_id": "def_10_4",
+  "type": "Definition",
+  "title": "Convergence in Distribution",
+  "content": "\\begin{defbox}{10.4 (Convergence in Distribution)}\nLet $(F_n)_{n=1}^{\\infty}$ be a sequence of cumulative distribution functions, and let $F$ be another cumulative distribution function. We say that $(F_n)_{n=1}^{\\infty}$ converges in distribution, or in law, if\n\\[\n\\lim_{n\\to\\infty}F_n(x)=F(x)\n\\]\nat every continuity point of $F(x)$. We use the notation\n\\[\nF_n\\xrightarrow{D}F\n\\qquad\\text{or}\\qquad\nF_n\\xrightarrow{L}F\n\\]\nfor convergence in distribution.\n\nGiven a sequence of probability measures $\\mu_n$'s and another probability measure $\\mu$, all defined on the real number line, we say that $(\\mu_n)_{n=1}^{\\infty}$ converges to $\\mu$ in distribution if the corresponding Stieltjes measure functions\n\\[\nF_n(x)=\\mu_n((-\\infty,x])\n\\qquad\\text{and}\\qquad\nF(x)=\\mu((-\\infty,x])\n\\]\nconverge in distribution.\n\nA sequence of random variables $X_n$'s, for $n=1,2,3,\\ldots$, is said to be converging to a random variable $X$ in distribution, or in law, if the cumulative distribution functions of the $X_n$'s converge to the cumulative distribution function of $X$ in distribution.\n\\end{defbox}",
+  "source_plan": "chapter10-distribution-total-variation",
+  "dependencies": [],
+  "soft_imports": [],
+  "final_import_union": []
+}

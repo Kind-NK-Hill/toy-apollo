@@ -13,9 +13,7 @@
         "type": "Remark",
         "title": "Convergence Almost Surely and Convergence in Probability",
         "content": "\\subsection*{10.1 Convergence Almost Surely and Convergence in Probability}\n\nIn this section, we discuss the first two fundamental notions of convergence: almost sure convergence and convergence in probability.",
-        "dependencies": [
-            "intro_10"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter10-almost-sure-probability"
     },
@@ -24,9 +22,7 @@
         "type": "Definition",
         "title": "Sure and Almost Sure Convergence",
         "content": "\\begin{defbox}{10.1}\nA sequence of random variables $(X_n)_{n\\geq 1}$ defined on a probability space $(\\Omega,\\mathcal{F},P)$ is said to converge to $X$ surely if\n\\[\n\\lim_{n\\to\\infty} X_n(\\omega)=X(\\omega)\n\\]\nfor all $\\omega\\in\\Omega$.\n\nA sequence of random variables $(X_n)_{n\\geq 1}$ is said to converge to $X$ almost surely if there exists an event $E$ with $P(E)=1$ such that\n\\[\n\\lim_{n\\to\\infty} X_n(\\omega)=X(\\omega)\n\\]\nfor $\\omega$ in $E$. In this case, we write $X_n\\xrightarrow{\\mathrm{a.s.}}X$ or $X_n\\to X$ with probability $1$.\n\\end{defbox}",
-        "dependencies": [
-            "intro_10_1"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter10-almost-sure-probability"
     },
@@ -36,7 +32,6 @@
         "title": "Convergence in Probability",
         "content": "\\begin{defbox}{10.2}\nA sequence of random variables $(X_n)_{n\\geq 1}$ is said to converge to $X$ in probability if for any $\\epsilon>0$,\n\\[\nP(\\lvert X_n-X\\rvert>\\epsilon)\\to 0\n\\]\nas $n\\to\\infty$. In this case, we write $X_n\\xrightarrow{P}X$ or $X_n\\to X$ in probability.\n\\end{defbox}",
         "dependencies": [
-            "intro_10_1",
             "def_10_1"
         ],
         "is_renowned": false,
@@ -47,10 +42,7 @@
         "type": "Remark",
         "title": "Pointwise and Probability Convergence",
         "content": "Almost sure convergence is concerned with the pointwise convergence of random variables. Convergence in probability is about the convergence of a sequence of probabilities. The next example illustrates the difference between a.s. convergence and convergence in probability.",
-        "dependencies": [
-            "def_10_1",
-            "def_10_2"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter10-almost-sure-probability"
     },
@@ -72,10 +64,7 @@
         "type": "Remark",
         "title": "Characterization of Almost Sure Convergence",
         "content": "We now establish a result that relates almost sure convergence to convergence in probability. To this end, we use the following characterization of a.s. convergence.",
-        "dependencies": [
-            "def_10_1",
-            "def_10_2"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter10-almost-sure-probability"
     },
@@ -95,9 +84,7 @@
         "type": "Remark",
         "title": "Limsup Tail Formulation",
         "content": "The event $\\{\\omega:\\lvert X_n(\\omega)-X(\\omega)\\rvert>\\epsilon\\ \\mathrm{i.o.}\\}$ in the last theorem can be written in terms of limsup:\n\\[\n\\{\\omega:\\lvert X_n(\\omega)-X(\\omega)\\rvert>\\epsilon\\ \\mathrm{i.o.}\\}\n=\n\\bigcap_{n=1}^{\\infty}\\bigcup_{m\\geq n}\n\\{\\omega:\\lvert X_m(\\omega)-X(\\omega)\\rvert>\\epsilon\\}.\n\\]\nBy using the semi-continuity property of probability measure, we can alternately express Theorem 10.1 as\n\\[\nX_n\\xrightarrow{\\mathrm{a.s.}}X\n\\quad\\Longleftrightarrow\\quad\n\\forall \\epsilon>0,\\;\n\\lim_{n\\to\\infty}P\\left(\n\\bigcup_{m\\geq n}\n\\{\\omega:\\lvert X_m(\\omega)-X(\\omega)\\rvert>\\epsilon\\}\n\\right)=0.\n\\tag{10.1}\n\\]\nThis equation is useful to check almost sure convergence, as it allows us to focus on the behavior of the tails of the sequence.",
-        "dependencies": [
-            "thm_10_1"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter10-almost-sure-probability"
     },
@@ -106,10 +93,7 @@
         "type": "Remark",
         "title": "Almost Sure Convergence Implies Convergence in Probability",
         "content": "Using (10.1), one can readily derive the next theorem.",
-        "dependencies": [
-            "thm_10_1",
-            "def_10_2"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter10-almost-sure-probability"
     },
@@ -148,11 +132,7 @@
         "type": "Remark",
         "title": "Summable Means and Almost Sure Convergence",
         "content": "The next theorem shows that if the means of a sequence of nonnegative random variables converge to $0$ sufficiently fast, then the sequence must converge to $0$ almost surely. The proof illustrates how to use Theorem 10.1 together with the Borel--Cantelli lemma to establish almost sure convergence.",
-        "dependencies": [
-            "thm_10_1",
-            "thm_10_3",
-            "thm_5_8"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter10-almost-sure-probability"
     },

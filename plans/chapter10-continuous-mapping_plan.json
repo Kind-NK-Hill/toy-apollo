@@ -42,10 +42,7 @@
         "type": "Remark",
         "title": "Slutsky Extension Note",
         "content": "Exercise 10.10 gives a partial extension of this theorem.",
-        "dependencies": [
-            "prob_10_10",
-            "thm_10_12"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter10-continuous-mapping"
     },

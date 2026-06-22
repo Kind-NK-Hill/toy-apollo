@@ -1,0 +1,28 @@
+{
+  "task_id": "def_10_2",
+  "hard_dependencies": [
+    "def_10_1"
+  ],
+  "soft_imports": [],
+  "final_import_union": [
+    "def_10_1"
+  ],
+  "decisions_by_dep": {
+    "def_10_1": [
+      {
+        "criterion": "operator_declared_reliance",
+        "decision_id": "def_10_2|def_10_1|hard|phase1_apply|operator_declared_reliance",
+        "dep_id": "def_10_1",
+        "evidence": "Declared in draft_plan.json dependencies",
+        "kind": "hard",
+        "phase": "phase1_apply",
+        "recorded_at": "2026-05-16T06:43:05.627943+00:00",
+        "schema_version": 1,
+        "source_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\plans\\chapter10-almost-sure-probability_plan.json",
+        "source_plan": "chapter10-almost-sure-probability",
+        "task_id": "def_10_2"
+      }
+    ]
+  },
+  "missing_decision_records": []
+}

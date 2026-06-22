@@ -1,0 +1,10 @@
+{
+  "block_id": "def_10_1",
+  "type": "Definition",
+  "title": "Sure and Almost Sure Convergence",
+  "content": "\\begin{defbox}{10.1}\nA sequence of random variables $(X_n)_{n\\geq 1}$ defined on a probability space $(\\Omega,\\mathcal{F},P)$ is said to converge to $X$ surely if\n\\[\n\\lim_{n\\to\\infty} X_n(\\omega)=X(\\omega)\n\\]\nfor all $\\omega\\in\\Omega$.\n\nA sequence of random variables $(X_n)_{n\\geq 1}$ is said to converge to $X$ almost surely if there exists an event $E$ with $P(E)=1$ such that\n\\[\n\\lim_{n\\to\\infty} X_n(\\omega)=X(\\omega)\n\\]\nfor $\\omega$ in $E$. In this case, we write $X_n\\xrightarrow{\\mathrm{a.s.}}X$ or $X_n\\to X$ with probability $1$.\n\\end{defbox}",
+  "source_plan": "chapter10-almost-sure-probability",
+  "dependencies": [],
+  "soft_imports": [],
+  "final_import_union": []
+}

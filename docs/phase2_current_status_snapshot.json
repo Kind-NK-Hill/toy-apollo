@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-06-22T08:23:08.300205Z",
+  "generated_at": "2026-06-22T09:01:20.667428Z",
   "purpose": "Tracked summary of the local Phase2 runtime ledger. This snapshot is audit context only; review-apply plus phase2_status remains the completion authority.",
   "ledger": {
     "path": "project_ledger.json",
     "exists": true,
-    "sha256": "9f5ec7cd01f30f4dd83e06b1c9dc70cad7b6c8825ae28444df124befcc67e273",
-    "size_bytes": 3218847
+    "sha256": "5dfd71019fd463edbfdfe9bc1eb2d986e4b5b0b85657ddcbb7df33cc4f9920c0",
+    "size_bytes": 3264441
   },
   "summary": {
     "task_count": 396,
@@ -13,15 +13,13 @@
     "legacy_obligation_task_count": 0,
     "legacy_obligation_symbol_owner_count": 0,
     "status_counts": {
-      "COMPLETED": 346,
+      "COMPLETED": 393,
       "COMPLETED_WITH_PROOF_DEBT": 1,
-      "DISCOVERED": 47,
       "PACKED": 2
     },
     "phase2_status_counts": {
       "allowed_exception": 4,
-      "missing": 47,
-      "pass": 345
+      "pass": 392
     },
     "task_type_counts": {
       "Definition": 82,
@@ -66,156 +64,5 @@
       }
     ]
   },
-  "missing_phase2_status_sample": [
-    {
-      "task_id": "intro_10",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_10_1",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_10_2",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_10_3",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_10_4",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_10_5",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_11",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_11_1",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_11_2",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_11_3",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_11_4",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_11_5",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_12",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_12_1",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_12_2",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_12_3",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_12_4",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_13",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_13_1",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_13_2",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_13_3",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_13_4",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_13_5",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_13_6",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    },
-    {
-      "task_id": "intro_14",
-      "type": "Remark",
-      "status": "DISCOVERED",
-      "phase2_status": ""
-    }
-  ]
+  "missing_phase2_status_sample": []
 }

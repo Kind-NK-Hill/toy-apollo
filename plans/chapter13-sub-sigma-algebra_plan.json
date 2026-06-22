@@ -4,9 +4,7 @@
         "type": "Remark",
         "title": "Expectation Conditioned on a Sub-sigma-algebra",
         "content": "\\subsection*{13.2 Expectation Conditioned on a Sub-sigma-algebra}\n\nWe extend the notion of conditional expectation to the general case by replacing the\n\nspecial\\sigma-algebra. \\mathcal{G}in Definition 13.2 by any sub-\\sigma-algebra of. \\mathcal{F}.",
-        "dependencies": [
-            "def_13_2"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter13-sub-sigma-algebra"
     },
