@@ -103,6 +103,12 @@ which remains `fail`.
 `allowed_exception` is reserved for explicit task/class pairs and is not clean
 textbook completion:
 
+- `thm_1_2` with `source_statement_exception`: the closed-interval
+  Riemann--Stieltjes concatenation clause is a source-statement decision
+  boundary under the current formal interface, not ordinary proof debt.
+- `ex_1_3_2` with `source_typo_statement_exception`: the mixed-type
+  expectation example carries a source typo/statement-decision boundary around
+  the displayed continuous part, so it is not an ordinary proof-repair target.
 - `thm_11_8` with `cited_external_proof_exception`: the textbook explicitly
   cites Etemadi's external proof, and the current Lean statement is
   source-faithful and downstream-usable while the core proof remains an

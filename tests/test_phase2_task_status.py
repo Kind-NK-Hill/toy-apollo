@@ -226,6 +226,24 @@ class Phase2TaskStatusClassifierTest(unittest.TestCase):
 
         self.assertEqual(thm_11_8.task_status, "allowed_exception")
 
+        thm_1_2 = classify_phase2_task_status(
+            task_id="thm_1_2",
+            task_type="Theorem_Statement",
+            review_verdict="pass",
+            proof_class="source_statement_exception",
+        )
+
+        self.assertEqual(thm_1_2.task_status, "allowed_exception")
+
+        ex_1_3_2 = classify_phase2_task_status(
+            task_id="ex_1_3_2",
+            task_type="Example_Proof",
+            review_verdict="pass",
+            proof_class="source_typo_statement_exception",
+        )
+
+        self.assertEqual(ex_1_3_2.task_status, "allowed_exception")
+
         ordinary = classify_phase2_task_status(
             task_id="prob_14_8",
             task_type="Problem",
@@ -243,6 +261,15 @@ class Phase2TaskStatusClassifierTest(unittest.TestCase):
         )
 
         self.assertEqual(wrong_class.task_status, "fail")
+
+        ordinary_source_exception = classify_phase2_task_status(
+            task_id="ex_1_2_1",
+            task_type="Example_Proof",
+            review_verdict="pass",
+            proof_class="source_typo_statement_exception",
+        )
+
+        self.assertEqual(ordinary_source_exception.task_status, "fail")
 
     def test_open_debt_beats_dependency_blocked(self):
         result = classify_phase2_task_status(

@@ -1,11 +1,11 @@
 # Phase2 Current Status Snapshot
 
-- generated_at: `2026-06-19T02:58:47.181254Z`
+- generated_at: `2026-06-22T06:31:10.828986Z`
 - ledger: `project_ledger.json`
-- ledger_sha256: `4ca96aeb49ffa5717ba4b9ff37e4dde953d0efecc20b2deafdd396c4b14dfad5`
-- ledger_size_bytes: `3270898`
+- ledger_sha256: `cddfbfd82290a085939a6a49b54b46c729e2e1f1809df986a3b45029ca5e0bf0`
+- ledger_size_bytes: `3551227`
 - tasks: `396`
-- symbols: `3647`
+- symbols: `3084`
 - legacy_obligation_tasks: `0`
 - legacy_obligation_symbol_owners: `0`
 
@@ -13,33 +13,34 @@ This report is audit context only. It does not replace `review-apply` or declare
 
 ## Status Counts
 
-- `COMPLETED`: 344
+- `COMPLETED`: 345
 - `COMPLETED_WITH_PROOF_DEBT`: 1
 - `DISCOVERED`: 47
-- `PACKED`: 4
+- `PACKED`: 3
 
 ## Phase2 Status Counts
 
-- `allowed_exception`: 2
-- `blocked`: 1
+- `allowed_exception`: 4
 - `fail`: 1
-- `missing`: 51
-- `pass`: 341
+- `missing`: 48
+- `pass`: 343
 
 ## Exceptions
 
 ### fail
 
-- `ex_1_3_2` `Example_Proof` ledger `PACKED` reason `proof_class open_math_debt_source_mismatch contains local open debt/adapter/weakening evidence`
+- `intro_9` `Remark` ledger `PACKED` reason `proof_class statement_weakened contains local open debt/adapter/weakening evidence`
 
 ### blocked
 
-- `thm_1_2` `Theorem_Statement` ledger `PACKED` reason `proof_class dependency_blocked_pending_statement_decision is dependency-gate blocked without local open debt`
+- none
 
 ### allowed_exception
 
+- `ex_1_3_2` `Example_Proof` ledger `PACKED` reason `source_typo_statement_exception is the explicit allowed Phase2 exception for ex_1_3_2`
 - `thm_11_8` `Theorem_Statement` ledger `COMPLETED` reason `cited_external_proof_exception is the explicit allowed Phase2 exception for thm_11_8`
 - `thm_14_8` `Theorem_Statement` ledger `COMPLETED_WITH_PROOF_DEBT` reason `beyond_book_exception is the explicit allowed Phase2 exception for thm_14_8`
+- `thm_1_2` `Theorem_Statement` ledger `PACKED` reason `source_statement_exception is the explicit allowed Phase2 exception for thm_1_2`
 
 ## Missing Phase2 Status Sample
 

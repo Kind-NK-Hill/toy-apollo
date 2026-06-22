@@ -1,29 +1,28 @@
 {
-  "generated_at": "2026-06-19T02:58:47.181254Z",
+  "generated_at": "2026-06-22T06:31:10.828986Z",
   "purpose": "Tracked summary of the local Phase2 runtime ledger. This snapshot is audit context only; review-apply plus phase2_status remains the completion authority.",
   "ledger": {
     "path": "project_ledger.json",
     "exists": true,
-    "sha256": "4ca96aeb49ffa5717ba4b9ff37e4dde953d0efecc20b2deafdd396c4b14dfad5",
-    "size_bytes": 3270898
+    "sha256": "cddfbfd82290a085939a6a49b54b46c729e2e1f1809df986a3b45029ca5e0bf0",
+    "size_bytes": 3551227
   },
   "summary": {
     "task_count": 396,
-    "symbol_count": 3647,
+    "symbol_count": 3084,
     "legacy_obligation_task_count": 0,
     "legacy_obligation_symbol_owner_count": 0,
     "status_counts": {
-      "COMPLETED": 344,
+      "COMPLETED": 345,
       "COMPLETED_WITH_PROOF_DEBT": 1,
       "DISCOVERED": 47,
-      "PACKED": 4
+      "PACKED": 3
     },
     "phase2_status_counts": {
-      "allowed_exception": 2,
-      "blocked": 1,
+      "allowed_exception": 4,
       "fail": 1,
-      "missing": 51,
-      "pass": 341
+      "missing": 48,
+      "pass": 343
     },
     "task_type_counts": {
       "Definition": 82,
@@ -37,23 +36,22 @@
   "exceptions": {
     "fail": [
       {
+        "task_id": "intro_9",
+        "type": "Remark",
+        "status": "PACKED",
+        "phase2_status": "fail",
+        "phase2_status_reason": "proof_class statement_weakened contains local open debt/adapter/weakening evidence"
+      }
+    ],
+    "blocked": [],
+    "allowed_exception": [
+      {
         "task_id": "ex_1_3_2",
         "type": "Example_Proof",
         "status": "PACKED",
-        "phase2_status": "fail",
-        "phase2_status_reason": "proof_class open_math_debt_source_mismatch contains local open debt/adapter/weakening evidence"
-      }
-    ],
-    "blocked": [
-      {
-        "task_id": "thm_1_2",
-        "type": "Theorem_Statement",
-        "status": "PACKED",
-        "phase2_status": "blocked",
-        "phase2_status_reason": "proof_class dependency_blocked_pending_statement_decision is dependency-gate blocked without local open debt"
-      }
-    ],
-    "allowed_exception": [
+        "phase2_status": "allowed_exception",
+        "phase2_status_reason": "source_typo_statement_exception is the explicit allowed Phase2 exception for ex_1_3_2"
+      },
       {
         "task_id": "thm_11_8",
         "type": "Theorem_Statement",
@@ -67,6 +65,13 @@
         "status": "COMPLETED_WITH_PROOF_DEBT",
         "phase2_status": "allowed_exception",
         "phase2_status_reason": "beyond_book_exception is the explicit allowed Phase2 exception for thm_14_8"
+      },
+      {
+        "task_id": "thm_1_2",
+        "type": "Theorem_Statement",
+        "status": "PACKED",
+        "phase2_status": "allowed_exception",
+        "phase2_status_reason": "source_statement_exception is the explicit allowed Phase2 exception for thm_1_2"
       }
     ]
   },

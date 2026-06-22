@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-20T13:08:42.163091Z",
+  "generated_at": "2026-06-22T06:34:26.154369Z",
   "scope": {
     "start_chapter": 9,
     "end_chapter": 14,
@@ -21,7 +21,7 @@
       "allowed_exception_boundary items remain visible and are not ordinary clean proof completion.",
       "A zero blocking_unfinished_count does not claim external or beyond-book mathematics has been locally proved."
     ],
-    "orphan_output_count": 50,
+    "orphan_output_count": 59,
     "reason_counts": {
       "allowed_exception_boundary": 2,
       "critical_ch6_bridge_verify": 1
@@ -433,6 +433,20 @@
       "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
     },
     {
+      "task_id": "thm_11_7_support",
+      "chapter": 11,
+      "file": "ToyApollo/Output/thm_11_7_support.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "thm_11_7"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
       "task_id": "ex_13_6_5_aabb_support",
       "chapter": 13,
       "file": "ToyApollo/Output/ex_13_6_5_aabb_support.lean",
@@ -494,8 +508,7 @@
       "file": "ToyApollo/Output/ex_13_6_5_process_common_support.lean",
       "has_prompt_pack": false,
       "imported_by": [
-        "ex_13_6_5_aabb_support",
-        "ex_13_6_5_abab_support"
+        "ex_13_6_5_word_pattern_support"
       ],
       "reasons": [
         "missing_ledger_entry"
@@ -510,6 +523,21 @@
       "has_prompt_pack": false,
       "imported_by": [
         "ex_13_6_5_process_common_support"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "ex_13_6_5_word_pattern_support",
+      "chapter": 13,
+      "file": "ToyApollo/Output/ex_13_6_5_word_pattern_support.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "ex_13_6_5_aabb_support",
+        "ex_13_6_5_abab_support"
       ],
       "reasons": [
         "missing_ledger_entry"
@@ -567,6 +595,48 @@
       "has_prompt_pack": false,
       "imported_by": [
         "prob_13_10_independent_count_support"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_13_12_support",
+      "chapter": 13,
+      "file": "ToyApollo/Output/thm_13_12_support.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "thm_13_12"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_13_14_support",
+      "chapter": 13,
+      "file": "ToyApollo/Output/thm_13_14_support.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "thm_13_14"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_13_18_support",
+      "chapter": 13,
+      "file": "ToyApollo/Output/thm_13_18_support.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "thm_13_18"
       ],
       "reasons": [
         "missing_ledger_entry"
@@ -720,7 +790,7 @@
       "file": "ToyApollo/Output/prob_14_1_grid_cdf_support.lean",
       "has_prompt_pack": false,
       "imported_by": [
-        "prob_14_1_tail_support"
+        "prob_14_1_tail_riemann_support"
       ],
       "reasons": [
         "missing_ledger_entry"
@@ -735,6 +805,34 @@
       "has_prompt_pack": false,
       "imported_by": [
         "prob_14_1"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "prob_14_1_tail_endpoint_support",
+      "chapter": 14,
+      "file": "ToyApollo/Output/prob_14_1_tail_endpoint_support.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "prob_14_1_tail_support"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "prob_14_1_tail_riemann_support",
+      "chapter": 14,
+      "file": "ToyApollo/Output/prob_14_1_tail_riemann_support.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "prob_14_1_tail_endpoint_support"
       ],
       "reasons": [
         "missing_ledger_entry"
@@ -833,6 +931,34 @@
       "has_prompt_pack": false,
       "imported_by": [
         "thm_14_4_density_support"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_14_5_support",
+      "chapter": 14,
+      "file": "ToyApollo/Output/thm_14_5_support.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "thm_14_5"
+      ],
+      "reasons": [
+        "missing_ledger_entry"
+      ],
+      "action_bucket": "support_output_without_ledger",
+      "next_action": "Verify whether this is an intentional support module imported by a real task; build-check it, but do not count it as a task by itself."
+    },
+    {
+      "task_id": "thm_14_7_support",
+      "chapter": 14,
+      "file": "ToyApollo/Output/thm_14_7_support.lean",
+      "has_prompt_pack": false,
+      "imported_by": [
+        "thm_14_7"
       ],
       "reasons": [
         "missing_ledger_entry"
