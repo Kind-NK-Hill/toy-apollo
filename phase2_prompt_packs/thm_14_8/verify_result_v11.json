@@ -1,0 +1,61 @@
+{
+  "task_id": "thm_14_8",
+  "attempt": 11,
+  "candidate_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_8\\official_snapshot_v5.lean",
+  "candidate_hash": "e62eb9e1a119efb3c79be4e4315041d38e7ce779b3e307e487cb23420feeb64f",
+  "verified_at": "2026-06-22T01:52:37.074522Z",
+  "success": false,
+  "repl": {
+    "success": false,
+    "output": "Fresh v5 read-only review: the official output remains source-facing and downstream-usable under the documented thm_14_8 beyond-book exception. The refactor keeps neutral triangular-array notation in ToyApollo.Output.chapter14_triangular_array_support and imports it; it does not hide the external triangular-array CLT proof as ordinary theorem completion. The setup, Lindeberg, and Lyapunov support obligations have verified definitional contracts. The non-formalized CLT proof boundary remains explicit through thm_14_8_ProofBeyondBook, so the correct Phase2 projection is allowed_exception, not clean pass. Task status: allowed_exception (beyond_book_exception is the explicit allowed Phase2 exception for thm_14_8). Non-clean apply: review verdict is pass, but phase2_status=allowed_exception; this result is recorded for repair/report and is not landed as completion."
+  },
+  "temp_build": {
+    "success": false,
+    "output": "Fresh v5 read-only review: the official output remains source-facing and downstream-usable under the documented thm_14_8 beyond-book exception. The refactor keeps neutral triangular-array notation in ToyApollo.Output.chapter14_triangular_array_support and imports it; it does not hide the external triangular-array CLT proof as ordinary theorem completion. The setup, Lindeberg, and Lyapunov support obligations have verified definitional contracts. The non-formalized CLT proof boundary remains explicit through thm_14_8_ProofBeyondBook, so the correct Phase2 projection is allowed_exception, not clean pass. Task status: allowed_exception (beyond_book_exception is the explicit allowed Phase2 exception for thm_14_8). Non-clean apply: review verdict is pass, but phase2_status=allowed_exception; this result is recorded for repair/report and is not landed as completion."
+  },
+  "final_build": {
+    "success": false,
+    "output": "Fresh v5 read-only review: the official output remains source-facing and downstream-usable under the documented thm_14_8 beyond-book exception. The refactor keeps neutral triangular-array notation in ToyApollo.Output.chapter14_triangular_array_support and imports it; it does not hide the external triangular-array CLT proof as ordinary theorem completion. The setup, Lindeberg, and Lyapunov support obligations have verified definitional contracts. The non-formalized CLT proof boundary remains explicit through thm_14_8_ProofBeyondBook, so the correct Phase2 projection is allowed_exception, not clean pass. Task status: allowed_exception (beyond_book_exception is the explicit allowed Phase2 exception for thm_14_8). Non-clean apply: review verdict is pass, but phase2_status=allowed_exception; this result is recorded for repair/report and is not landed as completion."
+  },
+  "diagnostics": [
+    {
+      "stage": "candidate_hard_checks",
+      "kind": "phase2_status_not_pass",
+      "message": "beyond_book_exception is the explicit allowed Phase2 exception for thm_14_8",
+      "line": null,
+      "column": null,
+      "blocking_symbols": []
+    }
+  ],
+  "primary_failure_kind": "",
+  "blocking_symbols": [],
+  "raw_outputs": {
+    "repl": "Fresh v5 read-only review: the official output remains source-facing and downstream-usable under the documented thm_14_8 beyond-book exception. The refactor keeps neutral triangular-array notation in ToyApollo.Output.chapter14_triangular_array_support and imports it; it does not hide the external triangular-array CLT proof as ordinary theorem completion. The setup, Lindeberg, and Lyapunov support obligations have verified definitional contracts. The non-formalized CLT proof boundary remains explicit through thm_14_8_ProofBeyondBook, so the correct Phase2 projection is allowed_exception, not clean pass. Task status: allowed_exception (beyond_book_exception is the explicit allowed Phase2 exception for thm_14_8). Non-clean apply: review verdict is pass, but phase2_status=allowed_exception; this result is recorded for repair/report and is not landed as completion.",
+    "temp_build": "Fresh v5 read-only review: the official output remains source-facing and downstream-usable under the documented thm_14_8 beyond-book exception. The refactor keeps neutral triangular-array notation in ToyApollo.Output.chapter14_triangular_array_support and imports it; it does not hide the external triangular-array CLT proof as ordinary theorem completion. The setup, Lindeberg, and Lyapunov support obligations have verified definitional contracts. The non-formalized CLT proof boundary remains explicit through thm_14_8_ProofBeyondBook, so the correct Phase2 projection is allowed_exception, not clean pass. Task status: allowed_exception (beyond_book_exception is the explicit allowed Phase2 exception for thm_14_8). Non-clean apply: review verdict is pass, but phase2_status=allowed_exception; this result is recorded for repair/report and is not landed as completion.",
+    "final_build": "Fresh v5 read-only review: the official output remains source-facing and downstream-usable under the documented thm_14_8 beyond-book exception. The refactor keeps neutral triangular-array notation in ToyApollo.Output.chapter14_triangular_array_support and imports it; it does not hide the external triangular-array CLT proof as ordinary theorem completion. The setup, Lindeberg, and Lyapunov support obligations have verified definitional contracts. The non-formalized CLT proof boundary remains explicit through thm_14_8_ProofBeyondBook, so the correct Phase2 projection is allowed_exception, not clean pass. Task status: allowed_exception (beyond_book_exception is the explicit allowed Phase2 exception for thm_14_8). Non-clean apply: review verdict is pass, but phase2_status=allowed_exception; this result is recorded for repair/report and is not landed as completion."
+  },
+  "mode": "review-apply",
+  "disposition": "codex_review_pass_allowed_exception_no_promotion",
+  "state_transition": "none",
+  "semantic_review": {
+    "verdict": "pass",
+    "proof_class": "beyond_book_exception",
+    "completion_class": "beyond_book_exception",
+    "phase2_status": "allowed_exception",
+    "phase2_status_reason": "beyond_book_exception is the explicit allowed Phase2 exception for thm_14_8",
+    "task_status": "allowed_exception",
+    "task_status_reason": "beyond_book_exception is the explicit allowed Phase2 exception for thm_14_8",
+    "needs_class_normalization": false,
+    "runner_status": "codex_handoff_applied",
+    "summary": "Fresh v5 read-only review: the official output remains source-facing and downstream-usable under the documented thm_14_8 beyond-book exception. The refactor keeps neutral triangular-array notation in ToyApollo.Output.chapter14_triangular_array_support and imports it; it does not hide the external triangular-array CLT proof as ordinary theorem completion. The setup, Lindeberg, and Lyapunov support obligations have verified definitional contracts. The non-formalized CLT proof boundary remains explicit through thm_14_8_ProofBeyondBook, so the correct Phase2 projection is allowed_exception, not clean pass.",
+    "recommended_disposition": "review_apply",
+    "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_8\\semantic_review_result_v5.json",
+    "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_8\\semantic_review_input_v5.json",
+    "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_8\\semantic_review_prompt_v5.md",
+    "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_8\\semantic_review_report_v5.md",
+    "cache_key": "a75034bb0c9b1e542fbdd24723bbbca1fee9477786310c0cf949ef982889c8b8",
+    "cache_hit": false,
+    "reviewer_backend_id": "codex-handoff"
+  },
+  "verify_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_8\\verify_result_v11.json"
+}

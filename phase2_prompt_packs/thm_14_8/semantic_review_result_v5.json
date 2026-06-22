@@ -1,0 +1,326 @@
+{
+  "schema_version": "phase2.semantic_review.result.v7",
+  "task_id": "thm_14_8",
+  "mode": "review-existing",
+  "attempt": 5,
+  "prompt_version": 9,
+  "rubric_version": 9,
+  "review_input_hash": "d2d66297dd58dff17771e268d42732e73393ecf1a91c6a9388f65374d36a7cec",
+  "cache_key": "a75034bb0c9b1e542fbdd24723bbbca1fee9477786310c0cf949ef982889c8b8",
+  "reviewer_backend_id": "codex-handoff",
+  "runner": {
+    "status": "codex_handoff_applied",
+    "result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_8\\semantic_review_result_v5.json"
+  },
+  "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_8\\semantic_review_input_v5.json",
+  "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_8\\semantic_review_prompt_v5.md",
+  "review_context_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_8\\semantic_review_context_v5.md",
+  "expected_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_8\\semantic_review_result_v5.json",
+  "candidate_hash": "e62eb9e1a119efb3c79be4e4315041d38e7ce779b3e307e487cb23420feeb64f",
+  "review_subject_kind": "official_output",
+  "review_subject_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_8\\official_snapshot_v5.lean",
+  "review_subject_hash": "e62eb9e1a119efb3c79be4e4315041d38e7ce779b3e307e487cb23420feeb64f",
+  "review_basis_hash": "efff7afe45ac0942ca80e24e646a85ee11d5a3b73da8142fba63a803f804378c",
+  "verdict": "pass",
+  "confidence": "high",
+  "proof_class": "beyond_book_exception",
+  "completion_class": "beyond_book_exception",
+  "phase2_status": "allowed_exception",
+  "projected_phase2_status": "allowed_exception",
+  "recommended_disposition": "review_apply",
+  "summary": "Fresh v5 read-only review: the official output remains source-facing and downstream-usable under the documented thm_14_8 beyond-book exception. The refactor keeps neutral triangular-array notation in ToyApollo.Output.chapter14_triangular_array_support and imports it; it does not hide the external triangular-array CLT proof as ordinary theorem completion. The setup, Lindeberg, and Lyapunov support obligations have verified definitional contracts. The non-formalized CLT proof boundary remains explicit through thm_14_8_ProofBeyondBook, so the correct Phase2 projection is allowed_exception, not clean pass.",
+  "reviewer_independence": {
+    "role": "independent_read_only_reviewer",
+    "read_only": true,
+    "did_edit_candidate": false,
+    "used_current_review_request": true,
+    "attestation": "Independent read-only review using semantic_review_request_v5.json, semantic_review_input_v5.json, semantic_review_context_v5.md, current thm_14_8 Lean output, current triangular-array support, source TeX, proof_obligations.json, and status_contract.md; no candidate, Lean, ledger, metadata, or proof-obligation files were edited."
+  },
+  "source_claims": [
+    {
+      "id": "triangular_array_notation",
+      "claim": "Before Theorem 14.8, the source introduces triangular-array rows X_{n,1},...,X_{n,k_n}, row-wise independence on a common probability space, possibly different probability spaces for different rows, zero means, variances sigma_{n,i}^2, s_n^2 as the row variance sum, and s_n^2 -> infinity."
+    },
+    {
+      "id": "lindeberg_condition",
+      "claim": "For every epsilon > 0, s_n^{-2} times the row sum of E[X_{n,i}^2 1{|X_{n,i}| >= epsilon s_n}] tends to 0; the source identifies this expectation with the integral of x^2 over |x| >= epsilon s_n against the law induced by X_{n,i}."
+    },
+    {
+      "id": "lyapunov_condition",
+      "claim": "There exists delta > 0 such that s_n^{-(2+delta)} times the row sum of E[|X_{n,i}|^{2+delta}] tends to 0."
+    },
+    {
+      "id": "lyapunov_stronger_than_lindeberg",
+      "claim": "The source states that the Lyapunov condition is stronger than the Lindeberg condition."
+    },
+    {
+      "id": "clt_conclusion",
+      "claim": "Under either Lindeberg or Lyapunov, the standardized row sums converge in distribution to N(0,1)."
+    },
+    {
+      "id": "proof_beyond_scope",
+      "claim": "The source explicitly says the proof is beyond the scope of the book and refers readers to external sources."
+    }
+  ],
+  "claim_mapping": [
+    {
+      "source_claim_id": "triangular_array_notation",
+      "lean_declarations": [
+        "chapter14_TriangularArrayNotation",
+        "thm_14_8_TriangularArrayNotation",
+        "thm_14_8_TriangularArraySetup"
+      ],
+      "status": "covered",
+      "assumptions": "chapter14_TriangularArrayNotation records rowLength, rowLength_pos, variance, totalVariance, totalVariance_eq, and totalVariance_tendsto_atTop. thm_14_8_TriangularArraySetup adds row laws, standardized sum laws, standard normal law, s_n, positivity, s_n^2 = totalVariance, s_n -> infinity, zero means, second moments as variances, row independence, and standardized-sum representation.",
+      "conclusion": "The source notation and setup are represented as reusable source-facing structures, not as a theorem conclusion or witness-only shell."
+    },
+    {
+      "source_claim_id": "lindeberg_condition",
+      "lean_declarations": [
+        "thm_14_8_lindebergTailIntegral",
+        "thm_14_8_LindebergCondition"
+      ],
+      "status": "covered",
+      "assumptions": "The predicate takes S : thm_14_8_TriangularArraySetup, quantifies epsilon > 0, and uses row laws with threshold epsilon * S.sn n.",
+      "conclusion": "It encodes Tendsto of the row sum of tail integrals over threshold <= |x| divided by S.sn n ^ 2 to 0."
+    },
+    {
+      "source_claim_id": "lyapunov_condition",
+      "lean_declarations": [
+        "thm_14_8_lyapunovMoment",
+        "thm_14_8_LyapunovCondition"
+      ],
+      "status": "covered",
+      "assumptions": "The predicate takes S : thm_14_8_TriangularArraySetup and existentially quantifies delta > 0 using Real.rpow |x| (2 + delta).",
+      "conclusion": "It encodes Tendsto of the normalized row sum of (2+delta)-moments divided by Real.rpow (S.sn n) (2 + delta) to 0."
+    },
+    {
+      "source_claim_id": "lyapunov_stronger_than_lindeberg",
+      "lean_declarations": [
+        "thm_14_8_ProofBeyondBook.lyapunov_implies_lindeberg",
+        "thm_14_8_of_lyapunov"
+      ],
+      "status": "accepted_as_proof_debt",
+      "assumptions": "The stronger-implies-weaker comparison is a named field of the documented external proof boundary.",
+      "conclusion": "The Lyapunov branch routes through Lindeberg via H.lyapunov_implies_lindeberg before applying the Lindeberg CLT field."
+    },
+    {
+      "source_claim_id": "clt_conclusion",
+      "lean_declarations": [
+        "thm_14_8_condition",
+        "thm_14_8_conclusion",
+        "thm_14_8_of_lindeberg",
+        "thm_14_8_of_lyapunov",
+        "thm_14_8"
+      ],
+      "status": "accepted_as_proof_debt",
+      "assumptions": "The public theorem requires S, H : thm_14_8_ProofBeyondBook S, and h : thm_14_8_condition S.",
+      "conclusion": "It concludes Tendsto S.standardizedSumLaws atTop (nhds S.standardNormalLaw), matching the source normal weak-limit conclusion at law level."
+    },
+    {
+      "source_claim_id": "proof_beyond_scope",
+      "lean_declarations": [
+        "thm_14_8_ProofBeyondBook"
+      ],
+      "status": "accepted_as_proof_debt",
+      "assumptions": "The source explicitly defers the proof outside the book, and docs/phase2/status_contract.md reserves thm_14_8 with beyond_book_exception as an allowed_exception.",
+      "conclusion": "The deferred proof is represented by a named explicit beyond-book boundary, not by an unlabeled axiom, adapter theorem, or clean source-route proof claim."
+    }
+  ],
+  "route_inspection": {
+    "status": "covered",
+    "source_route": "The source introduces triangular-array notation, states Lindeberg and Lyapunov hypotheses, states Lyapunov is stronger than Lindeberg, states the normal convergence conclusion, and explicitly defers the proof beyond the book.",
+    "expected_answer_or_statement": "For S : thm_14_8_TriangularArraySetup, thm_14_8_condition S implies thm_14_8_conclusion S only through the explicit H : thm_14_8_ProofBeyondBook S boundary.",
+    "local_mathlib_search": "No Mathlib theorem is used in the Lean file to shortcut the triangular-array CLT proof. The v5 input reports official-output sanity build passed; I did not rerun a build during this review to preserve the only-write-result constraint.",
+    "public_interface_check": "The public H : thm_14_8_ProofBeyondBook S premise is authorized only for this task by status_contract.md. The support declarations encode definitions/data and do not relocate the CLT conclusion into a public premise. The beyond-book premise remains explicitly named and classified as allowed_exception.",
+    "support_or_reassembly_decision": "Accept as allowed_exception with beyond_book_exception proof/completion class. Do not classify as textbook_proof_completed or clean source-route theorem completion.",
+    "stop_go_verdict": "go",
+    "notes": "The v5 official snapshot and current ToyApollo/Output/thm_14_8.lean match by LF-normalized content hash e62eb9e1a119efb3c79be4e4315041d38e7ce779b3e307e487cb23420feeb64f."
+  },
+  "spine_alignment": {
+    "status": "covered",
+    "summary": "All source-facing setup and hypothesis objects land in Lean. The actual triangular-array CLT proof spine remains intentionally outside the formalization because the book itself defers it; the output preserves that as an explicit beyond-book boundary.",
+    "obligations_checked": [
+      "triangular_array_setup",
+      "lindeberg_condition",
+      "lyapunov_condition",
+      "beyond_book_proof_obligations"
+    ],
+    "missing_obligations": [],
+    "shortcut_assessment": "allowed_beyond_book_exception_not_clean_textbook_completion"
+  },
+  "obligation_review": {
+    "status": "covered",
+    "summary": "The three source setup/condition obligations are covered by verified source-facing structure/def support-predicate contracts. The external CLT and Lyapunov-implies-Lindeberg proof obligations are accepted only as beyond-book proof debt.",
+    "items": [
+      {
+        "obligation_id": "triangular_array_setup",
+        "status": "covered",
+        "expected_theorem_signature": "structure thm_14_8_TriangularArraySetup",
+        "lean_landing": "chapter14_TriangularArrayNotation; thm_14_8_TriangularArrayNotation; thm_14_8_TriangularArraySetup",
+        "landing_kind": "support_predicate",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Verified definitional contract for the source-facing triangular-array setup. The Lean landing is the reusable chapter14_TriangularArrayNotation plus thm_14_8_TriangularArraySetup structure; its declaration/signature aligns with the source notation for row lengths, variances, total variance, s_n, zero means, row laws, independence, and standardized row-sum representation. body_reassumption_check passed means the declarations encode the data interface rather than re-assuming the theorem conclusion. public_premise_check passed because no source theorem conclusion is moved into this support interface."
+      },
+      {
+        "obligation_id": "lindeberg_condition",
+        "status": "covered",
+        "expected_theorem_signature": "def thm_14_8_lindebergTailIntegral; def thm_14_8_LindebergCondition",
+        "lean_landing": "thm_14_8_lindebergTailIntegral; thm_14_8_LindebergCondition",
+        "landing_kind": "support_predicate",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Verified definitional contract for the source-facing Lindeberg condition. The Lean landing has the expected def signatures and encodes the tail integral over threshold <= |x| plus the normalized row-sum Tendsto predicate. body_reassumption_check passed means the definition body encodes the source predicate rather than re-assuming the CLT conclusion. public_premise_check passed because it introduces no theorem-conclusion premise."
+      },
+      {
+        "obligation_id": "lyapunov_condition",
+        "status": "covered",
+        "expected_theorem_signature": "def thm_14_8_lyapunovMoment; def thm_14_8_LyapunovCondition",
+        "lean_landing": "thm_14_8_lyapunovMoment; thm_14_8_LyapunovCondition",
+        "landing_kind": "support_predicate",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "Verified definitional contract for the source-facing Lyapunov condition. The Lean landing has the expected def signatures and encodes existence of delta > 0 plus the normalized (2+delta)-moment row-sum Tendsto predicate. body_reassumption_check passed means the definition body encodes the source predicate rather than re-assuming the CLT conclusion. public_premise_check passed because it introduces no theorem-conclusion premise."
+      },
+      {
+        "obligation_id": "beyond_book_proof_obligations",
+        "status": "accepted_as_proof_debt",
+        "expected_theorem_signature": "structure thm_14_8_ProofBeyondBook (S : thm_14_8_TriangularArraySetup) : Prop where lindeberg_triangular_array_clt : thm_14_8_LindebergCondition S -> thm_14_8_conclusion S; lyapunov_implies_lindeberg : thm_14_8_LyapunovCondition S -> thm_14_8_LindebergCondition S",
+        "lean_landing": "thm_14_8_ProofBeyondBook; thm_14_8_of_lindeberg; thm_14_8_of_lyapunov; thm_14_8",
+        "landing_kind": "support_predicate",
+        "proof_contract_status": "beyond_book_exception",
+        "signature_match": "not_applicable",
+        "body_reassumption_check": "not_applicable",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "This is the documented thm_14_8 beyond-book exception accepted by docs/phase2/status_contract.md. It remains accepted_as_proof_debt / beyond_book_exception and must not be generalized to ordinary clean completion."
+      }
+    ],
+    "open_blockers": [],
+    "scaffold_assessment": [
+      {
+        "name": "thm_14_8_ProofBeyondBook",
+        "status": "accepted_as_proof_debt",
+        "evidence": "The structure names exactly the two deferred source proof debts: Lindeberg triangular-array CLT and Lyapunov-implies-Lindeberg."
+      }
+    ]
+  },
+  "evidence_review": {
+    "status": "covered",
+    "summary": "The v5 request/input/context, current source and Lean files, proof obligations, status contract, classification/dependency/downstream evidence in the v5 input, and LF-normalized hash checks support a pass verdict only under beyond_book_exception/allowed_exception.",
+    "items": [
+      {
+        "evidence_class": "source_tex",
+        "status": "covered",
+        "evidence": "Read inputs/chapter14-central-limit-theorems.tex around the triangular-array notation and Theorem 14.8. It supplies the row notation, Lindeberg and Lyapunov hypotheses, the conclusion, and the explicit beyond-scope proof sentence."
+      },
+      {
+        "evidence_class": "lean_subject",
+        "status": "covered",
+        "evidence": "Read current ToyApollo/Output/thm_14_8.lean and ToyApollo/Output/chapter14_triangular_array_support.lean. The official output exports the source setup, condition predicates, conclusion, branch theorems, and final theorem; it imports the shared notation support and keeps thm_14_8_ProofBeyondBook explicit."
+      },
+      {
+        "evidence_class": "proof_obligations",
+        "status": "covered",
+        "evidence": "Read phase2_prompt_packs/thm_14_8/proof_obligations.json. The setup, Lindeberg, and Lyapunov obligations are support predicates; beyond_book_proof_obligations is accepted_as_proof_debt with proof_contract_status beyond_book_exception."
+      },
+      {
+        "evidence_class": "audit",
+        "status": "covered",
+        "evidence": "semantic_review_input_v5 records the clean-debt audit conversion of the beyond-book proof obligation and records the prior validator normalization issue, which this result addresses through verified/passed contracts for covered support obligations."
+      },
+      {
+        "evidence_class": "classification",
+        "status": "covered",
+        "evidence": "semantic_review_input_v5 classification history lists thm_14_8 primary_class beyond_book_exception with public_interface_clean and ledger_unchanged; status_contract.md confirms this exact allowed exception."
+      },
+      {
+        "evidence_class": "dependency_status",
+        "status": "covered",
+        "evidence": "semantic_review_input_v5 lists hard dependency ex_14_4_2 as COMPLETED with official output present. The current thm_14_8 file itself imports only Mathlib and chapter14_triangular_array_support."
+      },
+      {
+        "evidence_class": "downstream",
+        "status": "covered",
+        "evidence": "semantic_review_input_v5 lists direct downstream consumer ex_14_4_3. The thm_14_8 interface remains source-facing and usable under the inherited beyond-book boundary because consumers can supply explicit H : thm_14_8_ProofBeyondBook S while proving local Lindeberg/Lyapunov conditions."
+      },
+      {
+        "evidence_class": "ledger_status",
+        "status": "covered",
+        "evidence": "semantic_review_input_v5 reports ledger/output owner status COMPLETED_WITH_PROOF_DEBT. docs/phase2/status_contract.md states thm_14_8 with beyond_book_exception projects to allowed_exception and is not clean textbook completion."
+      },
+      {
+        "evidence_class": "hashes",
+        "status": "covered",
+        "evidence": "semantic_review_request_v5 binds candidate hash e62eb9e1a119efb3c79be4e4315041d38e7ce779b3e307e487cb23420feeb64f and review_basis_hash efff7afe45ac0942ca80e24e646a85ee11d5a3b73da8142fba63a803f804378c. I checked LF-normalized SHA256 for official_snapshot_v5.lean and current ToyApollo/Output/thm_14_8.lean; both match e62eb9e1a119efb3c79be4e4315041d38e7ce779b3e307e487cb23420feeb64f, and line-content Compare-Object found no differences."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "interface_contract": {
+    "status": "covered",
+    "summary": "The public interface remains source-facing: shared triangular-array notation, theorem setup, Lindeberg and Lyapunov predicates, conclusion predicate, branch theorems, and final thm_14_8. The only theorem-level external proof premise is the documented thm_14_8_ProofBeyondBook allowed exception.",
+    "mismatches": []
+  },
+  "downstream_adequacy": {
+    "status": "covered",
+    "summary": "The interface is adequate for the direct downstream example under the inherited beyond-book boundary. This is not an assertion of clean theorem completion; downstream use must still account for thm_14_8_ProofBeyondBook.",
+    "consumers_checked": [
+      {
+        "block_id": "ex_14_4_3",
+        "status": "covered",
+        "evidence": "semantic_review_input_v5 identifies ex_14_4_3 as the direct hard downstream consumer. The reviewed public interface supplies thm_14_8_TriangularArraySetup, thm_14_8_LyapunovCondition, thm_14_8_condition, thm_14_8_conclusion, and thm_14_8 with the explicit inherited thm_14_8_ProofBeyondBook boundary."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "forbidden_weakenings": [
+    {
+      "rule": "No pure existential shell, placeholder definition, or witness-only replacement for the textbook public interface.",
+      "status": "not_present",
+      "evidence": "The output defines concrete source-facing structures and predicates for row notation, Lindeberg, Lyapunov, and the conclusion. thm_14_8_ProofBeyondBook is not treated as clean proof completion."
+    },
+    {
+      "rule": "No theorem-specific wrapper replacing a downstream-reusable theorem/interface.",
+      "status": "not_present",
+      "evidence": "The support notation is task-neutral chapter14_TriangularArrayNotation, and the theorem interface is reusable by downstream consumers."
+    },
+    {
+      "rule": "No extra theorem-level hypothesis to mask an upstream interface gap unless the task text explicitly contains that boundary.",
+      "status": "not_present",
+      "evidence": "H : thm_14_8_ProofBeyondBook S is explicitly authorized for thm_14_8 because the source defers the proof and status_contract.md names this exact beyond_book_exception. The three support predicates introduce no theorem-conclusion premise."
+    },
+    {
+      "rule": "No adapter-only Mathlib shortcut or hidden private axiom masquerading as source-route proof completion.",
+      "status": "not_present",
+      "evidence": "The reviewed thm_14_8 file contains no private axiom, sorry, admit, unsafe, or adapter theorem for the CLT. The missing proof remains visible as thm_14_8_ProofBeyondBook."
+    }
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "title": "Allowed exception preserved",
+      "evidence": "proof_class and completion_class are beyond_book_exception; phase2_status and projected_phase2_status are allowed_exception."
+    },
+    {
+      "severity": "info",
+      "title": "Definitional contracts verified",
+      "evidence": "triangular_array_setup, lindeberg_condition, and lyapunov_condition are covered support obligations with proof_contract_status=verified and signature/body/public-premise checks passed."
+    },
+    {
+      "severity": "info",
+      "title": "Refactor remains interface/import only",
+      "evidence": "The v5 subject imports chapter14_triangular_array_support and aliases chapter14_TriangularArrayNotation; thm_14_8 still requires thm_14_8_ProofBeyondBook."
+    }
+  ],
+  "cache_class": "semantic_verdict",
+  "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_8\\semantic_review_result_v5.json",
+  "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_14_8\\semantic_review_report_v5.md",
+  "needs_class_normalization": false
+}

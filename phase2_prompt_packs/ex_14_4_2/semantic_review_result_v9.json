@@ -1,0 +1,313 @@
+{
+  "schema_version": "phase2.semantic_review.result.v7",
+  "task_id": "ex_14_4_2",
+  "mode": "review-existing",
+  "attempt": 9,
+  "prompt_version": 9,
+  "rubric_version": 9,
+  "review_input_hash": "90282c2b8d6f113432d70adb09bad1bd84eeeaed24d2fd9a2c12b5f74896dfb8",
+  "cache_key": "18c1f35ffa82caa1e07bca3e57436e802290b272e316d8330228c108bb5bca2b",
+  "reviewer_backend_id": "codex-handoff",
+  "runner": {
+    "status": "codex_handoff_applied",
+    "result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_2\\semantic_review_result_v9.json"
+  },
+  "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_2\\semantic_review_input_v9.json",
+  "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_2\\semantic_review_prompt_v9.md",
+  "review_context_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_2\\semantic_review_context_v9.md",
+  "expected_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_2\\semantic_review_result_v9.json",
+  "candidate_hash": "b8395ff4e74f9e525fddcd8c232cb6a85c0d68d3ba10de000ef3467cd2816146",
+  "verdict": "pass",
+  "confidence": "high",
+  "summary": "The current official output is a source-route theorem completion for Example 14.4.2. The final public theorem assumes only the source setup and Poisson(1) source law; moment facts, finite iid Poisson sum laws, and the CLT application are rebuilt by theorem-level Lean declarations before invoking thm_14_7. The triangular-array notation following the example is preserved through a shared public support structure and is adequate for thm_14_8.",
+  "proof_class": "source_route_theorem",
+  "completion_class": "source_route_theorem",
+  "phase2_status": "pass",
+  "task_status": "pass",
+  "reviewer_independence": {
+    "role": "independent_read_only_reviewer",
+    "read_only": true,
+    "did_edit_candidate": false,
+    "used_current_review_request": true,
+    "attestation": "I independently reviewed the v9 official output and related support/downstream Lean files without editing any candidate, Lean output, ledger, metadata, status, or prompt-pack file other than this result JSON."
+  },
+  "source_claims": [
+    {
+      "id": "source_iid_poisson_one",
+      "claim": "Example 14.4.2 starts from iid Poisson random variables with mean 1.",
+      "status": "covered",
+      "evidence": "The source setup records probability-space, measurability, independence, and identical-distribution data, and ex_14_4_2_poissonSourceLaw states that every S.X k has Poisson(1) law."
+    },
+    {
+      "id": "poisson_one_moments",
+      "claim": "A Poisson(1) random variable has mean 1 and variance 1, with the integrability needed for the CLT.",
+      "status": "covered",
+      "evidence": "The Lean file proves canonical Poisson(1) integrability, square-integrability, mean-one, second-moment-two, and variance-one facts, then transports them from the source law to S.X 0."
+    },
+    {
+      "id": "finite_sum_poisson_law",
+      "claim": "The sum of n iid Poisson(1) variables has Poisson law with mean n.",
+      "status": "covered",
+      "evidence": "Lean proves independent Poisson addition by characteristic functions and iterates it over zero-based partial sums, yielding parameter n+1 for the sum X_0+...+X_n."
+    },
+    {
+      "id": "normal_approximation",
+      "claim": "Applying the Lindeberg-Levy CLT gives (S_n - n) / sqrt(n) converging in distribution to N(0,1).",
+      "status": "covered",
+      "evidence": "ex_14_4_2_normalApproximation derives the moment bridge from hSource and calls thm_14_7 with mu = 1, sigma = 1, and sigma positivity."
+    },
+    {
+      "id": "triangular_array_notation",
+      "claim": "The paragraph after the example introduces triangular-array notation: positive row lengths, row variances, total row variance as a row sum, and total variance tending to infinity.",
+      "status": "covered",
+      "evidence": "chapter14_TriangularArrayNotation records rowLength, rowLength_pos, variance, totalVariance, totalVariance_eq, and totalVariance_tendsto_atTop; ex_14_4_2_TriangularArrayNotation aliases it."
+    }
+  ],
+  "claim_mapping": [
+    {
+      "source_claim_id": "source_iid_poisson_one",
+      "lean_declarations": [
+        "ex_14_4_2_PoissonSourceSetup",
+        "ex_14_4_2_hasPoissonLaw",
+        "ex_14_4_2_poissonSourceLaw"
+      ],
+      "assumptions": "The final theorem assumes S : ex_14_4_2_PoissonSourceSetup and hSource : ex_14_4_2_poissonSourceLaw S. These are source-facing assumptions, not moment or finite-sum bridge premises.",
+      "conclusion": "For every k, ex_14_4_2_hasPoissonLaw S.P (S.X k) 1.",
+      "status": "covered"
+    },
+    {
+      "source_claim_id": "poisson_one_moments",
+      "lean_declarations": [
+        "ex_14_4_2_poissonCanonicalIntegrability_proved",
+        "ex_14_4_2_poissonCanonicalSquareIntegrability_proved",
+        "ex_14_4_2_poissonCanonicalMeanOne_proved",
+        "ex_14_4_2_poissonCanonicalSecondMomentTwo_proved",
+        "ex_14_4_2_poissonCanonicalVarianceOne_proved",
+        "ex_14_4_2_canonicalPoissonMomentBridge_proved",
+        "ex_14_4_2_poissonMomentBridge_of_sourceLaw_final"
+      ],
+      "assumptions": "No public moment, variance, or integrability premise is added to ex_14_4_2. The transport theorem uses only S and hSource after canonical Poisson(1) moment facts are proved.",
+      "conclusion": "ex_14_4_2_poissonMomentBridge S supplies integrability, square-integrability, mean one, and variance one for the thm_14_7 call.",
+      "status": "covered"
+    },
+    {
+      "source_claim_id": "finite_sum_poisson_law",
+      "lean_declarations": [
+        "ex_14_4_2_independent_sum_has_poisson_law",
+        "ex_14_4_2_partialSum_hasPoissonLaw",
+        "ex_14_4_2_poissonFiniteSumBridge_of_sourceLaw"
+      ],
+      "assumptions": "The two-variable theorem assumes measurability, independence, and source Poisson laws for the two summands. The finite-sum theorem derives the row of laws from S.hIndep, S.hX, and hSource.",
+      "conclusion": "Every ex_14_4_2_partialSum S.X n has Poisson law with parameter n+1, matching zero-based indexing of the textbook finite sum.",
+      "status": "covered"
+    },
+    {
+      "source_claim_id": "normal_approximation",
+      "lean_declarations": [
+        "ex_14_4_2_standardizedPoissonLaws",
+        "ex_14_4_2_sourceConclusion",
+        "ex_14_4_2_normalApproximation",
+        "ex_14_4_2_weakLimit_by_CLT",
+        "ex_14_4_2_sourceRoute_of_sourceLaw",
+        "ex_14_4_2"
+      ],
+      "assumptions": "The parent theorem has no public hBridge, finite-sum bridge, standardized-law equality, standard-normal-law equality, or moment premise. ex_14_4_2_normalApproximation reconstructs the needed CLT inputs internally from hSource.",
+      "conclusion": "Tendsto (ex_14_4_2_standardizedPoissonLaws S) atTop (nhds thm_14_7_standardNormalLaw).",
+      "status": "covered"
+    },
+    {
+      "source_claim_id": "triangular_array_notation",
+      "lean_declarations": [
+        "chapter14_TriangularArrayNotation",
+        "ex_14_4_2_TriangularArrayNotation",
+        "thm_14_8_TriangularArrayNotation"
+      ],
+      "assumptions": "The notation support is independent of the Poisson CLT proof and is shared with the downstream theorem statement.",
+      "conclusion": "The exported interface records positive row lengths, variances indexed by Fin (rowLength n), totalVariance, totalVariance_eq as a finite row sum, and Tendsto totalVariance atTop atTop.",
+      "status": "covered"
+    }
+  ],
+  "route_inspection": {
+    "status": "covered",
+    "source_route": "iid Poisson(1) source law -> canonical real Poisson moment calculations -> transport moments to S.X 0 via hSource -> independent Poisson addition by characteristic functions -> finite partial sums have Poisson laws -> apply thm_14_7 with mu = 1 and sigma = 1 -> expose triangular-array notation for thm_14_8.",
+    "expected_answer_or_statement": "The final proof-bearing example should establish convergence of the standardized finite-sum laws to the standard normal law from only source-level iid Poisson(1) assumptions, while preserving the following triangular-array notation as a public reusable interface.",
+    "local_mathlib_search": "Inspected current ToyApollo/Output/ex_14_4_2.lean, ToyApollo/Output/chapter14_triangular_array_support.lean, and ToyApollo/Output/thm_14_8.lean. Mathlib support is used for Poisson measures, PMF/integral series, characteristic functions, independence, and measure extensionality. rg found no sorry, admit, axiom, opaque, TODO, or placeholder markers in the three relevant files.",
+    "public_interface_check": "ex_14_4_2 takes only S and hSource. ex_14_4_2_PoissonSourceSetup stops at source data P, X, hX, hIndep, and hIdent. Moment facts, finite-sum laws, standardized-law equalities, normal-law equalities, and CLT bridge facts are not relocated to public premises.",
+    "support_or_reassembly_decision": "Accept the parent reassembly: ex_14_4_2_resolvedSourceBridges_of_sourceLaw and ex_14_4_2_sourceRoute_of_sourceLaw reconstruct the source law, moment bridge, finite-sum bridge, and CLT conclusion from hSource.",
+    "stop_go_verdict": "go",
+    "notes": "The raw SHA-256 of files varies with CRLF/LF line endings, but LF-normalized SHA-256 of official_snapshot_v9.lean and ToyApollo/Output/ex_14_4_2.lean matches the review request candidate hash b8395ff4e74f9e525fddcd8c232cb6a85c0d68d3ba10de000ef3467cd2816146."
+  },
+  "spine_alignment": {
+    "status": "covered",
+    "summary": "The Lean proof spine follows the textbook route rather than an adapter-only shortcut: source Poisson law, moment derivation, finite Poisson sum derivation, Lindeberg-Levy CLT application, and triangular-array notation are all landed in named declarations.",
+    "obligations_checked": [
+      "record_poisson_source_law lands in ex_14_4_2_poissonSourceLaw.",
+      "derive_poisson_moments lands in the canonical Poisson moment theorems, ex_14_4_2_canonicalPoissonMomentBridge_proved, and ex_14_4_2_poissonMomentBridge_of_sourceLaw_final.",
+      "derive_poisson_finite_sum_law lands in ex_14_4_2_independent_sum_has_poisson_law, ex_14_4_2_partialSum_hasPoissonLaw, and ex_14_4_2_poissonFiniteSumBridge_of_sourceLaw.",
+      "apply_lindeberg_levy_clt lands in ex_14_4_2_normalApproximation, ex_14_4_2_weakLimit_by_CLT, ex_14_4_2_sourceRoute_of_sourceLaw, and ex_14_4_2.",
+      "triangular_array_notation lands in chapter14_TriangularArrayNotation and ex_14_4_2_TriangularArrayNotation, then thm_14_8 aliases the same interface."
+    ],
+    "missing_obligations": [],
+    "shortcut_assessment": "No adapter-only shortcut was found. The call to thm_14_7 occurs only after the Poisson source law has supplied the iid moment inputs required by that theorem."
+  },
+  "obligation_review": {
+    "status": "covered",
+    "summary": "All five blocking obligations in proof_obligations.json are covered by current official Lean declarations. No scaffold hypotheses or accepted open proof debt are used.",
+    "items": [
+      {
+        "obligation_id": "record_poisson_source_law",
+        "status": "covered",
+        "route_class": "source-route support predicate",
+        "expected_theorem_signature": "A source-facing proposition ex_14_4_2_poissonSourceLaw S stating ex_14_4_2_hasPoissonLaw S.P (S.X k) 1 for every k.",
+        "lean_landing": "ex_14_4_2_poissonSourceLaw",
+        "landing_kind": "support_predicate",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "This is the textbook source assumption and does not relocate moment, finite-sum, standardized-law, or CLT bridge facts into the public setup."
+      },
+      {
+        "obligation_id": "derive_poisson_moments",
+        "status": "covered",
+        "route_class": "source-route theorem/lemma",
+        "expected_theorem_signature": "Theorems proving canonical Poisson(1) integrability, square integrability, mean one, and variance one, then transporting them from the source law to S.X 0.",
+        "lean_landing": "ex_14_4_2_poissonCanonicalIntegrability_proved; ex_14_4_2_poissonCanonicalSquareIntegrability_proved; ex_14_4_2_poissonCanonicalMeanOne_proved; ex_14_4_2_poissonCanonicalVarianceOne_proved; ex_14_4_2_canonicalPoissonMomentBridge_proved; ex_14_4_2_poissonMomentBridge_of_sourceLaw_final",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The canonical facts are proved from the real pushed-forward Poisson(1) law and PMF/integral calculations, then transported with hSource 0. The final theorem does not assume integrability, mean, variance, or a moment bridge."
+      },
+      {
+        "obligation_id": "derive_poisson_finite_sum_law",
+        "status": "covered",
+        "route_class": "source-route theorem/lemma",
+        "expected_theorem_signature": "From independent X Y with Poisson laws lam and mu, prove X + Y has Poisson law lam + mu; then iterate over source partial sums.",
+        "lean_landing": "ex_14_4_2_independent_sum_has_poisson_law; ex_14_4_2_partialSum_hasPoissonLaw; ex_14_4_2_poissonFiniteSumBridge_of_sourceLaw",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The two-variable theorem uses characteristic-function multiplication, the canonical Poisson characteristic function, parameter addition, and Measure.ext_of_charFun; the finite source bridge is derived by induction from hSource and S.hIndep."
+      },
+      {
+        "obligation_id": "apply_lindeberg_levy_clt",
+        "status": "covered",
+        "route_class": "source-route theorem/lemma",
+        "expected_theorem_signature": "After source-law, moment, and finite-sum bridges are resolved, apply thm_14_7 to obtain the standardized Poisson-source laws converging to the standard normal law.",
+        "lean_landing": "ex_14_4_2_normalApproximation; ex_14_4_2_weakLimit_by_CLT; ex_14_4_2_sourceRoute_of_sourceLaw; ex_14_4_2",
+        "landing_kind": "theorem",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "ex_14_4_2_normalApproximation derives ex_14_4_2_poissonMomentBridge S from hSource, extracts integrability, square-integrability, mean-one, and variance-one facts, and calls thm_14_7 with mu = 1, sigma = 1, and 0 < 1."
+      },
+      {
+        "obligation_id": "triangular_array_notation",
+        "status": "covered",
+        "route_class": "source-route support interface",
+        "expected_theorem_signature": "A public interface recording k_n, sigma^2_{n,i}, s_n^2 as the row-variance sum, and s_n^2 -> infinity.",
+        "lean_landing": "chapter14_TriangularArrayNotation; ex_14_4_2_TriangularArrayNotation",
+        "landing_kind": "support_constructor",
+        "proof_contract_status": "verified",
+        "signature_match": "passed",
+        "body_reassumption_check": "passed",
+        "public_premise_check": "passed",
+        "proof_contract_notes": "The support structure records positive row lengths, cell variances, total variance, the row-sum equality, and totalVariance -> infinity. ex_14_4_2 and thm_14_8 alias the same public structure."
+      }
+    ],
+    "open_blockers": [],
+    "scaffold_assessment": []
+  },
+  "evidence_review": {
+    "status": "covered",
+    "summary": "All required evidence classes were checked against source text, current Lean files, obligations, metadata, and downstream consumer. Stale historical failure/audit flags are explained as prior-state gates; the current review subject itself passes semantic inspection.",
+    "items": [
+      {
+        "evidence_class": "source_tex",
+        "status": "covered",
+        "evidence": "inputs/chapter14-central-limit-theorems.tex lines around Example 14.4.2 state the iid Poisson(1) finite-sum normal approximation and the following triangular-array notation paragraph."
+      },
+      {
+        "evidence_class": "lean_subject",
+        "status": "covered",
+        "evidence": "Inspected ToyApollo/Output/ex_14_4_2.lean, ToyApollo/Output/chapter14_triangular_array_support.lean, and ToyApollo/Output/thm_14_8.lean. Each file elaborates with lake env lean, and rg found no sorry/admit/axiom/opaque/TODO/placeholder markers in the relevant files."
+      },
+      {
+        "evidence_class": "proof_obligations",
+        "status": "covered",
+        "evidence": "proof_obligations.json lists five blocking obligations, all status proved and review_status accepted. Current Lean landings were independently inspected for all five obligations."
+      },
+      {
+        "evidence_class": "audit",
+        "status": "covered",
+        "evidence": "Historical audit/failure material records earlier private-axiom and public-premise relocation failures. The current v9 review-existing request explicitly freezes the official output for a fresh independent review; those older findings do not describe the current Lean route."
+      },
+      {
+        "evidence_class": "classification",
+        "status": "covered",
+        "evidence": "The current route is source_route_theorem: the example conclusion is proved after source-law, moment, finite-sum, and thm_14_7 steps are reassembled. It is not interface_bridge_completed alone and not open_math_debt."
+      },
+      {
+        "evidence_class": "dependency_status",
+        "status": "covered",
+        "evidence": "The review context lists thm_14_7 as the hard dependency. ex_14_4_2_normalApproximation calls thm_14_7 directly with iid source data and derived integrability, square-integrability, mean, variance, and sigma positivity inputs."
+      },
+      {
+        "evidence_class": "downstream",
+        "status": "covered",
+        "evidence": "The direct downstream consumer thm_14_8 imports ex_14_4_2 and aliases thm_14_8_TriangularArrayNotation to chapter14_TriangularArrayNotation, the same structure exposed through ex_14_4_2_TriangularArrayNotation."
+      },
+      {
+        "evidence_class": "ledger_status",
+        "status": "covered",
+        "evidence": "metadata.json records current_review_subject_file official_snapshot_v9.lean, current_review_subject_hash b8395ff4e74f9e525fddcd8c232cb6a85c0d68d3ba10de000ef3467cd2816146, latest operation review-existing, and verify_result_v16 requiring manual review-apply. This review result does not mutate ledger/status files."
+      },
+      {
+        "evidence_class": "hashes",
+        "status": "covered",
+        "evidence": "Get-FileHash raw SHA-256 differs between CRLF and LF copies, but LF-normalized SHA-256 of official_snapshot_v9.lean and ToyApollo/Output/ex_14_4_2.lean is b8395ff4e74f9e525fddcd8c232cb6a85c0d68d3ba10de000ef3467cd2816146, matching semantic_review_request_v9.json and the result template candidate_hash."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "interface_contract": {
+    "status": "covered",
+    "summary": "The public interface has no forbidden premise relocation. ex_14_4_2 exposes only S and hSource for the Poisson source data, while theorem-level declarations derive the moment and finite-sum bridges. The triangular-array notation is exported as a reusable shared support structure rather than a private current-file wrapper.",
+    "mismatches": []
+  },
+  "downstream_adequacy": {
+    "status": "covered",
+    "summary": "The direct downstream consumer thm_14_8 has the required triangular-array notation interface without needing fresh theorem-level assumptions beyond its own theorem statement/beyond-book proof support.",
+    "consumers_checked": [
+      {
+        "block_id": "thm_14_8",
+        "status": "covered",
+        "evidence": "ToyApollo/Output/thm_14_8.lean imports ToyApollo.Output.ex_14_4_2 and defines thm_14_8_TriangularArrayNotation as chapter14_TriangularArrayNotation. That structure records rowLength, variance, totalVariance, totalVariance_eq, and totalVariance_tendsto_atTop."
+      }
+    ],
+    "blocking_issues": []
+  },
+  "forbidden_weakenings": [
+    {
+      "weakening": "Do not replace the textbook public interface with a pure existential shell, placeholder definition, or witness-only structure.",
+      "status": "not_present",
+      "evidence": "The current output provides concrete source predicates and theorem-level support for Poisson laws, moments, finite sums, the CLT application, and triangular-array notation."
+    },
+    {
+      "weakening": "Do not rewrite reusable downstream theorem support into a theorem-specific wrapper usable only inside the current file.",
+      "status": "not_present",
+      "evidence": "Reusable declarations include ex_14_4_2_independent_sum_has_poisson_law, ex_14_4_2_partialSum_hasPoissonLaw, ex_14_4_2_poissonMomentBridge_of_sourceLaw_final, ex_14_4_2_sourceRoute_of_sourceLaw, chapter14_TriangularArrayNotation, and ex_14_4_2_TriangularArrayNotation."
+    }
+  ],
+  "findings": [],
+  "recommended_disposition": "accept",
+  "needs_class_normalization": false,
+  "cache_class": "semantic_verdict",
+  "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_2\\semantic_review_result_v9.json",
+  "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_2\\semantic_review_report_v9.md"
+}

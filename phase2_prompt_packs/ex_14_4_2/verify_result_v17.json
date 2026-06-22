@@ -1,0 +1,52 @@
+{
+  "task_id": "ex_14_4_2",
+  "attempt": 17,
+  "candidate_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_2\\official_snapshot_v9.lean",
+  "candidate_hash": "b8395ff4e74f9e525fddcd8c232cb6a85c0d68d3ba10de000ef3467cd2816146",
+  "verified_at": "2026-06-22T01:45:58.277658Z",
+  "success": true,
+  "repl": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_theorem is source-route completion for a proof-bearing task)."
+  },
+  "temp_build": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_theorem is source-route completion for a proof-bearing task)."
+  },
+  "final_build": {
+    "success": true,
+    "output": "Existing official output was already validated before review."
+  },
+  "diagnostics": [],
+  "primary_failure_kind": "",
+  "blocking_symbols": [],
+  "raw_outputs": {
+    "repl": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_theorem is source-route completion for a proof-bearing task).",
+    "temp_build": "Semantic review passed for the existing runnable official output. Task status: pass (source_route_theorem is source-route completion for a proof-bearing task).",
+    "final_build": "Existing official output was already validated before review."
+  },
+  "mode": "review-apply",
+  "disposition": "official_output_review_pass",
+  "state_transition": "none",
+  "semantic_review": {
+    "verdict": "pass",
+    "proof_class": "source_route_theorem",
+    "completion_class": "source_route_theorem",
+    "phase2_status": "pass",
+    "phase2_status_reason": "source_route_theorem is source-route completion for a proof-bearing task",
+    "task_status": "pass",
+    "task_status_reason": "source_route_theorem is source-route completion for a proof-bearing task",
+    "needs_class_normalization": false,
+    "runner_status": "codex_handoff_applied",
+    "summary": "The current official output is a source-route theorem completion for Example 14.4.2. The final public theorem assumes only the source setup and Poisson(1) source law; moment facts, finite iid Poisson sum laws, and the CLT application are rebuilt by theorem-level Lean declarations before invoking thm_14_7. The triangular-array notation following the example is preserved through a shared public support structure and is adequate for thm_14_8.",
+    "recommended_disposition": "accept",
+    "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_2\\semantic_review_result_v9.json",
+    "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_2\\semantic_review_input_v9.json",
+    "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_2\\semantic_review_prompt_v9.md",
+    "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_2\\semantic_review_report_v9.md",
+    "cache_key": "18c1f35ffa82caa1e07bca3e57436e802290b272e316d8330228c108bb5bca2b",
+    "cache_hit": false,
+    "reviewer_backend_id": "codex-handoff"
+  },
+  "verify_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\ex_14_4_2\\verify_result_v17.json"
+}

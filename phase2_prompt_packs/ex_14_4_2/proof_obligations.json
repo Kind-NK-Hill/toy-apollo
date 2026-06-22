@@ -31,7 +31,7 @@
       "expected_theorem_signature": "A source-facing proposition ex_14_4_2_poissonSourceLaw S stating ex_14_4_2_hasPoissonLaw S.P (S.X k) 1 for every k.",
       "landing_kind": "support_predicate",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "This is exactly the textbook source hypothesis, not a relocated moment, finite-sum, standardized-law, or CLT bridge premise.",
+      "proof_contract_notes": "This is the textbook source assumption and does not relocate moment, finite-sum, standardized-law, or CLT bridge facts into the public setup.",
       "body_reassumption_check": "passed",
       "signature_match": "passed",
       "public_premise_check": "passed",
@@ -55,7 +55,7 @@
       "expected_theorem_signature": "Theorems proving canonical Poisson(1) integrability, square integrability, mean one, and variance one, then transporting them from the source law to S.X 0.",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "The canonical facts are proved from PMF/integral series calculations and then transported using hSource 0. The final theorem does not take integrability, mean, variance, or moment bridge premises.",
+      "proof_contract_notes": "The canonical facts are proved from the real pushed-forward Poisson(1) law and PMF/integral calculations, then transported with hSource 0. The final theorem does not assume integrability, mean, variance, or a moment bridge.",
       "body_reassumption_check": "passed",
       "signature_match": "passed",
       "public_premise_check": "passed",
@@ -79,7 +79,7 @@
       "expected_theorem_signature": "From independent X Y with Poisson laws lam and mu, prove X + Y has Poisson law lam + mu; then iterate over source partial sums.",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "The two-variable theorem uses characteristic-function multiplication, canonical Poisson characteristic functions, parameter addition, and Measure.ext_of_charFun; the finite source bridge is derived by induction from hSource and independence.",
+      "proof_contract_notes": "The two-variable theorem uses characteristic-function multiplication, the canonical Poisson characteristic function, parameter addition, and Measure.ext_of_charFun; the finite source bridge is derived by induction from hSource and S.hIndep.",
       "body_reassumption_check": "passed",
       "signature_match": "passed",
       "public_premise_check": "passed",
@@ -106,7 +106,7 @@
       "expected_theorem_signature": "After source-law, moment, and finite-sum bridges are resolved, apply thm_14_7 to obtain the standardized Poisson-source laws converging to the standard normal law.",
       "landing_kind": "theorem",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "ex_14_4_2_normalApproximation derives momentBridge from hSource, extracts integrability, square-integrability, mean-one, and variance-one, and calls thm_14_7 with mu = 1, sigma = 1, and 0 < 1.",
+      "proof_contract_notes": "ex_14_4_2_normalApproximation derives ex_14_4_2_poissonMomentBridge S from hSource, extracts integrability, square-integrability, mean-one, and variance-one facts, and calls thm_14_7 with mu = 1, sigma = 1, and 0 < 1.",
       "body_reassumption_check": "passed",
       "signature_match": "passed",
       "public_premise_check": "passed",
@@ -118,7 +118,7 @@
       "kind": "source_step",
       "source_ref": "Second paragraph onward: rows indexed by n, row lengths k_n, variances sigma^2_{n,i}, total variance s_n^2 -> infinity.",
       "depends_on": [],
-      "lean_landing": "ex_14_4_2_TriangularArrayNotation",
+      "lean_landing": "chapter14_TriangularArrayNotation; ex_14_4_2_TriangularArrayNotation",
       "status": "proved",
       "review_status": "accepted",
       "blocking": true,
@@ -128,7 +128,7 @@
       "expected_theorem_signature": "A public interface recording k_n, sigma^2_{n,i}, s_n^2 as the row-variance sum, and s_n^2 -> infinity.",
       "landing_kind": "support_constructor",
       "proof_contract_status": "verified",
-      "proof_contract_notes": "The structure records positive row lengths, row variances, total variance, row-sum equality, and totalVariance -> infinity; thm_14_8 imports and aliases this interface.",
+      "proof_contract_notes": "The support structure records positive row lengths, cell variances, total variance, the row-sum equality, and totalVariance -> infinity. ex_14_4_2 and thm_14_8 alias the same public structure.",
       "body_reassumption_check": "passed",
       "signature_match": "passed",
       "public_premise_check": "passed"
@@ -229,7 +229,14 @@
       "status": "covered",
       "summary": "All five blocking obligations in proof_obligations.json are covered by candidate_v9. No scaffold hypotheses, nested obligations, promote-obligations recovery, or accepted open proof debt is used.",
       "open_blockers": []
+    },
+    {
+      "reviewed_at": "2026-06-22T01:45:57.711812Z",
+      "verdict": "pass",
+      "status": "covered",
+      "summary": "All five blocking obligations in proof_obligations.json are covered by current official Lean declarations. No scaffold hypotheses or accepted open proof debt are used.",
+      "open_blockers": []
     }
   ],
-  "last_reviewed_at": "2026-06-16T08:24:49.639648Z"
+  "last_reviewed_at": "2026-06-22T01:45:57.711812Z"
 }

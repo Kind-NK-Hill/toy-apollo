@@ -1,4 +1,5 @@
 import Mathlib
+import ToyApollo.Output.chapter14_triangular_array_support
 import ToyApollo.Output.thm_14_7
 
 /-
@@ -800,17 +801,10 @@ def ex_14_4_2_sourceRoute
   ex_14_4_2_resolvedSourceBridges S ∧
     ex_14_4_2_sourceConclusion S
 
-/-- The triangular-array notation introduced after the Poisson example and
-used by Theorem 14.8. -/
-structure ex_14_4_2_TriangularArrayNotation where
-  rowLength : ℕ → ℕ
-  rowLength_pos : ∀ n : ℕ, 0 < rowLength n
-  variance : ∀ n : ℕ, Fin (rowLength n) → ℝ
-  totalVariance : ℕ → ℝ
-  totalVariance_eq :
-    ∀ n : ℕ, totalVariance n = ∑ i : Fin (rowLength n), variance n i
-  totalVariance_tendsto_atTop :
-    Tendsto totalVariance atTop atTop
+/-- Compatibility name for the triangular-array notation introduced after the
+Poisson example and used by Theorem 14.8. -/
+abbrev ex_14_4_2_TriangularArrayNotation :=
+  chapter14_TriangularArrayNotation
 
 /-- Applying Theorem 14.7 to iid Poisson(1) variables gives the normal
 approximation `(S_n - n)/sqrt(n) -> N(0,1)`.  The Poisson moment bridge is
