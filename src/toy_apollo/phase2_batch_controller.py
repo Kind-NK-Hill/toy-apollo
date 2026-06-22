@@ -30,7 +30,12 @@ NONTERMINAL = "NONTERMINAL"
 TEXTBOOK_COMPLETE_OBJECTIVE = "textbook-complete"
 DIAGNOSTIC_OBJECTIVE = "diagnostic"
 OBJECTIVES = {TEXTBOOK_COMPLETE_OBJECTIVE, DIAGNOSTIC_OBJECTIVE}
-DEFAULT_ALLOWED_BEYOND_BOOK_TASKS = {"thm_11_8", "thm_14_8"}
+DEFAULT_ALLOWED_BEYOND_BOOK_TASKS = {
+    "thm_1_2",
+    "ex_1_3_2",
+    "thm_11_8",
+    "thm_14_8",
+}
 FAMILY_CONSUMABLE_PROOF_CLASSES = {
     "source_route_finite_interval_covered",
     "source_route_support_completed_downstream_blocked",

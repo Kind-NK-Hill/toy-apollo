@@ -20,7 +20,8 @@ CLEAN_DEBT_JSON = "docs/phase2_ch10_14_clean_debt_surface_audit.json"
 METADATA_FIX_MANIFEST = "docs/phase2_unfinished_metadata_status_fix_manifest.json"
 LEDGER_SUMMARY_SYNC_MANIFEST = "docs/phase2_unfinished_ledger_summary_sync_manifest.json"
 ALLOWED_PROOF_BEYOND_BOOK = "thm_14_8_ProofBeyondBook"
-ALLOWED_EXCEPTION_TASKS = {"thm_11_8", "thm_14_8"}
+ALLOWED_EXCEPTION_TASKS = {"thm_1_2", "ex_1_3_2", "thm_11_8", "thm_14_8"}
+SOURCE_STATEMENT_EXCEPTION_TASKS = {"thm_1_2", "ex_1_3_2"}
 PASSING_OBLIGATION_STATUSES = {"proved", "obsolete", "accepted_as_proof_debt"}
 PLACEHOLDER_OBLIGATION_ID = "source_proof_spine"
 
@@ -245,6 +246,12 @@ def obligation_is_allowed_exception(task_id: str, obligation: dict[str, Any]) ->
 
 
 def task_is_allowed_exception(task_id: str, task: dict[str, Any], opens: list[str]) -> bool:
+    if task_id in SOURCE_STATEMENT_EXCEPTION_TASKS:
+        return (
+            str(task.get("phase2_status") or "").strip() == "allowed_exception"
+            and str(task.get("phase2_status_evidence_type") or "").strip()
+            == "explicit_allowed_exception"
+        )
     return (
         task_id in ALLOWED_EXCEPTION_TASKS
         and str(task.get("phase2_status") or "").strip() == "allowed_exception"
