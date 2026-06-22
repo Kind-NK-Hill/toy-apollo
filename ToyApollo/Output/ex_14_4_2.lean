@@ -6,6 +6,7 @@ SOURCE MATERIAL: omitted from the public source snapshot; see docs/repository_sc
 -/
 
 import Mathlib
+import ToyApollo.Output.chapter14_triangular_array_support
 import ToyApollo.Output.thm_14_7
 
 -- WRITE FINAL LEAN CODE BELOW
@@ -691,15 +692,8 @@ def ex_14_4_2_sourceRoute
   ex_14_4_2_resolvedSourceBridges S ∧
     ex_14_4_2_sourceConclusion S
 
-structure ex_14_4_2_TriangularArrayNotation where
-  rowLength : ℕ → ℕ
-  rowLength_pos : ∀ n : ℕ, 0 < rowLength n
-  variance : ∀ n : ℕ, Fin (rowLength n) → ℝ
-  totalVariance : ℕ → ℝ
-  totalVariance_eq :
-    ∀ n : ℕ, totalVariance n = ∑ i : Fin (rowLength n), variance n i
-  totalVariance_tendsto_atTop :
-    Tendsto totalVariance atTop atTop
+abbrev ex_14_4_2_TriangularArrayNotation :=
+  chapter14_TriangularArrayNotation
 
 theorem ex_14_4_2_normalApproximation
     {Ω : Type*} [MeasurableSpace Ω]
