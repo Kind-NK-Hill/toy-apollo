@@ -1,0 +1,52 @@
+{
+  "task_id": "thm_13_12",
+  "attempt": 19,
+  "candidate_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_12\\official_snapshot_v9.lean",
+  "candidate_hash": "44ccfda93b513d5d161c17436eb03091fe829006a7d274ed1bc0ff6e753be7d2",
+  "verified_at": "2026-06-22T05:27:22.185706Z",
+  "success": true,
+  "repl": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (textbook_proof_completed is source-route completion for a proof-bearing task)."
+  },
+  "temp_build": {
+    "success": true,
+    "output": "Semantic review passed for the existing runnable official output. Task status: pass (textbook_proof_completed is source-route completion for a proof-bearing task)."
+  },
+  "final_build": {
+    "success": true,
+    "output": "Existing official output was already validated before review."
+  },
+  "diagnostics": [],
+  "primary_failure_kind": "",
+  "blocking_symbols": [],
+  "raw_outputs": {
+    "repl": "Semantic review passed for the existing runnable official output. Task status: pass (textbook_proof_completed is source-route completion for a proof-bearing task).",
+    "temp_build": "Semantic review passed for the existing runnable official output. Task status: pass (textbook_proof_completed is source-route completion for a proof-bearing task).",
+    "final_build": "Existing official output was already validated before review."
+  },
+  "mode": "review-apply",
+  "disposition": "official_output_review_pass",
+  "state_transition": "none",
+  "semantic_review": {
+    "verdict": "pass",
+    "proof_class": "textbook_proof_completed",
+    "completion_class": "textbook_proof_completed",
+    "phase2_status": "pass",
+    "phase2_status_reason": "textbook_proof_completed is source-route completion for a proof-bearing task",
+    "task_status": "pass",
+    "task_status_reason": "textbook_proof_completed is source-route completion for a proof-bearing task",
+    "needs_class_normalization": false,
+    "runner_status": "codex_handoff_applied",
+    "summary": "The split official output remains faithful to Theorem 13.12. The parent file keeps the source-facing theorem: any def_13_3 conditional-expectation version Y is a.e. equal to the countable atomwise formula. The support file retains the reusable countable-partition predicates, generated-sigma consequences, atom formula, measurability, atomwise integral calculation, integrability, and def_13_3 version proof. No statement drift, public-premise relocation, adapter-only shortcut, or forbidden weakening was found.",
+    "recommended_disposition": "accept",
+    "review_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_12\\semantic_review_result_v9.json",
+    "review_input_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_12\\semantic_review_input_v9.json",
+    "review_prompt_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_12\\semantic_review_prompt_v9.md",
+    "review_report_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_12\\semantic_review_report_v9.md",
+    "cache_key": "06640b3fcdb4d3951d943f97ff63f0abcdf165c1849b21febfa3da1bc13a8c5f",
+    "cache_hit": false,
+    "reviewer_backend_id": "codex-handoff"
+  },
+  "verify_result_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\phase2_prompt_packs\\thm_13_12\\verify_result_v19.json"
+}
