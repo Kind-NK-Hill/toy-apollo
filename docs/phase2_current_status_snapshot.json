@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-06-22T06:31:10.828986Z",
+  "generated_at": "2026-06-22T08:23:08.300205Z",
   "purpose": "Tracked summary of the local Phase2 runtime ledger. This snapshot is audit context only; review-apply plus phase2_status remains the completion authority.",
   "ledger": {
     "path": "project_ledger.json",
     "exists": true,
-    "sha256": "cddfbfd82290a085939a6a49b54b46c729e2e1f1809df986a3b45029ca5e0bf0",
-    "size_bytes": 3551227
+    "sha256": "9f5ec7cd01f30f4dd83e06b1c9dc70cad7b6c8825ae28444df124befcc67e273",
+    "size_bytes": 3218847
   },
   "summary": {
     "task_count": 396,
@@ -13,16 +13,15 @@
     "legacy_obligation_task_count": 0,
     "legacy_obligation_symbol_owner_count": 0,
     "status_counts": {
-      "COMPLETED": 345,
+      "COMPLETED": 346,
       "COMPLETED_WITH_PROOF_DEBT": 1,
       "DISCOVERED": 47,
-      "PACKED": 3
+      "PACKED": 2
     },
     "phase2_status_counts": {
       "allowed_exception": 4,
-      "fail": 1,
-      "missing": 48,
-      "pass": 343
+      "missing": 47,
+      "pass": 345
     },
     "task_type_counts": {
       "Definition": 82,
@@ -34,15 +33,7 @@
     }
   },
   "exceptions": {
-    "fail": [
-      {
-        "task_id": "intro_9",
-        "type": "Remark",
-        "status": "PACKED",
-        "phase2_status": "fail",
-        "phase2_status_reason": "proof_class statement_weakened contains local open debt/adapter/weakening evidence"
-      }
-    ],
+    "fail": [],
     "blocked": [],
     "allowed_exception": [
       {

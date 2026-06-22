@@ -1,0 +1,11 @@
+{
+  "block_id": "intro_9_2",
+  "type": "Remark",
+  "title": "Characteristic Functions",
+  "content": "\\subsection*{9.2 Characteristic Functions}\n\nThe main disadvantage of the moment generating function is that it does not exist for some random variables. A better option is the characteristic function, which is similar to the moment generating function but requires complex functions and complex integration (see Definition 6.6). The characteristic function can be regarded as the Fourier transform of the probability distribution function.\n\nThe characteristic function is an essential tool in determining whether a sequence of random variables converges in distribution. We will use it in the proof of the central limit theorem. In the remainder of this section, we reserve the symbol $i$ for the imaginary unit $\\sqrt{-1}$.",
+  "source_plan": "chapter9-characteristic-functions",
+  "dependencies": [],
+  "soft_imports": [],
+  "soft_imports_confirmed_at": "",
+  "final_import_union": []
+}

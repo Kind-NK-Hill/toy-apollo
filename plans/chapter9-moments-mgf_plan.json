@@ -13,9 +13,7 @@
         "type": "Remark",
         "title": "Moments and Moment Generating Functions",
         "content": "\\subsection*{9.1 Moments and Moment Generating Functions}\n\nThe moments provide some information about the shape of the probability distribution.",
-        "dependencies": [
-            "intro_9"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter9-moments-mgf"
     },
@@ -24,9 +22,7 @@
         "type": "Definition",
         "title": "Moments and Central Moments",
         "content": "\\begin{defbox}{9.1}\nFor an integer $r \\geq 1$, the $r$-th moment of $X$ is defined as the expectation $\\mathbb{E}[X^r]$. The $r$-th central moment is defined by $\\mathbb{E}[(X-\\mathbb{E}[X])^r]$. In particular, the second central moment is commonly called the variance of $X$; the square root of variance is called the standard deviation.\n\nThe third central moment measures the asymmetry of the probability distribution. The skewness of a random variable is defined as the third central moment normalized by the cube of the standard deviation $\\sigma$,\n\\[\n\\frac{\\mathbb{E}[(X-\\mathbb{E}[X])^3]}{\\sigma^3}.\n\\]\nThe analogous quantity of order $4$ is called the kurtosis,\n\\[\n\\frac{\\mathbb{E}[(X-\\mathbb{E}[X])^4]}{\\sigma^4}.\n\\]\nIt measures the tailedness of the probability distribution.\n\\end{defbox}",
-        "dependencies": [
-            "intro_9_1"
-        ],
+        "dependencies": [],
         "is_renowned": false,
         "source_plan": "chapter9-moments-mgf"
     },

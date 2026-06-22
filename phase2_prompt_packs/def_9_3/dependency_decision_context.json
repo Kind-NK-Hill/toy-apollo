@@ -1,0 +1,28 @@
+{
+  "task_id": "def_9_3",
+  "hard_dependencies": [
+    "def_6_6"
+  ],
+  "soft_imports": [],
+  "final_import_union": [
+    "def_6_6"
+  ],
+  "decisions_by_dep": {
+    "def_6_6": [
+      {
+        "criterion": "operator_declared_reliance",
+        "decision_id": "def_9_3|def_6_6|hard|phase1_apply|operator_declared_reliance",
+        "dep_id": "def_6_6",
+        "evidence": "Declared in draft_plan.json dependencies",
+        "kind": "hard",
+        "phase": "phase1_apply",
+        "recorded_at": "2026-05-11T03:38:19.544749+00:00",
+        "schema_version": 1,
+        "source_file": "D:\\Grad_Study\\Practimum\\Formalization\\toy-apollo\\plans\\chapter9-characteristic-functions_plan.json",
+        "source_plan": "chapter9-characteristic-functions",
+        "task_id": "def_9_3"
+      }
+    ]
+  },
+  "missing_decision_records": []
+}

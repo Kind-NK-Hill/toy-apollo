@@ -1,0 +1,14 @@
+{
+  "block_id": "def_9_3",
+  "type": "Definition",
+  "title": "Characteristic Function",
+  "content": "\\begin{defbox}{9.3}\nGiven a real-valued random variable $X$, define the characteristic function of $X$ by\n\\[\n\\phi_X(t) \\coloneqq \\mathbb{E}[e^{iXt}]\n= \\int_{\\Omega} e^{iX(\\omega)t}\\,dP(\\omega)\n\\]\nfor $t\\in\\mathbb{R}$.\n\nIf $X$ is a continuous random variable with pdf $f(x)$, we can compute its characteristic function by\n\\[\n\\int e^{ixt}f(x)\\,dx.\n\\]\nIf $X$ is a discrete random variable with pmf $p(n)$, the characteristic function is equal to\n\\[\n\\sum_n e^{int}p(n).\n\\]\n\\end{defbox}",
+  "source_plan": "chapter9-characteristic-functions",
+  "dependencies": [
+    "def_6_6"
+  ],
+  "soft_imports": [],
+  "final_import_union": [
+    "def_6_6"
+  ]
+}

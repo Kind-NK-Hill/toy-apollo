@@ -1,9 +1,9 @@
 # Phase2 Current Status Snapshot
 
-- generated_at: `2026-06-22T06:31:10.828986Z`
+- generated_at: `2026-06-22T08:23:08.300205Z`
 - ledger: `project_ledger.json`
-- ledger_sha256: `cddfbfd82290a085939a6a49b54b46c729e2e1f1809df986a3b45029ca5e0bf0`
-- ledger_size_bytes: `3551227`
+- ledger_sha256: `9f5ec7cd01f30f4dd83e06b1c9dc70cad7b6c8825ae28444df124befcc67e273`
+- ledger_size_bytes: `3218847`
 - tasks: `396`
 - symbols: `3084`
 - legacy_obligation_tasks: `0`
@@ -13,23 +13,22 @@ This report is audit context only. It does not replace `review-apply` or declare
 
 ## Status Counts
 
-- `COMPLETED`: 345
+- `COMPLETED`: 346
 - `COMPLETED_WITH_PROOF_DEBT`: 1
 - `DISCOVERED`: 47
-- `PACKED`: 3
+- `PACKED`: 2
 
 ## Phase2 Status Counts
 
 - `allowed_exception`: 4
-- `fail`: 1
-- `missing`: 48
-- `pass`: 343
+- `missing`: 47
+- `pass`: 345
 
 ## Exceptions
 
 ### fail
 
-- `intro_9` `Remark` ledger `PACKED` reason `proof_class statement_weakened contains local open debt/adapter/weakening evidence`
+- none
 
 ### blocked
 
