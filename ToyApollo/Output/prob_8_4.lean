@@ -1,0 +1,93 @@
+import Mathlib
+
+/-
+TASK ID: prob_8_4
+TYPE: Problem
+SOURCE PLAN: 35_chap8_problems
+TASK CONTENT:
+\textbf{8.4.} Define two probability distributions $P$ and $Q$ on a finite sample space $\Omega=\{a,b,c\}$. The pmf's of $P$ and $Q$ are given in the following table:
+\[
+\begin{array}{c|ccc}
+\omega & a & b & c\\
+\hline
+P(\omega) & 1/3 & 1/3 & 1/3\\
+Q(\omega) & 1/2 & 1/4 & 1/4
+\end{array}
+\]
+
+Find the maximal coupling of $P$ and $Q$.
+-/
+
+-- WRITE FINAL LEAN CODE BELOW
+
+open scoped BigOperators
+
+noncomputable section
+
+/-- `0,1,2` encode the sample-space atoms `a,b,c`. -/
+abbrev Omega := Fin 3
+
+noncomputable def P : Omega → ℝ
+  | 0 => 1 / 3
+  | 1 => 1 / 3
+  | _ => 1 / 3
+
+noncomputable def Q : Omega → ℝ
+  | 0 => 1 / 2
+  | 1 => 1 / 4
+  | _ => 1 / 4
+
+/-- The explicit maximal coupling matrix: put `min (P x) (Q x)` on the diagonal and send the
+remaining mass from `b` and `c` to `a`. -/
+def maximalCoupling : Omega → Omega → ℝ
+  | 0, 0 => 1 / 3
+  | 1, 0 => 1 / 12
+  | 1, 1 => 1 / 4
+  | 2, 0 => 1 / 12
+  | 2, 2 => 1 / 4
+  | _, _ => 0
+
+/-- Problem 8.4: the displayed matrix is a coupling of `P` and `Q`, has diagonal mass `5/6`,
+and is maximal because every coupling has diagonal mass at most `5/6`. -/
+theorem prob_8_4 :
+    ∃ π : Omega → Omega → ℝ,
+      (∀ x y, 0 ≤ π x y) ∧
+      (∑ x, ∑ y, π x y = 1) ∧
+      (∀ x, ∑ y, π x y = P x) ∧
+      (∀ y, ∑ x, π x y = Q y) ∧
+      (∑ x, π x x = 5 / 6) ∧
+      (∀ ρ : Omega → Omega → ℝ,
+        (∀ x y, 0 ≤ ρ x y) →
+        (∀ x, ∑ y, ρ x y = P x) →
+        (∀ y, ∑ x, ρ x y = Q y) →
+        ∑ x, ρ x x ≤ 5 / 6) := by
+  refine ⟨maximalCoupling, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · intro x y
+    fin_cases x <;> fin_cases y <;> norm_num [maximalCoupling]
+  · rw [Fin.sum_univ_three]
+    repeat rw [Fin.sum_univ_three]
+    norm_num [maximalCoupling]
+  · intro x
+    fin_cases x <;> rw [Fin.sum_univ_three] <;> norm_num [maximalCoupling, P]
+  · intro y
+    fin_cases y <;> rw [Fin.sum_univ_three] <;> norm_num [maximalCoupling, Q]
+  · rw [Fin.sum_univ_three]
+    norm_num [maximalCoupling]
+  · intro ρ hnonneg hrow hcol
+    have h00 : ρ 0 0 ≤ 1 / 3 := by
+      have hr := hrow 0
+      rw [Fin.sum_univ_three] at hr
+      norm_num [P] at hr
+      linarith [hnonneg 0 1, hnonneg 0 2]
+    have h11 : ρ 1 1 ≤ 1 / 4 := by
+      have hc := hcol 1
+      rw [Fin.sum_univ_three] at hc
+      norm_num [Q] at hc
+      linarith [hnonneg 0 1, hnonneg 2 1]
+    have h22 : ρ 2 2 ≤ 1 / 4 := by
+      have hc := hcol 2
+      rw [Fin.sum_univ_three] at hc
+      norm_num [Q] at hc
+      linarith [hnonneg 0 2, hnonneg 1 2]
+    rw [Fin.sum_univ_three]
+    linarith
