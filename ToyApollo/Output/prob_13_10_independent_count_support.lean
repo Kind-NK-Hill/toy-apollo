@@ -303,7 +303,7 @@ theorem prob_13_10_fiber_norm_bound_from_abs_prefix {Ω : Type*}
       refine hFixedIntegrable.integrableOn.congr_fun ?_ hs
       intro ω hω
       have hTω : T ω = m := hω
-      simp [prob_13_10_stoppedSum, hTω]
+      simp [prob_13_10_stoppedSum, chapter13_stoppedNatSum, hTω]
     simpa using hStoppedOn.norm
   have hRightInt :
       IntegrableOn
@@ -322,7 +322,7 @@ theorem prob_13_10_fiber_norm_bound_from_abs_prefix {Ω : Type*}
     calc
       ‖prob_13_10_stoppedSum X T ω‖
           = |∑ k ∈ Finset.range m, X (k + 1) ω| := by
-            simp [prob_13_10_stoppedSum, hTω, Real.norm_eq_abs]
+            simp [prob_13_10_stoppedSum, chapter13_stoppedNatSum, hTω, Real.norm_eq_abs]
       _ ≤ ∑ k ∈ Finset.range m, |X (k + 1) ω| := by
             exact Finset.abs_sum_le_sum_abs _ _
   have hMono :
@@ -395,7 +395,7 @@ theorem prob_13_10_independent_count_stopped_sum_integrable {Ω : Type*}
     refine hFixedIntegrable.integrableOn.congr_fun ?_ (hs m)
     intro ω hω
     have hTω : T ω = m := hω
-    simp [prob_13_10_stoppedSum, hTω]
+    simp [prob_13_10_stoppedSum, chapter13_stoppedNatSum, hTω]
   have hUnion : (⋃ m : ℕ, s m) = Set.univ := by
     ext ω
     simp [s]

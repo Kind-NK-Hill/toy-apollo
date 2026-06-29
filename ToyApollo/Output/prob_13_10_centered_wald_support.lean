@@ -536,7 +536,7 @@ theorem prob_13_10_centered_stoppedValueReal_eq_stoppedSum {Ω : Type*}
       = prob_13_10_stoppedSum (prob_13_10_centeredIncrements X μ) T := by
   funext ω
   simp [thm_13_18_stoppedValueReal, prob_13_10_centeredWalk,
-    prob_13_10_centeredIncrements, prob_13_10_stoppedSum,
+    prob_13_10_centeredIncrements, prob_13_10_stoppedSum, chapter13_stoppedNatSum,
     prob_13_10_partialSum]
 
 theorem prob_13_10_centered_stopping_time_stopped_sum_integrable {Ω : Type*}

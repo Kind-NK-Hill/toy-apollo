@@ -1,0 +1,402 @@
+/-
+TASK ID: ex_7_3_1
+TYPE: Example_Proof
+SOURCE PLAN: 27_chap7_stieltjes_integrals
+SOURCE MATERIAL: omitted from the public source snapshot; see docs/repository_scope.md.
+-/
+
+import Mathlib
+import ToyApollo.Output.thm_7_8
+
+open MeasureTheory Set
+open scoped Interval
+
+def ex731Clamp (x : ℝ) : ℝ :=
+  max 0 (min x 1)
+
+def ex731StieltjesFun (x : ℝ) : ℝ :=
+  ex731Clamp x ^ 2
+
+lemma continuous_ex731Clamp : Continuous ex731Clamp := by
+  simpa [ex731Clamp] using
+    (continuous_const.max (continuous_id.min continuous_const))
+
+lemma continuous_ex731StieltjesFun : Continuous ex731StieltjesFun := by
+  simpa [ex731StieltjesFun] using (continuous_ex731Clamp.pow 2)
+
+lemma monotone_ex731Clamp : Monotone ex731Clamp := by
+  intro x y hxy
+  dsimp [ex731Clamp]
+  exact max_le_max le_rfl (min_le_min hxy le_rfl)
+
+lemma monotone_ex731StieltjesFun : Monotone ex731StieltjesFun := by
+  intro x y hxy
+  have hClamp : ex731Clamp x ≤ ex731Clamp y := monotone_ex731Clamp hxy
+  have hx0 : 0 ≤ ex731Clamp x := by
+    exact le_max_left 0 (min x 1)
+  have hy0 : 0 ≤ ex731Clamp y := by
+    exact le_max_left 0 (min y 1)
+  dsimp [ex731StieltjesFun]
+  nlinarith
+
+noncomputable def ex731F : StieltjesFunction ℝ where
+  toFun := ex731StieltjesFun
+  mono' := monotone_ex731StieltjesFun
+  right_continuous' x := by
+    simpa using
+      (continuous_ex731StieltjesFun.continuousAt.continuousWithinAt :
+        ContinuousWithinAt ex731StieltjesFun (Set.Ici x) x)
+
+lemma ex731Clamp_nonneg (x : ℝ) : 0 ≤ ex731Clamp x := by
+  exact le_max_left 0 (min x 1)
+
+lemma ex731Clamp_le_one (x : ℝ) : ex731Clamp x ≤ 1 := by
+  dsimp [ex731Clamp]
+  exact max_le (by norm_num) (min_le_right _ _)
+
+noncomputable def ex731DensityReal : ℝ → ℝ :=
+  Set.indicator (Set.Ioc (0 : ℝ) 1) (fun x => 2 * x)
+
+noncomputable def ex731Density : ℝ → ENNReal :=
+  Set.indicator (Set.Ioc (0 : ℝ) 1) (fun x => (2 : ENNReal) * ENNReal.ofReal x)
+
+noncomputable def ex731DensityMeasure : Measure ℝ :=
+  volume.withDensity ex731Density
+
+noncomputable def ex731Measure : Measure ℝ :=
+  ex731F.measure
+
+lemma ex731Clamp_eq_zero_of_le_zero {x : ℝ} (hx : x ≤ 0) :
+    ex731Clamp x = 0 := by
+  dsimp [ex731Clamp]
+  rw [min_eq_left (hx.trans zero_le_one), max_eq_left hx]
+
+lemma ex731Clamp_eq_self_of_mem {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    ex731Clamp x = x := by
+  dsimp [ex731Clamp]
+  rw [min_eq_left hx1, max_eq_right hx0]
+
+lemma ex731Clamp_eq_one_of_one_le {x : ℝ} (hx : 1 ≤ x) :
+    ex731Clamp x = 1 := by
+  dsimp [ex731Clamp]
+  rw [min_eq_right hx, max_eq_right (by norm_num)]
+
+lemma ex731F_eq_zero_of_le_zero {x : ℝ} (hx : x ≤ 0) :
+    ex731F x = 0 := by
+  simp [ex731F, ex731StieltjesFun, ex731Clamp_eq_zero_of_le_zero hx]
+
+lemma ex731F_eq_sq_of_mem {x : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    ex731F x = x ^ 2 := by
+  simp [ex731F, ex731StieltjesFun, ex731Clamp_eq_self_of_mem hx0 hx1]
+
+lemma ex731F_eq_one_of_one_le {x : ℝ} (hx : 1 ≤ x) :
+    ex731F x = 1 := by
+  simp [ex731F, ex731StieltjesFun, ex731Clamp_eq_one_of_one_le hx]
+
+lemma ex731F_tendsto_atBot : Filter.Tendsto ex731F Filter.atBot (nhds 0) := by
+  have hEv : ex731F =ᶠ[Filter.atBot] fun _ : ℝ => (0 : ℝ) := by
+    filter_upwards [Filter.Iic_mem_atBot (0 : ℝ)] with x hx
+    exact ex731F_eq_zero_of_le_zero hx
+  exact tendsto_const_nhds.congr' hEv.symm
+
+lemma ex731F_tendsto_atTop : Filter.Tendsto ex731F Filter.atTop (nhds 1) := by
+  have hEv : ex731F =ᶠ[Filter.atTop] fun _ : ℝ => (1 : ℝ) := by
+    filter_upwards [Filter.Ici_mem_atTop (1 : ℝ)] with x hx
+    exact ex731F_eq_one_of_one_le hx
+  exact tendsto_const_nhds.congr' hEv.symm
+
+lemma ex731Ioc_inter_support {a b : ℝ} (hab : a < b) :
+    Set.Ioc a b ∩ Set.Ioc (0 : ℝ) 1 = Set.Ioc (ex731Clamp a) (ex731Clamp b) := by
+  ext x
+  constructor
+  · intro hx
+    rcases hx with ⟨hxab, hx01⟩
+    refine ⟨?_, ?_⟩
+    · by_cases ha0 : a ≤ 0
+      · rw [ex731Clamp_eq_zero_of_le_zero ha0]
+        exact hx01.1
+      · have ha0' : 0 < a := lt_of_not_ge ha0
+        by_cases ha1 : a ≤ 1
+        · rw [ex731Clamp_eq_self_of_mem ha0'.le ha1]
+          exact hxab.1
+        · exfalso
+          linarith [hx01.2, hxab.1]
+    · by_cases hb1 : 1 ≤ b
+      · rw [ex731Clamp_eq_one_of_one_le hb1]
+        exact hx01.2
+      · have hb1' : b < 1 := lt_of_not_ge hb1
+        have hb0 : 0 ≤ b := by
+          linarith [hx01.1, hxab.2]
+        rw [ex731Clamp_eq_self_of_mem hb0 hb1'.le]
+        exact hxab.2
+  · intro hx
+    rcases hx with ⟨hax, hxb⟩
+    have hx0 : 0 < x := lt_of_le_of_lt (ex731Clamp_nonneg a) hax
+    have hx1 : x ≤ 1 := le_trans hxb (ex731Clamp_le_one b)
+    have hax' : a < x := by
+      by_cases ha0 : a ≤ 0
+      · linarith
+      · have ha0' : 0 < a := lt_of_not_ge ha0
+        by_cases ha1 : a ≤ 1
+        · rw [ex731Clamp_eq_self_of_mem ha0'.le ha1] at hax
+          exact hax
+        · exfalso
+          have ha1' : 1 < a := lt_of_not_ge ha1
+          rw [ex731Clamp_eq_one_of_one_le ha1'.le] at hax
+          linarith
+    have hxb' : x ≤ b := by
+      by_cases hb1 : 1 ≤ b
+      · linarith
+      · have hb1' : b < 1 := lt_of_not_ge hb1
+        by_cases hb0 : 0 ≤ b
+        · rw [ex731Clamp_eq_self_of_mem hb0 hb1'.le] at hxb
+          exact hxb
+        · exfalso
+          have hb0' : b < 0 := lt_of_not_ge hb0
+          rw [ex731Clamp_eq_zero_of_le_zero hb0'.le] at hxb
+          linarith
+    exact ⟨⟨hax', hxb'⟩, ⟨hx0, hx1⟩⟩
+
+lemma ex731Density_measurable : Measurable ex731Density := by
+  simpa [ex731Density] using
+    ((measurable_const.mul (ENNReal.measurable_ofReal.comp measurable_id)).indicator
+      measurableSet_Ioc)
+
+lemma ex731Density_lt_top : ∀ᵐ x ∂(volume : Measure ℝ), ex731Density x < ⊤ := by
+  filter_upwards with x
+  by_cases hx : x ∈ Set.Ioc (0 : ℝ) 1
+  · simp [ex731Density, hx]
+    exact ENNReal.mul_lt_top (by simp) (by simp)
+  · simp [ex731Density, hx]
+
+lemma ex731_integral_linear {a b : ℝ} :
+    ∫ x in a..b, 2 * x = b ^ 2 - a ^ 2 := by
+  calc
+    ∫ x in a..b, 2 * x = 2 * ∫ x in a..b, x := by
+      rw [intervalIntegral.integral_const_mul]
+    _ = 2 * ((b ^ 2 - a ^ 2) / 2) := by
+      rw [integral_id]
+    _ = b ^ 2 - a ^ 2 := by
+      ring
+
+lemma ex731DensityMeasure_Ioc {a b : ℝ} (hab : a < b) :
+    ex731DensityMeasure (Set.Ioc a b) = ENNReal.ofReal (ex731F b - ex731F a) := by
+  have hIocab : MeasurableSet (Set.Ioc a b) := measurableSet_Ioc
+  have hSupport : MeasurableSet (Set.Ioc (0 : ℝ) 1) := measurableSet_Ioc
+  have hclamp : ex731Clamp a ≤ ex731Clamp b := monotone_ex731Clamp hab.le
+  have h_int : IntervalIntegrable (fun x : ℝ => 2 * x) volume (ex731Clamp a) (ex731Clamp b) := by
+    exact Continuous.intervalIntegrable (by fun_prop) _ _
+  have h_int_restrict :
+      Integrable (fun x : ℝ => 2 * x) (volume.restrict (Set.Ioc (ex731Clamp a) (ex731Clamp b))) := by
+    rwa [intervalIntegrable_iff_integrableOn_Ioc_of_le hclamp] at h_int
+  have h_nonneg :
+      0 ≤ᵐ[volume.restrict (Set.Ioc (ex731Clamp a) (ex731Clamp b))] fun x : ℝ => 2 * x := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioc] with x hx
+    have hx0 : 0 < x := lt_of_le_of_lt (ex731Clamp_nonneg a) hx.1
+    positivity
+  calc
+    ex731DensityMeasure (Set.Ioc a b)
+        = ∫⁻ x in Set.Ioc a b, ex731Density x ∂(volume : Measure ℝ) := by
+            rw [ex731DensityMeasure, withDensity_apply _ hIocab]
+    _ = ∫⁻ x, (Set.Ioc a b).indicator ex731Density x ∂(volume : Measure ℝ) := by
+          simpa using
+            (MeasureTheory.lintegral_indicator (μ := (volume : Measure ℝ)) hIocab ex731Density).symm
+    _ = ∫⁻ x, (Set.Ioc a b ∩ Set.Ioc (0 : ℝ) 1).indicator
+          (fun x => ENNReal.ofReal (2 * x)) x ∂(volume : Measure ℝ) := by
+          apply lintegral_congr_ae
+          filter_upwards with x
+          by_cases hx1 : x ∈ Set.Ioc a b
+          · by_cases hx2 : x ∈ Set.Ioc (0 : ℝ) 1
+            · have hx0 : 0 ≤ x := le_of_lt hx2.1
+              simp [ex731Density, hx1, hx2, Set.indicator, Set.mem_inter_iff,
+                ENNReal.ofReal_mul, hx0]
+            · simp [ex731Density, hx1, hx2, Set.indicator, Set.mem_inter_iff]
+          · by_cases hx2 : x ∈ Set.Ioc (0 : ℝ) 1
+            · simp [ex731Density, hx1, hx2, Set.indicator, Set.mem_inter_iff]
+            · simp [ex731Density, hx1, hx2, Set.indicator, Set.mem_inter_iff]
+    _ = ∫⁻ x in Set.Ioc a b ∩ Set.Ioc (0 : ℝ) 1,
+          ENNReal.ofReal (2 * x) ∂(volume : Measure ℝ) := by
+          simpa using
+            (MeasureTheory.lintegral_indicator (μ := (volume : Measure ℝ))
+              (hIocab.inter hSupport) (fun x => ENNReal.ofReal (2 * x)))
+    _ = ∫⁻ x in Set.Ioc (ex731Clamp a) (ex731Clamp b),
+          ENNReal.ofReal (2 * x) ∂(volume : Measure ℝ) := by
+          rw [ex731Ioc_inter_support hab]
+    _ = ENNReal.ofReal
+          (∫ x in Set.Ioc (ex731Clamp a) (ex731Clamp b), 2 * x ∂(volume : Measure ℝ)) := by
+          rw [← ofReal_integral_eq_lintegral_ofReal h_int_restrict h_nonneg]
+    _ = ENNReal.ofReal (∫ x in ex731Clamp a..ex731Clamp b, 2 * x) := by
+          rw [← intervalIntegral.integral_of_le hclamp]
+    _ = ENNReal.ofReal (ex731F b - ex731F a) := by
+          rw [ex731_integral_linear]
+          simp [ex731F, ex731StieltjesFun]
+
+lemma ex731Measure_eq_density : ex731Measure = ex731DensityMeasure := by
+  have hEq : ex731F.measure = ex731DensityMeasure := by
+    apply MeasureTheory.Measure.ext_of_Ioc ex731F.measure ex731DensityMeasure
+    intro a b hab
+    rw [ex731F.measure_Ioc, ex731DensityMeasure_Ioc hab]
+  simpa [ex731Measure] using hEq
+
+lemma ex731Measure_singleton_zero : ex731Measure ({0} : Set ℝ) = 0 := by
+  rw [ex731Measure, ex731F.measure_singleton]
+  have hcont :
+      ContinuousWithinAt (fun x : ℝ => ex731F x) (Set.Iic (0 : ℝ)) 0 := by
+    simpa using
+      (continuous_ex731StieltjesFun.continuousAt.continuousWithinAt :
+        ContinuousWithinAt ex731StieltjesFun (Set.Iic (0 : ℝ)) 0)
+  rw [hcont.leftLim_eq]
+  simp [ex731F, ex731StieltjesFun, ex731Clamp_eq_zero_of_le_zero le_rfl]
+
+lemma ex731_textbook_bridge {g : ℝ → ℝ} (hg : ContinuousOn g (Set.Icc (0 : ℝ) 1)) :
+    IntegrableOn g (Set.Icc (0 : ℝ) 1) ex731Measure ∧
+      ∃ hRS : RSIntegrable g (↑ex731F) 0 1,
+        ∫ x in Set.Icc (0 : ℝ) 1, g x ∂ex731Measure =
+          rsIntegral g (↑ex731F) 0 1 hRS := by
+  simpa [ex731Measure] using thm_7_8 ex731F zero_lt_one hg ex731Measure_singleton_zero
+
+lemma ex731_support_mul_subset (g : ℝ → ℝ) :
+    Function.support (fun x => ex731DensityReal x * g x) ⊆ Set.Ioc (0 : ℝ) 1 := by
+  intro x hx
+  by_contra hmem
+  apply hx
+  simp [ex731DensityReal, hmem]
+
+lemma ex731_integral_eq_interval (g : ℝ → ℝ) :
+    ∫ x, g x ∂ex731Measure = ∫ x in (0 : ℝ)..1, ex731DensityReal x * g x := by
+  calc
+    ∫ x, g x ∂ex731Measure = ∫ x, ex731DensityReal x * g x := by
+      rw [ex731Measure_eq_density, ex731DensityMeasure,
+        integral_withDensity_eq_integral_toReal_smul ex731Density_measurable ex731Density_lt_top]
+      apply integral_congr_ae
+      filter_upwards with x
+      by_cases hx : x ∈ Set.Ioc (0 : ℝ) 1
+      · have hx0 : 0 ≤ x := le_of_lt hx.1
+        simp [ex731Density, ex731DensityReal, hx, hx0, smul_eq_mul]
+      · simp [ex731Density, ex731DensityReal, hx, smul_eq_mul]
+    _ = ∫ x in (0 : ℝ)..1, ex731DensityReal x * g x := by
+      symm
+      exact intervalIntegral.integral_eq_integral_of_support_subset (ex731_support_mul_subset g)
+
+lemma ex731_measure_univ : ex731Measure Set.univ = 1 := by
+  simpa [ex731Measure] using ex731F.measure_univ ex731F_tendsto_atBot ex731F_tendsto_atTop
+
+lemma ex731_integral_id_reduction :
+    ∫ x, x ∂ex731Measure = ∫ x in (0 : ℝ)..1, 2 * x ^ 2 := by
+  calc
+    ∫ x, x ∂ex731Measure = ∫ x in (0 : ℝ)..1, ex731DensityReal x * x := ex731_integral_eq_interval id
+    _ = ∫ x in (0 : ℝ)..1, 2 * x ^ 2 := by
+      rw [intervalIntegral.integral_of_le zero_le_one]
+      conv_rhs => rw [intervalIntegral.integral_of_le zero_le_one]
+      apply setIntegral_congr_fun measurableSet_Ioc
+      intro x hx
+      simp [ex731DensityReal, hx.1, hx.2, pow_two, mul_assoc, mul_left_comm, mul_comm]
+
+lemma ex731_integral_id_value :
+    ∫ x in (0 : ℝ)..1, 2 * x ^ 2 = (2 : ℝ) / 3 := by
+  calc
+    ∫ x in (0 : ℝ)..1, 2 * x ^ 2 = 2 * ∫ x in (0 : ℝ)..1, x ^ 2 := by
+      rw [intervalIntegral.integral_const_mul]
+    _ = 2 * ((1 : ℝ) / 3) := by
+      rw [integral_pow]
+      norm_num
+    _ = (2 : ℝ) / 3 := by ring
+
+lemma ex731_cos_pi_integral :
+    ∫ x in (0 : ℝ)..1, Real.cos (Real.pi * x) = 0 := by
+  rw [intervalIntegral.integral_comp_mul_left (f := fun t : ℝ => Real.cos t) (a := (0 : ℝ))
+    (b := 1) Real.pi_ne_zero]
+  rw [integral_cos]
+  simp
+
+lemma ex731_integral_x_sin_value :
+    ∫ x in (0 : ℝ)..1, x * Real.sin (Real.pi * x) = 1 / Real.pi := by
+  have hu : ∀ x ∈ Set.uIcc (0 : ℝ) 1, HasDerivAt (fun y : ℝ => y) 1 x := by
+    intro x _
+    simpa using hasDerivAt_id x
+  have hv :
+      ∀ x ∈ Set.uIcc (0 : ℝ) 1,
+        HasDerivAt (fun y : ℝ => -(Real.cos (Real.pi * y) / Real.pi))
+          (Real.sin (Real.pi * x)) x := by
+    intro x _
+    have hmul : HasDerivAt (fun y : ℝ => Real.pi * y) Real.pi x := by
+      simpa [mul_comm] using (hasDerivAt_id x).const_mul Real.pi
+    have hcos : HasDerivAt (fun y : ℝ => Real.cos (Real.pi * y))
+        (-Real.sin (Real.pi * x) * Real.pi) x := by
+      simpa using (Real.hasDerivAt_cos (Real.pi * x)).comp x hmul
+    have hdiv : HasDerivAt (fun y : ℝ => Real.cos (Real.pi * y) / Real.pi)
+        ((-Real.sin (Real.pi * x) * Real.pi) / Real.pi) x := by
+      exact hcos.div_const Real.pi
+    have hneg : HasDerivAt (fun y : ℝ => -(Real.cos (Real.pi * y) / Real.pi))
+        (-((-Real.sin (Real.pi * x) * Real.pi) / Real.pi)) x := by
+      exact hdiv.neg
+    convert hneg using 1 <;> field_simp [Real.pi_ne_zero]
+  have hu' : IntervalIntegrable (fun _ : ℝ => (1 : ℝ)) volume 0 1 := by
+    simpa using (intervalIntegrable_const : IntervalIntegrable (fun _ : ℝ => (1 : ℝ)) volume 0 1)
+  have hv' : IntervalIntegrable (fun x : ℝ => Real.sin (Real.pi * x)) volume 0 1 := by
+    exact Continuous.intervalIntegrable (by fun_prop) _ _
+  have hparts :=
+    intervalIntegral.integral_mul_deriv_eq_deriv_mul
+      (a := (0 : ℝ)) (b := 1)
+      (u := fun y : ℝ => y) (u' := fun _ : ℝ => (1 : ℝ))
+      (v := fun y : ℝ => -(Real.cos (Real.pi * y) / Real.pi))
+      (v' := fun y : ℝ => Real.sin (Real.pi * y))
+      hu hv hu' hv'
+  have hcosScaled : ∫ x in (0 : ℝ)..1, (1 : ℝ) * (-(Real.cos (Real.pi * x) / Real.pi)) = 0 := by
+    simp [intervalIntegral.integral_neg, intervalIntegral.integral_div, ex731_cos_pi_integral]
+  calc
+    ∫ x in (0 : ℝ)..1, x * Real.sin (Real.pi * x)
+        = 1 * (-(Real.cos (Real.pi * 1) / Real.pi))
+            - 0 * (-(Real.cos (Real.pi * 0) / Real.pi))
+            - ∫ x in (0 : ℝ)..1, (1 : ℝ) * (-(Real.cos (Real.pi * x) / Real.pi)) := by
+          simpa using hparts
+    _ = 1 / Real.pi := by
+      rw [hcosScaled]
+      field_simp [Real.pi_ne_zero]
+      norm_num [Real.cos_pi]
+
+lemma ex731_integral_sin_reduction :
+    ∫ x, Real.sin (Real.pi * x) ∂ex731Measure
+      = ∫ x in (0 : ℝ)..1, 2 * x * Real.sin (Real.pi * x) := by
+  calc
+    ∫ x, Real.sin (Real.pi * x) ∂ex731Measure
+        = ∫ x in (0 : ℝ)..1, ex731DensityReal x * Real.sin (Real.pi * x) := by
+          exact ex731_integral_eq_interval (fun x => Real.sin (Real.pi * x))
+    _ = ∫ x in (0 : ℝ)..1, 2 * x * Real.sin (Real.pi * x) := by
+      rw [intervalIntegral.integral_of_le zero_le_one]
+      conv_rhs => rw [intervalIntegral.integral_of_le zero_le_one]
+      apply setIntegral_congr_fun measurableSet_Ioc
+      intro x hx
+      simp [ex731DensityReal, hx.1, hx.2, mul_assoc, mul_left_comm, mul_comm]
+
+lemma ex731_integral_sin_value :
+    ∫ x in (0 : ℝ)..1, 2 * x * Real.sin (Real.pi * x) = 2 / Real.pi := by
+  calc
+    ∫ x in (0 : ℝ)..1, 2 * x * Real.sin (Real.pi * x)
+        = ∫ x in (0 : ℝ)..1, 2 * (x * Real.sin (Real.pi * x)) := by
+          apply intervalIntegral.integral_congr
+          intro x hx
+          ring
+    _ = 2 * ∫ x in (0 : ℝ)..1, x * Real.sin (Real.pi * x) := by
+      rw [intervalIntegral.integral_const_mul]
+    _ = 2 * (1 / Real.pi) := by rw [ex731_integral_x_sin_value]
+    _ = 2 / Real.pi := by ring
+
+theorem ex_7_3_1 :
+    let P := ex731Measure
+    P Set.univ = 1 ∧
+      (∀ {g : ℝ → ℝ}, ContinuousOn g (Set.Icc (0 : ℝ) 1) →
+        IntegrableOn g (Set.Icc (0 : ℝ) 1) P ∧
+          ∃ hRS : RSIntegrable g (↑ex731F) 0 1,
+            ∫ x in Set.Icc (0 : ℝ) 1, g x ∂P =
+              rsIntegral g (↑ex731F) 0 1 hRS) ∧
+      (∫ x, x ∂P = ∫ x in (0 : ℝ)..1, 2 * x ^ 2) ∧
+      (∫ x, x ∂P = (2 : ℝ) / 3) ∧
+      (∫ x, Real.sin (Real.pi * x) ∂P = ∫ x in (0 : ℝ)..1, 2 * x * Real.sin (Real.pi * x)) ∧
+      (∫ x, Real.sin (Real.pi * x) ∂P = 2 / Real.pi) := by
+  dsimp
+  refine ⟨ex731_measure_univ, ?_, ex731_integral_id_reduction, ?_, ex731_integral_sin_reduction, ?_⟩
+  · intro g hg
+    exact ex731_textbook_bridge hg
+  · rw [ex731_integral_id_reduction, ex731_integral_id_value]
+  · rw [ex731_integral_sin_reduction, ex731_integral_sin_value]

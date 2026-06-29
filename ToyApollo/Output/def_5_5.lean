@@ -1,0 +1,10 @@
+/-
+TASK ID: def_5_5
+SOURCE MATERIAL: omitted from the public source snapshot; see docs/repository_scope.md.
+-/
+
+import Mathlib
+
+def def_5_5 {Ω : Type _} [MeasurableSpace Ω] (μ : MeasureTheory.Measure Ω) {n : ℕ}
+    (A : Fin n → Set Ω) : Prop :=
+  ProbabilityTheory.iIndepSet A μ
