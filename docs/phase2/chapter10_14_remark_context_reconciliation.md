@@ -1,5 +1,12 @@
 # Chapter 10-14 Remark Context Reconciliation
 
+> **Superseded 2026-06-30.** The Lean string carriers and ledger task entries for
+> these `intro_*` / `rem_*` remarks were removed. Chapters 9-14 now follow the
+> Chapters 1-8 norm: remark/intro blocks are plan-only narrative
+> (`plans/*_plan.json`), **not** Phase 2 Lean tasks — no `ToyApollo/Output`
+> carrier and no ledger entry is retained. The retain-as-carrier decision below
+> is kept for history only.
+
 Date: 2026-06-22
 
 ## Decision
