@@ -138,3 +138,12 @@ definition.
 Do not treat Theorem 1.2(4) as useless, and do not treat it as a global blocker.
 Record it as a source/definition convention issue and continue with tasks that
 do not depend on the unsafe unconditional local-to-global implication.
+
+## Author confirmation (2026-07)
+
+The textbook author (Kenneth Shum) has acknowledged this issue in
+correspondence: the counterexample is valid and Theorem 1.2(4) is missing a
+split-point continuity hypothesis (Option A: α continuous at c, or f continuous
+at c). This is a record-only update — `thm_1_2` stays `allowed_exception` and is
+not re-run. Full note:
+[`author_errata_confirmations_2026-07.md`](author_errata_confirmations_2026-07.md).
