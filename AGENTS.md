@@ -28,7 +28,8 @@ If this file conflicts with older notes, trust current runtime code and the rule
   - CLI `apply --input` points to the source `.tex` or `inputs/` directory, not to `phase1_prompt_packs/<source>/draft_plan.json`
 - Phase 2:
   - before any authoring, review, repair, hard-failure decision, or chapter/task-set batch, use the repo skill `.agents/skills/toy-apollo-phase2-entrypoint/SKILL.md`; if the Codex skill system has not auto-loaded it, read that file manually and follow its entry report before task-specific work
-  - proof-fidelity verdicts are governed by `docs/phase2/status_contract.md` and `docs/phase2/review_criteria.md`; do not treat Lean build success, ledger cleanliness, audit cleanliness, or classification cleanliness as textbook proof completion
+  - proof-fidelity verdicts are governed by `docs/phase2/status_contract.md` and `docs/phase2/review_criteria.md`; do not treat Lean build success, `#print axioms` cleanliness, ledger cleanliness, audit cleanliness, or classification cleanliness as textbook proof completion
+  - `#print axioms` cleanliness is only a proof-dependency-debt check for checked declarations; it does not prove source fidelity, human validation, or semantic completion. For detailed proof-status semantics, follow `docs/phase2/status_contract.md`.
   - default authority is three-gate: build gate only proves technical build readiness; review gate supplies a strict semantic verdict and proof class; apply gate lands clean completion only when `phase2_status=pass`
   - default operator path: `pack -> build-check -> review-now -> review-apply`
   - for chapter-wide or task-set work, start with `batch-plan`; use `--batch-task-kinds theorem,definition --batch-limit 15 --batch-workers <n>` for a non-Problem worker queue, and use `batch-run --batch-max-actions 1` only as a bounded dispatcher over existing review/auto-loop actions
@@ -47,6 +48,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
 - `soft-apply` means apply selected soft imports to the ledger and soft-dependency pack artifacts.
 - `soft-apply` does not call an external provider, does not generate execution batches, and does not perform a Lean verification gate.
 - Removed Phase 3 provider and post-processing artifacts remain protected local/historical state, not active workflow inputs.
+- Do not describe AI-generated Lean, docs, review files, prompt-pack contents, or audit artifacts as handwritten by the user unless local authorship evidence explicitly proves it.
 
 ## Recommended Routing
 
