@@ -100,7 +100,8 @@ See [7, Theorem 6.10] for a proof of Theorem 1.1.
     \[
     \int_a^b f\, d\alpha \le \int_a^b g\, d\alpha.
     \]
-    \item Suppose $a<c<b$. If $f\in \mathcal{R}(\alpha)$ on $[a,c]$ and $f\in \mathcal{R}(\alpha)$ on $[c,b]$, then $f$ is RS-integrable on $[a,b]$, and
+    % Theorem 1.2(4): split-point continuity hypothesis added per K. Shum erratum (2026-07)
+    \item Suppose $a<c<b$. If $f\in \mathcal{R}(\alpha)$ on $[a,c]$ and $f\in \mathcal{R}(\alpha)$ on $[c,b]$, and $\alpha$ is continuous at $c$ (or $f$ is continuous at $c$), then $f$ is RS-integrable on $[a,b]$, and
     \[
     \int_a^b f\, d\alpha = \int_a^c f\, d\alpha + \int_c^b f\, d\alpha.
     \]
@@ -223,10 +224,11 @@ The first part corresponds to the discrete part of $Y$ and is given by
 
 The second part corresponds to the continuous part of $Y$ and is given by
 \[
+% alpha_2: (1-2p) prefactor removed per K. Shum erratum (2026-07); middle piece is the standard normal CDF measured from -1.5, so it connects to the 1-2p plateau at x=1.5
 \alpha_2(x)\triangleq
 \begin{cases}
 0 & \text{if } x<-1.5,\\
-(1-2p)\int_{-1.5}^{x}\frac{1}{\sqrt{2\pi}}e^{-t^2/2}\, dt & \text{for } -1.5\le x<1.5,\\
+\int_{-1.5}^{x}\frac{1}{\sqrt{2\pi}}e^{-t^2/2}\, dt & \text{for } -1.5\le x<1.5,\\
 1-2p & \text{if } x\ge 1.5.
 \end{cases}
 \]
