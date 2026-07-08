@@ -932,7 +932,11 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             )
 
             result_path = self._write_codex_review_result(pack_dir, verdict="pass")
-            success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "apply build ok"),
+            ):
+                success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
 
             self.assertTrue(success, detail)
             task_record = ledger.ledger["tasks"][task_id]
@@ -966,6 +970,70 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             task_record = ledger.ledger["tasks"][task_id]
             self.assertEqual(task_record["status"], "COMPLETED")
             self.assertTrue(str(task_record.get("current_review_repair_request_file", "")).endswith(".json"))
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_existing_review_apply_pass_lands_completed_when_apply_build_ok(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_existing_review_apply_pass_build_ok"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_existing_review_apply_pass_build_ok"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
+            with patch("src.toy_apollo.phase2_prompt_pack._run_official_module_build", return_value=(True, "sanity ok")):
+                review_success, review_detail = asyncio.run(
+                    write_existing_output_review_pack(task_id, ledger, settings, force_new_attempt=True)
+                )
+            self.assertTrue(review_success, review_detail)
+
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass")
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "apply build ok"),
+            ):
+                success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertTrue(success, detail)
+            self.assertTrue(output_path.exists())
+            task_record = ledger.ledger["tasks"][task_id]
+            self.assertEqual(task_record["status"], "COMPLETED")
+            self.assertFalse(task_record.get("latest_official_apply_build_failed", False))
+            self.assertFalse(task_record.get("latest_official_review_requires_repair", False))
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_existing_review_apply_build_failure_blocks_completion_without_demote(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_existing_review_apply_build_fail_blocks"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_existing_review_apply_build_fail_blocks"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
+            original_output = output_path.read_text(encoding="utf-8")
+            with patch("src.toy_apollo.phase2_prompt_pack._run_official_module_build", return_value=(True, "sanity ok")):
+                review_success, review_detail = asyncio.run(
+                    write_existing_output_review_pack(task_id, ledger, settings, force_new_attempt=True)
+                )
+            self.assertTrue(review_success, review_detail)
+
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass")
+            # The semantic review passes, but the apply-time rebuild fails (e.g. a
+            # dependency drifted since review-prep). The clean completion must be
+            # refused, yet the existing official output must NOT be demoted.
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(False, "apply build broke: unknown identifier 'drifted_dep'"),
+            ):
+                success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertFalse(success, detail)
+            self.assertIn("apply build broke", detail)
+            # No demote: status stays COMPLETED and the output file is untouched.
+            self.assertTrue(output_path.exists())
+            self.assertEqual(output_path.read_text(encoding="utf-8"), original_output)
+            task_record = ledger.ledger["tasks"][task_id]
+            self.assertEqual(task_record["status"], "COMPLETED")
+            # Repair is flagged despite the passing semantic verdict.
+            self.assertTrue(task_record.get("latest_official_apply_build_failed"))
+            self.assertTrue(task_record.get("latest_official_review_requires_repair"))
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

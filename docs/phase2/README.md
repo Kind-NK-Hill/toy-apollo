@@ -57,6 +57,9 @@ is repair evidence, not a completion state, unless it is recorded through
 - [review_criteria.md](review_criteria.md): strict semantic review criteria.
 - [artifacts.md](artifacts.md): authority files versus cache/report/history.
 - [tools.md](tools.md): short notes for diagnostics-only tools.
+- [output_auxiliary_modules.md](output_auxiliary_modules.md): classification
+  for non-task `ToyApollo/Output` support, bridge, family-member, and retired
+  build-probe modules.
 - [../interface_dependency_policy.md](../interface_dependency_policy.md): the
   textbook-first, bridge-then-Mathlib policy for shared mathematical
   interfaces.
