@@ -135,6 +135,24 @@ def run_staged_official_build(*args: Any, **kwargs: Any):
     return _impl(*args, **kwargs)
 
 
+def run_official_module_build(*args: Any, **kwargs: Any):
+    from .phase2_prompt_pack import _run_official_module_build as _impl
+
+    return _impl(*args, **kwargs)
+
+
+def run_lean_module_build(*args: Any, **kwargs: Any):
+    from .phase2_prompt_pack import _run_lean_module_build as _impl
+
+    return _impl(*args, **kwargs)
+
+
+def support_review_target_from_obligations(*args: Any, **kwargs: Any):
+    from .phase2_prompt_pack import _support_review_target_from_obligations as _impl
+
+    return _impl(*args, **kwargs)
+
+
 def write_review_compat_summary(*args: Any, **kwargs: Any):
     from .phase2_prompt_pack import _write_review_compat_summary as _impl
 

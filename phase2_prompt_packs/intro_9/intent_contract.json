@@ -1,7 +1,0 @@
-{
-  "task_role": "remark",
-  "required_cues": [],
-  "forbidden_relaxations": [],
-  "must_not_assume": [],
-  "coverage_mode": "strict_source_alignment"
-}

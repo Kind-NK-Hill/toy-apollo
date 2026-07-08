@@ -30,10 +30,19 @@ when a task carries a route-risk signal such as:
 - `semantic_fail_public_premise*` or another public-premise relocation signal;
 - `source_mismatch` or statement/source mismatch;
 - `needs_concrete_decomposition`;
+- repeated build/review/auto-loop failures where the task is visibly
+  struggling and the missing mathematical route is not yet clear;
 - historical nested `obl_obl_*` evidence in an imported legacy ledger;
 - dirty or blocked family state;
 - parent theorem setup that exposes a core proof result as a public premise;
 - pilot large analysis/probability tasks such as `prob_14_1` and `prob_14_8`.
+
+For these tasks the normal practice is to write the mathematical proof route in
+natural language first, before authoring more Lean.  The skeleton should state
+the source claim, the textbook proof route, the intended theorem shape, the
+available local/Mathlib support, and any support obligations that must be
+proved.  Only after an independent read-only Math Review Gate result returns
+`go` should the operator resume Lean author/build for the parent task.
 
 The gate requires:
 

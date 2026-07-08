@@ -35,6 +35,14 @@ When a Math Review Gate row blocks authoring, the reason includes the compressed
 pre-author checklist: source statement, no public premise relocation, reviewed
 math skeleton with `go`, and independent semantic review after build.
 
+When a task is visibly struggling, pause ordinary Lean authoring and use the
+Math Review Gate before another repair loop.  Write a natural-language
+`math_proof_skeleton_vN.md` first: source statement, proof route, theorem shape,
+known support, missing support obligations, and forbidden public-premise
+relocations.  Then obtain an independent read-only `math_review_result_vN.json`.
+Only a `go` result reopens parent `build-check`; it is not completion evidence
+and does not replace semantic review or `review-apply`.
+
 `batch-run` executes a small number of actions from that same plan. It only
 dispatches existing Phase2 actions such as fresh existing review and
 `auto-loop`; it does not decide completion by itself.

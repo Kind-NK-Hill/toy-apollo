@@ -37,6 +37,18 @@ The apply gate projects:
 Ledger state, audit reports, classification files, batch state, validation
 tools, and verify reports are not status authorities.
 
+## Proof Dependency Audits
+
+`#print axioms` and related axiom-audit outputs are proof-dependency-debt
+checks for the declarations that were actually checked under the recorded
+command. A clean result can support a narrow claim such as "no reported
+`sorryAx`, native-reduction debt, or external axiom dependency for this checked
+term under this environment."
+
+This audit does not decide source fidelity, statement strength, textbook proof
+route, human validation, or Phase2 clean completion. It does not replace
+semantic review, proof class projection, or `review-apply`.
+
 ## Pass Rules
 
 Proof-bearing tasks include theorem, problem, exercise, and example tasks. They

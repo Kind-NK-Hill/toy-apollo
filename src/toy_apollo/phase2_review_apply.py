@@ -56,7 +56,10 @@ from .phase2_pack_generation import (
     parse_diagnostics,
     record_semantic_review_attempt,
     review_diagnostics,
+    run_lean_module_build,
+    run_official_module_build,
     run_staged_official_build,
+    support_review_target_from_obligations,
     write_review_compat_summary,
     ensure_task_registered,
     resolve_phase2_task,
@@ -850,34 +853,131 @@ async def apply_codex_review_result_once(
             next_action="review_fix" if task_status_projection.task_status == "fail" else "repair_dependency_gate",
         )
     if review_subject_kind == "official_output":
+        if not output_binding.is_obligation_task:
+            # Apply-gate build re-verification. The existing official output was
+            # sanity-built at review-prep, but the freshness gate only ties the
+            # output file's own hash, not its imports: a dependency that changed
+            # after prep can leave the recorded output un-buildable while the
+            # subject hash is unchanged. Re-run the module build now so we never
+            # land COMPLETED on top of a stale pass. On failure we do not demote
+            # the official output (mirrors the existing-output review-fail
+            # policy); we record repair-required and refuse the clean landing.
+            apply_build_success, apply_build_output = run_official_module_build(task_id, settings)
+            if not apply_build_success:
+                diagnostics = parse_diagnostics(apply_build_output, "final_build_failed", "apply_official_output_build")
+                fail_detail = (
+                    apply_build_output
+                    or f"lake build ToyApollo.Output.{task_id} failed at review-apply."
+                )
+                outcome = finish(
+                    success=False,
+                    detail_text=(
+                        f"{fail_detail} Existing official output rebuilt unclean at review-apply; "
+                        "not landed as completion and not demoted (repair required)."
+                    ),
+                    diagnostics=diagnostics,
+                    semantic_review=normalized_review,
+                    disposition="official_output_apply_build_failed",
+                    state_transition="none",
+                    final_build_success=False,
+                    final_build_output=apply_build_output,
+                )
+                # finish() recomputes latest_official_review_requires_repair from
+                # the (passing) semantic verdict; the apply-time build failure
+                # must still flag repair, so set it after finish() wrote metadata.
+                ledger.update_runtime_metadata(
+                    task_id,
+                    latest_official_review_requires_repair=True,
+                    latest_official_apply_build_failed=True,
+                    latest_official_apply_build_detail=fail_detail,
+                    official_output_quarantine_policy="not_quarantined_by_default",
+                )
+                return outcome
         ledger.register_success(task_id, candidate_code, ledger._hash_text(candidate_code))
         if output_binding.is_obligation_task:
             ledger.update_runtime_metadata(task_id, obligation_task_state="closed")
             reconcile_obligation_tasks_for_task(output_binding.output_owner_task_id, ledger, settings)
+        rebuilt = not output_binding.is_obligation_task
         return finish(
             success=True,
-            detail_text="Semantic review passed for the existing runnable official output.",
+            detail_text=(
+                "Semantic review passed; existing official output rebuilt cleanly at review-apply."
+                if rebuilt else
+                "Semantic review passed for the existing runnable official output (obligation task; apply-time build skipped)."
+            ),
             diagnostics=[],
             semantic_review=normalized_review,
             disposition="official_output_review_pass",
             state_transition="none",
             final_build_success=True,
-            final_build_output="Existing official output was already validated before review.",
+            final_build_output=(
+                "Existing official output rebuilt at review-apply."
+                if rebuilt else
+                "Existing official output was already validated before review."
+            ),
         )
     if review_subject_kind == "existing_support":
         if output_binding.is_obligation_task:
+            # Obligation support landing is the dormant path; leave it unchanged
+            # and skip the apply-time build (obligation handling is scoped out of
+            # this fix).
             ledger.update_status(task_id, TaskStatus.COMPLETED)
             ledger.update_runtime_metadata(task_id, obligation_task_state="closed")
             reconcile_obligation_tasks_for_task(output_binding.output_owner_task_id, ledger, settings)
+        else:
+            # Apply-gate build re-verification for a non-obligation support
+            # landing. The recorded review subject is a snapshot, not a live
+            # module, so resolve the real landing module from the obligations
+            # file and rebuild it before landing COMPLETED. On failure: do not
+            # land completion (the task stays at its pre-apply status).
+            support_target = support_review_target_from_obligations(pack_dir, settings)
+            support_module = str(support_target.get("module", "") or "")
+            if not support_module:
+                return finish(
+                    success=False,
+                    detail_text=(
+                        "Existing support landing module could not be resolved from "
+                        "proof_obligations.json at review-apply; support landing not completed."
+                    ),
+                    diagnostics=hard_check_diagnostic("support_module_unresolved", "missing landing_module"),
+                    semantic_review=normalized_review,
+                    disposition="existing_support_apply_module_unresolved",
+                    state_transition="none",
+                )
+            apply_build_success, apply_build_output = run_lean_module_build(support_module, settings)
+            if not apply_build_success:
+                diagnostics = parse_diagnostics(apply_build_output, "final_build_failed", "apply_support_build")
+                return finish(
+                    success=False,
+                    detail_text=(
+                        apply_build_output
+                        or f"lake build {support_module} failed at review-apply; support landing not completed."
+                    ),
+                    diagnostics=diagnostics,
+                    semantic_review=normalized_review,
+                    disposition="existing_support_apply_build_failed",
+                    state_transition="none",
+                    final_build_success=False,
+                    final_build_output=apply_build_output,
+                )
+        rebuilt = not output_binding.is_obligation_task
         return finish(
             success=True,
-            detail_text="Semantic review passed for the existing support landing.",
+            detail_text=(
+                "Semantic review passed; existing support module rebuilt cleanly at review-apply."
+                if rebuilt else
+                "Semantic review passed for the existing support landing (obligation task; apply-time build skipped)."
+            ),
             diagnostics=[],
             semantic_review=normalized_review,
             disposition="existing_support_review_pass",
             state_transition="completed",
             final_build_success=True,
-            final_build_output="Existing support module was already validated before review.",
+            final_build_output=(
+                "Existing support module rebuilt at review-apply."
+                if rebuilt else
+                "Existing support module was already validated before review."
+            ),
         )
 
     final_success, final_output = run_staged_official_build(
