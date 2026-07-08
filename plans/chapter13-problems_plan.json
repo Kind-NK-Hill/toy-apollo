@@ -1,5 +1,46 @@
 [
     {
+        "block_id": "prob_13_1",
+        "type": "Problem",
+        "title": "Problem 13.1",
+        "content": "\\textbf{13.1.} Random variables $X$ and $Y$ take values in $\\{1,2,3\\}$. Their joint pmf is defined as in the following table.\n\\[\n\\begin{array}{c|ccc}\n & Y=1 & Y=2 & Y=3\\\\\n\\hline\nX=1 & 0.1 & 0 & 0.2\\\\\nX=2 & 0 & 0.3 & 0\\\\\nX=3 & 0.2 & 0.2 & 0\n\\end{array}\n\\]\nFind $E[X\\vert Y]$ and $E[Y\\vert X]$.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter13-problems"
+    },
+    {
+        "block_id": "prob_13_2",
+        "type": "Problem",
+        "title": "Problem 13.2",
+        "content": "\\textbf{13.2.} Let $X$ be a zero-mean Gaussian random variable with nonzero variance $\\sigma^2$. Let\n\\[\nY \\triangleq\n\\begin{cases}\n-1 & \\text{if } X<-\\sigma,\\\\\n0 & \\text{if } -\\sigma \\leq X \\leq \\sigma,\\\\\n1 & \\text{if } X>\\sigma.\n\\end{cases}\n\\]\nCompute the conditional expectation $E[X\\vert Y]$ and $E[X\\vert Y^2]$.",
+        "dependencies": [],
+        "is_renowned": false,
+        "source_plan": "chapter13-problems"
+    },
+    {
+        "block_id": "prob_13_3",
+        "type": "Problem",
+        "title": "Problem 13.3",
+        "content": "\\textbf{13.3.} The joint pdf of two jointly Gaussian random variables $X_1$ and $X_2$ is given in (1.3). Find the conditional expectation of $X_2$ given $X_1=x$.",
+        "dependencies": [
+            "def_1_2",
+            "prob_13_4"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter13-problems"
+    },
+    {
+        "block_id": "prob_13_4",
+        "type": "Problem",
+        "title": "Problem 13.4",
+        "content": "\\textbf{13.4.} Suppose $X$ and $Y$ are jointly Gaussian random variables. Find the conditional expectation of $X$ given $Y$, in terms of the means, variances, and the covariance of $X$ and $Y$.",
+        "dependencies": [
+            "def_1_2"
+        ],
+        "is_renowned": false,
+        "source_plan": "chapter13-problems"
+    },
+    {
         "block_id": "prob_13_5",
         "type": "Problem",
         "title": "Problem 13.5",

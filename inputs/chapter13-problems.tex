@@ -1,5 +1,35 @@
 \subsection*{Problems}
 
+%%% BEGIN CHANGE [COD 2026-07-07]: add book Problems 13.1--13.4 missing from the cleaned source so Phase 1 can register the genuine coverage gap. %%%
+% [was: chapter13-problems.tex began at \textbf{13.5.}; Problems 13.1--13.4 were absent from this cleaned source unit.]
+\textbf{13.1.} Random variables $X$ and $Y$ take values in $\{1,2,3\}$. Their joint pmf is defined as in the following table.
+\[
+\begin{array}{c|ccc}
+ & Y=1 & Y=2 & Y=3\\
+\hline
+X=1 & 0.1 & 0 & 0.2\\
+X=2 & 0 & 0.3 & 0\\
+X=3 & 0.2 & 0.2 & 0
+\end{array}
+\]
+Find $E[X\vert Y]$ and $E[Y\vert X]$.
+
+\textbf{13.2.} Let $X$ be a zero-mean Gaussian random variable with nonzero variance $\sigma^2$. Let
+\[
+Y \triangleq
+\begin{cases}
+-1 & \text{if } X<-\sigma,\\
+0 & \text{if } -\sigma \leq X \leq \sigma,\\
+1 & \text{if } X>\sigma.
+\end{cases}
+\]
+Compute the conditional expectation $E[X\vert Y]$ and $E[X\vert Y^2]$.
+
+\textbf{13.3.} The joint pdf of two jointly Gaussian random variables $X_1$ and $X_2$ is given in (1.3). Find the conditional expectation of $X_2$ given $X_1=x$.
+
+\textbf{13.4.} Suppose $X$ and $Y$ are jointly Gaussian random variables. Find the conditional expectation of $X$ given $Y$, in terms of the means, variances, and the covariance of $X$ and $Y$.
+%%% END CHANGE %%%
+
 \textbf{13.5.} (a) Suppose X and Y are iid. random variables with finite mean. Prove that
 
 E[X\vertX + Y]= (X + Y)/ 2. (Hint: Show that E [Y\vertX + Y]= E[X\vertX +Y ] .)
