@@ -3,14 +3,45 @@ TASK ID: ex_3_3_6
 SOURCE MATERIAL: omitted from the public source snapshot; see docs/repository_scope.md.
 -/
 
-import Mathlib.Analysis.SpecificLimits.Basic
-import Mathlib.Analysis.Real.OfDigits
-import Mathlib.Probability.ProductMeasure
-import Mathlib.MeasureTheory.Measure.Dirac
-import ToyApollo.Output.ex_4_2_lebesgue_borel
+import Mathlib
 
 open MeasureTheory Set
 open scoped ENNReal
+
+lemma ex336_volume_image_div3 (S : Set ℝ) :
+    volume ((· / 3) '' S) = ENNReal.ofReal (1 / 3) * volume S := by
+  convert Real.volume_preimage_mul_left (show (3 : ℝ) ≠ 0 by norm_num) (S) using 1 <;> ring_nf
+  congr with x ; aesop
+
+lemma ex336_volume_image_add2_div3 (S : Set ℝ) :
+    volume ((fun x => (2 + x) / 3) '' S) = ENNReal.ofReal (1 / 3) * volume S := by
+  have himg : (fun x => (2 + x) / 3) '' S = (· / 3) '' ((fun x => x + 2) '' S) := by
+    rw [Set.image_image]
+    exact Set.image_congr fun x _ => by ring
+  rw [himg, ex336_volume_image_div3]
+  congr 1
+  simp [Set.image_add_right]
+
+lemma ex336_volume_preCantorSet_le (n : ℕ) :
+    volume (preCantorSet n) ≤ ENNReal.ofReal ((2 / 3 : ℝ) ^ n) := by
+  induction' n with n ih
+  · erw [Real.volume_Icc] ; norm_num
+  · refine' le_trans (MeasureTheory.measure_union_le _ _) _
+    rw [ex336_volume_image_div3, ex336_volume_image_add2_div3]
+    convert mul_le_mul_left' ih (ENNReal.ofReal (1 / 3) + ENNReal.ofReal (1 / 3)) using 1 ; ring
+    rw [← ENNReal.ofReal_add] <;> norm_num ; ring
+
+lemma ex336_volume_cantorSet_eq_zero : volume cantorSet = 0 := by
+  have h_cantor_subset : ∀ n, volume (preCantorSet n) ≤ ENNReal.ofReal ((2 / 3 : ℝ) ^ n) :=
+    fun n => ex336_volume_preCantorSet_le n
+  have h_cantor_le : ∀ n, volume cantorSet ≤ ENNReal.ofReal ((2 / 3 : ℝ) ^ n) :=
+    fun n => le_trans (MeasureTheory.measure_mono <| Set.iInter_subset _ _) (h_cantor_subset n)
+  have h_cantor_zero :
+      Filter.Tendsto (fun n => ENNReal.ofReal ((2 / 3 : ℝ) ^ n)) Filter.atTop (nhds 0) := by
+    simpa using
+      ENNReal.tendsto_ofReal
+        (tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num : (2 : ℝ) / 3 < 1))
+  exact le_antisymm (le_of_tendsto_of_tendsto' tendsto_const_nhds h_cantor_zero h_cantor_le) bot_le
 
 noncomputable def fairCoin : Measure Bool :=
   (1 / 2 : ℝ≥0∞) • Measure.dirac false + (1 / 2 : ℝ≥0∞) • Measure.dirac true
@@ -124,5 +155,5 @@ theorem cantorDistribution_singleton_eq_zero (x : ℝ) : cantorDistribution {x} 
 theorem ex_3_3_6 :
     ∃ C : Set ℝ, MeasurableSet C ∧ volume C = 0 ∧ cantorDistribution C = 1 ∧
       (∀ x : ℝ, cantorDistribution {x} = 0) := by
-  refine ⟨cantorSet, isClosed_cantorSet.measurableSet, volume_cantorSet_eq_zero,
+  refine ⟨cantorSet, isClosed_cantorSet.measurableSet, ex336_volume_cantorSet_eq_zero,
     cantorDistribution_cantorSet_eq_one, cantorDistribution_singleton_eq_zero⟩
