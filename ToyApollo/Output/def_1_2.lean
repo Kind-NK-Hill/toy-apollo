@@ -112,45 +112,30 @@ def rsUpperLowerCommonLimit (a b : ℝ) (f alpha : ℝ → ℝ) (L : ℝ) : Prop
 def rsTaggedCommonLimit (a b : ℝ) (f alpha : ℝ → ℝ) (L : ℝ) : Prop :=
   DarbouxRS.TaggedCommonLimit a b f alpha L
 
-/-- Source-faithful bridge package for the Definition 1.2 integral value.
-
-The source definition is the Darboux upper/lower common-limit criterion. The
-same source section also introduces tagged Riemann--Stieltjes sums. A valid
-finite-interval integral value carries both pieces of evidence for the same
-real number, so the bridge is part of the public definition interface rather
-than an unproved public axiom. -/
+/-- Source-faithful package for a guarded Definition 1.2 integral value. -/
 structure RSIntegralWitness (f alpha : ℝ → ℝ) (a b : ℝ) where
   value : ℝ
   source_limit : rsUpperLowerCommonLimit a b f alpha value
-  tagged_limit : rsTaggedCommonLimit a b f alpha value
 
 /-- `f` is Riemann-Stieltjes integrable on `[a,b]` with respect to `alpha`. -/
 def RSIntegrable (f alpha : ℝ → ℝ) (a b : ℝ) : Prop :=
-  Nonempty (RSIntegralWitness f alpha a b)
+  DarbouxRS.RSIntegrableOnInterval f alpha a b
+
+/-- Convert a source witness into the public Definition 1.2 predicate. -/
+def RSIntegralWitness.toRSIntegrable {f alpha : ℝ → ℝ} {a b : ℝ}
+    (w : RSIntegralWitness f alpha a b) : RSIntegrable f alpha a b :=
+  ⟨w.value, w.source_limit⟩
 
 /-- The value of the finite-interval Riemann-Stieltjes integral after integrability is known. -/
 noncomputable def rsIntegral (f alpha : ℝ → ℝ) (a b : ℝ)
     (h : RSIntegrable f alpha a b) : ℝ :=
-  (Classical.choice h).value
+  Classical.choose h
 
 /-- The chosen integral value satisfies the source upper/lower common-limit criterion. -/
 theorem rsIntegral_source_spec {f alpha : ℝ → ℝ} {a b : ℝ}
     (h : RSIntegrable f alpha a b) :
     rsUpperLowerCommonLimit a b f alpha (rsIntegral f alpha a b h) :=
-  (Classical.choice h).source_limit
-
-/-- The chosen integral value also satisfies the existing tagged-sum core interface. -/
-theorem rsIntegral_spec {f alpha : ℝ → ℝ} {a b : ℝ}
-    (h : RSIntegrable f alpha a b) :
-    rsTaggedCommonLimit a b f alpha (rsIntegral f alpha a b h) :=
-  (Classical.choice h).tagged_limit
-
-/-- The guarded integral value is the common value of the source and tagged interfaces. -/
-theorem rsIntegral_source_and_tagged_spec {f alpha : ℝ → ℝ} {a b : ℝ}
-    (h : RSIntegrable f alpha a b) :
-    rsUpperLowerCommonLimit a b f alpha (rsIntegral f alpha a b h) ∧
-      rsTaggedCommonLimit a b f alpha (rsIntegral f alpha a b h) :=
-  ⟨rsIntegral_source_spec h, rsIntegral_spec h⟩
+  Classical.choose_spec h
 
 namespace DarbouxRS
 
@@ -601,6 +586,60 @@ theorem lowerSum_le_upperSum_core {a b : ℝ} (P : Partition a b)
       ⟨hab, hAbove, hBelow, hmono⟩ hi_lt
   exact mul_le_mul_of_nonneg_right hstep hinc
 
+/-- For a fixed partition, every valid tagged sum lies between the lower and upper sums. -/
+theorem taggedSum_between_lower_upper_core {a b : ℝ} {f alpha : ℝ → ℝ}
+    (hs : SourceHypotheses a b f alpha)
+    (P : Partition a b) (tags : ℕ → ℝ)
+    (htags : tagsInPartition P tags) :
+    lowerSum P f alpha ≤ taggedSum P tags f alpha ∧
+      taggedSum P tags f alpha ≤ upperSum P f alpha := by
+  rcases hs with ⟨hab, hAbove, hBelow, hmono⟩
+  constructor
+  · unfold lowerSum taggedSum
+    refine Finset.sum_le_sum ?_
+    intro i hi_mem
+    have hi : i < P.n := Finset.mem_range.mp hi_mem
+    have hcellBelow : BddBelow (f '' subinterval P i) :=
+      BddBelow.mono (Set.image_mono (subinterval_subset_Icc_core P hi)) hBelow
+    have hlow_le_tag : lowerStep P f i ≤ f (tags i) := by
+      unfold lowerStep
+      exact csInf_le hcellBelow ⟨tags i, htags i hi, rfl⟩
+    have hinc_nonneg : 0 ≤ alpha (P.pts (i + 1)) - alpha (P.pts i) :=
+      partition_increment_nonneg_of_source_core P
+        ⟨hab, hAbove, hBelow, hmono⟩ hi
+    exact mul_le_mul_of_nonneg_right hlow_le_tag hinc_nonneg
+  · unfold taggedSum upperSum
+    refine Finset.sum_le_sum ?_
+    intro i hi_mem
+    have hi : i < P.n := Finset.mem_range.mp hi_mem
+    have hcellAbove : BddAbove (f '' subinterval P i) :=
+      BddAbove.mono (Set.image_mono (subinterval_subset_Icc_core P hi)) hAbove
+    have htag_le_up : f (tags i) ≤ upperStep P f i := by
+      unfold upperStep
+      exact le_csSup hcellAbove ⟨tags i, htags i hi, rfl⟩
+    have hinc_nonneg : 0 ≤ alpha (P.pts (i + 1)) - alpha (P.pts i) :=
+      partition_increment_nonneg_of_source_core P
+        ⟨hab, hAbove, hBelow, hmono⟩ hi
+    exact mul_le_mul_of_nonneg_right htag_le_up hinc_nonneg
+
+/-- Definition 1.2 upper/lower convergence implies the tagged-sum formulation. -/
+theorem taggedBridgeObligation {a b : ℝ} {f alpha : ℝ → ℝ} {L : ℝ}
+    (hUL : UpperLowerCommonLimit a b f alpha L) :
+    TaggedCommonLimit a b f alpha L := by
+  rcases hUL with ⟨hs, hlim⟩
+  refine ⟨hs, ?_⟩
+  intro eps heps
+  rcases hlim eps heps with ⟨δ, hδ, Hδ⟩
+  refine ⟨δ, hδ, ?_⟩
+  intro P tags htags hmesh
+  have hP := Hδ P hmesh
+  have hbetween := taggedSum_between_lower_upper_core hs P tags htags
+  have hlower_abs := abs_lt.mp hP.2
+  have hupper_abs := abs_lt.mp hP.1
+  refine abs_lt.mpr ⟨?_, ?_⟩
+  · linarith
+  · linarith
+
 theorem upperLowerCommonLimit_integrand_add_core {a b : ℝ} {f g alpha : ℝ → ℝ}
     {Lf Lg : ℝ}
     (hf : UpperLowerCommonLimit a b f alpha Lf)
@@ -976,6 +1015,25 @@ theorem upperLowerCommonLimit_const_mul_core {a b c : ℝ} {f alpha : ℝ → �
 
 end DarbouxRS
 
+/-- Source upper/lower convergence implies the exposed tagged-sum interface. -/
+theorem taggedCommonLimit_of_upperLowerCommonLimit {f alpha : ℝ → ℝ} {a b L : ℝ}
+    (hUL : rsUpperLowerCommonLimit a b f alpha L) :
+    rsTaggedCommonLimit a b f alpha L :=
+  DarbouxRS.taggedBridgeObligation hUL
+
+/-- The chosen integral value also satisfies the existing tagged-sum core interface. -/
+theorem rsIntegral_spec {f alpha : ℝ → ℝ} {a b : ℝ}
+    (h : RSIntegrable f alpha a b) :
+    rsTaggedCommonLimit a b f alpha (rsIntegral f alpha a b h) :=
+  taggedCommonLimit_of_upperLowerCommonLimit (rsIntegral_source_spec h)
+
+/-- The guarded integral value is the common value of the source and tagged interfaces. -/
+theorem rsIntegral_source_and_tagged_spec {f alpha : ℝ → ℝ} {a b : ℝ}
+    (h : RSIntegrable f alpha a b) :
+    rsUpperLowerCommonLimit a b f alpha (rsIntegral f alpha a b h) ∧
+      rsTaggedCommonLimit a b f alpha (rsIntegral f alpha a b h) :=
+  ⟨rsIntegral_source_spec h, rsIntegral_spec h⟩
+
 noncomputable def rsIntegralWitness_integrator_add {f α₁ α₂ : ℝ → ℝ} {a b : ℝ}
     (h₁ : RSIntegrable f α₁ a b)
     (h₂ : RSIntegrable f α₂ a b) :
@@ -984,15 +1042,12 @@ noncomputable def rsIntegralWitness_integrator_add {f α₁ α₂ : ℝ → ℝ}
   source_limit :=
     DarbouxRS.upperLowerCommonLimit_integrator_add
       (rsIntegral_source_spec h₁) (rsIntegral_source_spec h₂)
-  tagged_limit :=
-    DarbouxRS.taggedCommonLimit_integrator_add
-      (rsIntegral_spec h₁) (rsIntegral_spec h₂)
 
 noncomputable def rsIntegrable_integrator_add {f α₁ α₂ : ℝ → ℝ} {a b : ℝ}
     (h₁ : RSIntegrable f α₁ a b)
     (h₂ : RSIntegrable f α₂ a b) :
     RSIntegrable f (fun x => α₁ x + α₂ x) a b :=
-  ⟨rsIntegralWitness_integrator_add h₁ h₂⟩
+  (rsIntegralWitness_integrator_add h₁ h₂).toRSIntegrable
 
 theorem rsIntegral_integrator_add {f α₁ α₂ : ℝ → ℝ} {a b : ℝ}
     (h₁ : RSIntegrable f α₁ a b)
@@ -1011,15 +1066,12 @@ noncomputable def rsIntegralWitness_integrand_add {f g alpha : ℝ → ℝ} {a b
   source_limit :=
     DarbouxRS.upperLowerCommonLimit_integrand_add_core
       (rsIntegral_source_spec hf) (rsIntegral_source_spec hg)
-  tagged_limit :=
-    DarbouxRS.taggedCommonLimit_integrand_add
-      (rsIntegral_spec hf) (rsIntegral_spec hg)
 
 noncomputable def rsIntegrable_integrand_add {f g alpha : ℝ → ℝ} {a b : ℝ}
     (hf : RSIntegrable f alpha a b)
     (hg : RSIntegrable g alpha a b) :
     RSIntegrable (fun x => f x + g x) alpha a b :=
-  ⟨rsIntegralWitness_integrand_add hf hg⟩
+  (rsIntegralWitness_integrand_add hf hg).toRSIntegrable
 
 theorem rsIntegral_integrand_add {f g alpha : ℝ → ℝ} {a b : ℝ}
     (hf : RSIntegrable f alpha a b)
@@ -1038,14 +1090,11 @@ noncomputable def rsIntegralWitness_integrand_const_mul {f alpha : ℝ → ℝ} 
   source_limit :=
     DarbouxRS.upperLowerCommonLimit_const_mul_core
       (c := c) (rsIntegral_source_spec hf)
-  tagged_limit :=
-    DarbouxRS.taggedCommonLimit_const_mul_core
-      (c := c) (rsIntegral_spec hf)
 
 noncomputable def rsIntegrable_integrand_const_mul {f alpha : ℝ → ℝ} {c a b : ℝ}
     (hf : RSIntegrable f alpha a b) :
     RSIntegrable (fun x => c * f x) alpha a b :=
-  ⟨rsIntegralWitness_integrand_const_mul (c := c) hf⟩
+  (rsIntegralWitness_integrand_const_mul (c := c) hf).toRSIntegrable
 
 theorem rsIntegral_integrand_const_mul {f alpha : ℝ → ℝ} {c a b : ℝ}
     (hf : RSIntegrable f alpha a b) :
@@ -1065,8 +1114,8 @@ theorem rsIntegral_integrand_mono {f g alpha : ℝ → ℝ} {a b : ℝ}
 
 /-- The family `R(alpha)` of functions integrable with respect to `alpha` on `[a,b]`. -/
 def rsIntegrableFamily (alpha : ℝ → ℝ) (a b : ℝ) : Set (ℝ → ℝ) :=
-  {f | RSIntegrable f alpha a b}
+  {f | DarbouxRS.RSIntegrableOnInterval f alpha a b}
 
 /-- Exported statement of Definition 1.2. -/
 def def_1_2 (f alpha : ℝ → ℝ) (a b : ℝ) : Prop :=
-  RSIntegrable f alpha a b
+  DarbouxRS.RSIntegrableOnInterval f alpha a b

@@ -7,6 +7,8 @@ open scoped BigOperators
 noncomputable section
 
 abbrev UnitInterval := Set.Ico (0 : ℝ) 1
+abbrev ClosedUnitInterval := Set.Icc (0 : ℝ) 1
+abbrev UnitPowerset := {A : Set ℝ // A ⊆ ClosedUnitInterval}
 abbrev RatShift := {q : ℚ // 0 ≤ q ∧ q < 1}
 
 def vitaliRel (x y : UnitInterval) : Prop :=
@@ -41,16 +43,43 @@ theorem rep_eq (Q : VitaliQuot) : Quotient.mk _ (rep Q) = Q :=
 def vitaliSet : Set ℝ :=
   Set.range fun Q : VitaliQuot => (rep Q).1
 
+def modShift (A : Set ℝ) (r : RatShift) : Set ℝ :=
+  (fun x : ℝ => Int.fract (x + (r : ℚ))) '' A
+
 def shiftSet (r : RatShift) : Set ℝ :=
-  (fun x : ℝ => Int.fract (x + (r : ℚ))) '' vitaliSet
+  modShift vitaliSet r
 
 lemma mem_vitaliSet_rep (Q : VitaliQuot) : (rep Q).1 ∈ vitaliSet := by
   exact ⟨Q, rfl⟩
 
-lemma shiftSet_subset_unitInterval (r : RatShift) : shiftSet r ⊆ Set.Ico (0 : ℝ) 1 := by
+lemma unitInterval_subset_closedUnitInterval :
+    UnitInterval ⊆ ClosedUnitInterval :=
+  Ico_subset_Icc_self
+
+lemma vitaliSet_subset_unitInterval : vitaliSet ⊆ UnitInterval := by
+  intro x hx
+  rcases hx with ⟨Q, rfl⟩
+  exact (rep Q).2
+
+lemma vitaliSet_subset_closedUnitInterval : vitaliSet ⊆ ClosedUnitInterval :=
+  fun _ hx => unitInterval_subset_closedUnitInterval (vitaliSet_subset_unitInterval hx)
+
+lemma modShift_subset_unitInterval (A : Set ℝ) (r : RatShift) :
+    modShift A r ⊆ UnitInterval := by
   intro x hx
   rcases hx with ⟨y, -, rfl⟩
   exact ⟨Int.fract_nonneg _, Int.fract_lt_one _⟩
+
+lemma modShift_subset_closedUnitInterval (A : Set ℝ) (r : RatShift) :
+    modShift A r ⊆ ClosedUnitInterval :=
+  fun _ hx => unitInterval_subset_closedUnitInterval (modShift_subset_unitInterval A r hx)
+
+lemma shiftSet_subset_unitInterval (r : RatShift) : shiftSet r ⊆ Set.Ico (0 : ℝ) 1 := by
+  exact modShift_subset_unitInterval vitaliSet r
+
+lemma shiftSet_subset_closedUnitInterval (r : RatShift) :
+    shiftSet r ⊆ ClosedUnitInterval :=
+  modShift_subset_closedUnitInterval vitaliSet r
 
 lemma rep_equiv_of_mem_vitaliSet {x : ℝ} (hx : x ∈ vitaliSet) :
     ∃ Q : VitaliQuot, (rep Q).1 = x := by
@@ -145,17 +174,23 @@ lemma pairwise_disjoint_shiftSet : Pairwise fun r1 r2 => Disjoint (shiftSet r1) 
   intro r1 r2 hne
   exact shiftSet_disjoint hne
 
-structure VitaliAxioms (m : Set ℝ → ENNReal) : Prop where
-  monotone : ∀ {A B : Set ℝ}, A ⊆ B → m A ≤ m B
+structure VitaliAxioms (m : UnitPowerset → ENNReal) : Prop where
+  finite : ∀ A : UnitPowerset, m A ≠ ⊤
+  monotone :
+    ∀ {A B : Set ℝ} (hA : A ⊆ ClosedUnitInterval) (hB : B ⊆ ClosedUnitInterval),
+      A ⊆ B → m ⟨A, hA⟩ ≤ m ⟨B, hB⟩
   countablyAdditive :
-    ∀ (f : ℕ → Set ℝ),
+    ∀ (f : ℕ → Set ℝ) (hf : ∀ n, f n ⊆ ClosedUnitInterval)
+      (hUnion : (⋃ n, f n) ⊆ ClosedUnitInterval),
       Pairwise (fun i j : ℕ => Disjoint (f i) (f j)) →
-        m (⋃ i, f i) = ∑' i, m (f i)
+        m ⟨⋃ i, f i, hUnion⟩ = ∑' i, m ⟨f i, hf i⟩
   translationInvariant :
-    ∀ (A : Set ℝ) (r : RatShift),
-      m ((fun x : ℝ => Int.fract (x + (r : ℚ))) '' A) = m A
+    ∀ (A : Set ℝ) (hA : A ⊆ ClosedUnitInterval) (r : RatShift),
+      m ⟨modShift A r, modShift_subset_closedUnitInterval A r⟩ = m ⟨A, hA⟩
   intervalLength :
-    ∀ {a b : ℝ}, a < b → m (Set.Icc a b) = ENNReal.ofReal (b - a)
+    ∀ {a b : ℝ} (ha : 0 ≤ a) (hb : b ≤ 1), a < b →
+      m ⟨Set.Icc a b, fun x hx => ⟨le_trans ha hx.1, le_trans hx.2 hb⟩⟩ =
+        ENNReal.ofReal (b - a)
 
 def natShift (n : ℕ) : RatShift :=
   ⟨1 / (n + 2 : ℚ), by positivity, by
@@ -227,79 +262,202 @@ lemma pairwise_disjoint_natShiftSet :
   intro hEq
   exact hnm (natShift_injective hEq)
 
-theorem thm_2_9 :
-    ¬ ∃ m : Set ℝ → ENNReal, VitaliAxioms m := by
+theorem thm_2_9_ennreal :
+    ¬ ∃ m : UnitPowerset → ENNReal, VitaliAxioms m := by
   intro h
   rcases h with ⟨m, hm⟩
-  rcases hm with ⟨hmono, hadd, htrans, hlen⟩
-  have hsum :
-      m (Set.Ico (0 : ℝ) 1) = ∑' n : ℕ, m (codedShiftSet n) := by
-    simpa [iUnion_codedShiftSet] using hadd codedShiftSet pairwise_disjoint_codedShiftSet
-  have hconst : ∀ r : RatShift, m (shiftSet r) = m vitaliSet := by
-    intro r
-    exact htrans vitaliSet r
-  have hnatConst : ∀ n : ℕ, m (natShiftSet n) = m vitaliSet := by
+  rcases hm with ⟨_hfinite, hmono, hadd, htrans, hlen⟩
+  let μ := fun (A : Set ℝ) (hA : A ⊆ ClosedUnitInterval) => m ⟨A, hA⟩
+  have hIco : Set.Ico (0 : ℝ) 1 ⊆ ClosedUnitInterval :=
+    unitInterval_subset_closedUnitInterval
+  have hIcc01 : Set.Icc (0 : ℝ) 1 ⊆ ClosedUnitInterval := fun _ hx => hx
+  have hvitali : vitaliSet ⊆ ClosedUnitInterval :=
+    vitaliSet_subset_closedUnitInterval
+  have hcodedSubset : ∀ n : ℕ, codedShiftSet n ⊆ ClosedUnitInterval := by
     intro n
-    exact htrans vitaliSet (natShift n)
-  have hupper : m (Set.Ico (0 : ℝ) 1) ≤ 1 := by
+    dsimp [codedShiftSet]
+    cases hdec : Encodable.decode₂ RatShift n with
+    | none =>
+        intro x hx
+        simp [codedShiftSet, hdec] at hx
+    | some r =>
+        simpa [codedShiftSet, hdec] using shiftSet_subset_closedUnitInterval r
+  have hsum :
+      μ (Set.Ico (0 : ℝ) 1) hIco =
+        ∑' n : ℕ, μ (codedShiftSet n) (hcodedSubset n) := by
+    have hUnion : (⋃ n : ℕ, codedShiftSet n) ⊆ ClosedUnitInterval := by
+      rw [iUnion_codedShiftSet]
+      exact hIco
+    have hraw := hadd codedShiftSet hcodedSubset hUnion pairwise_disjoint_codedShiftSet
+    have hUnit :
+        (⟨⋃ n : ℕ, codedShiftSet n, hUnion⟩ : UnitPowerset) =
+          ⟨Set.Ico (0 : ℝ) 1, hIco⟩ := by
+      apply Subtype.ext
+      exact iUnion_codedShiftSet
+    simpa [μ, hUnit] using hraw
+  have hconst : ∀ r : RatShift, μ (shiftSet r) (shiftSet_subset_closedUnitInterval r) =
+      μ vitaliSet hvitali := by
+    intro r
+    simpa [μ, shiftSet] using htrans vitaliSet hvitali r
+  have hnatSubset : ∀ n : ℕ, natShiftSet n ⊆ ClosedUnitInterval := by
+    intro n
+    exact shiftSet_subset_closedUnitInterval (natShift n)
+  have hnatConst :
+      ∀ n : ℕ, μ (natShiftSet n) (hnatSubset n) = μ vitaliSet hvitali := by
+    intro n
+    simpa [natShiftSet] using hconst (natShift n)
+  have hupper : μ (Set.Ico (0 : ℝ) 1) hIco ≤ 1 := by
     calc
-      m (Set.Ico (0 : ℝ) 1) ≤ m (Set.Icc (0 : ℝ) 1) := hmono Ico_subset_Icc_self
-      _ = 1 := by simpa using hlen (show (0 : ℝ) < 1 by norm_num)
-  have hempty : m ∅ = 0 := by
-    have hemptySum : m ∅ = ∑' n : ℕ, m ∅ := by
-      simpa using hadd (fun _ : ℕ => (∅ : Set ℝ)) (by
+      μ (Set.Ico (0 : ℝ) 1) hIco ≤ μ (Set.Icc (0 : ℝ) 1) hIcc01 :=
+        hmono hIco hIcc01 Ico_subset_Icc_self
+      _ = 1 := by
+        simpa [μ] using
+          hlen (show (0 : ℝ) ≤ 0 by norm_num) (show (1 : ℝ) ≤ 1 by norm_num)
+            (show (0 : ℝ) < 1 by norm_num)
+  have hEmpty : (∅ : Set ℝ) ⊆ ClosedUnitInterval := by
+    intro x hx
+    cases hx
+  have hempty : μ ∅ hEmpty = 0 := by
+    have hemptySum : μ ∅ hEmpty = ∑' n : ℕ, μ ∅ hEmpty := by
+      have hraw := hadd (fun _ : ℕ => (∅ : Set ℝ)) (fun _ => hEmpty) (by
+        intro x hx
+        rcases mem_iUnion.mp hx with ⟨n, hn⟩
+        cases hn) (by
         intro i j hij
         simp)
-    by_cases hz : m ∅ = 0
+      simpa [μ] using hraw
+    by_cases hz : μ ∅ hEmpty = 0
     · exact hz
-    · have htop : (∑' n : ℕ, m ∅) = (⊤ : ENNReal) := ENNReal.tsum_const_eq_top_of_ne_zero hz
-      have htopEmpty : m ∅ = (⊤ : ENNReal) := by rw [hemptySum, htop]
-      have hempty_le : m ∅ ≤ 1 := by
+    · have htop : (∑' n : ℕ, μ ∅ hEmpty) = (⊤ : ENNReal) :=
+        ENNReal.tsum_const_eq_top_of_ne_zero hz
+      have htopEmpty : μ ∅ hEmpty = (⊤ : ENNReal) := by rw [hemptySum, htop]
+      have hempty_le : μ ∅ hEmpty ≤ 1 := by
         calc
-          m ∅ ≤ m (Set.Ico (0 : ℝ) 1) := hmono (by intro x hx; cases hx)
+          μ ∅ hEmpty ≤ μ (Set.Ico (0 : ℝ) 1) hIco :=
+            hmono hEmpty hIco (by intro x hx; cases hx)
           _ ≤ 1 := hupper
       have : (⊤ : ENNReal) ≤ 1 := by simpa [htopEmpty] using hempty_le
       exact (not_le_of_gt (show (1 : ENNReal) < ⊤ by simp) this).elim
-  have hlower : ENNReal.ofReal (1 / 2 : ℝ) ≤ m (Set.Ico (0 : ℝ) 1) := by
+  have hlower : ENNReal.ofReal (1 / 2 : ℝ) ≤ μ (Set.Ico (0 : ℝ) 1) hIco := by
     have hsub : Set.Icc (0 : ℝ) (1 / 2 : ℝ) ⊆ Set.Ico (0 : ℝ) 1 := by
       intro x hx
       rcases hx with ⟨hx0, hxhalf⟩
       constructor
       · exact hx0
       · linarith
+    have hhalfClosed : Set.Icc (0 : ℝ) (1 / 2 : ℝ) ⊆ ClosedUnitInterval := by
+      intro x hx
+      exact hIco (hsub hx)
     calc
-      ENNReal.ofReal (1 / 2 : ℝ) = m (Set.Icc (0 : ℝ) (1 / 2 : ℝ)) := by
+      ENNReal.ofReal (1 / 2 : ℝ) =
+          μ (Set.Icc (0 : ℝ) (1 / 2 : ℝ)) hhalfClosed := by
         symm
-        simpa using hlen (show (0 : ℝ) < (1 / 2 : ℝ) by norm_num)
-      _ ≤ m (Set.Ico (0 : ℝ) 1) := hmono hsub
-  have hnatSubset : (⋃ n : ℕ, natShiftSet n) ⊆ Set.Ico (0 : ℝ) 1 := by
+        simpa [μ] using
+          hlen (show (0 : ℝ) ≤ 0 by norm_num) (show ((1 / 2 : ℝ)) ≤ 1 by norm_num)
+            (show (0 : ℝ) < (1 / 2 : ℝ) by norm_num)
+      _ ≤ μ (Set.Ico (0 : ℝ) 1) hIco := hmono hhalfClosed hIco hsub
+  have hnatUnionSubsetIco : (⋃ n : ℕ, natShiftSet n) ⊆ Set.Ico (0 : ℝ) 1 := by
     intro x hx
     rcases mem_iUnion.mp hx with ⟨n, hx⟩
     exact shiftSet_subset_unitInterval (natShift n) hx
-  have hnatSum : m (⋃ n : ℕ, natShiftSet n) = ∑' n : ℕ, m (natShiftSet n) := by
-    exact hadd natShiftSet pairwise_disjoint_natShiftSet
-  have hnatUpper : ∑' n : ℕ, m (natShiftSet n) ≤ 1 := by
+  have hnatUnionSubset : (⋃ n : ℕ, natShiftSet n) ⊆ ClosedUnitInterval := by
+    intro x hx
+    exact hIco (hnatUnionSubsetIco hx)
+  have hnatSum :
+      μ (⋃ n : ℕ, natShiftSet n) hnatUnionSubset =
+        ∑' n : ℕ, μ (natShiftSet n) (hnatSubset n) := by
+    have hraw := hadd natShiftSet hnatSubset hnatUnionSubset pairwise_disjoint_natShiftSet
+    simpa [μ] using hraw
+  have hnatUpper : ∑' n : ℕ, μ (natShiftSet n) (hnatSubset n) ≤ 1 := by
     calc
-      ∑' n : ℕ, m (natShiftSet n) = m (⋃ n : ℕ, natShiftSet n) := by symm; exact hnatSum
-      _ ≤ m (Set.Ico (0 : ℝ) 1) := hmono hnatSubset
+      ∑' n : ℕ, μ (natShiftSet n) (hnatSubset n) =
+          μ (⋃ n : ℕ, natShiftSet n) hnatUnionSubset := by
+        symm
+        exact hnatSum
+      _ ≤ μ (Set.Ico (0 : ℝ) 1) hIco := hmono hnatUnionSubset hIco hnatUnionSubsetIco
       _ ≤ 1 := hupper
-  by_cases hzero : m vitaliSet = 0
-  · have hcodedZero : ∀ n : ℕ, m (codedShiftSet n) = 0 := by
+  by_cases hzero : μ vitaliSet hvitali = 0
+  · have hcodedZero : ∀ n : ℕ, μ (codedShiftSet n) (hcodedSubset n) = 0 := by
       intro n
-      dsimp [codedShiftSet]
       cases hdec : Encodable.decode₂ RatShift n with
       | none =>
-          simpa [codedShiftSet, hdec] using hempty
+          have hset : codedShiftSet n = (∅ : Set ℝ) := by
+            simp [codedShiftSet, hdec]
+          have hunit :
+              (⟨codedShiftSet n, hcodedSubset n⟩ : UnitPowerset) = ⟨∅, hEmpty⟩ := by
+            apply Subtype.ext
+            exact hset
+          simpa [μ, hunit] using hempty
       | some r =>
-          simpa [codedShiftSet, hdec, hzero] using hconst r
-    have hvanish : m (Set.Ico (0 : ℝ) 1) = 0 := by
+          have hset : codedShiftSet n = shiftSet r := by
+            simp [codedShiftSet, hdec]
+          have hunit :
+              (⟨codedShiftSet n, hcodedSubset n⟩ : UnitPowerset) =
+                ⟨shiftSet r, shiftSet_subset_closedUnitInterval r⟩ := by
+            apply Subtype.ext
+            exact hset
+          have hshift : μ (shiftSet r) (shiftSet_subset_closedUnitInterval r) = 0 := by
+            simpa [hzero] using hconst r
+          simpa [μ, hunit] using hshift
+    have hvanish : μ (Set.Ico (0 : ℝ) 1) hIco = 0 := by
       rw [hsum]
       simp [hcodedZero]
     have hhalf_pos : (0 : ENNReal) < ENNReal.ofReal (1 / 2 : ℝ) := by norm_num
     exact (not_lt_of_ge (hvanish ▸ hlower)) hhalf_pos
-  · have htop : (∑' n : ℕ, m (natShiftSet n)) = (⊤ : ENNReal) := by
+  · have htop : (∑' n : ℕ, μ (natShiftSet n) (hnatSubset n)) = (⊤ : ENNReal) := by
       calc
-        (∑' n : ℕ, m (natShiftSet n)) = ∑' _ : ℕ, m vitaliSet := by simp [hnatConst]
+        (∑' n : ℕ, μ (natShiftSet n) (hnatSubset n)) =
+            ∑' _ : ℕ, μ vitaliSet hvitali := by
+          simp [hnatConst]
         _ = (⊤ : ENNReal) := ENNReal.tsum_const_eq_top_of_ne_zero hzero
     have hle : (⊤ : ENNReal) ≤ 1 := by simpa [htop] using hnatUpper
     exact not_le_of_gt (show (1 : ENNReal) < ⊤ by simp) hle
+
+/-- The textbook finite-valued `[0,∞)` version of the Vitali axioms.  The
+countable-additivity equation is stated after coercion to `ENNReal`, where an
+infinite countable sum can be expressed. -/
+structure VitaliAxiomsNNReal (m : UnitPowerset → NNReal) : Prop where
+  monotone :
+    ∀ {A B : Set ℝ} (hA : A ⊆ ClosedUnitInterval) (hB : B ⊆ ClosedUnitInterval),
+      A ⊆ B → m ⟨A, hA⟩ ≤ m ⟨B, hB⟩
+  countablyAdditive :
+    ∀ (f : ℕ → Set ℝ) (hf : ∀ n, f n ⊆ ClosedUnitInterval)
+      (hUnion : (⋃ n, f n) ⊆ ClosedUnitInterval),
+      Pairwise (fun i j : ℕ => Disjoint (f i) (f j)) →
+        (m ⟨⋃ i, f i, hUnion⟩ : ENNReal) =
+          ∑' i, (m ⟨f i, hf i⟩ : ENNReal)
+  translationInvariant :
+    ∀ (A : Set ℝ) (hA : A ⊆ ClosedUnitInterval) (r : RatShift),
+      m ⟨modShift A r, modShift_subset_closedUnitInterval A r⟩ = m ⟨A, hA⟩
+  intervalLength :
+    ∀ {a b : ℝ} (ha : 0 ≤ a) (hb : b ≤ 1), a < b →
+      m ⟨Set.Icc a b, fun x hx => ⟨le_trans ha hx.1, le_trans hx.2 hb⟩⟩ =
+        Real.toNNReal (b - a)
+
+theorem VitaliAxiomsNNReal.toVitaliAxioms {m : UnitPowerset → NNReal}
+    (hm : VitaliAxiomsNNReal m) : VitaliAxioms (fun A => (m A : ENNReal)) where
+  finite := by
+    intro A
+    exact ENNReal.coe_ne_top
+  monotone := by
+    intro A B hA hB hAB
+    exact_mod_cast hm.monotone hA hB hAB
+  countablyAdditive := by
+    intro f hf hUnion hdisj
+    exact hm.countablyAdditive f hf hUnion hdisj
+  translationInvariant := by
+    intro A hA r
+    exact_mod_cast hm.translationInvariant A hA r
+  intervalLength := by
+    intro a b ha hb hab
+    have hnn := hm.intervalLength ha hb hab
+    change (m ⟨Set.Icc a b, fun x hx => ⟨le_trans ha hx.1, le_trans hx.2 hb⟩⟩ :
+        ENNReal) = ENNReal.ofReal (b - a)
+    rw [hnn]
+    simp [ENNReal.ofReal]
+
+theorem thm_2_9 :
+    ¬ ∃ m : UnitPowerset → NNReal, VitaliAxiomsNNReal m := by
+  rintro ⟨m, hm⟩
+  exact thm_2_9_ennreal
+    ⟨fun A : UnitPowerset => (m A : ENNReal), VitaliAxiomsNNReal.toVitaliAxioms hm⟩

@@ -21,7 +21,17 @@ Since $\mu(B\setminus A)$ is nonnegative, it follows that $\mu(B)\ge \mu(A)$. \h
 
 open MeasureTheory Set
 
-/-- Exported theorem for monotonicity of measures. -/
-theorem thm_2_2 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) {A B : Set Ω} (hAB : A ⊆ B) :
+/-- Exported theorem for monotonicity of measures, following the textbook
+decomposition `B = A ∪ (B \ A)`. -/
+theorem thm_2_2 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) {A B : Set Ω}
+    (hA : MeasurableSet A) (hB : MeasurableSet B) (hAB : A ⊆ B) :
     μ A ≤ μ B := by
-  exact measure_mono hAB
+  have h_disj : Disjoint A (B \ A) := disjoint_sdiff_right
+  have h_union : A ∪ (B \ A) = B := union_diff_cancel hAB
+  have h_diff_meas : MeasurableSet (B \ A) := hB.diff hA
+  have h_add : μ B = μ A + μ (B \ A) := by
+    calc
+      μ B = μ (A ∪ (B \ A)) := by rw [h_union]
+      _ = μ A + μ (B \ A) := measure_union h_disj h_diff_meas
+  rw [h_add]
+  exact le_add_right le_rfl
