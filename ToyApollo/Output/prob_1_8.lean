@@ -408,9 +408,8 @@ theorem prob_1_8_sqrt_id_0_2 :
   let hW : RSIntegralWitness Real.sqrt (fun x : ℝ => x) 0 2 := {
     value := (4 * Real.sqrt 2) / 3
     source_limit := Prob18Identity.upperLowerCommonLimit_sqrt_id_0_2
-    tagged_limit := Prob18Identity.taggedCommonLimit_sqrt_id_0_2
   }
-  let hRS : RSIntegrable Real.sqrt (fun x : ℝ => x) 0 2 := ⟨hW⟩
+  let hRS : RSIntegrable Real.sqrt (fun x : ℝ => x) 0 2 := hW.toRSIntegrable
   refine ⟨hRS, ?_⟩
   exact DarbouxRS.taggedCommonLimit_unique (rsIntegral_spec hRS)
     Prob18Identity.taggedCommonLimit_sqrt_id_0_2

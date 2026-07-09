@@ -19,8 +19,8 @@ noncomputable section
 lemma strict_interval_of_rsIntegrable {f α : ℝ → ℝ} {a b : ℝ}
     (h : RSIntegrable f α a b) :
     a < b := by
-  rcases h with ⟨w⟩
-  exact w.source_limit.1.1
+  rcases h with ⟨_L, hSource⟩
+  exact hSource.1.1
 
 lemma taggedSum_between_lower_upper {f α : ℝ → ℝ} {a b : ℝ}
     (hs : DarbouxRS.SourceHypotheses a b f α)
@@ -181,12 +181,12 @@ theorem sourceHypotheses_of_continuous_derivative_integrator {f α : ℝ → ℝ
     {a b : ℝ}
     (hab : a < b)
     (hf : ContinuousOn f (Set.Icc a b))
-    (hαmono : Monotone α) :
+    (hαmono : MonotoneOn α (Set.Icc a b)) :
     DarbouxRS.SourceHypotheses a b f α := by
   refine ⟨hab, ?_, ?_, ?_⟩
   · exact (isCompact_Icc.image_of_continuousOn hf).bddAbove
   · exact (isCompact_Icc.image_of_continuousOn hf).bddBelow
-  · exact hαmono.monotoneOn (Set.Icc a b)
+  · exact hαmono
 
 theorem derivative_integrand_continuousOn {f α' : ℝ → ℝ} {a b : ℝ}
     (hf : ContinuousOn f (Set.Icc a b))
@@ -582,7 +582,7 @@ theorem rsTaggedCommonLimit_derivative_of_identity_tagged_limit
     {f α α' : ℝ → ℝ} {a b L : ℝ}
     (hab : a < b)
     (hf : ContinuousOn f (Set.Icc a b))
-    (hαmono : Monotone α)
+    (hαmono : MonotoneOn α (Set.Icc a b))
     (hαderiv : ∀ x ∈ Set.Icc a b, HasDerivAt α (α' x) x)
     (hα'cont : ContinuousOn α' (Set.Icc a b))
     (hId : rsTaggedCommonLimit a b (fun x => f x * α' x) (fun x => x) L) :
@@ -650,7 +650,7 @@ theorem rsTaggedCommonLimit_integral_deriv
     {f α α' : ℝ → ℝ} {a b : ℝ}
     (hab : a < b)
     (hf : ContinuousOn f (Set.Icc a b))
-    (hαmono : Monotone α)
+    (hαmono : MonotoneOn α (Set.Icc a b))
     (hαderiv : ∀ x ∈ Set.Icc a b, HasDerivAt α (α' x) x)
     (hα'cont : ContinuousOn α' (Set.Icc a b)) :
     rsTaggedCommonLimit a b f α (∫ x in a..b, f x * α' x) := by
@@ -669,7 +669,7 @@ that derivative. -/
 theorem thm_1_4 {f α α' : ℝ → ℝ} {a b : ℝ}
     (hab : a ≤ b)
     (hf : ContinuousOn f (Icc a b))
-    (hαmono : Monotone α)
+    (hαmono : MonotoneOn α (Icc a b))
     (hαderiv : ∀ x ∈ Icc a b, HasDerivAt α (α' x) x)
     (hα'cont : ContinuousOn α' (Icc a b))
     (hRS : RSIntegrable f α a b) :

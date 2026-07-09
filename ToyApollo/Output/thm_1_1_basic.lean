@@ -22,8 +22,8 @@ hypothesis from the source upper/lower and tagged common-limit packages. -/
 lemma strict_interval_of_rsIntegrable {f α : ℝ → ℝ} {a b : ℝ}
     (h : RSIntegrable f α a b) :
     a < b := by
-  rcases h with ⟨w⟩
-  exact w.source_limit.1.1
+  rcases h with ⟨_L, hSource⟩
+  exact hSource.1.1
 
 /-- Therefore the current `def_1_2` interface has no integrability witness on a
 degenerate interval. This is the smallest source-route obstruction to the
@@ -135,14 +135,10 @@ theorem common_limits_iff_rsIntegrable {f α : ℝ → ℝ} {a b : ℝ} :
       RSIntegrable f α a b := by
   constructor
   · rintro ⟨L, hSource, hTagged⟩
-    exact ⟨{
-      value := L
-      source_limit := hSource
-      tagged_limit := hTagged
-    }⟩
+    exact ⟨L, hSource⟩
   · intro h
-    rcases h with ⟨w⟩
-    exact ⟨w.value, w.source_limit, w.tagged_limit⟩
+    rcases h with ⟨L, hSource⟩
+    exact ⟨L, hSource, taggedCommonLimit_of_upperLowerCommonLimit hSource⟩
 
 /-- For a fixed partition, the tagged sum lies between the lower and upper
 Darboux sums. This removes the tagged-limit half of the strict route once the

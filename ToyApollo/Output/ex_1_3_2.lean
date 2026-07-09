@@ -278,7 +278,7 @@ theorem rsIntegral_id_beta_eq_zero :
     (a := (-3 / 2 : ℝ)) (b := (3 / 2 : ℝ))
     (by norm_num)
     (continuous_id.continuousOn)
-    beta_monotone
+    (beta_monotone.monotoneOn _)
     (fun x _ => beta_hasDerivAt x)
     (continuous_standardNormalKernel.continuousOn)
     rsIntegrable_id_beta
@@ -374,7 +374,7 @@ theorem rsIntegral_id_const_eq_zero (k : ℝ) {a b : ℝ} (hab : a < b) :
     (a := a) (b := b)
     (le_of_lt hab)
     (continuous_id.continuousOn)
-    (monotone_const)
+    (monotone_const.monotoneOn _)
     (fun x _ => hasDerivAt_const x k)
     (continuous_const.continuousOn)
     (rsIntegrable_id_const k hab)

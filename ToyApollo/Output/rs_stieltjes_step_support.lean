@@ -19,15 +19,12 @@ noncomputable def rsIntegralWitness_add {f g alpha : ℝ → ℝ} {a b : ℝ}
   source_limit :=
     DarbouxRS.upperLowerCommonLimit_integrand_add
       (rsIntegral_source_spec hf) (rsIntegral_source_spec hg)
-  tagged_limit :=
-    DarbouxRS.taggedCommonLimit_integrand_add
-      (rsIntegral_spec hf) (rsIntegral_spec hg)
 
 noncomputable def rsIntegrable_add {f g alpha : ℝ → ℝ} {a b : ℝ}
     (hf : RSIntegrable f alpha a b)
     (hg : RSIntegrable g alpha a b) :
     RSIntegrable (fun x => f x + g x) alpha a b :=
-  ⟨rsIntegralWitness_add hf hg⟩
+  (rsIntegralWitness_add hf hg).toRSIntegrable
 
 theorem rsIntegral_add {f g alpha : ℝ → ℝ} {a b : ℝ}
     (hf : RSIntegrable f alpha a b)
@@ -45,14 +42,11 @@ noncomputable def rsIntegralWitness_const_mul {f alpha : ℝ → ℝ} {c a b : �
   source_limit :=
     DarbouxRS.upperLowerCommonLimit_const_mul
       (c := c) (rsIntegral_source_spec hf)
-  tagged_limit :=
-    DarbouxRS.taggedCommonLimit_const_mul
-      (c := c) (rsIntegral_spec hf)
 
 noncomputable def rsIntegrable_const_mul {f alpha : ℝ → ℝ} {c a b : ℝ}
     (hf : RSIntegrable f alpha a b) :
     RSIntegrable (fun x => c * f x) alpha a b :=
-  ⟨rsIntegralWitness_const_mul (c := c) hf⟩
+  (rsIntegralWitness_const_mul (c := c) hf).toRSIntegrable
 
 theorem rsIntegral_const_mul {f alpha : ℝ → ℝ} {c a b : ℝ}
     (hf : RSIntegrable f alpha a b) :
@@ -79,9 +73,6 @@ noncomputable def rsIntegralWitness_congr_integrator_Icc
   source_limit :=
     DarbouxRS.upperLowerCommonLimit_congr_integrator_Icc
       (rsIntegral_source_spec h) hβmono hEq
-  tagged_limit :=
-    DarbouxRS.taggedCommonLimit_congr_integrator_Icc
-      (rsIntegral_spec h) hβmono hEq
 
 noncomputable def rsIntegrable_congr_integrator_Icc
     {f α β : ℝ → ℝ} {a b : ℝ}
@@ -89,7 +80,7 @@ noncomputable def rsIntegrable_congr_integrator_Icc
     (hβmono : MonotoneOn β (Icc a b))
     (hEq : ∀ x ∈ Icc a b, β x = α x) :
     RSIntegrable f β a b :=
-  ⟨rsIntegralWitness_congr_integrator_Icc h hβmono hEq⟩
+  (rsIntegralWitness_congr_integrator_Icc h hβmono hEq).toRSIntegrable
 
 theorem rsIntegral_congr_integrator_Icc
     {f α β : ℝ → ℝ} {a b : ℝ}
@@ -111,16 +102,13 @@ noncomputable def rsIntegralWitness_congr_integrand_Icc
   source_limit :=
     DarbouxRS.upperLowerCommonLimit_congr_integrand_Icc
       (rsIntegral_source_spec h) hEq
-  tagged_limit :=
-    DarbouxRS.taggedCommonLimit_congr_integrand_Icc
-      (rsIntegral_spec h) hEq
 
 noncomputable def rsIntegrable_congr_integrand_Icc
     {f g α : ℝ → ℝ} {a b : ℝ}
     (h : RSIntegrable f α a b)
     (hEq : ∀ x ∈ Icc a b, g x = f x) :
     RSIntegrable g α a b :=
-  ⟨rsIntegralWitness_congr_integrand_Icc h hEq⟩
+  (rsIntegralWitness_congr_integrand_Icc h hEq).toRSIntegrable
 
 theorem rsIntegral_congr_integrand_Icc
     {f g α : ℝ → ℝ} {a b : ℝ}
@@ -313,10 +301,9 @@ theorem rsIntegral_singleJumpStep_exists
     value := f c * (u₂ - u₁)
     source_limit := DarbouxRS.singleJump_upperLowerCommonLimit
       (hac := hac) (hcb := hcb) (hu := hu) hAbove hBelow hcont
-    tagged_limit := DarbouxRS.singleJump_taggedCommonLimit
-      (hac := hac) (hcb := hcb) (hu := hu) hAbove hBelow hcont
   }
-  let hRS : RSIntegrable f (fun x => if x < c then u₁ else u₂) a b := ⟨hW⟩
+  let hRS : RSIntegrable f (fun x => if x < c then u₁ else u₂) a b :=
+    hW.toRSIntegrable
   refine ⟨hRS, ?_⟩
   exact DarbouxRS.taggedCommonLimit_unique
     (rsIntegral_spec hRS)
@@ -644,16 +631,15 @@ theorem rsIntegral_sqrt_id_0_2 :
     source_limit :=
       Thm14DerivativeTaggedScratch.rsUpperLowerCommonLimit_intervalIntegral_id
         (g := Real.sqrt) (a := 0) (b := 2) (by norm_num) hCont
-    tagged_limit :=
-      Thm14DerivativeTaggedScratch.rsTaggedCommonLimit_intervalIntegral_id
-        (g := Real.sqrt) (a := 0) (b := 2) (by norm_num) hCont
   }
-  let hRS : RSIntegrable Real.sqrt (fun x : ℝ => x) 0 2 := ⟨hW⟩
+  let hRS : RSIntegrable Real.sqrt (fun x : ℝ => x) 0 2 := hW.toRSIntegrable
   refine ⟨hRS, ?_⟩
   calc
     rsIntegral Real.sqrt (fun x : ℝ => x) 0 2 hRS =
         ∫ x in (0 : ℝ)..2, Real.sqrt x := by
-          exact DarbouxRS.taggedCommonLimit_unique (rsIntegral_spec hRS) hW.tagged_limit
+          exact DarbouxRS.taggedCommonLimit_unique (rsIntegral_spec hRS)
+            (Thm14DerivativeTaggedScratch.rsTaggedCommonLimit_intervalIntegral_id
+              (g := Real.sqrt) (a := 0) (b := 2) (by norm_num) hCont)
     _ = (4 * Real.sqrt 2) / 3 := hValue
 
 /-- Standard evaluated value for Problem 1.8(b). -/
