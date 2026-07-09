@@ -23,8 +23,8 @@ lemma continuousAt_of_not_mem_discontinuitySetOn {f : ℝ → ℝ} {a b x : ℝ}
 lemma strict_interval_of_rsIntegrable {f α : ℝ → ℝ} {a b : ℝ}
     (h : RSIntegrable f α a b) :
     a < b := by
-  rcases h with ⟨w⟩
-  exact w.source_limit.1.1
+  rcases h with ⟨_L, hSource⟩
+  exact hSource.1.1
 
 lemma not_rsIntegrable_refl (f α : ℝ → ℝ) (a : ℝ) :
     ¬ RSIntegrable f α a a := by
@@ -111,14 +111,10 @@ theorem common_limits_iff_rsIntegrable {f α : ℝ → ℝ} {a b : ℝ} :
       RSIntegrable f α a b := by
   constructor
   · rintro ⟨L, hSource, hTagged⟩
-    exact ⟨{
-      value := L
-      source_limit := hSource
-      tagged_limit := hTagged
-    }⟩
+    exact ⟨L, hSource⟩
   · intro h
-    rcases h with ⟨w⟩
-    exact ⟨w.value, w.source_limit, w.tagged_limit⟩
+    rcases h with ⟨L, hSource⟩
+    exact ⟨L, hSource, taggedCommonLimit_of_upperLowerCommonLimit hSource⟩
 
 lemma taggedSum_between_lower_upper {f α : ℝ → ℝ} {a b : ℝ}
     (hs : DarbouxRS.SourceHypotheses a b f α)

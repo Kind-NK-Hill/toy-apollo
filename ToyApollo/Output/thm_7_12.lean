@@ -52,7 +52,7 @@ theorem thm_7_12_rsTruncIntegral_eq_density_interval
         (a := a) (b := b)
         hle
         (hreg.g_continuousOn_Icc hle)
-        F.mono
+        (F.mono.monotoneOn _)
         (hreg.F_hasDerivAt hle)
         (hreg.f_continuousOn_Icc hle)
         hRS).2

@@ -1586,15 +1586,12 @@ noncomputable def rsIntegralWitness_glue_alpha {f α : ℝ → ℝ} {a d b : ℝ
   source_limit :=
     upperLowerCommonLimit_glue_alpha (rsIntegral_source_spec hac)
       (rsIntegral_source_spec hcb) hαd had hdb
-  tagged_limit :=
-    taggedCommonLimit_glue_alpha (rsIntegral_spec hac)
-      (rsIntegral_spec hcb) hαd had hdb
 
 noncomputable def rsIntegrable_glue_alpha {f α : ℝ → ℝ} {a d b : ℝ}
     (hac : RSIntegrable f α a d) (hcb : RSIntegrable f α d b)
     (hαd : ContinuousAt α d) (had : a < d) (hdb : d < b) :
     RSIntegrable f α a b :=
-  ⟨rsIntegralWitness_glue_alpha hac hcb hαd had hdb⟩
+  (rsIntegralWitness_glue_alpha hac hcb hαd had hdb).toRSIntegrable
 
 theorem rsIntegral_glue_alpha {f α : ℝ → ℝ} {a d b : ℝ}
     (hac : RSIntegrable f α a d) (hcb : RSIntegrable f α d b)
@@ -1613,15 +1610,12 @@ noncomputable def rsIntegralWitness_glue_f {f α : ℝ → ℝ} {a d b : ℝ}
   source_limit :=
     upperLowerCommonLimit_glue_f (rsIntegral_source_spec hac)
       (rsIntegral_source_spec hcb) hfd had hdb
-  tagged_limit :=
-    taggedCommonLimit_glue_f (rsIntegral_spec hac)
-      (rsIntegral_spec hcb) hfd had hdb
 
 noncomputable def rsIntegrable_glue_f {f α : ℝ → ℝ} {a d b : ℝ}
     (hac : RSIntegrable f α a d) (hcb : RSIntegrable f α d b)
     (hfd : ContinuousAt f d) (had : a < d) (hdb : d < b) :
     RSIntegrable f α a b :=
-  ⟨rsIntegralWitness_glue_f hac hcb hfd had hdb⟩
+  (rsIntegralWitness_glue_f hac hcb hfd had hdb).toRSIntegrable
 
 theorem rsIntegral_glue_f {f α : ℝ → ℝ} {a d b : ℝ}
     (hac : RSIntegrable f α a d) (hcb : RSIntegrable f α d b)
