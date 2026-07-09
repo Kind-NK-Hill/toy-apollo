@@ -10,7 +10,8 @@ import ToyApollo.Output.thm_2_4
 open MeasureTheory Set Finset
 
 theorem prob_2_4_finset_union_bound {α : Type _} [MeasurableSpace α]
-    (μ : Measure α) {ι : Type _} (s : Finset ι) (A : ι → Set α) :
+    (μ : Measure α) {ι : Type _} (s : Finset ι) (A : ι → Set α)
+    (hA : ∀ i, MeasurableSet (A i)) :
     μ (⋃ i ∈ s, A i) ≤ ∑ i ∈ s, μ (A i) := by
   classical
   refine Finset.induction_on s ?empty ?insert
@@ -19,9 +20,12 @@ theorem prob_2_4_finset_union_bound {α : Type _} [MeasurableSpace α]
     have hunion : (⋃ i ∈ insert a s, A i) = A a ∪ ⋃ i ∈ s, A i := by
       ext x
       simp
+    have h_tail : MeasurableSet (⋃ i ∈ s, A i) :=
+      Finset.measurableSet_biUnion s (fun i _hi => hA i)
     calc
       μ (⋃ i ∈ insert a s, A i) = μ (A a ∪ ⋃ i ∈ s, A i) := by rw [hunion]
-      _ ≤ μ (A a) + μ (⋃ i ∈ s, A i) := thm_2_3 μ (A a) (⋃ i ∈ s, A i)
+      _ ≤ μ (A a) + μ (⋃ i ∈ s, A i) :=
+        thm_2_3 μ (A := A a) (B := ⋃ i ∈ s, A i) (hA a) h_tail
       _ ≤ μ (A a) + ∑ i ∈ s, μ (A i) := add_le_add le_rfl ih
       _ = ∑ i ∈ insert a s, μ (A i) := by
         simp [has]
@@ -30,9 +34,9 @@ theorem prob_2_4 {α : Type _} [MeasurableSpace α] (μ : Measure α) [IsProbabi
     (∀ (n : ℕ) (A : Fin n → Set α), (∀ i, MeasurableSet (A i)) → μ (⋃ i, A i) ≤ ∑ i, μ (A i)) ∧
     (∀ (A : ℕ → Set α), (∀ i, MeasurableSet (A i)) → μ (⋃ i, A i) ≤ ∑' i, μ (A i)) := by
   refine ⟨?finite, ?countable⟩
-  · intro n A _hA
+  · intro n A hA
     simpa using
-      (prob_2_4_finset_union_bound μ (Finset.univ : Finset (Fin n)) A)
+      (prob_2_4_finset_union_bound μ (Finset.univ : Finset (Fin n)) A hA)
   · intro A hAmeas
     let U : ℕ → Set α := fun n => ⋃ i ∈ Finset.range (n + 1), A i
     have hUinc : SetSeqIncreasing U := by
@@ -64,7 +68,7 @@ theorem prob_2_4 {α : Type _} [MeasurableSpace α] (μ : Measure α) [IsProbabi
     have hfinite_bound :
         ∀ n, μ (U n) ≤ ∑ i ∈ Finset.range (n + 1), μ (A i) := by
       intro n
-      exact prob_2_4_finset_union_bound μ (Finset.range (n + 1)) A
+      exact prob_2_4_finset_union_bound μ (Finset.range (n + 1)) A hAmeas
     have hpartial_le_tsum : ∀ n, μ (U n) ≤ ∑' i, μ (A i) := by
       intro n
       exact (hfinite_bound n).trans (ENNReal.sum_le_tsum (Finset.range (n + 1)))

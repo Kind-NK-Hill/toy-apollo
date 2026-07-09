@@ -150,3 +150,20 @@ theorem ex_2_2_2_not_sigma_closed :
     (⋃ n, evenSingletonSequence n) ∉ cofiniteFamily := by
   rw [iUnion_evenSingletonSequence]
   exact positiveEvenNaturals_not_mem_cofiniteFamily
+
+theorem ex_2_2_2_source_spine :
+    ({1, 2, 3} : Set ℕ) ∈ cofiniteFamily ∧
+      (({2, 3, 5, 7} : Set ℕ)ᶜ) ∈ cofiniteFamily ∧
+      (Set.univ : Set ℕ) ∈ cofiniteFamily ∧
+      (∀ {A : Set ℕ}, A ∈ cofiniteFamily → Aᶜ ∈ cofiniteFamily) ∧
+      (∀ {A B : Set ℕ}, A ∈ cofiniteFamily → B ∈ cofiniteFamily →
+        A ∪ B ∈ cofiniteFamily) ∧
+      (∀ n, evenSingletonSequence n ∈ cofiniteFamily) ∧
+      (⋃ n, evenSingletonSequence n) ∉ cofiniteFamily :=
+  ⟨cofiniteFamily_example_finite,
+    cofiniteFamily_example_cofinite,
+    cofiniteFamily_univ_mem,
+    fun {_} => cofiniteFamily_compl_mem,
+    fun {_ _} => cofiniteFamily_union_mem,
+    evenSingletonSequence_mem,
+    ex_2_2_2_not_sigma_closed⟩
