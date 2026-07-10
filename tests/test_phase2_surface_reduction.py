@@ -144,6 +144,11 @@ class Phase2SurfaceReductionTests(unittest.TestCase):
                 "docs/phase2/artifacts.md",
                 "docs/phase2/tools.md",
                 "docs/phase2/rs_stieltjes_boundary.md",
+                "docs/phase2/output_auxiliary_modules.md",
+                "docs/phase2/author_errata_confirmations_2026-07.md",
+                "docs/phase2/p5_p9_health_reconciliation.md",
+                "docs/phase2/chapter9_intro_context_reconciliation.md",
+                "docs/phase2/chapter10_14_remark_context_reconciliation.md",
             },
         )
 
