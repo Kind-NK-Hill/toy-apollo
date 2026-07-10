@@ -243,8 +243,10 @@ def analyze_batch_state(
             report_status = task_status
         if not task_status and status == COMPLETED and not allowed_exception:
             report_status = "needs_fresh_review"
-            task_status_reason = "completed runtime status has no phase2_status/proof_class evidence"
-            task_status_evidence_type = "missing_task_status"
+            if not task_status_reason:
+                task_status_reason = "completed runtime status has no phase2_status/proof_class evidence"
+            if not task_status_evidence_type:
+                task_status_evidence_type = "missing_task_status"
         elif not task_status and blocked_dependency:
             task_status = "blocked"
             report_status = "blocked"

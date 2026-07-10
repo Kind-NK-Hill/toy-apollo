@@ -20,6 +20,11 @@ from src.toy_apollo.phase2_batch_runner import (  # noqa: E402
     render_batch_runner_plan,
     run_batch_actions,
 )
+from src.toy_apollo.phase2_prompt_pack import (  # noqa: E402
+    apply_codex_review_result,
+    write_existing_output_review_pack,
+)
+from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E402
 
 
 class FakeLedger:
@@ -27,7 +32,7 @@ class FakeLedger:
         self.ledger = {"tasks": tasks}
 
 
-class Phase2BatchRunnerTests(unittest.TestCase):
+class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
     def _settings(self, root: Path):
         output_dir = root / "ToyApollo" / "Output"
         output_dir.mkdir(parents=True)
@@ -57,6 +62,143 @@ class Phase2BatchRunnerTests(unittest.TestCase):
         self.assertIn("--phase2-mode review-now", plan.actions[0].command)
         self.assertIn("--review-subject existing", plan.actions[0].command)
         self.assertEqual(plan.report.rows[0].report_status, "needs_fresh_review")
+
+    def test_ledger_pass_with_legacy_unbound_review_requires_fresh_review(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            settings = self._settings(root)
+            task_id = "thm_1_legacy_review"
+            output_path = settings.toyapollo_output_dir / f"{task_id}.lean"
+            output_path.write_text("import Mathlib\n\ntheorem thm_1_legacy_review : True := by trivial\n", encoding="utf-8")
+            result_path = root / "phase2_prompt_packs" / task_id / "semantic_review_result_v1.json"
+            result_path.parent.mkdir(parents=True)
+            result_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "phase2.semantic_review.result.v1",
+                        "task_id": task_id,
+                        "verdict": "pass",
+                        "proof_class": "textbook_proof_completed",
+                        "completion_class": "textbook_proof_completed",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            ledger = FakeLedger(
+                {
+                    task_id: {
+                        "block_id": task_id,
+                        "type": "Theorem",
+                        "status": COMPLETED,
+                        "phase2_status": "pass",
+                        "latest_official_review_result_file": str(result_path),
+                    }
+                }
+            )
+
+            plan = plan_batch_from_ledger([task_id], ledger, settings)
+
+        self.assertEqual(plan.report.rows[0].report_status, "needs_fresh_review")
+        self.assertEqual(plan.actions[0].action, "review_existing")
+
+    def test_fresh_review_with_illegal_class_is_not_counted_as_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            task_id = "thm_1_illegal_class"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(
+                root,
+                task_id,
+                completed=True,
+            )
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "build ok"),
+            ):
+                success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
+            self.assertTrue(success, detail)
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="pass",
+                proof_class="textbook_proof_completed",
+                completion_class="semantically_complete",
+            )
+            ledger.update_runtime_metadata(
+                task_id,
+                phase2_status="pass",
+                latest_official_review_result_file=str(result_path),
+            )
+
+            plan = plan_batch_from_ledger([task_id], ledger, settings)
+
+        self.assertEqual(plan.report.rows[0].report_status, "needs_class_normalization")
+        self.assertEqual(plan.actions[0].action, "review_existing")
+
+    def test_only_fresh_applied_review_is_counted_as_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            task_id = "thm_1_fresh_applied"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(
+                root,
+                task_id,
+                completed=True,
+            )
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "build ok"),
+            ):
+                success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
+            self.assertTrue(success, detail)
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="pass",
+                proof_class="textbook_proof_completed",
+                completion_class="textbook_proof_completed",
+            )
+            with patch(
+                "src.toy_apollo.phase2_review_apply.run_official_module_build",
+                return_value=(True, "build ok"),
+            ):
+                success, detail = asyncio.run(
+                    apply_codex_review_result(task_id, ledger, settings, str(result_path))
+                )
+            self.assertTrue(success, detail)
+
+            plan = plan_batch_from_ledger([task_id], ledger, settings)
+
+        self.assertEqual(plan.report.rows[0].report_status, "pass")
+        self.assertEqual(plan.report.rows[0].task_status, "pass")
+
+    def test_fresh_but_unapplied_pass_result_is_not_counted_as_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            task_id = "thm_1_fresh_unapplied"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(
+                root,
+                task_id,
+                completed=True,
+            )
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "build ok"),
+            ):
+                success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
+            self.assertTrue(success, detail)
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="pass",
+                proof_class="textbook_proof_completed",
+                completion_class="textbook_proof_completed",
+            )
+            ledger.update_runtime_metadata(
+                task_id,
+                phase2_status="pass",
+                latest_official_review_result_file=str(result_path),
+            )
+
+            plan = plan_batch_from_ledger([task_id], ledger, settings)
+
+        self.assertEqual(plan.report.rows[0].report_status, "needs_fresh_review")
+        self.assertIn("review-apply", plan.report.rows[0].task_status_reason)
 
     def test_failed_task_routes_to_auto_loop(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1583,7 +1725,8 @@ class Phase2BatchRunnerTests(unittest.TestCase):
 
         self.assertEqual(state["batch_id"], "live-ledger")
         self.assertEqual(state["tasks"][0]["task_id"], "prob_11_6")
-        self.assertEqual(state["tasks"][0]["phase2_status"], "pass")
+        self.assertEqual(state["tasks"][0]["phase2_status"], "needs_fresh_review")
+        self.assertEqual(ledger.ledger["tasks"]["prob_11_6"]["phase2_status"], "pass")
 
     def test_batch_run_dispatches_only_bounded_executable_actions(self):
         with tempfile.TemporaryDirectory() as tmp:
