@@ -1058,6 +1058,20 @@ async def apply_codex_review_result_once(
         reconcile_obligation_tasks_for_task(output_binding.output_owner_task_id, ledger, settings)
     else:
         ledger.register_success(task_id, candidate_code, ledger._hash_text(candidate_code))
+        # A successful candidate promotion replaces the previously reviewed
+        # official output. Any repair/build-failure markers attached to that
+        # superseded output must not keep routing the newly promoted canonical
+        # file back into auto-loop.
+        ledger.update_runtime_metadata(
+            task_id,
+            latest_official_review_verdict=task_status_projection.review_verdict,
+            latest_official_review_result_file=str(normalized_review.get("review_result_file", "") or ""),
+            latest_official_review_requires_repair=False,
+            latest_official_review_detail="Candidate promoted after clean semantic review and final build.",
+            latest_official_apply_build_failed=False,
+            latest_official_apply_build_detail="",
+            official_output_quarantine_policy="not_quarantined_by_default",
+        )
     return finish(
         success=True,
         detail_text="Codex semantic review passed; candidate promoted and final build succeeded.",
