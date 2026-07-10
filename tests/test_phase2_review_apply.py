@@ -222,6 +222,50 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_candidate_promotion_clears_superseded_official_repair_markers(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_candidate_promotion_clears_official_repair"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_candidate_promotion_clears_official_repair"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            ledger.update_runtime_metadata(
+                task_id,
+                latest_official_review_verdict="fail",
+                latest_official_review_result_file=str(pack_dir / "old_official_fail.json"),
+                latest_official_review_requires_repair=True,
+                latest_official_apply_build_failed=True,
+                latest_official_apply_build_detail="old official output failed",
+            )
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass")
+
+            def promote_side_effect(*args, **kwargs):
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                output_path.write_text((pack_dir / "candidate_v1.lean").read_text(encoding="utf-8"), encoding="utf-8")
+                return True, "final build ok"
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                side_effect=promote_side_effect,
+            ), patch(
+                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                side_effect=promote_side_effect,
+            ):
+                success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            self.assertTrue(success, detail)
+            task_record = ledger.ledger["tasks"][task_id]
+            self.assertEqual(task_record.get("latest_official_review_verdict"), "pass")
+            self.assertEqual(Path(task_record.get("latest_official_review_result_file", "")), result_path)
+            self.assertFalse(task_record.get("latest_official_review_requires_repair", False))
+            self.assertFalse(task_record.get("latest_official_apply_build_failed", False))
+            self.assertEqual(task_record.get("latest_official_apply_build_detail"), "")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_codex_review_apply_resolves_review_input_when_path_exists_is_false(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_long_review_input"
         try:
