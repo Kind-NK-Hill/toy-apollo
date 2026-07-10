@@ -41,6 +41,7 @@ from .phase2_proof_obligations import (
 )
 from .phase2_obligation_tasks import reconcile_obligation_tasks_for_task
 from .phase2_output_binding import resolve_phase2_output_binding
+from .phase2_review_decision import evaluate_semantic_review_result, project_normalized_semantic_review_result
 from .phase2_review_request import _clear_current_review_metadata, _resolve_review_binding_path, _validate_review_input_freshness
 from .phase2_semantic_review import (
     SEMANTIC_REVIEW_PROMPT_VERSION,
@@ -50,7 +51,6 @@ from .phase2_semantic_review import (
     normalize_reviewer_result,
 )
 from .phase2_semantic_fail_triage import write_semantic_fail_triage_artifacts
-from .phase2_task_status import classify_phase2_task_status
 from .phase2_pack_generation import (
     hard_check_diagnostic,
     parse_diagnostics,
@@ -162,26 +162,21 @@ def _review_completion_status(review_result: dict[str, Any], task_record: dict[s
 
 
 def _classify_review_task_status(task_id: str, task: dict[str, Any], review_result: dict[str, Any]):
-    return classify_phase2_task_status(
-        task_id=task_id,
-        task_type=str(task.get("type", "") or ""),
-        review_verdict=str(review_result.get("verdict", "") or ""),
-        proof_class=review_result.get("proof_class", ""),
-        completion_class=review_result.get("completion_class", ""),
-    )
+    task_payload = dict(task)
+    task_payload["block_id"] = task_id
+    projection = project_normalized_semantic_review_result(review_result, task=task_payload).task_status_projection
+    if projection is None:
+        raise ValueError("operationally invalid semantic review has no task-status projection")
+    return projection
 
 
 def _review_with_task_status(task_id: str, task: dict[str, Any], review_result: dict[str, Any]) -> tuple[dict[str, Any], Any]:
-    projection = _classify_review_task_status(task_id, task, review_result)
-    enriched = dict(review_result)
-    enriched["phase2_status"] = projection.task_status
-    enriched["phase2_status_reason"] = projection.reason
-    enriched["phase2_status_evidence_type"] = projection.evidence_type
-    enriched["task_status"] = projection.task_status
-    enriched["task_status_reason"] = projection.reason
-    enriched["task_status_evidence_type"] = projection.evidence_type
-    enriched["task_role"] = projection.task_role
-    return enriched, projection
+    task_payload = dict(task)
+    task_payload["block_id"] = task_id
+    decision = project_normalized_semantic_review_result(review_result, task=task_payload)
+    if decision.task_status_projection is None:
+        raise ValueError("operationally invalid semantic review has no task-status projection")
+    return decision.result, decision.task_status_projection
 
 
 def _clear_current_review_repair_metadata(task_id: str, ledger: LedgerManager) -> None:
@@ -493,11 +488,11 @@ async def apply_codex_review_result_once(
             }
             normalized_review = _invalid_codex_review_result(review_input, "review input JSON is invalid", raw_result)
         else:
-            normalized_review = normalize_reviewer_result(
+            normalized_review = evaluate_semantic_review_result(
                 raw_result,
                 review_input=review_input,
                 runner_metadata={"status": "codex_handoff_applied", "result_file": str(result_path)},
-            )
+            ).result
     review_basis = review_input.get("review_basis", {}) if isinstance(review_input.get("review_basis", {}), dict) else {}
     proof_obligations_file = str(review_basis.get("proof_obligations_file", "") or "").strip()
     source_plan = str(task.get("source_plan", "unknown") or "unknown")
@@ -739,52 +734,39 @@ async def apply_codex_review_result_once(
             candidate_code = str(freshness.get("candidate_code", candidate_code))
             review_subject_hash = str(freshness.get("current_review_subject_hash", review_subject_hash))
 
-    if validation_error:
-        normalized_review = _invalid_codex_review_result(review_input, validation_error, raw_result)
-        normalized_review = dict(normalized_review)
-        if review_input_path is not None and path_exists(review_input_path):
-            normalized_review["review_input_file"] = str(review_input_path)
-        review_prompt_file = str(review_input.get("review_prompt_file", "") or normalized_review.get("review_prompt_file", "") or "").strip()
-        if review_prompt_file:
-            normalized_review["review_prompt_file"] = str(_resolve_review_binding_path(review_prompt_file, pack_dir=pack_dir))
-        review_report_file = str(review_input.get("review_report_file", "") or normalized_review.get("review_report_file", "") or "").strip()
-        if review_report_file:
-            normalized_review["review_report_file"] = str(_resolve_review_binding_path(review_report_file, pack_dir=pack_dir))
-        review_context_file = str(review_input.get("review_context_file", "") or normalized_review.get("review_context_file", "") or "").strip()
-        if review_context_file:
-            normalized_review["review_context_file"] = str(_resolve_review_binding_path(review_context_file, pack_dir=pack_dir))
-        normalized_review["review_result_file"] = str(result_path)
-    else:
-        normalized_review = _write_normalized_codex_review_artifacts(pack_dir, review_input, normalized_review)
-        obligation_update_path = Path(proof_obligations_file) if proof_obligations_file else proof_obligation_path(pack_dir)
-        if output_binding.is_obligation_task:
-            seed_focused_child_obligations_from_review(
-                obligation_update_path,
-                normalized_review,
-                focus_obligation_ids=output_binding.focus_obligation_ids,
-                owner_obligations_path=output_binding.proof_obligations_file,
-            )
-        updated_obligations = apply_obligation_review_to_file(obligation_update_path, normalized_review)
-        if updated_obligations:
-            obligation_owner_task_id = canonicalize_block_id(str(updated_obligations.get("task_id", "") or task_id))
-            ledger.update_runtime_metadata(
-                obligation_owner_task_id,
-                proof_obligations_file=str(obligation_update_path),
-                proof_obligation_summary=summarize_proof_obligations(updated_obligations),
-            )
     verdict = str(normalized_review.get("verdict", "inconclusive"))
     cache_class = str(normalized_review.get("cache_class", "semantic_verdict") or "semantic_verdict").strip().lower()
     detail = str(normalized_review.get("normalization_reason", "") or normalized_review.get("summary", "") or f"Codex review verdict: {verdict}")
-    if validation_error or cache_class != "semantic_verdict":
-        invalid_reason = validation_error or detail or "invalid reviewer output"
-        diagnostics = hard_check_diagnostic("semantic_review_invalid", invalid_reason)
-        return finish(
+    if validation_error:
+        return ApplyOutcome(
             success=False,
-            detail_text=invalid_reason,
-            diagnostics=diagnostics,
-            semantic_review=normalized_review,
+            detail=validation_error,
             disposition="codex_review_invalid_no_promotion",
-            state_transition="none" if (existing_completed_output or review_subject_kind == "official_output") else "review_apply_to_failed_local",
+        )
+    if cache_class != "semantic_verdict":
+        invalid_reason = validation_error or detail or "invalid reviewer output"
+        return ApplyOutcome(
+            success=False,
+            detail=invalid_reason,
+            disposition="codex_review_invalid_no_promotion",
+        )
+    normalized_review, task_status_projection = _review_with_task_status(task_id, task, normalized_review)
+    normalized_review = _write_normalized_codex_review_artifacts(pack_dir, review_input, normalized_review)
+    obligation_update_path = Path(proof_obligations_file) if proof_obligations_file else proof_obligation_path(pack_dir)
+    if output_binding.is_obligation_task:
+        seed_focused_child_obligations_from_review(
+            obligation_update_path,
+            normalized_review,
+            focus_obligation_ids=output_binding.focus_obligation_ids,
+            owner_obligations_path=output_binding.proof_obligations_file,
+        )
+    updated_obligations = apply_obligation_review_to_file(obligation_update_path, normalized_review)
+    if updated_obligations:
+        obligation_owner_task_id = canonicalize_block_id(str(updated_obligations.get("task_id", "") or task_id))
+        ledger.update_runtime_metadata(
+            obligation_owner_task_id,
+            proof_obligations_file=str(obligation_update_path),
+            proof_obligation_summary=summarize_proof_obligations(updated_obligations),
         )
     if verdict != "pass":
         diagnostics = review_diagnostics(normalized_review)
@@ -836,7 +818,6 @@ async def apply_codex_review_result_once(
             repair_ready=repair_ready,
             next_action="diagnoser" if needs_diagnoser else "review_fix",
         )
-    clean_review, task_status_projection = _review_with_task_status(task_id, task, normalized_review)
     if task_status_projection.task_status != "pass":
         detail_text = (
             f"{detail} Task status: {task_status_projection.task_status} ({task_status_projection.reason}). "
@@ -847,7 +828,7 @@ async def apply_codex_review_result_once(
             success=False,
             detail_text=detail_text,
             diagnostics=hard_check_diagnostic("phase2_status_not_pass", task_status_projection.reason),
-            semantic_review=clean_review,
+            semantic_review=normalized_review,
             disposition=f"codex_review_pass_{task_status_projection.task_status}_no_promotion",
             state_transition="none" if (existing_completed_output or review_subject_kind == "official_output") else "review_apply_no_completion",
             next_action="review_fix" if task_status_projection.task_status == "fail" else "repair_dependency_gate",
