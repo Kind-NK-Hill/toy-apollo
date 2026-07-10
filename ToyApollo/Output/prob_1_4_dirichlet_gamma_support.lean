@@ -18,12 +18,15 @@ theorem prob_1_4
       (DirichletLaw G.shape G.scale) mu ∧
     HasLaw (fun omega => projectedNormalizedGammaVector G omega)
       (ProjectedDirichletLaw G.shape G.scale) mu ∧
-    DirichletLaw G.shape G.scale (DirichletFullSimplex n) = 1 := by
+    DirichletLaw G.shape G.scale (DirichletFullSimplex n) = 1 ∧
+    ProjectedDirichletLaw G.shape G.scale =
+      (volume : Measure (Fin (n - 1) → ℝ)).withDensity
+        (fun x => ENNReal.ofReal (DirichletPDF G.shape x)) := by
   have hXlaw :
       ∀ i, HasLaw (fun omega => G.X omega i) (gammaScaleLaw (G.shape i) G.scale) mu := by
     intro i
     exact ⟨(G.measurable i).aemeasurable, G.gamma_law i⟩
-  refine ⟨?_, ?_, ?_⟩
+  refine ⟨?_, ?_, ?_, ?_⟩
   · simpa [normalizedGammaVector] using
       independent_gamma_normalized_hasLaw_dirichlet mu G.shape G.scale
         (fun i omega => G.X omega i) hXlaw G.independent
@@ -31,6 +34,8 @@ theorem prob_1_4
       projected_normalized_hasLaw_projectedDirichlet mu G.shape G.scale
         (fun i omega => G.X omega i) hXlaw G.independent
   · exact DirichletLaw_simplex_probability_one hn G.shape G.shape_pos G.scale_pos
+  · exact ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive
+      hn G.shape G.scale G.shape_pos G.scale_pos
 
 theorem prob_1_4_simplex
     {n : ℕ} (x : Fin (n - 1) → ℝ)

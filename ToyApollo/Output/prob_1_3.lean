@@ -6,6 +6,7 @@ SOURCE MATERIAL: omitted from the public source snapshot; see docs/repository_sc
 -/
 
 import Mathlib
+import ToyApollo.Output.ex_1_2_2_dirichlet_gamma_beta
 
 -- WRITE FINAL LEAN CODE BELOW
 open MeasureTheory ProbabilityTheory Real Set Filter Topology Complex
@@ -55,11 +56,6 @@ lemma gammaRatioTransformDensity_eq_betaPDFReal_of_neg {α₁ α₂ β u : ℝ} 
 lemma gammaRatioTransformDensity_eq_betaPDFReal_of_one_lt {α₁ α₂ β u : ℝ} (hu : 1 < u) :
     gammaRatioTransformDensity α₁ α₂ β u = betaPDFReal α₁ α₂ u := by
   rw [gammaRatioTransformDensity_eq_zero_of_one_lt hu, betaPDFReal_eq_zero_of_one_lt hu]
-
-lemma gammaPDFReal_eq_zero_of_neg {α β x : ℝ} (hx : x < 0) :
-    gammaPDFReal α β x = 0 := by
-  have hnot : ¬0 ≤ x := not_le.mpr hx
-  simp [gammaPDFReal, hnot]
 
 lemma gammaSumConvolutionDensity_eq_zero_of_neg {α₁ α₂ β x : ℝ} (hx : x < 0) :
     gammaSumConvolutionDensity α₁ α₂ β x = 0 := by
@@ -671,6 +667,157 @@ theorem prob_1_3_lawLevelDensityCandidate_of_pos
   prob_1_3_lawLevelDensityCandidate_of_aeDensityCandidate
     (prob_1_3_aeDensityCandidate_of_pos hα₁ hα₂ hβ)
 
-theorem prob_1_3 {α₁ α₂ β : ℝ} (hα₁ : 0 < α₁) (hα₂ : 0 < α₂) (hβ : 0 < β) :
-    prob_1_3_lawLevelDensityCandidate α₁ α₂ β :=
-  prob_1_3_lawLevelDensityCandidate_of_pos hα₁ hα₂ hβ
+lemma gammaPDF_eq_ofReal_gammaPDFReal (a r z : ℝ) :
+    gammaPDF a r z = ENNReal.ofReal (gammaPDFReal a r z) := rfl
+
+lemma measurable_gammaPDF_ennreal (a r : ℝ) : Measurable (gammaPDF a r) :=
+  (measurable_gammaPDFReal a r).ennreal_ofReal
+
+lemma lconv_gammaPDF_lt_top_ae {α₁ α₂ r : ℝ} (hα₁ : 0 < α₁) (hα₂ : 0 < α₂) (hr : 0 < r) :
+    ∀ᵐ x ∂(volume : Measure ℝ),
+      lconvolution (gammaPDF α₁ r) (gammaPDF α₂ r) volume x < ∞ := by
+  haveI hp₁ : IsProbabilityMeasure (gammaMeasure α₁ r) := isProbabilityMeasure_gammaMeasure hα₁ hr
+  haveI hp₂ : IsProbabilityMeasure (gammaMeasure α₂ r) := isProbabilityMeasure_gammaMeasure hα₂ hr
+  have hconv :
+      gammaMeasure α₁ r ∗ gammaMeasure α₂ r
+        = volume.withDensity (lconvolution (gammaPDF α₁ r) (gammaPDF α₂ r) volume) := by
+    simp only [gammaMeasure]
+    rw [conv_withDensity_eq_lconvolution (measurable_gammaPDF_ennreal α₁ r)
+        (measurable_gammaPDF_ennreal α₂ r)]
+  haveI : IsProbabilityMeasure (gammaMeasure α₁ r ∗ gammaMeasure α₂ r) := inferInstance
+  have htot :
+      ∫⁻ x, lconvolution (gammaPDF α₁ r) (gammaPDF α₂ r) volume x ∂volume = 1 := by
+    have huniv := (measure_univ (μ := gammaMeasure α₁ r ∗ gammaMeasure α₂ r))
+    rw [hconv, withDensity_apply _ MeasurableSet.univ, Measure.restrict_univ] at huniv
+    exact huniv
+  have hmeasl : Measurable (lconvolution (gammaPDF α₁ r) (gammaPDF α₂ r) volume) :=
+    measurable_lconvolution volume (measurable_gammaPDF_ennreal α₁ r)
+      (measurable_gammaPDF_ennreal α₂ r)
+  exact ae_lt_top hmeasl (by rw [htot]; exact ENNReal.one_ne_top)
+
+lemma gammaPDF_lconvolution_ae_eq {α₁ α₂ r : ℝ} (hα₁ : 0 < α₁) (hα₂ : 0 < α₂) (hr : 0 < r) :
+    lconvolution (gammaPDF α₁ r) (gammaPDF α₂ r) volume =ᵐ[volume] gammaPDF (α₁ + α₂) r := by
+  have hfin := lconv_gammaPDF_lt_top_ae hα₁ hα₂ hr
+  have hx0 : ∀ᵐ x ∂(volume : Measure ℝ), x ≠ 0 := by simp [ae_iff, measure_singleton]
+  filter_upwards [hfin, hx0] with x hfin_x hx_ne
+  rcases lt_or_gt_of_ne hx_ne with hxneg | hxpos
+  · -- x < 0 : both sides vanish
+    rw [gammaPDF_of_neg hxneg, lconvolution_def]
+    have hz : ∀ y, gammaPDF α₁ r y * gammaPDF α₂ r (-y + x) = 0 := by
+      intro y
+      by_cases hy : (0 : ℝ) ≤ y
+      · rw [gammaPDF_of_neg (show -y + x < 0 by linarith), mul_zero]
+      · rw [gammaPDF_of_neg (not_le.mp hy), zero_mul]
+    simp_rw [hz, lintegral_zero]
+  · -- x > 0 : the analytic convolution identity
+    have harg : ∀ y : ℝ, (-y + x) = x - y := fun y => by ring
+    have hcast : ∀ y, gammaPDF α₁ r y * gammaPDF α₂ r (-y + x)
+        = ENNReal.ofReal (gammaPDFReal α₁ r y * gammaPDFReal α₂ r (x - y)) := by
+      intro y
+      rw [harg, gammaPDF_eq_ofReal_gammaPDFReal, gammaPDF_eq_ofReal_gammaPDFReal,
+        ← ENNReal.ofReal_mul (gammaPDFReal_nonneg hα₁ hr y)]
+    have hFnn : 0 ≤ᵐ[volume] fun y => gammaPDFReal α₁ r y * gammaPDFReal α₂ r (x - y) :=
+      ae_of_all _ fun y =>
+        mul_nonneg (gammaPDFReal_nonneg hα₁ hr y) (gammaPDFReal_nonneg hα₂ hr (x - y))
+    have hFmeas : AEStronglyMeasurable
+        (fun y => gammaPDFReal α₁ r y * gammaPDFReal α₂ r (x - y)) volume :=
+      ((measurable_gammaPDFReal α₁ r).mul
+        ((measurable_gammaPDFReal α₂ r).comp
+          (measurable_const.sub measurable_id))).aestronglyMeasurable
+    have hlint_eq :
+        ∫⁻ y, ENNReal.ofReal (gammaPDFReal α₁ r y * gammaPDFReal α₂ r (x - y)) ∂volume
+          = lconvolution (gammaPDF α₁ r) (gammaPDF α₂ r) volume x := by
+      rw [lconvolution_def]
+      exact lintegral_congr fun y => (hcast y).symm
+    have hInt : Integrable (fun y => gammaPDFReal α₁ r y * gammaPDFReal α₂ r (x - y)) volume := by
+      refine ⟨hFmeas, (hasFiniteIntegral_iff_ofReal hFnn).mpr ?_⟩
+      rw [hlint_eq]; exact hfin_x
+    have hsupp :
+        (fun y => gammaPDFReal α₁ r y * gammaPDFReal α₂ r (x - y))
+          =ᵐ[volume]
+        (Set.Ioo 0 x).indicator
+          (fun y => gammaPDFReal α₁ r y * gammaPDFReal α₂ r (x - y)) := by
+      have h0 : ∀ᵐ y ∂(volume : Measure ℝ), y ≠ 0 := by simp [ae_iff, measure_singleton]
+      have hxx : ∀ᵐ y ∂(volume : Measure ℝ), y ≠ x := by simp [ae_iff, measure_singleton]
+      filter_upwards [h0, hxx] with y hy0 hyx
+      by_cases hy : y ∈ Set.Ioo 0 x
+      · rw [Set.indicator_of_mem hy]
+      · rw [Set.indicator_of_notMem hy]
+        rw [Set.mem_Ioo, not_and_or] at hy
+        rcases hy with h | h
+        · have hyneg : y < 0 := lt_of_le_of_ne (not_lt.mp h) hy0
+          rw [gammaPDFReal_eq_zero_of_neg hyneg, zero_mul]
+        · have hxy : x - y < 0 := by
+            have hxlt : x < y := lt_of_le_of_ne (not_lt.mp h) (Ne.symm hyx)
+            linarith
+          rw [gammaPDFReal_eq_zero_of_neg hxy, mul_zero]
+    have hIntEq :
+        ∫ y, gammaPDFReal α₁ r y * gammaPDFReal α₂ r (x - y) ∂volume
+          = gammaSumConvolutionDensity α₁ α₂ r x := by
+      rw [integral_congr_ae hsupp, integral_indicator measurableSet_Ioo]
+      rfl
+    rw [lconvolution_def]
+    calc
+      ∫⁻ y, gammaPDF α₁ r y * gammaPDF α₂ r (-y + x) ∂volume
+          = ∫⁻ y, ENNReal.ofReal (gammaPDFReal α₁ r y * gammaPDFReal α₂ r (x - y)) ∂volume := by
+            exact lintegral_congr fun y => hcast y
+      _ = ENNReal.ofReal (∫ y, gammaPDFReal α₁ r y * gammaPDFReal α₂ r (x - y) ∂volume) :=
+            (ofReal_integral_eq_lintegral_ofReal hInt hFnn).symm
+      _ = ENNReal.ofReal (gammaSumConvolutionDensity α₁ α₂ r x) := by rw [hIntEq]
+      _ = ENNReal.ofReal (gammaPDFReal (α₁ + α₂) r x) := by
+            rw [gammaSumConvolutionDensity_eq_gammaPDFReal_of_pos hα₁ hα₂ hr hxpos]
+      _ = gammaPDF (α₁ + α₂) r x := rfl
+
+theorem gammaMeasure_conv {α₁ α₂ r : ℝ} (hα₁ : 0 < α₁) (hα₂ : 0 < α₂) (hr : 0 < r) :
+    gammaMeasure α₁ r ∗ gammaMeasure α₂ r = gammaMeasure (α₁ + α₂) r := by
+  simp only [gammaMeasure]
+  rw [conv_withDensity_eq_lconvolution (measurable_gammaPDF_ennreal α₁ r)
+      (measurable_gammaPDF_ennreal α₂ r)]
+  exact withDensity_congr_ae (gammaPDF_lconvolution_ae_eq hα₁ hα₂ hr)
+
+theorem prob_1_3a {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} {X Y : Ω → ℝ}
+    {α₁ α₂ r : ℝ} (hα₁ : 0 < α₁) (hα₂ : 0 < α₂) (hr : 0 < r)
+    (hX : HasLaw X (gammaMeasure α₁ r) P) (hY : HasLaw Y (gammaMeasure α₂ r) P)
+    (hXY : IndepFun X Y P) :
+    HasLaw (fun ω => X ω + Y ω) (gammaMeasure (α₁ + α₂) r) P := by
+  haveI hp₁ : IsProbabilityMeasure (gammaMeasure α₁ r) := isProbabilityMeasure_gammaMeasure hα₁ hr
+  haveI hp₂ : IsProbabilityMeasure (gammaMeasure α₂ r) := isProbabilityMeasure_gammaMeasure hα₂ hr
+  have hsum := hXY.hasLaw_fun_add hX hY
+  rwa [gammaMeasure_conv hα₁ hα₂ hr] at hsum
+
+theorem prob_1_3b {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} {X Y : Ω → ℝ}
+    {α₁ α₂ r : ℝ} (hα₁ : 0 < α₁) (hα₂ : 0 < α₂) (hr : 0 < r)
+    (hX : HasLaw X (gammaMeasure α₁ r) P) (hY : HasLaw Y (gammaMeasure α₂ r) P)
+    (hXY : IndepFun X Y P) :
+    HasLaw (fun ω => X ω / (X ω + Y ω)) (betaMeasure α₁ α₂) P := by
+  haveI hpm₁ : IsProbabilityMeasure (gammaMeasure α₁ r) := isProbabilityMeasure_gammaMeasure hα₁ hr
+  haveI : IsProbabilityMeasure P := hX.isProbabilityMeasure
+  -- joint law of the pair `(X, Y)` is the product law (from independence)
+  have hpair_map : Measure.map (fun ω => (X ω, Y ω)) P
+      = (gammaMeasure α₁ r).prod (gammaMeasure α₂ r) := by
+    rw [(indepFun_iff_map_prod_eq_prod_map_map hX.aemeasurable hY.aemeasurable).1 hXY,
+        hX.map_eq, hY.map_eq]
+  have hpair : HasLaw (fun ω => (X ω, Y ω)) ((gammaMeasure α₁ r).prod (gammaMeasure α₂ r)) P :=
+    ⟨hX.aemeasurable.prodMk hY.aemeasurable, hpair_map⟩
+  -- the ratio pushforward of the product Gamma law is Mathlib's Beta measure
+  have hbeta : Measure.map (fun p : ℝ × ℝ => p.1 / (p.1 + p.2))
+      ((gammaMeasure α₁ r).prod (gammaMeasure α₂ r)) = betaMeasure α₁ α₂ := by
+    have hb₁ : gammaMeasure α₁ r = ex122GammaScaleLaw α₁ r⁻¹ := by
+      simp only [ex122GammaScaleLaw, inv_inv]
+    have hb₂ : gammaMeasure α₂ r = ex122GammaScaleLaw α₂ r⁻¹ := by
+      simp only [ex122GammaScaleLaw, inv_inv]
+    rw [hb₁, hb₂]
+    exact ex122_pair_product_gamma_ratio_eq_betaMeasure α₁ α₂ hα₁ hα₂ (inv_pos.mpr hr)
+  have hratio : HasLaw (fun p : ℝ × ℝ => p.1 / (p.1 + p.2)) (betaMeasure α₁ α₂)
+      ((gammaMeasure α₁ r).prod (gammaMeasure α₂ r)) :=
+    ⟨(by fun_prop : Measurable fun p : ℝ × ℝ => p.1 / (p.1 + p.2)).aemeasurable, hbeta⟩
+  simpa using hratio.comp hpair
+
+theorem prob_1_3 {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} {X Y : Ω → ℝ}
+    {α₁ α₂ r : ℝ} (hα₁ : 0 < α₁) (hα₂ : 0 < α₂) (hr : 0 < r)
+    (hX : HasLaw X (gammaMeasure α₁ r) P) (hY : HasLaw Y (gammaMeasure α₂ r) P)
+    (hXY : IndepFun X Y P) :
+    HasLaw (fun ω => X ω + Y ω) (gammaMeasure (α₁ + α₂) r) P ∧
+    HasLaw (fun ω => X ω / (X ω + Y ω)) (betaMeasure α₁ α₂) P ∧
+    ∫ x, x * betaPDFReal α₁ α₂ x = α₁ / (α₁ + α₂) :=
+  ⟨prob_1_3a hα₁ hα₂ hr hX hY hXY, prob_1_3b hα₁ hα₂ hr hX hY hXY, prob_1_3c hα₁ hα₂⟩
