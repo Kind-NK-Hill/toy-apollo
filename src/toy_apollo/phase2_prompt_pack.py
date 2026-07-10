@@ -3613,31 +3613,19 @@ def _is_canonical_official_output(file_path: Path) -> bool:
 def _iter_review_existing_queue_outputs(settings, selected_task_ids: set[str] | None = None) -> tuple[list[Path], list[str]]:
     outputs_by_task: dict[str, Path] = {}
     skipped_non_official: list[str] = []
-    output_lean_roots: list[Path] = []
-    if settings.output_lean_files_dir.exists():
-        output_lean_roots = [
-            settings.output_lean_files_dir / "general",
-            *[path for path in settings.output_lean_files_dir.iterdir() if path.is_dir() and path.name != "general"],
-        ]
-    roots = [
-        settings.toyapollo_output_dir,
-        *output_lean_roots,
-    ]
-    for root in roots:
-        if not root.exists():
+    root = settings.toyapollo_output_dir
+    if not root.exists():
+        return [], skipped_non_official
+    for file_path in sorted(root.glob("*.lean")):
+        if _is_queue_skipped_temp_output(file_path):
             continue
-        for file_path in sorted(root.glob("*.lean")):
-            if _is_queue_skipped_temp_output(file_path):
-                continue
-            if not _is_canonical_official_output(file_path):
-                skipped_non_official.append(str(file_path))
-                continue
-            canonical_task_id = canonicalize_block_id(file_path.stem)
-            if selected_task_ids is not None and canonical_task_id not in selected_task_ids:
-                continue
-            current = outputs_by_task.get(canonical_task_id)
-            if current is None or file_path.stat().st_mtime > current.stat().st_mtime:
-                outputs_by_task[canonical_task_id] = file_path
+        if not _is_canonical_official_output(file_path):
+            skipped_non_official.append(str(file_path))
+            continue
+        canonical_task_id = canonicalize_block_id(file_path.stem)
+        if selected_task_ids is not None and canonical_task_id not in selected_task_ids:
+            continue
+        outputs_by_task[canonical_task_id] = file_path
     return [outputs_by_task[task_id] for task_id in sorted(outputs_by_task)], skipped_non_official
 
 

@@ -176,10 +176,16 @@ def find_existing_task_file(task_id: str, source_plan: str, settings) -> Path | 
 
 
 def select_latest_existing_task_file(task_id: str, source_plan: str, settings) -> Path | None:
-    existing = [candidate for candidate in iter_official_output_targets(task_id, source_plan, settings) if candidate.exists()]
-    if not existing:
-        return None
-    return max(existing, key=_path_mtime)
+    """Return the canonical deployed output used as an existing-review subject.
+
+    Legacy ``output_lean_files`` copies remain discoverable through
+    ``find_existing_task_file`` for historical/dependency recovery, but they
+    are never allowed to replace ``ToyApollo/Output`` based on mtime.
+    """
+
+    del source_plan
+    canonical = settings.toyapollo_output_dir / f"{task_id}.lean"
+    return canonical if canonical.exists() else None
 
 
 def _path_mtime(path: Path | None) -> float:
@@ -230,33 +236,17 @@ def official_output_candidate_divergence(
     else:
         draft_hash = ""
 
-    official_candidates: list[dict[str, Any]] = []
-    for target in iter_official_output_targets(task_id, source_plan, settings):
-        if not target.exists():
-            continue
-        official_text = read_file_safely(target)
-        official_hash = sha256_text(official_text)
-        official_candidates.append(
-            {
-                "path": target,
-                "hash": official_hash,
-                "mtime": _path_mtime(target),
-            }
-        )
-    if not official_candidates:
+    canonical_output = select_latest_existing_task_file(task_id, source_plan, settings)
+    if canonical_output is None:
         return info
 
+    official_text = read_file_safely(canonical_output)
+    official_hash = sha256_text(official_text)
+    official_mtime = _path_mtime(canonical_output)
     info["has_official_output"] = True
-    superseding = [
-        item
-        for item in official_candidates
-        if candidate_hash and item["hash"] != candidate_hash and item["mtime"] > info["candidate_mtime"]
-    ]
-    selected = max(superseding or official_candidates, key=lambda item: item["mtime"])
-    official_hash = str(selected["hash"])
-    info["official_output_file"] = str(selected["path"])
+    info["official_output_file"] = str(canonical_output)
     info["official_output_hash"] = official_hash
-    info["official_mtime"] = float(selected["mtime"])
+    info["official_mtime"] = official_mtime
 
     candidate_differs = bool(candidate_hash and official_hash != candidate_hash)
     draft_differs = bool(draft_hash and official_hash != draft_hash)

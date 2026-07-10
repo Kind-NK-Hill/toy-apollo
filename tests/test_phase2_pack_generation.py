@@ -682,7 +682,7 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
-    def test_build_check_scans_all_official_targets_for_newer_divergent_output(self):
+    def test_build_check_ignores_newer_divergent_legacy_shadow(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_multiple_official_targets"
         try:
             self._clean_root(root)
@@ -703,11 +703,22 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             secondary_output.write_text(repaired_output, encoding="utf-8")
             os.utime(secondary_output, (2000, 2000))
 
-            success, detail = asyncio.run(build_check_prompt_pack_candidate(task_id, ledger, settings))
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                new_callable=AsyncMock,
+                return_value=(True, "repl ok"),
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                new_callable=AsyncMock,
+                return_value=(True, "temp build ok"),
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                return_value=(True, "final build ok"),
+            ):
+                success, detail = asyncio.run(build_check_prompt_pack_candidate(task_id, ledger, settings))
 
-            self.assertFalse(success)
-            self.assertIn(str(secondary_output), detail)
-            self.assertIn("Stale build-check source target", detail)
+            self.assertTrue(success, detail)
+            self.assertNotIn(str(secondary_output), detail)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -1146,7 +1157,7 @@ theorem thm_10_8 : True := by
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
-    def test_review_existing_uses_latest_official_target_when_multiple_exist(self):
+    def test_review_existing_uses_canonical_target_when_shadow_is_newer(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_review_existing_latest_target"
         try:
             self._clean_root(root)
@@ -1172,13 +1183,13 @@ theorem thm_10_8 : True := by
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
 
             self.assertTrue(success, detail)
-            self.assertEqual((pack_dir / "official_snapshot_v1.lean").read_text(encoding="utf-8"), latest_output)
+            self.assertEqual((pack_dir / "official_snapshot_v1.lean").read_text(encoding="utf-8"), old_output)
             task = ledger.ledger["tasks"][task_id]
             self.assertEqual(task["current_review_subject_kind"], "official_output")
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
-    def test_review_existing_queue_uses_latest_target_when_multiple_exist(self):
+    def test_review_existing_queue_uses_canonical_target_when_shadow_is_newer(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_queue_latest_target"
         try:
             self._clean_root(root)
@@ -1206,8 +1217,8 @@ theorem thm_10_8 : True := by
             self.assertTrue(success, detail)
             report_path = next((settings.phase2_prompt_packs_dir / "_reports").glob("review_existing_queue_*.json"))
             report = json.loads(report_path.read_text(encoding="utf-8"))
-            self.assertEqual(report["tasks"][0]["official_output_file"], str(secondary_output))
-            self.assertEqual((pack_dir / "official_snapshot_v1.lean").read_text(encoding="utf-8"), latest_output)
+            self.assertEqual(report["tasks"][0]["official_output_file"], str(output_path))
+            self.assertEqual((pack_dir / "official_snapshot_v1.lean").read_text(encoding="utf-8"), old_output)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

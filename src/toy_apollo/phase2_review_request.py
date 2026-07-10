@@ -465,6 +465,9 @@ def build_semantic_review_basis(
         ),
     )
     source_plan = str(task.get("source_plan", "") or "")
+    source_tex_file = settings.runtime_root / "inputs" / f"{source_plan}.tex" if source_plan else None
+    source_tex_exists = bool(source_tex_file is not None and source_tex_file.exists())
+    source_tex_content = read_file_safely(source_tex_file) if source_tex_exists and source_tex_file is not None else ""
     subject_file_path = Path(review_subject_file).expanduser() if review_subject_file else None
     if subject_file_path is not None and not subject_file_path.is_absolute():
         subject_file_path = (pack_dir / subject_file_path).resolve()
@@ -493,7 +496,11 @@ def build_semantic_review_basis(
         "source_evidence": {
             "task_id": task_id,
             "source_plan": source_plan,
-            "tex_hash": sha256_text(str(task.get("content", "") or "")),
+            "tex_file": str(source_tex_file) if source_tex_file is not None else "",
+            "tex_exists": source_tex_exists,
+            "tex_status": "present" if source_tex_exists else "missing",
+            "tex_hash": sha256_text(source_tex_content) if source_tex_exists else "",
+            "task_content_hash": sha256_text(str(task.get("content", "") or "")),
         },
         "lean_subject_evidence": {
             "review_subject_kind": str(review_subject_kind or ""),
