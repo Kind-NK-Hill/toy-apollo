@@ -12,8 +12,10 @@ from src.block_id_naming import canonicalize_block_id
 
 from .phase2_batch_controller import BatchReport, analyze_batch_state, _task_has_family_consumable_support
 from .phase2_math_review_gate import math_review_gate_blocker, math_review_gate_state
-from .phase2_pack_shared.io import read_json_safely
+from .phase2_pack_shared.io import read_json_safely, sha256_json
 from .phase2_proof_obligations import summarize_proof_obligations
+from .phase2_review_decision import evaluate_semantic_review_result
+from .phase2_review_request import _resolve_review_binding_path, _validate_review_input_freshness
 
 
 DIAGNOSER_RESULT_PREFIX = "diagnoser_result"
@@ -72,7 +74,15 @@ def build_live_batch_state(task_ids: list[str], ledger, settings=None, *, batch_
         record = records.get(task_id, {})
         if not isinstance(record, dict):
             record = {}
-        tasks.append(_batch_task_from_ledger_record(task_id, record, settings=settings, all_records=records))
+        tasks.append(
+            _batch_task_from_ledger_record(
+                task_id,
+                record,
+                ledger=ledger,
+                settings=settings,
+                all_records=records,
+            )
+        )
     return {"batch_id": batch_id, "tasks": tasks}
 
 
@@ -260,31 +270,45 @@ def _batch_task_from_ledger_record(
     task_id: str,
     record: dict[str, Any],
     *,
+    ledger=None,
     settings=None,
     all_records: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     all_records = all_records if isinstance(all_records, dict) else {}
-    current_review_result = _current_review_result_from_record(record)
+    pack_dir = _task_pack_dir(task_id, settings)
+    current_review_result, current_review_result_path = _current_review_result_binding_from_record(
+        record,
+        pack_dir=pack_dir,
+    )
+    review_authority = _current_review_authority_projection(
+        task_id,
+        record,
+        ledger=ledger,
+        settings=settings,
+        pack_dir=pack_dir,
+        review_result=current_review_result,
+        review_result_path=current_review_result_path,
+    )
     proof_obligations = _proof_obligations_from_pack(task_id, settings)
     proof_obligation_summary = (
         summarize_proof_obligations(proof_obligations)
         if proof_obligations is not None
         else record.get("proof_obligation_summary", {})
     )
-    review_verdict = (
+    review_verdict = review_authority.get("phase2_review_verdict", "") if review_authority else (
         record.get("phase2_review_verdict", "")
         or record.get("review_verdict", "")
         or record.get("current_review_verdict", "")
         or current_review_result.get("verdict", "")
     )
-    proof_class = (
+    proof_class = review_authority.get("phase2_proof_class", "") if review_authority else (
         record.get("phase2_proof_class", "")
         or record.get("proof_class", "")
         or current_review_result.get("proof_class", "")
         or record.get("completion_class", "")
         or current_review_result.get("completion_class", "")
     )
-    completion_class = (
+    completion_class = review_authority.get("phase2_completion_class", "") if review_authority else (
         record.get("phase2_completion_class", "")
         or record.get("completion_class", "")
         or current_review_result.get("completion_class", "")
@@ -295,12 +319,15 @@ def _batch_task_from_ledger_record(
         "type": record.get("type", record.get("task_type", "")),
         "dependencies": _dependencies_from_record(record, task_id=task_id, settings=settings),
         "pack_dir": str(_task_pack_dir(task_id, settings)),
-        "phase2_status": record.get("phase2_status", record.get("phase2_task_status", "")),
-        "phase2_status_reason": record.get(
+        "phase2_status": review_authority.get(
+            "phase2_status",
+            record.get("phase2_status", record.get("phase2_task_status", "")),
+        ),
+        "phase2_status_reason": review_authority.get("phase2_status_reason") or record.get(
             "phase2_status_reason",
             record.get("phase2_task_status_reason", ""),
         ),
-        "phase2_status_evidence_type": record.get(
+        "phase2_status_evidence_type": review_authority.get("phase2_status_evidence_type") or record.get(
             "phase2_status_evidence_type",
             record.get("phase2_task_status_evidence_type", ""),
         ),
@@ -353,7 +380,11 @@ def _batch_task_from_ledger_record(
     }
 
 
-def _current_review_result_from_record(record: dict[str, Any]) -> dict[str, Any]:
+def _current_review_result_binding_from_record(
+    record: dict[str, Any],
+    *,
+    pack_dir: Path,
+) -> tuple[dict[str, Any], Path | None]:
     for key in (
         "current_review_expected_result_file",
         "latest_semantic_review_result_file",
@@ -362,7 +393,7 @@ def _current_review_result_from_record(record: dict[str, Any]) -> dict[str, Any]
         raw_path = str(record.get(key, "") or "").strip()
         if not raw_path:
             continue
-        path = Path(raw_path)
+        path = _resolve_review_binding_path(raw_path, pack_dir=pack_dir)
         if not path.is_file():
             continue
         try:
@@ -370,8 +401,136 @@ def _current_review_result_from_record(record: dict[str, Any]) -> dict[str, Any]
         except (OSError, json.JSONDecodeError):
             continue
         if isinstance(payload, dict):
-            return payload
-    return {}
+            return payload, path.resolve()
+    return {}, None
+
+
+def _current_review_result_from_record(record: dict[str, Any], *, pack_dir: Path | None = None) -> dict[str, Any]:
+    resolved_pack_dir = pack_dir or Path.cwd()
+    payload, _ = _current_review_result_binding_from_record(record, pack_dir=resolved_pack_dir)
+    return payload
+
+
+def _review_freshness_projection(reason: str) -> dict[str, Any]:
+    return {
+        "phase2_status": "needs_fresh_review",
+        "phase2_status_reason": reason,
+        "phase2_status_evidence_type": "freshness_error",
+        "phase2_review_verdict": "",
+        "phase2_proof_class": "",
+        "phase2_completion_class": "",
+    }
+
+
+def _current_review_authority_projection(
+    task_id: str,
+    record: dict[str, Any],
+    *,
+    ledger,
+    settings,
+    pack_dir: Path,
+    review_result: dict[str, Any],
+    review_result_path: Path | None,
+) -> dict[str, Any]:
+    """Revalidate a ledger PASS against the current official review contract.
+
+    The batch scheduler is read-only: it never rewrites review artifacts or the
+    ledger. A historical PASS is schedulable as PASS only when its bound input,
+    subject, basis, normalized class projection, and review-apply receipt all
+    still agree with current state.
+    """
+
+    claimed_status = str(record.get("phase2_status", record.get("phase2_task_status", "")) or "").strip().lower()
+    if claimed_status not in {"pass", "allowed_exception"}:
+        return {}
+    if ledger is None or settings is None:
+        return _review_freshness_projection("current review freshness cannot be checked without ledger/settings")
+    if not review_result or review_result_path is None:
+        return _review_freshness_projection("ledger PASS has no readable current official review result")
+
+    raw_input_path = str(review_result.get("review_input_file", "") or "").strip()
+    if not raw_input_path:
+        return _review_freshness_projection("current review result is missing review_input_file/input binding")
+    review_input_path = _resolve_review_binding_path(raw_input_path, pack_dir=pack_dir)
+    review_input = read_json_safely(review_input_path, {}) if review_input_path.is_file() else {}
+    if not isinstance(review_input, dict) or not review_input:
+        return _review_freshness_projection("current review input is missing or invalid")
+    task = review_input.get("task", {})
+    if not isinstance(task, dict) or str(task.get("block_id", "") or "") != task_id:
+        return _review_freshness_projection("current review input task binding is missing or mismatched")
+
+    has_apply_receipt = bool(str(record.get("latest_applied_review_post_basis_hash", "") or "").strip())
+    freshness_error, _ = _validate_review_input_freshness(
+        task=task,
+        ledger=ledger,
+        settings=settings,
+        pack_dir=pack_dir,
+        review_input=review_input,
+        allow_promoted_candidate=has_apply_receipt,
+    )
+    if freshness_error:
+        return _review_freshness_projection(freshness_error)
+
+    decision = evaluate_semantic_review_result(
+        review_result,
+        review_input=review_input,
+        runner_metadata={
+            "status": "batch_read_only_revalidation",
+            "result_file": str(review_result_path),
+        },
+    )
+    projection = decision.task_status_projection
+    if projection is None:
+        reason = str(decision.result.get("normalization_reason", "") or "current review is not a semantic verdict")
+        if "class" in reason.lower():
+            return {
+                "phase2_status": "fail",
+                "phase2_status_reason": reason,
+                "phase2_status_evidence_type": "needs_class_normalization",
+                "phase2_review_verdict": str(decision.result.get("verdict", "") or ""),
+                "phase2_proof_class": "",
+                "phase2_completion_class": "",
+            }
+        return _review_freshness_projection(reason)
+
+    normalized = decision.result
+    authority = {
+        "phase2_status": projection.task_status,
+        "phase2_status_reason": projection.reason,
+        "phase2_status_evidence_type": (
+            "needs_class_normalization"
+            if projection.evidence_type == "class_not_task_pass"
+            else projection.evidence_type
+        ),
+        "phase2_review_verdict": projection.review_verdict,
+        "phase2_proof_class": projection.proof_class,
+        "phase2_completion_class": str(normalized.get("completion_class", "") or ""),
+    }
+    if projection.task_status not in {"pass", "allowed_exception"}:
+        return authority
+
+    receipt_result_raw = str(record.get("latest_applied_review_result_file", "") or "").strip()
+    receipt_result_path = (
+        _resolve_review_binding_path(receipt_result_raw, pack_dir=pack_dir).resolve()
+        if receipt_result_raw
+        else None
+    )
+    receipt_result_hash = str(record.get("latest_applied_review_result_hash", "") or "")
+    receipt_input_hash = str(record.get("latest_applied_review_input_hash", "") or "")
+    receipt_subject_kind = str(record.get("latest_applied_review_subject_kind", "") or "")
+    if receipt_result_path is None or not receipt_result_path.is_file():
+        return _review_freshness_projection("current PASS result has no matching review-apply result receipt")
+    if receipt_result_hash != sha256_json(review_result):
+        return _review_freshness_projection("current PASS result does not match its review-apply result hash")
+    if receipt_input_hash != str(normalized.get("review_input_hash", "") or ""):
+        return _review_freshness_projection("current PASS result has no matching review-apply input receipt")
+    if receipt_subject_kind != str(review_input.get("review_subject_kind", "") or ""):
+        return _review_freshness_projection("current PASS result has no matching review-apply subject-kind receipt")
+    if bool(record.get("latest_official_review_requires_repair", False)) or bool(
+        record.get("latest_official_apply_build_failed", False)
+    ):
+        return _review_freshness_projection("current official review receipt is marked repair-required")
+    return authority
 
 
 def _proof_obligations_from_pack(task_id: str, settings=None) -> dict[str, Any] | None:
@@ -410,7 +569,13 @@ def _augment_raw_tasks_with_dependency_records(raw_tasks: dict[str, dict[str, An
         record = records.get(dep_id, {})
         if not isinstance(record, dict):
             continue
-        dep_task = _batch_task_from_ledger_record(dep_id, record, settings=settings, all_records=records)
+        dep_task = _batch_task_from_ledger_record(
+            dep_id,
+            record,
+            ledger=ledger,
+            settings=settings,
+            all_records=records,
+        )
         raw_tasks[dep_id] = dep_task
         stack.extend(_canonical_dependency_list(dep_task.get("dependencies", [])))
 
@@ -720,6 +885,20 @@ def _action_for_row(
             _phase2_command("auto-loop", row.task_id, "--review-subject current"),
             diagnoser_author_reason,
         )
+    if row.report_status == "needs_class_normalization":
+        if _official_output_exists(settings, row.task_id):
+            return action(
+                "review_existing",
+                _phase2_command("review-now", row.task_id, "--review-subject existing"),
+                row.task_status_reason or "official output needs a fresh classified semantic review",
+            )
+        return action(
+            "diagnostic_restore_or_rebuild_output"
+            if _review_or_build_candidate_exists(raw_task)
+            else "restore_or_rebuild_output",
+            "",
+            "class normalization requires a fresh review, but no official output file was found",
+        )
     verify_failure = raw_task.get("latest_verify_failure", {})
     if isinstance(verify_failure, dict) and verify_failure:
         return action(
@@ -727,7 +906,7 @@ def _action_for_row(
             _phase2_command("auto-loop", row.task_id, "--review-subject current"),
             str(verify_failure.get("summary", "") or "latest verify result failed; repair through auto-loop"),
         )
-    if row.report_status in {"needs_fresh_review", "needs_class_normalization"}:
+    if row.report_status == "needs_fresh_review":
         if _official_output_exists(settings, row.task_id):
             return action(
                 "review_existing",

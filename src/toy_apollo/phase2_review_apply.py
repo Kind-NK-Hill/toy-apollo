@@ -716,7 +716,7 @@ async def apply_codex_review_result_once(
                 except ValueError:
                     pass
         refresh_pack_runtime_view(task, ledger, settings, pack_dir)
-        if success and review_subject_kind == "candidate":
+        if success and review_subject_kind in {"candidate", "official_output", "existing_support"}:
             post_apply_basis = build_semantic_review_basis(
                 task,
                 ledger,
@@ -731,6 +731,10 @@ async def apply_codex_review_result_once(
                 latest_applied_review_subject_hash=review_subject_hash,
                 latest_applied_review_origin_basis_hash=str(review_input.get("review_basis_hash", "") or ""),
                 latest_applied_review_post_basis_hash=sha256_json(post_apply_basis),
+                latest_applied_review_input_hash=str(normalized_review.get("review_input_hash", "") or ""),
+                latest_applied_review_result_file=str(normalized_review.get("review_result_file", "") or ""),
+                latest_applied_review_result_hash=sha256_json(normalized_review),
+                latest_applied_review_subject_kind=review_subject_kind,
             )
         return ApplyOutcome(success=success, detail=detail_text, disposition=disposition, next_action=next_action, repair_ready=repair_ready)
 
