@@ -281,7 +281,31 @@ class Phase2TaskStatusClassifierTest(unittest.TestCase):
 
         self.assertEqual(result.task_status, "fail")
 
-    def test_semantic_review_pass_without_proof_class_is_marked_for_normalization(self):
+    def test_completion_class_local_debt_overrides_clean_proof_class(self):
+        result = classify_phase2_task_status(
+            task_id="thm_11_7",
+            task_type="Theorem",
+            review_verdict="pass",
+            proof_class="source_route_proof_completed",
+            completion_class="open_math_debt",
+        )
+
+        self.assertEqual(result.task_status, "fail")
+        self.assertEqual(result.evidence_type, "local_open_debt")
+
+    def test_completion_class_dependency_block_overrides_clean_proof_class(self):
+        result = classify_phase2_task_status(
+            task_id="thm_11_7",
+            task_type="Theorem",
+            review_verdict="pass",
+            proof_class="source_route_proof_completed",
+            completion_class="dependency_blocked_root_debt",
+        )
+
+        self.assertEqual(result.task_status, "blocked")
+        self.assertEqual(result.evidence_type, "blocked_by_dependency_gate")
+
+    def test_semantic_review_pass_without_completion_classes_is_operationally_invalid(self):
         review_input = {
             "task": {"block_id": "thm_11_7", "type": "Theorem"},
             "mode": "codex",
@@ -350,10 +374,13 @@ class Phase2TaskStatusClassifierTest(unittest.TestCase):
 
         result = normalize_reviewer_result(raw, review_input=review_input, runner_metadata={"status": "test"})
 
-        self.assertEqual(result["cache_class"], "semantic_verdict")
+        self.assertEqual(result["cache_class"], "operational_failure")
+        self.assertEqual(result["verdict"], "inconclusive")
+        self.assertIn("completion_class", result["normalization_reason"])
+        self.assertIn("proof_class", result["normalization_reason"])
         self.assertEqual(result["proof_class"], "")
         self.assertEqual(result["completion_class"], "")
-        self.assertTrue(result["needs_class_normalization"])
+        self.assertFalse(result["needs_class_normalization"])
 
 
 if __name__ == "__main__":
