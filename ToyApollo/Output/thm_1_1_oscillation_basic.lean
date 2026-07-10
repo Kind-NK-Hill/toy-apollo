@@ -10,9 +10,9 @@ namespace Thm11SourceRoute
 
 noncomputable def partitionOscillation {a b : ℝ}
     (P : DarbouxRS.Partition a b) (f α : ℝ → ℝ) : ℝ :=
-  ∑ i ∈ Finset.range P.n,
+  ∑ i : Fin P.n,
     (DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i) *
-      (α (P.pts (i + 1)) - α (P.pts i))
+      (α (P.pts i.succ) - α (P.pts i.castSucc))
 
 /-- The upper-lower Darboux gap is the partition oscillation sum. -/
 lemma upperSum_sub_lowerSum_eq_partitionOscillation {f α : ℝ → ℝ} {a b : ℝ}
@@ -34,15 +34,14 @@ lemma partitionOscillation_nonneg_of_source {f α : ℝ → ℝ} {a b : ℝ}
   unfold partitionOscillation
   refine Finset.sum_nonneg ?_
   intro i hi_mem
-  have hi : i < P.n := Finset.mem_range.mp hi_mem
   have hstep_le : DarbouxRS.lowerStep P f i ≤ DarbouxRS.upperStep P f i :=
-    DarbouxRS.lowerStep_le_upperStep_core P hi hBelow hAbove
+    DarbouxRS.lowerStep_le_upperStep_core P i hBelow hAbove
   have hosc_nonneg :
       0 ≤ DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i :=
     sub_nonneg.mpr hstep_le
-  have hinc_nonneg : 0 ≤ α (P.pts (i + 1)) - α (P.pts i) :=
+  have hinc_nonneg : 0 ≤ α (P.pts i.succ) - α (P.pts i.castSucc) :=
     DarbouxRS.partition_increment_nonneg_of_source_core P
-      ⟨hab, hAbove, hBelow, hmono⟩ hi
+      ⟨hab, hAbove, hBelow, hmono⟩
   exact mul_nonneg hosc_nonneg hinc_nonneg
 
 /-- A bounded integrand on `[a,b]` admits one positive absolute-value bound.
@@ -77,7 +76,7 @@ lemma exists_pos_abs_bound_on_Icc_of_bddAbove_bddBelow {f : ℝ → ℝ} {a b : 
 the cell upper-minus-lower step is at most `eta`. -/
 lemma upperStep_sub_lowerStep_le_of_subinterval_oscillation_bound
     {f : ℝ → ℝ} {a b eta : ℝ}
-    (P : DarbouxRS.Partition a b) {i : ℕ} (hi : i < P.n)
+    (P : DarbouxRS.Partition a b) (i : Fin P.n)
     (hAbove : BddAbove (f '' Icc a b))
     (hBelow : BddBelow (f '' Icc a b))
     (hosc :
@@ -86,13 +85,13 @@ lemma upperStep_sub_lowerStep_le_of_subinterval_oscillation_bound
     DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i ≤ eta := by
   let cell := DarbouxRS.subinterval P i
   have hcell_nonempty : (f '' cell).Nonempty := by
-    refine ⟨f (P.pts i), ?_⟩
-    refine ⟨P.pts i, ?_, rfl⟩
-    exact ⟨le_rfl, le_of_lt (P.strict_mono i hi)⟩
+    refine ⟨f (P.pts i.castSucc), ?_⟩
+    refine ⟨P.pts i.castSucc, ?_, rfl⟩
+    exact ⟨le_rfl, le_of_lt (P.strict_mono Fin.castSucc_lt_succ)⟩
   have hcellAbove : BddAbove (f '' cell) :=
-    BddAbove.mono (Set.image_mono (DarbouxRS.subinterval_subset_Icc_core P hi)) hAbove
+    BddAbove.mono (Set.image_mono (DarbouxRS.subinterval_subset_Icc_core P)) hAbove
   have hcellBelow : BddBelow (f '' cell) :=
-    BddBelow.mono (Set.image_mono (DarbouxRS.subinterval_subset_Icc_core P hi)) hBelow
+    BddBelow.mono (Set.image_mono (DarbouxRS.subinterval_subset_Icc_core P)) hBelow
   have hsup_le :
       sSup (f '' cell) ≤ sInf (f '' cell) + eta := by
     refine csSup_le hcell_nonempty ?_
@@ -110,16 +109,16 @@ lemma upperStep_sub_lowerStep_le_of_subinterval_oscillation_bound
 bound. This is the estimate used for cells near discontinuities. -/
 lemma upperStep_sub_lowerStep_le_two_mul_abs_bound
     {f : ℝ → ℝ} {a b C : ℝ}
-    (P : DarbouxRS.Partition a b) {i : ℕ} (hi : i < P.n)
+    (P : DarbouxRS.Partition a b) (i : Fin P.n)
     (hAbove : BddAbove (f '' Icc a b))
     (hBelow : BddBelow (f '' Icc a b))
     (hC : ∀ x : ℝ, x ∈ Icc a b → |f x| ≤ C) :
     DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i ≤ 2 * C := by
   refine upperStep_sub_lowerStep_le_of_subinterval_oscillation_bound
-    P hi hAbove hBelow ?_
+    P i hAbove hBelow ?_
   intro x hx y hy
-  have hxI : x ∈ Icc a b := DarbouxRS.subinterval_subset_Icc_core P hi hx
-  have hyI : y ∈ Icc a b := DarbouxRS.subinterval_subset_Icc_core P hi hy
+  have hxI : x ∈ Icc a b := DarbouxRS.subinterval_subset_Icc_core P hx
+  have hyI : y ∈ Icc a b := DarbouxRS.subinterval_subset_Icc_core P hy
   have hxC := hC x hxI
   have hyC := hC y hyI
   have htri : |f x - f y| ≤ |f x| + |f y| := by
