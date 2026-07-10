@@ -901,10 +901,28 @@ def _action_for_row(
         )
     verify_failure = raw_task.get("latest_verify_failure", {})
     if isinstance(verify_failure, dict) and verify_failure:
+        verify_disposition = str(verify_failure.get("disposition", "") or "").strip()
+        verify_summary = str(
+            verify_failure.get("summary", "") or "latest verify result failed; repair through auto-loop"
+        )
+        if verify_disposition == "review_existing_required":
+            if _official_output_exists(settings, row.task_id):
+                return action(
+                    "review_existing",
+                    _phase2_command("review-now", row.task_id, "--review-subject existing"),
+                    verify_summary,
+                )
+            return action(
+                "diagnostic_restore_or_rebuild_output"
+                if _review_or_build_candidate_exists(raw_task)
+                else "restore_or_rebuild_output",
+                "",
+                f"{verify_summary}; official output required by verify disposition was not found",
+            )
         return action(
             "auto_loop",
             _phase2_command("auto-loop", row.task_id, "--review-subject current"),
-            str(verify_failure.get("summary", "") or "latest verify result failed; repair through auto-loop"),
+            verify_summary,
         )
     if row.report_status == "needs_fresh_review":
         if _official_output_exists(settings, row.task_id):

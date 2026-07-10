@@ -1839,6 +1839,62 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertIn("--phase2-mode auto-loop", plan.actions[0].command)
         self.assertIn("type_mismatch", plan.actions[0].reason)
 
+    def test_stale_pass_with_review_existing_required_verify_disposition_routes_to_review_existing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            settings = self._settings(root)
+            task_id = "def_2_1"
+            (settings.toyapollo_output_dir / f"{task_id}.lean").write_text(
+                "import Mathlib\n\ndef def_2_1 : Prop := True\n",
+                encoding="utf-8",
+            )
+            pack_dir = settings.phase2_prompt_packs_dir / task_id
+            pack_dir.mkdir(parents=True)
+            verify_path = pack_dir / "verify_result_v1.json"
+            verify_path.write_text(
+                json.dumps(
+                    {
+                        "success": False,
+                        "disposition": "review_existing_required",
+                        "primary_failure_kind": "",
+                        "diagnostics": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            legacy_result_path = pack_dir / "semantic_review_result_v1.json"
+            legacy_result_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "phase2.semantic_review.result.v1",
+                        "task_id": task_id,
+                        "verdict": "pass",
+                        "proof_class": "textbook_definition_completed",
+                        "completion_class": "textbook_definition_completed",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            ledger = FakeLedger(
+                {
+                    task_id: {
+                        "block_id": task_id,
+                        "type": "Definition",
+                        "status": COMPLETED,
+                        "phase2_status": "pass",
+                        "latest_semantic_review_result_file": str(legacy_result_path),
+                        "latest_verify_result_file": str(verify_path),
+                    }
+                }
+            )
+
+            plan = plan_batch_from_ledger([task_id], ledger, settings)
+
+        self.assertEqual(plan.report.rows[0].report_status, "needs_fresh_review")
+        self.assertEqual(plan.actions[0].action, "review_existing")
+        self.assertIn("--review-subject existing", plan.actions[0].command)
+        self.assertIn("review_existing_required", plan.actions[0].reason)
+
     def test_worker_queue_prefers_non_problem_roots_by_fanout_and_limit(self):
         with tempfile.TemporaryDirectory() as tmp:
             settings = self._settings(Path(tmp))
