@@ -189,6 +189,14 @@ This command applies the formal normalizer and task-status projection without
 writing the ledger. Reviewer-supplied `phase2_status` / `task_status` fields are
 not authority. Only the later `review-apply` command may land the decision.
 
+The local full-review campaign scripts `collect_review.py`, `ch1_sidecar.py`,
+and `ch3_sidecar.py` were retired fail-closed on 2026-07-10. Do not restore or
+use them as collectors: they predate the tracked decision boundary. Their old
+`state*.json` / `reviews*.json` files remain historical provenance only and
+must not be merged into the ledger. A future batch collector must call the
+tracked decision command above and still land results only through
+`review-apply`.
+
 If reviewer verdict is `pass` but `phase2_status` is `fail`, `blocked`, or
 `allowed_exception`, `review-apply` records the result and does not promote a
 candidate as clean completion. `allowed_exception` is only for explicit
