@@ -1,5 +1,7 @@
 import hashlib
 import json
+import shutil
+import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -134,6 +136,89 @@ class Phase2ReviewDecisionTests(unittest.TestCase):
         self.assertTrue(decision.is_semantic_verdict)
         self.assertEqual(decision.task_status_projection.task_status, "allowed_exception")
         self.assertFalse(decision.is_clean_pass)
+
+    def test_tracked_collector_cli_reports_authoritative_projection_without_mutating_inputs(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_decision_cli"
+        try:
+            shutil.rmtree(root, ignore_errors=True)
+            root.mkdir(parents=True, exist_ok=True)
+            review_input = self._review_input()
+            raw = self._raw_result(
+                review_input,
+                proof_class="mathlib_backed_adapter_completed",
+                completion_class="mathlib_backed_adapter_completed",
+            )
+            raw["phase2_status"] = "pass"
+            input_path = root / "review_input.json"
+            result_path = root / "raw_result.json"
+            input_path.write_text(json.dumps(review_input, indent=2, ensure_ascii=False), encoding="utf-8")
+            result_path.write_text(json.dumps(raw, indent=2, ensure_ascii=False), encoding="utf-8")
+            input_before = input_path.read_text(encoding="utf-8")
+            result_before = result_path.read_text(encoding="utf-8")
+
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO_ROOT / "tools" / "phase2_review_decision.py"),
+                    "--review-input",
+                    str(input_path),
+                    "--review-result",
+                    str(result_path),
+                ],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            payload = json.loads(completed.stdout)
+            self.assertTrue(payload["is_semantic_verdict"])
+            self.assertFalse(payload["is_clean_pass"])
+            self.assertEqual(payload["phase2_status"], "fail")
+            self.assertEqual(payload["result"]["phase2_status"], "fail")
+            self.assertEqual(input_path.read_text(encoding="utf-8"), input_before)
+            self.assertEqual(result_path.read_text(encoding="utf-8"), result_before)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_tracked_collector_cli_rejects_identity_mismatch(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_decision_cli_identity"
+        try:
+            shutil.rmtree(root, ignore_errors=True)
+            root.mkdir(parents=True, exist_ok=True)
+            review_input = self._review_input()
+            raw = self._raw_result(review_input)
+            raw["task_id"] = "thm_wrong_identity"
+            input_path = root / "review_input.json"
+            result_path = root / "raw_result.json"
+            input_path.write_text(json.dumps(review_input, indent=2, ensure_ascii=False), encoding="utf-8")
+            result_path.write_text(json.dumps(raw, indent=2, ensure_ascii=False), encoding="utf-8")
+
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO_ROOT / "tools" / "phase2_review_decision.py"),
+                    "--review-input",
+                    str(input_path),
+                    "--review-result",
+                    str(result_path),
+                ],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                check=False,
+            )
+
+            self.assertEqual(completed.returncode, 2)
+            payload = json.loads(completed.stdout)
+            self.assertFalse(payload["is_semantic_verdict"])
+            self.assertIsNone(payload["phase2_status"])
+            self.assertIn("task id mismatch", payload["result"]["normalization_reason"])
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
 
 
 if __name__ == "__main__":
