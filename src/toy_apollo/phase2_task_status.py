@@ -120,7 +120,8 @@ def classify_phase2_task_status(
     canonical_task_id = canonicalize_block_id(str(task_id or ""))
     normalized_task_type = str(task_type or "").strip()
     verdict = str(review_verdict or "").strip().lower()
-    normalized_proof_class = _normalize_class(proof_class) or _normalize_class(completion_class)
+    normalized_completion_class = _normalize_class(completion_class)
+    normalized_proof_class = _normalize_class(proof_class) or normalized_completion_class
     task_role = infer_phase2_task_role(canonical_task_id, normalized_task_type)
 
     if not normalized_proof_class:
@@ -141,7 +142,13 @@ def classify_phase2_task_status(
             needs_class_normalization=needs_normalization,
         )
 
-    if _has_local_defect(normalized_proof_class):
+    classification_classes = [
+        value
+        for value in (normalized_proof_class, normalized_completion_class)
+        if value
+    ]
+    local_defect_class = next((value for value in classification_classes if _has_local_defect(value)), "")
+    if local_defect_class:
         return Phase2TaskStatusClassification(
             task_id=canonical_task_id,
             task_type=normalized_task_type,
@@ -149,11 +156,12 @@ def classify_phase2_task_status(
             review_verdict=verdict,
             proof_class=normalized_proof_class,
             task_status=TASK_STATUS_FAIL,
-            reason=f"proof_class {normalized_proof_class} contains local open debt/adapter/weakening evidence",
+            reason=f"review class {local_defect_class} contains local open debt/adapter/weakening evidence",
             evidence_type="local_open_debt",
         )
 
-    if _is_dependency_blocked(normalized_proof_class):
+    dependency_blocked_class = next((value for value in classification_classes if _is_dependency_blocked(value)), "")
+    if dependency_blocked_class:
         return Phase2TaskStatusClassification(
             task_id=canonical_task_id,
             task_type=normalized_task_type,
@@ -161,7 +169,7 @@ def classify_phase2_task_status(
             review_verdict=verdict,
             proof_class=normalized_proof_class,
             task_status=TASK_STATUS_BLOCKED,
-            reason=f"proof_class {normalized_proof_class} is dependency-gate blocked without local open debt",
+            reason=f"review class {dependency_blocked_class} is dependency-gate blocked without local open debt",
             evidence_type="blocked_by_dependency_gate",
         )
 

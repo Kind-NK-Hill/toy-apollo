@@ -25,6 +25,8 @@ SEMANTIC_REVIEW_REQUIRED_FIELDS = {
     "verdict",
     "confidence",
     "summary",
+    "proof_class",
+    "completion_class",
     "reviewer_independence",
     "source_claims",
     "claim_mapping",
@@ -459,6 +461,18 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
         return _inconclusive_result(
             base,
             "reviewer result is missing required fields: " + ", ".join(missing),
+            raw=raw,
+            cache_class="operational_failure",
+        )
+    empty_completion_fields = [
+        field
+        for field in ("proof_class", "completion_class")
+        if not str(raw.get(field, "") or "").strip()
+    ]
+    if empty_completion_fields:
+        return _inconclusive_result(
+            base,
+            "reviewer result fields must be non-empty: " + ", ".join(empty_completion_fields),
             raw=raw,
             cache_class="operational_failure",
         )

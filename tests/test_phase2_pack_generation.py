@@ -341,6 +341,8 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertIn("semantic_fail_public_premise", route_gate["trigger_conditions"])
 
             review_template = json.loads((pack_dir / "semantic_review_result_template_v1.json").read_text(encoding="utf-8"))
+            self.assertEqual(review_template["proof_class"], "")
+            self.assertEqual(review_template["completion_class"], "")
             self.assertEqual(
                 review_template["route_inspection"],
                 {
@@ -355,6 +357,14 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
                 },
             )
             schema_hints = review_template["reviewer_schema_hints"]
+            self.assertEqual(
+                schema_hints["completion_class_contract"],
+                {
+                    "required_fields": ["proof_class", "completion_class"],
+                    "must_be_non_empty": True,
+                    "authority": "reviewer_classification_then_official_task_status_projection",
+                },
+            )
             self.assertEqual(schema_hints["section_status_values"], ["covered", "partial", "missing", "violated", "unclear"])
             self.assertEqual(
                 schema_hints["route_inspection_fields"],

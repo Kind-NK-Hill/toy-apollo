@@ -45,6 +45,7 @@ from .phase2_pack_shared.io import (
 )
 from .phase2_math_review_gate import math_review_gate_blocker
 from .phase2_output_binding import resolve_phase2_output_binding
+from .phase2_review_decision import evaluate_semantic_review_result, project_normalized_semantic_review_result
 from .phase2_semantic_review import (
     SEMANTIC_REVIEW_PROMPT_VERSION,
     SEMANTIC_REVIEW_RUBRIC_VERSION,
@@ -59,7 +60,6 @@ from .phase2_semantic_review import (
     render_semantic_review_report,
     run_semantic_review,
 )
-from .phase2_task_status import classify_phase2_task_status
 from .phase2_proof_obligations import (
     PROOF_OBLIGATIONS_FILE_NAME,
     maybe_ensure_proof_obligations_file,
@@ -3773,12 +3773,12 @@ def _queue_review_result_is_valid(result_path: Path, review_input: dict[str, Any
         return False
     if str(raw_result.get("candidate_hash", "") or "") != str(review_input.get("candidate", {}).get("hash", "") or ""):
         return False
-    normalized = normalize_reviewer_result(
+    decision = evaluate_semantic_review_result(
         raw_result,
         review_input=review_input,
         runner_metadata=raw_result.get("runner", {}) if isinstance(raw_result.get("runner"), dict) else {"status": "queue-inspection"},
     )
-    return "normalization_reason" not in normalized
+    return decision.is_semantic_verdict
 
 
 def _find_matching_existing_review_materials(
@@ -4191,23 +4191,7 @@ def _semantic_review_summary(review_result: dict[str, Any]) -> dict[str, Any]:
 
 
 def _project_semantic_review_task_status(task: dict[str, Any], review_result: dict[str, Any]) -> dict[str, Any]:
-    task_id = canonicalize_block_id(str(task.get("block_id", "") or review_result.get("task_id", "") or ""))
-    projection = classify_phase2_task_status(
-        task_id=task_id,
-        task_type=str(task.get("type", "") or ""),
-        review_verdict=str(review_result.get("verdict", "") or ""),
-        proof_class=review_result.get("proof_class", ""),
-        completion_class=review_result.get("completion_class", ""),
-    )
-    enriched = dict(review_result)
-    enriched["phase2_status"] = projection.task_status
-    enriched["phase2_status_reason"] = projection.reason
-    enriched["phase2_status_evidence_type"] = projection.evidence_type
-    enriched["task_status"] = projection.task_status
-    enriched["task_status_reason"] = projection.reason
-    enriched["task_status_evidence_type"] = projection.evidence_type
-    enriched["task_role"] = projection.task_role
-    return enriched
+    return project_normalized_semantic_review_result(review_result, task=task).result
 
 
 def _record_phase2_task_status_projection(
@@ -4216,7 +4200,10 @@ def _record_phase2_task_status_projection(
     ledger: LedgerManager,
     review_result: dict[str, Any],
 ) -> dict[str, Any]:
-    enriched = _project_semantic_review_task_status(task, review_result)
+    decision = project_normalized_semantic_review_result(review_result, task=task)
+    enriched = decision.result
+    if decision.task_status_projection is None:
+        return enriched
     ledger.update_runtime_metadata(
         task_id,
         phase2_review_verdict=str(enriched.get("verdict", "") or ""),
@@ -5738,6 +5725,8 @@ def _write_codex_handoff_review_artifacts(
         "verdict": "inconclusive",
         "confidence": "",
         "summary": "",
+        "proof_class": "",
+        "completion_class": "",
         "reviewer_independence": {
             "role": "independent_read_only_reviewer",
             "read_only": True,
@@ -5791,6 +5780,11 @@ def _write_codex_handoff_review_artifacts(
         "findings": [],
         "recommended_disposition": "revise",
         "reviewer_schema_hints": {
+            "completion_class_contract": {
+                "required_fields": ["proof_class", "completion_class"],
+                "must_be_non_empty": True,
+                "authority": "reviewer_classification_then_official_task_status_projection",
+            },
             "reviewer_independence_shape": {
                 "role": "independent_read_only_reviewer",
                 "read_only": True,

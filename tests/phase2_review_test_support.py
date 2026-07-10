@@ -63,6 +63,8 @@ class Phase2ReviewTestSupport:
             "verdict": verdict,
             "confidence": "high" if verdict == "pass" else "medium",
             "summary": f"fake reviewer {verdict}",
+            "proof_class": "textbook_proof_completed" if verdict == "pass" else "open_math_debt",
+            "completion_class": "textbook_proof_completed" if verdict == "pass" else "open_math_debt",
             "reviewer_independence": {
                 "role": "independent_read_only_reviewer",
                 "read_only": True,
