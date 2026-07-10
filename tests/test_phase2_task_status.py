@@ -305,22 +305,96 @@ class Phase2TaskStatusClassifierTest(unittest.TestCase):
         self.assertEqual(result.task_status, "blocked")
         self.assertEqual(result.evidence_type, "blocked_by_dependency_gate")
 
+    def test_any_documented_local_defect_marker_overrides_clean_completion_prefix(self):
+        for defect_class in ("private_axiom", "proof_debt", "source_mismatch"):
+            with self.subTest(defect_class=defect_class):
+                result = classify_phase2_task_status(
+                    task_id="thm_11_7",
+                    task_type="Theorem",
+                    review_verdict="pass",
+                    proof_class="source_route_proof_completed",
+                    completion_class=defect_class,
+                )
+                suffixed = classify_phase2_task_status(
+                    task_id="thm_11_7",
+                    task_type="Theorem",
+                    review_verdict="pass",
+                    proof_class=f"source_route_proof_completed_{defect_class}",
+                    completion_class=f"source_route_proof_completed_{defect_class}",
+                )
+
+                self.assertEqual(result.task_status, "fail")
+                self.assertEqual(result.evidence_type, "local_open_debt")
+                self.assertEqual(suffixed.task_status, "fail")
+                self.assertEqual(suffixed.evidence_type, "local_open_debt")
+
+    def test_incompatible_completion_class_cannot_hide_behind_clean_proof_class(self):
+        incompatible = (
+            "beyond_book_exception",
+            "interface_bridge_completed",
+            "source_statement_exception",
+            "definition_only_completed",
+            "focused_child_obligation_completed",
+        )
+        for completion_class in incompatible:
+            with self.subTest(completion_class=completion_class):
+                result = classify_phase2_task_status(
+                    task_id="thm_11_7",
+                    task_type="Theorem",
+                    review_verdict="pass",
+                    proof_class="source_route_proof_completed",
+                    completion_class=completion_class,
+                )
+
+                self.assertEqual(result.task_status, "fail")
+                expected_evidence = (
+                    "bridge_not_task_pass"
+                    if completion_class == "interface_bridge_completed"
+                    else "class_not_task_pass"
+                )
+                self.assertEqual(result.evidence_type, expected_evidence)
+
     def test_semantic_review_pass_without_completion_classes_is_operationally_invalid(self):
+        task_payload = {
+            "block_id": "thm_11_7",
+            "type": "Theorem",
+            "title": "Fixture theorem",
+            "content": "A fixture source theorem.",
+            "source_plan": "fixture_plan",
+            "dependencies": [],
+            "soft_imports": [],
+            "soft_imports_confirmed_at": "",
+        }
+        candidate_lean = "import Mathlib\n\ntheorem thm_11_7 : True := by trivial\n"
+        candidate_hash = hashlib.sha256(candidate_lean.encode("utf-8")).hexdigest()
+        review_basis = {"task": dict(task_payload), "required_evidence_classes": []}
+        context_markdown = "# Fixture review context\n"
         review_input = {
-            "task": {"block_id": "thm_11_7", "type": "Theorem"},
+            "schema_version": "phase2.semantic_review.input.v3",
+            "task": task_payload,
             "mode": "codex",
             "attempt": 1,
+            "prompt_version": SEMANTIC_REVIEW_PROMPT_VERSION,
+            "rubric_version": SEMANTIC_REVIEW_RUBRIC_VERSION,
             "cache_key": "fixture",
             "reviewer_backend_id": "test",
-            "candidate": {"hash": "candidate-hash"},
-            "review_basis": {"required_evidence_classes": []},
+            "review_subject_kind": "candidate",
+            "review_subject_file": "candidate.lean",
+            "review_subject_hash": candidate_hash,
+            "candidate": {"file": "candidate.lean", "hash": candidate_hash, "lean": candidate_lean},
+            "review_context_hash": hashlib.sha256(context_markdown.encode("utf-8")).hexdigest(),
+            "review_context_markdown": context_markdown,
+            "review_basis": review_basis,
+            "review_basis_hash": hashlib.sha256(
+                json.dumps(review_basis, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest(),
         }
         raw = {
             "task_id": "thm_11_7",
             "review_input_hash": hashlib.sha256(
                 json.dumps(review_input, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
             ).hexdigest(),
-            "candidate_hash": "candidate-hash",
+            "candidate_hash": candidate_hash,
             "prompt_version": SEMANTIC_REVIEW_PROMPT_VERSION,
             "rubric_version": SEMANTIC_REVIEW_RUBRIC_VERSION,
             "verdict": "pass",

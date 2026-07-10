@@ -36,7 +36,9 @@ from .phase2_pack_shared.review_basis_parts import (
 from .phase2_semantic_review import (
     SEMANTIC_REVIEW_PROMPT_VERSION,
     SEMANTIC_REVIEW_RUBRIC_VERSION,
+    _validate_review_input_internal_binding,
     latest_semantic_review_context_path,
+    render_semantic_review_prompt,
 )
 from .phase2_output_binding import Phase2OutputBinding, resolve_phase2_output_binding
 from .phase2_proof_obligations import (
@@ -57,6 +59,8 @@ REQUIRED_REVIEW_EVIDENCE_CLASSES = [
     "ledger_status",
     "hashes",
 ]
+
+PLAN_ONLY_SOURCE_TASKS = {"thm_6_7__lemma_1"}
 
 
 def _review_request_path(pack_dir: Path, attempt: int) -> Path:
@@ -249,7 +253,7 @@ def _classification_history(task_id: str, settings) -> dict[str, Any]:
         if key in seen:
             continue
         seen.add(key)
-        if not path.exists():
+        if not path_exists(path):
             continue
         payload = read_json_safely(path, {})
         if not isinstance(payload, dict):
@@ -284,7 +288,7 @@ def _dependency_status(task: dict[str, Any], ledger: LedgerManager, settings) ->
         record = record if isinstance(record, dict) else {}
         source_plan = str(record.get("source_plan", "unknown") or "unknown")
         output_path = find_existing_task_file(dep_id, source_plan, settings)
-        output_exists = bool(output_path and output_path.exists())
+        output_exists = bool(output_path and path_exists(output_path))
         status.append(
             {
                 "task_id": dep_id,
@@ -311,7 +315,7 @@ def _downstream_evidence(downstream: list[dict[str, str]], settings) -> dict[str
             {
                 **consumer,
                 "official_output_file": str(output_path or ""),
-                "official_output_exists": bool(output_path and output_path.exists()),
+                "official_output_exists": bool(output_path and path_exists(output_path)),
                 "official_output_imports": _subject_imports(output_path) if output_path else [],
             }
         )
@@ -381,6 +385,7 @@ def _build_semantic_review_request(
     review_subject_file: str,
     review_subject_hash: str,
     review_basis_hash: str,
+    review_input_hash: str,
     review_input_file: str,
     review_prompt_file: str,
     review_context_file: str,
@@ -399,6 +404,7 @@ def _build_semantic_review_request(
         "review_subject_file": review_subject_file,
         "review_subject_hash": review_subject_hash,
         "review_basis_hash": review_basis_hash,
+        "review_input_hash": review_input_hash,
         "review_input_file": review_input_file,
         "review_prompt_file": review_prompt_file,
         "review_context_file": review_context_file,
@@ -473,8 +479,15 @@ def build_semantic_review_basis(
     )
     source_plan = str(task.get("source_plan", "") or "")
     source_tex_file = settings.runtime_root / "inputs" / f"{source_plan}.tex" if source_plan else None
-    source_tex_exists = bool(source_tex_file is not None and source_tex_file.exists())
+    source_tex_exists = bool(source_tex_file is not None and path_exists(source_tex_file))
     source_tex_content = read_file_safely(source_tex_file) if source_tex_exists and source_tex_file is not None else ""
+    source_kind = "plan_only" if task_id in PLAN_ONLY_SOURCE_TASKS and not source_tex_exists else "source_tex"
+    if source_tex_exists:
+        source_tex_status = "present"
+    elif source_kind == "plan_only":
+        source_tex_status = "not_applicable"
+    else:
+        source_tex_status = "missing_required"
     subject_file_path = Path(review_subject_file).expanduser() if review_subject_file else None
     if subject_file_path is not None and not subject_file_path.is_absolute():
         subject_file_path = (pack_dir / subject_file_path).resolve()
@@ -503,9 +516,10 @@ def build_semantic_review_basis(
         "source_evidence": {
             "task_id": task_id,
             "source_plan": source_plan,
+            "source_kind": source_kind,
             "tex_file": str(source_tex_file) if source_tex_file is not None else "",
             "tex_exists": source_tex_exists,
-            "tex_status": "present" if source_tex_exists else "missing",
+            "tex_status": source_tex_status,
             "tex_hash": sha256_text(source_tex_content) if source_tex_exists else "",
             "task_content_hash": sha256_text(str(task.get("content", "") or "")),
         },
@@ -569,12 +583,21 @@ def _resolve_current_review_request_path(pack_dir: Path, current_record: dict[st
     raw_request = str(current_record.get("current_review_request_file", "") or "").strip()
     if raw_request:
         request_path = _resolve_review_binding_path(raw_request, pack_dir=pack_dir)
-        if request_path.exists():
+        if path_exists(request_path):
             return request_path
     latest_request = _latest_review_request_path(pack_dir)
-    if latest_request.exists():
+    if path_exists(latest_request):
         return latest_request
     return None
+
+
+def _review_version_matches(value: Any, expected: int) -> bool:
+    if isinstance(value, bool):
+        return False
+    try:
+        return int(value) == expected
+    except (TypeError, ValueError):
+        return False
 
 
 def _validate_review_input_freshness(
@@ -584,55 +607,129 @@ def _validate_review_input_freshness(
     settings,
     pack_dir: Path,
     review_input: dict[str, Any],
+    allow_promoted_candidate: bool = False,
 ) -> tuple[str, dict[str, Any]]:
     task_id = task["block_id"]
     source_plan = str(task.get("source_plan", "unknown") or "unknown")
+    if not isinstance(review_input, dict):
+        return "review input must be a JSON object", {}
+    task_payload = review_input.get("task", {})
+    candidate_payload = review_input.get("candidate", {})
+    if not isinstance(task_payload, dict):
+        return "review input task must be a JSON object", {}
+    if not isinstance(candidate_payload, dict):
+        return "review input candidate must be a JSON object", {}
+    attempt_value = review_input.get("attempt")
+    if isinstance(attempt_value, bool):
+        return "review input attempt must be a positive integer", {}
+    try:
+        attempt = int(attempt_value)
+        if attempt <= 0:
+            return "review input attempt must be a positive integer", {}
+    except (TypeError, ValueError):
+        return "review input attempt must be a positive integer", {}
     review_subject_kind = str(review_input.get("review_subject_kind", "") or "candidate")
     if review_subject_kind not in {"candidate", "official_output", "existing_support"}:
         return "review input review_subject_kind is invalid", {}
-    if canonicalize_block_id(str(review_input.get("task", {}).get("block_id", "") or "")) != task_id:
+    if canonicalize_block_id(str(task_payload.get("block_id", "") or "")) != task_id:
         return f"review input task id mismatch: expected {task_id}", {}
-    if int(review_input.get("prompt_version") or 0) != SEMANTIC_REVIEW_PROMPT_VERSION:
+    if not _review_version_matches(review_input.get("prompt_version"), SEMANTIC_REVIEW_PROMPT_VERSION):
         return "review input prompt_version does not match current semantic review prompt version", {}
-    if int(review_input.get("rubric_version") or 0) != SEMANTIC_REVIEW_RUBRIC_VERSION:
+    if not _review_version_matches(review_input.get("rubric_version"), SEMANTIC_REVIEW_RUBRIC_VERSION):
         return "review input rubric_version does not match current semantic review rubric version", {}
+    input_binding_error = _validate_review_input_internal_binding(review_input)
+    if input_binding_error:
+        return input_binding_error, {}
 
-    subject_file_raw = str(review_input.get("review_subject_file", "") or review_input.get("candidate", {}).get("file", "") or "").strip()
+    request_path = _review_request_path(pack_dir, attempt)
+    request_payload = read_json_safely(request_path, {}) if path_exists(request_path) else {}
+    if not isinstance(request_payload, dict):
+        return "bound semantic review request is missing or invalid", {}
+    expected_review_input_hash = str(request_payload.get("review_input_hash", "") or "")
+    if not expected_review_input_hash or expected_review_input_hash != sha256_json(review_input):
+        return "semantic review input hash no longer matches the bound review request", {}
+    if canonicalize_block_id(str(request_payload.get("task_id", "") or "")) != task_id:
+        return "bound semantic review request task id does not match review input", {}
+    if not _review_version_matches(request_payload.get("attempt"), attempt):
+        return "bound semantic review request attempt does not match review input", {}
+    request_bindings = {
+        "review_subject_kind": review_subject_kind,
+        "review_subject_file": str(review_input.get("review_subject_file", "") or ""),
+        "review_subject_hash": str(review_input.get("review_subject_hash", "") or ""),
+        "review_basis_hash": str(review_input.get("review_basis_hash", "") or ""),
+    }
+    for field, expected_value in request_bindings.items():
+        if str(request_payload.get(field, "") or "") != expected_value:
+            return f"bound semantic review request {field} does not match review input", {}
+
+    bound_input_file = _resolve_review_binding_path(str(request_payload.get("review_input_file", "") or ""), pack_dir=pack_dir)
+    bound_input_payload = read_json_safely(bound_input_file, {}) if path_exists(bound_input_file) else {}
+    if not isinstance(bound_input_payload, dict) or sha256_json(bound_input_payload) != expected_review_input_hash:
+        return "bound semantic review input file is missing or changed", {}
+
+    prompt_file_raw = str(request_payload.get("review_prompt_file", "") or "").strip()
+    if not prompt_file_raw:
+        return "bound semantic review prompt file is missing", {}
+    prompt_file_path = _resolve_review_binding_path(prompt_file_raw, pack_dir=pack_dir)
+    if not path_exists(prompt_file_path):
+        return "bound semantic review prompt file is missing", {}
+    if read_file_safely(prompt_file_path).strip() != render_semantic_review_prompt(review_input).strip():
+        return "semantic review prompt no longer matches the bound review input", {}
+
+    subject_file_raw = str(review_input.get("review_subject_file", "") or candidate_payload.get("file", "") or "").strip()
     if not subject_file_raw:
         return "review input review_subject_file is missing", {}
     subject_file_path = _resolve_review_binding_path(subject_file_raw, pack_dir=pack_dir)
-    if not subject_file_path.exists():
+    if not path_exists(subject_file_path):
         return "review subject file is missing; regenerate semantic review materials", {}
 
+    context_file_raw = str(review_input.get("review_context_file", "") or "").strip()
+    if not context_file_raw:
+        return "review input review_context_file is missing", {}
+    context_file_path = _resolve_review_binding_path(context_file_raw, pack_dir=pack_dir)
+    if not path_exists(context_file_path):
+        return "review context file is missing; regenerate semantic review materials", {}
+    context_file_text = read_file_safely(context_file_path)
+    context_markdown = str(review_input.get("review_context_markdown", "") or "")
+    if context_file_text.strip() != context_markdown.strip():
+        return "review context file no longer matches review_context_markdown", {}
+
     candidate_code = read_file_safely(subject_file_path)
-    recorded_subject_hash = str(review_input.get("review_subject_hash", "") or review_input.get("candidate", {}).get("hash", "") or "")
+    recorded_subject_hash = str(review_input.get("review_subject_hash", "") or candidate_payload.get("hash", "") or "")
+    if not recorded_subject_hash:
+        return "review input review_subject_hash is missing; regenerate semantic review materials", {}
     current_review_subject_hash = sha256_text(candidate_code) if candidate_code else ""
+    if current_review_subject_hash != recorded_subject_hash:
+        return "review subject snapshot hash changed since review-pack generation", {}
     if review_subject_kind == "candidate":
-        if recorded_subject_hash and current_review_subject_hash != recorded_subject_hash:
-            return "review subject hash changed since review-pack generation", {}
-        latest_ready_hash = str(ledger.ledger.get("tasks", {}).get(task_id, {}).get("latest_build_ready_candidate_hash", "") or "")
-        if current_review_subject_hash != latest_ready_hash:
-            return "candidate hash changed since build-check generation", {}
-        stale_official_message = stale_candidate_official_output_message(
-            task_id=task_id,
-            source_plan=source_plan,
-            settings=settings,
-            candidate_path=subject_file_path,
-            candidate_hash=current_review_subject_hash,
-            draft_path=pack_dir / DRAFT_FILE_NAME,
-            action="current candidate review request",
-        )
-        if stale_official_message:
-            return stale_official_message, {}
+        if allow_promoted_candidate:
+            current_output = select_latest_existing_task_file(task_id, source_plan, settings)
+            current_output_code = read_file_safely(current_output) if current_output and path_exists(current_output) else ""
+            if not current_output_code:
+                return "canonical official output is missing for promoted review replay", {}
+            if sha256_text(current_output_code) != recorded_subject_hash:
+                return "canonical official output no longer matches the promoted review subject", {}
+        else:
+            latest_ready_hash = str(ledger.ledger.get("tasks", {}).get(task_id, {}).get("latest_build_ready_candidate_hash", "") or "")
+            if current_review_subject_hash != latest_ready_hash:
+                return "candidate hash changed since build-check generation", {}
+            stale_official_message = stale_candidate_official_output_message(
+                task_id=task_id,
+                source_plan=source_plan,
+                settings=settings,
+                candidate_path=subject_file_path,
+                candidate_hash=current_review_subject_hash,
+                draft_path=pack_dir / DRAFT_FILE_NAME,
+                action="current candidate review request",
+            )
+            if stale_official_message:
+                return stale_official_message, {}
     elif review_subject_kind == "official_output":
         current_output = select_latest_existing_task_file(task_id, source_plan, settings)
-        current_output_code = read_file_safely(current_output) if current_output and current_output.exists() else ""
-        current_review_subject_hash = sha256_text(current_output_code) if current_output_code else ""
-        if current_review_subject_hash != recorded_subject_hash:
+        current_output_code = read_file_safely(current_output) if current_output and path_exists(current_output) else ""
+        current_output_hash = sha256_text(current_output_code) if current_output_code else ""
+        if current_output_hash != recorded_subject_hash:
             return "official output changed since review-existing generation", {}
-    else:
-        if recorded_subject_hash and current_review_subject_hash != recorded_subject_hash:
-            return "support landing changed since review-support generation", {}
 
     expected_review_basis_hash = str(review_input.get("review_basis_hash", "") or "")
     if not expected_review_basis_hash:
@@ -646,7 +743,25 @@ def _validate_review_input_freshness(
         review_subject_file=subject_file_path,
         materialize_proof_obligations=False,
     )
-    if sha256_json(current_review_basis) != expected_review_basis_hash:
+    recorded_review_basis = review_input.get("review_basis", {})
+    if not isinstance(recorded_review_basis, dict) or sha256_json(recorded_review_basis) != expected_review_basis_hash:
+        return "recorded semantic review basis does not match its bound hash", {}
+    if allow_promoted_candidate:
+        current_record = ledger.ledger.get("tasks", {}).get(task_id, {})
+        current_record = current_record if isinstance(current_record, dict) else {}
+        receipt_subject_hash = str(current_record.get("latest_applied_review_subject_hash", "") or "")
+        receipt_origin_basis_hash = str(current_record.get("latest_applied_review_origin_basis_hash", "") or "")
+        receipt_post_basis_hash = str(current_record.get("latest_applied_review_post_basis_hash", "") or "")
+        if (
+            receipt_subject_hash != recorded_subject_hash
+            or receipt_origin_basis_hash != expected_review_basis_hash
+            or not receipt_post_basis_hash
+        ):
+            return "promoted review replay receipt is missing or does not match this review input", {}
+        basis_matches = sha256_json(current_review_basis) == receipt_post_basis_hash
+    else:
+        basis_matches = sha256_json(current_review_basis) == expected_review_basis_hash
+    if not basis_matches:
         return "semantic review basis changed since review generation", {}
     return "", {
         "review_subject_kind": review_subject_kind,
@@ -686,6 +801,7 @@ def _load_current_codex_review_request(
         "review_context_file",
         "review_result_template_file",
         "expected_result_file",
+        "review_input_hash",
         "reviewer_backend_id",
         "prompt_version",
         "rubric_version",
@@ -697,9 +813,9 @@ def _load_current_codex_review_request(
         return f"Current codex review request task id mismatch: expected {task['block_id']}", {}
     if str(request_payload.get("reviewer_backend_id", "") or "") != "codex-handoff":
         return "Current codex review request is not for the codex-handoff backend.", {}
-    if int(request_payload.get("prompt_version") or 0) != SEMANTIC_REVIEW_PROMPT_VERSION:
+    if not _review_version_matches(request_payload.get("prompt_version"), SEMANTIC_REVIEW_PROMPT_VERSION):
         return "Current codex review request prompt_version does not match the current semantic review prompt version.", {}
-    if int(request_payload.get("rubric_version") or 0) != SEMANTIC_REVIEW_RUBRIC_VERSION:
+    if not _review_version_matches(request_payload.get("rubric_version"), SEMANTIC_REVIEW_RUBRIC_VERSION):
         return "Current codex review request rubric_version does not match the current semantic review rubric version.", {}
 
     input_path = _resolve_review_binding_path(str(request_payload.get("review_input_file", "")), pack_dir=pack_dir)
@@ -721,13 +837,16 @@ def _load_current_codex_review_request(
     review_input = read_json_safely(input_path, {})
     if not isinstance(review_input, dict):
         return "Current codex review input JSON is invalid; regenerate semantic review materials.", {}
+    if str(request_payload.get("review_input_hash", "") or "") != sha256_json(review_input):
+        return "Current codex review request input hash does not match the bound review input.", {}
     if str(request_payload.get("review_subject_kind", "") or "") != str(review_input.get("review_subject_kind", "") or ""):
         return "Current codex review request subject kind does not match the bound review input.", {}
     current_subject_kind = str(current_record.get("current_review_subject_kind", "") or "")
     if current_subject_kind and str(request_payload.get("review_subject_kind", "") or "") != current_subject_kind:
         return "Current codex review request subject kind no longer matches the current review state.", {}
     request_subject_hash = str(request_payload.get("review_subject_hash", "") or "")
-    input_subject_hash = str(review_input.get("review_subject_hash", "") or review_input.get("candidate", {}).get("hash", "") or "")
+    input_candidate = review_input.get("candidate", {}) if isinstance(review_input.get("candidate", {}), dict) else {}
+    input_subject_hash = str(review_input.get("review_subject_hash", "") or input_candidate.get("hash", "") or "")
     if request_subject_hash != input_subject_hash:
         return "Current codex review request subject hash does not match the bound review input.", {}
     if str(request_payload.get("review_basis_hash", "") or "") != str(review_input.get("review_basis_hash", "") or ""):

@@ -14,7 +14,8 @@ Review authority:
 - latest valid `semantic_review_input_vN.json`
 - latest valid `semantic_review_result_vN.json`
 - matching `semantic_review_request_vN.json`
-- matching review subject hash and review-basis hash
+- matching complete review-input hash, rendered prompt/context, review subject
+  hash, and review-basis hash
 
 These decide semantic review verdict and `proof_class`.
 Existing-output review subjects are bound only to
@@ -22,6 +23,9 @@ Existing-output review subjects are bound only to
 evidence, not alternate review subjects. The review basis separately hashes the
 resolved `inputs/<source_plan>.tex` file and the task content, so changing the
 source TeX invalidates an older request even when ledger/plan text is unchanged.
+The inline task/candidate/context shown to the reviewer must also match those
+bound artifacts; reviewer-visible context changes produce a different cache
+key.
 
 Math Review Gate evidence:
 
@@ -44,6 +48,11 @@ Apply authority:
 
 Only `review-apply` can land clean completion, and only when
 `phase2_status=pass`.
+
+Successful candidate apply also records the subject hash, original review-
+basis hash, and full post-apply basis hash as an idempotence receipt. That
+receipt authorizes a no-op replay only while all bound evidence remains
+unchanged; it is not a substitute for a fresh review after any drift.
 
 ## Evidence And Context
 

@@ -197,6 +197,7 @@ def _semantic_failed_review_subject_hash(repair_request: dict[str, Any]) -> str:
     if not failed_hash:
         return ""
     failed_verdict = str(repair_request.get("failed_verdict", "") or "").strip().lower()
+    failed_phase2_status = str(repair_request.get("failed_phase2_status", "") or "").strip().lower()
     failure_kind = str(
         repair_request.get("primary_failure_kind", "")
         or repair_request.get("failed_disposition", "")
@@ -207,8 +208,9 @@ def _semantic_failed_review_subject_hash(repair_request: dict[str, Any]) -> str:
         "semantic_review_fail",
         "official_output_review_fail",
         "codex_review_fail_no_promotion",
+        "codex_review_pass_fail_no_promotion",
     }
-    if failed_verdict == "fail" or failure_kind in semantic_failure_kinds:
+    if failed_verdict == "fail" or failed_phase2_status == "fail" or failure_kind in semantic_failure_kinds:
         return failed_hash
     return ""
 
@@ -530,6 +532,7 @@ def _backfill_review_repair_request_from_latest_failed_review(
         "official_output_review_inconclusive",
         "codex_review_fail_no_promotion",
         "codex_review_inconclusive_no_promotion",
+        "codex_review_pass_fail_no_promotion",
     }
     for verify_path in reversed(list_versioned_json_files(pack_dir, "verify_result")):
         verify_payload = read_json_safely(verify_path, {})
@@ -683,8 +686,20 @@ def _load_current_review_repair_request(
     failed_review_result = read_json_safely(failed_review_result_path, {})
     if not isinstance(failed_review_result, dict):
         return "Current review repair request is stale because the failed review result JSON is invalid.", {}
-    if str(failed_review_result.get("verdict", "") or "").strip().lower() not in {"fail", "inconclusive"}:
-        return "Current review repair request is stale because the bound review result is no longer fail/inconclusive.", {}
+    result_verdict = str(failed_review_result.get("verdict", "") or "").strip().lower()
+    result_phase2_status = str(failed_review_result.get("phase2_status", "") or "").strip().lower()
+    request_phase2_status = str(request_payload.get("failed_phase2_status", "") or "").strip().lower()
+    is_semantic_failure = result_verdict in {"fail", "inconclusive"} or (
+        result_verdict == "pass"
+        and result_phase2_status == "fail"
+        and request_phase2_status == "fail"
+    )
+    if not is_semantic_failure:
+        return (
+            "Current review repair request is stale because the bound review result is no longer "
+            "a semantic verdict/task-projection failure.",
+            {},
+        )
     current_result_hash = sha256_text(failed_review_result_path.read_text(encoding="utf-8"))
     if current_result_hash != str(request_payload.get("review_result_hash", "") or ""):
         return "Current review repair request is stale because the bound review result hash changed.", {}

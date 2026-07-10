@@ -9,19 +9,20 @@ from src.block_id_naming import canonicalize_block_id
 
 from .core import LedgerManager, TaskStatus
 from .phase2_pack_shared.artifacts import (
-    find_existing_task_file,
     latest_review_repair_request_path,
     latest_review_repair_summary_path,
     list_versioned_json_files,
     next_review_repair_attempt,
     review_repair_request_path,
     review_repair_summary_path,
+    select_latest_existing_task_file,
 )
 from .phase2_pack_shared.io import (
     copy_file,
     path_exists,
     read_file_safely,
     read_json_safely,
+    sha256_json,
     sha256_text,
     unlink_path,
     write_json,
@@ -42,7 +43,12 @@ from .phase2_proof_obligations import (
 from .phase2_obligation_tasks import reconcile_obligation_tasks_for_task
 from .phase2_output_binding import resolve_phase2_output_binding
 from .phase2_review_decision import evaluate_semantic_review_result, project_normalized_semantic_review_result
-from .phase2_review_request import _clear_current_review_metadata, _resolve_review_binding_path, _validate_review_input_freshness
+from .phase2_review_request import (
+    _clear_current_review_metadata,
+    _resolve_review_binding_path,
+    _validate_review_input_freshness,
+    build_semantic_review_basis,
+)
 from .phase2_semantic_review import (
     SEMANTIC_REVIEW_PROMPT_VERSION,
     SEMANTIC_REVIEW_RUBRIC_VERSION,
@@ -61,7 +67,6 @@ from .phase2_pack_generation import (
     run_staged_official_build,
     support_review_target_from_obligations,
     write_review_compat_summary,
-    ensure_task_registered,
     resolve_phase2_task,
 )
 
@@ -73,6 +78,15 @@ class ApplyOutcome:
     disposition: str
     next_action: str = ""
     repair_ready: dict[str, Any] | None = None
+
+
+def _review_version_matches(value: Any, expected: int) -> bool:
+    if isinstance(value, bool):
+        return False
+    try:
+        return int(value) == expected
+    except (TypeError, ValueError):
+        return False
 
 
 def _resolve_codex_review_input_path(result_path: Path, raw_result: Any) -> Path | None:
@@ -343,6 +357,9 @@ def _build_review_repair_contract(
         "origin_review_attempt": int(review_input.get("attempt") or 0) or attempt,
         "review_subject_kind": str(review_input.get("review_subject_kind", "") or "candidate"),
         "failed_verdict": str(review_result.get("verdict", "inconclusive") or "inconclusive"),
+        "failed_phase2_status": str(review_result.get("phase2_status", "") or ""),
+        "failed_phase2_status_reason": str(review_result.get("phase2_status_reason", "") or ""),
+        "failed_phase2_status_evidence_type": str(review_result.get("phase2_status_evidence_type", "") or ""),
         "failed_review_input_file": str(failed_review_input_file),
         "failed_review_result_file": str(failed_review_result_file),
         "failed_review_report_file": str(failed_review_report_file),
@@ -442,8 +459,15 @@ async def apply_codex_review_result_once(
     settings,
     review_result_arg: str,
 ) -> ApplyOutcome:
-    task = ensure_task_registered(resolve_phase2_task(task_id, ledger, settings), ledger)
+    task = resolve_phase2_task(task_id, ledger, settings)
     task_id = task["block_id"]
+    registered_task = ledger.ledger.get("tasks", {}).get(task_id)
+    if not isinstance(registered_task, dict):
+        return ApplyOutcome(
+            success=False,
+            detail=f"Phase 2 task is not registered in the ledger for review-apply: {task_id}",
+            disposition="codex_review_invalid_no_promotion",
+        )
     output_binding = resolve_phase2_output_binding(task, ledger, settings)
     apply_original_status = str(ledger.ledger.get("tasks", {}).get(task_id, {}).get("status", ""))
     pack_dir = settings.phase2_prompt_packs_dir / task_id
@@ -493,10 +517,12 @@ async def apply_codex_review_result_once(
                 review_input=review_input,
                 runner_metadata={"status": "codex_handoff_applied", "result_file": str(result_path)},
             ).result
+    review_task_payload = review_input.get("task", {}) if isinstance(review_input.get("task", {}), dict) else {}
+    review_candidate_payload = review_input.get("candidate", {}) if isinstance(review_input.get("candidate", {}), dict) else {}
     review_basis = review_input.get("review_basis", {}) if isinstance(review_input.get("review_basis", {}), dict) else {}
     proof_obligations_file = str(review_basis.get("proof_obligations_file", "") or "").strip()
     source_plan = str(task.get("source_plan", "unknown") or "unknown")
-    existing_official_output = find_existing_task_file(task_id, source_plan, settings)
+    existing_official_output = select_latest_existing_task_file(task_id, source_plan, settings)
     completed_status_values = {TaskStatus.COMPLETED.value, TaskStatus.COMPLETED_WITH_PROOF_DEBT.value}
     existing_completed_output = (
         apply_original_status in completed_status_values
@@ -505,12 +531,12 @@ async def apply_codex_review_result_once(
     )
 
     review_subject_kind = str(review_input.get("review_subject_kind", "") or "candidate")
-    subject_file_raw = str(review_input.get("review_subject_file", "") or review_input.get("candidate", {}).get("file", result_path))
+    subject_file_raw = str(review_input.get("review_subject_file", "") or review_candidate_payload.get("file", result_path))
     candidate_path = Path(subject_file_raw).expanduser()
     if not candidate_path.is_absolute():
         candidate_path = (pack_dir / candidate_path).resolve()
-    candidate_code = read_file_safely(candidate_path) if path_exists(candidate_path) else str(review_input.get("candidate", {}).get("lean", "") or "")
-    review_subject_hash = str(review_input.get("review_subject_hash", "") or review_input.get("candidate", {}).get("hash", "") or "")
+    candidate_code = read_file_safely(candidate_path) if path_exists(candidate_path) else str(review_candidate_payload.get("lean", "") or "")
+    review_subject_hash = str(review_input.get("review_subject_hash", "") or review_candidate_payload.get("hash", "") or "")
 
     def already_promoted_candidate_review() -> bool:
         if not existing_completed_output or review_subject_kind != "candidate":
@@ -523,7 +549,7 @@ async def apply_codex_review_result_once(
             return False
         if _classify_review_task_status(task_id, task, normalized_review).task_status != "pass":
             return False
-        expected_hash = str(review_input.get("candidate", {}).get("hash", "") or review_subject_hash or "")
+        expected_hash = str(review_candidate_payload.get("hash", "") or review_subject_hash or "")
         if not expected_hash or existing_official_output is None:
             return False
         existing_output_code = read_file_safely(existing_official_output)
@@ -690,36 +716,51 @@ async def apply_codex_review_result_once(
                 except ValueError:
                     pass
         refresh_pack_runtime_view(task, ledger, settings, pack_dir)
+        if success and review_subject_kind == "candidate":
+            post_apply_basis = build_semantic_review_basis(
+                task,
+                ledger,
+                settings,
+                review_subject_kind=review_subject_kind,
+                review_subject_hash=review_subject_hash,
+                review_subject_file=candidate_path,
+                materialize_proof_obligations=False,
+            )
+            ledger.update_runtime_metadata(
+                task_id,
+                latest_applied_review_subject_hash=review_subject_hash,
+                latest_applied_review_origin_basis_hash=str(review_input.get("review_basis_hash", "") or ""),
+                latest_applied_review_post_basis_hash=sha256_json(post_apply_basis),
+            )
         return ApplyOutcome(success=success, detail=detail_text, disposition=disposition, next_action=next_action, repair_ready=repair_ready)
 
     validation_error = ""
-    input_task_id = canonicalize_block_id(str(review_input.get("task", {}).get("block_id", "") or ""))
-    if input_task_id != task_id:
+    if not isinstance(review_input.get("task"), dict):
+        validation_error = "review input task must be a JSON object"
+    elif not isinstance(review_input.get("candidate"), dict):
+        validation_error = "review input candidate must be a JSON object"
+    input_task_id = canonicalize_block_id(str(review_task_payload.get("block_id", "") or ""))
+    if not validation_error and input_task_id != task_id:
         validation_error = f"review input task id mismatch: expected {task_id}, got {input_task_id}"
     result_task_id = canonicalize_block_id(str(raw_result.get("task_id", "") if isinstance(raw_result, dict) else ""))
     if not validation_error and result_task_id and result_task_id != task_id:
         validation_error = f"review result task id mismatch: expected {task_id}, got {result_task_id}"
-    if not validation_error and int(review_input.get("prompt_version") or 0) != SEMANTIC_REVIEW_PROMPT_VERSION:
+    if not validation_error and not _review_version_matches(review_input.get("prompt_version"), SEMANTIC_REVIEW_PROMPT_VERSION):
         validation_error = "review input prompt_version does not match current semantic review prompt version"
-    if not validation_error and int(review_input.get("rubric_version") or 0) != SEMANTIC_REVIEW_RUBRIC_VERSION:
+    if not validation_error and not _review_version_matches(review_input.get("rubric_version"), SEMANTIC_REVIEW_RUBRIC_VERSION):
         validation_error = "review input rubric_version does not match current semantic review rubric version"
     if isinstance(raw_result, dict):
-        if not validation_error and int(raw_result.get("prompt_version") or 0) != SEMANTIC_REVIEW_PROMPT_VERSION:
+        if not validation_error and not _review_version_matches(raw_result.get("prompt_version"), SEMANTIC_REVIEW_PROMPT_VERSION):
             validation_error = "review result prompt_version does not match current semantic review prompt version"
-        if not validation_error and int(raw_result.get("rubric_version") or 0) != SEMANTIC_REVIEW_RUBRIC_VERSION:
+        if not validation_error and not _review_version_matches(raw_result.get("rubric_version"), SEMANTIC_REVIEW_RUBRIC_VERSION):
             validation_error = "review result rubric_version does not match current semantic review rubric version"
-        expected_candidate_hash = str(review_input.get("candidate", {}).get("hash", "") or "")
+        expected_candidate_hash = str(review_candidate_payload.get("hash", "") or "")
         result_candidate_hash = str(raw_result.get("candidate_hash", "") or "")
         if not validation_error and result_candidate_hash != expected_candidate_hash:
             validation_error = "review result candidate hash does not match semantic review input candidate hash"
     elif not validation_error:
         validation_error = "review result is not a JSON object"
-    if not validation_error and already_promoted_candidate_review():
-        return ApplyOutcome(
-            success=True,
-            detail="Codex semantic review already promoted; no changes made.",
-            disposition="codex_review_already_promoted",
-        )
+    already_promoted = not validation_error and already_promoted_candidate_review()
     if not validation_error:
         validation_error, freshness = _validate_review_input_freshness(
             task=task,
@@ -727,12 +768,20 @@ async def apply_codex_review_result_once(
             settings=settings,
             pack_dir=pack_dir,
             review_input=review_input,
+            allow_promoted_candidate=already_promoted,
         )
         if not validation_error:
             review_subject_kind = str(freshness.get("review_subject_kind", review_subject_kind))
             candidate_path = Path(str(freshness.get("subject_file_path", candidate_path)))
             candidate_code = str(freshness.get("candidate_code", candidate_code))
             review_subject_hash = str(freshness.get("current_review_subject_hash", review_subject_hash))
+
+    if not validation_error and already_promoted:
+        return ApplyOutcome(
+            success=True,
+            detail="Codex semantic review already promoted; no changes made.",
+            disposition="codex_review_already_promoted",
+        )
 
     verdict = str(normalized_review.get("verdict", "inconclusive"))
     cache_class = str(normalized_review.get("cache_class", "semantic_verdict") or "semantic_verdict").strip().lower()
@@ -824,6 +873,24 @@ async def apply_codex_review_result_once(
             f"Non-clean apply: review verdict is pass, but phase2_status={task_status_projection.task_status}; "
             "this result is recorded for repair/report and is not landed as completion."
         )
+        repair_ready = None
+        if task_status_projection.task_status == "fail":
+            repair_ready = _write_review_repair_artifacts(
+                task=task,
+                ledger=ledger,
+                settings=settings,
+                pack_dir=pack_dir,
+                review_input=review_input,
+                review_result=normalized_review,
+                failed_review_input_file=Path(str(normalized_review.get("review_input_file", review_input_path or ""))),
+                failed_review_result_file=Path(str(normalized_review.get("review_result_file", result_path))),
+                failed_review_report_file=Path(
+                    str(normalized_review.get("review_report_file", pack_dir / "semantic_review_report.md"))
+                ),
+                failed_review_subject_file=candidate_path,
+                next_draft_seed_file=candidate_path,
+                origin_review_mode="review-apply",
+            )
         return finish(
             success=False,
             detail_text=detail_text,
@@ -831,6 +898,7 @@ async def apply_codex_review_result_once(
             semantic_review=normalized_review,
             disposition=f"codex_review_pass_{task_status_projection.task_status}_no_promotion",
             state_transition="none" if (existing_completed_output or review_subject_kind == "official_output") else "review_apply_no_completion",
+            repair_ready=repair_ready,
             next_action="review_fix" if task_status_projection.task_status == "fail" else "repair_dependency_gate",
         )
     if review_subject_kind == "official_output":

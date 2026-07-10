@@ -181,6 +181,9 @@ class Phase2ReviewTestSupport:
             }
         )
         settings = self._make_settings(root, plans_dir)
+        source_tex = settings.runtime_root / "inputs" / "08_chap4_measurable_functions.tex"
+        source_tex.parent.mkdir(parents=True, exist_ok=True)
+        source_tex.write_text("Show a trivial theorem.\n", encoding="utf-8")
         official_code = f"import Mathlib\n\ntheorem {task_id} : True := by\n  trivial\n"
         output_path = settings.toyapollo_output_dir / f"{task_id}.lean"
         if completed:

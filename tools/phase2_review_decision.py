@@ -40,8 +40,21 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _paths_alias(left: Path, right: Path) -> bool:
+    try:
+        return left.samefile(right)
+    except (FileNotFoundError, OSError):
+        return left.resolve() == right.resolve()
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.output is not None and (
+        _paths_alias(args.output, args.review_input)
+        or _paths_alias(args.output, args.review_result)
+    ):
+        sys.stderr.write("ERROR: --output must be a separate decision artifact, not the review input/result file.\n")
+        return 2
     review_input = _read_json(args.review_input)
     raw_result = _read_json(args.review_result)
     if not isinstance(review_input, dict) or "_json_error" in review_input:

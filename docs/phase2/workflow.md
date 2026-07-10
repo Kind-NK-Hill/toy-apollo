@@ -164,6 +164,21 @@ read-only preflight. It does not rewrite the submitted result, proof
 obligations, review history, or ledger, so the same review request can be
 retried after correcting the result JSON.
 
+The reviewer-facing bundle is one bound object: `review_basis.task` must match
+the input task, inline candidate Lean/file/hash must match the review subject,
+inline context must match its hash and context file, and the versioned prompt
+must equal a fresh render of that input. The request stores the complete input
+hash. Any change to input, prompt, context, snapshot, or canonical subject
+requires regeneration instead of reuse. Semantic-review cache keys also cover
+all reviewer-visible context, imports, search, and build summaries.
+
+After a clean candidate promotion, the ledger records a post-apply replay-basis
+receipt. Re-applying the same result is idempotent only when the canonical
+output, source TeX, task/dependency evidence, and full post-apply proof-
+obligation basis still match that receipt. A changed source, missing canonical
+output, edited review snapshot, or altered obligation contract makes the old
+result stale instead of returning an unconditional "already promoted" success.
+
 Campaign/sidecar collectors must use the tracked read-only decision command:
 
 ```powershell

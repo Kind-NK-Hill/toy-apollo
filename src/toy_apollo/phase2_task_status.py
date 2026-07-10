@@ -25,6 +25,8 @@ REMARK_ID_PREFIXES = ("rem_", "intro_")
 
 LOCAL_DEFECT_MARKERS = (
     "open_math_debt",
+    "proof_debt",
+    "private_axiom",
     "needs_decision",
     "adapter",
     "statement_weakened",
@@ -32,6 +34,7 @@ LOCAL_DEFECT_MARKERS = (
     "public_premise",
     "reassumption",
     "semantic_fail",
+    "source_mismatch",
     "source_route_mismatch",
     "local_defect",
 )
@@ -185,7 +188,8 @@ def classify_phase2_task_status(
             evidence_type="review_verdict_not_pass",
         )
 
-    if normalized_proof_class in ALLOWED_EXCEPTION_TASK_CLASSES.get(canonical_task_id, set()):
+    allowed_exception_classes = ALLOWED_EXCEPTION_TASK_CLASSES.get(canonical_task_id, set())
+    if classification_classes and all(value in allowed_exception_classes for value in classification_classes):
         return Phase2TaskStatusClassification(
             task_id=canonical_task_id,
             task_type=normalized_task_type,
@@ -197,10 +201,15 @@ def classify_phase2_task_status(
             evidence_type="explicit_allowed_exception",
         )
 
-    if _is_obligation_child_task(canonical_task_id, normalized_task_type) and (
-        normalized_proof_class in OBLIGATION_CHILD_PASS_CLASSES
-        or _normalize_class(completion_class) in OBLIGATION_CHILD_PASS_CLASSES
-    ):
+    is_obligation_child = _is_obligation_child_task(canonical_task_id, normalized_task_type)
+    obligation_child_classes_are_valid = (
+        any(value in OBLIGATION_CHILD_PASS_CLASSES for value in classification_classes)
+        and all(
+            value in OBLIGATION_CHILD_PASS_CLASSES or _starts_with_any(value, PROOF_BEARING_PASS_PREFIXES)
+            for value in classification_classes
+        )
+    )
+    if is_obligation_child and obligation_child_classes_are_valid:
         return Phase2TaskStatusClassification(
             task_id=canonical_task_id,
             task_type=normalized_task_type,
@@ -212,7 +221,9 @@ def classify_phase2_task_status(
             evidence_type="fresh_review_task_projection",
         )
 
-    if task_role == DEFINITION_INTERFACE_ROLE and _starts_with_any(normalized_proof_class, DEFINITION_INTERFACE_PASS_PREFIXES):
+    if task_role == DEFINITION_INTERFACE_ROLE and all(
+        _starts_with_any(value, DEFINITION_INTERFACE_PASS_PREFIXES) for value in classification_classes
+    ):
         return Phase2TaskStatusClassification(
             task_id=canonical_task_id,
             task_type=normalized_task_type,
@@ -224,7 +235,7 @@ def classify_phase2_task_status(
             evidence_type="fresh_review_task_projection",
         )
 
-    if task_role == REMARK_ROLE and _starts_with_any(normalized_proof_class, REMARK_PASS_PREFIXES):
+    if task_role == REMARK_ROLE and all(_starts_with_any(value, REMARK_PASS_PREFIXES) for value in classification_classes):
         return Phase2TaskStatusClassification(
             task_id=canonical_task_id,
             task_type=normalized_task_type,
@@ -236,7 +247,9 @@ def classify_phase2_task_status(
             evidence_type="fresh_review_task_projection",
         )
 
-    if task_role == PROOF_BEARING_ROLE and _starts_with_any(normalized_proof_class, PROOF_BEARING_PASS_PREFIXES):
+    if task_role == PROOF_BEARING_ROLE and all(
+        _starts_with_any(value, PROOF_BEARING_PASS_PREFIXES) for value in classification_classes
+    ):
         return Phase2TaskStatusClassification(
             task_id=canonical_task_id,
             task_type=normalized_task_type,
@@ -248,7 +261,8 @@ def classify_phase2_task_status(
             evidence_type="fresh_review_task_projection",
         )
 
-    if task_role == PROOF_BEARING_ROLE and normalized_proof_class in BRIDGE_CLASSES:
+    bridge_class = next((value for value in classification_classes if value in BRIDGE_CLASSES), "")
+    if task_role == PROOF_BEARING_ROLE and bridge_class:
         return Phase2TaskStatusClassification(
             task_id=canonical_task_id,
             task_type=normalized_task_type,
@@ -256,7 +270,7 @@ def classify_phase2_task_status(
             review_verdict=verdict,
             proof_class=normalized_proof_class,
             task_status=TASK_STATUS_FAIL,
-            reason=f"bridge proof_class {normalized_proof_class} cannot make a proof-bearing task pass",
+            reason=f"bridge review class {bridge_class} cannot make a proof-bearing task pass",
             evidence_type="bridge_not_task_pass",
         )
 
@@ -267,7 +281,7 @@ def classify_phase2_task_status(
         review_verdict=verdict,
         proof_class=normalized_proof_class,
         task_status=TASK_STATUS_FAIL,
-        reason=f"proof_class {normalized_proof_class} is not a task-level pass class for role {task_role}",
+        reason=f"review classes {classification_classes} are not a task-level pass combination for role {task_role}",
         evidence_type="class_not_task_pass",
     )
 
