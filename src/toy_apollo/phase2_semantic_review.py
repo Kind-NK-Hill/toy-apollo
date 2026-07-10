@@ -21,6 +21,7 @@ from .phase2_proof_obligations import (
 
 SEMANTIC_REVIEW_PROMPT_VERSION = 9
 SEMANTIC_REVIEW_RUBRIC_VERSION = 9
+SEMANTIC_REVIEW_INPUT_SCHEMA_VERSION = "phase2.semantic_review.input.v3"
 SEMANTIC_REVIEW_REQUIRED_FIELDS = {
     "verdict",
     "confidence",
@@ -89,6 +90,62 @@ def _hash_text(text: str) -> str:
 
 def _hash_json(payload: Any) -> str:
     return _hash_text(json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+
+
+def _matches_version(value: Any, expected: int) -> bool:
+    if isinstance(value, bool):
+        return False
+    try:
+        return int(value) == expected
+    except (TypeError, ValueError):
+        return False
+
+
+def _object_field(payload: Any, field: str) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        return {}
+    value = payload.get(field, {})
+    return value if isinstance(value, dict) else {}
+
+
+def _validate_review_input_internal_binding(review_input: dict[str, Any]) -> str:
+    if str(review_input.get("schema_version", "") or "") != SEMANTIC_REVIEW_INPUT_SCHEMA_VERSION:
+        return f"review input schema_version must be {SEMANTIC_REVIEW_INPUT_SCHEMA_VERSION}"
+    if not _matches_version(review_input.get("prompt_version"), SEMANTIC_REVIEW_PROMPT_VERSION):
+        return "review input prompt_version does not match current semantic review prompt version"
+    if not _matches_version(review_input.get("rubric_version"), SEMANTIC_REVIEW_RUBRIC_VERSION):
+        return "review input rubric_version does not match current semantic review rubric version"
+
+    task_payload = _object_field(review_input, "task")
+    candidate_payload = _object_field(review_input, "candidate")
+    review_basis = _object_field(review_input, "review_basis")
+    basis_task = _object_field(review_basis, "task")
+    review_basis_hash = str(review_input.get("review_basis_hash", "") or "")
+    if not review_basis_hash or _hash_json(review_basis) != review_basis_hash:
+        return "review input review_basis does not match review_basis_hash"
+    if task_payload != basis_task:
+        return "review input task payload does not match review_basis.task"
+
+    review_subject_kind = str(review_input.get("review_subject_kind", "") or "")
+    if review_subject_kind not in {"candidate", "official_output", "existing_support"}:
+        return "review input review_subject_kind is invalid"
+    recorded_subject_hash = str(review_input.get("review_subject_hash", "") or "")
+    candidate_hash = str(candidate_payload.get("hash", "") or "")
+    if not recorded_subject_hash or candidate_hash != recorded_subject_hash:
+        return "review input candidate.hash does not match review_subject_hash"
+    candidate_lean = candidate_payload.get("lean")
+    if not isinstance(candidate_lean, str) or _hash_text(candidate_lean) != recorded_subject_hash:
+        return "review input inline candidate Lean does not match review_subject_hash"
+    review_subject_file = str(review_input.get("review_subject_file", "") or "").strip()
+    candidate_file = str(candidate_payload.get("file", "") or "").strip()
+    if not review_subject_file or candidate_file != review_subject_file:
+        return "review input candidate.file does not match review_subject_file"
+
+    context_markdown = review_input.get("review_context_markdown")
+    context_hash = str(review_input.get("review_context_hash", "") or "")
+    if not isinstance(context_markdown, str) or not context_hash or _hash_text(context_markdown) != context_hash:
+        return "review input review_context_markdown does not match review_context_hash"
+    return ""
 
 
 def load_reviewer_config_from_env() -> SemanticReviewerConfig | None:
@@ -212,10 +269,14 @@ def build_semantic_review_input(
     cache_basis = {
         "task_source_hash": task_source_hash,
         "candidate_hash": candidate_hash,
+        "imports_hash": _hash_json(import_lines),
         "dependency_summary_hash": dependency_summary_hash,
+        "search_summary_hash": _hash_json(search_summary),
+        "build_summary_hash": _hash_json(build_summary),
         "build_precondition_hash": _hash_json(build_precondition),
         "reviewer_role_contract_hash": _hash_json(reviewer_role_contract),
         "review_basis_hash": resolved_review_basis_hash,
+        "review_context_hash": review_context_hash,
         "review_subject_kind": review_subject_kind,
         "prompt_version": SEMANTIC_REVIEW_PROMPT_VERSION,
         "rubric_version": SEMANTIC_REVIEW_RUBRIC_VERSION,
@@ -223,7 +284,7 @@ def build_semantic_review_input(
         "reviewer_argv_hash": reviewer_argv_hash,
     }
     return {
-        "schema_version": "phase2.semantic_review.input.v3",
+        "schema_version": SEMANTIC_REVIEW_INPUT_SCHEMA_VERSION,
         "mode": mode,
         "attempt": attempt,
         "generated_at": utc_stamp(),
@@ -442,18 +503,63 @@ def _validate_route_inspection(result: dict[str, Any], *, verdict: str) -> str:
 
 
 def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_metadata: dict[str, Any]) -> dict[str, Any]:
+    review_input_payload = review_input if isinstance(review_input, dict) else {}
+    task_payload = _object_field(review_input_payload, "task")
+    candidate_payload = _object_field(review_input_payload, "candidate")
     base = {
         "schema_version": "phase2.semantic_review.result.v7",
-        "task_id": review_input.get("task", {}).get("block_id", ""),
-        "mode": review_input.get("mode", ""),
-        "attempt": review_input.get("attempt"),
+        "task_id": task_payload.get("block_id", ""),
+        "mode": review_input_payload.get("mode", ""),
+        "attempt": review_input_payload.get("attempt"),
         "prompt_version": SEMANTIC_REVIEW_PROMPT_VERSION,
         "rubric_version": SEMANTIC_REVIEW_RUBRIC_VERSION,
         "review_input_hash": _hash_json(review_input),
-        "cache_key": review_input.get("cache_key", ""),
-        "reviewer_backend_id": review_input.get("reviewer_backend_id", ""),
+        "cache_key": review_input_payload.get("cache_key", ""),
+        "reviewer_backend_id": review_input_payload.get("reviewer_backend_id", ""),
         "runner": runner_metadata,
     }
+    if not isinstance(review_input, dict):
+        return _inconclusive_result(
+            base,
+            "review input must be a JSON object",
+            raw=raw,
+            cache_class="operational_failure",
+        )
+    malformed_nested_fields = [
+        field
+        for field in ("task", "candidate")
+        if not isinstance(review_input.get(field), dict)
+    ]
+    if malformed_nested_fields:
+        return _inconclusive_result(
+            base,
+            "review input fields must be JSON objects: " + ", ".join(malformed_nested_fields),
+            raw=raw,
+            cache_class="operational_failure",
+        )
+    attempt_value = review_input.get("attempt")
+    if isinstance(attempt_value, bool):
+        valid_attempt = False
+    else:
+        try:
+            valid_attempt = int(attempt_value) > 0
+        except (TypeError, ValueError):
+            valid_attempt = False
+    if not valid_attempt:
+        return _inconclusive_result(
+            base,
+            "review input attempt must be a positive integer",
+            raw=raw,
+            cache_class="operational_failure",
+        )
+    input_binding_error = _validate_review_input_internal_binding(review_input)
+    if input_binding_error:
+        return _inconclusive_result(
+            base,
+            input_binding_error,
+            raw=raw,
+            cache_class="operational_failure",
+        )
     if not isinstance(raw, dict):
         return _inconclusive_result(base, "reviewer result is not a JSON object", cache_class="operational_failure")
     missing = sorted(SEMANTIC_REVIEW_REQUIRED_FIELDS - set(raw.keys()))
@@ -464,24 +570,24 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
             raw=raw,
             cache_class="operational_failure",
         )
-    empty_completion_fields = [
+    invalid_completion_fields = [
         field
         for field in ("proof_class", "completion_class")
-        if not str(raw.get(field, "") or "").strip()
+        if not isinstance(raw.get(field), str) or not raw.get(field, "").strip()
     ]
-    if empty_completion_fields:
+    if invalid_completion_fields:
         return _inconclusive_result(
             base,
-            "reviewer result fields must be non-empty: " + ", ".join(empty_completion_fields),
+            "reviewer result fields must be non-empty strings: " + ", ".join(invalid_completion_fields),
             raw=raw,
             cache_class="operational_failure",
         )
-    result = {**base, **raw}
+    result = {**raw, **base}
     independence_error = _validate_reviewer_independence(result)
     if independence_error:
         return _inconclusive_result(base, independence_error, raw=raw, cache_class="operational_failure")
-    expected_task_id = canonicalize_block_id(str(review_input.get("task", {}).get("block_id", "") or ""))
-    result_task_id = canonicalize_block_id(str(result.get("task_id", "") or ""))
+    expected_task_id = canonicalize_block_id(str(task_payload.get("block_id", "") or ""))
+    result_task_id = canonicalize_block_id(str(raw.get("task_id", "") or ""))
     if result_task_id != expected_task_id:
         return _inconclusive_result(
             base,
@@ -489,21 +595,21 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
             raw=raw,
             cache_class="operational_failure",
         )
-    if int(result.get("prompt_version") or 0) != SEMANTIC_REVIEW_PROMPT_VERSION:
+    if not _matches_version(raw.get("prompt_version"), SEMANTIC_REVIEW_PROMPT_VERSION):
         return _inconclusive_result(
             base,
             "reviewer result prompt_version does not match current semantic review prompt version",
             raw=raw,
             cache_class="operational_failure",
         )
-    if int(result.get("rubric_version") or 0) != SEMANTIC_REVIEW_RUBRIC_VERSION:
+    if not _matches_version(raw.get("rubric_version"), SEMANTIC_REVIEW_RUBRIC_VERSION):
         return _inconclusive_result(
             base,
             "reviewer result rubric_version does not match current semantic review rubric version",
             raw=raw,
             cache_class="operational_failure",
         )
-    if str(result.get("review_input_hash", "") or "") != str(base["review_input_hash"]):
+    if str(raw.get("review_input_hash", "") or "") != str(base["review_input_hash"]):
         return _inconclusive_result(
             base,
             "reviewer result review_input_hash does not match current semantic review input",
@@ -511,7 +617,7 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
             cache_class="operational_failure",
         )
     expected_review_input_path = _expected_review_input_path(review_input)
-    raw_review_input_file = str(result.get("review_input_file", "") or "").strip()
+    raw_review_input_file = str(raw.get("review_input_file", "") or "").strip()
     if raw_review_input_file and expected_review_input_path is not None:
         resolved_review_input = Path(raw_review_input_file).expanduser()
         if not resolved_review_input.is_absolute():
@@ -523,8 +629,8 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
                 raw=raw,
                 cache_class="operational_failure",
             )
-    expected_candidate_hash = str(review_input.get("candidate", {}).get("hash", "") or "")
-    if str(result.get("candidate_hash", "") or "") != expected_candidate_hash:
+    expected_candidate_hash = str(candidate_payload.get("hash", "") or "")
+    if str(raw.get("candidate_hash", "") or "") != expected_candidate_hash:
         return _inconclusive_result(
             base,
             "reviewer result candidate_hash does not match current semantic review input candidate hash",
@@ -536,12 +642,39 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
         return _inconclusive_result(base, f"invalid reviewer verdict: {result.get('verdict')}", raw=raw, cache_class="operational_failure")
     result["verdict"] = verdict
     _normalize_completion_class_fields(result, verdict=verdict)
+    review_basis = review_input.get("review_basis", {}) if isinstance(review_input.get("review_basis", {}), dict) else {}
+    source_evidence = review_basis.get("source_evidence", {}) if isinstance(review_basis.get("source_evidence", {}), dict) else {}
+    if (
+        verdict == "pass"
+        and str(source_evidence.get("source_kind", "") or "") == "source_tex"
+        and str(source_evidence.get("tex_status", "") or "") != "present"
+    ):
+        return _inconclusive_result(
+            base,
+            "invalid reviewer output: pass verdict requires the bound source TeX to be present",
+            raw=raw,
+            cache_class="operational_failure",
+        )
     route_error = _validate_route_inspection(result, verdict=verdict)
     if route_error:
         return _inconclusive_result(base, route_error, raw=raw, cache_class="operational_failure")
     evidence_error = _validate_evidence_review(result, review_input=review_input, verdict=verdict)
     if evidence_error:
         return _inconclusive_result(base, evidence_error, raw=raw, cache_class="operational_failure")
+    if verdict == "pass" and str(source_evidence.get("source_kind", "") or "") == "source_tex":
+        evidence_items = result.get("evidence_review", {}).get("items", [])
+        source_items = [
+            item
+            for item in evidence_items
+            if isinstance(item, dict) and str(item.get("evidence_class", "") or "") == "source_tex"
+        ]
+        if source_items and any(str(item.get("status", "") or "").strip().lower() != "covered" for item in source_items):
+            return _inconclusive_result(
+                base,
+                "invalid reviewer output: source-backed pass requires source_tex evidence status covered",
+                raw=raw,
+                cache_class="operational_failure",
+            )
     for field in ("source_claims", "claim_mapping", "forbidden_weakenings", "findings"):
         if not isinstance(result.get(field), list):
             return _inconclusive_result(base, f"reviewer field {field} must be a list", raw=raw, cache_class="operational_failure")
@@ -690,7 +823,12 @@ def _normalize_completion_class_fields(result: dict[str, Any], *, verdict: str) 
 
 
 def _expected_review_input_path(review_input: dict[str, Any]) -> Path | None:
-    attempt = int(review_input.get("attempt") or 0)
+    if not isinstance(review_input, dict):
+        return None
+    try:
+        attempt = int(review_input.get("attempt") or 0)
+    except (TypeError, ValueError):
+        return None
     if attempt <= 0:
         return None
     review_context_file = str(review_input.get("review_context_file", "") or "").strip()
@@ -699,9 +837,10 @@ def _expected_review_input_path(review_input: dict[str, Any]) -> Path | None:
         if not base_path.is_absolute():
             base_path = (Path.cwd() / base_path).resolve()
         return (base_path.parent / f"{SEMANTIC_REVIEW_INPUT_PREFIX}_v{attempt}.json").resolve()
+    candidate_payload = _object_field(review_input, "candidate")
     review_subject_file = str(
         review_input.get("review_subject_file", "")
-        or review_input.get("candidate", {}).get("file", "")
+        or candidate_payload.get("file", "")
         or ""
     ).strip()
     if review_subject_file:
@@ -816,9 +955,35 @@ def run_semantic_review(
 
     cached = _find_cached_result(pack_dir, review_input.get("cache_key", ""), exclude_attempt=attempt)
     if cached is not None:
-        result = dict(cached)
-        result["cache_hit"] = True
-        result["cached_from"] = cached.get("review_result_file", "")
+        cached_raw = {
+            key: cached[key]
+            for key in SEMANTIC_REVIEW_REQUIRED_FIELDS
+            if key in cached
+        }
+        cached_raw.update(
+            {
+                "task_id": review_input.get("task", {}).get("block_id", ""),
+                "prompt_version": SEMANTIC_REVIEW_PROMPT_VERSION,
+                "rubric_version": SEMANTIC_REVIEW_RUBRIC_VERSION,
+                "review_input_hash": _hash_json(review_input),
+                "review_input_file": str(paths["input"]),
+                "candidate_hash": review_input.get("candidate", {}).get("hash", ""),
+            }
+        )
+        result = normalize_reviewer_result(
+            cached_raw,
+            review_input=review_input,
+            runner_metadata={
+                "status": "cache_hit_revalidated",
+                "cached_from": str(cached.get("_cache_source_file", "") or cached.get("review_result_file", "") or ""),
+            },
+        )
+        if str(result.get("cache_class", "") or "") == "semantic_verdict":
+            result["cache_hit"] = True
+            result["cached_from"] = str(cached.get("_cache_source_file", "") or cached.get("review_result_file", "") or "")
+        else:
+            result = _run_or_inconclusive(paths, review_input, config, allow_missing_config)
+            result["cache_hit"] = False
     else:
         result = _run_or_inconclusive(paths, review_input, config, allow_missing_config)
         result["cache_hit"] = False
@@ -930,16 +1095,18 @@ def _run_or_inconclusive(
 
 
 def _base_for_runner_failure(review_input: dict[str, Any], metadata: dict[str, Any]) -> dict[str, Any]:
+    review_input_payload = review_input if isinstance(review_input, dict) else {}
+    task_payload = _object_field(review_input_payload, "task")
     return {
         "schema_version": "phase2.semantic_review.result.v7",
-        "task_id": review_input.get("task", {}).get("block_id", ""),
-        "mode": review_input.get("mode", ""),
-        "attempt": review_input.get("attempt"),
+        "task_id": task_payload.get("block_id", ""),
+        "mode": review_input_payload.get("mode", ""),
+        "attempt": review_input_payload.get("attempt"),
         "prompt_version": SEMANTIC_REVIEW_PROMPT_VERSION,
         "rubric_version": SEMANTIC_REVIEW_RUBRIC_VERSION,
         "review_input_hash": _hash_json(review_input),
-        "cache_key": review_input.get("cache_key", ""),
-        "reviewer_backend_id": review_input.get("reviewer_backend_id", ""),
+        "cache_key": review_input_payload.get("cache_key", ""),
+        "reviewer_backend_id": review_input_payload.get("reviewer_backend_id", ""),
         "runner": metadata,
     }
 
@@ -960,7 +1127,25 @@ def _find_cached_result(pack_dir: Path, cache_key: str, *, exclude_attempt: int)
             and payload.get("cache_key") == cache_key
             and payload.get("cache_class") == "semantic_verdict"
         ):
-            return payload
+            raw_input_file = str(payload.get("review_input_file", "") or "").strip()
+            if not raw_input_file:
+                continue
+            input_path = Path(raw_input_file).expanduser()
+            if not input_path.is_absolute():
+                input_path = (path.parent / input_path).resolve()
+            try:
+                cached_input = json.loads(input_path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            if not isinstance(cached_input, dict):
+                continue
+            if str(cached_input.get("cache_key", "") or "") != cache_key:
+                continue
+            if str(payload.get("review_input_hash", "") or "") != _hash_json(cached_input):
+                continue
+            rebound = dict(payload)
+            rebound["_cache_source_file"] = str(path)
+            return rebound
     return None
 
 

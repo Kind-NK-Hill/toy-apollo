@@ -369,6 +369,10 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertFalse(task_record["phase2_needs_class_normalization"])
             self.assertIn("Task status: fail", detail)
             self.assertIn("Non-clean apply", detail)
+            self.assertIn("Repair loop continued automatically", detail)
+            repair_request = Path(str(task_record.get("current_review_repair_request_file", "") or ""))
+            self.assertTrue(repair_request.exists())
+            self.assertTrue(str(repair_request).endswith("review_repair_request_v1.json"))
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -421,7 +425,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
                 output_path.write_text((pack_dir / "candidate_v1.lean").read_text(encoding="utf-8"), encoding="utf-8")
                 return True, "final build ok"
 
-            with patch(
+            with patch.object(ledger, "add_or_update_task", wraps=ledger.add_or_update_task) as register_task, patch(
                 "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
                 side_effect=promote_side_effect,
             ), patch(
@@ -429,6 +433,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
                 side_effect=promote_side_effect,
             ):
                 success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+            register_task.assert_not_called()
 
             self.assertFalse(success, detail)
             self.assertFalse(output_path.exists())
@@ -502,6 +507,151 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertEqual(ledger.ledger["tasks"][task_id]["latest_operation_file"], first_record["latest_operation_file"])
             self.assertEqual(ledger.ledger["tasks"][task_id]["latest_verify_result_file"], first_record["latest_verify_result_file"])
             self.assertEqual(sorted(pack_dir.glob("verify_result_v*.json")), first_verify_files)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_promoted_candidate_replay_rejects_source_tex_drift(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_replay_source_drift"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_replay_source_drift"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass")
+
+            def promote_side_effect(*args, **kwargs):
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                output_path.write_text((pack_dir / "candidate_v1.lean").read_text(encoding="utf-8"), encoding="utf-8")
+                return True, "final build ok"
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                side_effect=promote_side_effect,
+            ), patch(
+                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                side_effect=promote_side_effect,
+            ):
+                success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+            self.assertTrue(success, detail)
+            source_tex = settings.runtime_root / "inputs" / "08_chap4_measurable_functions.tex"
+            source_tex.write_text("The source theorem changed after promotion.\n", encoding="utf-8")
+
+            replay_success, replay_detail = asyncio.run(
+                apply_codex_review_result(task_id, ledger, settings, str(result_path))
+            )
+
+            self.assertFalse(replay_success)
+            self.assertIn("basis changed", replay_detail.lower())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_promoted_candidate_replay_does_not_accept_matching_legacy_shadow_without_canonical(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_replay_shadow_only"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_replay_shadow_only"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass")
+
+            def promote_side_effect(*args, **kwargs):
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                output_path.write_text((pack_dir / "candidate_v1.lean").read_text(encoding="utf-8"), encoding="utf-8")
+                return True, "final build ok"
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                side_effect=promote_side_effect,
+            ), patch(
+                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                side_effect=promote_side_effect,
+            ):
+                success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+            self.assertTrue(success, detail)
+            promoted_code = output_path.read_text(encoding="utf-8")
+            output_path.unlink()
+            shadow = settings.output_lean_files_dir / "general" / f"{task_id}.lean"
+            shadow.parent.mkdir(parents=True, exist_ok=True)
+            shadow.write_text(promoted_code, encoding="utf-8")
+
+            replay_success, replay_detail = asyncio.run(
+                apply_codex_review_result(task_id, ledger, settings, str(result_path))
+            )
+
+            self.assertFalse(replay_success)
+            self.assertNotIn("already promoted", replay_detail.lower())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_promoted_candidate_replay_rejects_proof_obligation_contract_drift(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_replay_obligation_drift"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_apply_replay_obligation_drift"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            self._write_single_open_obligation(pack_dir, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="pass",
+                obligation_review={
+                    "status": "covered",
+                    "summary": "source_step has a verified Lean contract",
+                    "items": [
+                        {
+                            "obligation_id": "source_step",
+                            "status": "covered",
+                            "evidence": "the candidate theorem discharges the source step",
+                            "expected_theorem_signature": f"theorem {task_id} : True",
+                            "lean_landing": task_id,
+                            "landing_kind": "theorem",
+                            "proof_contract_status": "verified",
+                            "proof_contract_notes": "reviewed test contract",
+                            "body_reassumption_check": "passed",
+                            "signature_match": "passed",
+                            "public_premise_check": "passed",
+                        }
+                    ],
+                    "open_blockers": [],
+                    "scaffold_assessment": [],
+                },
+            )
+
+            def promote_side_effect(*args, **kwargs):
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                output_path.write_text((pack_dir / "candidate_v1.lean").read_text(encoding="utf-8"), encoding="utf-8")
+                return True, "final build ok"
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                side_effect=promote_side_effect,
+            ), patch(
+                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                side_effect=promote_side_effect,
+            ):
+                success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+            self.assertTrue(success, detail)
+
+            obligations_path = pack_dir / "proof_obligations.json"
+            obligations = json.loads(obligations_path.read_text(encoding="utf-8"))
+            obligations["obligations"][0]["source_ref"] = "a different source proof contract"
+            obligations_path.write_text(json.dumps(obligations, indent=2, ensure_ascii=False), encoding="utf-8")
+
+            replay_success, replay_detail = asyncio.run(
+                apply_codex_review_result(task_id, ledger, settings, str(result_path))
+            )
+
+            self.assertFalse(replay_success)
+            self.assertIn("basis changed", replay_detail.lower())
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

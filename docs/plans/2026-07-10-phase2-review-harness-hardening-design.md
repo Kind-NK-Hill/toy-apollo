@@ -25,7 +25,7 @@
 
 ### 2. 显式 class 契约
 
-`proof_class` 与 `completion_class` 成为 reviewer result 的必备键；模板顶层和 schema hints 同时出现。非 pass 可以使用空字符串，但 pass 缺失或为空不能成为 task-level pass。系统不猜测 proof class。
+`proof_class` 与 `completion_class` 成为所有新 reviewer result 的必备非空字符串；模板顶层和 schema hints 同时出现。任何 verdict 缺失、为空或类型错误都属于 operational invalid，不能进入 task-level projection。系统不猜测 proof class；历史数据的兼容分类只属于显式迁移流程。
 
 ### 3. 先判定、后变更
 
@@ -33,21 +33,25 @@
 
 ### 4. Canonical subject binding
 
-existing-output 的权威顺序固定为：
-
-1. `ToyApollo/Output/<task>.lean`；
-2. `output_lean_files/general/<task>.lean`；
-3. `output_lean_files/<source_plan>/<task>.lean`。
-
-mtime 只用于诊断，不再用于 subject selection。shadow divergence 继续报告，不能静默改变复审对象。
+existing-output 的唯一权威对象固定为
+`ToyApollo/Output/<task>.lean`。`output_lean_files/general/<task>.lean` 与
+`output_lean_files/<source_plan>/<task>.lean` 只能作为历史/诊断 shadow
+evidence；canonical 缺失时不得 fallback。mtime 只用于诊断，不再用于
+subject selection。shadow divergence 继续报告，不能静默改变复审对象。
 
 ### 5. 真实 source TeX binding
 
 `source_evidence` 同时记录 task-content hash 和 `inputs/<source_plan>.tex` 的路径、存在性与内容 hash。review generation 与 apply freshness 使用同一 basis，TeX 内容改变会使旧 review 失效。
 
+候选结果首次成功提升后，`review-apply` 记录完整 post-apply basis receipt。相同结果只有在 canonical output、subject snapshot、source TeX、proof obligations 及其余绑定证据仍与 receipt 一致时才可幂等 no-op；不能用“already promoted”绕过 freshness。
+
+### 6. Reviewer-facing bundle binding
+
+`semantic_review_input` 内的 task、inline candidate Lean/file/hash、context markdown 与 basis/subject/context hash 必须内部一致；versioned request 另存完整 input hash，apply 时重渲染并核对 prompt、context file、snapshot 与 canonical subject。cache key 覆盖 reviewer 可见的 context、imports、search/build summaries，不能把旧语义 verdict 重绑到新上下文。
+
 ## 数据流
 
-`review request -> independent reviewer JSON -> official normalize -> official task projection -> freshness/preflight -> apply mutations`
+`bound input/prompt/context/request -> independent reviewer JSON -> official normalize -> official task projection -> freshness/preflight -> apply mutations`
 
 sidecar 只保存调度状态和对正式结果的引用；最终 ledger 仍只能由 `review-apply` 更新。
 
@@ -65,4 +69,5 @@ sidecar 只保存调度状态和对正式结果的引用；最终 ledger 仍只�
 - operational-invalid apply 前后 proof obligations、ledger 和 canonical review artifacts 不变，并可用修正后的同一 request 重试。
 - canonical output 即使 mtime 更旧也被选择。
 - 修改 source TeX（不改 plan task content）会触发 basis freshness failure。
+- 修改 inline candidate/task/context、versioned prompt 或其他 request-bound input 会触发 freshness failure；context 改变不会 cache-hit 旧 verdict。
 - 现有 Phase2 review 测试与新增回归测试全部通过。
