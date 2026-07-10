@@ -118,55 +118,16 @@ theorem common_limits_iff_rsIntegrable {f α : ℝ → ℝ} {a b : ℝ} :
 
 lemma taggedSum_between_lower_upper {f α : ℝ → ℝ} {a b : ℝ}
     (hs : DarbouxRS.SourceHypotheses a b f α)
-    (P : DarbouxRS.Partition a b) (tags : ℕ → ℝ)
+    (P : DarbouxRS.Partition a b) (tags : Fin P.n → ℝ)
     (htags : DarbouxRS.tagsInPartition P tags) :
     DarbouxRS.lowerSum P f α ≤ DarbouxRS.taggedSum P tags f α ∧
-      DarbouxRS.taggedSum P tags f α ≤ DarbouxRS.upperSum P f α := by
-  rcases hs with ⟨hab, hAbove, hBelow, hmono⟩
-  constructor
-  · unfold DarbouxRS.lowerSum DarbouxRS.taggedSum
-    refine Finset.sum_le_sum ?_
-    intro i hi_mem
-    have hi : i < P.n := Finset.mem_range.mp hi_mem
-    have hcellBelow : BddBelow (f '' DarbouxRS.subinterval P i) :=
-      BddBelow.mono (Set.image_mono (DarbouxRS.subinterval_subset_Icc_core P hi)) hBelow
-    have hlow_le_tag : DarbouxRS.lowerStep P f i ≤ f (tags i) := by
-      unfold DarbouxRS.lowerStep
-      exact csInf_le hcellBelow ⟨tags i, htags i hi, rfl⟩
-    have hinc_nonneg : 0 ≤ α (P.pts (i + 1)) - α (P.pts i) :=
-      DarbouxRS.partition_increment_nonneg_of_source_core P
-        ⟨hab, hAbove, hBelow, hmono⟩ hi
-    exact mul_le_mul_of_nonneg_right hlow_le_tag hinc_nonneg
-  · unfold DarbouxRS.taggedSum DarbouxRS.upperSum
-    refine Finset.sum_le_sum ?_
-    intro i hi_mem
-    have hi : i < P.n := Finset.mem_range.mp hi_mem
-    have hcellAbove : BddAbove (f '' DarbouxRS.subinterval P i) :=
-      BddAbove.mono (Set.image_mono (DarbouxRS.subinterval_subset_Icc_core P hi)) hAbove
-    have htag_le_up : f (tags i) ≤ DarbouxRS.upperStep P f i := by
-      unfold DarbouxRS.upperStep
-      exact le_csSup hcellAbove ⟨tags i, htags i hi, rfl⟩
-    have hinc_nonneg : 0 ≤ α (P.pts (i + 1)) - α (P.pts i) :=
-      DarbouxRS.partition_increment_nonneg_of_source_core P
-        ⟨hab, hAbove, hBelow, hmono⟩ hi
-    exact mul_le_mul_of_nonneg_right htag_le_up hinc_nonneg
+      DarbouxRS.taggedSum P tags f α ≤ DarbouxRS.upperSum P f α :=
+  DarbouxRS.taggedSum_between_lower_upper_core hs P tags htags
 
 theorem taggedCommonLimit_of_upperLowerCommonLimit {f α : ℝ → ℝ} {a b L : ℝ}
     (hUL : rsUpperLowerCommonLimit a b f α L) :
-    rsTaggedCommonLimit a b f α L := by
-  rcases hUL with ⟨hs, hlim⟩
-  refine ⟨hs, ?_⟩
-  intro eps heps
-  rcases hlim eps heps with ⟨δ, hδ, Hδ⟩
-  refine ⟨δ, hδ, ?_⟩
-  intro P tags htags hmesh
-  have hP := Hδ P hmesh
-  have hbetween := taggedSum_between_lower_upper hs P tags htags
-  have hlower_abs := abs_lt.mp hP.2
-  have hupper_abs := abs_lt.mp hP.1
-  refine abs_lt.mpr ⟨?_, ?_⟩
-  · linarith
-  · linarith
+    rsTaggedCommonLimit a b f α L :=
+  DarbouxRS.taggedBridgeObligation hUL
 
 def StrictFiniteDiscontinuityUpperLowerCriterion : Prop :=
   ∀ {f α : ℝ → ℝ} {a b : ℝ},

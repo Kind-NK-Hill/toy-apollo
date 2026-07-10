@@ -6,6 +6,7 @@ SOURCE MATERIAL: omitted from the public source snapshot; see docs/repository_sc
 import Mathlib
 
 open Finset BigOperators
+
 open Set
 open scoped Pointwise
 open scoped Classical
@@ -14,46 +15,59 @@ noncomputable section
 
 namespace DarbouxRS
 
+def SourceHypotheses (a b : ℝ) (f alpha : ℝ → ℝ) : Prop :=
+  a < b ∧
+  BddAbove (f '' Set.Icc a b) ∧
+  BddBelow (f '' Set.Icc a b) ∧
+  MonotoneOn alpha (Set.Icc a b)
+
 structure Partition (a b : ℝ) where
   n : ℕ
   hn : 0 < n
-  pts : ℕ → ℝ
+  pts : Fin (n + 1) → ℝ
   pts_start : pts 0 = a
-  pts_end : pts n = b
-  strict_mono : ∀ i, i < n → pts i < pts (i + 1)
+  pts_end : pts (Fin.last n) = b
+  strict_mono : StrictMono pts
 
 def Partition.mesh {a b : ℝ} (P : Partition a b) : ℝ :=
-  Finset.sup' (Finset.range P.n) (⟨0, Finset.mem_range.mpr P.hn⟩)
-    fun i => P.pts (i + 1) - P.pts i
+  Finset.sup' (Finset.univ : Finset (Fin P.n))
+    ⟨⟨0, P.hn⟩, Finset.mem_univ _⟩
+    fun i => P.pts i.succ - P.pts i.castSucc
 
-def subinterval {a b : ℝ} (P : Partition a b) (i : ℕ) : Set ℝ :=
-  Set.Icc (P.pts i) (P.pts (i + 1))
+def Partition.subinterval {a b : ℝ} (P : Partition a b) (i : Fin P.n)
+  : Set ℝ :=
+  Set.Icc (P.pts i.castSucc) (P.pts i.succ)
 
-def upperStep {a b : ℝ} (P : Partition a b) (f : ℝ → ℝ) (i : ℕ) : ℝ :=
-  sSup (f '' subinterval P i)
+abbrev subinterval {a b : ℝ} (P : Partition a b) (i : Fin P.n) : Set ℝ :=
+  P.subinterval i
 
-def lowerStep {a b : ℝ} (P : Partition a b) (f : ℝ → ℝ) (i : ℕ) : ℝ :=
-  sInf (f '' subinterval P i)
+def upperStep {a b : ℝ} (P : Partition a b) (f : ℝ → ℝ) (i : Fin P.n) : ℝ :=
+  sSup (f '' Partition.subinterval P i)
+
+def lowerStep {a b : ℝ} (P : Partition a b) (f : ℝ → ℝ) (i : Fin P.n) : ℝ :=
+  sInf (f '' Partition.subinterval P i)
+
+open scoped BigOperators
+
+def taggedSum {a b : ℝ} (P : Partition a b) (tags : Fin P.n → ℝ)
+    (f alpha : ℝ → ℝ) : ℝ :=
+  ∑ i : Fin P.n,
+    f (tags i) * (alpha (P.pts i.succ) - alpha (P.pts i.castSucc))
+
+def tagsInPartition {a b : ℝ} (P : Partition a b) (tags : Fin P.n → ℝ) : Prop :=
+  ∀ i : Fin P.n, tags i ∈ Partition.subinterval P i
+
+example {a b : ℝ} (P : Partition a b) (tags : Fin P.n → ℝ) :
+  tagsInPartition P tags ↔ ∀ i : Fin P.n, tags i ∈ Set.Icc (P.pts i.castSucc) (P.pts i.succ)
+  := by rfl
 
 def upperSum {a b : ℝ} (P : Partition a b) (f alpha : ℝ → ℝ) : ℝ :=
-  ∑ i ∈ Finset.range P.n,
-    upperStep P f i * (alpha (P.pts (i + 1)) - alpha (P.pts i))
+  ∑ i : Fin P.n,
+    upperStep P f i * (alpha (P.pts i.succ) - alpha (P.pts i.castSucc))
 
 def lowerSum {a b : ℝ} (P : Partition a b) (f alpha : ℝ → ℝ) : ℝ :=
-  ∑ i ∈ Finset.range P.n,
-    lowerStep P f i * (alpha (P.pts (i + 1)) - alpha (P.pts i))
-
-def taggedSum {a b : ℝ} (P : Partition a b) (tags : ℕ → ℝ)
-    (f alpha : ℝ → ℝ) : ℝ :=
-  ∑ i ∈ Finset.range P.n,
-    f (tags i) * (alpha (P.pts (i + 1)) - alpha (P.pts i))
-
-def tagsInPartition {a b : ℝ} (P : Partition a b) (tags : ℕ → ℝ) : Prop :=
-  ∀ i, i < P.n → tags i ∈ subinterval P i
-
-def SourceHypotheses (a b : ℝ) (f alpha : ℝ → ℝ) : Prop :=
-  a < b ∧ BddAbove (f '' Set.Icc a b) ∧ BddBelow (f '' Set.Icc a b) ∧
-    MonotoneOn alpha (Set.Icc a b)
+  ∑ i : Fin P.n,
+    lowerStep P f i * (alpha (P.pts i.succ) - alpha (P.pts i.castSucc))
 
 def UpperLowerCommonLimit (a b : ℝ) (f alpha : ℝ → ℝ) (L : ℝ) : Prop :=
   SourceHypotheses a b f alpha ∧
@@ -66,10 +80,10 @@ def RSIntegrableOnInterval (f alpha : ℝ → ℝ) (a b : ℝ) : Prop :=
 
 def TaggedCommonLimit (a b : ℝ) (f alpha : ℝ → ℝ) (L : ℝ) : Prop :=
   SourceHypotheses a b f alpha ∧
-    ∀ eps > 0, ∃ delta > 0, ∀ P : Partition a b, ∀ tags : ℕ → ℝ,
+    ∀ eps > 0, ∃ delta > 0, ∀ P : Partition a b, ∀ tags : Fin P.n → ℝ,
       tagsInPartition P tags →
-        P.mesh < delta →
-          |taggedSum P tags f alpha - L| < eps
+      P.mesh < delta →
+      |taggedSum P tags f alpha - L| < eps
 
 end DarbouxRS
 
@@ -110,7 +124,53 @@ theorem rsIntegral_source_spec {f alpha : ℝ → ℝ} {a b : ℝ}
     rsUpperLowerCommonLimit a b f alpha (rsIntegral f alpha a b h) :=
   Classical.choose_spec h
 
+def def_1_2 (f alpha : ℝ → ℝ) (a b : ℝ) : Prop :=
+  RSIntegrable f alpha a b
+
+def rsIntegrableFamily (alpha : ℝ → ℝ) (a b : ℝ) : Set (ℝ → ℝ) :=
+  {f | RSIntegrable f alpha a b}
+
 namespace DarbouxRS
+
+theorem sourceHypotheses_integrator_add {a b : ℝ} {f α₁ α₂ : ℝ → ℝ}
+    (h₁ : SourceHypotheses a b f α₁)
+    (h₂ : SourceHypotheses a b f α₂) :
+    SourceHypotheses a b f (fun x => α₁ x + α₂ x) := by
+  rcases h₁ with ⟨hab, hAbove, hBelow, hmono₁⟩
+  rcases h₂ with ⟨_hab₂, _hAbove₂, _hBelow₂, hmono₂⟩
+  refine ⟨hab, hAbove, hBelow, ?_⟩
+  intro x hx y hy hxy
+  exact add_le_add (hmono₁ hx hy hxy) (hmono₂ hx hy hxy)
+
+theorem upperSum_integrator_add {a b : ℝ} (P : Partition a b)
+    (f α₁ α₂ : ℝ → ℝ) :
+    upperSum P f (fun x => α₁ x + α₂ x) =
+      upperSum P f α₁ + upperSum P f α₂ := by
+  unfold upperSum
+  rw [← Finset.sum_add_distrib]
+  refine Finset.sum_congr rfl ?_
+  intro i _hi
+  ring
+
+theorem lowerSum_integrator_add {a b : ℝ} (P : Partition a b)
+    (f α₁ α₂ : ℝ → ℝ) :
+    lowerSum P f (fun x => α₁ x + α₂ x) =
+      lowerSum P f α₁ + lowerSum P f α₂ := by
+  unfold lowerSum
+  rw [← Finset.sum_add_distrib]
+  refine Finset.sum_congr rfl ?_
+  intro i _hi
+  ring
+
+theorem taggedSum_integrator_add {a b : ℝ} (P : Partition a b) (tags : Fin P.n → ℝ)
+    (f α₁ α₂ : ℝ → ℝ) :
+    taggedSum P tags f (fun x => α₁ x + α₂ x) =
+      taggedSum P tags f α₁ + taggedSum P tags f α₂ := by
+  unfold taggedSum
+  rw [← Finset.sum_add_distrib]
+  refine Finset.sum_congr rfl ?_
+  intro i _hi
+  ring
 
 def uniformPartition (a b : ℝ) (hab : a < b) (n : ℕ) (hn : 0 < n) :
     Partition a b where
@@ -120,25 +180,29 @@ def uniformPartition (a b : ℝ) (hab : a < b) (n : ℕ) (hn : 0 < n) :
   pts_start := by simp
   pts_end := by
     have hn0 : (n : ℝ) ≠ 0 := by exact_mod_cast (ne_of_gt hn)
+    -- Explicitly change the Fin coercion to expose its integer value
+    change a + ((Fin.last n).val : ℝ) / (n : ℝ) * (b - a) = b
+    rw [Fin.val_last]
     field_simp [hn0]
     ring
   strict_mono := by
-    intro i hi
+    -- StrictMono means ∀ i j, i < j → pts i < pts j
+    intro i j hij
+    dsimp
     have hnR : 0 < (n : ℝ) := by exact_mod_cast hn
     have hba : 0 < b - a := sub_pos.mpr hab
-    have hstep : 0 < (b - a) / (n : ℝ) := div_pos hba hnR
-    have hdiff :
-        a + (((i + 1 : ℕ) : ℝ) / (n : ℝ)) * (b - a) -
-          (a + ((i : ℝ) / (n : ℝ)) * (b - a)) = (b - a) / (n : ℝ) := by
-      norm_num [Nat.cast_add, Nat.cast_one]
-      field_simp [ne_of_gt hnR]
-      ring
-    have hpos : 0 <
-        a + (((i + 1 : ℕ) : ℝ) / (n : ℝ)) * (b - a) -
-          (a + ((i : ℝ) / (n : ℝ)) * (b - a)) := by
-      rw [hdiff]
-      exact hstep
-    linarith
+    have hijR : (i : ℝ) < (j : ℝ) := by exact_mod_cast hij
+
+    -- Step 1: i < j  ==>  i / n < j / n
+    have h1 : (i : ℝ) / (n : ℝ) < (j : ℝ) / (n : ℝ) := by
+      exact mul_lt_mul_of_pos_right hijR (inv_pos.mpr hnR)
+
+    -- Step 2: i / n * (b - a) < j / n * (b - a)
+    have h2 : ((i : ℝ) / (n : ℝ)) * (b - a) < ((j : ℝ) / (n : ℝ)) * (b - a) :=
+      mul_lt_mul_of_pos_right h1 hba
+
+    -- Step 3: a + ... < a + ...
+    linarith [h2]
 
 theorem uniformPartition_mesh_eq (a b : ℝ) (hab : a < b) (n : ℕ) (hn : 0 < n) :
     (uniformPartition a b hab n hn).mesh = (b - a) / (n : ℝ) := by
@@ -167,44 +231,37 @@ theorem exists_partition_mesh_lt {a b δ : ℝ} (hab : a < b) (hδ : 0 < δ) :
   nlinarith
 
 theorem leftTagsInPartition {a b : ℝ} (P : Partition a b) :
-    tagsInPartition P P.pts := by
-  intro i hi
-  exact ⟨le_rfl, le_of_lt (P.strict_mono i hi)⟩
+    tagsInPartition P (fun i => P.pts i.castSucc) := by
+  intro i
+  constructor
+  · exact le_rfl
+  · simp only
+    apply le_of_lt
+    exact P.strict_mono (Fin.castSucc_lt_succ)
 
-lemma partition_pts_monotone_core {a b : ℝ} (P : Partition a b) {i j : ℕ}
-    (hij : i ≤ j) (hj : j ≤ P.n) : P.pts i ≤ P.pts j := by
-  induction j generalizing i with
-  | zero =>
-      have hi0 : i = 0 := Nat.eq_zero_of_le_zero hij
-      subst hi0
-      rfl
-  | succ j ih =>
-      by_cases htop : i = j + 1
-      · subst htop
-        rfl
-      · have hij' : i ≤ j := Nat.le_of_lt_succ (Nat.lt_of_le_of_ne hij htop)
-        have hjle : j ≤ P.n := Nat.le_trans (Nat.le_succ j) hj
-        have hlt : j < P.n := Nat.lt_of_succ_le hj
-        exact le_trans (ih hij' hjle) (le_of_lt (P.strict_mono j hlt))
+lemma partition_pts_monotone_core {a b : ℝ} (P : Partition a b)
+    {i j : Fin (P.n + 1)} (hij : i ≤ j) :
+  P.pts i ≤ P.pts j := by
+  exact P.strict_mono.monotone hij
 
-lemma partition_pts_mem_Icc_core {a b : ℝ} (P : Partition a b) {i : ℕ}
-    (hi : i ≤ P.n) :
-    P.pts i ∈ Icc a b := by
+lemma partition_pts_mem_Icc_core {a b : ℝ} (P : Partition a b) {i : Fin (P.n + 1)} :
+    P.pts i ∈ Set.Icc a b := by
   constructor
   · calc
       a = P.pts 0 := P.pts_start.symm
-      _ ≤ P.pts i := partition_pts_monotone_core P (Nat.zero_le i) hi
+      _ ≤ P.pts i := partition_pts_monotone_core P (Fin.zero_le i)
   · calc
-      P.pts i ≤ P.pts P.n := partition_pts_monotone_core P hi le_rfl
+      P.pts i ≤ P.pts (Fin.last P.n) := partition_pts_monotone_core P (Fin.le_last i)
       _ = b := P.pts_end
 
-lemma subinterval_subset_Icc_core {a b : ℝ} (P : Partition a b) {i : ℕ}
-    (hi : i < P.n) :
-    subinterval P i ⊆ Icc a b := by
+lemma subinterval_subset_Icc_core {a b : ℝ} (P : Partition a b) {i : Fin P.n} :
+    Partition.subinterval P i ⊆ Set.Icc a b := by
   intro x hx
   constructor
-  · exact le_trans (partition_pts_mem_Icc_core P (Nat.le_of_lt hi)).1 hx.1
-  · exact le_trans hx.2 (partition_pts_mem_Icc_core P (Nat.succ_le_of_lt hi)).2
+  · -- a ≤ P.pts i.castSucc ≤ x
+    exact le_trans (partition_pts_mem_Icc_core P).1 hx.1
+  · -- x ≤ P.pts i.succ ≤ b
+    exact le_trans hx.2 (partition_pts_mem_Icc_core P).2
 
 theorem taggedCommonLimit_unique {a b : ℝ} {f alpha : ℝ → ℝ} {L₁ L₂ : ℝ}
     (h₁ : TaggedCommonLimit a b f alpha L₁)
@@ -219,12 +276,16 @@ theorem taggedCommonLimit_unique {a b : ℝ} {f alpha : ℝ → ℝ} {L₁ L₂ 
   rcases hlim₁ (eps / 2) hhalf with ⟨δ₁, hδ₁, H₁⟩
   rcases hlim₂ (eps / 2) hhalf with ⟨δ₂, hδ₂, H₂⟩
   rcases exists_partition_mesh_lt hab (lt_min hδ₁ hδ₂) with ⟨P, hPmesh⟩
-  let tags := P.pts
-  have htags : tagsInPartition P tags := by
-    dsimp [tags]
-    exact leftTagsInPartition P
+
+  -- Define `tags` to precisely match the size `Fin P.n`
+  let tags : Fin P.n → ℝ := fun i => P.pts i.castSucc
+
+  -- `leftTagsInPartition P` provides exactly this proof.
+  have htags : tagsInPartition P tags := leftTagsInPartition P
+
   have hmesh₁ : P.mesh < δ₁ := lt_of_lt_of_le hPmesh (min_le_left δ₁ δ₂)
   have hmesh₂ : P.mesh < δ₂ := lt_of_lt_of_le hPmesh (min_le_right δ₁ δ₂)
+
   have hP₁ := H₁ P tags htags hmesh₁
   have hP₂ := H₂ P tags htags hmesh₂
   have hdecomp :
@@ -249,46 +310,6 @@ theorem taggedCommonLimit_unique {a b : ℝ} {f alpha : ℝ → ℝ} {L₁ L₂ 
   have hdist : dist L₁ L₂ < eps := by
     simpa [Real.dist_eq, abs_sub_comm] using hlt
   exact le_of_lt hdist
-
-theorem upperSum_integrator_add {a b : ℝ} (P : Partition a b)
-    (f α₁ α₂ : ℝ → ℝ) :
-    upperSum P f (fun x => α₁ x + α₂ x) =
-      upperSum P f α₁ + upperSum P f α₂ := by
-  unfold upperSum
-  rw [← Finset.sum_add_distrib]
-  refine Finset.sum_congr rfl ?_
-  intro i _hi
-  ring
-
-theorem lowerSum_integrator_add {a b : ℝ} (P : Partition a b)
-    (f α₁ α₂ : ℝ → ℝ) :
-    lowerSum P f (fun x => α₁ x + α₂ x) =
-      lowerSum P f α₁ + lowerSum P f α₂ := by
-  unfold lowerSum
-  rw [← Finset.sum_add_distrib]
-  refine Finset.sum_congr rfl ?_
-  intro i _hi
-  ring
-
-theorem taggedSum_integrator_add {a b : ℝ} (P : Partition a b) (tags : ℕ → ℝ)
-    (f α₁ α₂ : ℝ → ℝ) :
-    taggedSum P tags f (fun x => α₁ x + α₂ x) =
-      taggedSum P tags f α₁ + taggedSum P tags f α₂ := by
-  unfold taggedSum
-  rw [← Finset.sum_add_distrib]
-  refine Finset.sum_congr rfl ?_
-  intro i _hi
-  ring
-
-theorem sourceHypotheses_integrator_add {a b : ℝ} {f α₁ α₂ : ℝ → ℝ}
-    (h₁ : SourceHypotheses a b f α₁)
-    (h₂ : SourceHypotheses a b f α₂) :
-    SourceHypotheses a b f (fun x => α₁ x + α₂ x) := by
-  rcases h₁ with ⟨hab, hAbove, hBelow, hmono₁⟩
-  rcases h₂ with ⟨_hab₂, _hAbove₂, _hBelow₂, hmono₂⟩
-  refine ⟨hab, hAbove, hBelow, ?_⟩
-  intro x hx y hy hxy
-  exact add_le_add (hmono₁ hx hy hxy) (hmono₂ hx hy hxy)
 
 theorem upperLowerCommonLimit_integrator_add {a b : ℝ} {f α₁ α₂ : ℝ → ℝ}
     {L₁ L₂ : ℝ}
@@ -373,9 +394,10 @@ theorem taggedCommonLimit_integrator_add {a b : ℝ} {f α₁ α₂ : ℝ → �
             eps / 2 + eps / 2 := add_lt_add hP₁ hP₂
       simpa using hlt
 
-theorem taggedSum_integrand_add {a b : ℝ} (P : Partition a b) (tags : ℕ → ℝ)
+theorem taggedSum_integrand_add {a b : ℝ}
+    (P : Partition a b) (tags : Fin P.n → ℝ)
     (f g alpha : ℝ → ℝ) :
-    taggedSum P tags (fun x => f x + g x) alpha =
+  taggedSum P tags (fun x => f x + g x) alpha =
       taggedSum P tags f alpha + taggedSum P tags g alpha := by
   unfold taggedSum
   rw [← Finset.sum_add_distrib]
@@ -435,57 +457,107 @@ theorem taggedCommonLimit_integrand_add {a b : ℝ} {f g alpha : ℝ → ℝ}
         add_lt_add hPf hPg
       simpa using hlt
 
-lemma upperStep_integrand_add_le_core {a b : ℝ} (P : Partition a b)
-    {f g : ℝ → ℝ} {i : ℕ} (hi : i < P.n)
-    (hfAbove : BddAbove (f '' Icc a b))
-    (hgAbove : BddAbove (g '' Icc a b)) :
+lemma upperStep_integrand_add_le_core {a b : ℝ}
+    {f g : ℝ → ℝ}
+    (P : Partition a b)
+    (i : Fin P.n)
+    (hfAbove : BddAbove (f '' Set.Icc a b))
+    (hgAbove : BddAbove (g '' Set.Icc a b)) :
     upperStep P (fun x => f x + g x) i ≤ upperStep P f i + upperStep P g i := by
-  have hcell_nonempty : ((fun x => f x + g x) '' subinterval P i).Nonempty := by
-    refine ⟨f (P.pts i) + g (P.pts i), ?_⟩
-    exact ⟨P.pts i, ⟨le_rfl, le_of_lt (P.strict_mono i hi)⟩, rfl⟩
-  have hfCellAbove : BddAbove (f '' subinterval P i) :=
-    BddAbove.mono (Set.image_mono (subinterval_subset_Icc_core P hi)) hfAbove
-  have hgCellAbove : BddAbove (g '' subinterval P i) :=
-    BddAbove.mono (Set.image_mono (subinterval_subset_Icc_core P hi)) hgAbove
+  have hcell_nonempty : ((fun x => f x + g x) '' Partition.subinterval P i).Nonempty := by
+    -- Evaluate the function at the left endpoint of the interval
+    refine ⟨f (P.pts i.castSucc) + g (P.pts i.castSucc), ?_⟩
+    exact ⟨P.pts i.castSucc, ⟨le_rfl, le_of_lt (P.strict_mono (Fin.castSucc_lt_succ))⟩, rfl⟩
+
+  have hfCellAbove : BddAbove (f '' Partition.subinterval P i) :=
+    BddAbove.mono (Set.image_mono (subinterval_subset_Icc_core P)) hfAbove
+
+  have hgCellAbove : BddAbove (g '' Partition.subinterval P i) :=
+    BddAbove.mono (Set.image_mono (subinterval_subset_Icc_core P)) hgAbove
+
   unfold upperStep
   refine csSup_le hcell_nonempty ?_
   rintro y ⟨x, hx, rfl⟩
-  have hfx : f x ≤ sSup (f '' subinterval P i) :=
+
+  have hfx : f x ≤ sSup (f '' Partition.subinterval P i) :=
     le_csSup hfCellAbove ⟨x, hx, rfl⟩
-  have hgx : g x ≤ sSup (g '' subinterval P i) :=
+
+  have hgx : g x ≤ sSup (g '' Partition.subinterval P i) :=
     le_csSup hgCellAbove ⟨x, hx, rfl⟩
+
   linarith
 
-lemma lowerStep_integrand_add_le_core {a b : ℝ} (P : Partition a b)
-    {f g : ℝ → ℝ} {i : ℕ} (hi : i < P.n)
-    (hfBelow : BddBelow (f '' Icc a b))
-    (hgBelow : BddBelow (g '' Icc a b)) :
+lemma lowerStep_integrand_add_le_core {a b : ℝ} {f g : ℝ → ℝ}
+    (P : Partition a b)
+    (i : Fin P.n)
+    (hfBelow : BddBelow (f '' Set.Icc a b))
+    (hgBelow : BddBelow (g '' Set.Icc a b)) :
     lowerStep P f i + lowerStep P g i ≤ lowerStep P (fun x => f x + g x) i := by
-  have hcell_nonempty : ((fun x => f x + g x) '' subinterval P i).Nonempty := by
-    refine ⟨f (P.pts i) + g (P.pts i), ?_⟩
-    exact ⟨P.pts i, ⟨le_rfl, le_of_lt (P.strict_mono i hi)⟩, rfl⟩
-  have hfCellBelow : BddBelow (f '' subinterval P i) :=
-    BddBelow.mono (Set.image_mono (subinterval_subset_Icc_core P hi)) hfBelow
-  have hgCellBelow : BddBelow (g '' subinterval P i) :=
-    BddBelow.mono (Set.image_mono (subinterval_subset_Icc_core P hi)) hgBelow
+  have hcell_nonempty : ((fun x => f x + g x) '' Partition.subinterval P i).Nonempty := by
+    -- Evaluate the function at the left endpoint of the interval
+    refine ⟨f (P.pts i.castSucc) + g (P.pts i.castSucc), ?_⟩
+    exact ⟨P.pts i.castSucc, ⟨le_rfl, le_of_lt (P.strict_mono (Fin.castSucc_lt_succ))⟩, rfl⟩
+
+  have hfCellBelow : BddBelow (f '' Partition.subinterval P i) :=
+    BddBelow.mono (Set.image_mono (subinterval_subset_Icc_core P)) hfBelow
+
+  have hgCellBelow : BddBelow (g '' Partition.subinterval P i) :=
+    BddBelow.mono (Set.image_mono (subinterval_subset_Icc_core P)) hgBelow
+
   unfold lowerStep
   refine le_csInf hcell_nonempty ?_
   rintro y ⟨x, hx, rfl⟩
-  have hfx : sInf (f '' subinterval P i) ≤ f x :=
+
+  have hfx : sInf (f '' Partition.subinterval P i) ≤ f x :=
     csInf_le hfCellBelow ⟨x, hx, rfl⟩
-  have hgx : sInf (g '' subinterval P i) ≤ g x :=
+
+  have hgx : sInf (g '' Partition.subinterval P i) ≤ g x :=
     csInf_le hgCellBelow ⟨x, hx, rfl⟩
+
   linarith
 
+lemma image_const_mul_Icc_eq_smul_core {a b c : ℝ} (f : ℝ → ℝ) :
+    (fun x => c * f x) '' Icc a b = c • (f '' Icc a b) := by
+  ext y
+  constructor
+  · rintro ⟨x, hx, rfl⟩
+    exact ⟨f x, ⟨x, hx, rfl⟩, by simp [smul_eq_mul]⟩
+  · rintro ⟨z, ⟨x, hx, rfl⟩, rfl⟩
+    exact ⟨x, hx, by simp [smul_eq_mul]⟩
+
+theorem sourceHypotheses_const_mul_core {a b c : ℝ} {f alpha : ℝ → ℝ}
+    (h : SourceHypotheses a b f alpha) :
+    SourceHypotheses a b (fun x => c * f x) alpha := by
+  rcases h with ⟨hab, hAbove, hBelow, hmono⟩
+  refine ⟨hab, ?_, ?_, hmono⟩
+  · by_cases hc : 0 ≤ c
+    · rw [image_const_mul_Icc_eq_smul_core]
+      exact hAbove.smul_of_nonneg hc
+    · have hc' : c ≤ 0 := le_of_not_ge hc
+      rw [image_const_mul_Icc_eq_smul_core]
+      exact BddBelow.smul_of_nonpos hc' hBelow
+  · by_cases hc : 0 ≤ c
+    · rw [image_const_mul_Icc_eq_smul_core]
+      exact hBelow.smul_of_nonneg hc
+    · have hc' : c ≤ 0 := le_of_not_ge hc
+      rw [image_const_mul_Icc_eq_smul_core]
+      exact BddAbove.smul_of_nonpos hc' hAbove
+
 lemma partition_increment_nonneg_of_source_core {a b : ℝ} (P : Partition a b)
-    {f alpha : ℝ → ℝ} (hs : SourceHypotheses a b f alpha) {i : ℕ}
-    (hi : i < P.n) :
-    0 ≤ alpha (P.pts (i + 1)) - alpha (P.pts i) := by
+    {f alpha : ℝ → ℝ} (hs : SourceHypotheses a b f alpha) {i : Fin P.n} :
+    0 ≤ alpha (P.pts i.succ) - alpha (P.pts i.castSucc) := by
+  -- Unpack the SourceHypotheses to get the monotonicity of alpha
   rcases hs with ⟨_hab, _hAbove, _hBelow, hmono⟩
-  have hleft : P.pts i ∈ Icc a b := partition_pts_mem_Icc_core P (Nat.le_of_lt hi)
-  have hright : P.pts (i + 1) ∈ Icc a b :=
-    partition_pts_mem_Icc_core P (Nat.succ_le_of_lt hi)
-  exact sub_nonneg.mpr (hmono hleft hright (le_of_lt (P.strict_mono i hi)))
+
+  -- The endpoints of the subinterval are in [a, b]
+  have hleft : P.pts i.castSucc ∈ Set.Icc a b := partition_pts_mem_Icc_core P
+  have hright : P.pts i.succ ∈ Set.Icc a b := partition_pts_mem_Icc_core P
+
+  -- Because x_i < x_{i+1}, monotonicity implies alpha(x_i) ≤ alpha(x_{i+1})
+  have h_pts_lt : P.pts i.castSucc < P.pts i.succ :=
+    P.strict_mono (Fin.castSucc_lt_succ)
+
+  exact sub_nonneg.mpr (hmono hleft hright (le_of_lt h_pts_lt))
 
 theorem upperSum_integrand_add_le_core {a b : ℝ} (P : Partition a b)
     {f g alpha : ℝ → ℝ}
@@ -493,17 +565,20 @@ theorem upperSum_integrand_add_le_core {a b : ℝ} (P : Partition a b)
     (hsg : SourceHypotheses a b g alpha) :
     upperSum P (fun x => f x + g x) alpha ≤
       upperSum P f alpha + upperSum P g alpha := by
-  rcases hsf with ⟨hab, hfAbove, hfBelow, hmono⟩
+  rcases hsf with ⟨_hab, hfAbove, _hfBelow, _hmono⟩
   rcases hsg with ⟨_habg, hgAbove, _hgBelow, _hmonog⟩
   unfold upperSum
   rw [← Finset.sum_add_distrib]
   refine Finset.sum_le_sum ?_
-  intro i hi
-  have hi_lt : i < P.n := Finset.mem_range.mp hi
-  have hstep := upperStep_integrand_add_le_core (P := P) (i := i) hi_lt hfAbove hgAbove
-  have hinc : 0 ≤ alpha (P.pts (i + 1)) - alpha (P.pts i) := by
-    exact partition_increment_nonneg_of_source_core P
-      ⟨hab, hfAbove, hfBelow, hmono⟩ hi_lt
+  intro i _hi
+
+  -- `i` is explicitly passed
+  have hstep := upperStep_integrand_add_le_core P i hfAbove hgAbove
+
+  -- Reconstruct the SourceHypotheses on the fly using the pieces in your context!
+  have hinc : 0 ≤ alpha (P.pts i.succ) - alpha (P.pts i.castSucc) :=
+    partition_increment_nonneg_of_source_core P ⟨_hab, hfAbove, _hfBelow, _hmono⟩
+
   have hmul := mul_le_mul_of_nonneg_right hstep hinc
   nlinarith
 
@@ -513,101 +588,69 @@ theorem lowerSum_integrand_add_le_core {a b : ℝ} (P : Partition a b)
     (hsg : SourceHypotheses a b g alpha) :
     lowerSum P f alpha + lowerSum P g alpha ≤
       lowerSum P (fun x => f x + g x) alpha := by
-  rcases hsf with ⟨hab, hfAbove, hfBelow, hmono⟩
+  -- For lower sums, we need the `BddBelow` pieces!
+  rcases hsf with ⟨_hab, _hfAbove, hfBelow, _hmono⟩
   rcases hsg with ⟨_habg, _hgAbove, hgBelow, _hmonog⟩
   unfold lowerSum
   rw [← Finset.sum_add_distrib]
   refine Finset.sum_le_sum ?_
-  intro i hi
-  have hi_lt : i < P.n := Finset.mem_range.mp hi
-  have hstep := lowerStep_integrand_add_le_core (P := P) (i := i) hi_lt hfBelow hgBelow
-  have hinc : 0 ≤ alpha (P.pts (i + 1)) - alpha (P.pts i) := by
+  intro i _hi
+
+  -- Apply the lowerStep lemma we fixed earlier
+  have hstep := lowerStep_integrand_add_le_core P i hfBelow hgBelow
+
+  -- Reconstruct the SourceHypotheses for the increment proof
+  have hinc : 0 ≤ alpha (P.pts i.succ) - alpha (P.pts i.castSucc) := by
     exact partition_increment_nonneg_of_source_core P
-      ⟨hab, hfAbove, hfBelow, hmono⟩ hi_lt
+      ⟨_hab, _hfAbove, hfBelow, _hmono⟩
+
+  -- Multiply the step inequality by the non-negative increment width
   have hmul := mul_le_mul_of_nonneg_right hstep hinc
   nlinarith
 
 lemma lowerStep_le_upperStep_core {a b : ℝ} (P : Partition a b)
-    {f : ℝ → ℝ} {i : ℕ} (hi : i < P.n)
-    (hBelow : BddBelow (f '' Icc a b))
-    (hAbove : BddAbove (f '' Icc a b)) :
+    {f : ℝ → ℝ} (i : Fin P.n)
+    (hBelow : BddBelow (f '' Set.Icc a b))
+    (hAbove : BddAbove (f '' Set.Icc a b)) :
     lowerStep P f i ≤ upperStep P f i := by
-  have hcell_nonempty : (f '' subinterval P i).Nonempty := by
-    refine ⟨f (P.pts i), ?_⟩
-    exact ⟨P.pts i, ⟨le_rfl, le_of_lt (P.strict_mono i hi)⟩, rfl⟩
-  have hcellBelow : BddBelow (f '' subinterval P i) :=
-    BddBelow.mono (Set.image_mono (subinterval_subset_Icc_core P hi)) hBelow
-  have hcellAbove : BddAbove (f '' subinterval P i) :=
-    BddAbove.mono (Set.image_mono (subinterval_subset_Icc_core P hi)) hAbove
+  have hcell_nonempty : (f '' Partition.subinterval P i).Nonempty := by
+    -- We show the image is non-empty by plugging in the left endpoint
+    refine ⟨f (P.pts i.castSucc), ?_⟩
+    exact ⟨P.pts i.castSucc, ⟨le_rfl, le_of_lt (P.strict_mono (Fin.castSucc_lt_succ))⟩, rfl⟩
+
+  have hcellBelow : BddBelow (f '' Partition.subinterval P i) :=
+    BddBelow.mono (Set.image_mono (subinterval_subset_Icc_core P)) hBelow
+
+  have hcellAbove : BddAbove (f '' Partition.subinterval P i) :=
+    BddAbove.mono (Set.image_mono (subinterval_subset_Icc_core P)) hAbove
+
   rcases hcell_nonempty with ⟨y, hy⟩
   unfold lowerStep upperStep
+
+  -- inf(f) ≤ y and y ≤ sup(f), therefore inf(f) ≤ sup(f)
   exact le_trans (csInf_le hcellBelow hy) (le_csSup hcellAbove hy)
 
 theorem lowerSum_le_upperSum_core {a b : ℝ} (P : Partition a b)
     {f alpha : ℝ → ℝ} (hs : SourceHypotheses a b f alpha) :
     lowerSum P f alpha ≤ upperSum P f alpha := by
-  rcases hs with ⟨hab, hAbove, hBelow, hmono⟩
+  -- Keep a copy of `hs` so we can extract bounds without destroying the original
+  have hs_copy := hs
+  rcases hs_copy with ⟨_hab, hAbove, hBelow, _hmono⟩
+
   unfold lowerSum upperSum
   refine Finset.sum_le_sum ?_
-  intro i hi
-  have hi_lt : i < P.n := Finset.mem_range.mp hi
-  have hstep := lowerStep_le_upperStep_core (P := P) (i := i) hi_lt hBelow hAbove
-  have hinc : 0 ≤ alpha (P.pts (i + 1)) - alpha (P.pts i) := by
-    exact partition_increment_nonneg_of_source_core P
-      ⟨hab, hAbove, hBelow, hmono⟩ hi_lt
+  intro i _hi  -- _hi is `i ∈ Finset.univ`, which we ignore
+
+  -- 1. Prove the step inequality: m_i ≤ M_i
+  have hstep := lowerStep_le_upperStep_core P i hBelow hAbove
+
+  -- 2. Prove the increment is non-negative: 0 ≤ Δα_i
+  -- We can just pass the intact `hs` directly!
+  have hinc : 0 ≤ alpha (P.pts i.succ) - alpha (P.pts i.castSucc) :=
+    partition_increment_nonneg_of_source_core P hs
+
+  -- 3. Multiply them together: m_i * Δα_i ≤ M_i * Δα_i
   exact mul_le_mul_of_nonneg_right hstep hinc
-
-theorem taggedSum_between_lower_upper_core {a b : ℝ} {f alpha : ℝ → ℝ}
-    (hs : SourceHypotheses a b f alpha)
-    (P : Partition a b) (tags : ℕ → ℝ)
-    (htags : tagsInPartition P tags) :
-    lowerSum P f alpha ≤ taggedSum P tags f alpha ∧
-      taggedSum P tags f alpha ≤ upperSum P f alpha := by
-  rcases hs with ⟨hab, hAbove, hBelow, hmono⟩
-  constructor
-  · unfold lowerSum taggedSum
-    refine Finset.sum_le_sum ?_
-    intro i hi_mem
-    have hi : i < P.n := Finset.mem_range.mp hi_mem
-    have hcellBelow : BddBelow (f '' subinterval P i) :=
-      BddBelow.mono (Set.image_mono (subinterval_subset_Icc_core P hi)) hBelow
-    have hlow_le_tag : lowerStep P f i ≤ f (tags i) := by
-      unfold lowerStep
-      exact csInf_le hcellBelow ⟨tags i, htags i hi, rfl⟩
-    have hinc_nonneg : 0 ≤ alpha (P.pts (i + 1)) - alpha (P.pts i) :=
-      partition_increment_nonneg_of_source_core P
-        ⟨hab, hAbove, hBelow, hmono⟩ hi
-    exact mul_le_mul_of_nonneg_right hlow_le_tag hinc_nonneg
-  · unfold taggedSum upperSum
-    refine Finset.sum_le_sum ?_
-    intro i hi_mem
-    have hi : i < P.n := Finset.mem_range.mp hi_mem
-    have hcellAbove : BddAbove (f '' subinterval P i) :=
-      BddAbove.mono (Set.image_mono (subinterval_subset_Icc_core P hi)) hAbove
-    have htag_le_up : f (tags i) ≤ upperStep P f i := by
-      unfold upperStep
-      exact le_csSup hcellAbove ⟨tags i, htags i hi, rfl⟩
-    have hinc_nonneg : 0 ≤ alpha (P.pts (i + 1)) - alpha (P.pts i) :=
-      partition_increment_nonneg_of_source_core P
-        ⟨hab, hAbove, hBelow, hmono⟩ hi
-    exact mul_le_mul_of_nonneg_right htag_le_up hinc_nonneg
-
-theorem taggedBridgeObligation {a b : ℝ} {f alpha : ℝ → ℝ} {L : ℝ}
-    (hUL : UpperLowerCommonLimit a b f alpha L) :
-    TaggedCommonLimit a b f alpha L := by
-  rcases hUL with ⟨hs, hlim⟩
-  refine ⟨hs, ?_⟩
-  intro eps heps
-  rcases hlim eps heps with ⟨δ, hδ, Hδ⟩
-  refine ⟨δ, hδ, ?_⟩
-  intro P tags htags hmesh
-  have hP := Hδ P hmesh
-  have hbetween := taggedSum_between_lower_upper_core hs P tags htags
-  have hlower_abs := abs_lt.mp hP.2
-  have hupper_abs := abs_lt.mp hP.1
-  refine abs_lt.mpr ⟨?_, ?_⟩
-  · linarith
-  · linarith
 
 theorem upperLowerCommonLimit_integrand_add_core {a b : ℝ} {f g alpha : ℝ → ℝ}
     {Lf Lg : ℝ}
@@ -713,208 +756,6 @@ theorem upperLowerCommonLimit_integrand_add_core {a b : ℝ} {f g alpha : ℝ �
         linarith
       exact hlt
 
-lemma tag_mem_Icc_of_tagsInPartition_core {a b : ℝ} (P : Partition a b)
-    {tags : ℕ → ℝ} (htags : tagsInPartition P tags)
-    {i : ℕ} (hi : i < P.n) :
-    tags i ∈ Icc a b :=
-  subinterval_subset_Icc_core P hi (htags i hi)
-
-theorem taggedSum_mono_core {a b : ℝ} (P : Partition a b) (tags : ℕ → ℝ)
-    {f g alpha : ℝ → ℝ}
-    (hs : SourceHypotheses a b f alpha)
-    (htags : tagsInPartition P tags)
-    (hfg : ∀ x ∈ Icc a b, f x ≤ g x) :
-    taggedSum P tags f alpha ≤ taggedSum P tags g alpha := by
-  rcases hs with ⟨hab, hAbove, hBelow, hmono⟩
-  unfold taggedSum
-  refine Finset.sum_le_sum ?_
-  intro i hi
-  have hi_lt : i < P.n := Finset.mem_range.mp hi
-  have htag : tags i ∈ Icc a b := tag_mem_Icc_of_tagsInPartition_core P htags hi_lt
-  have hstep : f (tags i) ≤ g (tags i) := hfg (tags i) htag
-  have hinc : 0 ≤ alpha (P.pts (i + 1)) - alpha (P.pts i) := by
-    exact partition_increment_nonneg_of_source_core P
-      ⟨hab, hAbove, hBelow, hmono⟩ hi_lt
-  exact mul_le_mul_of_nonneg_right hstep hinc
-
-theorem taggedCommonLimit_mono_core {a b : ℝ} {f g alpha : ℝ → ℝ} {Lf Lg : ℝ}
-    (hf : TaggedCommonLimit a b f alpha Lf)
-    (hg : TaggedCommonLimit a b g alpha Lg)
-    (hfg : ∀ x ∈ Icc a b, f x ≤ g x) :
-    Lf ≤ Lg := by
-  rcases hf with ⟨hsf, hlimf⟩
-  rcases hg with ⟨_hsg, hlimg⟩
-  rcases hsf with ⟨hab, hAbove, hBelow, hmono⟩
-  rw [le_iff_forall_pos_lt_add]
-  intro eps heps
-  have hhalf : 0 < eps / 2 := half_pos heps
-  rcases hlimf (eps / 2) hhalf with ⟨δf, hδf, Hf⟩
-  rcases hlimg (eps / 2) hhalf with ⟨δg, hδg, Hg⟩
-  rcases exists_partition_mesh_lt hab (lt_min hδf hδg) with ⟨P, hPmesh⟩
-  let tags := P.pts
-  have htags : tagsInPartition P tags := by
-    dsimp [tags]
-    exact leftTagsInPartition P
-  have hmeshf : P.mesh < δf := lt_of_lt_of_le hPmesh (min_le_left δf δg)
-  have hmeshg : P.mesh < δg := lt_of_lt_of_le hPmesh (min_le_right δf δg)
-  have hPf := Hf P tags htags hmeshf
-  have hPg := Hg P tags htags hmeshg
-  have hsum : taggedSum P tags f alpha ≤ taggedSum P tags g alpha :=
-    taggedSum_mono_core P tags ⟨hab, hAbove, hBelow, hmono⟩ htags hfg
-  have hf_bound : Lf < taggedSum P tags f alpha + eps / 2 := by
-    have hleft := (abs_lt.mp hPf).1
-    linarith
-  have hg_bound : taggedSum P tags g alpha < Lg + eps / 2 := by
-    have hright := (abs_lt.mp hPg).2
-    linarith
-  linarith
-
-lemma image_const_mul_subinterval_eq_smul_core {a b c : ℝ} (P : Partition a b)
-    (f : ℝ → ℝ) (i : ℕ) :
-    (fun x => c * f x) '' subinterval P i = c • (f '' subinterval P i) := by
-  ext y
-  constructor
-  · rintro ⟨x, hx, rfl⟩
-    exact ⟨f x, ⟨x, hx, rfl⟩, by simp [smul_eq_mul]⟩
-  · rintro ⟨z, ⟨x, hx, rfl⟩, rfl⟩
-    exact ⟨x, hx, by simp [smul_eq_mul]⟩
-
-lemma upperStep_const_mul_nonneg_core {a b c : ℝ} (P : Partition a b)
-    (f : ℝ → ℝ) (i : ℕ) (hc : 0 ≤ c) :
-    upperStep P (fun x => c * f x) i = c * upperStep P f i := by
-  unfold upperStep
-  rw [image_const_mul_subinterval_eq_smul_core]
-  simpa [smul_eq_mul] using Real.sSup_smul_of_nonneg hc (f '' subinterval P i)
-
-lemma lowerStep_const_mul_nonneg_core {a b c : ℝ} (P : Partition a b)
-    (f : ℝ → ℝ) (i : ℕ) (hc : 0 ≤ c) :
-    lowerStep P (fun x => c * f x) i = c * lowerStep P f i := by
-  unfold lowerStep
-  rw [image_const_mul_subinterval_eq_smul_core]
-  simpa [smul_eq_mul] using Real.sInf_smul_of_nonneg hc (f '' subinterval P i)
-
-lemma upperStep_const_mul_nonpos_core {a b c : ℝ} (P : Partition a b)
-    (f : ℝ → ℝ) (i : ℕ) (hc : c ≤ 0) :
-    upperStep P (fun x => c * f x) i = c * lowerStep P f i := by
-  unfold upperStep lowerStep
-  rw [image_const_mul_subinterval_eq_smul_core]
-  simpa [smul_eq_mul] using Real.sSup_smul_of_nonpos hc (f '' subinterval P i)
-
-lemma lowerStep_const_mul_nonpos_core {a b c : ℝ} (P : Partition a b)
-    (f : ℝ → ℝ) (i : ℕ) (hc : c ≤ 0) :
-    lowerStep P (fun x => c * f x) i = c * upperStep P f i := by
-  unfold lowerStep upperStep
-  rw [image_const_mul_subinterval_eq_smul_core]
-  simpa [smul_eq_mul] using Real.sInf_smul_of_nonpos hc (f '' subinterval P i)
-
-lemma image_const_mul_Icc_eq_smul_core {a b c : ℝ} (f : ℝ → ℝ) :
-    (fun x => c * f x) '' Icc a b = c • (f '' Icc a b) := by
-  ext y
-  constructor
-  · rintro ⟨x, hx, rfl⟩
-    exact ⟨f x, ⟨x, hx, rfl⟩, by simp [smul_eq_mul]⟩
-  · rintro ⟨z, ⟨x, hx, rfl⟩, rfl⟩
-    exact ⟨x, hx, by simp [smul_eq_mul]⟩
-
-theorem sourceHypotheses_const_mul_core {a b c : ℝ} {f alpha : ℝ → ℝ}
-    (h : SourceHypotheses a b f alpha) :
-    SourceHypotheses a b (fun x => c * f x) alpha := by
-  rcases h with ⟨hab, hAbove, hBelow, hmono⟩
-  refine ⟨hab, ?_, ?_, hmono⟩
-  · by_cases hc : 0 ≤ c
-    · rw [image_const_mul_Icc_eq_smul_core]
-      exact hAbove.smul_of_nonneg hc
-    · have hc' : c ≤ 0 := le_of_not_ge hc
-      rw [image_const_mul_Icc_eq_smul_core]
-      exact BddBelow.smul_of_nonpos hc' hBelow
-  · by_cases hc : 0 ≤ c
-    · rw [image_const_mul_Icc_eq_smul_core]
-      exact hBelow.smul_of_nonneg hc
-    · have hc' : c ≤ 0 := le_of_not_ge hc
-      rw [image_const_mul_Icc_eq_smul_core]
-      exact BddAbove.smul_of_nonpos hc' hAbove
-
-theorem taggedSum_const_mul_core {a b c : ℝ} (P : Partition a b) (tags : ℕ → ℝ)
-    (f alpha : ℝ → ℝ) :
-    taggedSum P tags (fun x => c * f x) alpha = c * taggedSum P tags f alpha := by
-  unfold taggedSum
-  rw [Finset.mul_sum]
-  refine Finset.sum_congr rfl ?_
-  intro i _hi
-  ring
-
-theorem taggedCommonLimit_const_mul_core {a b c : ℝ} {f alpha : ℝ → ℝ}
-    {L : ℝ}
-    (h : TaggedCommonLimit a b f alpha L) :
-    TaggedCommonLimit a b (fun x => c * f x) alpha (c * L) := by
-  rcases h with ⟨hs, hlim⟩
-  refine ⟨sourceHypotheses_const_mul_core hs, ?_⟩
-  intro eps heps
-  let C : ℝ := |c| + 1
-  have hCpos : 0 < C := by
-    dsimp [C]
-    linarith [abs_nonneg c]
-  have hscale : 0 < eps / C := div_pos heps hCpos
-  rcases hlim (eps / C) hscale with ⟨δ, hδ, H⟩
-  refine ⟨δ, hδ, ?_⟩
-  intro P tags htags hmesh
-  have hP := H P tags htags hmesh
-  have hEq :
-      taggedSum P tags (fun x => c * f x) alpha - c * L =
-        c * (taggedSum P tags f alpha - L) := by
-    rw [taggedSum_const_mul_core]
-    ring
-  rw [hEq, abs_mul]
-  have hmul₁ : |c| * |taggedSum P tags f alpha - L| ≤
-      |c| * (eps / C) :=
-    mul_le_mul_of_nonneg_left (le_of_lt hP) (abs_nonneg c)
-  have hmul₂ : |c| * (eps / C) < C * (eps / C) := by
-    dsimp [C]
-    exact mul_lt_mul_of_pos_right (lt_add_one |c|) hscale
-  have hCmul : C * (eps / C) = eps := by
-    field_simp [ne_of_gt hCpos]
-  exact lt_of_le_of_lt hmul₁ (by simpa [hCmul] using hmul₂)
-
-theorem upperSum_const_mul_nonneg_core {a b c : ℝ} (P : Partition a b)
-    (f alpha : ℝ → ℝ) (hc : 0 ≤ c) :
-    upperSum P (fun x => c * f x) alpha = c * upperSum P f alpha := by
-  unfold upperSum
-  rw [Finset.mul_sum]
-  refine Finset.sum_congr rfl ?_
-  intro i _hi
-  rw [upperStep_const_mul_nonneg_core P f i hc]
-  ring
-
-theorem lowerSum_const_mul_nonneg_core {a b c : ℝ} (P : Partition a b)
-    (f alpha : ℝ → ℝ) (hc : 0 ≤ c) :
-    lowerSum P (fun x => c * f x) alpha = c * lowerSum P f alpha := by
-  unfold lowerSum
-  rw [Finset.mul_sum]
-  refine Finset.sum_congr rfl ?_
-  intro i _hi
-  rw [lowerStep_const_mul_nonneg_core P f i hc]
-  ring
-
-theorem upperSum_const_mul_nonpos_core {a b c : ℝ} (P : Partition a b)
-    (f alpha : ℝ → ℝ) (hc : c ≤ 0) :
-    upperSum P (fun x => c * f x) alpha = c * lowerSum P f alpha := by
-  unfold upperSum lowerSum
-  rw [Finset.mul_sum]
-  refine Finset.sum_congr rfl ?_
-  intro i _hi
-  rw [upperStep_const_mul_nonpos_core P f i hc]
-  ring
-
-theorem lowerSum_const_mul_nonpos_core {a b c : ℝ} (P : Partition a b)
-    (f alpha : ℝ → ℝ) (hc : c ≤ 0) :
-    lowerSum P (fun x => c * f x) alpha = c * upperSum P f alpha := by
-  unfold lowerSum upperSum
-  rw [Finset.mul_sum]
-  refine Finset.sum_congr rfl ?_
-  intro i _hi
-  rw [lowerStep_const_mul_nonpos_core P f i hc]
-  ring
-
 lemma abs_const_mul_error_lt_core {c old L eps : ℝ}
     (heps : 0 < eps) (hold : |old - L| < eps / (|c| + 1)) :
     |c * (old - L)| < eps := by
@@ -932,6 +773,88 @@ lemma abs_const_mul_error_lt_core {c old L eps : ℝ}
   have hCmul : C * (eps / C) = eps := by
     field_simp [ne_of_gt hCpos]
   exact lt_of_le_of_lt hmul₁ (by simpa [hCmul] using hmul₂)
+
+lemma image_const_mul_subinterval_eq_smul_core {a b c : ℝ} (P : Partition a b)
+    (f : ℝ → ℝ) (i : Fin P.n) :
+    (fun x => c * f x) '' Partition.subinterval P i = c • (f '' Partition.subinterval P i) := by
+  ext y
+  constructor
+  · rintro ⟨x, hx, rfl⟩
+    exact ⟨f x, ⟨x, hx, rfl⟩, by simp [smul_eq_mul]⟩
+  · rintro ⟨z, ⟨x, hx, rfl⟩, rfl⟩
+    exact ⟨x, hx, by simp [smul_eq_mul]⟩
+
+lemma upperStep_const_mul_nonneg_core {a b c : ℝ} (P : Partition a b)
+    (f : ℝ → ℝ) (i : Fin P.n) (hc : 0 ≤ c) :
+    upperStep P (fun x => c * f x) i = c * upperStep P f i := by
+  unfold upperStep
+  rw [image_const_mul_subinterval_eq_smul_core]
+  -- `Real.sSup_smul_of_nonneg` proves sup(c • S) = c • sup(S) when c ≥ 0
+  simpa [smul_eq_mul] using Real.sSup_smul_of_nonneg hc (f '' Partition.subinterval P i)
+
+theorem upperSum_const_mul_nonneg_core {a b c : ℝ} (P : Partition a b)
+    (f alpha : ℝ → ℝ) (hc : 0 ≤ c) :
+    upperSum P (fun x => c * f x) alpha = c * upperSum P f alpha := by
+  unfold upperSum
+  rw [Finset.mul_sum]
+  refine Finset.sum_congr rfl ?_
+  intro i _hi
+  rw [upperStep_const_mul_nonneg_core P f i hc]
+  ring
+
+lemma lowerStep_const_mul_nonneg_core {a b c : ℝ} (P : Partition a b)
+    (f : ℝ → ℝ) (i : Fin P.n) (hc : 0 ≤ c) :
+    lowerStep P (fun x => c * f x) i = c * lowerStep P f i := by
+  unfold lowerStep
+  rw [image_const_mul_subinterval_eq_smul_core]
+  -- `Real.sInf_smul_of_nonneg` proves inf(c • S) = c • inf(S) when c ≥ 0
+  simpa [smul_eq_mul] using Real.sInf_smul_of_nonneg hc (f '' Partition.subinterval P i)
+
+theorem lowerSum_const_mul_nonneg_core {a b c : ℝ} (P : Partition a b)
+    (f alpha : ℝ → ℝ) (hc : 0 ≤ c) :
+    lowerSum P (fun x => c * f x) alpha = c * lowerSum P f alpha := by
+  unfold lowerSum
+  rw [Finset.mul_sum]
+  refine Finset.sum_congr rfl ?_
+  intro i _hi
+  rw [lowerStep_const_mul_nonneg_core P f i hc]
+  ring
+
+lemma upperStep_const_mul_nonpos_core {a b c : ℝ} (P : Partition a b)
+    (f : ℝ → ℝ) (i : Fin P.n) (hc : c ≤ 0) :
+    upperStep P (fun x => c * f x) i = c * lowerStep P f i := by
+  unfold upperStep lowerStep
+  rw [image_const_mul_subinterval_eq_smul_core]
+  -- `Real.sSup_smul_of_nonpos` proves sup(c • S) = c • inf(S) when c ≤ 0
+  simpa [smul_eq_mul] using Real.sSup_smul_of_nonpos hc (f '' Partition.subinterval P i)
+
+theorem upperSum_const_mul_nonpos_core {a b c : ℝ} (P : Partition a b)
+    (f alpha : ℝ → ℝ) (hc : c ≤ 0) :
+    upperSum P (fun x => c * f x) alpha = c * lowerSum P f alpha := by
+  unfold upperSum lowerSum
+  rw [Finset.mul_sum]
+  refine Finset.sum_congr rfl ?_
+  intro i _hi
+  rw [upperStep_const_mul_nonpos_core P f i hc]
+  ring
+
+lemma lowerStep_const_mul_nonpos_core {a b c : ℝ} (P : Partition a b)
+    (f : ℝ → ℝ) (i : Fin P.n) (hc : c ≤ 0) :
+    lowerStep P (fun x => c * f x) i = c * upperStep P f i := by
+  unfold lowerStep upperStep
+  rw [image_const_mul_subinterval_eq_smul_core]
+  -- `Real.sInf_smul_of_nonpos` proves inf(c • S) = c • sup(S) when c ≤ 0
+  simpa [smul_eq_mul] using Real.sInf_smul_of_nonpos hc (f '' Partition.subinterval P i)
+
+theorem lowerSum_const_mul_nonpos_core {a b c : ℝ} (P : Partition a b)
+    (f alpha : ℝ → ℝ) (hc : c ≤ 0) :
+    lowerSum P (fun x => c * f x) alpha = c * upperSum P f alpha := by
+  unfold lowerSum upperSum
+  rw [Finset.mul_sum]
+  refine Finset.sum_congr rfl ?_
+  intro i _hi
+  rw [lowerStep_const_mul_nonpos_core P f i hc]
+  ring
 
 theorem upperLowerCommonLimit_const_mul_core {a b c : ℝ} {f alpha : ℝ → ℝ}
     {L : ℝ}
@@ -982,6 +905,170 @@ theorem upperLowerCommonLimit_const_mul_core {a b c : ℝ} {f alpha : ℝ → �
       rw [hEq]
       exact abs_const_mul_error_lt_core heps (by simpa [C] using hP.1)
 
+theorem taggedSum_const_mul_core {a b c : ℝ} (P : Partition a b) (tags : Fin P.n → ℝ)
+    (f alpha : ℝ → ℝ) :
+    taggedSum P tags (fun x => c * f x) alpha = c * taggedSum P tags f alpha := by
+  unfold taggedSum
+  rw [Finset.mul_sum]
+  refine Finset.sum_congr rfl ?_
+  intro i _hi
+  ring
+
+theorem taggedCommonLimit_const_mul_core {a b c : ℝ} {f alpha : ℝ → ℝ}
+    {L : ℝ}
+    (h : TaggedCommonLimit a b f alpha L) :
+    TaggedCommonLimit a b (fun x => c * f x) alpha (c * L) := by
+  rcases h with ⟨hs, hlim⟩
+  refine ⟨sourceHypotheses_const_mul_core hs, ?_⟩
+  intro eps heps
+  let C : ℝ := |c| + 1
+  have hCpos : 0 < C := by
+    dsimp [C]
+    linarith [abs_nonneg c]
+  have hscale : 0 < eps / C := div_pos heps hCpos
+  rcases hlim (eps / C) hscale with ⟨δ, hδ, H⟩
+  refine ⟨δ, hδ, ?_⟩
+  intro P tags htags hmesh
+  have hP := H P tags htags hmesh
+  have hEq :
+      taggedSum P tags (fun x => c * f x) alpha - c * L =
+        c * (taggedSum P tags f alpha - L) := by
+    rw [taggedSum_const_mul_core]
+    ring
+  rw [hEq, abs_mul]
+  have hmul₁ : |c| * |taggedSum P tags f alpha - L| ≤
+      |c| * (eps / C) :=
+    mul_le_mul_of_nonneg_left (le_of_lt hP) (abs_nonneg c)
+  have hmul₂ : |c| * (eps / C) < C * (eps / C) := by
+    dsimp [C]
+    exact mul_lt_mul_of_pos_right (lt_add_one |c|) hscale
+  have hCmul : C * (eps / C) = eps := by
+    field_simp [ne_of_gt hCpos]
+  exact lt_of_le_of_lt hmul₁ (by simpa [hCmul] using hmul₂)
+
+lemma tag_mem_Icc_of_tagsInPartition_core {a b : ℝ} (P : Partition a b)
+    {tags : Fin P.n → ℝ} (htags : tagsInPartition P tags)
+    (i : Fin P.n) :
+    tags i ∈ Set.Icc a b :=
+  -- `htags i` proves the tag is in the subinterval.
+  -- `subinterval_subset_Icc_core` applies the subset property.
+  subinterval_subset_Icc_core P (htags i)
+
+theorem taggedSum_mono_core {a b : ℝ} (P : Partition a b) (tags : Fin P.n → ℝ)
+    {f g alpha : ℝ → ℝ}
+    (hs : SourceHypotheses a b f alpha)
+    (htags : tagsInPartition P tags)
+    (hfg : ∀ x ∈ Set.Icc a b, f x ≤ g x) :
+    taggedSum P tags f alpha ≤ taggedSum P tags g alpha := by
+  unfold taggedSum
+  refine Finset.sum_le_sum ?_
+  intro i _hi
+
+  -- 1. Prove the tag is inside [a, b]
+  have htag : tags i ∈ Set.Icc a b := tag_mem_Icc_of_tagsInPartition_core P htags i
+
+  -- 2. Evaluate the function inequality at the tag
+  have hstep : f (tags i) ≤ g (tags i) := hfg (tags i) htag
+
+  -- 3. The increment is non-negative (pass `hs` directly!)
+  have hinc : 0 ≤ alpha (P.pts i.succ) - alpha (P.pts i.castSucc) :=
+    partition_increment_nonneg_of_source_core P hs
+
+  -- 4. Multiply the step inequality by the non-negative increment
+  exact mul_le_mul_of_nonneg_right hstep hinc
+
+theorem taggedCommonLimit_mono_core {a b : ℝ} {f g alpha : ℝ → ℝ} {Lf Lg : ℝ}
+    (hf : TaggedCommonLimit a b f alpha Lf)
+    (hg : TaggedCommonLimit a b g alpha Lg)
+    (hfg : ∀ x ∈ Set.Icc a b, f x ≤ g x) :
+    Lf ≤ Lg := by
+  rcases hf with ⟨hsf, hlimf⟩
+  rcases hg with ⟨_hsg, hlimg⟩
+
+  -- Create a copy of `hsf` so we can extract `hab` without destroying `hsf`
+  have hsf_copy := hsf
+  rcases hsf_copy with ⟨hab, _hAbove, _hBelow, _hmono⟩
+
+  rw [le_iff_forall_pos_lt_add]
+  intro eps heps
+  have hhalf : 0 < eps / 2 := half_pos heps
+  rcases hlimf (eps / 2) hhalf with ⟨δf, hδf, Hf⟩
+  rcases hlimg (eps / 2) hhalf with ⟨δg, hδg, Hg⟩
+  rcases exists_partition_mesh_lt hab (lt_min hδf hδg) with ⟨P, hPmesh⟩
+
+  -- FIX: Define `tags` to exactly match `Fin P.n → ℝ` using left endpoints
+  let tags : Fin P.n → ℝ := fun i => P.pts i.castSucc
+
+  -- We already proved this earlier!
+  have htags : tagsInPartition P tags := leftTagsInPartition P
+
+  have hmeshf : P.mesh < δf := lt_of_lt_of_le hPmesh (min_le_left δf δg)
+  have hmeshg : P.mesh < δg := lt_of_lt_of_le hPmesh (min_le_right δf δg)
+  have hPf := Hf P tags htags hmeshf
+  have hPg := Hg P tags htags hmeshg
+
+  -- Pass `hsf` cleanly without rebuilding it!
+  have hsum : taggedSum P tags f alpha ≤ taggedSum P tags g alpha :=
+    taggedSum_mono_core P tags hsf htags hfg
+
+  have hf_bound : Lf < taggedSum P tags f alpha + eps / 2 := by
+    have hleft := (abs_lt.mp hPf).1
+    linarith
+  have hg_bound : taggedSum P tags g alpha < Lg + eps / 2 := by
+    have hright := (abs_lt.mp hPg).2
+    linarith
+  linarith
+
+theorem taggedSum_between_lower_upper_core {a b : ℝ} {f alpha : ℝ → ℝ}
+    (hs : SourceHypotheses a b f alpha)
+    (P : Partition a b) (tags : Fin P.n → ℝ)
+    (htags : tagsInPartition P tags) :
+    lowerSum P f alpha ≤ taggedSum P tags f alpha ∧
+      taggedSum P tags f alpha ≤ upperSum P f alpha := by
+  rcases hs with ⟨hab, hAbove, hBelow, hmono⟩
+  constructor
+  · unfold lowerSum taggedSum
+    refine Finset.sum_le_sum ?_
+    intro i _hi
+    have hcellBelow : BddBelow (f '' Partition.subinterval P i) :=
+      BddBelow.mono (Set.image_mono (subinterval_subset_Icc_core P)) hBelow
+    have hlow_le_tag : lowerStep P f i ≤ f (tags i) := by
+      unfold lowerStep
+      exact csInf_le hcellBelow ⟨tags i, htags i, rfl⟩
+    have hinc_nonneg :
+        0 ≤ alpha (P.pts i.succ) - alpha (P.pts i.castSucc) :=
+      partition_increment_nonneg_of_source_core P
+        ⟨hab, hAbove, hBelow, hmono⟩
+    exact mul_le_mul_of_nonneg_right hlow_le_tag hinc_nonneg
+  · unfold taggedSum upperSum
+    refine Finset.sum_le_sum ?_
+    intro i _hi
+    have hcellAbove : BddAbove (f '' Partition.subinterval P i) :=
+      BddAbove.mono (Set.image_mono (subinterval_subset_Icc_core P)) hAbove
+    have htag_le_up : f (tags i) ≤ upperStep P f i := by
+      unfold upperStep
+      exact le_csSup hcellAbove ⟨tags i, htags i, rfl⟩
+    have hinc_nonneg :
+        0 ≤ alpha (P.pts i.succ) - alpha (P.pts i.castSucc) :=
+      partition_increment_nonneg_of_source_core P
+        ⟨hab, hAbove, hBelow, hmono⟩
+    exact mul_le_mul_of_nonneg_right htag_le_up hinc_nonneg
+
+theorem taggedBridgeObligation {a b : ℝ} {f alpha : ℝ → ℝ} {L : ℝ}
+    (hUL : UpperLowerCommonLimit a b f alpha L) :
+    TaggedCommonLimit a b f alpha L := by
+  rcases hUL with ⟨hs, hlim⟩
+  refine ⟨hs, ?_⟩
+  intro eps heps
+  rcases hlim eps heps with ⟨delta, hdelta, Hdelta⟩
+  refine ⟨delta, hdelta, ?_⟩
+  intro P tags htags hmesh
+  have hP := Hdelta P hmesh
+  have hbetween := taggedSum_between_lower_upper_core hs P tags htags
+  have hlower_abs := abs_lt.mp hP.2
+  have hupper_abs := abs_lt.mp hP.1
+  exact abs_lt.mpr ⟨by linarith, by linarith⟩
+
 end DarbouxRS
 
 theorem taggedCommonLimit_of_upperLowerCommonLimit {f alpha : ℝ → ℝ} {a b L : ℝ}
@@ -999,30 +1086,6 @@ theorem rsIntegral_source_and_tagged_spec {f alpha : ℝ → ℝ} {a b : ℝ}
     rsUpperLowerCommonLimit a b f alpha (rsIntegral f alpha a b h) ∧
       rsTaggedCommonLimit a b f alpha (rsIntegral f alpha a b h) :=
   ⟨rsIntegral_source_spec h, rsIntegral_spec h⟩
-
-noncomputable def rsIntegralWitness_integrator_add {f α₁ α₂ : ℝ → ℝ} {a b : ℝ}
-    (h₁ : RSIntegrable f α₁ a b)
-    (h₂ : RSIntegrable f α₂ a b) :
-    RSIntegralWitness f (fun x => α₁ x + α₂ x) a b where
-  value := rsIntegral f α₁ a b h₁ + rsIntegral f α₂ a b h₂
-  source_limit :=
-    DarbouxRS.upperLowerCommonLimit_integrator_add
-      (rsIntegral_source_spec h₁) (rsIntegral_source_spec h₂)
-
-noncomputable def rsIntegrable_integrator_add {f α₁ α₂ : ℝ → ℝ} {a b : ℝ}
-    (h₁ : RSIntegrable f α₁ a b)
-    (h₂ : RSIntegrable f α₂ a b) :
-    RSIntegrable f (fun x => α₁ x + α₂ x) a b :=
-  (rsIntegralWitness_integrator_add h₁ h₂).toRSIntegrable
-
-theorem rsIntegral_integrator_add {f α₁ α₂ : ℝ → ℝ} {a b : ℝ}
-    (h₁ : RSIntegrable f α₁ a b)
-    (h₂ : RSIntegrable f α₂ a b) :
-    rsIntegral f (fun x => α₁ x + α₂ x) a b (rsIntegrable_integrator_add h₁ h₂) =
-      rsIntegral f α₁ a b h₁ + rsIntegral f α₂ a b h₂ := by
-  exact DarbouxRS.taggedCommonLimit_unique
-    (rsIntegral_spec (rsIntegrable_integrator_add h₁ h₂))
-    (DarbouxRS.taggedCommonLimit_integrator_add (rsIntegral_spec h₁) (rsIntegral_spec h₂))
 
 noncomputable def rsIntegralWitness_integrand_add {f g alpha : ℝ → ℝ} {a b : ℝ}
     (hf : RSIntegrable f alpha a b)
@@ -1078,8 +1141,26 @@ theorem rsIntegral_integrand_mono {f g alpha : ℝ → ℝ} {a b : ℝ}
     rsIntegral f alpha a b hf ≤ rsIntegral g alpha a b hg :=
   DarbouxRS.taggedCommonLimit_mono_core (rsIntegral_spec hf) (rsIntegral_spec hg) hfg
 
-def rsIntegrableFamily (alpha : ℝ → ℝ) (a b : ℝ) : Set (ℝ → ℝ) :=
-  {f | DarbouxRS.RSIntegrableOnInterval f alpha a b}
+noncomputable def rsIntegralWitness_integrator_add {f α₁ α₂ : ℝ → ℝ} {a b : ℝ}
+    (h₁ : RSIntegrable f α₁ a b)
+    (h₂ : RSIntegrable f α₂ a b) :
+    RSIntegralWitness f (fun x => α₁ x + α₂ x) a b where
+  value := rsIntegral f α₁ a b h₁ + rsIntegral f α₂ a b h₂
+  source_limit :=
+    DarbouxRS.upperLowerCommonLimit_integrator_add
+      (rsIntegral_source_spec h₁) (rsIntegral_source_spec h₂)
 
-def def_1_2 (f alpha : ℝ → ℝ) (a b : ℝ) : Prop :=
-  DarbouxRS.RSIntegrableOnInterval f alpha a b
+noncomputable def rsIntegrable_integrator_add {f α₁ α₂ : ℝ → ℝ} {a b : ℝ}
+    (h₁ : RSIntegrable f α₁ a b)
+    (h₂ : RSIntegrable f α₂ a b) :
+    RSIntegrable f (fun x => α₁ x + α₂ x) a b :=
+  (rsIntegralWitness_integrator_add h₁ h₂).toRSIntegrable
+
+theorem rsIntegral_integrator_add {f α₁ α₂ : ℝ → ℝ} {a b : ℝ}
+    (h₁ : RSIntegrable f α₁ a b)
+    (h₂ : RSIntegrable f α₂ a b) :
+    rsIntegral f (fun x => α₁ x + α₂ x) a b (rsIntegrable_integrator_add h₁ h₂) =
+      rsIntegral f α₁ a b h₁ + rsIntegral f α₂ a b h₂ := by
+  exact DarbouxRS.taggedCommonLimit_unique
+    (rsIntegral_spec (rsIntegrable_integrator_add h₁ h₂))
+    (DarbouxRS.taggedCommonLimit_integrator_add (rsIntegral_spec h₁) (rsIntegral_spec h₂))
