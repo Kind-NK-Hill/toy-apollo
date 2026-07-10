@@ -106,7 +106,8 @@ theorem ex122_normalized_nonneg {n : ℕ} (x : Fin n → ℝ)
 theorem ex122_normalized_mem_simplex {n : ℕ} (x : Fin (n + 1) → ℝ)
     (hx : ∀ i, 0 ≤ x i) (hV : 0 < ex122GammaTotal x) :
     ex122NormalizedVector x ∈ ex122DirichletSimplex n := by
-  simpa [ex122DirichletSimplex, ex122GammaTotal, ex122NormalizedVector] using
+  simpa [ex122DirichletSimplex, ex122GammaTotal, ex122NormalizedVector,
+    DirichletFullSimplex, gammaVectorTotal, sourceNormalizedVector] using
     sourceNormalizedVector_mem_fullSimplex x hx hV
 
 theorem measurable_ex122GammaTotal {n : ℕ} :
@@ -141,7 +142,7 @@ theorem ex122GammaScaleLaw_eq_withDensity_gammaPDFReal (α β : ℝ) :
 theorem ex122GammaScaleLaw_isProbability {α β : ℝ}
     (hα : 0 < α) (hβ : 0 < β) :
     IsProbabilityMeasure (ex122GammaScaleLaw α β) := by
-  simpa [ex122GammaScaleLaw] using gammaScaleLaw_isProbability hα hβ
+  simpa [ex122GammaScaleLaw, gammaScaleLaw] using gammaScaleLaw_isProbability hα hβ
 
 instance ex122GammaScaleLaw_noAtoms (α β : ℝ) :
     NoAtoms (ex122GammaScaleLaw α β) := by
@@ -156,7 +157,7 @@ instance ex122GammaScaleLaw_sigmaFinite (α β : ℝ) :
 theorem ex122GammaScaleLaw_positive_ae {α β : ℝ}
     (hα : 0 < α) (hβ : 0 < β) :
     ∀ᵐ x ∂ex122GammaScaleLaw α β, 0 < x := by
-  simpa [ex122GammaScaleLaw] using gammaScaleLaw_positive_ae hα hβ
+  simpa [ex122GammaScaleLaw, gammaScaleLaw] using gammaScaleLaw_positive_ae hα hβ
 
 /-- Product law of the independent Gamma variables before normalization. -/
 def ex122GammaProductLaw {n : ℕ} (α : Fin n → ℝ) (β : ℝ) :
@@ -166,17 +167,20 @@ def ex122GammaProductLaw {n : ℕ} (α : Fin n → ℝ) (β : ℝ) :
 theorem ex122GammaProductLaw_isProbability {n : ℕ} (α : Fin n → ℝ) {β : ℝ}
     (hα : ∀ i, 0 < α i) (hβ : 0 < β) :
     IsProbabilityMeasure (ex122GammaProductLaw α β) := by
-  simpa [ex122GammaProductLaw] using gammaProductLaw_isProbability α hα hβ
+  simpa [ex122GammaProductLaw, ex122GammaScaleLaw, gammaProductLaw, gammaScaleLaw] using
+    gammaProductLaw_isProbability α hα hβ
 
 theorem ex122GammaProductLaw_coordinates_positive_ae {n : ℕ}
     (α : Fin n → ℝ) {β : ℝ} (hα : ∀ i, 0 < α i) (hβ : 0 < β) :
     ∀ᵐ x ∂ex122GammaProductLaw α β, ∀ i, 0 < x i := by
-  simpa [ex122GammaProductLaw] using gammaProductLaw_coordinates_positive_ae α hα hβ
+  simpa [ex122GammaProductLaw, ex122GammaScaleLaw, gammaProductLaw, gammaScaleLaw] using
+    gammaProductLaw_coordinates_positive_ae α hα hβ
 
 theorem ex122GammaProductLaw_total_positive_ae {n : ℕ}
     (α : Fin (n + 1) → ℝ) {β : ℝ} (hα : ∀ i, 0 < α i) (hβ : 0 < β) :
     ∀ᵐ x ∂ex122GammaProductLaw α β, 0 < ex122GammaTotal x := by
-  simpa [ex122GammaProductLaw, ex122GammaTotal] using
+  simpa [ex122GammaProductLaw, ex122GammaScaleLaw, ex122GammaTotal,
+    gammaProductLaw, gammaScaleLaw, gammaVectorTotal] using
     gammaProductLaw_total_positive_ae (n := n + 1) (Nat.succ_pos n) α hα hβ
 
 /-- The Dirichlet law is the pushforward of the independent Gamma product law
@@ -190,25 +194,22 @@ theorem ex122DirichletLaw_isProbability {n : ℕ}
     (α : Fin (n + 1) → ℝ) {β : ℝ}
     (hα : ∀ i, 0 < α i) (hβ : 0 < β) :
     IsProbabilityMeasure (ex122DirichletLaw α β) := by
-  simpa [ex122DirichletLaw] using DirichletLaw_isProbability α hα hβ
+  change IsProbabilityMeasure (DirichletLaw α β)
+  exact DirichletLaw_isProbability α hα hβ
 
 theorem ex122DirichletLaw_supported_on_simplex {n : ℕ}
     (α : Fin (n + 1) → ℝ) {β : ℝ}
     (hα : ∀ i, 0 < α i) (hβ : 0 < β) :
     ∀ᵐ y ∂ex122DirichletLaw α β, y ∈ ex122DirichletSimplex n := by
-  simpa [ex122DirichletLaw, ex122DirichletSimplex, ex122NormalizedVector,
-    ex122GammaProductLaw, ex122GammaScaleLaw, DirichletLaw, DirichletFullSimplex,
-    sourceNormalizedVector, gammaVectorTotal, gammaProductLaw, gammaScaleLaw] using
-    DirichletLaw_supported_on_simplex (n := n + 1) (Nat.succ_pos n) α hα hβ
+  change ∀ᵐ y ∂DirichletLaw α β, y ∈ DirichletFullSimplex (n + 1)
+  exact DirichletLaw_supported_on_simplex (n := n + 1) (Nat.succ_pos n) α hα hβ
 
 theorem ex122DirichletLaw_simplex_probability_one {n : ℕ}
     (α : Fin (n + 1) → ℝ) {β : ℝ}
     (hα : ∀ i, 0 < α i) (hβ : 0 < β) :
     ex122DirichletLaw α β (ex122DirichletSimplex n) = 1 := by
-  simpa [ex122DirichletLaw, ex122DirichletSimplex, ex122NormalizedVector,
-    ex122GammaProductLaw, ex122GammaScaleLaw, DirichletLaw, DirichletFullSimplex,
-    sourceNormalizedVector, gammaVectorTotal, gammaProductLaw, gammaScaleLaw] using
-    DirichletLaw_simplex_probability_one (n := n + 1) (Nat.succ_pos n) α hα hβ
+  change DirichletLaw α β (DirichletFullSimplex (n + 1)) = 1
+  exact DirichletLaw_simplex_probability_one (n := n + 1) (Nat.succ_pos n) α hα hβ
 
 /-- A random vector whose coordinates have the source Gamma laws and are
 independent has joint law equal to the Gamma product law. -/
@@ -220,7 +221,7 @@ theorem ex122_independent_gamma_joint_hasLaw
     (hXlaw : ∀ i, HasLaw (X i) (ex122GammaScaleLaw (α i) β) P)
     (hIndep : ProbabilityTheory.iIndepFun X P) :
     HasLaw (fun ω i => X i ω) (ex122GammaProductLaw α β) P := by
-  simpa [ex122GammaScaleLaw, ex122GammaProductLaw] using
+  simpa [ex122GammaScaleLaw, ex122GammaProductLaw, gammaScaleLaw, gammaProductLaw] using
     independent_gamma_joint_hasLaw P α β X hXlaw hIndep
 
 theorem ex122_normalization_map_hasLaw_dirichlet
@@ -229,8 +230,11 @@ theorem ex122_normalization_map_hasLaw_dirichlet
       (fun x : Fin (n + 1) → ℝ => ex122NormalizedVector x)
       (ex122DirichletLaw α β)
       (ex122GammaProductLaw α β) := by
-  simpa [ex122NormalizedVector, ex122DirichletLaw, ex122GammaProductLaw] using
-    normalization_map_hasLaw_dirichlet α β
+  change HasLaw
+    (fun x : Fin (n + 1) → ℝ => sourceNormalizedVector x)
+    (DirichletLaw α β)
+    (gammaProductLaw α β)
+  exact normalization_map_hasLaw_dirichlet α β
 
 /-- Source probability spine: independent Gamma variables normalized by their
 sum have the Dirichlet law defined as the normalization pushforward. -/
@@ -245,8 +249,11 @@ theorem ex122_independent_gamma_normalized_hasLaw_dirichlet
       (fun ω => ex122NormalizedVector (fun i => X i ω))
       (ex122DirichletLaw α β)
       P := by
-  simpa [ex122GammaScaleLaw, ex122NormalizedVector, ex122DirichletLaw] using
-    independent_gamma_normalized_hasLaw_dirichlet P α β X hXlaw hIndep
+  change HasLaw
+    (fun ω => sourceNormalizedVector (fun i => X i ω))
+    (DirichletLaw α β)
+    P
+  exact independent_gamma_normalized_hasLaw_dirichlet P α β X hXlaw hIndep
 
 theorem ex122_independent_gamma_normalized_simplex_ae
     {n : ℕ} {Ω : Type*} [MeasurableSpace Ω]

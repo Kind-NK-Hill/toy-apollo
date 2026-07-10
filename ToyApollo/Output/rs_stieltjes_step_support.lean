@@ -403,20 +403,17 @@ theorem rsIntegral_floor_square_0_10 :
   let h12 : RSIntegrable f (fun x => α1 x + α2 x) 0 10 :=
     rsIntegrable_integrator_add h1 h2
   have hv12 : rsIntegral f (fun x => α1 x + α2 x) 0 10 h12 = 5 := by
-    dsimp [h12]
     rw [rsIntegral_integrator_add h1 h2, hv1', hv2']
     norm_num
   let h123 : RSIntegrable f (fun x => (α1 x + α2 x) + α3 x) 0 10 :=
     rsIntegrable_integrator_add h12 h3
   have hv123 : rsIntegral f (fun x => (α1 x + α2 x) + α3 x) 0 10 h123 = 14 := by
-    dsimp [h123]
     rw [rsIntegral_integrator_add h12 h3, hv12, hv3']
     norm_num
   let h1234 : RSIntegrable f (fun x => ((α1 x + α2 x) + α3 x) + α4 x) 0 10 :=
     rsIntegrable_integrator_add h123 h4
   have hv1234 :
       rsIntegral f (fun x => ((α1 x + α2 x) + α3 x) + α4 x) 0 10 h1234 = 30 := by
-    dsimp [h1234]
     rw [rsIntegral_integrator_add h123 h4, hv123, hv4']
     norm_num
   let h12345 :
@@ -425,7 +422,6 @@ theorem rsIntegral_floor_square_0_10 :
   have hv12345 :
       rsIntegral f (fun x => (((α1 x + α2 x) + α3 x) + α4 x) + α5 x)
           0 10 h12345 = 55 := by
-    dsimp [h12345]
     rw [rsIntegral_integrator_add h1234 h5, hv1234, hv5']
     norm_num
   let h123456 :
@@ -435,7 +431,6 @@ theorem rsIntegral_floor_square_0_10 :
   have hv123456 :
       rsIntegral f (fun x => ((((α1 x + α2 x) + α3 x) + α4 x) + α5 x) + α6 x)
           0 10 h123456 = 91 := by
-    dsimp [h123456]
     rw [rsIntegral_integrator_add h12345 h6, hv12345, hv6']
     norm_num
   let h1234567 :
@@ -447,7 +442,6 @@ theorem rsIntegral_floor_square_0_10 :
       rsIntegral f
           (fun x => (((((α1 x + α2 x) + α3 x) + α4 x) + α5 x) + α6 x) + α7 x)
           0 10 h1234567 = 140 := by
-    dsimp [h1234567]
     rw [rsIntegral_integrator_add h123456 h7, hv123456, hv7']
     norm_num
   let h12345678 :
@@ -461,7 +455,6 @@ theorem rsIntegral_floor_square_0_10 :
           (fun x => ((((((α1 x + α2 x) + α3 x) + α4 x) + α5 x) + α6 x) + α7 x) +
             α8 x)
           0 10 h12345678 = 204 := by
-    dsimp [h12345678]
     rw [rsIntegral_integrator_add h1234567 h8, hv1234567, hv8']
     norm_num
   let h123456789 :
@@ -475,7 +468,6 @@ theorem rsIntegral_floor_square_0_10 :
           (fun x => (((((((α1 x + α2 x) + α3 x) + α4 x) + α5 x) + α6 x) +
             α7 x) + α8 x) + α9 x)
           0 10 h123456789 = 285 := by
-    dsimp [h123456789]
     rw [rsIntegral_integrator_add h12345678 h9, hv12345678, hv9']
     norm_num
   let hSteps :
@@ -489,7 +481,6 @@ theorem rsIntegral_floor_square_0_10 :
           (fun x => ((((((((α1 x + α2 x) + α3 x) + α4 x) + α5 x) + α6 x) +
             α7 x) + α8 x) + α9 x) + α10 x)
           0 10 hSteps = 385 := by
-    dsimp [hSteps]
     rw [rsIntegral_integrator_add h123456789 h10, hv123456789, hv10']
     norm_num
   have hFloorMono : MonotoneOn (fun x : ℝ => (⌊x⌋ : ℝ)) (Icc (0 : ℝ) 10) := by
@@ -585,7 +576,6 @@ theorem rsIntegral_sqrt_floor_0_2 :
   have hvSteps :
       rsIntegral Real.sqrt (fun x => α1 x + α2 x) 0 2 hSteps =
         1 + Real.sqrt 2 := by
-    dsimp [hSteps]
     rw [rsIntegral_integrator_add h1 h2, hv1', hv2']
   have hFloorMono : MonotoneOn (fun x : ℝ => (⌊x⌋ : ℝ)) (Icc (0 : ℝ) 2) := by
     intro x _hx y _hy hxy

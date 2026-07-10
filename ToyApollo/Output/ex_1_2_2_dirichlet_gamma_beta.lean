@@ -174,10 +174,13 @@ theorem ex122RatioSumToPair_hasFDerivAt (y : ℝ × ℝ) :
   have hconst :
       HasFDerivAt (fun _ : ℝ × ℝ => (1 : ℝ)) (0 : ℝ × ℝ →L[ℝ] ℝ) y :=
     hasFDerivAt_const (1 : ℝ) y
-  convert HasFDerivAt.prodMk (𝕜 := ℝ)
+  have hprod := HasFDerivAt.prodMk (𝕜 := ℝ)
     (hfst.mul hsnd)
-    ((hconst.sub hfst).mul hsnd) using 2 <;>
-  ext <;> simp [sub_eq_add_neg, add_comm, mul_comm]
+    ((hconst.sub hfst).mul hsnd)
+  refine (hprod.congr_fderiv ?_).congr_of_eventuallyEq ?_
+  · ext <;> simp [sub_eq_add_neg, add_comm, mul_comm]
+  · filter_upwards with x
+    rfl
 
 theorem ex122FDerivRatioSumToPair_det (y : ℝ × ℝ) :
     (ex122FDerivRatioSumToPair y).det = y.2 := by
@@ -454,12 +457,11 @@ theorem ex122ProjectedDirichletLaw_eq_projectedDensityMeasure_of_pos
     (hα : ∀ i, 0 < α i) (hβ : 0 < β) :
     ex122ProjectedDirichletLaw α β = ex122ProjectedDensityMeasure α := by
   rw [ex122ProjectedDensityMeasure_eq_withDensity_DirichletPDF]
-  simpa [ex122ProjectedDirichletLaw, ex122ProjectFirst, ex122DirichletLaw,
-    ex122GammaProductLaw, ex122GammaScaleLaw, ex122NormalizedVector, ex122GammaTotal,
-    ProjectedDirichletLaw, DirichletLaw, gammaProductLaw, gammaScaleLaw,
-    sourceNormalizedVector, gammaVectorTotal, projectFirst] using
-    ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive
-      (n := n + 1) (Nat.succ_pos n) α β hα hβ
+  change ProjectedDirichletLaw α β =
+    (volume : Measure (Fin n → ℝ)).withDensity
+      (fun y => ENNReal.ofReal (DirichletPDF α y))
+  exact ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive
+    (n := n + 1) (Nat.succ_pos n) α β hα hβ
 
 /-- The ordinary pair-coordinate Gamma product law is exactly the two-dimensional
 Lebesgue density obtained by multiplying the two Mathlib Gamma pdfs. This isolates
@@ -852,9 +854,14 @@ theorem ex122_pair_product_gamma_ratio_eq_betaMeasure_iff_lintegral_preimage
           ProbabilityTheory.gammaPDF α₁ β⁻¹ x.1 *
             ProbabilityTheory.gammaPDF α₂ β⁻¹ x.2 ∂(volume : Measure (ℝ × ℝ))) =
         (∫⁻ y in s, ProbabilityTheory.betaPDF α₁ α₂ y ∂(volume : Measure ℝ)) := by
-  simpa [ex122GammaPairRatioLawTwo, ex122GammaPairRatioMapTwo,
-    ex122GammaPairLawTwo] using
-    ex122GammaPairRatioLawTwo_eq_betaMeasure_iff_lintegral_preimage α₁ α₂ β
+  change ex122GammaPairRatioLawTwo α₁ α₂ β =
+        ProbabilityTheory.betaMeasure α₁ α₂ ↔
+      ∀ s : Set ℝ, MeasurableSet s →
+        (∫⁻ x in ex122GammaPairRatioMapTwo ⁻¹' s,
+          ProbabilityTheory.gammaPDF α₁ β⁻¹ x.1 *
+            ProbabilityTheory.gammaPDF α₂ β⁻¹ x.2 ∂(volume : Measure (ℝ × ℝ))) =
+        (∫⁻ y in s, ProbabilityTheory.betaPDF α₁ α₂ y ∂(volume : Measure ℝ))
+  exact ex122GammaPairRatioLawTwo_eq_betaMeasure_iff_lintegral_preimage α₁ α₂ β
 
 theorem ex122GammaRatioLawTwo_eq_pairRatioLawTwo
     (α₁ α₂ β : ℝ) :
@@ -974,10 +981,10 @@ theorem ex122_betaMeasure_supported_on_Ioo (α₁ α₂ : ℝ) :
     constructor
     · intro hy
       simp only [Set.mem_Ioo, not_and_or, not_lt] at hy
-      simpa only [Set.mem_union, Set.mem_Iic, Set.mem_Ici] using hy
+      simpa only [Set.mem_union, Set.mem_Iic, Set.mem_Ici, Set.mem_setOf_eq] using hy
     · intro hy
       simp only [Set.mem_union, Set.mem_Iic, Set.mem_Ici] at hy
-      simpa only [Set.mem_Ioo, not_and_or, not_lt] using hy
+      simpa only [Set.mem_Ioo, not_and_or, not_lt, Set.mem_setOf_eq] using hy
   rw [hcompl, ProbabilityTheory.betaMeasure]
   exact measure_union_null
     (by
@@ -1063,10 +1070,15 @@ theorem ex122_pair_product_gamma_ratio_eq_betaMeasure_iff_lintegral_preimage_Ioo
           ProbabilityTheory.gammaPDF α₁ β⁻¹ x.1 *
             ProbabilityTheory.gammaPDF α₂ β⁻¹ x.2 ∂(volume : Measure (ℝ × ℝ))) =
         (∫⁻ y in s, ProbabilityTheory.betaPDF α₁ α₂ y ∂(volume : Measure ℝ)) := by
-  simpa [ex122GammaPairRatioLawTwo, ex122GammaPairRatioMapTwo,
-    ex122GammaPairLawTwo] using
-    ex122GammaPairRatioLawTwo_eq_betaMeasure_iff_lintegral_preimage_Ioo
-      α₁ α₂ hα₁ hα₂ hβ
+  change ex122GammaPairRatioLawTwo α₁ α₂ β =
+        ProbabilityTheory.betaMeasure α₁ α₂ ↔
+      ∀ s : Set ℝ, MeasurableSet s → s ⊆ Set.Ioo 0 1 →
+        (∫⁻ x in ex122GammaPairRatioMapTwo ⁻¹' s,
+          ProbabilityTheory.gammaPDF α₁ β⁻¹ x.1 *
+            ProbabilityTheory.gammaPDF α₂ β⁻¹ x.2 ∂(volume : Measure (ℝ × ℝ))) =
+        (∫⁻ y in s, ProbabilityTheory.betaPDF α₁ α₂ y ∂(volume : Measure ℝ))
+  exact ex122GammaPairRatioLawTwo_eq_betaMeasure_iff_lintegral_preimage_Ioo
+    α₁ α₂ hα₁ hα₂ hβ
 
 /-- The pair-coordinate Gamma ratio has Mathlib's Beta law. This discharges the
 previous measure-level blocker by the concrete preimage integral identity. -/
@@ -1088,10 +1100,9 @@ theorem ex122_pair_product_gamma_ratio_eq_betaMeasure
     Measure.map (fun x : ℝ × ℝ => x.1 / (x.1 + x.2))
         ((ex122GammaScaleLaw α₁ β).prod (ex122GammaScaleLaw α₂ β)) =
         ProbabilityTheory.betaMeasure α₁ α₂ := by
-  simpa [ex122GammaPairRatioLawTwo, ex122GammaPairRatioMapTwo,
-    ex122GammaPairLawTwo] using
-    ex122GammaPairRatioLawTwo_eq_betaMeasure
-      α₁ α₂ hα₁ hα₂ hβ
+  change ex122GammaPairRatioLawTwo α₁ α₂ β =
+    ProbabilityTheory.betaMeasure α₁ α₂
+  exact ex122GammaPairRatioLawTwo_eq_betaMeasure α₁ α₂ hα₁ hα₂ hβ
 
 theorem ex122GammaRatioLawTwo_eq_betaMeasure
     (α₁ α₂ : ℝ) {β : ℝ}
@@ -1391,6 +1402,9 @@ def ex_1_2_2 : DirichletExample where
       ex122SampleAlpha_pos (by norm_num) X hXlaw hIndep
   independent_gamma_projected_hasLaw := by
     intro Ω _ P _ X hXlaw hIndep
-    simpa [ex122ProjectFirst] using
-      (ex122_projectFirst_hasLaw_projectedDirichlet P ex122SampleAlpha 1 X hXlaw hIndep)
+    change HasLaw
+      (fun ω i => ex122NormalizedVector (fun j => X j ω) (Fin.castSucc i))
+      (ex122ProjectedDirichletLaw ex122SampleAlpha 1)
+      P
+    exact ex122_projectFirst_hasLaw_projectedDirichlet P ex122SampleAlpha 1 X hXlaw hIndep
   simplex_volume_zero := ex122DirichletSimplex_volume_zero 2

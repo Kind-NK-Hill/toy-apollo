@@ -115,6 +115,8 @@ theorem ex_1_3_1 {f : ℝ → ℝ} {a b c u₁ u₂ : ℝ}
     (hcont : ContinuousAt f c) :
     ∃ hRS : RSIntegrable f (singleJumpStep c u₁ u₂) a b,
       rsIntegral f (singleJumpStep c u₁ u₂) a b hRS = f c * (u₂ - u₁) := by
-  simpa [singleJumpStep] using
-    (rsIntegral_singleJumpStep_exists (f := f) (a := a) (b := b) (c := c)
-      (u₁ := u₁) (u₂ := u₂) hab hac hcb hu hAbove hBelow hcont)
+  change
+    ∃ hRS : RSIntegrable f (fun x => if x < c then u₁ else u₂) a b,
+      rsIntegral f (fun x => if x < c then u₁ else u₂) a b hRS = f c * (u₂ - u₁)
+  exact rsIntegral_singleJumpStep_exists (f := f) (a := a) (b := b) (c := c)
+    (u₁ := u₁) (u₂ := u₂) hab hac hcb hu hAbove hBelow hcont

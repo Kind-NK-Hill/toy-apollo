@@ -11,7 +11,8 @@ def ex122ProjectFirst {n : ℕ} (y : Fin (n + 1) → ℝ) : Fin n → ℝ :=
 
 theorem measurable_ex122ProjectFirst {n : ℕ} :
     Measurable (ex122ProjectFirst : (Fin (n + 1) → ℝ) → Fin n → ℝ) := by
-  simpa [ex122ProjectFirst] using (measurable_projectFirst (n := n + 1))
+  change Measurable (projectFirst : (Fin (n + 1) → ℝ) → Fin n → ℝ)
+  exact measurable_projectFirst
 
 /-- Law of the lower-dimensional projection of the Dirichlet vector. -/
 def ex122ProjectedDirichletLaw {n : ℕ} (α : Fin (n + 1) → ℝ) (β : ℝ) :
@@ -23,7 +24,8 @@ theorem ex122ProjectedDirichletLaw_isProbability {n : ℕ}
     (α : Fin (n + 1) → ℝ) {β : ℝ}
     (hα : ∀ i, 0 < α i) (hβ : 0 < β) :
     IsProbabilityMeasure (ex122ProjectedDirichletLaw α β) := by
-  simpa [ex122ProjectedDirichletLaw] using ProjectedDirichletLaw_isProbability α hα hβ
+  change IsProbabilityMeasure (ProjectedDirichletLaw α β)
+  exact ProjectedDirichletLaw_isProbability α hα hβ
 
 theorem ex122_projectFirst_hasLaw_projectedDirichlet
     {n : ℕ} {Ω : Type*} [MeasurableSpace Ω]
@@ -36,9 +38,11 @@ theorem ex122_projectFirst_hasLaw_projectedDirichlet
       (fun ω i => ex122NormalizedVector (fun j => X j ω) (Fin.castSucc i))
       (ex122ProjectedDirichletLaw α β)
       P := by
-  simpa [ex122GammaScaleLaw, ex122NormalizedVector, ex122ProjectedDirichletLaw,
-    ex122ProjectFirst, projectFirst] using
-    projected_normalized_hasLaw_projectedDirichlet P α β X hXlaw hIndep
+  change HasLaw
+    (fun ω => projectFirst (sourceNormalizedVector (fun j => X j ω)))
+    (ProjectedDirichletLaw α β)
+    P
+  exact projected_normalized_hasLaw_projectedDirichlet P α β X hXlaw hIndep
 
 /-- Last coordinate after projecting the Dirichlet simplex to the first `n` coordinates. -/
 def ex122ProjectedLastCoord {n : ℕ} (y : Fin n → ℝ) : ℝ := 1 - ∑ i, y i
@@ -424,8 +428,8 @@ theorem ex122ProjectedDensityENNReal_eq_DirichletPDF {n : ℕ}
   classical
   by_cases hy : y ∈ ex122ProjectedSimplex n
   · have hyD : DirichletSimplex (n := n + 1) y := by
-      simpa [ex122ProjectedSimplex, DirichletSimplex, ex122ProjectedLastCoord,
-        simplexLastCoord, sub_eq_add_neg, sub_nonneg] using hy
+      change DirichletSimplex (n := n + 1) y at hy
+      exact hy
     rw [ex122ProjectedDensityENNReal]
     simp [hy]
     rw [DirichletPDF_formula_on_simplex (n := n + 1) (hn := Nat.succ_pos n)
@@ -443,8 +447,8 @@ theorem ex122ProjectedDensityENNReal_eq_DirichletPDF {n : ℕ}
   · have hyD : ¬ DirichletSimplex (n := n + 1) y := by
       intro hD
       apply hy
-      simpa [ex122ProjectedSimplex, DirichletSimplex, ex122ProjectedLastCoord,
-        simplexLastCoord, sub_eq_add_neg, sub_nonneg] using hD
+      change y ∈ ex122ProjectedSimplex n at hD
+      exact hD
     rw [ex122ProjectedDensityENNReal]
     simp [hy]
     simp [DirichletPDF, hyD]
@@ -869,8 +873,8 @@ theorem ex122ProjectedPositiveChartDomain_lintegral_eq_iterated
         ∂(volume : Measure ℝ)
       ∂(volume : Measure (Fin n → ℝ))) := by
   rw [ex122ProjectedPositiveChartDomain, Measure.volume_eq_prod]
-  exact MeasureTheory.setLIntegral_prod g
-    (by simpa [ex122ProjectedPositiveChartDomain] using hg)
+  rw [ex122ProjectedPositiveChartDomain, Measure.volume_eq_prod] at hg
+  exact MeasureTheory.setLIntegral_prod g hg
 
 /-- Normalizing the explicit positive chart recovers the projected point when
 the total-mass parameter is nonzero. -/
@@ -1210,13 +1214,9 @@ theorem ex122ProjectedScaleTotalMap_hasFDerivAt_explicit
         (ContinuousLinearMap.snd ℝ (Fin n → ℝ) ℝ)
         p :=
     hasFDerivAt_snd (𝕜 := ℝ) (p := p)
-  convert hfirst.prodMk hsecond using 1
-  apply funext
-  intro q
-  apply Prod.ext
-  · funext i
-    simp [ex122ProjectedScaleTotalMap, smul_eq_mul, mul_comm]
-  · simp [ex122ProjectedScaleTotalMap]
+  refine (hfirst.prodMk hsecond).congr_of_eventuallyEq ?_
+  filter_upwards with q
+  ext i <;> simp [ex122ProjectedScaleTotalMap, smul_eq_mul, mul_comm]
 
 theorem ex122ProjectedScaleTotalMap_fderiv_eq
     {n : ℕ} (p : (Fin n → ℝ) × ℝ) :
@@ -1401,8 +1401,8 @@ theorem ex122ProjectedCompletionShearLinearMap_measurableEmbedding
     norm_num
   let e :=
     (ex122ProjectedCompletionShearLinearMap (n := n)).equivOfDetNeZero hdet_ne
-  simpa [e, LinearEquiv.coe_toContinuousLinearEquiv'] using
-    e.toContinuousLinearEquiv.toHomeomorph.measurableEmbedding
+  change MeasurableEmbedding e
+  exact e.toContinuousLinearEquiv.toHomeomorph.measurableEmbedding
 
 /-- The linear completion map is a measurable embedding. -/
 theorem ex122ProjectedLinearCompletionMap_measurableEmbedding {n : ℕ} :

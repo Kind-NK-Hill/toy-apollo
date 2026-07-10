@@ -602,18 +602,16 @@ theorem prob_1_3c {α₁ α₂ : ℝ} (hα₁ : 0 < α₁) (hα₂ : 0 < α₂) 
             ∀ u v : ℝ, 0 < u → 0 < v →
               ∫ x in (0)..1, x ^ (u - 1) * (1 - x) ^ (v - 1) = Complex.re (Complex.betaIntegral u v) := by
           intro u v hu hv
-          rw [intervalIntegral.integral_of_le zero_le_one]
-          simp +decide [Complex.betaIntegral]
-          rw [intervalIntegral.integral_of_le zero_le_one]
-          convert integral_ofReal.symm
-          norm_num [Complex.ofReal_cpow, hu.le, hv.le]
-          convert Complex.ofReal_re _
-          convert integral_ofReal using 1
-          norm_num [Complex.ofReal_cpow, hu.le, hv.le]
-          exact
-            MeasureTheory.setIntegral_congr_fun measurableSet_Ioc fun x hx => by
-              rw [Complex.ofReal_cpow (by linarith [hx.1]), Complex.ofReal_cpow (by linarith [hx.2])]
-              norm_num [Complex.ofReal_sub, Complex.ofReal_one]
+          rw [Complex.betaIntegral]
+          simp only [intervalIntegral.integral_of_le zero_le_one]
+          rw [← RCLike.re_to_complex, ← integral_re]
+          · refine MeasureTheory.setIntegral_congr_fun measurableSet_Ioc fun x ⟨hx0, hx1⟩ => ?_
+            norm_cast
+            rw [← Complex.ofReal_cpow, ← Complex.ofReal_cpow, RCLike.re_to_complex,
+              Complex.re_mul_ofReal, Complex.ofReal_re]
+            all_goals linarith
+          · convert! Complex.betaIntegral_convergent (u := u) (v := v) (by simpa) (by simpa)
+            rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (by norm_num), IntegrableOn]
         convert h_beta (α₁ + 1) α₂ (by positivity) (by positivity) using 1
         · norm_num
         ·
@@ -955,7 +953,10 @@ theorem prob_1_3b {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} {X Y : Ω �
   have hratio : HasLaw (fun p : ℝ × ℝ => p.1 / (p.1 + p.2)) (betaMeasure α₁ α₂)
       ((gammaMeasure α₁ r).prod (gammaMeasure α₂ r)) :=
     ⟨(by fun_prop : Measurable fun p : ℝ × ℝ => p.1 / (p.1 + p.2)).aemeasurable, hbeta⟩
-  simpa using hratio.comp hpair
+  change HasLaw
+    ((fun p : ℝ × ℝ => p.1 / (p.1 + p.2)) ∘ fun ω => (X ω, Y ω))
+    (betaMeasure α₁ α₂) P
+  exact hratio.comp hpair
 
 /-- Problem 1.3, all three parts at the faithful distributional level.
 
