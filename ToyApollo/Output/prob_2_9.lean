@@ -37,11 +37,12 @@ lemma atom_union_univ {Ω : Type*} {n : ℕ} (A : Fin n → Set Ω) :
 
 lemma atom_measurable {Ω : Type*} {n : ℕ} (A : Fin n → Set Ω) (f : Fin n → Bool) :
     @MeasurableSet Ω (MeasurableSpace.generateFrom (Set.range A)) (atom A f) := by
-  convert MeasurableSet.iInter fun i => ?_
-  · infer_instance
-  · split_ifs
-    · exact MeasurableSpace.measurableSet_generateFrom (Set.mem_range_self _)
-    · exact (MeasurableSpace.measurableSet_generateFrom (Set.mem_range_self _)).compl
+  unfold atom
+  apply MeasurableSet.iInter
+  intro i
+  split_ifs
+  · exact MeasurableSpace.measurableSet_generateFrom (Set.mem_range_self _)
+  · exact (MeasurableSpace.measurableSet_generateFrom (Set.mem_range_self _)).compl
 
 lemma set_eq_union_atoms {Ω : Type*} {n : ℕ} (A : Fin n → Set Ω) (i : Fin n) :
     A i = ⋃ (f : Fin n → Bool) (_ : f i = true), atom A f := by

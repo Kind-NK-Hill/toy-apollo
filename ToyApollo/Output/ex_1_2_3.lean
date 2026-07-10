@@ -36,13 +36,16 @@ def ex123B (n : ℕ) (ω : ex123Ω) : Bool :=
   ω n
 
 lemma ex123B_measurable (n : ℕ) : Measurable (ex123B n) := by
-  simpa [ex123B] using measurable_pi_apply n
+  change Measurable (fun ω : ℕ → Bool => ω n)
+  exact measurable_pi_apply n
 
 theorem ex123B_independent : ProbabilityTheory.iIndepFun ex123B ex123P := by
-  simpa [ex123B, ex123P] using
-    (ProbabilityTheory.iIndepFun_infinitePi (ι := ℕ) (𝓧 := fun _ => Bool)
-      (Ω := fun _ => Bool) (P := fun _ : ℕ => ex123FairCoin)
-      (fun _ : ℕ => measurable_id))
+  change ProbabilityTheory.iIndepFun
+    (fun i : ℕ => fun ω : ℕ → Bool => ω i)
+    (Measure.infinitePi fun _ : ℕ => ex123FairCoin)
+  exact ProbabilityTheory.iIndepFun_infinitePi (ι := ℕ) (𝓧 := fun _ => Bool)
+    (Ω := fun _ => Bool) (P := fun _ : ℕ => ex123FairCoin)
+    (fun _ : ℕ => measurable_id)
 
 def ex123R (n : ℕ) (ω : ex123Ω) : ℝ :=
   if ex123B n ω then (2 : ℝ) else 0
@@ -70,12 +73,16 @@ theorem ex123CDF_def (u : ℝ) :
 
 theorem ex123U_series (ω : ex123Ω) :
     HasSum (fun n : ℕ => ex123R n ω / (3 : ℝ) ^ (n + 1)) (ex123U ω) := by
+  change HasSum (fun n : ℕ => ex123R n ω / (3 : ℝ) ^ (n + 1))
+    (Real.ofDigits (ex123Digits ω))
+  rw [Real.ofDigits]
   convert (@summable_ofDigitsTerm 3 (ex123Digits ω)).hasSum using 1
   ext n
   by_cases h : ω n <;> simp [ex123R, ex123B, ex123Digits, Real.ofDigitsTerm, h, div_eq_mul_inv]
 
 lemma ex123U_mem_cantorSet (ω : ex123Ω) : ex123U ω ∈ cantorSet := by
-  simpa [ex123U, ex123Digits] using ofDigits_bool_to_fin_three_mem_cantorSet ω
+  change Real.ofDigits (fun i => cond (ω i) (2 : Fin 3) 0) ∈ cantorSet
+  exact ofDigits_bool_to_fin_three_mem_cantorSet ω
 
 theorem ex123U_mem_unit (ω : ex123Ω) : ex123U ω ∈ Set.Icc (0 : ℝ) 1 :=
   cantorSet_subset_unitInterval (ex123U_mem_cantorSet ω)
@@ -355,10 +362,18 @@ lemma ex123_volume_preCantorSet_le (n : ℕ) :
     rw [ex123_volume_image_div3,
       ex123_volume_image_add2_div3_of_measurable (preCantorSet n)
         (isClosed_preCantorSet n).measurableSet]
-    convert mul_le_mul_right ih (ENNReal.ofReal (1 / 3) + ENNReal.ofReal (1 / 3)) using 1
-    · ring
-    rw [← ENNReal.ofReal_add] <;> norm_num
-    ring
+    calc
+      ENNReal.ofReal (1 / 3) * volume (preCantorSet n) +
+          ENNReal.ofReal (1 / 3) * volume (preCantorSet n) =
+          (ENNReal.ofReal (1 / 3) + ENNReal.ofReal (1 / 3)) *
+            volume (preCantorSet n) := by ring
+      _ ≤ (ENNReal.ofReal (1 / 3) + ENNReal.ofReal (1 / 3)) *
+          ENNReal.ofReal ((2 / 3 : ℝ) ^ n) :=
+        mul_le_mul_left' ih _
+      _ = ENNReal.ofReal ((2 / 3 : ℝ) ^ (n + 1)) := by
+        rw [← ENNReal.ofReal_add] <;> norm_num
+        rw [pow_succ]
+        ring
 
 theorem ex123_volume_cantorSet_eq_zero : volume cantorSet = 0 := by
   have h_cantor_subset : ∀ n, volume (preCantorSet n) ≤ ENNReal.ofReal ((2 / 3 : ℝ) ^ n) :=

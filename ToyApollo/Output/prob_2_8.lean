@@ -94,7 +94,8 @@ private lemma m_partition_sets_eq :
          constructor;
          · intro hs;
            have h_cases : (c ∈ s ↔ d ∈ s) ∧ (b ∈ s ↔ e ∈ s) := by
-             convert hs using 1;
+              change (c ∈ s ↔ d ∈ s) ∧ (b ∈ s ↔ e ∈ s) at hs
+              exact hs
            by_cases ha : a ∈ s <;> by_cases hf : f ∈ s <;> simp_all +decide [ Set.ext_iff ];
            · by_cases hb : b ∈ s <;> by_cases he : e ∈ s <;> simp_all +decide [ Set.ext_iff ];
              · by_cases hc : c ∈ s <;> by_cases hd : d ∈ s <;> simp_all +decide [ Set.ext_iff ];

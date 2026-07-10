@@ -151,10 +151,10 @@ theorem openBoxes_isTopologicalBasis (d : ℕ) :
 
 theorem euclideanOpenBoxes_isTopologicalBasis (d : ℕ) :
     TopologicalSpace.IsTopologicalBasis (euclideanOpenBoxes d) := by
-  let e : EuclideanSpace ℝ (Fin d) ≃L[ℝ] (Fin d → ℝ) :=
-    EuclideanSpace.equiv (Fin d) ℝ
-  simpa [euclideanOpenBoxes, e] using
-    (openBoxes_isTopologicalBasis d).isInducing e.toHomeomorph.isInducing
+  change TopologicalSpace.IsTopologicalBasis
+    (Set.preimage (EuclideanSpace.equiv (Fin d) ℝ) '' openBoxes d)
+  exact (openBoxes_isTopologicalBasis d).isInducing
+    (EuclideanSpace.equiv (Fin d) ℝ).toHomeomorph.isInducing
 
 theorem euclideanOpenBall_eq_countable_biUnion_openBoxes
     (d : ℕ) (c : EuclideanSpace ℝ (Fin d)) {r : ℝ} (_hr : 0 < r) :

@@ -12,58 +12,36 @@ lemma charFun_expMeasure (r : ℝ) (hr : 0 < r) (t : ℝ) :
     charFun (expMeasure r) t = ↑r / (↑r - ↑t * I) := by
   -- Use the provided lemma to rewrite the characteristic function.
   have h_char_fun : charFun (expMeasure r) t = r * ∫ x in Set.Ioi (0 : ℝ), Complex.exp (-(r - t * Complex.I) * x) := by
-    convert integral_withDensity_eq_integral_smul _ _ using 1;
-    · have hmul :
-          (↑r : ℂ) * ∫ x in Set.Ioi (0 : ℝ), Complex.exp (-(r - t * Complex.I) * x) =
-            ∫ x in Set.Ioi (0 : ℝ), (↑r : ℂ) * Complex.exp (-(r - t * Complex.I) * x) := by
-        simpa using
-          (MeasureTheory.integral_const_mul
-            (μ := volume.restrict (Set.Ioi (0 : ℝ)))
-            (r := (↑r : ℂ))
-            (f := fun x : ℝ => Complex.exp (-(r - t * Complex.I) * x))).symm
-      rw [hmul]
-      rw [ ← MeasureTheory.integral_indicator ] <;> norm_num [ Set.indicator, gammaPDFReal ];
-      rw [ ← MeasureTheory.integral_congr_ae ]
-      filter_upwards [ MeasureTheory.measure_eq_zero_iff_ae_notMem.1 ( MeasureTheory.measure_singleton 0 ) ] with x hx
-      rcases lt_or_gt_of_ne hx with hneg | hpos
-      · have hxnot_le : ¬ 0 ≤ x := not_le_of_gt hneg
-        have hxnot_lt : ¬ 0 < x := not_lt_of_ge hneg.le
-        simp [hxnot_le, hxnot_lt]
-        exact zero_smul ℝ (Complex.exp (↑(inner ℝ x t) * I))
-      · simp [Set.indicator, gammaPDFReal, hpos, hpos.le, Real.Gamma_one]
-        have hnonneg : 0 ≤ r * Real.exp (-(r * x)) := by positivity
-        rw [NNReal.smul_def]
-        norm_num [Real.toNNReal_of_nonneg hnonneg] at *
-        change ((r * Real.exp (-(r * x)) : ℝ) : ℂ) * Complex.exp (↑(inner ℝ x t) * I) =
-          ↑r * Complex.exp ((↑t * I - ↑r) * ↑x)
-        rw [Complex.ofReal_mul, Complex.ofReal_exp, mul_assoc, ← Complex.exp_add]
-        have hone : inner ℝ (1 : ℝ) t = t := by
-          calc
-            inner ℝ (1 : ℝ) t = t * inner ℝ (1 : ℝ) 1 := by
-              simpa using (real_inner_smul_right (1 : ℝ) (1 : ℝ) t)
-            _ = t * 1 := by
-              have h11 : inner ℝ (1 : ℝ) 1 = 1 := by norm_num
-              rw [h11]
-            _ = t := by ring
-        have hinner : inner ℝ x t = x * t := by
-          calc
-            inner ℝ x t = x * inner ℝ (1 : ℝ) t := by
-              simpa using (real_inner_smul_left (1 : ℝ) t x)
-            _ = x * t := by rw [hone]
-        have hexp :
-            (↑(-(r * x)) : ℂ) + ↑(inner ℝ x t) * I = (↑t * I - ↑r) * ↑x := by
-          rw [hinner]
-          have hrx : (↑(-(r * x)) : ℂ) = -↑r * ↑x := by
-            push_cast
-            ring_nf
-          have htx : ↑(x * t) * I = I * ↑t * ↑x := by
-            push_cast
-            ring_nf
-          rw [hrx, htx]
-          ring_nf
-        rw [hexp]
-    · refine' Measurable.subtype_mk _;
-      exact Measurable.max ( Measurable.ite ( measurableSet_Ici ) ( by exact Continuous.measurable ( by continuity ) ) measurable_const ) measurable_const;
+    rw [charFun_apply_real, expMeasure, gammaMeasure]
+    change
+      (∫ x : ℝ, Complex.exp (↑t * ↑x * I)
+        ∂volume.withDensity (fun x => ENNReal.ofReal (gammaPDFReal 1 r x))) = _
+    rw [integral_withDensity_eq_integral_toReal_smul
+      (Measurable.ennreal_ofReal (measurable_gammaPDFReal 1 r))
+      (by filter_upwards with _x; exact ENNReal.ofReal_lt_top)]
+    have hmul :
+        (↑r : ℂ) * ∫ x in Set.Ioi (0 : ℝ), Complex.exp (-(r - t * Complex.I) * x) =
+          ∫ x in Set.Ioi (0 : ℝ), (↑r : ℂ) * Complex.exp (-(r - t * Complex.I) * x) := by
+      simpa using
+        (MeasureTheory.integral_const_mul
+          (μ := volume.restrict (Set.Ioi (0 : ℝ)))
+          (r := (↑r : ℂ))
+          (f := fun x : ℝ => Complex.exp (-(r - t * Complex.I) * x))).symm
+    rw [hmul, ← MeasureTheory.integral_indicator measurableSet_Ioi]
+    refine MeasureTheory.integral_congr_ae ?_
+    filter_upwards [MeasureTheory.measure_eq_zero_iff_ae_notMem.1
+      (MeasureTheory.measure_singleton 0)] with x hx
+    rcases lt_or_gt_of_ne hx with hneg | hpos
+    · have hxnot_le : ¬ 0 ≤ x := not_le_of_gt hneg
+      have hxnot_lt : ¬ 0 < x := not_lt_of_ge hneg.le
+      simp [Set.indicator, gammaPDF, gammaPDFReal, hxnot_le, hxnot_lt]
+    · have hnonneg : 0 ≤ r * Real.exp (-(r * x)) := by positivity
+      simp [Set.indicator, gammaPDF, gammaPDFReal, hpos, hpos.le, Real.Gamma_one,
+        hnonneg, Complex.real_smul]
+      rw [mul_assoc, ← Complex.exp_add]
+      congr 2
+      push_cast
+      ring
   rw [ h_char_fun, mul_comm ];
   have h_integral : ∀ a : ℂ, a.re > 0 → ∫ x in Set.Ioi (0 : ℝ), Complex.exp (-a * x) = 1 / a := by
     intro a ha
@@ -112,30 +90,11 @@ lemma integral_cexp_sq_gaussianReal_sq (v : NNReal) (hv : (v : ℝ) > 0) (t : �
       unfold gaussianPDFReal
       push_cast
       simp [sub_zero]
-      change (((√↑v)⁻¹ * ((√π)⁻¹ * (√2)⁻¹) * Real.exp (-x ^ 2 / (2 * ↑v))) : ℝ) •
-            Complex.exp (↑x ^ 2 * ↑t * I) =
-          (↑√↑v)⁻¹ * ((↑√π)⁻¹ * (↑√2)⁻¹) * Complex.exp (-(b * ↑x ^ 2))
-      rw [Complex.real_smul, Complex.ofReal_mul, Complex.ofReal_mul, Complex.ofReal_exp, mul_assoc,
-        ← Complex.exp_add]
-      have hvc : ((v : ℝ) : ℂ) ≠ 0 := by
-        exact_mod_cast ne_of_gt hv
       have hexp_direct :
-          (((-x ^ 2 / (2 * (v : ℝ))) : ℝ) : ℂ) + ↑x ^ 2 * ↑t * I = -(b * ↑x ^ 2) := by
-        have hsq_div :
-            (((-x ^ 2 / (2 * (v : ℝ))) : ℝ) : ℂ) =
-              (((x ^ 2 * (↑v)⁻¹ * (-1 / 2 : ℝ)) : ℝ) : ℂ) := by
-          norm_num [div_eq_mul_inv]
-          ring_nf
-        rw [hsq_div]
+          -↑x ^ 2 / (2 * ↑(v : ℝ)) + ↑x ^ 2 * ↑t * I = -(b * ↑x ^ 2) := by
         simp [b, div_eq_mul_inv]
-        ring_nf
-      have hcexp := congrArg Complex.exp hexp_direct
-      have hmul_exp :
-          (↑(√↑v)⁻¹ : ℂ) * ↑((√π)⁻¹ * (√2)⁻¹) *
-              Complex.exp (((( -x ^ 2 / (2 * (v : ℝ))) : ℝ) : ℂ) + ↑x ^ 2 * ↑t * I) =
-            (↑(√↑v)⁻¹ : ℂ) * ↑((√π)⁻¹ * (√2)⁻¹) * Complex.exp (-(b * ↑x ^ 2)) := by
-        exact congrArg (fun z => (↑(√↑v)⁻¹ : ℂ) * ↑((√π)⁻¹ * (√2)⁻¹) * z) hcexp
-      simpa [mul_assoc] using hmul_exp
+        ring
+      rw [mul_assoc, ← Complex.exp_add, hexp_direct]
     · aesop;
   -- By integral_gaussian_complex, ∫ x, cexp (-b * x^2) = (π / b)^(1/2).
   have h2 : ∫ x : ℝ, Complex.exp (-(b * x ^ 2)) = (Real.pi / b) ^ (1 / 2 : ℂ) := by

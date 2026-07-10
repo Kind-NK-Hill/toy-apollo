@@ -31,8 +31,11 @@ lemma prob_2_7_liminf_A : liminf prob_2_7_A atTop = Set.Ioc (0 : ℝ) 3 := by
   -- For x ∈ liminf prob_2_7_A atTop, show that x ∈ (0, 3].
   have h_liminf : ∀ x, x ∈ liminf prob_2_7_A atTop → 0 < x ∧ x ≤ 3 := by
     simp +contextual [ Filter.liminf_eq, Filter.eventually_atTop ];
-    intro x S N hS hx; have := hS ( 2 * N + 1 ) ( by linarith ) hx; have := hS ( 2 * N + 2 ) ( by linarith ) hx; norm_num [ prob_2_7_A ] at *;
-    exact ⟨ lt_of_lt_of_le ( by positivity ) this.1, by linarith ⟩;
+    intro x S N hS hx
+    have hOdd := hS (2 * N + 1) (by linarith) hx
+    have hEven := hS (2 * N + 2) (by linarith) hx
+    norm_num [prob_2_7_A, pow_add, pow_mul] at hOdd hEven
+    exact ⟨lt_of_lt_of_le (by positivity) hEven.1, by linarith [hOdd.2]⟩
   refine' Set.Subset.antisymm h_liminf fun x hx => _;
   obtain ⟨ N, hN ⟩ := h_inf x hx;
   exact ⟨ { x }, Filter.eventually_atTop.mpr ⟨ N, fun m hm => by aesop ⟩, by aesop ⟩
@@ -87,7 +90,11 @@ theorem prob_2_7 :
     (liminf B atTop = ({1} : Set ℝ) ∧ limsup B atTop = Set.Icc (0 : ℝ) 2) := by
   refine ⟨⟨?_, ?_⟩, ⟨?_, ?_⟩⟩
   · -- A and prob_2_7_A are the same
-    convert prob_2_7_liminf_A
-  · convert prob_2_7_limsup_A
-  · convert prob_2_7_liminf_B
-  · convert prob_2_7_limsup_B
+    change liminf prob_2_7_A atTop = Set.Ioc (0 : ℝ) 3
+    exact prob_2_7_liminf_A
+  · change limsup prob_2_7_A atTop = Set.Ioc (0 : ℝ) 5
+    exact prob_2_7_limsup_A
+  · change liminf prob_2_7_B atTop = ({1} : Set ℝ)
+    exact prob_2_7_liminf_B
+  · change limsup prob_2_7_B atTop = Set.Icc (0 : ℝ) 2
+    exact prob_2_7_limsup_B

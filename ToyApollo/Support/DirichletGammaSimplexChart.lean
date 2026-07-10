@@ -21,7 +21,8 @@ theorem fin_sum_projected_last
   cases n with
   | zero => cases hn
   | succ m =>
-      simpa using (Fin.sum_univ_castSucc (f := alpha))
+      rw [Fin.sum_univ_castSucc]
+      congr 1
 
 theorem fin_prod_projected_last
     {n : ℕ} (hn : 0 < n) (f : Fin n → ℝ) :
@@ -31,7 +32,8 @@ theorem fin_prod_projected_last
   cases n with
   | zero => cases hn
   | succ m =>
-      simpa using (Fin.prod_univ_castSucc (f := f))
+      rw [Fin.prod_univ_castSucc]
+      congr 1
 
 /-- Inverse chart candidate for the projected normalization map: from projected
 coordinates and total mass to the original `n` Gamma coordinates. -/
@@ -209,7 +211,9 @@ theorem projectedSimplexChartPreimage_lintegral_eq_iterated
         ∫⁻ t in Set.Ioi (0 : ℝ), g (x, t) := by
   rw [projectedSimplexChartPreimage_eq_prod]
   rw [Measure.volume_eq_prod]
-  exact MeasureTheory.setLIntegral_prod g (by simpa [projectedSimplexChartPreimage_eq_prod] using hg)
+  apply MeasureTheory.setLIntegral_prod g
+  rw [projectedSimplexChartPreimage_eq_prod, Measure.volume_eq_prod] at hg
+  exact hg
 
 theorem ofReal_setIntegral_eq_lintegral_ofReal_of_nonneg_ae
     {α : Type*} [MeasurableSpace α] {μ : Measure α} {s : Set α} {f : α → ℝ}
@@ -422,13 +426,9 @@ theorem projectedScaleTotalMap_hasFDerivAt_explicit
         (ContinuousLinearMap.snd ℝ (Fin (n - 1) → ℝ) ℝ)
         p :=
     hasFDerivAt_snd (𝕜 := ℝ) (p := p)
-  convert hfirst.prodMk hsecond using 1
-  apply funext
-  intro q
-  apply Prod.ext
-  · funext i
-    simp [projectedScaleTotalMap, smul_eq_mul, mul_comm]
-  · simp [projectedScaleTotalMap]
+  refine (hfirst.prodMk hsecond).congr_of_eventuallyEq ?_
+  filter_upwards with q
+  ext i <;> simp [projectedScaleTotalMap, smul_eq_mul, mul_comm]
 
 theorem projectedScaleTotalMap_hasFDerivWithinAt_explicit
     {n : ℕ} (s : Set ((Fin (n - 1) → ℝ) × ℝ))
@@ -620,9 +620,13 @@ theorem projectedSimplexAppendLastLinearMap_measurePreserving {m : ℕ} :
     rw [Measure.volume_eq_prod (Fin m → ℝ) ℝ, Measure.volume_eq_prod ℝ (Fin m → ℝ)]
     exact Measure.measurePreserving_swap
   have h := hsplit.comp hswap
-  convert h using 1
-  ext p i
-  simp [projectedSimplexAppendLastLinearMap_eq_snoc, split]
+  convert h using 1 <;> try rfl
+  apply funext
+  intro p
+  apply funext
+  intro i
+  simpa [split] using
+    congrFun (projectedSimplexAppendLastLinearMap_eq_snoc (m := m) p) i
 
 /-- The linear functional summing the projected coordinates in the source
 product space. -/
@@ -701,9 +705,10 @@ theorem projectedSimplexAppendLastLinearMapFull_measurePreserving
   cases n with
   | zero => omega
   | succ m =>
-      simpa [projectedSimplexAppendLastLinearMapFull,
-        projectedSimplexAppendLastLinearMap] using
-        (projectedSimplexAppendLastLinearMap_measurePreserving (m := m))
+      change MeasurePreserving
+        (projectedSimplexAppendLastLinearMap (m := m) :
+          ((Fin m → ℝ) × ℝ) → Fin (m + 1) → ℝ)
+      exact projectedSimplexAppendLastLinearMap_measurePreserving (m := m)
 
 /-- Full-dimension version of the determinant-one completion shear. -/
 def projectedSimplexCompletionShearLinearMapFull {n : ℕ} :
@@ -907,7 +912,8 @@ theorem projectedSimplexLinearCompletionMap_measurableEmbedding
         ((Fin (n - 1) → ℝ) × ℝ) → Fin n → ℝ) := by
   let e :=
     (projectedSimplexLinearCompletionEquiv hn).toContinuousLinearEquiv.toHomeomorph
-  simpa [e, LinearEquiv.coe_toContinuousLinearEquiv'] using e.measurableEmbedding
+  change MeasurableEmbedding (projectedSimplexLinearCompletionEquiv hn)
+  exact e.measurableEmbedding
 
 theorem projectedSimplexTotalMap_lintegral_image_eq_lintegral_totalPow_mul_chart
     {n : ℕ} (hn : 0 < n) {s : Set (Fin (n - 1) → ℝ)}
