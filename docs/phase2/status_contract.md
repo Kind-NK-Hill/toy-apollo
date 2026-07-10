@@ -91,10 +91,15 @@ These proof classes or markers are fail/blocker evidence for local completion:
 - `public_premise`
 - `private_axiom`
 - `semantic_fail`
-- missing `proof_class` on a pass review
+- a historical/imported pass record with no completion class after migration
 
 They may be useful evidence or repair targets, but they are not clean
 completion.
+
+New semantic-review results must contain non-empty `proof_class` and
+`completion_class`. Missing/empty fields are schema-invalid operational output
+and never reach task-status projection; the historical fallback rule above is
+retained only for ledger/report migration.
 
 `mathlib_backed_adapter_completed` means adapter-only completion: a
 proof-bearing source task was closed by importing or applying Mathlib without a

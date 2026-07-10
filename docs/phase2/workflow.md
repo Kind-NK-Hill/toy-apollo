@@ -158,6 +158,22 @@ python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks <task_id> -
 independence, and task-level projection. It lands clean completion only when
 the semantic review is valid and `phase2_status=pass`.
 
+Operationally invalid reviewer output (for example, missing required class
+fields, an identity/hash mismatch, or an invalid evidence shape) is rejected in
+read-only preflight. It does not rewrite the submitted result, proof
+obligations, review history, or ledger, so the same review request can be
+retried after correcting the result JSON.
+
+Campaign/sidecar collectors must use the tracked read-only decision command:
+
+```powershell
+python .\tools\phase2_review_decision.py --review-input <semantic_review_input_vN.json> --review-result <raw_reviewer_result.json>
+```
+
+This command applies the formal normalizer and task-status projection without
+writing the ledger. Reviewer-supplied `phase2_status` / `task_status` fields are
+not authority. Only the later `review-apply` command may land the decision.
+
 If reviewer verdict is `pass` but `phase2_status` is `fail`, `blocked`, or
 `allowed_exception`, `review-apply` records the result and does not promote a
 candidate as clean completion. `allowed_exception` is only for explicit
