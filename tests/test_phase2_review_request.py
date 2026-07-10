@@ -23,6 +23,31 @@ from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E4
 
 
 class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
+    def test_updated_ledger_hard_dependency_is_not_hidden_by_stale_pack_task(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_updated_hard_dependency"
+        try:
+            self._clean_root(root)
+            task_id = "def_3_2"
+            dep_id = "def_3_1"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id, completed=True)
+            stale_pack_task = json.loads((pack_dir / "task.json").read_text(encoding="utf-8"))
+            stale_pack_task["dependencies"] = []
+            stale_pack_task["soft_imports"] = []
+            stale_pack_task["final_import_union"] = []
+            (pack_dir / "task.json").write_text(
+                json.dumps(stale_pack_task, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            ledger.ledger["tasks"][task_id]["candidate_snapshot"]["dependencies"] = [dep_id]
+
+            task = resolve_phase2_task(task_id, ledger, settings)
+
+            self.assertEqual(task["dependencies"], [dep_id])
+            self.assertIn(dep_id, task["final_import_union"])
+            self.assertNotIn(dep_id, task["soft_imports"])
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_existing_output_selection_prefers_canonical_target_over_newer_shadow(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_canonical_output_selection"
         try:

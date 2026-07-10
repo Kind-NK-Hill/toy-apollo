@@ -497,6 +497,15 @@ def _merge_effective_task_imports(task: dict[str, Any], task_id: str, ledger: Le
 
     record = ledger.ledger.get("tasks", {}).get(canonical_task_id, {})
     snapshot = record.get("candidate_snapshot", {}) if isinstance(record, dict) else {}
+    if isinstance(snapshot, dict) and "dependencies" in snapshot:
+        stale_pack_hard_deps = set(hard_deps)
+        hard_deps = canonicalize_id_list(snapshot.get("dependencies", []))
+        import_union = canonicalize_id_list(
+            dep
+            for dep in import_union
+            if dep not in stale_pack_hard_deps or dep in hard_deps or dep in soft_imports
+        )
+        import_union = canonicalize_id_list(hard_deps + soft_imports + import_union)
     is_obligation_task = str(merged.get("type", "") or "").strip() == "Phase2ObligationTask"
     if is_obligation_task and pack_has_import_manifest:
         snapshot_soft_imports = canonicalize_id_list(
