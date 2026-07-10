@@ -41,7 +41,7 @@ noncomputable section
 `S(P,f,alpha1+alpha2) = S(P,f,alpha1) + S(P,f,alpha2)` for tagged
 Riemann-Stieltjes sums. -/
 theorem thm_1_3_tagged_sum_decomposition {a b : ℝ}
-    (P : DarbouxRS.Partition a b) (tags : ℕ → ℝ) (f α₁ α₂ : ℝ → ℝ) :
+    (P : DarbouxRS.Partition a b) (tags : Fin P.n → ℝ) (f α₁ α₂ : ℝ → ℝ) :
     DarbouxRS.taggedSum P tags f (fun x => α₁ x + α₂ x) =
       DarbouxRS.taggedSum P tags f α₁ + DarbouxRS.taggedSum P tags f α₂ := by
   exact DarbouxRS.taggedSum_integrator_add P tags f α₁ α₂

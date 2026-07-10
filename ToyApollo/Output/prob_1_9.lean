@@ -76,97 +76,146 @@ end RSWeakPartition
 
 /-- The finite endpoint-product telescoping identity behind the
 Riemann--Stieltjes integration-by-parts source proof. -/
+private lemma prob_1_9_sum_adjacent_sub {n : ℕ} (g : Fin (n + 1) → ℝ) :
+    (∑ i : Fin n, (g i.succ - g i.castSucc)) =
+      g (Fin.last n) - g 0 := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+      rw [Fin.sum_univ_succ]
+      have htail := ih (fun i : Fin (n + 1) => g i.succ)
+      have htail' :
+          (∑ i : Fin n, (g i.succ.succ - g i.succ.castSucc)) =
+            g (Fin.last n).succ - g (Fin.succ 0) := by
+        simpa only [Fin.succ_castSucc] using htail
+      rw [htail']
+      simp
+
+/-- The finite endpoint-product telescoping identity behind the
+Riemann--Stieltjes integration-by-parts source proof. -/
 theorem prob_1_9_endpoint_product_telescope {f α : ℝ → ℝ} {a b : ℝ}
     (P : RSPartition a b) :
     f b * α b - f a * α a =
-      ∑ i ∈ Finset.range P.n,
-        (f (P.pts (i + 1)) * α (P.pts (i + 1)) -
-          f (P.pts i) * α (P.pts i)) := by
-  let g : ℕ → ℝ := fun i => f (P.pts i) * α (P.pts i)
-  calc
-    f b * α b - f a * α a = g P.n - g 0 := by
-      simp [g, P.pts_start, P.pts_end]
-    _ = ∑ i ∈ Finset.range P.n, (g (i + 1) - g i) := by
-      exact (Finset.sum_range_sub g P.n).symm
-    _ =
-        ∑ i ∈ Finset.range P.n,
-          (f (P.pts (i + 1)) * α (P.pts (i + 1)) -
-            f (P.pts i) * α (P.pts i)) := by
-      rfl
+      ∑ i : Fin P.n,
+        (f (P.pts i.succ) * α (P.pts i.succ) -
+          f (P.pts i.castSucc) * α (P.pts i.castSucc)) := by
+  have hsum := prob_1_9_sum_adjacent_sub
+    (fun i : Fin (P.n + 1) => f (P.pts i) * α (P.pts i))
+  simpa [P.pts_start, P.pts_end] using hsum.symm
 
 /-- Right endpoints are legal tags for the strict partition interface. -/
 theorem prob_1_9_rightTagsInPartition {a b : ℝ} (P : RSPartition a b) :
-    DarbouxRS.tagsInPartition P (fun i => P.pts (i + 1)) := by
-  intro i hi
-  exact ⟨le_of_lt (P.strict_mono i hi), le_rfl⟩
+    DarbouxRS.tagsInPartition P (fun i => P.pts i.succ) := by
+  intro i
+  exact ⟨le_of_lt (P.strict_mono Fin.castSucc_lt_succ), le_rfl⟩
 
 /-- Endpoint-product telescoping split into the two endpoint-tagged
 Riemann--Stieltjes sums used in the limiting proof. -/
 theorem prob_1_9_endpoint_split_telescope {f α : ℝ → ℝ} {a b : ℝ}
     (P : RSPartition a b) :
     f b * α b - f a * α a =
-      DarbouxRS.taggedSum P (fun i => P.pts (i + 1)) f α +
-        DarbouxRS.taggedSum P P.pts α f := by
+      DarbouxRS.taggedSum P (fun i => P.pts i.succ) f α +
+        DarbouxRS.taggedSum P (fun i => P.pts i.castSucc) α f := by
   rw [prob_1_9_endpoint_product_telescope (f := f) (α := α) (P := P)]
   unfold DarbouxRS.taggedSum
   rw [← Finset.sum_add_distrib]
   refine Finset.sum_congr rfl ?_
-  intro i hi
+  intro i _hi
   ring
 
 /-- Source part (b), as a finite algebraic identity over the original
-partition cells. Each summand on the right is the contribution of the two
-weak refined cells `[x_i, t_i]` and `[t_i, x_{i+1}]` with tags `x_i` and
-`x_{i+1}` respectively. -/
+partition cells. -/
 theorem prob_1_9_refined_sum_algebra {f α : ℝ → ℝ} {a b : ℝ}
-    (P : RSPartition a b) (tags : ℕ → ℝ) :
+    (P : RSPartition a b) (tags : Fin P.n → ℝ) :
     f b * α b - f a * α a - DarbouxRS.taggedSum P tags α f =
-      ∑ i ∈ Finset.range P.n,
-        (f (P.pts i) * (α (tags i) - α (P.pts i)) +
-          f (P.pts (i + 1)) * (α (P.pts (i + 1)) - α (tags i))) := by
+      ∑ i : Fin P.n,
+        (f (P.pts i.castSucc) * (α (tags i) - α (P.pts i.castSucc)) +
+          f (P.pts i.succ) * (α (P.pts i.succ) - α (tags i))) := by
   rw [prob_1_9_endpoint_product_telescope (P := P)]
   unfold DarbouxRS.taggedSum
   rw [← Finset.sum_sub_distrib]
   refine Finset.sum_congr rfl ?_
-  intro i hi
+  intro i _hi
   ring
+
+/-- Checked Nat view of a strict partition point, used only to build the
+source's interleaved weak chain. -/
+private def prob_1_9_partitionPointNat {a b : ℝ}
+    (P : RSPartition a b) (k : ℕ) : ℝ :=
+  if hk : k ≤ P.n then P.pts ⟨k, Nat.lt_succ_iff.mpr hk⟩ else b
+
+private theorem prob_1_9_partitionPointNat_fin {a b : ℝ}
+    (P : RSPartition a b) (k : Fin (P.n + 1)) :
+    prob_1_9_partitionPointNat P k = P.pts k := by
+  simp [prob_1_9_partitionPointNat, Nat.le_of_lt_succ k.isLt]
+
+private theorem prob_1_9_partitionPointNat_of_le {a b : ℝ}
+    (P : RSPartition a b) {k : ℕ} (hk : k ≤ P.n) :
+    prob_1_9_partitionPointNat P k =
+      P.pts ⟨k, Nat.lt_succ_iff.mpr hk⟩ := by
+  simp [prob_1_9_partitionPointNat, hk]
+
+/-- Checked Nat view of a strict-cell tag. -/
+private def prob_1_9_tagNat {a b : ℝ} (P : RSPartition a b)
+    (tags : Fin P.n → ℝ) (k : ℕ) : ℝ :=
+  if hk : k < P.n then tags ⟨k, hk⟩ else b
+
+private theorem prob_1_9_tagNat_of_lt {a b : ℝ} (P : RSPartition a b)
+    (tags : Fin P.n → ℝ) {k : ℕ} (hk : k < P.n) :
+    prob_1_9_tagNat P tags k = tags ⟨k, hk⟩ := by
+  simp [prob_1_9_tagNat, hk]
 
 /-- The source-refined weak chain
 `x₀,t₀,x₁,t₁,...,t_{n-1},xₙ` attached to a strict partition and one tag
 inside each original cell. -/
 noncomputable def prob_1_9_refinedWeakPartition {a b : ℝ}
-    (P : RSPartition a b) (tags : ℕ → ℝ)
+    (P : RSPartition a b) (tags : Fin P.n → ℝ)
     (htags : DarbouxRS.tagsInPartition P tags) : RSWeakPartition a b where
   n := 2 * P.n
-  pts := fun j => if j % 2 = 0 then P.pts (j / 2) else tags (j / 2)
+  pts := fun j =>
+    if j % 2 = 0 then prob_1_9_partitionPointNat P (j / 2)
+    else prob_1_9_tagNat P tags (j / 2)
   pts_start := by
-    simp [P.pts_start]
+    rw [prob_1_9_partitionPointNat_of_le P (Nat.zero_le P.n)]
+    exact P.pts_start
   pts_end := by
     have hmod : (2 * P.n) % 2 = 0 := by omega
     have hdiv : (2 * P.n) / 2 = P.n := by omega
-    simp [hmod, hdiv, P.pts_end]
+    simp only [hmod, if_pos, hdiv]
+    rw [prob_1_9_partitionPointNat_of_le P le_rfl]
+    exact P.pts_end
   mono := by
     intro j hj
     by_cases heven : j % 2 = 0
     · have hodd_next : (j + 1) % 2 ≠ 0 := by omega
       have hhalf_next : (j + 1) / 2 = j / 2 := by omega
       have hj_half_lt : j / 2 < P.n := by omega
-      have htag := htags (j / 2) hj_half_lt
-      simp [heven, hodd_next, hhalf_next, htag.1]
+      let i : Fin P.n := ⟨j / 2, hj_half_lt⟩
+      have htag := htags i
+      simp only [heven, if_pos, hodd_next, hhalf_next]
+      rw [prob_1_9_partitionPointNat_of_le P (Nat.le_of_lt hj_half_lt)]
+      rw [prob_1_9_tagNat_of_lt P tags hj_half_lt]
+      simpa [i] using htag.1
     · have hnext_even : (j + 1) % 2 = 0 := by omega
       have hhalf_next : (j + 1) / 2 = j / 2 + 1 := by omega
       have hj_half_lt : j / 2 < P.n := by omega
-      have htag := htags (j / 2) hj_half_lt
-      simp [heven, hnext_even, hhalf_next, htag.2]
+      let i : Fin P.n := ⟨j / 2, hj_half_lt⟩
+      have htag := htags i
+      simp only [heven, hnext_even, if_pos, hhalf_next]
+      rw [prob_1_9_tagNat_of_lt P tags hj_half_lt]
+      rw [prob_1_9_partitionPointNat_of_le P (Nat.succ_le_of_lt hj_half_lt)]
+      simpa [i] using htag.2
 
 /-- The source tags on the refined weak chain: left endpoint on each first
 half-cell, right endpoint on each second half-cell. -/
 noncomputable def prob_1_9_refinedWeakTags {a b : ℝ}
     (P : RSPartition a b) : ℕ → ℝ :=
-  fun j => if j % 2 = 0 then P.pts (j / 2) else P.pts (j / 2 + 1)
+  fun j =>
+    if j % 2 = 0 then prob_1_9_partitionPointNat P (j / 2)
+    else prob_1_9_partitionPointNat P (j / 2 + 1)
 
 theorem prob_1_9_refinedWeakTagsIn {a b : ℝ}
-    (P : RSPartition a b) (tags : ℕ → ℝ)
+    (P : RSPartition a b) (tags : Fin P.n → ℝ)
     (htags : DarbouxRS.tagsInPartition P tags) :
     RSWeakPartition.TagsIn
       (prob_1_9_refinedWeakPartition P tags htags)
@@ -178,15 +227,23 @@ theorem prob_1_9_refinedWeakTagsIn {a b : ℝ}
   · have hodd_next : (j + 1) % 2 ≠ 0 := by omega
     have hhalf_next : (j + 1) / 2 = j / 2 := by omega
     have hj_half_lt : j / 2 < P.n := by omega
-    have htag := htags (j / 2) hj_half_lt
-    simp [prob_1_9_refinedWeakPartition, prob_1_9_refinedWeakTags,
-      heven, hodd_next, hhalf_next, htag.1]
+    let i : Fin P.n := ⟨j / 2, hj_half_lt⟩
+    have htag := htags i
+    simp only [prob_1_9_refinedWeakPartition, prob_1_9_refinedWeakTags,
+      heven, if_pos, hodd_next, hhalf_next]
+    rw [prob_1_9_partitionPointNat_of_le P (Nat.le_of_lt hj_half_lt)]
+    rw [prob_1_9_tagNat_of_lt P tags hj_half_lt]
+    simpa [i] using htag.1
   · have hnext_even : (j + 1) % 2 = 0 := by omega
     have hhalf_next : (j + 1) / 2 = j / 2 + 1 := by omega
     have hj_half_lt : j / 2 < P.n := by omega
-    have htag := htags (j / 2) hj_half_lt
-    simp [prob_1_9_refinedWeakPartition, prob_1_9_refinedWeakTags,
-      heven, hnext_even, hhalf_next, htag.2]
+    let i : Fin P.n := ⟨j / 2, hj_half_lt⟩
+    have htag := htags i
+    simp only [prob_1_9_refinedWeakPartition, prob_1_9_refinedWeakTags,
+      heven, hnext_even, if_pos, hhalf_next]
+    rw [prob_1_9_tagNat_of_lt P tags hj_half_lt]
+    rw [prob_1_9_partitionPointNat_of_le P (Nat.succ_le_of_lt hj_half_lt)]
+    simpa [i] using htag.2
 
 private theorem prob_1_9_sum_range_two_mul {β : Type*} [AddCommMonoid β]
     (n : ℕ) (g : ℕ → β) :
@@ -213,7 +270,7 @@ private theorem prob_1_9_sum_range_two_mul {β : Type*} [AddCommMonoid β]
 partition. This is intentionally a weak-partition statement because the source
 chain allows endpoint tags and therefore duplicate adjacent points. -/
 theorem prob_1_9_refined_sum_as_weak_taggedSum {f α : ℝ → ℝ} {a b : ℝ}
-    (P : RSPartition a b) (tags : ℕ → ℝ)
+    (P : RSPartition a b) (tags : Fin P.n → ℝ)
     (htags : DarbouxRS.tagsInPartition P tags) :
     f b * α b - f a * α a - DarbouxRS.taggedSum P tags α f =
       RSWeakPartition.taggedSum
@@ -221,10 +278,33 @@ theorem prob_1_9_refined_sum_as_weak_taggedSum {f α : ℝ → ℝ} {a b : ℝ}
         (prob_1_9_refinedWeakTags P) f α := by
   rw [prob_1_9_refined_sum_algebra (P := P) (tags := tags)]
   unfold RSWeakPartition.taggedSum
+  let originalTermNat : ℕ → ℝ := fun i =>
+    f (prob_1_9_partitionPointNat P i) *
+        (α (prob_1_9_tagNat P tags i) - α (prob_1_9_partitionPointNat P i)) +
+      f (prob_1_9_partitionPointNat P (i + 1)) *
+        (α (prob_1_9_partitionPointNat P (i + 1)) - α (prob_1_9_tagNat P tags i))
+  have horiginal :
+      (∑ i : Fin P.n,
+        (f (P.pts i.castSucc) * (α (tags i) - α (P.pts i.castSucc)) +
+          f (P.pts i.succ) * (α (P.pts i.succ) - α (tags i)))) =
+        ∑ i ∈ Finset.range P.n, originalTermNat i := by
+    calc
+      (∑ i : Fin P.n,
+        (f (P.pts i.castSucc) * (α (tags i) - α (P.pts i.castSucc)) +
+          f (P.pts i.succ) * (α (P.pts i.succ) - α (tags i)))) =
+          ∑ i : Fin P.n, originalTermNat i.val := by
+            refine Finset.sum_congr rfl ?_
+            intro i _hi
+            dsimp [originalTermNat]
+            rw [prob_1_9_partitionPointNat_of_le P (Nat.le_of_lt i.isLt)]
+            rw [prob_1_9_partitionPointNat_of_le P (Nat.succ_le_of_lt i.isLt)]
+            rw [prob_1_9_tagNat_of_lt P tags i.isLt]
+            congr 4
+      _ = ∑ i ∈ Finset.range P.n, originalTermNat i :=
+        Fin.sum_univ_eq_sum_range originalTermNat P.n
+  rw [horiginal]
   change
-    (∑ i ∈ Finset.range P.n,
-      (f (P.pts i) * (α (tags i) - α (P.pts i)) +
-        f (P.pts (i + 1)) * (α (P.pts (i + 1)) - α (tags i)))) =
+    (∑ i ∈ Finset.range P.n, originalTermNat i) =
       ∑ j ∈ Finset.range (2 * P.n),
         f (prob_1_9_refinedWeakTags P j) *
           (α ((prob_1_9_refinedWeakPartition P tags htags).pts (j + 1)) -
@@ -232,13 +312,15 @@ theorem prob_1_9_refined_sum_as_weak_taggedSum {f α : ℝ → ℝ} {a b : ℝ}
   rw [prob_1_9_sum_range_two_mul P.n]
   refine Finset.sum_congr rfl ?_
   intro i hi
+  have hi_lt : i < P.n := Finset.mem_range.mp hi
+  let fi : Fin P.n := ⟨i, hi_lt⟩
   have h2i : (2 * i) % 2 = 0 := by omega
   have h2idiv : (2 * i) / 2 = i := by omega
   have h2i1 : (2 * i + 1) % 2 ≠ 0 := by omega
   have h2i1div : (2 * i + 1) / 2 = i := by omega
   have h2i2 : (2 * i + 1 + 1) % 2 = 0 := by omega
   have h2i2div : (2 * i + 1 + 1) / 2 = i + 1 := by omega
-  simp [prob_1_9_refinedWeakPartition, prob_1_9_refinedWeakTags,
+  simp [originalTermNat, prob_1_9_refinedWeakPartition, prob_1_9_refinedWeakTags,
     h2i, h2idiv, h2i1div, h2i2, h2i2div]
 
 /-- Problem 1.9: Riemann--Stieltjes integration by parts. -/
@@ -264,8 +346,8 @@ theorem prob_1_9 {f α : ℝ → ℝ} {a b : ℝ}
     rcases hlim_αf (eps / 2) hhalf with ⟨δαf, hδαf, Hαf⟩
     rcases DarbouxRS.exists_partition_mesh_lt hablt (lt_min hδfα hδαf) with
       ⟨P, hPmesh⟩
-    let rightTags : ℕ → ℝ := fun i => P.pts (i + 1)
-    let leftTags : ℕ → ℝ := P.pts
+    let rightTags : Fin P.n → ℝ := fun i => P.pts i.succ
+    let leftTags : Fin P.n → ℝ := fun i => P.pts i.castSucc
     have hmesh_fα : P.mesh < δfα := lt_of_lt_of_le hPmesh (min_le_left δfα δαf)
     have hmesh_αf : P.mesh < δαf := lt_of_lt_of_le hPmesh (min_le_right δfα δαf)
     have hright : DarbouxRS.tagsInPartition P rightTags := by
