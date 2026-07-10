@@ -88,6 +88,7 @@ These are not authorities:
 - classification JSON/Markdown;
 - validation and audit reports;
 - old prompt-pack artifacts.
+- retired full-review sidecar `state*.json` / `reviews*.json` files.
 
 Use them for review context, diagnostics, repair planning, and reproducibility.
 Do not hand-edit them to declare completion.
