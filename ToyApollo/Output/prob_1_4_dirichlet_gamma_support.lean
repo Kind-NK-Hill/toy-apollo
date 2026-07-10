@@ -18,9 +18,10 @@ has the Dirichlet law obtained as the normalization pushforward of the product
 Gamma law; its first `n - 1` coordinates have the corresponding projected law;
 and the full Dirichlet law is supported on the simplex.
 
-The remaining analytic bridge is to prove that `ProjectedDirichletLaw` has
-`DirichletPDF` as its density, equivalently to evaluate
-`normalizedGammaDirichletDensity` to the displayed formula.
+Finally the projected Dirichlet law is evaluated to its explicit density:
+`ProjectedDirichletLaw G.shape G.scale` equals
+`volume.withDensity (fun x => ENNReal.ofReal (DirichletPDF G.shape x))`, i.e.
+the pdf of the Dirichlet distribution in (1.4).
 -/
 theorem prob_1_4
     {Ω : Type*} [MeasurableSpace Ω] (mu : Measure Ω) [IsProbabilityMeasure mu]
@@ -29,12 +30,15 @@ theorem prob_1_4
       (DirichletLaw G.shape G.scale) mu ∧
     HasLaw (fun omega => projectedNormalizedGammaVector G omega)
       (ProjectedDirichletLaw G.shape G.scale) mu ∧
-    DirichletLaw G.shape G.scale (DirichletFullSimplex n) = 1 := by
+    DirichletLaw G.shape G.scale (DirichletFullSimplex n) = 1 ∧
+    ProjectedDirichletLaw G.shape G.scale =
+      (volume : Measure (Fin (n - 1) → ℝ)).withDensity
+        (fun x => ENNReal.ofReal (DirichletPDF G.shape x)) := by
   have hXlaw :
       ∀ i, HasLaw (fun omega => G.X omega i) (gammaScaleLaw (G.shape i) G.scale) mu := by
     intro i
     exact ⟨(G.measurable i).aemeasurable, G.gamma_law i⟩
-  refine ⟨?_, ?_, ?_⟩
+  refine ⟨?_, ?_, ?_, ?_⟩
   · simpa [normalizedGammaVector] using
       independent_gamma_normalized_hasLaw_dirichlet mu G.shape G.scale
         (fun i omega => G.X omega i) hXlaw G.independent
@@ -42,6 +46,8 @@ theorem prob_1_4
       projected_normalized_hasLaw_projectedDirichlet mu G.shape G.scale
         (fun i omega => G.X omega i) hXlaw G.independent
   · exact DirichletLaw_simplex_probability_one hn G.shape G.shape_pos G.scale_pos
+  · exact ProjectedDirichletLaw_eq_withDensity_DirichletPDF_positive
+      hn G.shape G.scale G.shape_pos G.scale_pos
 
 /-- The simplex constraint attached to the projected Dirichlet coordinates. -/
 theorem prob_1_4_simplex

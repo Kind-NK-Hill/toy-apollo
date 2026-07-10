@@ -481,6 +481,88 @@ theorem ex123_removed_gaps_probability_zero :
 theorem ex123_singular : IsSingularRealRandomVariable ex123P ex123U :=
   ⟨cantorSet, ex123_volume_cantorSet_eq_zero, ex123_cantor_set_probability_one⟩
 
+/-- If `ex123U` never takes a value in `(u, u']` — because that half-open interval avoids
+the Cantor set, where `ex123U` is supported — then the cdf does not increase from `u` to
+`u'`: `ex123CDF u = ex123CDF u'`. -/
+theorem ex123CDF_flat_step {u u' : ℝ} (huu' : u ≤ u')
+    (hdisj : Disjoint (Set.Ioc u u') cantorSet) :
+    ex123CDF u = ex123CDF u' := by
+  have hpre : ex123U ⁻¹' Set.Iic u' = ex123U ⁻¹' Set.Iic u := by
+    ext ω
+    simp only [Set.mem_preimage, Set.mem_Iic]
+    constructor
+    · intro hle
+      by_contra hnot
+      push_neg at hnot
+      exact (Set.disjoint_left.mp hdisj (Set.mem_Ioc.mpr ⟨hnot, hle⟩))
+        (ex123U_mem_cantorSet ω)
+    · intro hle
+      exact le_trans hle huu'
+  rw [ex123CDF_def, ex123CDF_def, hpre]
+
+/-- The cdf is flat on every removed gap: on any open interval contained in the union
+`ex123T` of the removed middle-third gaps, `ex123CDF` is constant. This upgrades the three
+displayed-gap flatness facts to *all* removed gaps. -/
+theorem ex123CDF_flat_on_removed_gaps {a b u u' : ℝ}
+    (hsub : Set.Ioo a b ⊆ ex123T)
+    (hu : u ∈ Set.Ioo a b) (hu' : u' ∈ Set.Ioo a b) :
+    ex123CDF u = ex123CDF u' := by
+  have hTc : ex123T ⊆ (cantorSetᶜ : Set ℝ) := by
+    rw [ex123_removed_gaps_union]
+    exact fun x hx => hx.2
+  have hdisj : ∀ {p q : ℝ}, p ∈ Set.Ioo a b → q ∈ Set.Ioo a b →
+      Disjoint (Set.Ioc p q) cantorSet := by
+    intro p q hp hq
+    rw [Set.disjoint_left]
+    intro y hy hyC
+    have hyab : y ∈ Set.Ioo a b :=
+      ⟨lt_trans hp.1 hy.1, lt_of_le_of_lt hy.2 hq.2⟩
+    exact hTc (hsub hyab) hyC
+  rcases le_total u u' with h | h
+  · exact ex123CDF_flat_step h (hdisj hu hu')
+  · exact (ex123CDF_flat_step h (hdisj hu' hu)).symm
+
+/-- Away from the measure-zero Cantor set, `ex123U` avoids a whole neighbourhood, so the
+real-valued cdf `fun t => (ex123CDF t).toReal` is locally constant and has derivative `0`. -/
+theorem ex123CDF_hasDerivAt_zero_of_notMem {x : ℝ} (hx : x ∉ cantorSet) :
+    HasDerivAt (fun t => (ex123CDF t).toReal) 0 x := by
+  have hxc : x ∈ (cantorSetᶜ : Set ℝ) := hx
+  have hopen : IsOpen (cantorSetᶜ : Set ℝ) := isClosed_cantorSet.isOpen_compl
+  obtain ⟨ε, hε, hball⟩ := Metric.isOpen_iff.mp hopen x hxc
+  have hIoo : Set.Ioo (x - ε) (x + ε) ⊆ (cantorSetᶜ : Set ℝ) := by
+    rw [← Real.ball_eq_Ioo]; exact hball
+  have hconst : (fun t => (ex123CDF t).toReal)
+      =ᶠ[nhds x] fun _ => (ex123CDF x).toReal := by
+    filter_upwards [Ioo_mem_nhds (show x - ε < x by linarith) (show x < x + ε by linarith)]
+      with t ht
+    have hdisj : ∀ {p q : ℝ}, p ∈ Set.Ioo (x - ε) (x + ε) →
+        q ∈ Set.Ioo (x - ε) (x + ε) → Disjoint (Set.Ioc p q) cantorSet := by
+      intro p q hp hq
+      rw [Set.disjoint_left]
+      intro y hy hyC
+      have hyIoo : y ∈ Set.Ioo (x - ε) (x + ε) :=
+        ⟨lt_trans hp.1 hy.1, lt_of_le_of_lt hy.2 hq.2⟩
+      exact hIoo hyIoo hyC
+    have hxIoo : x ∈ Set.Ioo (x - ε) (x + ε) := ⟨by linarith, by linarith⟩
+    have hkey : ex123CDF t = ex123CDF x := by
+      rcases le_total t x with h | h
+      · exact ex123CDF_flat_step h (hdisj ht hxIoo)
+      · exact (ex123CDF_flat_step h (hdisj hxIoo ht)).symm
+    rw [hkey]
+  exact (hasDerivAt_const x ((ex123CDF x).toReal)).congr_of_eventuallyEq hconst
+
+/-- **Zero slope almost everywhere.** The cdf of the Cantor random variable has derivative
+`0` at Lebesgue-almost every point, since the exceptional set is contained in the
+measure-zero Cantor set. -/
+theorem ex123CDF_deriv_zero_ae :
+    ∀ᵐ x ∂(volume : Measure ℝ), HasDerivAt (fun t => (ex123CDF t).toReal) 0 x := by
+  rw [ae_iff]
+  refine measure_mono_null ?_ ex123_volume_cantorSet_eq_zero
+  intro x hx
+  simp only [Set.mem_setOf_eq] at hx
+  by_contra hxC
+  exact hx (ex123CDF_hasDerivAt_zero_of_notMem hxC)
+
 /-- Proof-bodied package for the currently closed part of Example 1.2.3. -/
 structure CantorDistributionExample where
   Ω : Type
@@ -519,6 +601,11 @@ structure CantorDistributionExample where
   cantor_set_volume_zero : volume cantorSet = 0
   singular : IsSingularRealRandomVariable P U
   cantor_binary_equiv : cantorSet ≃ (ℕ → Bool)
+  cdf_flat_on_removed_gaps :
+    ∀ {a b u u' : ℝ}, Set.Ioo a b ⊆ removed_gaps →
+      u ∈ Set.Ioo a b → u' ∈ Set.Ioo a b → cdf u = cdf u'
+  cdf_deriv_zero_ae :
+    ∀ᵐ x ∂(volume : Measure ℝ), HasDerivAt (fun t => (cdf t).toReal) 0 x
 
 /-- The instantiated Cantor distribution construction with proof-bodied first-gap facts. -/
 def ex_1_2_3 : CantorDistributionExample where
@@ -552,6 +639,8 @@ def ex_1_2_3 : CantorDistributionExample where
   cantor_set_volume_zero := ex123_volume_cantorSet_eq_zero
   singular := ex123_singular
   cantor_binary_equiv := cantorSetEquivNatToBool
+  cdf_flat_on_removed_gaps := ex123CDF_flat_on_removed_gaps
+  cdf_deriv_zero_ae := ex123CDF_deriv_zero_ae
 
 /-- The Cantor set corresponds to infinite binary sequences. -/
 theorem ex_1_2_3_cantor_binary_equiv : Nonempty (cantorSet ≃ (ℕ → Bool)) := by
@@ -566,3 +655,18 @@ gaps. -/
 theorem ex_1_2_3_removed_gaps_probability_zero :
     ex123P (ex123U ⁻¹' ex123T) = 0 :=
   ex_1_2_3.removed_gaps_probability_zero
+
+/-- The cdf of the Cantor random variable is flat on every removed middle-third gap:
+if an open interval lies in the union `ex123T` of removed gaps, the cdf is constant on it.
+This is the "cdf is flat on all removed gaps" statement of Example 1.2.3. -/
+theorem ex_1_2_3_cdf_flat_on_removed_gaps {a b u u' : ℝ}
+    (hsub : Set.Ioo a b ⊆ ex123T)
+    (hu : u ∈ Set.Ioo a b) (hu' : u' ∈ Set.Ioo a b) :
+    ex123CDF u = ex123CDF u' :=
+  ex123CDF_flat_on_removed_gaps hsub hu hu'
+
+/-- The cdf of the Cantor random variable has zero slope almost everywhere: its
+real-valued cdf has derivative `0` at Lebesgue-almost every point. -/
+theorem ex_1_2_3_cdf_deriv_zero_ae :
+    ∀ᵐ x ∂(volume : Measure ℝ), HasDerivAt (fun t => (ex123CDF t).toReal) 0 x :=
+  ex123CDF_deriv_zero_ae
