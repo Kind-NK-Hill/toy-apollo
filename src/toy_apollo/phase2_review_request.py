@@ -418,6 +418,7 @@ def build_semantic_review_basis(
     review_subject_kind: str,
     review_subject_hash: str = "",
     review_subject_file: str | Path | None = None,
+    materialize_proof_obligations: bool = True,
 ) -> dict[str, Any]:
     task_id = task["block_id"]
     pack_dir = settings.phase2_prompt_packs_dir / task_id
@@ -430,14 +431,20 @@ def build_semantic_review_basis(
     )
     current_record = ledger.ledger.get("tasks", {}).get(task_id, {})
     current_record = current_record if isinstance(current_record, dict) else {}
-    proof_obligations = maybe_ensure_proof_obligations_file(
-        obligations_pack_dir,
-        obligations_task,
-        current_record=ledger.ledger.get("tasks", {}).get(output_binding.output_owner_task_id, {})
+    obligations_record = (
+        ledger.ledger.get("tasks", {}).get(output_binding.output_owner_task_id, {})
         if output_binding.is_obligation_task
-        else current_record if isinstance(current_record, dict) else {},
-        tracking_level=2,
+        else current_record if isinstance(current_record, dict) else {}
     )
+    if materialize_proof_obligations:
+        proof_obligations = maybe_ensure_proof_obligations_file(
+            obligations_pack_dir,
+            obligations_task,
+            current_record=obligations_record,
+            tracking_level=2,
+        )
+    else:
+        proof_obligations = load_existing_proof_obligations_file(obligations_pack_dir, obligations_task)
     if output_binding.is_obligation_task:
         proof_obligations_owner_file = output_binding.proof_obligations_file.as_posix()
     elif proof_obligations is not None:
@@ -637,6 +644,7 @@ def _validate_review_input_freshness(
         review_subject_kind=review_subject_kind,
         review_subject_hash=current_review_subject_hash,
         review_subject_file=subject_file_path,
+        materialize_proof_obligations=False,
     )
     if sha256_json(current_review_basis) != expected_review_basis_hash:
         return "semantic review basis changed since review generation", {}

@@ -372,7 +372,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
-    def test_codex_review_apply_missing_class_pass_is_non_clean(self):
+    def test_codex_review_apply_missing_class_is_non_mutating_and_same_request_can_retry(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_missing_class_task_status"
         try:
             self._clean_root(root)
@@ -382,11 +382,39 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertTrue(build_success, build_detail)
             review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
             self.assertTrue(review_success, review_detail)
+            obligations_path = pack_dir / "proof_obligations.json"
+            obligations_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "phase2.proof_obligations.v1",
+                        "task_id": task_id,
+                        "classification": {"requires_decomposition": False, "reason": "test", "evidence": []},
+                        "obligations": [],
+                        "scaffold_hypotheses": [],
+                        "review_history": [],
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            # Regenerate the request after installing the obligation evidence so
+            # the freshness basis intentionally includes this file.
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
             result_path = self._write_codex_review_result(pack_dir, verdict="pass")
             result_payload = json.loads(result_path.read_text(encoding="utf-8"))
             result_payload.pop("proof_class", None)
             result_payload.pop("completion_class", None)
             result_path.write_text(json.dumps(result_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+            ledger_before = json.dumps(ledger.ledger, ensure_ascii=False, sort_keys=True)
+            ledger_file_before = settings.project_ledger_file.read_text(encoding="utf-8")
+            result_before = result_path.read_text(encoding="utf-8")
+            obligations_before = obligations_path.read_text(encoding="utf-8")
+            history_before = (pack_dir / "attempt_history.json").read_text(encoding="utf-8")
+            verify_files_before = sorted(path.name for path in pack_dir.glob("verify_result_v*.json"))
+            result_alias_existed_before = (pack_dir / "semantic_review_result.json").exists()
 
             def promote_side_effect(*args, **kwargs):
                 output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -404,13 +432,34 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
 
             self.assertFalse(success, detail)
             self.assertFalse(output_path.exists())
-            task_record = ledger.ledger["tasks"][task_id]
-            self.assertEqual(task_record["status"], "PACKED")
-            self.assertEqual(task_record["phase2_status"], "fail")
-            self.assertEqual(task_record["phase2_task_status"], "fail")
-            self.assertTrue(task_record["phase2_needs_class_normalization"])
-            self.assertIn("needs_class_normalization", task_record["phase2_task_status_evidence_type"])
-            self.assertIn("Non-clean apply", detail)
+            self.assertIn("proof_class", detail)
+            self.assertIn("completion_class", detail)
+            self.assertEqual(json.dumps(ledger.ledger, ensure_ascii=False, sort_keys=True), ledger_before)
+            self.assertEqual(settings.project_ledger_file.read_text(encoding="utf-8"), ledger_file_before)
+            self.assertEqual(result_path.read_text(encoding="utf-8"), result_before)
+            self.assertEqual(obligations_path.read_text(encoding="utf-8"), obligations_before)
+            self.assertEqual((pack_dir / "attempt_history.json").read_text(encoding="utf-8"), history_before)
+            self.assertEqual(sorted(path.name for path in pack_dir.glob("verify_result_v*.json")), verify_files_before)
+            self.assertEqual((pack_dir / "semantic_review_result.json").exists(), result_alias_existed_before)
+
+            corrected = json.loads(result_path.read_text(encoding="utf-8"))
+            corrected["proof_class"] = "source_route_proof_completed"
+            corrected["completion_class"] = "source_route_proof_completed"
+            result_path.write_text(json.dumps(corrected, indent=2, ensure_ascii=False), encoding="utf-8")
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                side_effect=promote_side_effect,
+            ), patch(
+                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                side_effect=promote_side_effect,
+            ):
+                retry_success, retry_detail = asyncio.run(
+                    apply_codex_review_result(task_id, ledger, settings, str(result_path))
+                )
+
+            self.assertTrue(retry_success, retry_detail)
+            self.assertTrue(output_path.exists())
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -1084,7 +1133,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
-    def test_codex_review_apply_invalid_result_does_not_leave_active_auto_loop_state(self):
+    def test_codex_review_apply_invalid_result_preserves_active_auto_loop_state(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_invalid_clears_auto_loop"
         try:
             self._clean_root(root)
@@ -1121,9 +1170,11 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
                 detail,
             )
             task_record = ledger.ledger["tasks"][task_id]
-            self.assertEqual(task_record.get("current_auto_loop_status"), "")
-            self.assertEqual(task_record.get("current_auto_loop_phase"), "")
+            self.assertEqual(task_record.get("current_auto_loop_status"), "active")
+            self.assertEqual(task_record.get("current_auto_loop_phase"), "applying")
             self.assertEqual(task_record.get("current_auto_loop_stop_reason"), "")
+            self.assertEqual(task_record.get("current_auto_loop_last_candidate_hash"), "candidate-hash")
+            self.assertEqual(task_record.get("current_auto_loop_last_review_fingerprint"), "review-fingerprint")
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -1142,6 +1193,9 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             payload = json.loads(result_path.read_text(encoding="utf-8"))
             payload["downstream_adequacy"]["consumers_checked"] = []
             result_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+            result_before = result_path.read_text(encoding="utf-8")
+            ledger_before = json.dumps(ledger.ledger, ensure_ascii=False, sort_keys=True)
+            history_before = (pack_dir / "attempt_history.json").read_text(encoding="utf-8")
 
             success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
 
@@ -1151,6 +1205,9 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             task_record = ledger.ledger["tasks"][task_id]
             self.assertEqual(str(task_record.get("current_review_repair_request_file", "") or ""), "")
             self.assertEqual(str(task_record.get("current_review_repair_seed_file", "") or ""), "")
+            self.assertEqual(result_path.read_text(encoding="utf-8"), result_before)
+            self.assertEqual(json.dumps(ledger.ledger, ensure_ascii=False, sort_keys=True), ledger_before)
+            self.assertEqual((pack_dir / "attempt_history.json").read_text(encoding="utf-8"), history_before)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

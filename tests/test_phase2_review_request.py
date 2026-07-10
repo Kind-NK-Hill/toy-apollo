@@ -115,6 +115,44 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_freshness_validation_does_not_recreate_missing_proof_obligations(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_freshness_read_only"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_freshness_read_only"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id, completed=True)
+            plan_path = settings.plans_dir / "08_chap4_measurable_functions_plan.json"
+            plan_payload = json.loads(plan_path.read_text(encoding="utf-8"))
+            plan_payload[0]["content"] = (
+                "Proof. Construct the representation, split cases, establish intermediate lemmas, "
+                "pass to the limit, and conclude by contradiction. " * 30
+            )
+            plan_path.write_text(json.dumps(plan_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "build ok"),
+            ):
+                success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
+            self.assertTrue(success, detail)
+            obligations_path = pack_dir / "proof_obligations.json"
+            self.assertTrue(obligations_path.exists())
+            review_input = json.loads((pack_dir / "semantic_review_input_v1.json").read_text(encoding="utf-8"))
+            obligations_path.unlink()
+            self.assertFalse(obligations_path.exists())
+
+            error, _ = _validate_review_input_freshness(
+                task=resolve_phase2_task(task_id, ledger, settings),
+                ledger=ledger,
+                settings=settings,
+                pack_dir=pack_dir,
+                review_input=review_input,
+            )
+
+            self.assertIn("basis changed", error)
+            self.assertFalse(obligations_path.exists())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_review_now_current_rejects_stale_basis_request(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_now_stale_basis"
         try:
