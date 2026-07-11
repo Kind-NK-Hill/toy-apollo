@@ -1,101 +1,99 @@
-import Mathlib
+import Mathlib.Probability.CDF
+import ToyApollo.Output.def_1_4
 import ToyApollo.Output.def_1_3_kenneth_finite_support
 
-open MeasureTheory
-open scoped ENNReal
+open MeasureTheory ProbabilityTheory
 
 noncomputable section
 
-/-- The measure induced by a monotone cdf-like integrator. -/
-def cdfMeasure (F : ℝ → ℝ) (hF : Monotone F) : Measure ℝ :=
-  hF.stieltjesFunction.measure
+/-!
+# Definition 1.3: expectation and variance from a probability CDF
 
-/-- The cdf-side expectation exists as a finite Bochner integral. -/
-def CdfHasExpectation (F : ℝ → ℝ) (hF : Monotone F) : Prop :=
-  Integrable (fun x : ℝ => x) (cdfMeasure F hF)
+The public integrator is `ProbabilityTheory.cdf μ` for an actual probability
+measure `μ`. Whole-line values use the proof-carrying double-limit interface of
+Definition 1.4. Kenneth's finite discrete, jump, density, and variance proofs
+remain compiled support through the import above.
+-/
 
-/-- The cdf-side variance integral exists once the mean value is fixed. -/
-def CdfHasVariance (F : ℝ → ℝ) (hF : Monotone F) (m : ℝ) : Prop :=
-  Integrable (fun x : ℝ => (x - m) ^ 2) (cdfMeasure F hF)
+/-- The textbook whole-line CDF expectation exists and is finite. -/
+def CdfHasExpectationRS (μ : Measure ℝ) [IsProbabilityMeasure μ] : Prop :=
+  ImproperRSIntegrable (fun x : ℝ => x) (cdf μ)
 
-/-- Expectation defined from a cdf via its Stieltjes measure, guarded by existence. -/
-noncomputable def cdfExpectation (F : ℝ → ℝ) (hF : Monotone F)
-    (_hMean : CdfHasExpectation F hF) : ℝ :=
-  ∫ x, x ∂cdfMeasure F hF
+/-- The textbook whole-line CDF variance about `m` exists and is finite. -/
+def CdfHasVarianceRS (μ : Measure ℝ) [IsProbabilityMeasure μ] (m : ℝ) : Prop :=
+  ImproperRSIntegrable (fun x : ℝ => (x - m) ^ 2) (cdf μ)
 
-/-- Variance defined from a cdf via its Stieltjes measure, guarded by existence. -/
-noncomputable def cdfVariance (F : ℝ → ℝ) (hF : Monotone F) (m : ℝ)
-    (_hVar : CdfHasVariance F hF m) : ℝ :=
-  ∫ x, (x - m) ^ 2 ∂cdfMeasure F hF
+/-- Expectation chosen from the guarded improper Riemann--Stieltjes limit. -/
+def cdfExpectationRS (μ : Measure ℝ) [IsProbabilityMeasure μ]
+    (h : CdfHasExpectationRS μ) : ℝ :=
+  improperRSIntegral (fun x : ℝ => x) (cdf μ) h
 
-/-- The density-side expectation exists as an ordinary integral. -/
-def DensityHasExpectation (fX : ℝ → ℝ) : Prop :=
-  Integrable (fun x : ℝ => x * fX x) volume
+/-- The chosen expectation satisfies the source double-limit specification. -/
+theorem cdfExpectationRS_spec (μ : Measure ℝ) [IsProbabilityMeasure μ]
+    (h : CdfHasExpectationRS μ) :
+    ImproperRSConvergesTo (fun x : ℝ => x) (cdf μ) (cdfExpectationRS μ h) := by
+  exact improperRSIntegral_spec h
 
-/-- The density-side variance integral exists once the mean value is fixed. -/
-def DensityHasVariance (fX : ℝ → ℝ) (m : ℝ) : Prop :=
-  Integrable (fun x : ℝ => (x - m) ^ 2 * fX x) volume
+/-- Variance chosen from the guarded improper Riemann--Stieltjes limit. -/
+def cdfVarianceRS (μ : Measure ℝ) [IsProbabilityMeasure μ] (m : ℝ)
+    (h : CdfHasVarianceRS μ m) : ℝ :=
+  improperRSIntegral (fun x : ℝ => (x - m) ^ 2) (cdf μ) h
 
-/-- Ordinary expectation formula when the cdf admits a density. -/
-noncomputable def expectationFromDensity (fX : ℝ → ℝ)
-    (_hMean : DensityHasExpectation fX) : ℝ :=
-  ∫ x, x * fX x
+/-- The chosen variance satisfies the source double-limit specification. -/
+theorem cdfVarianceRS_spec (μ : Measure ℝ) [IsProbabilityMeasure μ]
+    (m : ℝ) (h : CdfHasVarianceRS μ m) :
+    ImproperRSConvergesTo (fun x : ℝ => (x - m) ^ 2) (cdf μ)
+      (cdfVarianceRS μ m h) := by
+  exact improperRSIntegral_spec h
 
-/-- Ordinary variance formula when the cdf admits a density. -/
-noncomputable def varianceFromDensity (fX : ℝ → ℝ) (m : ℝ)
-    (_hVar : DensityHasVariance fX m) : ℝ :=
-  ∫ x, (x - m) ^ 2 * fX x
+/-- Proof irrelevance of the expectation witness. -/
+theorem cdfExpectationRS_proof_irrel (μ : Measure ℝ) [IsProbabilityMeasure μ]
+    (h₁ h₂ : CdfHasExpectationRS μ) :
+    cdfExpectationRS μ h₁ = cdfExpectationRS μ h₂ := by
+  exact ImproperRSConvergesTo.unique (cdfExpectationRS_spec μ h₁)
+    (cdfExpectationRS_spec μ h₂)
 
-/-- Source-facing statement that the cdf measure has ordinary density `fX`. -/
-structure CdfDensity (F : ℝ → ℝ) (hF : Monotone F) (fX : ℝ → ℝ) : Prop where
-  measure_eq : cdfMeasure F hF = volume.withDensity (fun x => ENNReal.ofReal (fX x))
-  density_aemeasurable : AEMeasurable (fun x => ENNReal.ofReal (fX x)) volume
-  density_nonnegative : ∀ᵐ x ∂volume, 0 ≤ fX x
+/-- Proof irrelevance of a variance witness about a fixed centre. -/
+theorem cdfVarianceRS_proof_irrel (μ : Measure ℝ) [IsProbabilityMeasure μ]
+    (m : ℝ) (h₁ h₂ : CdfHasVarianceRS μ m) :
+    cdfVarianceRS μ m h₁ = cdfVarianceRS μ m h₂ := by
+  exact ImproperRSConvergesTo.unique (cdfVarianceRS_spec μ m h₁)
+    (cdfVarianceRS_spec μ m h₂)
 
-/-- Density simplification of the cdf expectation. -/
-theorem cdfExpectation_eq_expectationFromDensity {F fX : ℝ → ℝ} {hF : Monotone F}
-    (hMean : CdfHasExpectation F hF)
-    (hDensityMean : DensityHasExpectation fX)
-    (hDensity : CdfDensity F hF fX) :
-    cdfExpectation F hF hMean = expectationFromDensity fX hDensityMean := by
-  rw [cdfExpectation, expectationFromDensity, hDensity.measure_eq]
-  rw [integral_withDensity_eq_integral_toReal_smul₀ hDensity.density_aemeasurable]
-  · apply integral_congr_ae
-    filter_upwards [hDensity.density_nonnegative] with x hx
-    simp [ENNReal.toReal_ofReal hx, smul_eq_mul, mul_comm]
-  · filter_upwards with x
-    exact ENNReal.ofReal_lt_top
+/-- Guarded expectation-and-variance data for Definition 1.3. -/
+structure CdfMomentData (μ : Measure ℝ) [IsProbabilityMeasure μ] where
+  mean_integrable : CdfHasExpectationRS μ
+  variance_integrable : CdfHasVarianceRS μ (cdfExpectationRS μ mean_integrable)
 
-/-- Density simplification of the cdf variance around the same mean. -/
-theorem cdfVariance_eq_varianceFromDensity {F fX : ℝ → ℝ} {hF : Monotone F} {m : ℝ}
-    (hVar : CdfHasVariance F hF m)
-    (hDensityVar : DensityHasVariance fX m)
-    (hDensity : CdfDensity F hF fX) :
-    cdfVariance F hF m hVar = varianceFromDensity fX m hDensityVar := by
-  rw [cdfVariance, varianceFromDensity, hDensity.measure_eq]
-  rw [integral_withDensity_eq_integral_toReal_smul₀ hDensity.density_aemeasurable]
-  · apply integral_congr_ae
-    filter_upwards [hDensity.density_nonnegative] with x hx
-    simp [ENNReal.toReal_ofReal hx, smul_eq_mul, mul_comm]
-  · filter_upwards with x
-    exact ENNReal.ofReal_lt_top
+namespace CdfMomentData
 
-/-- Packaged expectation/variance data associated to a cdf, with existence guards. -/
-structure CdfMomentData (F : ℝ → ℝ) (hF : Monotone F) where
-  expectation_integrable : CdfHasExpectation F hF
-  expectation : ℝ
-  expectation_eq : expectation = cdfExpectation F hF expectation_integrable
-  variance_integrable : CdfHasVariance F hF expectation
-  variance : ℝ
-  variance_eq : variance = cdfVariance F hF expectation variance_integrable
+/-- The expectation carried by Definition 1.3 data. -/
+def expectation {μ : Measure ℝ} [IsProbabilityMeasure μ]
+    (d : CdfMomentData μ) : ℝ :=
+  cdfExpectationRS μ d.mean_integrable
 
-/-- Exported definition for Definition 1.3. -/
-noncomputable def def_1_3 (F : ℝ → ℝ) (hF : Monotone F)
-    (hMean : CdfHasExpectation F hF)
-    (hVar : CdfHasVariance F hF (cdfExpectation F hF hMean)) : CdfMomentData F hF where
-  expectation_integrable := hMean
-  expectation := cdfExpectation F hF hMean
-  expectation_eq := rfl
-  variance_integrable := hVar
-  variance := cdfVariance F hF (cdfExpectation F hF hMean) hVar
-  variance_eq := rfl
+/-- The variance carried by Definition 1.3 data. -/
+def variance {μ : Measure ℝ} [IsProbabilityMeasure μ]
+    (d : CdfMomentData μ) : ℝ :=
+  cdfVarianceRS μ d.expectation d.variance_integrable
+
+theorem expectation_spec {μ : Measure ℝ} [IsProbabilityMeasure μ]
+    (d : CdfMomentData μ) :
+    ImproperRSConvergesTo (fun x : ℝ => x) (cdf μ) d.expectation :=
+  cdfExpectationRS_spec μ d.mean_integrable
+
+theorem variance_spec {μ : Measure ℝ} [IsProbabilityMeasure μ]
+    (d : CdfMomentData μ) :
+    ImproperRSConvergesTo (fun x : ℝ => (x - d.expectation) ^ 2) (cdf μ)
+      d.variance :=
+  cdfVarianceRS_spec μ d.expectation d.variance_integrable
+
+end CdfMomentData
+
+/-- Definition 1.3 for the genuine probability law `μ`. -/
+def def_1_3 (μ : Measure ℝ) [IsProbabilityMeasure μ] := CdfMomentData μ
+
+/-- The Stieltjes measure of the public CDF is the original probability law. -/
+theorem def_1_3_cdf_measure (μ : Measure ℝ) [IsProbabilityMeasure μ] :
+    (cdf μ).measure = μ :=
+  measure_cdf μ
