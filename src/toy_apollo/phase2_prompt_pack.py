@@ -506,6 +506,18 @@ def _merge_effective_task_imports(task: dict[str, Any], task_id: str, ledger: Le
             if dep not in stale_pack_hard_deps or dep in hard_deps or dep in soft_imports
         )
         import_union = canonicalize_id_list(hard_deps + soft_imports + import_union)
+    soft_imports_confirmed = bool(
+        str(record.get("soft_imports_confirmed_at", "") or "").strip()
+    ) if isinstance(record, dict) else False
+    if soft_imports_confirmed and isinstance(snapshot, dict):
+        stale_pack_soft_imports = set(soft_imports)
+        soft_imports = canonicalize_id_list(snapshot.get("soft_imports", []))
+        import_union = canonicalize_id_list(
+            dep
+            for dep in import_union
+            if dep not in stale_pack_soft_imports or dep in hard_deps or dep in soft_imports
+        )
+        import_union = canonicalize_id_list(hard_deps + soft_imports + import_union)
     is_obligation_task = str(merged.get("type", "") or "").strip() == "Phase2ObligationTask"
     if is_obligation_task and pack_has_import_manifest:
         snapshot_soft_imports = canonicalize_id_list(
