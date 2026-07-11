@@ -299,7 +299,6 @@ def _dependency_status(task: dict[str, Any], ledger: LedgerManager, settings) ->
                 "official_output_exists": output_exists,
                 "official_output_hash": _hash_file(output_path) if output_path else "",
                 "proof_obligation_summary": record.get("proof_obligation_summary", {}) if isinstance(record.get("proof_obligation_summary", {}), dict) else {},
-                "latest_semantic_review_result_file": str(record.get("latest_semantic_review_result_file", "") or ""),
             }
         )
     return status
@@ -339,8 +338,6 @@ def _ledger_status_evidence(
         "task_status": str(record.get("status", "") or ""),
         "output_owner_task_id": output_owner_task_id,
         "output_owner_status": str(owner.get("status", "") or ""),
-        "latest_build_result_file": str(record.get("latest_build_result_file", "") or ""),
-        "latest_build_ready_candidate_file": str(record.get("latest_build_ready_candidate_file", "") or ""),
         "latest_build_ready_candidate_hash": str(record.get("latest_build_ready_candidate_hash", "") or ""),
         # Do not include the latest review-result artifact here.  Creating a new
         # request refreshes that alias, so either its path or its presence would

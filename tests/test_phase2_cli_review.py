@@ -483,6 +483,47 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_process_target_review_now_failure_exits_nonzero(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        root = REPO_ROOT / "tests" / "_tmp_phase2_cli_review_now_failure"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_cli_review_now_failure"
+            ledger, settings, _, _ = self._setup_trivial_phase2_task(root, task_id)
+            args = argparse.Namespace(
+                phase=2,
+                input="",
+                tasks=task_id,
+                task_ids=[task_id],
+                phase2_mode="review-now",
+                phase3_mode="soft-pack",
+                candidate="",
+                review_result="",
+                review_subject="existing",
+                auto_apply_pass=False,
+                abandon_current_repair=False,
+                max_auto_rounds=6,
+                nonprogress_limit=2,
+                max_build_attempts_per_round=3,
+                selection="",
+                batch="",
+                status=False,
+            )
+            with patch.object(cli_app, "get_settings", return_value=settings), patch(
+                "src.toy_apollo.core.LedgerManager",
+                return_value=ledger,
+            ), patch(
+                "src.toy_apollo.phase2_review_loop.run_codex_review_now",
+                new=AsyncMock(return_value=(False, "basis changed")),
+            ), patch("builtins.print"):
+                with self.assertRaises(SystemExit) as caught:
+                    asyncio.run(cli_app.process_target(args))
+
+            self.assertEqual(caught.exception.code, 1)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_process_target_auto_loop_prints_continue_now_banner(self):
         from src.toy_apollo.cli import app as cli_app
 

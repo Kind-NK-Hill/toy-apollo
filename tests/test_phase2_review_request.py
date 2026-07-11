@@ -477,6 +477,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
                 root / "legacy-artifact-root" / task_id / "semantic_review_result.json"
             )
             (pack_dir / "semantic_review_result.json").write_text("{}\n", encoding="utf-8")
+            ledger.save()
 
             with patch(
                 "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
