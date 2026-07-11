@@ -342,7 +342,10 @@ def _ledger_status_evidence(
         "latest_build_result_file": str(record.get("latest_build_result_file", "") or ""),
         "latest_build_ready_candidate_file": str(record.get("latest_build_ready_candidate_file", "") or ""),
         "latest_build_ready_candidate_hash": str(record.get("latest_build_ready_candidate_hash", "") or ""),
-        "latest_semantic_review_result_file": str(record.get("latest_semantic_review_result_file", "") or ""),
+        # Do not include the latest review-result artifact here.  Creating a new
+        # request refreshes that alias, so either its path or its presence would
+        # make review-now invalidate the request it just generated.  Review
+        # provenance is bound separately by the request/input/result hashes.
         "proof_obligation_summary": owner.get("proof_obligation_summary", {}) if isinstance(owner.get("proof_obligation_summary", {}), dict) else {},
     }
 

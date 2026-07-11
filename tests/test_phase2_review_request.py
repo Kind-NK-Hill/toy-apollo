@@ -441,6 +441,36 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_review_now_existing_survives_review_artifact_path_rebinding(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_now_existing_path_rebinding"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_now_existing_path_rebinding"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(
+                root,
+                task_id,
+                completed=True,
+            )
+            self.assertTrue(output_path.exists())
+            ledger.ledger["tasks"][task_id]["latest_semantic_review_result_file"] = str(
+                root / "legacy-artifact-root" / task_id / "semantic_review_result.json"
+            )
+            (pack_dir / "semantic_review_result.json").write_text("{}\n", encoding="utf-8")
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "build ok"),
+            ):
+                success, detail = asyncio.run(
+                    run_codex_review_now(task_id, ledger, settings, review_subject="existing")
+                )
+
+            self.assertTrue(success, detail)
+            self.assertIn("request is ready", detail.lower())
+            self.assertTrue((pack_dir / "semantic_review_request_v1.json").exists())
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_review_now_current_reprepares_existing_subject_after_result_exists(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_now_reprepare_existing"
         try:
