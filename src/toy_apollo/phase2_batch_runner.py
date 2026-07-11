@@ -13,9 +13,14 @@ from src.block_id_naming import canonicalize_block_id
 from .phase2_batch_controller import BatchReport, analyze_batch_state, _task_has_family_consumable_support
 from .phase2_math_review_gate import math_review_gate_blocker, math_review_gate_state
 from .phase2_pack_shared.io import read_json_safely, sha256_json
+from .phase2_pack_generation import resolve_phase2_task
 from .phase2_proof_obligations import summarize_proof_obligations
 from .phase2_review_decision import evaluate_semantic_review_result
-from .phase2_review_request import _resolve_review_binding_path, _validate_review_input_freshness
+from .phase2_review_request import (
+    _load_current_codex_review_request,
+    _resolve_review_binding_path,
+    _validate_review_input_freshness,
+)
 
 
 DIAGNOSER_RESULT_PREFIX = "diagnoser_result"
@@ -109,6 +114,7 @@ def plan_batch_from_ledger(
             raw_tasks.get(row.task_id, {}),
             fanout.get(row.task_id, 0),
             raw_tasks=raw_tasks,
+            ledger=ledger,
         )
         for row in report.rows
     )
@@ -759,6 +765,7 @@ def _action_for_row(
     raw_task: dict[str, Any] | None = None,
     fanout: int = 0,
     raw_tasks: dict[str, dict[str, Any]] | None = None,
+    ledger=None,
 ) -> BatchRunnerAction:
     raw_task = raw_task if isinstance(raw_task, dict) else {}
     raw_tasks = raw_tasks if isinstance(raw_tasks, dict) else {}
@@ -825,9 +832,45 @@ def _action_for_row(
         )
     if row.task_status == "blocked":
         return action("blocked", "", row.task_status_reason or "dependency gate blocked")
-    reviewer_reason = _reviewer_required_blocker(raw_task)
+    reviewer_reason, stale_request_reason = _reviewer_required_blocker(
+        row.task_id,
+        raw_task,
+        ledger=ledger,
+        settings=settings,
+    )
     if reviewer_reason:
         return action("reviewer_required", "", reviewer_reason)
+    if stale_request_reason and _official_output_exists(settings, row.task_id):
+        return action(
+            "review_existing",
+            _phase2_command("review-now", row.task_id, "--review-subject existing"),
+            f"stale pending review request: {stale_request_reason}",
+        )
+    verify_failure = raw_task.get("latest_verify_failure", {})
+    verify_disposition = (
+        str(verify_failure.get("disposition", "") or "").strip()
+        if isinstance(verify_failure, dict)
+        else ""
+    )
+    verify_summary = (
+        str(verify_failure.get("summary", "") or "").strip()
+        if isinstance(verify_failure, dict)
+        else ""
+    )
+    if (
+        row.report_status == "needs_fresh_review"
+        and row.task_status_evidence_type == "freshness_error"
+        and verify_disposition in {"", "review_existing_required", "codex_review_required"}
+        and _official_output_exists(settings, row.task_id)
+    ):
+        return action(
+            "review_existing",
+            _phase2_command("review-now", row.task_id, "--review-subject existing"),
+            verify_summary
+            if verify_disposition == "review_existing_required" and verify_summary
+            else row.task_status_reason
+            or "the previous review binding is stale; generate a fresh existing-output review",
+        )
     diagnoser_result = _load_diagnoser_result(raw_task)
     stop_requires_diagnoser = str(raw_task.get("stop_reason", "") or "").strip().lower() == "diagnoser_required"
     if stop_requires_diagnoser and not diagnoser_result:
@@ -1315,31 +1358,58 @@ def _semantic_fail_triage_blocker(raw_task: dict[str, Any]) -> str:
     return "; ".join(part for part in parts if part)
 
 
-def _reviewer_required_blocker(raw_task: dict[str, Any]) -> str:
+def _reviewer_required_blocker(
+    task_id: str,
+    raw_task: dict[str, Any],
+    *,
+    ledger,
+    settings,
+) -> tuple[str, str]:
     expected_path = _resolve_existing_path(raw_task.get("current_review_expected_result_file", ""))
     request_path = _resolve_existing_path(raw_task.get("current_review_request_file", ""))
     phase = str(raw_task.get("current_auto_loop_phase", "") or "").strip().lower()
     status = str(raw_task.get("current_auto_loop_status", "") or "").strip().lower()
-    if request_path is not None and request_path.exists() and expected_path is not None and not expected_path.exists():
-        parts = [
-            "waiting for independent semantic reviewer",
-            f"request={request_path}",
-            f"expected_result={expected_path}",
-        ]
-        return "; ".join(parts)
-    if phase == "reviewing" and status == "active" and expected_path is not None and not expected_path.exists():
-        parts = [
-            "waiting for independent semantic reviewer",
-            f"request={request_path}" if request_path is not None else "",
-            f"expected_result={expected_path}",
-        ]
-        return "; ".join(part for part in parts if part)
-    verify_failure = raw_task.get("latest_verify_failure", {})
-    if isinstance(verify_failure, dict):
-        disposition = str(verify_failure.get("disposition", "") or "").strip()
-        if disposition == "codex_review_required":
-            return str(verify_failure.get("summary", "") or "waiting for independent semantic reviewer")
-    return ""
+    pending_request = (
+        request_path is not None
+        and request_path.exists()
+        and expected_path is not None
+        and not expected_path.exists()
+    ) or (
+        phase == "reviewing"
+        and status == "active"
+        and expected_path is not None
+        and not expected_path.exists()
+    )
+    if pending_request:
+        if ledger is None or settings is None or not hasattr(settings, "phase2_prompt_packs_dir"):
+            return "", "current pending review freshness cannot be checked without ledger/settings"
+        try:
+            task = resolve_phase2_task(task_id, ledger, settings)
+            validation_error, request_info = _load_current_codex_review_request(
+                task=task,
+                ledger=ledger,
+                settings=settings,
+                pack_dir=settings.phase2_prompt_packs_dir / task_id,
+            )
+        except (AttributeError, KeyError, OSError, TypeError, ValueError) as exc:
+            return "", f"current pending review request could not be validated: {exc}"
+        if validation_error:
+            return "", validation_error
+        if bool(request_info.get("result_exists")):
+            return "", "current pending review already has a result and is no longer reviewer-pending"
+        current_request_path = Path(str(request_info.get("request_path", "") or request_path))
+        current_expected_path = Path(str(request_info.get("expected_result_path", "") or expected_path))
+        return (
+            "; ".join(
+                [
+                    "waiting for independent semantic reviewer",
+                    f"request={current_request_path}",
+                    f"expected_result={current_expected_path}",
+                ]
+            ),
+            "",
+        )
+    return "", ""
 
 
 def _resolve_existing_path(raw_path: Any) -> Path | None:
