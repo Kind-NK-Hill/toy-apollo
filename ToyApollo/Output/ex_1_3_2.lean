@@ -11,7 +11,6 @@ import ToyApollo.Output.thm_1_4
 import ToyApollo.Output.thm_1_2
 import ToyApollo.Output.ex_1_2_1
 import ToyApollo.Output.rs_stieltjes_step_support
-import ToyApollo.Output.thm_7_9_double_filter_support
 
 open MeasureTheory intervalIntegral Set Filter
 open scoped Real ENNReal
@@ -526,56 +525,43 @@ theorem rsIntegral_id_alpha1_trunc_eq_zero {a b : ℝ}
         + (if x < (3 / 2 : ℝ) then (0 : ℝ) else pTail)) a b hint = 0
   rw [hadd, hLv, hRv]; ring
 
-theorem improperRS_zero_of_trunc_zero {α : ℝ → ℝ} (hα : Monotone α)
+theorem improperRS_zero_of_trunc_zero {α : ℝ → ℝ}
     (htrunc : ∀ a b : ℝ, a < (-3 / 2 : ℝ) → (3 / 2 : ℝ) < b →
-      rsTruncIntegral (fun y => y) α a b = 0) :
+      ∃ h : RSIntegrable (fun y => y) α a b,
+        rsTruncIntegral (fun y => y) α a b h = 0) :
     ImproperRSConvergesTo (fun y => y) α 0 := by
-  -- Finiteness on every strict interval.
-  have hRS : ∀ ⦃a b : ℝ⦄, a < b → RSIntegrable (fun y => y) α a b :=
-    fun a b hab => rsIntegrable_id_of_monotone hα hab
-  have hFinite := thm_7_9_eventually_rsIntegrable_of_forall hRS
-  -- Symmetric truncation `v n = rsTruncIntegral id α (-n) n` is eventually `0`.
-  have hSymm : Tendsto (fun n : ℕ => rsTruncIntegral (fun y => y) α (-(n : ℝ)) (n : ℝ))
-      atTop (nhds 0) := by
-    apply Filter.Tendsto.congr' _ tendsto_const_nhds
-    rw [Filter.EventuallyEq, Filter.eventually_atTop]
-    refine ⟨2, fun n hn => ?_⟩
-    have hn2 : (2 : ℝ) ≤ (n : ℝ) := by exact_mod_cast hn
-    exact (htrunc (-(n : ℝ)) (n : ℝ) (by linarith) (by linarith)).symm
-  -- Tail control: for `p` far out, both truncated values are `0`.
-  have hctrl : ∀ ε : ℝ, 0 < ε → ∀ N : ℕ,
+  intro ε hε
+  have hp :
       ∀ᶠ p : ℝ × ℝ in improperRSFilter,
-        ∃ n : ℕ, N ≤ n ∧
-          dist (rsTruncIntegral (fun y => y) α p.1 p.2)
-            (rsTruncIntegral (fun y => y) α (-(n : ℝ)) (n : ℝ)) < ε := by
-    intro ε hε N
-    -- Eventually `p.1 < -3/2` and `p.2 > 3/2` under the double filter.
-    have hp1 : ∀ᶠ p : ℝ × ℝ in improperRSFilter, p.1 < (-3 / 2 : ℝ) ∧ (3 / 2 : ℝ) < p.2 := by
-      unfold improperRSFilter
-      rw [Filter.eventually_inf_principal, Filter.eventually_prod_iff]
-      refine ⟨fun x : ℝ => x < (-3 / 2 : ℝ), ?_, fun y : ℝ => (3 / 2 : ℝ) < y, ?_, ?_⟩
-      · exact Filter.eventually_atBot.2 ⟨(-2 : ℝ), fun x hx => by linarith⟩
-      · exact Filter.eventually_atTop.2 ⟨(2 : ℝ), fun y hy => by linarith⟩
-      · intro x hx y hy _; exact ⟨hx, hy⟩
-    filter_upwards [hp1] with p hp
-    refine ⟨N + 2, by omega, ?_⟩
-    rw [htrunc p.1 p.2 hp.1 hp.2,
-        htrunc (-(((N : ℕ) + 2 : ℕ) : ℝ)) (((N : ℕ) + 2 : ℕ) : ℝ)
-          (by push_cast; linarith) (by push_cast; linarith)]
-    simpa using hε
-  exact thm_7_9_improperRSConvergesTo_of_symmetric_tail_control hFinite hSymm hctrl
+        p.1 < (-3 / 2 : ℝ) ∧ (3 / 2 : ℝ) < p.2 := by
+    unfold improperRSFilter
+    rw [Filter.eventually_inf_principal, Filter.eventually_prod_iff]
+    refine
+      ⟨fun x : ℝ => x < (-3 / 2 : ℝ), ?_,
+        fun y : ℝ => (3 / 2 : ℝ) < y, ?_, ?_⟩
+    · exact Filter.eventually_atBot.2 ⟨(-2 : ℝ), fun x hx => by linarith⟩
+    · exact Filter.eventually_atTop.2 ⟨(2 : ℝ), fun y hy => by linarith⟩
+    · intro x hx y hy _
+      exact ⟨hx, hy⟩
+  filter_upwards [hp] with p hp
+  rcases htrunc p.1 p.2 hp.1 hp.2 with ⟨h, hzero⟩
+  refine ⟨h, ?_⟩
+  rw [hzero, dist_self]
+  exact hε
 
 theorem rsTrunc_id_alpha1_zero {a b : ℝ}
     (ha : a < (-3 / 2 : ℝ)) (hb : (3 / 2 : ℝ) < b) :
-    rsTruncIntegral (fun y => y) (alpha1 pTail) a b = 0 := by
+    ∃ h : RSIntegrable (fun y => y) (alpha1 pTail) a b,
+      rsTruncIntegral (fun y => y) (alpha1 pTail) a b h = 0 := by
   obtain ⟨h, hv⟩ := rsIntegral_id_alpha1_trunc_eq_zero ha hb
-  rw [rsTruncIntegral, dif_pos h]; exact hv
+  exact ⟨h, by simpa using hv⟩
 
 theorem rsTrunc_id_alpha2_zero {a b : ℝ}
     (ha : a < (-3 / 2 : ℝ)) (hb : (3 / 2 : ℝ) < b) :
-    rsTruncIntegral (fun y => y) (alpha2 pTail) a b = 0 := by
+    ∃ h : RSIntegrable (fun y => y) (alpha2 pTail) a b,
+      rsTruncIntegral (fun y => y) (alpha2 pTail) a b h = 0 := by
   obtain ⟨h, hv⟩ := rsIntegral_id_alpha2_trunc_eq_zero ha hb
-  rw [rsTruncIntegral, dif_pos h]; exact hv
+  exact ⟨h, by simpa using hv⟩
 
 theorem alpha1_monotone : Monotone (alpha1 pTail) := by
   have hp : (0 : ℝ) ≤ pTail := pTail_nonneg
@@ -591,12 +577,12 @@ theorem alpha1_monotone : Monotone (alpha1 pTail) := by
 
 theorem alpha1_improperRS_zero :
     ImproperRSConvergesTo (fun y => y) (alpha1 pTail) 0 :=
-  improperRS_zero_of_trunc_zero alpha1_monotone
+  improperRS_zero_of_trunc_zero
     (fun _ _ ha hb => rsTrunc_id_alpha1_zero ha hb)
 
 theorem alpha2_improperRS_zero :
     ImproperRSConvergesTo (fun y => y) (alpha2 pTail) 0 :=
-  improperRS_zero_of_trunc_zero alpha2_monotone
+  improperRS_zero_of_trunc_zero
     (fun _ _ ha hb => rsTrunc_id_alpha2_zero ha hb)
 
 theorem alpha_sum_monotone :
@@ -614,13 +600,16 @@ theorem rsIntegral_id_alpha_sum_trunc_eq_zero {a b : ℝ}
 
 theorem rsTrunc_id_alpha_sum_zero {a b : ℝ}
     (ha : a < (-3 / 2 : ℝ)) (hb : (3 / 2 : ℝ) < b) :
-    rsTruncIntegral (fun y => y) (fun y => alpha1 pTail y + alpha2 pTail y) a b = 0 := by
+    ∃ h : RSIntegrable (fun y => y)
+        (fun y => alpha1 pTail y + alpha2 pTail y) a b,
+      rsTruncIntegral (fun y => y)
+        (fun y => alpha1 pTail y + alpha2 pTail y) a b h = 0 := by
   obtain ⟨h, hv⟩ := rsIntegral_id_alpha_sum_trunc_eq_zero ha hb
-  rw [rsTruncIntegral, dif_pos h]; exact hv
+  exact ⟨h, by simpa using hv⟩
 
 theorem alpha_sum_improperRS_zero :
     ImproperRSConvergesTo (fun y => y) (fun y => alpha1 pTail y + alpha2 pTail y) 0 :=
-  improperRS_zero_of_trunc_zero alpha_sum_monotone
+  improperRS_zero_of_trunc_zero
     (fun _ _ ha hb => rsTrunc_id_alpha_sum_zero ha hb)
 
 theorem law_Iic_eq_zero_of_lt {y : ℝ} (hy : y < (-3 / 2 : ℝ)) :

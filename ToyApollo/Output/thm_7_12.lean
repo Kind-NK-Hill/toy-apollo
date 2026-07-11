@@ -37,14 +37,18 @@ theorem thm_7_12_rsTruncIntegral_eq_density_interval
     (F : StieltjesFunction ℝ) {f g : ℝ → ℝ}
     (hreg : TextbookPiecewiseContinuousForDensity F f g)
     {a b : ℝ} (hab : a < b) :
-    rsTruncIntegral g F a b = ∫ x in Ioc a b, g x * f x ∂volume := by
+    rsTruncIntegral g F a b (hreg.thm79_inputs.finite_rs hab) =
+      ∫ x in Ioc a b, g x * f x ∂volume := by
   have hle : a ≤ b := le_of_lt hab
   have hRS : RSIntegrable g F a b :=
     hreg.thm79_inputs.finite_rs hab
   have hTrunc :
-      rsTruncIntegral g F a b = rsIntegral g F a b hRS := by
-    unfold rsTruncIntegral
-    simp [hRS]
+      rsTruncIntegral g F a b (hreg.thm79_inputs.finite_rs hab) =
+        rsIntegral g F a b hRS := by
+    calc
+      rsTruncIntegral g F a b (hreg.thm79_inputs.finite_rs hab) =
+          rsTruncIntegral g F a b hRS := rsTruncIntegral_proof_irrel _ _
+      _ = rsIntegral g F a b hRS := rsTruncIntegral_eq_rsIntegral hRS
   have hFinite :
       rsIntegral g F a b hRS = ∫ x in a..b, g x * f x := by
     exact
@@ -57,7 +61,8 @@ theorem thm_7_12_rsTruncIntegral_eq_density_interval
         (hreg.f_continuousOn_Icc hle)
         hRS).2
   calc
-    rsTruncIntegral g F a b = rsIntegral g F a b hRS := hTrunc
+    rsTruncIntegral g F a b (hreg.thm79_inputs.finite_rs hab) =
+        rsIntegral g F a b hRS := hTrunc
     _ = ∫ x in a..b, g x * f x := hFinite
     _ = ∫ x in Ioc a b, g x * f x ∂volume :=
       thm_7_12_intervalIntegral_eq_integral_Ioc hle
@@ -75,18 +80,18 @@ theorem thm_7_12_improperRSIntegral_eq_density_integral
         improperRSFilter (nhds (∫ x, g x * f x)) :=
     thm_7_9_integral_Ioc_tendsto volume
       hreg.density_measurable hAbsDensity
-  have hEventually :
-      (fun p : ℝ × ℝ => rsTruncIntegral g F p.1 p.2)
-        =ᶠ[improperRSFilter]
-      fun p : ℝ × ℝ => ∫ x in Ioc p.1 p.2, g x * f x ∂volume := by
+  have hRep :
+      ∀ᶠ p : ℝ × ℝ in improperRSFilter,
+        ∃ hRS : RSIntegrable g F p.1 p.2,
+          (∫ x in Ioc p.1 p.2, g x * f x ∂volume) =
+            rsTruncIntegral g F p.1 p.2 hRS := by
     filter_upwards [thm_7_9_eventually_strict_improperRSFilter] with p hp
-    exact thm_7_12_rsTruncIntegral_eq_density_interval F hreg hp
-  have hRSTendsto :
-      Tendsto (fun p : ℝ × ℝ => rsTruncIntegral g F p.1 p.2)
-        improperRSFilter (nhds (∫ x, g x * f x)) :=
-    Filter.Tendsto.congr' hEventually.symm hDensityTendsto
-  haveI : NeBot improperRSFilter := thm_7_9_improperRSFilter_neBot
-  exact tendsto_nhds_unique hSpec.2 hRSTendsto
+    exact ⟨hreg.thm79_inputs.finite_rs hp,
+      (thm_7_12_rsTruncIntegral_eq_density_interval F hreg hp).symm⟩
+  have hDensityConverges :
+      ImproperRSConvergesTo g F (∫ x, g x * f x) :=
+    ImproperRSConvergesTo.of_tendsto hRep hDensityTendsto
+  exact hSpec.unique hDensityConverges
 
 theorem thm_7_12_change_of_variables
     {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)

@@ -10,33 +10,13 @@ open Filter
 noncomputable section
 
 theorem thm_7_9_improperRSFilter_neBot : NeBot improperRSFilter := by
-  unfold improperRSFilter
-  rw [Filter.inf_neBot_iff]
-  intro s hs t ht
-  rw [Filter.mem_prod_iff] at hs
-  rcases hs with ⟨A, hA, B, hB, hsub⟩
-  rcases (Filter.eventually_atBot.mp hA) with ⟨a0, hA0⟩
-  rcases (Filter.eventually_atTop.mp hB) with ⟨b0, hB0⟩
-  let x : ℝ := min a0 b0
-  let y : ℝ := max b0 x
-  have hxA : x ∈ A := hA0 x (min_le_left a0 b0)
-  have hyB : y ∈ B := hB0 y (le_max_left b0 x)
-  have hxy : x ≤ y := le_max_right b0 x
-  have ht_sub : {p : ℝ × ℝ | p.1 ≤ p.2} ⊆ t := by
-    simpa using ht
-  refine ⟨(x, y), ?_⟩
-  constructor
-  · exact hsub ⟨hxA, hyB⟩
-  · exact ht_sub hxy
+  exact improperRSFilter_neBot
 
 theorem thm_7_9_improperRSIntegral_eq_of_convergesTo {g α : ℝ → ℝ} {I : ℝ}
     (h : ImproperRSConvergesTo g α I) :
     improperRSIntegral g α (thm_7_9_improperRSIntegrable_of_convergesTo h) = I := by
-  haveI : NeBot improperRSFilter := thm_7_9_improperRSFilter_neBot
-  exact tendsto_nhds_unique
-    (improperRSIntegral_spec
-      (thm_7_9_improperRSIntegrable_of_convergesTo h)).2
-    h.2
+  simpa [thm_7_9_improperRSIntegrable_of_convergesTo] using
+    (improperRSIntegral_eq_of_convergesTo h)
 
 theorem thm_7_9_value_packaging_with_improperRSIntegral_spec {g α : ℝ → ℝ} {I : ℝ}
     (h : ImproperRSConvergesTo g α I) :
