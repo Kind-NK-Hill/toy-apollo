@@ -32,21 +32,21 @@ theorem thm_7_9_eventually_rsTruncIntegral_eq_rsIntegral {g α : ℝ → ℝ}
     (hRS : ∀ ⦃a b : ℝ⦄, a < b → RSIntegrable g α a b) :
     ∀ᶠ p : ℝ × ℝ in improperRSFilter,
       ∃ h : RSIntegrable g α p.1 p.2,
-        rsTruncIntegral g α p.1 p.2 = rsIntegral g α p.1 p.2 h := by
+        rsTruncIntegral g α p.1 p.2 h = rsIntegral g α p.1 p.2 h := by
   filter_upwards [thm_7_9_eventually_strict_improperRSFilter] with p hp
   let h : RSIntegrable g α p.1 p.2 := hRS hp
-  exact ⟨h, by simp [rsTruncIntegral, h]⟩
+  exact ⟨h, rfl⟩
 
 theorem thm_7_9_improperRSConvergesTo_intro {g α : ℝ → ℝ} {I : ℝ}
-    (hFinite :
-      ∀ᶠ p : ℝ × ℝ in improperRSFilter, RSIntegrable g α p.1 p.2)
+    {u : ℝ × ℝ → ℝ}
+    (hRep :
+      ∀ᶠ p : ℝ × ℝ in improperRSFilter,
+        ∃ h : RSIntegrable g α p.1 p.2,
+          u p = rsTruncIntegral g α p.1 p.2 h)
     (hTendsto :
-      Tendsto
-        (fun p : ℝ × ℝ => rsTruncIntegral g α p.1 p.2)
-        improperRSFilter
-        (nhds I)) :
+      Tendsto u improperRSFilter (nhds I)) :
     ImproperRSConvergesTo g α I := by
-  exact ⟨hFinite, hTendsto⟩
+  exact ImproperRSConvergesTo.of_tendsto hRep hTendsto
 
 theorem thm_7_9_improperRSIntegrable_of_convergesTo {g α : ℝ → ℝ} {I : ℝ}
     (h : ImproperRSConvergesTo g α I) :

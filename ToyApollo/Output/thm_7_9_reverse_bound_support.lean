@@ -26,16 +26,6 @@ lemma thm_7_9_setIntegral_abs_trunc_eq_integral
   · simp [thm_7_9_trunc, hx]
   · simp [thm_7_9_trunc, hx]
 
-lemma thm_7_9_rsTruncIntegral_zero_zero
-    (f α : ℝ → ℝ) :
-    rsTruncIntegral f α 0 0 = 0 := by
-  unfold rsTruncIntegral
-  by_cases h : RSIntegrable f α 0 0
-  · have hsrc := rsIntegral_source_spec h
-    have hlt : (0 : ℝ) < 0 := hsrc.1.1
-    exact False.elim ((lt_irrefl (0 : ℝ)) hlt)
-  · simp [h]
-
 lemma thm_7_9_nat_Ioc_subset {n m : ℕ} (hnm : n ≤ m) :
     Ioc (-(n : ℝ)) (n : ℝ) ⊆ Ioc (-(m : ℝ)) (m : ℝ) := by
   intro x hx
@@ -45,21 +35,32 @@ lemma thm_7_9_nat_Ioc_subset {n m : ℕ} (hnm : n ≤ m) :
   · linarith [hx.1]
   · exact le_trans hx.2 hnmR
 
+/-- The genuine finite RS-integrability witness for a positive symmetric
+truncation. -/
+noncomputable def thm_7_9_symmetric_abs_rsIntegrable
+    (F : StieltjesFunction ℝ) {g : ℝ → ℝ}
+    (h : Thm79FiniteDiscontinuityInputs F g) {n : ℕ} (hn : 0 < n) :
+    RSIntegrable (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) := by
+  exact h.to_source_regular.finite_abs_rs (by
+    have hnR : 0 < (n : ℝ) := by exact_mod_cast hn
+    linarith)
+
 /-- The guarded finite RS truncation of `|g|` over `[-n,n]` is exactly the
 Lebesgue-Stieltjes integral over the half-open interval `(−n,n]`. This is the
 endpoint-safe form needed for monotonicity. -/
 theorem thm_7_9_rsTruncIntegral_abs_eq_integral_Ioc
     (F : StieltjesFunction ℝ) {g : ℝ → ℝ}
     (h : Thm79FiniteDiscontinuityInputs F g) {n : ℕ} (hn : 0 < n) :
-    rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) =
+    rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ)
+        (thm_7_9_symmetric_abs_rsIntegrable F h hn) =
       ∫ x in Ioc (-(n : ℝ)) (n : ℝ), |g x| ∂F.measure := by
   have hlt : -(n : ℝ) < (n : ℝ) := by
     have hnR : 0 < (n : ℝ) := by
       exact_mod_cast hn
     linarith
   let f : ℝ → ℝ := thm_7_9_trunc (fun x => |g x|) n
-  have hOrig : RSIntegrable (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) :=
-    h.to_source_regular.finite_abs_rs hlt
+  let hOrig : RSIntegrable (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) :=
+    thm_7_9_symmetric_abs_rsIntegrable F h hn
   have hEqOn : ∀ x ∈ Icc (-(n : ℝ)) (n : ℝ), f x = |g x| := by
     intro x hx
     dsimp [f]
@@ -69,15 +70,7 @@ theorem thm_7_9_rsTruncIntegral_abs_eq_integral_Ioc
   have hTruncOrig :
       rsIntegral f F (-(n : ℝ)) (n : ℝ) hTrunc =
         rsIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) hOrig := by
-    dsimp [hTrunc]
     exact rsIntegral_congr_integrand_Icc hOrig hEqOn
-  have hRsTruncOrig :
-      rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) =
-        rsIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) hOrig := by
-    unfold rsTruncIntegral
-    by_cases hIf : RSIntegrable (fun x => |g x|) F (-(n : ℝ)) (n : ℝ)
-    · simp [hIf]
-    · exact False.elim (hIf hOrig)
   have hfMeas : Measurable f := by
     dsimp [f]
     exact thm_7_9_trunc_measurable h.measurable.abs n
@@ -117,8 +110,9 @@ theorem thm_7_9_rsTruncIntegral_abs_eq_integral_Ioc
       (rsIntegral_spec hRSIoc) (rsIntegral_spec hTrunc)
   calc
     rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ)
+        (thm_7_9_symmetric_abs_rsIntegrable F h hn)
         = rsIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) hOrig :=
-          hRsTruncOrig
+          rsTruncIntegral_proof_irrel _ _
     _ = rsIntegral f F (-(n : ℝ)) (n : ℝ) hTrunc := hTruncOrig.symm
     _ = rsIntegral f F (-(n : ℝ)) (n : ℝ) hRSIoc := hRSIocTrunc.symm
     _ = ∫ x in Ioc (-(n : ℝ)) (n : ℝ), f x ∂F.measure := hIocEq.symm
@@ -131,15 +125,16 @@ theorem thm_7_9_symmetric_abs_rs_bound_by_total_ls
     (F : StieltjesFunction ℝ) {g : ℝ → ℝ}
     (h : Thm79FiniteDiscontinuityInputs F g)
     (hAbs : Integrable (fun x => |g x|) F.measure) {n : ℕ} (hn : 0 < n) :
-    rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) ≤
+    rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ)
+        (thm_7_9_symmetric_abs_rsIntegrable F h hn) ≤
       ∫ x, |g x| ∂F.measure := by
   have hlt : -(n : ℝ) < (n : ℝ) := by
     have hnR : 0 < (n : ℝ) := by
       exact_mod_cast hn
     linarith
   let f : ℝ → ℝ := thm_7_9_trunc (fun x => |g x|) n
-  have hOrig : RSIntegrable (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) :=
-    h.to_source_regular.finite_abs_rs hlt
+  let hOrig : RSIntegrable (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) :=
+    thm_7_9_symmetric_abs_rsIntegrable F h hn
   have hEqOn : ∀ x ∈ Icc (-(n : ℝ)) (n : ℝ), f x = |g x| := by
     intro x hx
     dsimp [f]
@@ -149,15 +144,7 @@ theorem thm_7_9_symmetric_abs_rs_bound_by_total_ls
   have hTruncOrig :
       rsIntegral f F (-(n : ℝ)) (n : ℝ) hTrunc =
         rsIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) hOrig := by
-    dsimp [hTrunc]
     exact rsIntegral_congr_integrand_Icc hOrig hEqOn
-  have hRsTruncOrig :
-      rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) =
-        rsIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) hOrig := by
-    unfold rsTruncIntegral
-    by_cases hIf : RSIntegrable (fun x => |g x|) F (-(n : ℝ)) (n : ℝ)
-    · simp [hIf]
-    · exact False.elim (hIf hOrig)
   rcases
       thm_7_9_finite_abs_bridge
         F h hn with
@@ -169,12 +156,14 @@ theorem thm_7_9_symmetric_abs_rs_bound_by_total_ls
     exact DarbouxRS.taggedCommonLimit_unique
       (rsIntegral_spec hRSBridge) (rsIntegral_spec hTrunc)
   have hRsTruncBridge :
-      rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) =
+      rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ)
+          (thm_7_9_symmetric_abs_rsIntegrable F h hn) =
         rsIntegral f F (-(n : ℝ)) (n : ℝ) hRSBridge := by
     calc
       rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ)
+          (thm_7_9_symmetric_abs_rsIntegrable F h hn)
           = rsIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) hOrig :=
-            hRsTruncOrig
+            rsTruncIntegral_proof_irrel _ _
       _ = rsIntegral f F (-(n : ℝ)) (n : ℝ) hTrunc := hTruncOrig.symm
       _ = rsIntegral f F (-(n : ℝ)) (n : ℝ) hRSBridge :=
             hBridgeTrunc.symm
@@ -200,36 +189,41 @@ theorem thm_7_9_symmetric_abs_rs_bound_by_total_ls
       F.measure h.measurable hAbs n
   calc
     rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ)
+        (thm_7_9_symmetric_abs_rsIntegrable F h hn)
         = rsIntegral f F (-(n : ℝ)) (n : ℝ) hRSBridge := hRsTruncBridge
     _ ≤ ∫ x in Icc (-(n : ℝ)) (n : ℝ), f x ∂F.measure := hBridgeValueLeSet
     _ = ∫ x, f x ∂F.measure := hSetEqGlobal
     _ ≤ ∫ x, |g x| ∂F.measure := hGlobalLe
 
-/-- The symmetric absolute RS truncation values are bounded above. This is the
-sequence-level boundedness needed before applying the monotone convergence
-bookkeeping for the reverse direction. -/
+/-- The positive-radius symmetric RS sequence.  Radius `n + 1` keeps every
+finite truncation inside Definition 1.2's strict-interval domain. -/
+noncomputable def thm_7_9_symmetric_abs_rsTrunc
+    (F : StieltjesFunction ℝ) {g : ℝ → ℝ}
+    (h : Thm79FiniteDiscontinuityInputs F g) (n : ℕ) : ℝ :=
+  rsTruncIntegral (fun x => |g x|) F
+    (-((n + 1 : ℕ) : ℝ)) ((n + 1 : ℕ) : ℝ)
+    (thm_7_9_symmetric_abs_rsIntegrable F h (Nat.succ_pos n))
+
+theorem thm_7_9_symmetric_abs_rsTrunc_eq_integral_Ioc
+    (F : StieltjesFunction ℝ) {g : ℝ → ℝ}
+    (h : Thm79FiniteDiscontinuityInputs F g) (n : ℕ) :
+    thm_7_9_symmetric_abs_rsTrunc F h n =
+      ∫ x in Ioc (-((n + 1 : ℕ) : ℝ)) ((n + 1 : ℕ) : ℝ),
+        |g x| ∂F.measure := by
+  exact thm_7_9_rsTruncIntegral_abs_eq_integral_Ioc F h (Nat.succ_pos n)
+
+/-- The positive-radius symmetric absolute RS truncation values are bounded
+above by the whole-line LS integral. -/
 theorem thm_7_9_symmetric_abs_rs_bddAbove_by_total_ls
     (F : StieltjesFunction ℝ) {g : ℝ → ℝ}
     (h : Thm79FiniteDiscontinuityInputs F g)
     (hAbs : Integrable (fun x => |g x|) F.measure) :
     ∃ C : ℝ, ∀ n : ℕ,
-      rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) ≤ C := by
-  let total : ℝ := ∫ x, |g x| ∂F.measure
-  refine
-    ⟨max (rsTruncIntegral (fun x => |g x|) F (-(0 : ℝ)) (0 : ℝ)) total,
-      ?_⟩
+      thm_7_9_symmetric_abs_rsTrunc F h n ≤ C := by
+  refine ⟨∫ x, |g x| ∂F.measure, ?_⟩
   intro n
-  cases n with
-  | zero =>
-      simpa using
-        (le_max_left
-          (rsTruncIntegral (fun x => |g x|) F (-(0 : ℝ)) (0 : ℝ)) total)
-  | succ k =>
-      have hk : 0 < k.succ := Nat.succ_pos k
-      exact le_trans
-        (thm_7_9_symmetric_abs_rs_bound_by_total_ls F h hAbs hk)
-        (le_max_right
-          (rsTruncIntegral (fun x => |g x|) F (-(0 : ℝ)) (0 : ℝ)) total)
+  exact thm_7_9_symmetric_abs_rs_bound_by_total_ls
+    F h hAbs (Nat.succ_pos n)
 
 /-- The symmetric absolute finite RS truncation values form an increasing
 sequence. The proof uses the half-open `(−n,n]` LS identification above, so no
@@ -238,31 +232,15 @@ theorem thm_7_9_symmetric_abs_rs_monotone
     (F : StieltjesFunction ℝ) {g : ℝ → ℝ}
     (h : Thm79FiniteDiscontinuityInputs F g)
     (hAbs : Integrable (fun x => |g x|) F.measure) :
-    Monotone (fun n : ℕ =>
-      rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ)) := by
+    Monotone (thm_7_9_symmetric_abs_rsTrunc F h) := by
   intro n m hnm
-  change
-    rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) ≤
-      rsTruncIntegral (fun x => |g x|) F (-(m : ℝ)) (m : ℝ)
-  by_cases hnzero : n = 0
-  · subst n
-    by_cases hmzero : m = 0
-    · subst m
-      rfl
-    · have hmpos : 0 < m := Nat.pos_of_ne_zero hmzero
-      have hzero :
-          rsTruncIntegral (fun x => |g x|) F (-((0 : ℕ) : ℝ)) ((0 : ℕ) : ℝ) =
-            0 := by
-        simpa using thm_7_9_rsTruncIntegral_zero_zero (fun x => |g x|) F
-      rw [hzero]
-      rw [thm_7_9_rsTruncIntegral_abs_eq_integral_Ioc F h hmpos]
-      exact integral_nonneg fun x => abs_nonneg (g x)
-  · have hnpos : 0 < n := Nat.pos_of_ne_zero hnzero
-    have hmpos : 0 < m := lt_of_lt_of_le hnpos hnm
-    rw [thm_7_9_rsTruncIntegral_abs_eq_integral_Ioc F h hnpos]
-    rw [thm_7_9_rsTruncIntegral_abs_eq_integral_Ioc F h hmpos]
-    have hsubset : Ioc (-(n : ℝ)) (n : ℝ) ⊆ Ioc (-(m : ℝ)) (m : ℝ) :=
-      thm_7_9_nat_Ioc_subset hnm
-    exact setIntegral_mono_set (hAbs.integrableOn)
-      (Filter.Eventually.of_forall fun x => abs_nonneg (g x))
-      (Filter.Eventually.of_forall fun x hx => hsubset hx)
+  rw [thm_7_9_symmetric_abs_rsTrunc_eq_integral_Ioc,
+    thm_7_9_symmetric_abs_rsTrunc_eq_integral_Ioc]
+  have hnm' : n + 1 ≤ m + 1 := Nat.add_le_add_right hnm 1
+  have hsubset :
+      Ioc (-((n + 1 : ℕ) : ℝ)) ((n + 1 : ℕ) : ℝ) ⊆
+        Ioc (-((m + 1 : ℕ) : ℝ)) ((m + 1 : ℕ) : ℝ) :=
+    thm_7_9_nat_Ioc_subset hnm'
+  exact setIntegral_mono_set hAbs.integrableOn
+    (Filter.Eventually.of_forall fun x => abs_nonneg (g x))
+    (Filter.Eventually.of_forall fun x hx => hsubset hx)

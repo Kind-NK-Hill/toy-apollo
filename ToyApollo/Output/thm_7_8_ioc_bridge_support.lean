@@ -17,23 +17,23 @@ left-endpoint atom hypothesis. Closed interval consumers can combine this with
 -/
 
 lemma thm_7_8_partition_Ioc_subset_Ioc {a b : ℝ}
-    (P : DarbouxRS.Partition a b) {i : ℕ} (hi : i < P.n) :
-    Ioc (P.pts i) (P.pts (i + 1)) ⊆ Ioc a b := by
+    (P : DarbouxRS.Partition a b) (i : Fin P.n) :
+    Ioc (P.pts i.castSucc) (P.pts i.succ) ⊆ Ioc a b := by
   intro x hx
   constructor
-  · have hleft : a ≤ P.pts i :=
-      (DarbouxRS.partition_pts_mem_Icc_core P (Nat.le_of_lt hi)).1
+  · have hleft : a ≤ P.pts i.castSucc :=
+      (DarbouxRS.partition_pts_mem_Icc_core P).1
     exact lt_of_le_of_lt hleft hx.1
   · exact le_trans hx.2
-      (DarbouxRS.partition_pts_mem_Icc_core P (Nat.succ_le_of_lt hi)).2
+      (DarbouxRS.partition_pts_mem_Icc_core P).2
 
 theorem thm_7_8_integral_indicator_const_partition_cell_Ioc
     (F : StieltjesFunction ℝ) {a b c : ℝ} (P : DarbouxRS.Partition a b)
-    {i : ℕ} (hi : i < P.n) :
+    (i : Fin P.n) :
     ∫ x in Ioc a b,
-        (Ioc (P.pts i) (P.pts (i + 1))).indicator
+        (Ioc (P.pts i.castSucc) (P.pts i.succ)).indicator
           (fun _ : ℝ => c) x ∂F.measure =
-      c * (F (P.pts (i + 1)) - F (P.pts i)) := by
+      c * (F (P.pts i.succ) - F (P.pts i.castSucc)) := by
   rw [integral_indicator measurableSet_Ioc]
   rw [integral_const]
   rw [Measure.real_def]
@@ -41,78 +41,77 @@ theorem thm_7_8_integral_indicator_const_partition_cell_Ioc
   simp only [univ_inter]
   rw [Measure.restrict_apply measurableSet_Ioc]
   have hcell_subset :
-      Ioc (P.pts i) (P.pts (i + 1)) ⊆ Ioc a b :=
-    thm_7_8_partition_Ioc_subset_Ioc P hi
+      Ioc (P.pts i.castSucc) (P.pts i.succ) ⊆ Ioc a b :=
+    thm_7_8_partition_Ioc_subset_Ioc P i
   have hcell_inter :
-      Ioc (P.pts i) (P.pts (i + 1)) ∩ Ioc a b =
-        Ioc (P.pts i) (P.pts (i + 1)) := by
+      Ioc (P.pts i.castSucc) (P.pts i.succ) ∩ Ioc a b =
+        Ioc (P.pts i.castSucc) (P.pts i.succ) := by
     exact inter_eq_self_of_subset_left hcell_subset
   rw [hcell_inter]
-  rw [F.measure_Ioc (P.pts i) (P.pts (i + 1))]
+  rw [F.measure_Ioc (P.pts i.castSucc) (P.pts i.succ)]
   have hnonneg :
-      0 ≤ F (P.pts (i + 1)) - F (P.pts i) :=
-    sub_nonneg.mpr (F.mono (le_of_lt (P.strict_mono i hi)))
+      0 ≤ F (P.pts i.succ) - F (P.pts i.castSucc) :=
+    sub_nonneg.mpr (F.mono (le_of_lt
+      (P.strict_mono Fin.castSucc_lt_succ)))
   rw [ENNReal.toReal_ofReal hnonneg]
   rw [smul_eq_mul]
   ring
 
 theorem thm_7_8_integral_partitionCellStep_Ioc
     (F : StieltjesFunction ℝ) {a b : ℝ} (P : DarbouxRS.Partition a b)
-    (v : ℕ → ℝ) :
+    (v : Fin P.n → ℝ) :
     ∫ x in Ioc a b, thm_7_8_partitionCellStep P v x ∂F.measure =
-      ∑ i ∈ Finset.range P.n, v i * (F (P.pts (i + 1)) - F (P.pts i)) := by
+      ∑ i : Fin P.n, v i * (F (P.pts i.succ) - F (P.pts i.castSucc)) := by
   unfold thm_7_8_partitionCellStep
   rw [integral_finset_sum]
   · refine Finset.sum_congr rfl ?_
-    intro i hi
-    have hi_lt : i < P.n := Finset.mem_range.mp hi
+    intro i _hi
     simpa using
       thm_7_8_integral_indicator_const_partition_cell_Ioc
-        (F := F) (P := P) (c := v i) hi_lt
-  · intro i hi
-    have hi_lt : i < P.n := Finset.mem_range.mp hi
+        (F := F) (P := P) (c := v i) i
+  · intro i _hi
     rw [integrable_indicator_iff measurableSet_Ioc]
     have hfinite : IsFiniteMeasure
         ((F.measure.restrict (Ioc a b)).restrict
-          (Ioc (P.pts i) (P.pts (i + 1)))) := by
+          (Ioc (P.pts i.castSucc) (P.pts i.succ))) := by
       rw [isFiniteMeasure_restrict]
       rw [Measure.restrict_apply measurableSet_Ioc]
       have hcell_subset :
-          Ioc (P.pts i) (P.pts (i + 1)) ⊆ Ioc a b :=
-        thm_7_8_partition_Ioc_subset_Ioc P hi_lt
+          Ioc (P.pts i.castSucc) (P.pts i.succ) ⊆ Ioc a b :=
+        thm_7_8_partition_Ioc_subset_Ioc P i
       have hcell_inter :
-          Ioc (P.pts i) (P.pts (i + 1)) ∩ Ioc a b =
-            Ioc (P.pts i) (P.pts (i + 1)) := by
+          Ioc (P.pts i.castSucc) (P.pts i.succ) ∩ Ioc a b =
+            Ioc (P.pts i.castSucc) (P.pts i.succ) := by
         exact inter_eq_self_of_subset_left hcell_subset
       rw [hcell_inter]
-      rw [F.measure_Ioc (P.pts i) (P.pts (i + 1))]
+      rw [F.measure_Ioc (P.pts i.castSucc) (P.pts i.succ)]
       exact ENNReal.ofReal_ne_top
     letI := hfinite
     exact integrable_const (v i)
 
 theorem thm_7_8_integrable_partitionCellStep_Ioc
     (F : StieltjesFunction ℝ) {a b : ℝ} (P : DarbouxRS.Partition a b)
-    (v : ℕ → ℝ) :
+    (v : Fin P.n → ℝ) :
     IntegrableOn (thm_7_8_partitionCellStep P v) (Ioc a b) F.measure := by
   unfold thm_7_8_partitionCellStep
-  exact integrable_finset_sum (Finset.range P.n) (μ := F.measure.restrict (Ioc a b))
-    (fun i hi => by
-      have hi_lt : i < P.n := Finset.mem_range.mp hi
+  exact integrable_finset_sum (Finset.univ : Finset (Fin P.n))
+    (μ := F.measure.restrict (Ioc a b))
+    (fun i _hi => by
       rw [integrable_indicator_iff measurableSet_Ioc]
       have hfinite : IsFiniteMeasure
           ((F.measure.restrict (Ioc a b)).restrict
-            (Ioc (P.pts i) (P.pts (i + 1)))) := by
+            (Ioc (P.pts i.castSucc) (P.pts i.succ))) := by
         rw [isFiniteMeasure_restrict]
         rw [Measure.restrict_apply measurableSet_Ioc]
         have hcell_subset :
-            Ioc (P.pts i) (P.pts (i + 1)) ⊆ Ioc a b :=
-          thm_7_8_partition_Ioc_subset_Ioc P hi_lt
+            Ioc (P.pts i.castSucc) (P.pts i.succ) ⊆ Ioc a b :=
+          thm_7_8_partition_Ioc_subset_Ioc P i
         have hcell_inter :
-            Ioc (P.pts i) (P.pts (i + 1)) ∩ Ioc a b =
-              Ioc (P.pts i) (P.pts (i + 1)) := by
+            Ioc (P.pts i.castSucc) (P.pts i.succ) ∩ Ioc a b =
+              Ioc (P.pts i.castSucc) (P.pts i.succ) := by
           exact inter_eq_self_of_subset_left hcell_subset
         rw [hcell_inter]
-        rw [F.measure_Ioc (P.pts i) (P.pts (i + 1))]
+        rw [F.measure_Ioc (P.pts i.castSucc) (P.pts i.succ)]
         exact ENNReal.ofReal_ne_top
       letI := hfinite
       exact integrable_const (v i))
@@ -148,10 +147,10 @@ theorem thm_7_8_lowerCellStep_le_on_Ioc
   have hxIcc : x ∈ Icc a b := Ioc_subset_Icc_self hxIoc
   have hxne : x ≠ a := by exact ne_of_gt hxIoc.1
   rcases thm_7_8_partition_Ioc_cover_Icc_of_ne_left P hxIcc hxne with
-    ⟨i, hi, hxcell⟩
+    ⟨i, hxcell⟩
   rw [thm_7_8_partitionCellStep_eq_of_mem_Ioc
-    (P := P) (v := fun i => DarbouxRS.lowerStep P g i) hi hxcell]
-  exact thm_7_8_lowerStep_le_of_mem_Ioc P hBelow hi hxcell
+    (P := P) (v := fun i => DarbouxRS.lowerStep P g i) i hxcell]
+  exact thm_7_8_lowerStep_le_of_mem_Ioc P hBelow i hxcell
 
 theorem thm_7_8_le_upperCellStep_on_Ioc
     {a b : ℝ} (P : DarbouxRS.Partition a b)
@@ -162,10 +161,10 @@ theorem thm_7_8_le_upperCellStep_on_Ioc
   have hxIcc : x ∈ Icc a b := Ioc_subset_Icc_self hxIoc
   have hxne : x ≠ a := by exact ne_of_gt hxIoc.1
   rcases thm_7_8_partition_Ioc_cover_Icc_of_ne_left P hxIcc hxne with
-    ⟨i, hi, hxcell⟩
+    ⟨i, hxcell⟩
   rw [thm_7_8_partitionCellStep_eq_of_mem_Ioc
-    (P := P) (v := fun i => DarbouxRS.upperStep P g i) hi hxcell]
-  exact thm_7_8_le_upperStep_of_mem_Ioc P hAbove hi hxcell
+    (P := P) (v := fun i => DarbouxRS.upperStep P g i) i hxcell]
+  exact thm_7_8_le_upperStep_of_mem_Ioc P hAbove i hxcell
 
 theorem thm_7_8_cellStep_integral_sandwich_Ioc
     (F : StieltjesFunction ℝ) {a b : ℝ} (P : DarbouxRS.Partition a b)

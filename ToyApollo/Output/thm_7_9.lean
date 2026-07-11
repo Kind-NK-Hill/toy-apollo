@@ -18,7 +18,7 @@ The source statement assumes the piecewise-continuity and no-common-jump
 surface used before Theorem 7.9.  The older `hRS`-only formal interface was
 too weak to justify the finite absolute bridges required by the proof.  This
 parent theorem therefore consumes the reviewed source-facing regularity
-surface `Thm79FiniteDiscontinuityInputs`, not the old bridge-debt axiom.
+surface `Thm79FiniteDiscontinuityInputs`, not the old bridge-debt premise.
 -/
 
 instance thm_7_9_improperRSFilter_isCountablyGenerated :
@@ -120,14 +120,9 @@ theorem thm_7_9_abs_integrableOn_Ioc
 theorem thm_7_9_rsTruncIntegral_eq_integral_Ioc
     (F : StieltjesFunction ℝ) {g : ℝ → ℝ}
     (h : Thm79FiniteDiscontinuityInputs F g) {a b : ℝ} (hab : a < b) :
-    rsTruncIntegral g F a b = ∫ x in Ioc a b, g x ∂F.measure := by
+    rsTruncIntegral g F a b (h.finite_rs hab) =
+      ∫ x in Ioc a b, g x ∂F.measure := by
   have hOrig : RSIntegrable g F a b := h.finite_rs hab
-  have hRsTruncOrig :
-      rsTruncIntegral g F a b = rsIntegral g F a b hOrig := by
-    unfold rsTruncIntegral
-    by_cases hIf : RSIntegrable g F a b
-    · simp [hIf]
-    · exact False.elim (hIf hOrig)
   have hgMeasRestrict : Measurable ((Icc a b).restrict g) := by
     exact h.measurable.comp measurable_subtype_coe
   have hBounds := h.finite_bounds hab
@@ -141,23 +136,17 @@ theorem thm_7_9_rsTruncIntegral_eq_integral_Ioc
     exact DarbouxRS.taggedCommonLimit_unique
       (rsIntegral_spec hRSIoc) (rsIntegral_spec hOrig)
   calc
-    rsTruncIntegral g F a b = rsIntegral g F a b hOrig := hRsTruncOrig
+    rsTruncIntegral g F a b (h.finite_rs hab) =
+        rsIntegral g F a b hOrig := rsTruncIntegral_proof_irrel _ _
     _ = rsIntegral g F a b hRSIoc := hRSIocOrig.symm
     _ = ∫ x in Ioc a b, g x ∂F.measure := hIocEq.symm
 
 theorem thm_7_9_rsTruncIntegral_abs_eq_integral_Ioc_any
     (F : StieltjesFunction ℝ) {g : ℝ → ℝ}
     (h : Thm79FiniteDiscontinuityInputs F g) {a b : ℝ} (hab : a < b) :
-    rsTruncIntegral (fun x => |g x|) F a b =
+    rsTruncIntegral (fun x => |g x|) F a b (h.finite_abs_rs hab) =
       ∫ x in Ioc a b, |g x| ∂F.measure := by
   have hOrig : RSIntegrable (fun x => |g x|) F a b := h.finite_abs_rs hab
-  have hRsTruncOrig :
-      rsTruncIntegral (fun x => |g x|) F a b =
-        rsIntegral (fun x => |g x|) F a b hOrig := by
-    unfold rsTruncIntegral
-    by_cases hIf : RSIntegrable (fun x => |g x|) F a b
-    · simp [hIf]
-    · exact False.elim (hIf hOrig)
   have hgMeasRestrict : Measurable ((Icc a b).restrict (fun x => |g x|)) := by
     exact h.measurable.abs.comp measurable_subtype_coe
   have hBounds := h.finite_abs_bounds hab
@@ -172,8 +161,9 @@ theorem thm_7_9_rsTruncIntegral_abs_eq_integral_Ioc_any
     exact DarbouxRS.taggedCommonLimit_unique
       (rsIntegral_spec hRSIoc) (rsIntegral_spec hOrig)
   calc
-    rsTruncIntegral (fun x => |g x|) F a b =
-        rsIntegral (fun x => |g x|) F a b hOrig := hRsTruncOrig
+    rsTruncIntegral (fun x => |g x|) F a b (h.finite_abs_rs hab) =
+        rsIntegral (fun x => |g x|) F a b hOrig :=
+          rsTruncIntegral_proof_irrel _ _
     _ = rsIntegral (fun x => |g x|) F a b hRSIoc := hRSIocOrig.symm
     _ = ∫ x in Ioc a b, |g x| ∂F.measure := hIocEq.symm
 
@@ -185,7 +175,8 @@ theorem thm_7_9_lintegral_ioc_abs_eq_ofReal_rs
         ((Ioc (-(n : ℝ)) (n : ℝ)).indicator (fun y => |g y|) x)
         ∂F.measure) =
       ENNReal.ofReal
-        (rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ)) := by
+        (rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ)
+          (thm_7_9_symmetric_abs_rsIntegrable F h hn)) := by
   have hlt : -(n : ℝ) < (n : ℝ) := by
     have hnR : 0 < (n : ℝ) := by
       exact_mod_cast hn
@@ -213,7 +204,7 @@ theorem thm_7_9_lintegral_ioc_abs_eq_ofReal_rs
           ∂F.measure) =
         ∫ x in Ioc (-(n : ℝ)) (n : ℝ), |g x| ∂F.measure :=
     integral_indicator measurableSet_Ioc
-  have hBridge := thm_7_9_rsTruncIntegral_abs_eq_integral_Ioc_any F h hlt
+  have hBridge := thm_7_9_rsTruncIntegral_abs_eq_integral_Ioc F h hn
   rw [← hOfReal]
   rw [hIntegralIndicator]
   rw [← hBridge]
@@ -272,38 +263,57 @@ theorem thm_7_9_integrable_abs_of_improper_abs
     (hImp : ImproperRSIntegrable (fun x => |g x|) F) :
     Integrable (fun x => |g x|) F.measure := by
   rcases hImp with ⟨I, hConv⟩
-  have hSeq :
+  have hPair :
       Tendsto
         (fun n : ℕ =>
-          rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ))
+          ((-((n + 1 : ℕ) : ℝ), ((n + 1 : ℕ) : ℝ)) : ℝ × ℝ))
+        atTop improperRSFilter :=
+    thm_7_9_tendsto_symmetric_to_improperRSFilter.comp
+      (tendsto_add_atTop_nat 1)
+  have hSeq :
+      Tendsto
+        (thm_7_9_symmetric_abs_rsTrunc F h)
         atTop (nhds I) := by
-    simpa [Function.comp_def] using
-      hConv.2.comp thm_7_9_tendsto_symmetric_to_improperRSFilter
+    rw [Metric.tendsto_nhds]
+    intro ε hε
+    have hClose := hPair.eventually (hConv ε hε)
+    filter_upwards [hClose] with n hn
+    rcases hn with ⟨hRS, hdist⟩
+    calc
+      dist (thm_7_9_symmetric_abs_rsTrunc F h n) I =
+          dist
+            (rsTruncIntegral (fun x => |g x|) F
+              (-((n + 1 : ℕ) : ℝ)) ((n + 1 : ℕ) : ℝ) hRS) I := by
+        rw [thm_7_9_symmetric_abs_rsTrunc,
+          rsTruncIntegral_proof_irrel
+            (thm_7_9_symmetric_abs_rsIntegrable F h (Nat.succ_pos n)) hRS]
+      _ < ε := hdist
   have hRealBound : ∀ᶠ n : ℕ in atTop,
-      rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) ≤ I + 1 := by
+      thm_7_9_symmetric_abs_rsTrunc F h n ≤ I + 1 := by
     have hEv := (Metric.tendsto_nhds.mp hSeq) 1 zero_lt_one
     filter_upwards [hEv] with n hn
     have habs :
-        |rsTruncIntegral (fun x => |g x|) F (-(n : ℝ)) (n : ℝ) - I| < 1 := by
+        |thm_7_9_symmetric_abs_rsTrunc F h n - I| < 1 := by
       simpa [Real.dist_eq] using hn
     linarith [(abs_lt.mp habs).2]
   let u : ℕ → ENNReal := fun n =>
     ∫⁻ x : ℝ,
       ENNReal.ofReal
-        ((Ioc (-(n : ℝ)) (n : ℝ)).indicator (fun y => |g y|) x)
+        ((Ioc (-((n + 1 : ℕ) : ℝ)) ((n + 1 : ℕ) : ℝ)).indicator
+          (fun y => |g y|) x)
         ∂F.measure
   have hENNBound : ∀ᶠ n : ℕ in atTop, u n ≤ ENNReal.ofReal (I + 1) := by
-    filter_upwards [hRealBound,
-      (Filter.eventually_atTop.2 ⟨1, fun n hn => hn⟩)] with n hnBound hnpos
-    have hnpos' : 0 < n := hnpos
+    filter_upwards [hRealBound] with n hnBound
     dsimp [u]
-    rw [thm_7_9_lintegral_ioc_abs_eq_ofReal_rs F h hnpos']
-    exact ENNReal.ofReal_le_ofReal hnBound
+    rw [thm_7_9_lintegral_ioc_abs_eq_ofReal_rs F h (Nat.succ_pos n)]
+    simpa [thm_7_9_symmetric_abs_rsTrunc] using
+      ENNReal.ofReal_le_ofReal hnBound
   have hMCT :
       Tendsto u atTop
         (nhds (∫⁻ x : ℝ, ENNReal.ofReal |g x| ∂F.measure)) := by
     dsimp [u]
-    exact thm_7_9_lintegral_ioc_abs_tendsto F.measure h.measurable
+    exact (thm_7_9_lintegral_ioc_abs_tendsto F.measure h.measurable).comp
+      (tendsto_add_atTop_nat 1)
   have hLle :
       (∫⁻ x : ℝ, ENNReal.ofReal |g x| ∂F.measure) ≤
         ENNReal.ofReal (I + 1) :=
@@ -328,24 +338,16 @@ theorem thm_7_9_improper_abs_of_integrable_abs
   have hLS :=
     thm_7_9_integral_Ioc_tendsto
       F.measure h.measurable.abs hAbsAbs
-  have hEq :
-      (fun p : ℝ × ℝ => ∫ x in Ioc p.1 p.2, |g x| ∂F.measure)
-        =ᶠ[improperRSFilter]
-        fun p : ℝ × ℝ => rsTruncIntegral (fun x => |g x|) F p.1 p.2 := by
-    filter_upwards [thm_7_9_eventually_strict_improperRSFilter] with p hp
-    exact (thm_7_9_rsTruncIntegral_abs_eq_integral_Ioc_any F h hp).symm
-  have hTendsto :
-      Tendsto
-        (fun p : ℝ × ℝ => rsTruncIntegral (fun x => |g x|) F p.1 p.2)
-        improperRSFilter
-        (nhds (∫ x, |g x| ∂F.measure)) :=
-    Filter.Tendsto.congr' hEq hLS
-  have hFinite :
+  have hRep :
       ∀ᶠ p : ℝ × ℝ in improperRSFilter,
-        RSIntegrable (fun x => |g x|) F p.1 p.2 :=
-    thm_7_9_eventually_rsIntegrable_of_forall
-      (fun ⦃a b : ℝ⦄ hab => h.finite_abs_rs hab)
-  exact thm_7_9_improperRSIntegrable_of_convergesTo ⟨hFinite, hTendsto⟩
+        ∃ hRS : RSIntegrable (fun x => |g x|) F p.1 p.2,
+          (∫ x in Ioc p.1 p.2, |g x| ∂F.measure) =
+            rsTruncIntegral (fun x => |g x|) F p.1 p.2 hRS := by
+    filter_upwards [thm_7_9_eventually_strict_improperRSFilter] with p hp
+    exact ⟨h.finite_abs_rs hp,
+      (thm_7_9_rsTruncIntegral_abs_eq_integral_Ioc_any F h hp).symm⟩
+  exact thm_7_9_improperRSIntegrable_of_convergesTo
+    (ImproperRSConvergesTo.of_tendsto hRep hLS)
 
 theorem thm_7_9_improper_convergesTo_of_integrable_abs
     (F : StieltjesFunction ℝ) {g : ℝ → ℝ}
@@ -353,23 +355,15 @@ theorem thm_7_9_improper_convergesTo_of_integrable_abs
     (hAbs : Integrable (fun x => |g x|) F.measure) :
     ImproperRSConvergesTo g F (∫ x, g x ∂F.measure) := by
   have hLS := thm_7_9_integral_Ioc_tendsto F.measure h.measurable hAbs
-  have hEq :
-      (fun p : ℝ × ℝ => ∫ x in Ioc p.1 p.2, g x ∂F.measure)
-        =ᶠ[improperRSFilter]
-        fun p : ℝ × ℝ => rsTruncIntegral g F p.1 p.2 := by
+  have hRep :
+      ∀ᶠ p : ℝ × ℝ in improperRSFilter,
+        ∃ hRS : RSIntegrable g F p.1 p.2,
+          (∫ x in Ioc p.1 p.2, g x ∂F.measure) =
+            rsTruncIntegral g F p.1 p.2 hRS := by
     filter_upwards [thm_7_9_eventually_strict_improperRSFilter] with p hp
-    exact (thm_7_9_rsTruncIntegral_eq_integral_Ioc F h hp).symm
-  have hTendsto :
-      Tendsto
-        (fun p : ℝ × ℝ => rsTruncIntegral g F p.1 p.2)
-        improperRSFilter
-        (nhds (∫ x, g x ∂F.measure)) :=
-    Filter.Tendsto.congr' hEq hLS
-  have hFinite :
-      ∀ᶠ p : ℝ × ℝ in improperRSFilter, RSIntegrable g F p.1 p.2 :=
-    thm_7_9_eventually_rsIntegrable_of_forall
-      (fun ⦃a b : ℝ⦄ hab => h.finite_rs hab)
-  exact ⟨hFinite, hTendsto⟩
+    exact ⟨h.finite_rs hp,
+      (thm_7_9_rsTruncIntegral_eq_integral_Ioc F h hp).symm⟩
+  exact ImproperRSConvergesTo.of_tendsto hRep hLS
 
 theorem thm_7_9_value_equality
     (F : StieltjesFunction ℝ) {g : ℝ → ℝ}

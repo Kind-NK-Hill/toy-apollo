@@ -37,16 +37,16 @@ theorem thm_7_9_tendsto_double_filter_of_symmetric_tail_control
     _ = ε := by ring
 
 theorem thm_7_9_improperRSConvergesTo_of_symmetric_tail_control
-    {g α : ℝ → ℝ} {I : ℝ}
-    (hFinite : ∀ᶠ p : ℝ × ℝ in improperRSFilter, RSIntegrable g α p.1 p.2)
-    (hSymm :
-      Tendsto (fun n : ℕ => rsTruncIntegral g α (-(n : ℝ)) (n : ℝ))
-        atTop (nhds I))
+    {g α : ℝ → ℝ} {I : ℝ} {u : ℝ × ℝ → ℝ} {v : ℕ → ℝ}
+    (hRep :
+      ∀ᶠ p : ℝ × ℝ in improperRSFilter,
+        ∃ h : RSIntegrable g α p.1 p.2,
+          u p = rsTruncIntegral g α p.1 p.2 h)
+    (hSymm : Tendsto v atTop (nhds I))
     (hctrl : ∀ ε : ℝ, 0 < ε → ∀ N : ℕ,
       ∀ᶠ p : ℝ × ℝ in improperRSFilter,
         ∃ n : ℕ, N ≤ n ∧
-          dist (rsTruncIntegral g α p.1 p.2)
-            (rsTruncIntegral g α (-(n : ℝ)) (n : ℝ)) < ε) :
+          dist (u p) (v n) < ε) :
     ImproperRSConvergesTo g α I := by
-  refine thm_7_9_improperRSConvergesTo_intro hFinite ?_
+  refine thm_7_9_improperRSConvergesTo_intro hRep ?_
   exact thm_7_9_tendsto_double_filter_of_symmetric_tail_control hSymm hctrl
