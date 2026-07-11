@@ -253,6 +253,8 @@ async def process_target(args):
                 else:
                     print(f"❌ Codex review request could not be prepared for {task_id}.")
                 print(detail)
+                if not success:
+                    raise SystemExit(1)
             elif args.phase2_mode == "review-fix":
                 task_id = next(iter(selected_task_ids))
                 success, detail = await run_codex_review_fix(
