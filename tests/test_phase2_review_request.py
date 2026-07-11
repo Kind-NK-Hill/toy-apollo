@@ -462,6 +462,68 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_review_basis_binds_runtime_toolchain_and_dependency_lock(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_runtime_environment_basis"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_runtime_environment_basis"
+            ledger, settings, _, output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
+            toolchain = "leanprover/lean4:v4.31.0\n"
+            manifest = '{"version": "1.1.0", "packages": [{"name": "mathlib", "rev": "v4.31.0"}]}\n'
+            lakefile = 'name = "ToyApollo"\n'
+            (root / "lean-toolchain").write_text(toolchain, encoding="utf-8")
+            (root / "lake-manifest.json").write_text(manifest, encoding="utf-8")
+            (root / "lakefile.toml").write_text(lakefile, encoding="utf-8")
+            task = resolve_phase2_task(task_id, ledger, settings)
+
+            basis = build_semantic_review_basis(
+                task,
+                ledger,
+                settings,
+                review_subject_kind="official_output",
+                review_subject_hash=sha256_text(output_path.read_text(encoding="utf-8")),
+                review_subject_file=output_path,
+            )
+
+            environment = basis["runtime_environment_evidence"]
+            self.assertEqual(environment["lean_toolchain"]["value"], "leanprover/lean4:v4.31.0")
+            self.assertEqual(environment["lean_toolchain"]["sha256"], sha256_text(toolchain))
+            self.assertEqual(environment["lake_manifest"]["sha256"], sha256_text(manifest))
+            self.assertEqual(environment["lakefile"]["sha256"], sha256_text(lakefile))
+            self.assertNotIn(str(root), json.dumps(environment))
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_toolchain_change_invalidates_existing_review_request(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_toolchain_freshness"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_toolchain_freshness"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id, completed=True)
+            (root / "lean-toolchain").write_text("leanprover/lean4:v4.29.0\n", encoding="utf-8")
+            (root / "lake-manifest.json").write_text('{"packages": []}\n', encoding="utf-8")
+            (root / "lakefile.toml").write_text('name = "ToyApollo"\n', encoding="utf-8")
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "build ok"),
+            ):
+                success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
+            self.assertTrue(success, detail)
+            review_input = json.loads((pack_dir / "semantic_review_input_v1.json").read_text(encoding="utf-8"))
+            (root / "lean-toolchain").write_text("leanprover/lean4:v4.31.0\n", encoding="utf-8")
+
+            error, _ = _validate_review_input_freshness(
+                task=resolve_phase2_task(task_id, ledger, settings),
+                ledger=ledger,
+                settings=settings,
+                pack_dir=pack_dir,
+                review_input=review_input,
+            )
+
+            self.assertIn("basis changed", error)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_review_now_existing_survives_review_artifact_path_rebinding(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_now_existing_path_rebinding"
         try:
