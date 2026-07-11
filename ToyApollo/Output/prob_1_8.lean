@@ -74,6 +74,87 @@ namespace Prob18Identity
 
 open DarbouxRS
 
+private def pointAtNat {a b : ℝ} (P : Partition a b) (i : ℕ) : ℝ :=
+  if hi : i ≤ P.n then P.pts ⟨i, Nat.lt_succ_iff.mpr hi⟩ else b
+
+private def upperStepAtNat {a b : ℝ} (P : Partition a b)
+    (f : ℝ → ℝ) (i : ℕ) : ℝ :=
+  if hi : i < P.n then upperStep P f ⟨i, hi⟩ else 0
+
+private def lowerStepAtNat {a b : ℝ} (P : Partition a b)
+    (f : ℝ → ℝ) (i : ℕ) : ℝ :=
+  if hi : i < P.n then lowerStep P f ⟨i, hi⟩ else 0
+
+private lemma pointAtNat_eq {a b : ℝ} (P : Partition a b) {i : ℕ}
+    (hi : i ≤ P.n) :
+    pointAtNat P i = P.pts ⟨i, Nat.lt_succ_iff.mpr hi⟩ := by
+  simp [pointAtNat, hi]
+
+private lemma pointAtNat_zero {a b : ℝ} (P : Partition a b) : pointAtNat P 0 = a := by
+  rw [pointAtNat_eq P (Nat.zero_le P.n)]
+  simpa using P.pts_start
+
+private lemma pointAtNat_end {a b : ℝ} (P : Partition a b) : pointAtNat P P.n = b := by
+  rw [pointAtNat_eq P le_rfl]
+  convert P.pts_end using 1
+  congr 1
+
+private lemma upperSum_eq_range {a b : ℝ} (P : Partition a b) (f α : ℝ → ℝ) :
+    upperSum P f α = ∑ i ∈ Finset.range P.n,
+      upperStepAtNat P f i * (α (pointAtNat P (i + 1)) - α (pointAtNat P i)) := by
+  unfold upperSum
+  calc
+    (∑ i : Fin P.n,
+        upperStep P f i * (α (P.pts i.succ) - α (P.pts i.castSucc))) =
+        ∑ i : Fin P.n,
+          upperStepAtNat P f i.val *
+            (α (pointAtNat P (i.val + 1)) - α (pointAtNat P i.val)) := by
+      refine Finset.sum_congr rfl ?_
+      intro i _
+      rw [upperStepAtNat, dif_pos i.isLt,
+        pointAtNat_eq P (Nat.succ_le_of_lt i.isLt),
+        pointAtNat_eq P (Nat.le_of_lt i.isLt)]
+      rfl
+    _ = _ := Fin.sum_univ_eq_sum_range
+      (fun i => upperStepAtNat P f i *
+        (α (pointAtNat P (i + 1)) - α (pointAtNat P i))) P.n
+
+private lemma lowerSum_eq_range {a b : ℝ} (P : Partition a b) (f α : ℝ → ℝ) :
+    lowerSum P f α = ∑ i ∈ Finset.range P.n,
+      lowerStepAtNat P f i * (α (pointAtNat P (i + 1)) - α (pointAtNat P i)) := by
+  unfold lowerSum
+  calc
+    (∑ i : Fin P.n,
+        lowerStep P f i * (α (P.pts i.succ) - α (P.pts i.castSucc))) =
+        ∑ i : Fin P.n,
+          lowerStepAtNat P f i.val *
+            (α (pointAtNat P (i.val + 1)) - α (pointAtNat P i.val)) := by
+      refine Finset.sum_congr rfl ?_
+      intro i _
+      rw [lowerStepAtNat, dif_pos i.isLt,
+        pointAtNat_eq P (Nat.succ_le_of_lt i.isLt),
+        pointAtNat_eq P (Nat.le_of_lt i.isLt)]
+      rfl
+    _ = _ := Fin.sum_univ_eq_sum_range
+      (fun i => lowerStepAtNat P f i *
+        (α (pointAtNat P (i + 1)) - α (pointAtNat P i))) P.n
+
+private lemma gapAtNat_le_mesh {a b : ℝ} (P : Partition a b) {i : ℕ}
+    (hi : i < P.n) : pointAtNat P (i + 1) - pointAtNat P i ≤ P.mesh := by
+  rw [pointAtNat_eq P (Nat.succ_le_of_lt hi), pointAtNat_eq P (Nat.le_of_lt hi)]
+  simpa using DarbouxRS.partition_length_le_mesh P (⟨i, hi⟩ : Fin P.n)
+
+private lemma pointAtNat_mem_Icc {a b : ℝ} (P : Partition a b) {i : ℕ}
+    (hi : i ≤ P.n) : pointAtNat P i ∈ Icc a b := by
+  rw [pointAtNat_eq P hi]
+  exact partition_pts_mem_Icc_core P
+
+private lemma pointAtNat_lt_succ {a b : ℝ} (P : Partition a b) {i : ℕ}
+    (hi : i < P.n) : pointAtNat P i < pointAtNat P (i + 1) := by
+  rw [pointAtNat_eq P (Nat.le_of_lt hi), pointAtNat_eq P (Nat.succ_le_of_lt hi)]
+  apply P.strict_mono
+  simp
+
 private def sqrtPrimitive (x : ℝ) : ℝ :=
   (2 / 3 : ℝ) * x * Real.sqrt x
 
@@ -117,12 +198,16 @@ private lemma sqrtPrimitive_sub_bounds {u v : ℝ} (hu : 0 ≤ u) (huv : u ≤ v
 
 private lemma upperStep_sqrt_eq_right {P : Partition (0 : ℝ) 2} {i : ℕ}
     (hi : i < P.n) :
-    upperStep P Real.sqrt i = Real.sqrt (P.pts (i + 1)) := by
-  have hnonempty : (Real.sqrt '' subinterval P i).Nonempty := by
-    refine ⟨Real.sqrt (P.pts (i + 1)), ?_⟩
-    exact ⟨P.pts (i + 1), ⟨le_of_lt (P.strict_mono i hi), le_rfl⟩, rfl⟩
-  have habove : BddAbove (Real.sqrt '' subinterval P i) := by
-    refine ⟨Real.sqrt (P.pts (i + 1)), ?_⟩
+    upperStepAtNat P Real.sqrt i = Real.sqrt (pointAtNat P (i + 1)) := by
+  let iFin : Fin P.n := ⟨i, hi⟩
+  rw [upperStepAtNat, dif_pos hi,
+    pointAtNat_eq P (Nat.succ_le_of_lt hi)]
+  have hnonempty : (Real.sqrt '' subinterval P iFin).Nonempty := by
+    refine ⟨Real.sqrt (P.pts iFin.succ), ?_⟩
+    exact ⟨P.pts iFin.succ,
+      ⟨le_of_lt (P.strict_mono Fin.castSucc_lt_succ), le_rfl⟩, rfl⟩
+  have habove : BddAbove (Real.sqrt '' subinterval P iFin) := by
+    refine ⟨Real.sqrt (P.pts iFin.succ), ?_⟩
     rintro y ⟨x, hx, rfl⟩
     exact Real.sqrt_le_sqrt hx.2
   unfold upperStep
@@ -131,22 +216,28 @@ private lemma upperStep_sqrt_eq_right {P : Partition (0 : ℝ) 2} {i : ℕ}
     rintro y ⟨x, hx, rfl⟩
     exact Real.sqrt_le_sqrt hx.2
   · exact le_csSup habove
-      ⟨P.pts (i + 1), ⟨le_of_lt (P.strict_mono i hi), le_rfl⟩, rfl⟩
+      ⟨P.pts iFin.succ,
+        ⟨le_of_lt (P.strict_mono Fin.castSucc_lt_succ), le_rfl⟩, rfl⟩
 
 private lemma lowerStep_sqrt_eq_left {P : Partition (0 : ℝ) 2} {i : ℕ}
     (hi : i < P.n) :
-    lowerStep P Real.sqrt i = Real.sqrt (P.pts i) := by
-  have hnonempty : (Real.sqrt '' subinterval P i).Nonempty := by
-    refine ⟨Real.sqrt (P.pts i), ?_⟩
-    exact ⟨P.pts i, ⟨le_rfl, le_of_lt (P.strict_mono i hi)⟩, rfl⟩
-  have hbelow : BddBelow (Real.sqrt '' subinterval P i) := by
-    refine ⟨Real.sqrt (P.pts i), ?_⟩
+    lowerStepAtNat P Real.sqrt i = Real.sqrt (pointAtNat P i) := by
+  let iFin : Fin P.n := ⟨i, hi⟩
+  rw [lowerStepAtNat, dif_pos hi,
+    pointAtNat_eq P (Nat.le_of_lt hi)]
+  have hnonempty : (Real.sqrt '' subinterval P iFin).Nonempty := by
+    refine ⟨Real.sqrt (P.pts iFin.castSucc), ?_⟩
+    exact ⟨P.pts iFin.castSucc,
+      ⟨le_rfl, le_of_lt (P.strict_mono Fin.castSucc_lt_succ)⟩, rfl⟩
+  have hbelow : BddBelow (Real.sqrt '' subinterval P iFin) := by
+    refine ⟨Real.sqrt (P.pts iFin.castSucc), ?_⟩
     rintro y ⟨x, hx, rfl⟩
     exact Real.sqrt_le_sqrt hx.1
   unfold lowerStep
   refine le_antisymm ?_ ?_
   · exact csInf_le hbelow
-      ⟨P.pts i, ⟨le_rfl, le_of_lt (P.strict_mono i hi)⟩, rfl⟩
+      ⟨P.pts iFin.castSucc,
+        ⟨le_rfl, le_of_lt (P.strict_mono Fin.castSucc_lt_succ)⟩, rfl⟩
   · refine le_csInf hnonempty ?_
     rintro y ⟨x, hx, rfl⟩
     exact Real.sqrt_le_sqrt hx.1
@@ -159,54 +250,61 @@ private lemma sqrtPrimitive_total_0_2 :
 
 private lemma lowerSum_sqrt_id_le_total (P : Partition (0 : ℝ) 2) :
     lowerSum P Real.sqrt (fun x : ℝ => x) ≤ sqrtPrimitive 2 - sqrtPrimitive 0 := by
-  unfold lowerSum
+  rw [lowerSum_eq_range]
   calc
     ∑ i ∈ Finset.range P.n,
-        lowerStep P Real.sqrt i * ((fun x : ℝ => x) (P.pts (i + 1)) -
-          (fun x : ℝ => x) (P.pts i))
+        lowerStepAtNat P Real.sqrt i * ((fun x : ℝ => x) (pointAtNat P (i + 1)) -
+          (fun x : ℝ => x) (pointAtNat P i))
         =
         ∑ i ∈ Finset.range P.n,
-          Real.sqrt (P.pts i) * (P.pts (i + 1) - P.pts i) := by
+          Real.sqrt (pointAtNat P i) *
+            (pointAtNat P (i + 1) - pointAtNat P i) := by
           refine Finset.sum_congr rfl ?_
           intro i hi
           rw [lowerStep_sqrt_eq_left (P := P) (i := i) (Finset.mem_range.mp hi)]
     _ ≤
         ∑ i ∈ Finset.range P.n,
-          (sqrtPrimitive (P.pts (i + 1)) - sqrtPrimitive (P.pts i)) := by
+          (sqrtPrimitive (pointAtNat P (i + 1)) -
+            sqrtPrimitive (pointAtNat P i)) := by
           refine Finset.sum_le_sum ?_
           intro i hi
           have hi_lt : i < P.n := Finset.mem_range.mp hi
-          have hpi_nonneg : 0 ≤ P.pts i :=
-            (partition_pts_mem_Icc_core P (Nat.le_of_lt hi_lt)).1
-          have hmono : P.pts i ≤ P.pts (i + 1) := le_of_lt (P.strict_mono i hi_lt)
+          have hpi_nonneg : 0 ≤ pointAtNat P i :=
+            (pointAtNat_mem_Icc P (Nat.le_of_lt hi_lt)).1
+          have hmono : pointAtNat P i ≤ pointAtNat P (i + 1) :=
+            le_of_lt (pointAtNat_lt_succ P hi_lt)
           exact (sqrtPrimitive_sub_bounds hpi_nonneg hmono).1
     _ = sqrtPrimitive 2 - sqrtPrimitive 0 := by
-          simpa [P.pts_start, P.pts_end] using
-            (Finset.sum_range_sub (fun j => sqrtPrimitive (P.pts j)) P.n)
+          simpa [pointAtNat_zero P, pointAtNat_end P] using
+            (Finset.sum_range_sub (fun j => sqrtPrimitive (pointAtNat P j)) P.n)
 
 private lemma total_le_upperSum_sqrt_id (P : Partition (0 : ℝ) 2) :
     sqrtPrimitive 2 - sqrtPrimitive 0 ≤ upperSum P Real.sqrt (fun x : ℝ => x) := by
-  unfold upperSum
+  rw [upperSum_eq_range]
   calc
     sqrtPrimitive 2 - sqrtPrimitive 0 =
         ∑ i ∈ Finset.range P.n,
-          (sqrtPrimitive (P.pts (i + 1)) - sqrtPrimitive (P.pts i)) := by
-          simpa [P.pts_start, P.pts_end] using
-            (Finset.sum_range_sub (fun j => sqrtPrimitive (P.pts j)) P.n).symm
+          (sqrtPrimitive (pointAtNat P (i + 1)) -
+            sqrtPrimitive (pointAtNat P i)) := by
+          simpa [pointAtNat_zero P, pointAtNat_end P] using
+            (Finset.sum_range_sub (fun j => sqrtPrimitive (pointAtNat P j)) P.n).symm
     _ ≤
         ∑ i ∈ Finset.range P.n,
-          Real.sqrt (P.pts (i + 1)) * (P.pts (i + 1) - P.pts i) := by
+          Real.sqrt (pointAtNat P (i + 1)) *
+            (pointAtNat P (i + 1) - pointAtNat P i) := by
           refine Finset.sum_le_sum ?_
           intro i hi
           have hi_lt : i < P.n := Finset.mem_range.mp hi
-          have hpi_nonneg : 0 ≤ P.pts i :=
-            (partition_pts_mem_Icc_core P (Nat.le_of_lt hi_lt)).1
-          have hmono : P.pts i ≤ P.pts (i + 1) := le_of_lt (P.strict_mono i hi_lt)
+          have hpi_nonneg : 0 ≤ pointAtNat P i :=
+            (pointAtNat_mem_Icc P (Nat.le_of_lt hi_lt)).1
+          have hmono : pointAtNat P i ≤ pointAtNat P (i + 1) :=
+            le_of_lt (pointAtNat_lt_succ P hi_lt)
           exact (sqrtPrimitive_sub_bounds hpi_nonneg hmono).2
     _ =
         ∑ i ∈ Finset.range P.n,
-          upperStep P Real.sqrt i * ((fun x : ℝ => x) (P.pts (i + 1)) -
-            (fun x : ℝ => x) (P.pts i)) := by
+          upperStepAtNat P Real.sqrt i *
+            ((fun x : ℝ => x) (pointAtNat P (i + 1)) -
+              (fun x : ℝ => x) (pointAtNat P i)) := by
           refine Finset.sum_congr rfl ?_
           intro i hi
           rw [upperStep_sqrt_eq_right (P := P) (i := i) (Finset.mem_range.mp hi)]
@@ -214,18 +312,20 @@ private lemma total_le_upperSum_sqrt_id (P : Partition (0 : ℝ) 2) :
 private lemma upper_lower_gap_sqrt_id_le (P : Partition (0 : ℝ) 2) :
     upperSum P Real.sqrt (fun x : ℝ => x) -
       lowerSum P Real.sqrt (fun x : ℝ => x) ≤ Real.sqrt 2 * P.mesh := by
-  unfold upperSum lowerSum
+  rw [upperSum_eq_range, lowerSum_eq_range]
   rw [← Finset.sum_sub_distrib]
   calc
     ∑ i ∈ Finset.range P.n,
-        (upperStep P Real.sqrt i * ((fun x : ℝ => x) (P.pts (i + 1)) -
-            (fun x : ℝ => x) (P.pts i)) -
-          lowerStep P Real.sqrt i * ((fun x : ℝ => x) (P.pts (i + 1)) -
-            (fun x : ℝ => x) (P.pts i)))
+        (upperStepAtNat P Real.sqrt i *
+            ((fun x : ℝ => x) (pointAtNat P (i + 1)) -
+              (fun x : ℝ => x) (pointAtNat P i)) -
+          lowerStepAtNat P Real.sqrt i *
+            ((fun x : ℝ => x) (pointAtNat P (i + 1)) -
+              (fun x : ℝ => x) (pointAtNat P i)))
         =
         ∑ i ∈ Finset.range P.n,
-          ((Real.sqrt (P.pts (i + 1)) - Real.sqrt (P.pts i)) *
-            (P.pts (i + 1) - P.pts i)) := by
+          ((Real.sqrt (pointAtNat P (i + 1)) - Real.sqrt (pointAtNat P i)) *
+            (pointAtNat P (i + 1) - pointAtNat P i)) := by
           refine Finset.sum_congr rfl ?_
           intro i hi
           rw [upperStep_sqrt_eq_right (P := P) (i := i) (Finset.mem_range.mp hi),
@@ -233,20 +333,24 @@ private lemma upper_lower_gap_sqrt_id_le (P : Partition (0 : ℝ) 2) :
           ring
     _ ≤
         ∑ i ∈ Finset.range P.n,
-          ((Real.sqrt (P.pts (i + 1)) - Real.sqrt (P.pts i)) * P.mesh) := by
+          ((Real.sqrt (pointAtNat P (i + 1)) - Real.sqrt (pointAtNat P i)) *
+            P.mesh) := by
           refine Finset.sum_le_sum ?_
           intro i hi
           have hi_lt : i < P.n := Finset.mem_range.mp hi
           have hsqrt_nonneg :
-              0 ≤ Real.sqrt (P.pts (i + 1)) - Real.sqrt (P.pts i) := by
-            exact sub_nonneg.mpr (Real.sqrt_le_sqrt (le_of_lt (P.strict_mono i hi_lt)))
-          exact mul_le_mul_of_nonneg_left (partition_length_le_mesh P hi_lt) hsqrt_nonneg
+              0 ≤ Real.sqrt (pointAtNat P (i + 1)) -
+                Real.sqrt (pointAtNat P i) := by
+            exact sub_nonneg.mpr
+              (Real.sqrt_le_sqrt (le_of_lt (pointAtNat_lt_succ P hi_lt)))
+          exact mul_le_mul_of_nonneg_left (gapAtNat_le_mesh P hi_lt) hsqrt_nonneg
     _ = (∑ i ∈ Finset.range P.n,
-          (Real.sqrt (P.pts (i + 1)) - Real.sqrt (P.pts i))) * P.mesh := by
+          (Real.sqrt (pointAtNat P (i + 1)) - Real.sqrt (pointAtNat P i))) *
+            P.mesh := by
           rw [Finset.sum_mul]
     _ = Real.sqrt 2 * P.mesh := by
-          rw [Finset.sum_range_sub (fun j => Real.sqrt (P.pts j)) P.n]
-          simp [P.pts_start, P.pts_end]
+          rw [Finset.sum_range_sub (fun j => Real.sqrt (pointAtNat P j)) P.n]
+          simp [pointAtNat_zero P, pointAtNat_end P]
 
 private lemma sqrt_two_mul_delta_lt {eps : ℝ} (heps : 0 < eps) :
     Real.sqrt 2 * (eps / (Real.sqrt 2 + 1)) < eps := by
@@ -316,90 +420,10 @@ private theorem upperLowerCommonLimit_sqrt_id_0_2 :
       exact lt_of_le_of_lt hle hgap_lt
     simpa [sqrtPrimitive_total_0_2] using hlt
 
-private lemma lowerSum_le_taggedSum_sqrt_id (P : Partition (0 : ℝ) 2)
-    (tags : ℕ → ℝ) (htags : tagsInPartition P tags) :
-    lowerSum P Real.sqrt (fun x : ℝ => x) ≤
-      taggedSum P tags Real.sqrt (fun x : ℝ => x) := by
-  unfold lowerSum taggedSum
-  refine Finset.sum_le_sum ?_
-  intro i hi
-  have hi_lt : i < P.n := Finset.mem_range.mp hi
-  have htag := htags i hi_lt
-  have hsqrt : Real.sqrt (P.pts i) ≤ Real.sqrt (tags i) :=
-    Real.sqrt_le_sqrt htag.1
-  have hinc : 0 ≤ P.pts (i + 1) - P.pts i :=
-    sub_nonneg.mpr (le_of_lt (P.strict_mono i hi_lt))
-  rw [lowerStep_sqrt_eq_left (P := P) (i := i) hi_lt]
-  exact mul_le_mul_of_nonneg_right hsqrt hinc
-
-private lemma taggedSum_le_upperSum_sqrt_id (P : Partition (0 : ℝ) 2)
-    (tags : ℕ → ℝ) (htags : tagsInPartition P tags) :
-    taggedSum P tags Real.sqrt (fun x : ℝ => x) ≤
-      upperSum P Real.sqrt (fun x : ℝ => x) := by
-  unfold upperSum taggedSum
-  refine Finset.sum_le_sum ?_
-  intro i hi
-  have hi_lt : i < P.n := Finset.mem_range.mp hi
-  have htag := htags i hi_lt
-  have hsqrt : Real.sqrt (tags i) ≤ Real.sqrt (P.pts (i + 1)) :=
-    Real.sqrt_le_sqrt htag.2
-  have hinc : 0 ≤ P.pts (i + 1) - P.pts i :=
-    sub_nonneg.mpr (le_of_lt (P.strict_mono i hi_lt))
-  rw [upperStep_sqrt_eq_right (P := P) (i := i) hi_lt]
-  exact mul_le_mul_of_nonneg_right hsqrt hinc
-
 private theorem taggedCommonLimit_sqrt_id_0_2 :
     rsTaggedCommonLimit (0 : ℝ) 2 Real.sqrt (fun x : ℝ => x)
-      ((4 * Real.sqrt 2) / 3) := by
-  refine ⟨sourceHypotheses_sqrt_id_0_2, ?_⟩
-  intro eps heps
-  let δ : ℝ := eps / (Real.sqrt 2 + 1)
-  have hδ : 0 < δ := by
-    dsimp [δ]
-    positivity
-  refine ⟨δ, hδ, ?_⟩
-  intro P tags htags hmesh
-  have hgap_le := upper_lower_gap_sqrt_id_le P
-  have hgap_lt :
-      upperSum P Real.sqrt (fun x : ℝ => x) -
-        lowerSum P Real.sqrt (fun x : ℝ => x) < eps := by
-    have hsqrt2_pos : 0 < Real.sqrt 2 := by positivity
-    have hmesh_bound : Real.sqrt 2 * P.mesh < Real.sqrt 2 * δ :=
-      mul_lt_mul_of_pos_left hmesh hsqrt2_pos
-    exact lt_of_le_of_lt hgap_le
-      (lt_trans hmesh_bound (by simpa [δ] using sqrt_two_mul_delta_lt heps))
-  have hlower_le_total := lowerSum_sqrt_id_le_total P
-  have htotal_le_upper := total_le_upperSum_sqrt_id P
-  have hlower_le_tag := lowerSum_le_taggedSum_sqrt_id P tags htags
-  have htag_le_upper := taggedSum_le_upperSum_sqrt_id P tags htags
-  have hleft_le :
-      (sqrtPrimitive 2 - sqrtPrimitive 0) -
-          taggedSum P tags Real.sqrt (fun x : ℝ => x) ≤
-        upperSum P Real.sqrt (fun x : ℝ => x) -
-          lowerSum P Real.sqrt (fun x : ℝ => x) := by
-    linarith
-  have hright_le :
-      taggedSum P tags Real.sqrt (fun x : ℝ => x) -
-          (sqrtPrimitive 2 - sqrtPrimitive 0) ≤
-        upperSum P Real.sqrt (fun x : ℝ => x) -
-          lowerSum P Real.sqrt (fun x : ℝ => x) := by
-    linarith
-  have hleft_lt :
-      (sqrtPrimitive 2 - sqrtPrimitive 0) -
-          taggedSum P tags Real.sqrt (fun x : ℝ => x) < eps :=
-    lt_of_le_of_lt hleft_le hgap_lt
-  have hright_lt :
-      taggedSum P tags Real.sqrt (fun x : ℝ => x) -
-          (sqrtPrimitive 2 - sqrtPrimitive 0) < eps :=
-    lt_of_le_of_lt hright_le hgap_lt
-  have habs :
-      |taggedSum P tags Real.sqrt (fun x : ℝ => x) -
-          (sqrtPrimitive 2 - sqrtPrimitive 0)| < eps := by
-    apply abs_lt.mpr
-    constructor
-    · linarith
-    · exact hright_lt
-  simpa [sqrtPrimitive_total_0_2] using habs
+      ((4 * Real.sqrt 2) / 3) :=
+  taggedCommonLimit_of_upperLowerCommonLimit upperLowerCommonLimit_sqrt_id_0_2
 
 end Prob18Identity
 
