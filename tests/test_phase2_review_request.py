@@ -23,6 +23,27 @@ from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E4
 
 
 class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
+    def test_confirmed_ledger_soft_import_is_not_hidden_by_stale_pack_task(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_confirmed_soft_import"
+        try:
+            self._clean_root(root)
+            task_id = "prob_4_review_confirmed_soft_import"
+            dep_id = "ex_4_1_1"
+            ledger, settings, _, _ = self._setup_trivial_phase2_task(
+                root,
+                task_id,
+                completed=True,
+            )
+            ledger.update_candidate_soft_imports(task_id, [dep_id])
+            ledger.mark_soft_imports_confirmed(task_id, [dep_id])
+
+            task = resolve_phase2_task(task_id, ledger, settings)
+
+            self.assertEqual(task["soft_imports"], [dep_id])
+            self.assertIn(dep_id, task["final_import_union"])
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_updated_ledger_hard_dependency_is_not_hidden_by_stale_pack_task(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_updated_hard_dependency"
         try:
