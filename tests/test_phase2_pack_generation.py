@@ -3,6 +3,7 @@ import json
 import os
 import shutil
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
@@ -42,7 +43,7 @@ from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E4
 
 class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
     def test_staged_official_build_uses_short_backup_names_for_long_child_obligation_paths(self):
-        root = REPO_ROOT / "tests" / "_tmp_phase2_staged_long_backup"
+        root = Path(tempfile.gettempdir()) / "toy_apollo_staged_long_backup"
         try:
             self._clean_root(root)
             plans_dir = root / "plans"
@@ -86,7 +87,7 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             shutil.rmtree(root, ignore_errors=True)
 
     def test_staged_official_build_handles_long_owner_pack_staging_path(self):
-        root = REPO_ROOT / "tests" / "_tmp_phase2_staged_long_owner_pack"
+        root = Path(tempfile.gettempdir()) / "toy_apollo_staged_long_owner_pack"
         try:
             self._clean_root(root)
             plans_dir = root / "plans"
@@ -411,7 +412,7 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             shutil.rmtree(root, ignore_errors=True)
 
     def test_codex_review_pack_writes_template_for_long_nested_obligation_path(self):
-        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_long_review_path"
+        root = Path(tempfile.gettempdir()) / "toy_apollo_pack_generation_long_review_path"
         try:
             self._clean_root(root)
             task_id = (
