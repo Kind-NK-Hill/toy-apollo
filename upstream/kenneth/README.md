@@ -64,3 +64,14 @@ The canonical ToyApollo contract therefore remains:
   `taggedCommonLimit_of_upperLowerCommonLimit`;
 - later Kenneth commits are reconciled only by an explicit, reviewed commit.
 
+## 2026-07-11 Chapter 1 review baseline
+
+Kenneth's current public `main` is now pinned at commit
+`2b86c183a7da2bd1af77a99870b93197067d7558` (tree
+`95da03e39418ce2435f4f161a36d663411f5e87b`).  The exact Chapter 1 tree and
+blob identifiers are recorded in `2b86c183/manifest.json`.
+
+This new baseline does not replace the byte-exact human-review anchor above.
+It is the immutable input for the next review round.  Until that review is
+complete, its files are classified as `kenneth_revised_review_pending`, not as
+official ToyApollo PASS results and not as automatically human-reviewed blobs.
