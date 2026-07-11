@@ -4,6 +4,7 @@ SOURCE MATERIAL: omitted from the public source snapshot; see docs/repository_sc
 -/
 
 import Mathlib
+import ToyApollo.Output.def_1_3_kenneth_finite_support
 
 open MeasureTheory
 open scoped ENNReal
