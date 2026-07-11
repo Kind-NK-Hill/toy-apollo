@@ -101,6 +101,61 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(plan.report.rows[0].report_status, "needs_fresh_review")
         self.assertEqual(plan.actions[0].action, "review_existing")
 
+    def test_stale_review_freshness_routes_before_old_semantic_fail_triage(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            settings = self._settings(root)
+            task_id = "def_3_stale_triage"
+            output_path = settings.toyapollo_output_dir / f"{task_id}.lean"
+            output_path.write_text("import Mathlib\n\ndef def_3_stale_triage : Prop := True\n", encoding="utf-8")
+            pack_dir = settings.phase2_prompt_packs_dir / task_id
+            pack_dir.mkdir(parents=True)
+            legacy_result = pack_dir / "semantic_review_result_v1.json"
+            legacy_result.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "phase2.semantic_review.result.v1",
+                        "task_id": task_id,
+                        "verdict": "pass",
+                        "proof_class": "textbook_definition_completed",
+                        "completion_class": "textbook_definition_completed",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            triage = pack_dir / "semantic_fail_triage.json"
+            triage.write_text(
+                json.dumps(
+                    {
+                        "needs_diagnoser": True,
+                        "local_repair_allowed": False,
+                        "category": "mathlib_adapter",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            ledger = FakeLedger(
+                {
+                    task_id: {
+                        "block_id": task_id,
+                        "type": "Definition",
+                        "status": COMPLETED,
+                        "phase2_status": "pass",
+                        "latest_official_review_result_file": str(legacy_result),
+                        "latest_semantic_fail_triage_file": str(triage),
+                        "latest_semantic_fail_triage_needs_diagnoser": True,
+                        "latest_semantic_fail_triage_local_repair_allowed": False,
+                        "latest_semantic_fail_triage_category": "mathlib_adapter",
+                    }
+                }
+            )
+
+            plan = plan_batch_from_ledger([task_id], ledger, settings)
+
+        self.assertEqual(plan.report.rows[0].report_status, "needs_fresh_review")
+        self.assertEqual(plan.actions[0].action, "review_existing")
+        self.assertIn("--review-subject existing", plan.actions[0].command)
+
     def test_fresh_review_with_illegal_class_is_not_counted_as_pass(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -1457,31 +1512,24 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
     def test_batch_run_skips_reviewer_required_and_dispatches_next_executable_action(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            settings = self._settings(root)
-            waiting_pack = settings.phase2_prompt_packs_dir / "prob_14_2"
-            waiting_pack.mkdir(parents=True)
-            expected_result = waiting_pack / "semantic_review_result_v6.json"
-            review_request = waiting_pack / "semantic_review_request_v6.json"
-            review_request.write_text("{}", encoding="utf-8")
-            ledger = FakeLedger(
-                {
-                    "prob_14_2": {
-                        "block_id": "prob_14_2",
-                        "type": "Problem",
-                        "status": NONTERMINAL,
-                        "current_auto_loop_phase": "reviewing",
-                        "current_auto_loop_status": "active",
-                        "current_review_request_file": str(review_request),
-                        "current_review_expected_result_file": str(expected_result),
-                    },
-                    "def_1_3": {
-                        "block_id": "def_1_3",
-                        "type": "Definition",
-                        "status": NONTERMINAL,
-                        "phase2_status": "fail",
-                    },
-                }
+            ledger, settings, waiting_pack, _ = self._setup_trivial_phase2_task(
+                root,
+                "prob_14_2",
+                completed=True,
             )
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "build ok"),
+            ):
+                success, detail = asyncio.run(write_existing_output_review_pack("prob_14_2", ledger, settings))
+            self.assertTrue(success, detail)
+            ledger.ledger["tasks"]["def_1_3"] = {
+                "block_id": "def_1_3",
+                "type": "Definition",
+                "status": NONTERMINAL,
+                "phase2_status": "fail",
+            }
+            ledger.save()
 
             plan = plan_batch_from_ledger(["prob_14_2", "def_1_3"], ledger, settings)
             with patch(
@@ -1492,7 +1540,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
 
         actions = {action.task_id: action for action in plan.actions}
         self.assertEqual(actions["prob_14_2"].action, "reviewer_required")
-        self.assertIn("semantic_review_result_v6.json", actions["prob_14_2"].reason)
+        self.assertIn("semantic_review_result_v1.json", actions["prob_14_2"].reason)
         auto_loop_mock.assert_awaited_once()
         self.assertEqual(len(result.executed), 1)
         self.assertEqual(result.executed[0].task_id, "def_1_3")
@@ -1561,12 +1609,16 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(result.details, ())
         self.assertEqual(result.plan.actions[0].action, "foundation_absorb_required")
 
-    def test_current_review_request_without_auto_loop_phase_requires_reviewer(self):
+    def test_invalid_pending_review_request_routes_to_fresh_existing_review(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             settings = self._settings(root)
             pack_dir = settings.phase2_prompt_packs_dir / "thm_11_6"
             pack_dir.mkdir(parents=True)
+            (settings.toyapollo_output_dir / "thm_11_6.lean").write_text(
+                "import Mathlib\n\ntheorem thm_11_6 : True := by trivial\n",
+                encoding="utf-8",
+            )
             request_path = pack_dir / "semantic_review_request_v29.json"
             result_path = pack_dir / "semantic_review_result_v29.json"
             request_path.write_text("{}", encoding="utf-8")
@@ -1584,9 +1636,78 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
 
             plan = plan_batch_from_ledger(["thm_11_6"], ledger, settings)
 
+        self.assertEqual(plan.actions[0].action, "review_existing")
+        self.assertIn("--review-subject existing", plan.actions[0].command)
+
+    def test_failed_task_with_stale_pending_request_refreshes_before_old_triage(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            settings = self._settings(root)
+            task_id = "thm_3_stale_pending_after_fail"
+            (settings.toyapollo_output_dir / f"{task_id}.lean").write_text(
+                "import Mathlib\n\ntheorem thm_3_stale_pending_after_fail : True := by trivial\n",
+                encoding="utf-8",
+            )
+            pack_dir = settings.phase2_prompt_packs_dir / task_id
+            pack_dir.mkdir(parents=True)
+            request_path = pack_dir / "semantic_review_request_v2.json"
+            result_path = pack_dir / "semantic_review_result_v2.json"
+            request_path.write_text("{}", encoding="utf-8")
+            triage_path = pack_dir / "semantic_fail_triage.json"
+            triage_path.write_text(
+                json.dumps(
+                    {
+                        "needs_diagnoser": True,
+                        "local_repair_allowed": False,
+                        "category": "mathlib_adapter",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            ledger = FakeLedger(
+                {
+                    task_id: {
+                        "block_id": task_id,
+                        "type": "Theorem",
+                        "status": COMPLETED,
+                        "phase2_status": "fail",
+                        "current_review_request_file": str(request_path),
+                        "current_review_expected_result_file": str(result_path),
+                        "latest_semantic_fail_triage_file": str(triage_path),
+                        "latest_semantic_fail_triage_needs_diagnoser": True,
+                        "latest_semantic_fail_triage_local_repair_allowed": False,
+                        "latest_semantic_fail_triage_category": "mathlib_adapter",
+                    }
+                }
+            )
+
+            plan = plan_batch_from_ledger([task_id], ledger, settings)
+
+        self.assertEqual(plan.actions[0].action, "review_existing")
+        self.assertIn("--review-subject existing", plan.actions[0].command)
+        self.assertIn("stale", plan.actions[0].reason.lower())
+
+    def test_fresh_pending_review_request_requires_reviewer(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            task_id = "thm_11_fresh_pending_review"
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(
+                root,
+                task_id,
+                completed=True,
+            )
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "build ok"),
+            ):
+                success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
+            self.assertTrue(success, detail)
+
+            plan = plan_batch_from_ledger([task_id], ledger, settings)
+
         self.assertEqual(plan.actions[0].action, "reviewer_required")
         self.assertEqual(plan.actions[0].command, "")
-        self.assertIn("semantic_review_result_v29.json", plan.actions[0].reason)
+        self.assertIn("semantic_review_result_v1.json", plan.actions[0].reason)
 
     def test_blocked_downstream_is_skipped_until_root_repairs(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -2007,7 +2128,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
 
         self.assertEqual(plan.actions, ())
         self.assertIn("subagent-dispatch-required", rendered)
-        self.assertIn("reviewer_required=1", rendered)
+        self.assertNotIn("reviewer_required=1", rendered)
         self.assertIn("diagnoser_required=1", rendered)
 
 
