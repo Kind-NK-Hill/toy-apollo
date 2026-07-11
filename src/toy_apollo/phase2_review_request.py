@@ -276,6 +276,29 @@ def _classification_history(task_id: str, settings) -> dict[str, Any]:
     }
 
 
+def _runtime_environment_evidence(settings) -> dict[str, Any]:
+    """Bind review freshness to the checked-in Lean environment, not its absolute worktree path."""
+
+    def file_evidence(relative_name: str, *, include_value: bool = False) -> dict[str, Any]:
+        path = settings.runtime_root / relative_name
+        exists = path_exists(path)
+        content = read_file_safely(path) if exists else ""
+        evidence: dict[str, Any] = {
+            "file": relative_name,
+            "status": "present" if exists else "missing_required",
+            "sha256": sha256_text(content) if exists else "",
+        }
+        if include_value:
+            evidence["value"] = content.strip()
+        return evidence
+
+    return {
+        "lean_toolchain": file_evidence("lean-toolchain", include_value=True),
+        "lake_manifest": file_evidence("lake-manifest.json"),
+        "lakefile": file_evidence("lakefile.toml"),
+    }
+
+
 def _dependency_status(task: dict[str, Any], ledger: LedgerManager, settings) -> list[dict[str, Any]]:
     status: list[dict[str, Any]] = []
     hard_deps = canonicalize_id_list(task.get("dependencies", []))
@@ -523,6 +546,7 @@ def build_semantic_review_basis(
             "tex_hash": sha256_text(source_tex_content) if source_tex_exists else "",
             "task_content_hash": sha256_text(str(task.get("content", "") or "")),
         },
+        "runtime_environment_evidence": _runtime_environment_evidence(settings),
         "lean_subject_evidence": {
             "review_subject_kind": str(review_subject_kind or ""),
             "review_subject_hash": str(review_subject_hash or ""),
