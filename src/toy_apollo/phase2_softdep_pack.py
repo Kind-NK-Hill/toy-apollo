@@ -16,6 +16,7 @@ from .phase2_prompt_pack import _ledger_record_has_accepted_proof_debt, find_exi
 PROBLEM_TYPE = "problem"
 DEFINITION_TYPE_PREFIX = "definition"
 THEOREM_TYPE_PREFIX = "theorem"
+EXAMPLE_TYPE_PREFIX = "example"
 KNOWN_SELECTION_SCOPE_ALIASES: dict[frozenset[str], str] = {
     frozenset(
         [
@@ -73,7 +74,11 @@ def _is_problem_task(task: dict[str, Any]) -> bool:
 
 def _is_allowed_material_task(task: dict[str, Any]) -> bool:
     task_type = _task_type(task)
-    return task_type.startswith(DEFINITION_TYPE_PREFIX) or task_type.startswith(THEOREM_TYPE_PREFIX)
+    return (
+        task_type.startswith(DEFINITION_TYPE_PREFIX)
+        or task_type.startswith(THEOREM_TYPE_PREFIX)
+        or task_type.startswith(EXAMPLE_TYPE_PREFIX)
+    )
 
 
 def build_selection_scope_id(task_ids: list[str]) -> str:
