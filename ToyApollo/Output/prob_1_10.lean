@@ -32,7 +32,7 @@ theorem prob_1_10
     (hboundary :
       Filter.Tendsto (fun x : ℝ => x * (1 - (μ (Iic x)).toReal)) Filter.atTop
         (nhds 0)) :
-    ∫ x, x ∂μ = ∫ t in Ioi 0, (μ (Ioi t)).toReal := by
+    (∫⁻ x, ENNReal.ofReal x ∂μ) = ∫⁻ t in Ioi 0, μ (Ioi t) := by
   -- `F + G = 1`, i.e. the tail equals `1 − F`.
   have hFG : ∀ T : ℝ, (μ (Ioi T)).toReal = 1 - (μ (Iic T)).toReal := by
     intro T
@@ -149,7 +149,7 @@ theorem prob_1_10
         (nhds (∫⁻ x in Ioi (0:ℝ), ENNReal.ofReal x ∂μ)) :=
       hsum.congr (fun n => core (n:ℝ) (Nat.cast_nonneg n))
     exact tendsto_nhds_unique h1 key_v
-  -- transport back to the Bochner integrals
+  -- Remove the support restriction, passing from `Ioi 0` to the whole-space lintegral.
   have hlint_id : ∫⁻ x, ENNReal.ofReal x ∂μ = ∫⁻ x in Ioi (0:ℝ), ENNReal.ofReal x ∂μ := by
     rw [← lintegral_add_compl (fun x => ENNReal.ofReal x) measurableSet_Ioi, compl_Ioi]
     have hz : ∫⁻ x in Iic (0:ℝ), ENNReal.ofReal x ∂μ = 0 := by
@@ -160,27 +160,51 @@ theorem prob_1_10
         exact ENNReal.ofReal_eq_zero.mpr hx
       rw [setLIntegral_congr_fun measurableSet_Iic heq]; simp
     rw [hz, add_zero]
-  have hlint_tail : ∫⁻ t in Ioi (0:ℝ), ENNReal.ofReal ((μ (Ioi t)).toReal)
-      = ∫⁻ t in Ioi (0:ℝ), μ (Ioi t) := by
-    apply setLIntegral_congr_fun measurableSet_Ioi
-    intro t _
-    exact ENNReal.ofReal_toReal (measure_ne_top μ _)
+  exact hlint_id.trans hAB
+
+theorem prob_1_10_real_of_integrable
+    (μ : Measure ℝ) [IsProbabilityMeasure μ]
+    (hsupp : μ (Iio 0) = 0)
+    (hboundary :
+      Filter.Tendsto (fun x : ℝ => x * (1 - (μ (Iic x)).toReal)) Filter.atTop
+        (nhds 0))
+    (hfinite : Integrable (fun x : ℝ => x) μ) :
+    ∫ x, x ∂μ = ∫ t in Ioi 0, (μ (Ioi t)).toReal := by
   have hnn_id : 0 ≤ᵐ[μ] (fun x : ℝ => x) := by
     filter_upwards [MeasureTheory.measure_eq_zero_iff_ae_notMem.mp hsupp] with x hx
     exact le_of_not_gt hx
-  have hmeas_id : AEStronglyMeasurable (fun x : ℝ => x) μ := measurable_id.aestronglyMeasurable
-  have hnn_tail : 0 ≤ᵐ[volume.restrict (Ioi (0:ℝ))] (fun t => (μ (Ioi t)).toReal) :=
+  have hcanonical := prob_1_10 μ hsupp hboundary
+  have hlhs_finite : (∫⁻ x, ENNReal.ofReal x ∂μ) < (⊤ : ENNReal) :=
+    hfinite.lintegral_lt_top
+  have hrhs_finite : (∫⁻ t in Ioi (0 : ℝ), μ (Ioi t)) < (⊤ : ENNReal) := by
+    rw [← hcanonical]
+    exact hlhs_finite
+  have htail_lintegral :
+      (∫⁻ t in Ioi (0 : ℝ), ENNReal.ofReal ((μ (Ioi t)).toReal))
+        = ∫⁻ t in Ioi (0 : ℝ), μ (Ioi t) := by
+    apply setLIntegral_congr_fun measurableSet_Ioi
+    intro t _
+    exact ENNReal.ofReal_toReal (measure_ne_top μ _)
+  have hnn_tail :
+      0 ≤ᵐ[volume.restrict (Ioi (0 : ℝ))] (fun t => (μ (Ioi t)).toReal) :=
     Filter.Eventually.of_forall (fun _ => ENNReal.toReal_nonneg)
   have hmeas_tail : AEStronglyMeasurable (fun t => (μ (Ioi t)).toReal)
-      (volume.restrict (Ioi (0:ℝ))) := by
+      (volume.restrict (Ioi (0 : ℝ))) := by
     refine Measurable.aestronglyMeasurable ?_
     refine Measurable.ennreal_toReal ?_
     exact Antitone.measurable (fun a b hab => measure_mono (Ioi_subset_Ioi hab))
-  have goalL : ∫ x, x ∂μ = (∫⁻ x in Ioi (0:ℝ), ENNReal.ofReal x ∂μ).toReal := by
-    rw [← hlint_id]
-    exact integral_eq_lintegral_of_nonneg_ae hnn_id hmeas_id
-  have goalR : ∫ t in Ioi (0:ℝ), (μ (Ioi t)).toReal
-      = (∫⁻ t in Ioi (0:ℝ), μ (Ioi t)).toReal := by
-    rw [← hlint_tail]
-    exact integral_eq_lintegral_of_nonneg_ae hnn_tail hmeas_tail
-  rw [goalL, goalR, hAB]
+  have hfinite_tail : Integrable (fun t => (μ (Ioi t)).toReal)
+      (volume.restrict (Ioi (0 : ℝ))) := by
+    refine ⟨hmeas_tail, ?_⟩
+    rw [hasFiniteIntegral_iff_ofReal hnn_tail, htail_lintegral]
+    exact hrhs_finite
+  apply (ENNReal.ofReal_eq_ofReal_iff
+    (integral_nonneg_of_ae hnn_id) (integral_nonneg_of_ae hnn_tail)).mp
+  calc
+    ENNReal.ofReal (∫ x, x ∂μ) = ∫⁻ x, ENNReal.ofReal x ∂μ :=
+      ofReal_integral_eq_lintegral_ofReal hfinite hnn_id
+    _ = ∫⁻ t in Ioi (0 : ℝ), μ (Ioi t) := hcanonical
+    _ = ∫⁻ t in Ioi (0 : ℝ), ENNReal.ofReal ((μ (Ioi t)).toReal) :=
+      htail_lintegral.symm
+    _ = ENNReal.ofReal (∫ t in Ioi (0 : ℝ), (μ (Ioi t)).toReal) :=
+      (ofReal_integral_eq_lintegral_ofReal hfinite_tail hnn_tail).symm
