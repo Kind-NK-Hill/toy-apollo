@@ -158,6 +158,12 @@ class Phase2SoftdepPackTests(unittest.TestCase):
                     "content": "Measurability of sup and inf constructions.",
                 },
                 {
+                    "block_id": "ex_4_1_1",
+                    "type": "Example",
+                    "title": "reusable chapter example",
+                    "content": "A previously formalized example with a reusable theorem.",
+                },
+                {
                     "block_id": "prob_4_2",
                     "type": "Problem",
                     "title": "abs measurable",
@@ -189,6 +195,7 @@ class Phase2SoftdepPackTests(unittest.TestCase):
             allowed = json.loads((pack_dir / "allowed_material_ids.json").read_text(encoding="utf-8"))
             self.assertIn("def_4_3_sup_inf", allowed)
             self.assertIn("thm_4_7", allowed)
+            self.assertIn("ex_4_1_1", allowed)
             hints = (pack_dir / "selection_hints.md").read_text(encoding="utf-8")
             self.assertIn("minimal but sufficient", hints.lower())
             self.assertIn("prob_4_2", hints)
