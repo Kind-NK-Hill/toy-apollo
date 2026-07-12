@@ -1,5 +1,6 @@
 import Mathlib
 import ToyApollo.Output.def_1_2
+import ToyApollo.Output.thm_1_2_restriction_support
 
 /-
 TASK ID: thm_1_2
@@ -20,7 +21,7 @@ TASK CONTENT:
     \[
     \int_a^b f\, d\alpha \le \int_a^b g\, d\alpha.
     \]
-    \item Suppose $a<c<b$. If $f\in \mathcal{R}(\alpha)$ on $[a,c]$ and $f\in \mathcal{R}(\alpha)$ on $[c,b]$, and $\alpha$ is continuous at $c$ (or $f$ is continuous at $c$), then $f$ is RS-integrable on $[a,b]$, and
+    \item Suppose $f$ is RS-integrable with respect to $\alpha$ on $[a,b]$. Then $f$ is RS-integrable on $[a,c]$ and $[c,b]$, and
     \[
     \int_a^b f\, d\alpha = \int_a^c f\, d\alpha + \int_c^b f\, d\alpha.
     \]
@@ -2323,10 +2324,9 @@ theorem rsIntegral_glue {f α : ℝ → ℝ} {a d b : ℝ}
 end Thm12Item4
 
 /-- The standard algebraic laws for the finite-interval Riemann--Stieltjes
-integral from Theorem 1.2, stated for the partition-based definition exported
-by `def_1_2`. Item 4 (interval additivity across an interior split point `d`)
-is proved under continuity of the integrator `α` or the integrand `f` at `d`,
-following the certified Darboux/tagged skeleton. -/
+integral from Theorem 1.2. Item 4 follows the author's erratum: integrability
+on the whole interval restricts to both adjacent subintervals, and the integral
+splits at the interior point. -/
 theorem thm_1_2 {f g α : ℝ → ℝ} {c a b : ℝ} :
     (∀ (hf : RSIntegrable f α a b) (hg : RSIntegrable g α a b),
       ∃ hfg : RSIntegrable (fun x => f x + g x) α a b,
@@ -2340,9 +2340,8 @@ theorem thm_1_2 {f g α : ℝ → ℝ} {c a b : ℝ} :
       (∀ x ∈ Icc a b, f x ≤ g x) →
         rsIntegral f α a b hf ≤ rsIntegral g α a b hg) ∧
     (∀ (d : ℝ), a < d → d < b →
-      ∀ (hac : RSIntegrable f α a d) (hcb : RSIntegrable f α d b),
-        (ContinuousAt α d ∨ ContinuousAt f d) →
-        ∃ hab : RSIntegrable f α a b,
+      ∀ (hab : RSIntegrable f α a b),
+        ∃ hac : RSIntegrable f α a d, ∃ hcb : RSIntegrable f α d b,
           rsIntegral f α a b hab = rsIntegral f α a d hac + rsIntegral f α d b hcb) := by
   refine ⟨?_, ?_, ?_, ?_⟩
   · intro hf hg
@@ -2352,5 +2351,7 @@ theorem thm_1_2 {f g α : ℝ → ℝ} {c a b : ℝ} :
       rsIntegral_integrand_const_mul (c := c) hf⟩
   · intro hf hg hfg
     exact rsIntegral_integrand_mono hf hg hfg
-  · intro d had hdb hac hcb hcont
-    exact Thm12Item4.rsIntegral_glue had hdb hac hcb hcont
+  · intro d had hdb hab
+    let hac := Thm12Restriction.rsIntegrable_left had hdb hab
+    let hcb := Thm12Restriction.rsIntegrable_right had hdb hab
+    exact ⟨hac, hcb, Thm12Restriction.rsIntegral_split had hdb hab⟩
