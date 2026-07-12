@@ -31,10 +31,12 @@ build.
 
 ## Repair Architecture
 
-Each theorem gets a fresh campaign candidate seeded from the Kenneth file.
-Kenneth import paths are translated mechanically to `ToyApollo.Output.*`.
-Mathematical edits are restricted to review findings and mechanically necessary
-consumer/support repairs.
+Each theorem is repaired first on a local Kenneth branch based exactly on
+`1dc1b65`. The branch keeps Kenneth paths and splits Theorem 1.4 and Theorem 1.1
+into separate commits. After a Kenneth candidate passes its build and semantic
+gates, the same reviewed code is translated mechanically to a ToyApollo Phase 2
+candidate. Mathematical edits are restricted to review findings and
+mechanically necessary consumer/support repairs.
 
 `thm_1_4` is repaired first because its route is already buildable and its
 semantic defect is isolated. `thm_1_1` follows because it requires the complete
@@ -50,6 +52,18 @@ pack -> seed Kenneth candidate -> RED build -> repair/build-check
 Failed or inconclusive review returns to `auto-loop`; build success alone never
 promotes the candidate.
 
+## Kenneth Review Deliverable
+
+The final local Kenneth branch must be directly reviewable against GitHub
+commit `1dc1b65` without ToyApollo path noise. Deliver:
+
+- one focused commit for Theorem 1.4 and one for Theorem 1.1;
+- `git diff 1dc1b65..HEAD --stat`;
+- per-file diffs under `ProbabilityTheory/chapter_01/`;
+- `git format-patch` output for the focused commits;
+- a manifest mapping each Kenneth commit/file/hash to the promoted ToyApollo
+  file/hash and its three-gate evidence.
+
 ## Acceptance
 
 - `ToyApollo.Output.thm_1_4` and `ToyApollo.Output.thm_1_1` build directly.
@@ -61,4 +75,5 @@ promotes the candidate.
   pass-compatible proof/completion class.
 - `review-apply` records `phase2_status=pass` for both tasks against fresh
   candidate hashes.
-
+- The Kenneth branch is clean after its two focused commits, and its diff and
+  format-patch artifacts are generated from `1dc1b65..HEAD` without pushing.

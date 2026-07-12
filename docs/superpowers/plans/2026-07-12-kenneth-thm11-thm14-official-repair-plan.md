@@ -20,17 +20,20 @@
 - [ ] Set `TOY_APOLLO_RUNTIME_ROOT` to the ToyApollo worktree and `TOY_APOLLO_ARTIFACT_ROOT` to the fresh campaign.
 - [ ] Run `python run_chapter.py --phase 2 --phase2-mode pack --tasks thm_1_4,thm_1_1`.
 - [ ] Read both task JSON files, source TeX spans, dependency contexts, proof obligations, and ledger rows.
-- [ ] Record the existing Kenneth `thm_1_4` semantic failure and direct Kenneth `thm_1_1` build failure as RED evidence.
+- [ ] Persist the existing Kenneth `thm_1_4` semantic failure and direct Kenneth `thm_1_1` build failure under the fresh campaign, including commit, command, exit code, and error/source-mismatch summary.
 
 ### Task 2: Repair and land Kenneth Theorem 1.4
 
 **Files:**
+- Modify first: `../_review-worktrees/kenneth-ProbabilityTheory-1dc1b65-thm1_2/ProbabilityTheory/chapter_01/thm_1_4.lean`
 - Modify candidate: `../toy-apollo-artifacts/campaigns/ch1-kenneth-1dc1b65-thm11-thm14-repair-20260712/phase2_prompt_packs/thm_1_4/draft.lean`
 - Promote on pass: `ToyApollo/Output/thm_1_4.lean`
 
-- [ ] Seed `draft.lean` from Kenneth `ProbabilityTheory/chapter_01/thm_1_4.lean`, changing only the module import prefix.
+- [ ] Create a local Kenneth repair branch at exactly `1dc1b65`; do not push.
 - [ ] Run build-check and confirm the source-faithfulness test fails while any global `Monotone alpha` premise remains.
-- [ ] Change the four theorem/helper premises to `MonotoneOn alpha (Set.Icc a b)` and pass the interval premise directly into `SourceHypotheses`.
+- [ ] In the Kenneth file, change the four theorem/helper premises to `MonotoneOn alpha (Set.Icc a b)` and pass the interval premise directly into `SourceHypotheses`.
+- [ ] Build in Kenneth layout, run forbidden/axiom checks, and commit only the Theorem 1.4 repair.
+- [ ] Seed `draft.lean` from that committed Kenneth file, changing only the module import prefix.
 - [ ] Run `python run_chapter.py --phase 2 --phase2-mode build-check --tasks thm_1_4` until the candidate builds.
 - [ ] Run direct regression builds for `ToyApollo.Output.def_1_3` and `ToyApollo.Output.def_1_4` against the candidate-compatible dependency surface.
 - [ ] Generate `review-now --review-subject candidate`, delegate independent read-only review, and write the bound result JSON.
@@ -39,14 +42,16 @@
 ### Task 3: Reconcile the Kenneth Theorem 1.1 proof family
 
 **Files:**
+- Modify first: `../_review-worktrees/kenneth-ProbabilityTheory-1dc1b65-thm1_2/ProbabilityTheory/chapter_01/thm_1_1*.lean`
 - Modify candidate: `../toy-apollo-artifacts/campaigns/ch1-kenneth-1dc1b65-thm11-thm14-repair-20260712/phase2_prompt_packs/thm_1_1/draft.lean`
 - Modify support candidates only as generated/declared by the Phase 2 pack.
 - Promote on pass: `ToyApollo/Output/thm_1_1.lean` and mechanically necessary stable support files.
 
-- [ ] Seed the parent and nine Kenneth `thm_1_1*` files from commit `1dc1b65`, translating import prefixes only.
 - [ ] Run direct build to reproduce the `Partition.noConfusion`/missing `DarbouxRS` interface failure.
 - [ ] Reconcile the proof family with the prioritized Kenneth Definition 1.2 contract: eliminate the root `Partition` collision, provide the expected partition/core interface, and use the correct Fin tag/index types without changing the finite-discontinuity proof route.
 - [ ] Replace theorem-level global `Monotone alpha` with `MonotoneOn alpha (Icc a b)` and propagate the local premise through source hypotheses and support lemmas.
+- [ ] Build all Kenneth support modules, run forbidden/axiom checks, and commit the Theorem 1.1/API repair separately from Theorem 1.4.
+- [ ] Seed the ToyApollo parent/support candidate from the committed Kenneth proof family, translating only module prefixes and declared support paths.
 - [ ] Run build-check until the parent and every declared support module build.
 - [ ] Run regression builds for `ToyApollo.Output.thm_1_2`, `ToyApollo.Output.thm_1_3`, `ToyApollo.Output.thm_1_4`, `ToyApollo.Output.def_1_3`, and `ToyApollo.Output.def_1_4`.
 - [ ] Generate candidate review, delegate independent read-only review, and apply only a pass-compatible result.
@@ -64,5 +69,6 @@
 - [ ] Run `#print axioms` for both public theorems and their major proof owners.
 - [ ] Run `python tools/check_repo_hygiene.py` and confirm no unrelated tracked files changed.
 - [ ] Confirm both fresh ledger rows have `phase2_status=pass`, valid independent reviewer evidence, and matching apply receipts.
-- [ ] Commit only reviewed ToyApollo source/support changes and the design/plan; do not push or alter Kenneth remote.
-
+- [ ] Generate `git diff 1dc1b65..HEAD --stat`, per-file diffs, and `git format-patch` from the local Kenneth repair branch.
+- [ ] Write a hash/commit mapping from Kenneth files to promoted ToyApollo files and their three-gate evidence.
+- [ ] Commit only reviewed ToyApollo source/support changes and the design/plan; do not push either remote.
