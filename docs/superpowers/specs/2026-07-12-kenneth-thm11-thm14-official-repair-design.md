@@ -25,7 +25,10 @@ build.
   repair namespace, partition, tag-index, and integration boundaries instead
   of replacing the proof with the older ToyApollo theorem.
 - Keep already reviewed Kenneth `def_1_3` discrete/continuous RS special cases
-  intact and include them in regression verification.
+  intact and include them in regression verification. Because the repaired
+  Theorem 1.4 interface requires two mechanical call-site edits in `def_1_3`,
+  the changed `def_1_3` hash receives its own fresh candidate review and
+  `review-apply`; its older PASS receipt is not reused.
 - Do not push Kenneth's remote or overwrite ToyApollo official output before a
   passing Phase 2 apply gate.
 
@@ -75,5 +78,7 @@ commit `1dc1b65` without ToyApollo path noise. Deliver:
   pass-compatible proof/completion class.
 - `review-apply` records `phase2_status=pass` for both tasks against fresh
   candidate hashes.
+- The mechanically changed `def_1_3` candidate separately lands
+  `phase2_status=pass` against its new hash after Theorem 1.4 passes.
 - The Kenneth branch is clean after its two focused commits, and its diff and
   format-patch artifacts are generated from `1dc1b65..HEAD` without pushing.

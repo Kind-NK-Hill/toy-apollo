@@ -38,6 +38,8 @@
 - [ ] Run direct regression builds for `ToyApollo.Output.def_1_3` and `ToyApollo.Output.def_1_4` against the candidate-compatible dependency surface.
 - [ ] Generate `review-now --review-subject candidate`, delegate independent read-only review, and write the bound result JSON.
 - [ ] Run `review-apply`; if it does not project to `phase2_status=pass`, resume `auto-loop` rather than promoting manually.
+- [ ] Pack `def_1_3` into the fresh campaign after Theorem 1.4 passes, seed the exact Kenneth consumer candidate, and rebuild its discrete and continuous expectation declarations.
+- [ ] Run a separate independent `def_1_3` semantic review proving that only two internal call sites changed and that its public definition/theorems and proof spine are unchanged; land the new hash only through its own `review-apply`.
 
 ### Task 3: Reconcile the Kenneth Theorem 1.1 proof family
 
@@ -69,6 +71,7 @@
 - [ ] Run `#print axioms` for both public theorems and their major proof owners.
 - [ ] Run `python tools/check_repo_hygiene.py` and confirm no unrelated tracked files changed.
 - [ ] Confirm both fresh ledger rows have `phase2_status=pass`, valid independent reviewer evidence, and matching apply receipts.
+- [ ] Confirm the fresh `def_1_3` ledger row also has `phase2_status=pass` and a matching apply receipt for the mechanically changed hash.
 - [ ] Generate `git diff 1dc1b65..HEAD --stat`, per-file diffs, and `git format-patch` from the local Kenneth repair branch.
 - [ ] Write a hash/commit mapping from Kenneth files to promoted ToyApollo files and their three-gate evidence.
 - [ ] Commit only reviewed ToyApollo source/support changes and the design/plan; do not push either remote.
