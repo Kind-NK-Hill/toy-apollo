@@ -7,6 +7,7 @@ SOURCE MATERIAL: omitted from the public source snapshot; see docs/repository_sc
 
 import Mathlib
 import ToyApollo.Output.def_1_2
+import ToyApollo.Output.thm_1_2_restriction_support
 
 -- WRITE FINAL LEAN CODE BELOW
 
@@ -1848,9 +1849,8 @@ theorem thm_1_2 {f g α : ℝ → ℝ} {c a b : ℝ} :
       (∀ x ∈ Icc a b, f x ≤ g x) →
         rsIntegral f α a b hf ≤ rsIntegral g α a b hg) ∧
     (∀ (d : ℝ), a < d → d < b →
-      ∀ (hac : RSIntegrable f α a d) (hcb : RSIntegrable f α d b),
-        (ContinuousAt α d ∨ ContinuousAt f d) →
-        ∃ hab : RSIntegrable f α a b,
+      ∀ (hab : RSIntegrable f α a b),
+        ∃ hac : RSIntegrable f α a d, ∃ hcb : RSIntegrable f α d b,
           rsIntegral f α a b hab = rsIntegral f α a d hac + rsIntegral f α d b hcb) := by
   refine ⟨?_, ?_, ?_, ?_⟩
   · intro hf hg
@@ -1860,5 +1860,7 @@ theorem thm_1_2 {f g α : ℝ → ℝ} {c a b : ℝ} :
       rsIntegral_integrand_const_mul (c := c) hf⟩
   · intro hf hg hfg
     exact rsIntegral_integrand_mono hf hg hfg
-  · intro d had hdb hac hcb hcont
-    exact Thm12Item4.rsIntegral_glue had hdb hac hcb hcont
+  · intro d had hdb hab
+    let hac := Thm12Restriction.rsIntegrable_left had hdb hab
+    let hcb := Thm12Restriction.rsIntegrable_right had hdb hab
+    exact ⟨hac, hcb, Thm12Restriction.rsIntegral_split had hdb hab⟩
