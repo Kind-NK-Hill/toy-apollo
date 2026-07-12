@@ -3,47 +3,90 @@ TASK ID: thm_1_4
 SOURCE MATERIAL: omitted from the public source snapshot; see docs/repository_scope.md.
 -/
 
-import Mathlib
 import ToyApollo.Output.def_1_2
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
+import Mathlib.Analysis.Calculus.Deriv.MeanValue
 
-open Set
-open MeasureTheory
-open scoped BigOperators
-
-namespace Thm14SourceRouteLocal
+open Set MeasureTheory DarbouxRS
+open scoped BigOperators Pointwise Interval
 
 noncomputable section
+
+namespace Thm_1_4
 
 lemma strict_interval_of_rsIntegrable {f α : ℝ → ℝ} {a b : ℝ}
     (h : RSIntegrable f α a b) :
     a < b := by
-  rcases h with ⟨_L, hSource⟩
-  exact hSource.1.1
+  rcases h with ⟨_L, hL⟩
+  exact hL.1.1
 
 lemma taggedSum_between_lower_upper {f α : ℝ → ℝ} {a b : ℝ}
-    (hs : DarbouxRS.SourceHypotheses a b f α)
-    (P : DarbouxRS.Partition a b) (tags : Fin P.n → ℝ)
-    (htags : DarbouxRS.tagsInPartition P tags) :
-    DarbouxRS.lowerSum P f α ≤ DarbouxRS.taggedSum P tags f α ∧
-      DarbouxRS.taggedSum P tags f α ≤ DarbouxRS.upperSum P f α :=
-  DarbouxRS.taggedSum_between_lower_upper_core hs P tags htags
+    (hs : SourceHypotheses a b f α)
+    (P : Partition a b) (tags : Fin P.n → ℝ)
+    (htags : tagsInPartition P tags) :
+    lowerSum P f α ≤ taggedSum P tags f α ∧
+      taggedSum P tags f α ≤ upperSum P f α := by
+  rcases hs with ⟨hab, hAbove, hBelow, hmono⟩
+  constructor
+  · unfold lowerSum taggedSum
+    refine Finset.sum_le_sum ?_
+    intro i _hi
+    have hcellBelow : BddBelow (f '' Partition.subinterval P i) :=
+      BddBelow.mono
+        (Set.image_mono (DarbouxRS.subinterval_subset_Icc_core P (i := i)))
+        hBelow
+    have hlow_le_tag : lowerStep P f i ≤ f (tags i) := by
+      unfold lowerStep
+      exact csInf_le hcellBelow ⟨tags i, htags i, rfl⟩
+    have hinc_nonneg :
+        0 ≤ α (P.pts i.succ) - α (P.pts i.castSucc) :=
+      DarbouxRS.partition_increment_nonneg_of_source_core P
+        ⟨hab, hAbove, hBelow, hmono⟩
+    exact mul_le_mul_of_nonneg_right hlow_le_tag hinc_nonneg
+  · unfold taggedSum upperSum
+    refine Finset.sum_le_sum ?_
+    intro i _hi
+    have hcellAbove : BddAbove (f '' Partition.subinterval P i) :=
+      BddAbove.mono
+        (Set.image_mono (DarbouxRS.subinterval_subset_Icc_core P (i := i)))
+        hAbove
+    have htag_le_up : f (tags i) ≤ upperStep P f i := by
+      unfold upperStep
+      exact le_csSup hcellAbove ⟨tags i, htags i, rfl⟩
+    have hinc_nonneg :
+        0 ≤ α (P.pts i.succ) - α (P.pts i.castSucc) :=
+      DarbouxRS.partition_increment_nonneg_of_source_core P
+        ⟨hab, hAbove, hBelow, hmono⟩
+    exact mul_le_mul_of_nonneg_right htag_le_up hinc_nonneg
 
 theorem taggedCommonLimit_of_upperLowerCommonLimit {f α : ℝ → ℝ} {a b L : ℝ}
     (hUL : rsUpperLowerCommonLimit a b f α L) :
-    rsTaggedCommonLimit a b f α L :=
-  DarbouxRS.taggedBridgeObligation hUL
+    rsTaggedCommonLimit a b f α L := by
+  rcases hUL with ⟨hs, hlim⟩
+  refine ⟨hs, ?_⟩
+  intro eps heps
+  rcases hlim eps heps with ⟨δ, hδ, Hδ⟩
+  refine ⟨δ, hδ, ?_⟩
+  intro P tags htags hmesh
+  have hP := Hδ P hmesh
+  have hbetween := taggedSum_between_lower_upper hs P tags htags
+  have hlower_abs := abs_lt.mp hP.2
+  have hupper_abs := abs_lt.mp hP.1
+  refine abs_lt.mpr ⟨?_, ?_⟩
+  · linarith
+  · linarith
 
 noncomputable def partitionOscillation {a b : ℝ}
-    (P : DarbouxRS.Partition a b) (f α : ℝ → ℝ) : ℝ :=
+    (P : Partition a b) (f α : ℝ → ℝ) : ℝ :=
   ∑ i : Fin P.n,
-    (DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i) *
+    (upperStep P f i - lowerStep P f i) *
       (α (P.pts i.succ) - α (P.pts i.castSucc))
 
 lemma upperSum_sub_lowerSum_eq_partitionOscillation {f α : ℝ → ℝ} {a b : ℝ}
-    (P : DarbouxRS.Partition a b) :
-    DarbouxRS.upperSum P f α - DarbouxRS.lowerSum P f α =
+    (P : Partition a b) :
+    upperSum P f α - lowerSum P f α =
       partitionOscillation P f α := by
-  unfold partitionOscillation DarbouxRS.upperSum DarbouxRS.lowerSum
+  unfold partitionOscillation upperSum lowerSum
   rw [← Finset.sum_sub_distrib]
   refine Finset.sum_congr rfl ?_
   intro i _hi
@@ -76,22 +119,26 @@ lemma exists_pos_abs_bound_on_Icc_of_bddAbove_bddBelow {f : ℝ → ℝ} {a b : 
 
 lemma upperStep_sub_lowerStep_le_of_subinterval_oscillation_bound
     {f : ℝ → ℝ} {a b eta : ℝ}
-    (P : DarbouxRS.Partition a b) (i : Fin P.n)
+    (P : Partition a b) (i : Fin P.n)
     (hAbove : BddAbove (f '' Icc a b))
     (hBelow : BddBelow (f '' Icc a b))
     (hosc :
-      ∀ x, x ∈ DarbouxRS.subinterval P i →
-      ∀ y, y ∈ DarbouxRS.subinterval P i → |f x - f y| ≤ eta) :
-    DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i ≤ eta := by
-  let cell := DarbouxRS.subinterval P i
+      ∀ x, x ∈ Partition.subinterval P i →
+      ∀ y, y ∈ Partition.subinterval P i → |f x - f y| ≤ eta) :
+    upperStep P f i - lowerStep P f i ≤ eta := by
+  let cell := Partition.subinterval P i
   have hcell_nonempty : (f '' cell).Nonempty := by
     refine ⟨f (P.pts i.castSucc), ?_⟩
     refine ⟨P.pts i.castSucc, ?_, rfl⟩
     exact ⟨le_rfl, le_of_lt (P.strict_mono Fin.castSucc_lt_succ)⟩
   have hcellAbove : BddAbove (f '' cell) :=
-    BddAbove.mono (Set.image_mono (DarbouxRS.subinterval_subset_Icc_core P)) hAbove
+    BddAbove.mono
+      (Set.image_mono (DarbouxRS.subinterval_subset_Icc_core P (i := i)))
+      hAbove
   have hcellBelow : BddBelow (f '' cell) :=
-    BddBelow.mono (Set.image_mono (DarbouxRS.subinterval_subset_Icc_core P)) hBelow
+    BddBelow.mono
+      (Set.image_mono (DarbouxRS.subinterval_subset_Icc_core P (i := i)))
+      hBelow
   have hsup_le :
       sSup (f '' cell) ≤ sInf (f '' cell) + eta := by
     refine csSup_le hcell_nonempty ?_
@@ -102,45 +149,94 @@ lemma upperStep_sub_lowerStep_le_of_subinterval_oscillation_bound
       have hxy : f x - f y ≤ eta := (abs_le.mp (hosc x hx y hy)).2
       linarith
     linarith
-  unfold DarbouxRS.upperStep DarbouxRS.lowerStep
+  unfold upperStep lowerStep
   linarith
 
 lemma abs_sub_le_cell_length_of_mem_subinterval {a b x y : ℝ}
-    (P : DarbouxRS.Partition a b) {i : Fin P.n}
-    (hx : x ∈ DarbouxRS.subinterval P i)
-    (hy : y ∈ DarbouxRS.subinterval P i) :
+    (P : Partition a b) {i : Fin P.n}
+    (hx : x ∈ Partition.subinterval P i)
+    (hy : y ∈ Partition.subinterval P i) :
     |x - y| ≤ P.pts i.succ - P.pts i.castSucc := by
   rcases hx with ⟨hix, hxi⟩
   rcases hy with ⟨hiy, hyi⟩
   refine abs_le.mpr ⟨?_, ?_⟩ <;> linarith
 
 lemma partition_length_le_mesh_core {a b : ℝ}
-    (P : DarbouxRS.Partition a b) (i : Fin P.n) :
+    (P : Partition a b) (i : Fin P.n) :
     P.pts i.succ - P.pts i.castSucc ≤ P.mesh := by
-  unfold DarbouxRS.Partition.mesh
-  exact Finset.le_sup' (s := (Finset.univ : Finset (Fin P.n)))
-    (f := fun j => P.pts j.succ - P.pts j.castSucc) (Finset.mem_univ i)
+  unfold Partition.mesh
+  exact Finset.le_sup'
+    (fun j : Fin P.n => P.pts j.succ - P.pts j.castSucc)
+    (by simp : i ∈ (Finset.univ : Finset (Fin P.n)))
 
 def ClosedIntervalDarbouxGapSmall
     (a b : ℝ) (f α : ℝ → ℝ) : Prop :=
-  ∀ eps > 0, ∃ δ > 0, ∀ P : DarbouxRS.Partition a b,
+  ∀ eps > 0, ∃ δ > 0, ∀ P : Partition a b,
     P.mesh < δ →
-      DarbouxRS.upperSum P f α - DarbouxRS.lowerSum P f α < eps
+      upperSum P f α - lowerSum P f α < eps
 
-end
+private noncomputable def ptNat {a b : ℝ} (P : Partition a b) (k : ℕ) : ℝ :=
+  if hk : k ≤ P.n then
+    P.pts ⟨k, Nat.lt_succ_of_le hk⟩
+  else
+    P.pts (Fin.last P.n)
 
-end Thm14SourceRouteLocal
+private lemma ptNat_zero {a b : ℝ} (P : Partition a b) :
+    ptNat P 0 = a := by
+  unfold ptNat
+  rw [dif_pos (Nat.zero_le P.n)]
+  simpa using P.pts_start
 
-namespace Thm14DerivativeTaggedScratch
+private lemma ptNat_last {a b : ℝ} (P : Partition a b) :
+    ptNat P P.n = b := by
+  unfold ptNat
+  rw [dif_pos le_rfl]
+  have hfin :
+      (⟨P.n, Nat.lt_succ_self P.n⟩ : Fin (P.n + 1)) = Fin.last P.n := by
+    ext
+    simp
+  simpa [hfin] using P.pts_end
 
-noncomputable section
+private lemma ptNat_of_lt {a b : ℝ} (P : Partition a b) {k : ℕ}
+    (hk : k < P.n) :
+    ptNat P k = P.pts (Fin.castSucc (⟨k, hk⟩ : Fin P.n)) := by
+  unfold ptNat
+  rw [dif_pos (le_of_lt hk)]
+  congr
+
+private lemma ptNat_succ_of_lt {a b : ℝ} (P : Partition a b) {k : ℕ}
+    (hk : k < P.n) :
+    ptNat P (k + 1) = P.pts (Fin.succ (⟨k, hk⟩ : Fin P.n)) := by
+  unfold ptNat
+  rw [dif_pos (Nat.succ_le_of_lt hk)]
+  congr
+
+lemma partition_length_sum {a b : ℝ} (P : Partition a b) :
+    (∑ i : Fin P.n, (P.pts i.succ - P.pts i.castSucc)) = b - a := by
+  classical
+  rw [Finset.sum_fin_eq_sum_range]
+  have htel0 := Finset.sum_Ico_sub (ptNat P) (Nat.zero_le P.n)
+  have hIco : Finset.Ico 0 P.n = Finset.range P.n := by
+    ext k
+    simp
+  rw [hIco] at htel0
+  have htel :
+      (∑ k ∈ Finset.range P.n, (ptNat P (k + 1) - ptNat P k)) = b - a := by
+    simpa [ptNat_zero, ptNat_last] using htel0
+  trans (∑ k ∈ Finset.range P.n, (ptNat P (k + 1) - ptNat P k))
+  · refine Finset.sum_congr rfl ?_
+    intro k hk
+    have hklt : k < P.n := Finset.mem_range.mp hk
+    rw [ptNat_succ_of_lt P hklt, ptNat_of_lt P hklt]
+    simp [hklt]
+  · exact htel
 
 theorem sourceHypotheses_of_continuous_derivative_integrator {f α : ℝ → ℝ}
     {a b : ℝ}
     (hab : a < b)
     (hf : ContinuousOn f (Set.Icc a b))
     (hαmono : MonotoneOn α (Set.Icc a b)) :
-    DarbouxRS.SourceHypotheses a b f α := by
+    SourceHypotheses a b f α := by
   refine ⟨hab, ?_, ?_, ?_⟩
   · exact (isCompact_Icc.image_of_continuousOn hf).bddAbove
   · exact (isCompact_Icc.image_of_continuousOn hf).bddBelow
@@ -155,31 +251,12 @@ theorem derivative_integrand_continuousOn {f α' : ℝ → ℝ} {a b : ℝ}
 theorem exists_pos_abs_bound_of_continuousOn {f : ℝ → ℝ} {a b : ℝ}
     (hf : ContinuousOn f (Set.Icc a b)) :
     ∃ C : ℝ, 0 < C ∧ ∀ x : ℝ, x ∈ Set.Icc a b → |f x| ≤ C := by
-  exact Thm14SourceRouteLocal.exists_pos_abs_bound_on_Icc_of_bddAbove_bddBelow
+  exact exists_pos_abs_bound_on_Icc_of_bddAbove_bddBelow
     (isCompact_Icc.image_of_continuousOn hf).bddAbove
     (isCompact_Icc.image_of_continuousOn hf).bddBelow
 
-private lemma sum_adjacent_sub {n : ℕ} (g : Fin (n + 1) → ℝ) :
-    (∑ i : Fin n, (g i.succ - g i.castSucc)) =
-      g (Fin.last n) - g 0 := by
-  induction n with
-  | zero => simp
-  | succ n ih =>
-      rw [Fin.sum_univ_succ]
-      have htail := ih (fun i : Fin (n + 1) => g i.succ)
-      have htail' :
-          (∑ i : Fin n, (g i.succ.succ - g i.succ.castSucc)) =
-            g (Fin.last n).succ - g (Fin.succ 0) := by
-        simpa only [Fin.succ_castSucc] using htail
-      rw [htail']
-      simp
-
-theorem partition_length_sum {a b : ℝ} (P : DarbouxRS.Partition a b) :
-    (∑ i : Fin P.n, (P.pts i.succ - P.pts i.castSucc)) = b - a := by
-  simpa [P.pts_start, P.pts_end] using sum_adjacent_sub P.pts
-
-theorem tag_mem_Icc {a b : ℝ} (P : DarbouxRS.Partition a b)
-    {tags : Fin P.n → ℝ} (htags : DarbouxRS.tagsInPartition P tags)
+lemma tag_mem_Icc {a b : ℝ} (P : Partition a b)
+    {tags : Fin P.n → ℝ} (htags : tagsInPartition P tags)
     (i : Fin P.n) :
     tags i ∈ Set.Icc a b :=
   DarbouxRS.tag_mem_Icc_of_tagsInPartition_core P htags i
@@ -200,38 +277,40 @@ theorem exists_cell_increment_eq_deriv_mul_length {α α' : ℝ → ℝ} {a b u 
     (hsub : Set.Icc u v ⊆ Set.Icc a b)
     (hderiv : ∀ x ∈ Set.Icc a b, HasDerivAt α (α' x) x) :
     ∃ c ∈ Set.Ioo u v, α v - α u = α' c * (v - u) := by
-  rcases exists_cell_deriv_eq_increment_slope huv hsub hderiv with ⟨c, hc, hcslope⟩
+  rcases exists_cell_deriv_eq_increment_slope huv hsub hderiv with
+    ⟨c, hc, hcslope⟩
   refine ⟨c, hc, ?_⟩
   rw [hcslope]
   exact (div_mul_cancel₀ (α v - α u) (sub_ne_zero.mpr huv.ne')).symm
 
 theorem cell_mvt_point {α α' : ℝ → ℝ} {a b : ℝ}
-    (P : DarbouxRS.Partition a b) (i : Fin P.n)
+    (P : Partition a b) (i : Fin P.n)
     (hαderiv : ∀ x ∈ Set.Icc a b, HasDerivAt α (α' x) x) :
     ∃ c ∈ Set.Ioo (P.pts i.castSucc) (P.pts i.succ),
       α (P.pts i.succ) - α (P.pts i.castSucc) =
         α' c * (P.pts i.succ - P.pts i.castSucc) := by
   exact exists_cell_increment_eq_deriv_mul_length
     (P.strict_mono Fin.castSucc_lt_succ)
-    (DarbouxRS.subinterval_subset_Icc_core P)
+    (DarbouxRS.subinterval_subset_Icc_core P (i := i))
     hαderiv
 
 noncomputable def cellMVTTag {α α' : ℝ → ℝ} {a b : ℝ}
-    (P : DarbouxRS.Partition a b)
+    (P : Partition a b)
     (hαderiv : ∀ x ∈ Set.Icc a b, HasDerivAt α (α' x) x)
     (i : Fin P.n) : ℝ :=
   Classical.choose (cell_mvt_point P i hαderiv)
 
 theorem cellMVTTag_mem_Ioo {α α' : ℝ → ℝ} {a b : ℝ}
-    (P : DarbouxRS.Partition a b)
+    (P : Partition a b)
     (hαderiv : ∀ x ∈ Set.Icc a b, HasDerivAt α (α' x) x)
     (i : Fin P.n) :
-    cellMVTTag P hαderiv i ∈ Set.Ioo (P.pts i.castSucc) (P.pts i.succ) := by
+    cellMVTTag P hαderiv i ∈
+      Set.Ioo (P.pts i.castSucc) (P.pts i.succ) := by
   unfold cellMVTTag
   exact (Classical.choose_spec (cell_mvt_point P i hαderiv)).1
 
 theorem cellMVTTag_increment_eq {α α' : ℝ → ℝ} {a b : ℝ}
-    (P : DarbouxRS.Partition a b)
+    (P : Partition a b)
     (hαderiv : ∀ x ∈ Set.Icc a b, HasDerivAt α (α' x) x)
     (i : Fin P.n) :
     α (P.pts i.succ) - α (P.pts i.castSucc) =
@@ -241,14 +320,14 @@ theorem cellMVTTag_increment_eq {α α' : ℝ → ℝ} {a b : ℝ}
   exact (Classical.choose_spec (cell_mvt_point P i hαderiv)).2
 
 theorem cellMVTTag_mem_subinterval {α α' : ℝ → ℝ} {a b : ℝ}
-    (P : DarbouxRS.Partition a b)
+    (P : Partition a b)
     (hαderiv : ∀ x ∈ Set.Icc a b, HasDerivAt α (α' x) x)
     (i : Fin P.n) :
-    cellMVTTag P hαderiv i ∈ DarbouxRS.subinterval P i := by
+    cellMVTTag P hαderiv i ∈ Partition.subinterval P i := by
   exact Set.Ioo_subset_Icc_self (cellMVTTag_mem_Ioo P hαderiv i)
 
 theorem cellMVTTag_mem_Icc {α α' : ℝ → ℝ} {a b : ℝ}
-    (P : DarbouxRS.Partition a b)
+    (P : Partition a b)
     (hαderiv : ∀ x ∈ Set.Icc a b, HasDerivAt α (α' x) x)
     (i : Fin P.n) :
     cellMVTTag P hαderiv i ∈ Set.Icc a b :=
@@ -256,22 +335,22 @@ theorem cellMVTTag_mem_Icc {α α' : ℝ → ℝ} {a b : ℝ}
     (cellMVTTag_mem_subinterval P hαderiv i)
 
 theorem tag_mvt_distance_le_mesh {α α' : ℝ → ℝ} {a b : ℝ}
-    (P : DarbouxRS.Partition a b) {tags : Fin P.n → ℝ}
-    (htags : DarbouxRS.tagsInPartition P tags)
+    (P : Partition a b) {tags : Fin P.n → ℝ}
+    (htags : tagsInPartition P tags)
     (hαderiv : ∀ x ∈ Set.Icc a b, HasDerivAt α (α' x) x)
     (i : Fin P.n) :
     |cellMVTTag P hαderiv i - tags i| ≤ P.mesh := by
   have hcell :
       |cellMVTTag P hαderiv i - tags i| ≤
         P.pts i.succ - P.pts i.castSucc :=
-    Thm14SourceRouteLocal.abs_sub_le_cell_length_of_mem_subinterval P
+    abs_sub_le_cell_length_of_mem_subinterval P
       (cellMVTTag_mem_subinterval P hαderiv i)
       (htags i)
-  exact le_trans hcell (Thm14SourceRouteLocal.partition_length_le_mesh_core P i)
+  exact le_trans hcell (partition_length_le_mesh_core P i)
 
 theorem taggedSum_derivative_identity_abs_le {f α α' : ℝ → ℝ} {a b C eta delta : ℝ}
-    (P : DarbouxRS.Partition a b) (tags : Fin P.n → ℝ)
-    (htags : DarbouxRS.tagsInPartition P tags)
+    (P : Partition a b) (tags : Fin P.n → ℝ)
+    (htags : tagsInPartition P tags)
     (hαderiv : ∀ x ∈ Set.Icc a b, HasDerivAt α (α' x) x)
     (hα'osc :
       ∀ x ∈ Set.Icc a b, ∀ y ∈ Set.Icc a b,
@@ -279,204 +358,235 @@ theorem taggedSum_derivative_identity_abs_le {f α α' : ℝ → ℝ} {a b C eta
     (hmesh : P.mesh < delta)
     (hbound : ∀ x : ℝ, x ∈ Set.Icc a b → |f x| ≤ C)
     (hC : 0 ≤ C) :
-    |DarbouxRS.taggedSum P tags f α -
-        DarbouxRS.taggedSum P tags (fun x => f x * α' x) (fun x => x)| ≤
+    |taggedSum P tags f α -
+        taggedSum P tags (fun x => f x * α' x) (fun x => x)| ≤
       C * eta * (b - a) := by
   have hsum_rewrite :
-      DarbouxRS.taggedSum P tags f α -
-          DarbouxRS.taggedSum P tags (fun x => f x * α' x) (fun x => x) =
-        ∑ i ∈ (Finset.univ : Finset (Fin P.n)),
+      taggedSum P tags f α -
+          taggedSum P tags (fun x => f x * α' x) (fun x => x) =
+        ∑ i : Fin P.n,
           (f (tags i) * (α (P.pts i.succ) - α (P.pts i.castSucc)) -
-            (f (tags i) * α' (tags i)) * (P.pts i.succ - P.pts i.castSucc)) := by
-    unfold DarbouxRS.taggedSum
+            (f (tags i) * α' (tags i)) *
+              (P.pts i.succ - P.pts i.castSucc)) := by
+    unfold taggedSum
     rw [← Finset.sum_sub_distrib]
   calc
-    |DarbouxRS.taggedSum P tags f α -
-        DarbouxRS.taggedSum P tags (fun x => f x * α' x) (fun x => x)|
-        = |∑ i ∈ (Finset.univ : Finset (Fin P.n)),
+    |taggedSum P tags f α -
+        taggedSum P tags (fun x => f x * α' x) (fun x => x)|
+        =
+      |∑ i : Fin P.n,
           (f (tags i) * (α (P.pts i.succ) - α (P.pts i.castSucc)) -
-            (f (tags i) * α' (tags i)) * (P.pts i.succ - P.pts i.castSucc))| := by
-            rw [hsum_rewrite]
-    _ ≤ ∑ i ∈ (Finset.univ : Finset (Fin P.n)),
+            (f (tags i) * α' (tags i)) *
+              (P.pts i.succ - P.pts i.castSucc))| := by
+        rw [hsum_rewrite]
+    _ ≤ ∑ i : Fin P.n,
           |f (tags i) * (α (P.pts i.succ) - α (P.pts i.castSucc)) -
-            (f (tags i) * α' (tags i)) * (P.pts i.succ - P.pts i.castSucc)| := by
-            exact Finset.abs_sum_le_sum_abs _ _
-    _ ≤ ∑ i ∈ (Finset.univ : Finset (Fin P.n)),
+            (f (tags i) * α' (tags i)) *
+              (P.pts i.succ - P.pts i.castSucc)| := by
+        exact Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ i : Fin P.n,
           C * eta * (P.pts i.succ - P.pts i.castSucc) := by
-            refine Finset.sum_le_sum ?_
-            intro i hi_mem
-            let c := cellMVTTag P hαderiv i
-            have hc_eq :
-                α (P.pts i.succ) - α (P.pts i.castSucc) =
-                  α' c * (P.pts i.succ - P.pts i.castSucc) := by
-              simpa [c] using cellMVTTag_increment_eq P hαderiv i
-            have htagI : tags i ∈ Set.Icc a b := tag_mem_Icc P htags i
-            have hcI : c ∈ Set.Icc a b := by
-              simpa [c] using cellMVTTag_mem_Icc P hαderiv i
-            have hdist : |c - tags i| < delta := by
-              have hle : |c - tags i| ≤ P.mesh := by
-                simpa [c] using tag_mvt_distance_le_mesh P htags hαderiv i
-              exact lt_of_le_of_lt hle hmesh
-            have hosc : |α' c - α' (tags i)| ≤ eta :=
-              hα'osc c hcI (tags i) htagI hdist
-            have hfbound : |f (tags i)| ≤ C := hbound (tags i) htagI
-            have hlen_nonneg : 0 ≤ P.pts i.succ - P.pts i.castSucc :=
-              sub_nonneg.mpr (le_of_lt (P.strict_mono Fin.castSucc_lt_succ))
-            have hprod :
-                |f (tags i)| * |α' c - α' (tags i)| *
-                    (P.pts i.succ - P.pts i.castSucc) ≤
-                  C * eta * (P.pts i.succ - P.pts i.castSucc) := by
-              have hmul₁ :
-                  |f (tags i)| * |α' c - α' (tags i)| ≤ C * eta :=
-                mul_le_mul hfbound hosc (abs_nonneg _) hC
-              exact mul_le_mul_of_nonneg_right hmul₁ hlen_nonneg
-            have hterm_eq :
-                f (tags i) * (α (P.pts i.succ) - α (P.pts i.castSucc)) -
-                    (f (tags i) * α' (tags i)) *
-                      (P.pts i.succ - P.pts i.castSucc) =
-                  f (tags i) * (α' c - α' (tags i)) *
-                    (P.pts i.succ - P.pts i.castSucc) := by
-              rw [hc_eq]
-              ring
-            rw [hterm_eq, abs_mul, abs_mul, abs_of_nonneg hlen_nonneg]
-            exact hprod
+        refine Finset.sum_le_sum ?_
+        intro i _hi
+        let c := cellMVTTag P hαderiv i
+        have hc_eq :
+            α (P.pts i.succ) - α (P.pts i.castSucc) =
+              α' c * (P.pts i.succ - P.pts i.castSucc) := by
+          simpa [c] using cellMVTTag_increment_eq P hαderiv i
+        have htagI : tags i ∈ Set.Icc a b := tag_mem_Icc P htags i
+        have hcI : c ∈ Set.Icc a b := by
+          simpa [c] using cellMVTTag_mem_Icc P hαderiv i
+        have hdist : |c - tags i| < delta := by
+          have hle : |c - tags i| ≤ P.mesh := by
+            simpa [c] using tag_mvt_distance_le_mesh P htags hαderiv i
+          exact lt_of_le_of_lt hle hmesh
+        have hosc : |α' c - α' (tags i)| ≤ eta :=
+          hα'osc c hcI (tags i) htagI hdist
+        have hfbound : |f (tags i)| ≤ C := hbound (tags i) htagI
+        have hlen_nonneg : 0 ≤ P.pts i.succ - P.pts i.castSucc :=
+          sub_nonneg.mpr (le_of_lt (P.strict_mono Fin.castSucc_lt_succ))
+        have hprod :
+            |f (tags i)| * |α' c - α' (tags i)| *
+                (P.pts i.succ - P.pts i.castSucc) ≤
+              C * eta * (P.pts i.succ - P.pts i.castSucc) := by
+          have hmul₁ :
+              |f (tags i)| * |α' c - α' (tags i)| ≤ C * eta :=
+            mul_le_mul hfbound hosc (abs_nonneg _) hC
+          exact mul_le_mul_of_nonneg_right hmul₁ hlen_nonneg
+        have hterm_eq :
+            f (tags i) * (α (P.pts i.succ) - α (P.pts i.castSucc)) -
+                (f (tags i) * α' (tags i)) *
+                  (P.pts i.succ - P.pts i.castSucc) =
+              f (tags i) * (α' c - α' (tags i)) *
+                (P.pts i.succ - P.pts i.castSucc) := by
+          rw [hc_eq]
+          ring
+        rw [hterm_eq, abs_mul, abs_mul, abs_of_nonneg hlen_nonneg]
+        exact hprod
     _ = C * eta * (b - a) := by
-            rw [← Finset.mul_sum]
-            rw [partition_length_sum P]
+        rw [← Finset.mul_sum]
+        rw [partition_length_sum P]
 
 theorem cell_integral_between_lower_upper_id {g : ℝ → ℝ} {a b : ℝ}
     (hg : ContinuousOn g (Set.Icc a b))
-    (P : DarbouxRS.Partition a b) (i : Fin P.n) :
-    DarbouxRS.lowerStep P g i * (P.pts i.succ - P.pts i.castSucc) ≤
+    (P : Partition a b) (i : Fin P.n) :
+    lowerStep P g i * (P.pts i.succ - P.pts i.castSucc) ≤
         ∫ x in P.pts i.castSucc..P.pts i.succ, g x ∧
       ∫ x in P.pts i.castSucc..P.pts i.succ, g x ≤
-        DarbouxRS.upperStep P g i * (P.pts i.succ - P.pts i.castSucc) := by
-  have huv : P.pts i.castSucc ≤ P.pts i.succ := le_of_lt (P.strict_mono Fin.castSucc_lt_succ)
-  have hgcell : ContinuousOn g (Set.Icc (P.pts i.castSucc) (P.pts i.succ)) :=
-    hg.mono (DarbouxRS.subinterval_subset_Icc_core P)
+        upperStep P g i * (P.pts i.succ - P.pts i.castSucc) := by
+  have huv : P.pts i.castSucc ≤ P.pts i.succ :=
+    le_of_lt (P.strict_mono Fin.castSucc_lt_succ)
+  have hgcell :
+      ContinuousOn g (Set.Icc (P.pts i.castSucc) (P.pts i.succ)) :=
+    hg.mono (DarbouxRS.subinterval_subset_Icc_core P (i := i))
   have hgi : IntervalIntegrable g volume (P.pts i.castSucc) (P.pts i.succ) :=
     ContinuousOn.intervalIntegrable_of_Icc huv hgcell
   have hconstLower :
-      IntervalIntegrable (fun _ : ℝ => DarbouxRS.lowerStep P g i) volume
+      IntervalIntegrable (fun _ : ℝ => lowerStep P g i) volume
         (P.pts i.castSucc) (P.pts i.succ) :=
     continuous_const.intervalIntegrable _ _
   have hconstUpper :
-      IntervalIntegrable (fun _ : ℝ => DarbouxRS.upperStep P g i) volume
+      IntervalIntegrable (fun _ : ℝ => upperStep P g i) volume
         (P.pts i.castSucc) (P.pts i.succ) :=
     continuous_const.intervalIntegrable _ _
-  have hcellBelow : BddBelow (g '' DarbouxRS.subinterval P i) := by
-    exact (isCompact_Icc.image_of_continuousOn hgcell).bddBelow
-  have hcellAbove : BddAbove (g '' DarbouxRS.subinterval P i) := by
-    exact (isCompact_Icc.image_of_continuousOn hgcell).bddAbove
+  have hcellBelow : BddBelow (g '' Partition.subinterval P i) := by
+    simpa [Partition.subinterval] using
+      (isCompact_Icc.image_of_continuousOn hgcell).bddBelow
+  have hcellAbove : BddAbove (g '' Partition.subinterval P i) := by
+    simpa [Partition.subinterval] using
+      (isCompact_Icc.image_of_continuousOn hgcell).bddAbove
   have hLowerPoint :
-      ∀ x ∈ Set.Icc (P.pts i.castSucc) (P.pts i.succ), DarbouxRS.lowerStep P g i ≤ g x := by
+      ∀ x ∈ Set.Icc (P.pts i.castSucc) (P.pts i.succ),
+        lowerStep P g i ≤ g x := by
     intro x hx
-    unfold DarbouxRS.lowerStep
+    unfold lowerStep
     exact csInf_le hcellBelow ⟨x, hx, rfl⟩
   have hUpperPoint :
-      ∀ x ∈ Set.Icc (P.pts i.castSucc) (P.pts i.succ), g x ≤ DarbouxRS.upperStep P g i := by
+      ∀ x ∈ Set.Icc (P.pts i.castSucc) (P.pts i.succ),
+        g x ≤ upperStep P g i := by
     intro x hx
-    unfold DarbouxRS.upperStep
+    unfold upperStep
     exact le_csSup hcellAbove ⟨x, hx, rfl⟩
   have hLowerIntegral :
-      (∫ x in P.pts i.castSucc..P.pts i.succ, DarbouxRS.lowerStep P g i) ≤
+      (∫ x in P.pts i.castSucc..P.pts i.succ, lowerStep P g i) ≤
         ∫ x in P.pts i.castSucc..P.pts i.succ, g x :=
     intervalIntegral.integral_mono_on huv hconstLower hgi hLowerPoint
   have hUpperIntegral :
       (∫ x in P.pts i.castSucc..P.pts i.succ, g x) ≤
-        ∫ x in P.pts i.castSucc..P.pts i.succ, DarbouxRS.upperStep P g i :=
+        ∫ x in P.pts i.castSucc..P.pts i.succ, upperStep P g i :=
     intervalIntegral.integral_mono_on huv hgi hconstUpper hUpperPoint
   constructor
   · calc
-      DarbouxRS.lowerStep P g i * (P.pts i.succ - P.pts i.castSucc)
-          = ∫ x in P.pts i.castSucc..P.pts i.succ, DarbouxRS.lowerStep P g i := by
+      lowerStep P g i * (P.pts i.succ - P.pts i.castSucc)
+          = ∫ x in P.pts i.castSucc..P.pts i.succ, lowerStep P g i := by
             rw [intervalIntegral.integral_const]
             simp [smul_eq_mul, mul_comm]
       _ ≤ ∫ x in P.pts i.castSucc..P.pts i.succ, g x := hLowerIntegral
   · calc
       ∫ x in P.pts i.castSucc..P.pts i.succ, g x
-          ≤ ∫ x in P.pts i.castSucc..P.pts i.succ, DarbouxRS.upperStep P g i := hUpperIntegral
-      _ = DarbouxRS.upperStep P g i * (P.pts i.succ - P.pts i.castSucc) := by
+          ≤ ∫ x in P.pts i.castSucc..P.pts i.succ, upperStep P g i :=
+            hUpperIntegral
+      _ = upperStep P g i * (P.pts i.succ - P.pts i.castSucc) := by
             rw [intervalIntegral.integral_const]
             simp [smul_eq_mul, mul_comm]
 
-theorem partition_integral_between_lower_upper_id {g : ℝ → ℝ} {a b : ℝ}
+private lemma partition_integral_sum {g : ℝ → ℝ} {a b : ℝ}
     (hg : ContinuousOn g (Set.Icc a b))
-    (P : DarbouxRS.Partition a b) :
-    DarbouxRS.lowerSum P g (fun x => x) ≤ ∫ x in a..b, g x ∧
-      ∫ x in a..b, g x ≤ DarbouxRS.upperSum P g (fun x => x) := by
-  let ptsNat : ℕ → ℝ := fun k =>
-    if hk : k ≤ P.n then P.pts ⟨k, Nat.lt_succ_iff.mpr hk⟩ else b
-  have hptsNat (k : Fin (P.n + 1)) : ptsNat k = P.pts k := by
-    simp [ptsNat, Nat.le_of_lt_succ k.isLt]
-  have hcellInt : ∀ k < P.n,
-      IntervalIntegrable g volume (ptsNat k) (ptsNat (k + 1)) := by
+    (P : Partition a b) :
+    (∑ i : Fin P.n,
+        ∫ x in P.pts i.castSucc..P.pts i.succ, g x) =
+      ∫ x in a..b, g x := by
+  classical
+  rw [Finset.sum_fin_eq_sum_range]
+
+  have hcellIntNat :
+      ∀ k < P.n, IntervalIntegrable g volume (ptNat P k) (ptNat P (k + 1)) := by
     intro k hk
     let i : Fin P.n := ⟨k, hk⟩
-    have hleft : ptsNat k = P.pts i.castSucc := by
-      simpa [i] using hptsNat i.castSucc
-    have hright : ptsNat (k + 1) = P.pts i.succ := by
-      simpa [i] using hptsNat i.succ
-    rw [hleft, hright]
-    exact ContinuousOn.intervalIntegrable_of_Icc
-      (le_of_lt (P.strict_mono Fin.castSucc_lt_succ))
-      (hg.mono (DarbouxRS.subinterval_subset_Icc_core P))
-  have hsumNat := intervalIntegral.sum_integral_adjacent_intervals hcellInt
-  have hsumIntegral :
-      (∑ k : Fin P.n, ∫ x in P.pts k.castSucc..P.pts k.succ, g x) =
+    have huv : P.pts i.castSucc ≤ P.pts i.succ :=
+      le_of_lt (P.strict_mono Fin.castSucc_lt_succ)
+    have hgcell :
+        ContinuousOn g (Set.Icc (P.pts i.castSucc) (P.pts i.succ)) :=
+      hg.mono (DarbouxRS.subinterval_subset_Icc_core P (i := i))
+    have hInt :
+        IntervalIntegrable g volume (P.pts i.castSucc) (P.pts i.succ) :=
+      ContinuousOn.intervalIntegrable_of_Icc huv hgcell
+
+    have hleft : ptNat P k = P.pts i.castSucc := by
+      rw [ptNat_of_lt P hk]
+
+    have hright : ptNat P (k + 1) = P.pts i.succ := by
+      rw [ptNat_succ_of_lt P hk]
+
+    simpa [hleft, hright] using hInt
+
+  have hsum0 :=
+    intervalIntegral.sum_integral_adjacent_intervals hcellIntNat
+
+  have hsum :
+      (∑ k ∈ Finset.range P.n,
+          ∫ x in ptNat P k..ptNat P (k + 1), g x) =
         ∫ x in a..b, g x := by
-    calc
-      (∑ k : Fin P.n, ∫ x in P.pts k.castSucc..P.pts k.succ, g x) =
-          ∑ k : Fin P.n, ∫ x in ptsNat k.val..ptsNat (k.val + 1), g x := by
-            refine Finset.sum_congr rfl ?_
-            intro k _hk
-            rw [show ptsNat k.val = P.pts k.castSucc by
-              simpa using hptsNat k.castSucc]
-            rw [show ptsNat (k.val + 1) = P.pts k.succ by
-              simpa using hptsNat k.succ]
-      _ = ∑ k ∈ Finset.range P.n, ∫ x in ptsNat k..ptsNat (k + 1), g x :=
-        Fin.sum_univ_eq_sum_range
-          (fun k => ∫ x in ptsNat k..ptsNat (k + 1), g x) P.n
-      _ = ∫ x in ptsNat 0..ptsNat P.n, g x := hsumNat
-      _ = ∫ x in a..b, g x := by
-        rw [show ptsNat 0 = a by simpa [P.pts_start] using hptsNat (0 : Fin (P.n + 1))]
-        rw [show ptsNat P.n = b by
-          simpa [P.pts_end] using hptsNat (Fin.last P.n)]
+    simpa [ptNat_zero, ptNat_last] using hsum0
+
+  trans
+      (∑ k ∈ Finset.range P.n,
+          ∫ x in ptNat P k..ptNat P (k + 1), g x)
+  · refine Finset.sum_congr rfl ?_
+    intro k hk
+    have hklt : k < P.n := Finset.mem_range.mp hk
+    rw [dif_pos hklt]
+    rw [ptNat_of_lt P hklt, ptNat_succ_of_lt P hklt]
+
+  · exact hsum
+
+theorem partition_integral_between_lower_upper_id {g : ℝ → ℝ} {a b : ℝ}
+    (hg : ContinuousOn g (Set.Icc a b))
+    (P : Partition a b) :
+    lowerSum P g (fun x => x) ≤ ∫ x in a..b, g x ∧
+      ∫ x in a..b, g x ≤ upperSum P g (fun x => x) := by
+  have hsumIntegral := partition_integral_sum hg P
   have hlowerSum :
-      (∑ k : Fin P.n,
-          DarbouxRS.lowerStep P g k * (P.pts k.succ - P.pts k.castSucc)) ≤
-        ∑ k : Fin P.n, ∫ x in P.pts k.castSucc..P.pts k.succ, g x := by
+      (∑ i : Fin P.n,
+          lowerStep P g i * (P.pts i.succ - P.pts i.castSucc)) ≤
+        ∑ i : Fin P.n,
+          ∫ x in P.pts i.castSucc..P.pts i.succ, g x := by
     refine Finset.sum_le_sum ?_
-    intro k _hk
-    exact (cell_integral_between_lower_upper_id hg P k).1
+    intro i _hi
+    exact (cell_integral_between_lower_upper_id hg P i).1
   have hupperSum :
-      (∑ k : Fin P.n, ∫ x in P.pts k.castSucc..P.pts k.succ, g x) ≤
-        ∑ k : Fin P.n,
-          DarbouxRS.upperStep P g k * (P.pts k.succ - P.pts k.castSucc) := by
+      (∑ i : Fin P.n,
+          ∫ x in P.pts i.castSucc..P.pts i.succ, g x) ≤
+        ∑ i : Fin P.n,
+          upperStep P g i * (P.pts i.succ - P.pts i.castSucc) := by
     refine Finset.sum_le_sum ?_
-    intro k _hk
-    exact (cell_integral_between_lower_upper_id hg P k).2
+    intro i _hi
+    exact (cell_integral_between_lower_upper_id hg P i).2
   constructor
   · calc
-      DarbouxRS.lowerSum P g (fun x => x)
-          = ∑ k : Fin P.n,
-              DarbouxRS.lowerStep P g k *
-                (P.pts k.succ - P.pts k.castSucc) := by simp [DarbouxRS.lowerSum]
-      _ ≤ ∑ k : Fin P.n, ∫ x in P.pts k.castSucc..P.pts k.succ, g x := hlowerSum
+      lowerSum P g (fun x => x)
+          = ∑ i : Fin P.n,
+              lowerStep P g i * (P.pts i.succ - P.pts i.castSucc) := by
+            unfold lowerSum
+            simp
+      _ ≤ ∑ i : Fin P.n,
+            ∫ x in P.pts i.castSucc..P.pts i.succ, g x := hlowerSum
       _ = ∫ x in a..b, g x := hsumIntegral
   · calc
       ∫ x in a..b, g x
-          = ∑ k : Fin P.n, ∫ x in P.pts k.castSucc..P.pts k.succ, g x :=
+          = ∑ i : Fin P.n,
+              ∫ x in P.pts i.castSucc..P.pts i.succ, g x :=
             hsumIntegral.symm
-      _ ≤ ∑ k : Fin P.n,
-              DarbouxRS.upperStep P g k *
-                (P.pts k.succ - P.pts k.castSucc) := hupperSum
-      _ = DarbouxRS.upperSum P g (fun x => x) := by simp [DarbouxRS.upperSum]
+      _ ≤ ∑ i : Fin P.n,
+            upperStep P g i * (P.pts i.succ - P.pts i.castSucc) := hupperSum
+      _ = upperSum P g (fun x => x) := by
+            unfold upperSum
+            simp
 
 theorem upper_lower_gap_small_continuous_id {g : ℝ → ℝ} {a b : ℝ}
     (hab : a < b)
     (hg : ContinuousOn g (Set.Icc a b)) :
-    Thm14SourceRouteLocal.ClosedIntervalDarbouxGapSmall a b g (fun x => x) := by
+    ClosedIntervalDarbouxGapSmall a b g (fun x => x) := by
   intro eps heps
   let eta : ℝ := eps / (b - a + 1)
   have hspan_nonneg : 0 ≤ b - a := sub_nonneg.mpr (le_of_lt hab)
@@ -501,44 +611,45 @@ theorem upper_lower_gap_small_continuous_id {g : ℝ → ℝ} {a b : ℝ}
     (isCompact_Icc.image_of_continuousOn hg).bddBelow
   have hstep :
       ∀ i : Fin P.n,
-        DarbouxRS.upperStep P g i - DarbouxRS.lowerStep P g i ≤ eta := by
+        upperStep P g i - lowerStep P g i ≤ eta := by
     intro i
-    refine Thm14SourceRouteLocal.upperStep_sub_lowerStep_le_of_subinterval_oscillation_bound
+    refine upperStep_sub_lowerStep_le_of_subinterval_oscillation_bound
       P i hAbove hBelow ?_
     intro x hx y hy
-    have hxI : x ∈ Set.Icc a b := DarbouxRS.subinterval_subset_Icc_core P hx
-    have hyI : y ∈ Set.Icc a b := DarbouxRS.subinterval_subset_Icc_core P hy
+    have hxI : x ∈ Set.Icc a b :=
+      DarbouxRS.subinterval_subset_Icc_core P hx
+    have hyI : y ∈ Set.Icc a b :=
+      DarbouxRS.subinterval_subset_Icc_core P hy
     have hxy_len : |x - y| ≤ P.pts i.succ - P.pts i.castSucc :=
-      Thm14SourceRouteLocal.abs_sub_le_cell_length_of_mem_subinterval P hx hy
+      abs_sub_le_cell_length_of_mem_subinterval P hx hy
     have hlen_mesh : P.pts i.succ - P.pts i.castSucc ≤ P.mesh :=
-      Thm14SourceRouteLocal.partition_length_le_mesh_core P i
+      partition_length_le_mesh_core P i
     have hdist : dist x y < δ := by
-      simpa [Real.dist_eq] using lt_of_le_of_lt (le_trans hxy_len hlen_mesh) hmesh
+      simpa [Real.dist_eq] using
+        lt_of_le_of_lt (le_trans hxy_len hlen_mesh) hmesh
     exact le_of_lt (by
       simpa [Real.dist_eq] using Hδ x hxI y hyI hdist)
   have hosc_le :
-      Thm14SourceRouteLocal.partitionOscillation P g (fun x => x) ≤ eta * (b - a) := by
-    unfold Thm14SourceRouteLocal.partitionOscillation
-    have htel :
-        (∑ i : Fin P.n, (P.pts i.succ - P.pts i.castSucc)) = b - a :=
-      partition_length_sum P
+      partitionOscillation P g (fun x => x) ≤ eta * (b - a) := by
+    unfold partitionOscillation
     calc
       (∑ i : Fin P.n,
-          (DarbouxRS.upperStep P g i - DarbouxRS.lowerStep P g i) *
-            ((fun x : ℝ => x) (P.pts i.succ) - (fun x : ℝ => x) (P.pts i.castSucc)))
+          (upperStep P g i - lowerStep P g i) *
+            ((fun x : ℝ => x) (P.pts i.succ) -
+              (fun x : ℝ => x) (P.pts i.castSucc)))
           ≤ ∑ i : Fin P.n,
               eta * (P.pts i.succ - P.pts i.castSucc) := by
             refine Finset.sum_le_sum ?_
-            intro i hi_mem
+            intro i _hi
             have hlen_nonneg : 0 ≤ P.pts i.succ - P.pts i.castSucc :=
               sub_nonneg.mpr (le_of_lt (P.strict_mono Fin.castSucc_lt_succ))
             simpa using mul_le_mul_of_nonneg_right (hstep i) hlen_nonneg
       _ = eta * (b - a) := by
-            rw [← Finset.mul_sum, htel]
+            rw [← Finset.mul_sum, partition_length_sum P]
   calc
-    DarbouxRS.upperSum P g (fun x => x) - DarbouxRS.lowerSum P g (fun x => x)
-        = Thm14SourceRouteLocal.partitionOscillation P g (fun x => x) :=
-          Thm14SourceRouteLocal.upperSum_sub_lowerSum_eq_partitionOscillation P
+    upperSum P g (fun x => x) - lowerSum P g (fun x => x)
+        = partitionOscillation P g (fun x => x) :=
+          upperSum_sub_lowerSum_eq_partitionOscillation P
     _ ≤ eta * (b - a) := hosc_le
     _ < eps := hsmall_eta_span
 
@@ -552,7 +663,8 @@ theorem rsUpperLowerCommonLimit_intervalIntegral_id {g : ℝ → ℝ} {a b : ℝ
     (isCompact_Icc.image_of_continuousOn hg).bddBelow
   refine ⟨⟨hab, hAbove, hBelow, monotoneOn_id⟩, ?_⟩
   intro eps heps
-  rcases upper_lower_gap_small_continuous_id hab hg eps heps with ⟨δ, hδ_pos, Hδ⟩
+  rcases upper_lower_gap_small_continuous_id hab hg eps heps with
+    ⟨δ, hδ_pos, Hδ⟩
   refine ⟨δ, hδ_pos, ?_⟩
   intro P hmesh
   have hbetween := partition_integral_between_lower_upper_id hg P
@@ -565,7 +677,7 @@ theorem rsTaggedCommonLimit_intervalIntegral_id {g : ℝ → ℝ} {a b : ℝ}
     (hab : a < b)
     (hg : ContinuousOn g (Set.Icc a b)) :
     rsTaggedCommonLimit a b g (fun x => x) (∫ x in a..b, g x) :=
-  Thm14SourceRouteLocal.taggedCommonLimit_of_upperLowerCommonLimit
+  taggedCommonLimit_of_upperLowerCommonLimit
     (rsUpperLowerCommonLimit_intervalIntegral_id hab hg)
 
 theorem rsTaggedCommonLimit_derivative_of_identity_tagged_limit
@@ -608,11 +720,11 @@ theorem rsTaggedCommonLimit_derivative_of_identity_tagged_limit
       simpa [Real.dist_eq] using hxy
     have h := HδA x hx y hy hdist
     exact le_of_lt (by simpa [Real.dist_eq] using h)
-  let Sid : ℝ := DarbouxRS.taggedSum P tags (fun x => f x * α' x) (fun x => x)
+  let Sid : ℝ := taggedSum P tags (fun x => f x * α' x) (fun x => x)
   have hdiff :
-      |DarbouxRS.taggedSum P tags f α - Sid| < eps / 2 := by
+      |taggedSum P tags f α - Sid| < eps / 2 := by
     have hle :
-        |DarbouxRS.taggedSum P tags f α - Sid| ≤ C * eta * (b - a) := by
+        |taggedSum P tags f α - Sid| ≤ C * eta * (b - a) := by
       simpa [Sid] using
         taggedSum_derivative_identity_abs_le
           (f := f) (α := α) (α' := α') (a := a) (b := b)
@@ -622,17 +734,17 @@ theorem rsTaggedCommonLimit_derivative_of_identity_tagged_limit
   have hIdClose : |Sid - L| < eps / 2 := by
     simpa [Sid] using HδI P tags htags hmeshI
   have htriangle :
-      |DarbouxRS.taggedSum P tags f α - L| ≤
-        |DarbouxRS.taggedSum P tags f α - Sid| + |Sid - L| := by
+      |taggedSum P tags f α - L| ≤
+        |taggedSum P tags f α - Sid| + |Sid - L| := by
     have hdecomp :
-        DarbouxRS.taggedSum P tags f α - L =
-          (DarbouxRS.taggedSum P tags f α - Sid) + (Sid - L) := by
+        taggedSum P tags f α - L =
+          (taggedSum P tags f α - Sid) + (Sid - L) := by
       ring
     rw [hdecomp]
     exact abs_add_le _ _
   calc
-    |DarbouxRS.taggedSum P tags f α - L|
-        ≤ |DarbouxRS.taggedSum P tags f α - Sid| + |Sid - L| := htriangle
+    |taggedSum P tags f α - L|
+        ≤ |taggedSum P tags f α - Sid| + |Sid - L| := htriangle
     _ < eps / 2 + eps / 2 := add_lt_add hdiff hIdClose
     _ = eps := by ring
 
@@ -649,9 +761,7 @@ theorem rsTaggedCommonLimit_integral_deriv
     (rsTaggedCommonLimit_intervalIntegral_id hab
       (derivative_integrand_continuousOn hf hα'cont))
 
-end
-
-end Thm14DerivativeTaggedScratch
+end Thm_1_4
 
 theorem thm_1_4 {f α α' : ℝ → ℝ} {a b : ℝ}
     (hab : a ≤ b)
@@ -666,10 +776,10 @@ theorem thm_1_4 {f α α' : ℝ → ℝ} {a b : ℝ}
       IntervalIntegrable (fun x => f x * α' x) volume a b :=
     (hf.mul hα'cont).intervalIntegrable_of_Icc hab
   have hstrict : a < b :=
-    Thm14SourceRouteLocal.strict_interval_of_rsIntegrable hRS
+    Thm_1_4.strict_interval_of_rsIntegrable hRS
   have hTagged :
       rsTaggedCommonLimit a b f α (∫ x in a..b, f x * α' x) :=
-    Thm14DerivativeTaggedScratch.rsTaggedCommonLimit_integral_deriv
+    Thm_1_4.rsTaggedCommonLimit_integral_deriv
       hstrict hf hαmono hαderiv hα'cont
   refine ⟨hInt, ?_⟩
-  exact DarbouxRS.taggedCommonLimit_unique (rsIntegral_spec hRS) hTagged
+  exact taggedCommonLimit_unique (rsIntegral_spec hRS) hTagged
