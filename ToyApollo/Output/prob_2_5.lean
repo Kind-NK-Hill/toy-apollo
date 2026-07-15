@@ -19,9 +19,10 @@ whose intersection is empty but whose measures do not tend to 0.
 theorem prob_2_5 :
     ∃ (Ω : Type) (_ : Countable Ω) (m : MeasurableSpace Ω) (μ : Measure Ω)
       (A : ℕ → Set Ω),
-      (∀ n, MeasurableSet (A n)) ∧ (∀ n, A (n + 1) ⊆ A n) ∧
+      μ = Measure.count ∧
+        (∀ n, MeasurableSet (A n)) ∧ (∀ n, A (n + 1) ⊆ A n) ∧
         (⋂ n, A n) = ∅ ∧ ¬ Tendsto (fun n => μ (A n)) atTop (𝓝 0) := by
-  refine ⟨ℕ, inferInstance, ⊤, Measure.count, fun n => Set.Ici n, ?_, ?_, ?_, ?_⟩
+  refine ⟨ℕ, inferInstance, ⊤, Measure.count, fun n => Set.Ici n, rfl, ?_, ?_, ?_, ?_⟩
   · intro n
     exact measurableSet_Ici
   · intro n x hx

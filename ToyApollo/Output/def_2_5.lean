@@ -1,10 +1,16 @@
-import Mathlib
+import Mathlib.Tactic
+-- import Mathlib.MeasureTheory.MeasurableSpace.Defs
+-- import Mathlib.MeasureTheory.Measure.MeasureSpaceDef
+import Mathlib.MeasureTheory.Measure.MeasureSpace
+import Mathlib.MeasureTheory.Measure.Typeclasses.Probability
 
 /-
-TASK ID: def_2_5
-TYPE: Definition
-SOURCE PLAN: 42_chap2_measure_functions
-TASK CONTENT:
+
+ Definition 2.5 Measure and Probability Measure on a sigma-algebra
+
+-/
+
+/-
 \begin{defbox}{2.5}
 Let $\mathcal{F}$ be a $\sigma$-field on a sample space $\Omega$. A set function $m$ from $\mathcal{F}$ to $[0,\infty]$ is called a \textit{measure} if it satisfies the following properties:
 \begin{enumerate}[label=\arabic*.]
@@ -25,7 +31,6 @@ A \textit{measure space} is a triple $(\Omega,\mathcal{F},m)$ where $\mathcal{F}
 \end{defbox}
 -/
 
--- WRITE FINAL LEAN CODE BELOW
 
 open MeasureTheory Set
 
@@ -44,10 +49,39 @@ def IsProbabilityMeasureOn {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) :
 structure MeasureSpaceData (Ω : Type*) [MeasurableSpace Ω] where
   measure : Measure Ω
 
-/-- A probability space packages a measurable space with a probability measure. -/
-structure ProbabilitySpaceData (Ω : Type*) [MeasurableSpace Ω] where
-  measure : Measure Ω
-  is_probability : IsProbabilityMeasure measure
+/-- A probability space packages a measurable space with a probability measure.
+ We obtain this data structure by extending `MeasureSpaceData` and adding
+ the condition that the measure of the whole space is 1.
+-/
+structure ProbabilitySpaceData (Ω : Type*) [MeasurableSpace Ω]
+  extends MeasureSpaceData Ω where
+  (is_probability : IsProbabilityMeasure measure)
 
-/-- Exported definition for Definition 2.5. -/
+-- structure ProbabilitySpaceData (Ω : Type*) [MeasurableSpace Ω] where
+--   measure : Measure Ω
+--   is_probability : IsProbabilityMeasure measure
+
+/-- # Definition 2.5 Measure functino
+Exported definition for Definition 2.5. -/
 def def_2_5 {Ω : Type*} [MeasurableSpace Ω] := Measure Ω
+
+
+/-
+  The measure function make takes the infinity as its value
+  We have the following convention with ∞
+-/
+
+section checking_ENNReal
+
+open ENNReal
+
+-- c + ∞ = ∞
+example (c : ENNReal) : c + ∞ = ∞ := by
+  exact add_top c
+
+-- ∞ · ∞ = ∞
+example : ∞ * ∞ = ∞ := by
+  exact top_mul_top
+
+
+end checking_ENNReal

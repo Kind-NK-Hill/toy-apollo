@@ -54,6 +54,17 @@ theorem setLiminf_subset_setLimsup {Ω : Type*} (E : ℕ → Set Ω) :
   refine ⟨le_max_left n j, ?_⟩
   exact mem_iInter₂.mp hj (max n j) (le_max_right n j)
 
-/-- Exported definition for Definition 2.4. -/
-def def_2_4 {Ω : Type*} (E : ℕ → Set Ω) : Set Ω :=
+/-- The common set-sequence limit from Definition 2.4, available exactly when
+the limit inferior and limit superior agree. -/
+def def_2_4 {Ω : Type*} (E : ℕ → Set Ω)
+    (_h : setSeqLimitExists E) : Set Ω :=
   setLiminf E
+
+@[simp] theorem def_2_4_eq_setLiminf {Ω : Type*} (E : ℕ → Set Ω)
+    (h : setSeqLimitExists E) :
+    def_2_4 E h = setLiminf E := rfl
+
+theorem def_2_4_eq_setLimsup {Ω : Type*} (E : ℕ → Set Ω)
+    (h : setSeqLimitExists E) :
+    def_2_4 E h = setLimsup E := by
+  exact h
