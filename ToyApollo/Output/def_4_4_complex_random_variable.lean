@@ -14,6 +14,11 @@ We use Mathlib's standard notion of measurability for `ℂ`-valued functions.
 def IsComplexRandomVariable {Ω : Type*} [MeasurableSpace Ω] (Z : Ω → ℂ) : Prop :=
   Measurable Z
 
+/-- Definition 4.4 under its canonical task identifier. -/
+def def_4_4_complex_random_variable {Ω : Type*} [MeasurableSpace Ω]
+    (Z : Ω → ℂ) : Prop :=
+  IsComplexRandomVariable Z
+
 theorem isComplexRandomVariable_iff_measurable {Ω : Type*} [MeasurableSpace Ω] (Z : Ω → ℂ) :
     IsComplexRandomVariable Z ↔ Measurable Z :=
   Iff.rfl
@@ -32,18 +37,19 @@ def complexConjugateRV {Ω : Type*} [MeasurableSpace Ω] (Z : Ω → ℂ) : Ω �
 
 theorem measurable_complexConjugateRV {Ω : Type*} [MeasurableSpace Ω] {Z : Ω → ℂ}
     (hZ : IsComplexRandomVariable Z) : Measurable (complexConjugateRV Z) := by
-  simpa [IsComplexRandomVariable, complexConjugateRV, complex_conjugate] using
-    (continuous_star.measurable.comp hZ)
+  convert (continuous_star.measurable.comp hZ) using 1
+  funext ω
+  apply Complex.ext <;> simp [complexConjugateRV, complex_conjugate]
 
 theorem measurable_complexRealPartRV {Ω : Type*} [MeasurableSpace Ω] {Z : Ω → ℂ}
     (hZ : IsComplexRandomVariable Z) : Measurable (complexRealPartRV Z) := by
-  simpa [complexRealPartRV, IsComplexRandomVariable, complexRealPart] using
-    (Complex.continuous_re.measurable.comp hZ)
+  change Measurable (fun ω => (Z ω).re)
+  exact Complex.continuous_re.measurable.comp hZ
 
 theorem measurable_complexImagPartRV {Ω : Type*} [MeasurableSpace Ω] {Z : Ω → ℂ}
     (hZ : IsComplexRandomVariable Z) : Measurable (complexImagPartRV Z) := by
-  simpa [complexImagPartRV, IsComplexRandomVariable, complexImagPart] using
-    (Complex.continuous_im.measurable.comp hZ)
+  change Measurable (fun ω => (Z ω).im)
+  exact Complex.continuous_im.measurable.comp hZ
 
 theorem isComplexRandomVariable_of_measurable_parts {Ω : Type*} [MeasurableSpace Ω] {Z : Ω → ℂ}
     (hRe : Measurable (complexRealPartRV Z)) (hIm : Measurable (complexImagPartRV Z)) :
@@ -55,8 +61,8 @@ theorem isComplexRandomVariable_of_measurable_parts {Ω : Type*} [MeasurableSpac
     (show Measurable (fun ω => pairToComplex (complexRealPartRV Z ω, complexImagPartRV Z ω)) from
       measurable_pairToComplex.comp hPair) using 1
   funext ω
-  simpa [complexRealPartRV, complexImagPartRV, complexToPair] using
-    (pairToComplex_complexToPair (Z ω)).symm
+  change Z ω = pairToComplex ((Z ω).re, (Z ω).im)
+  exact (pairToComplex_complexToPair (Z ω)).symm
 
 theorem isComplexRandomVariable_iff_measurable_parts {Ω : Type*} [MeasurableSpace Ω]
     {Z : Ω → ℂ} :

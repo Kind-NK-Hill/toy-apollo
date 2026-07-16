@@ -1,22 +1,83 @@
 import Mathlib
 import ToyApollo.Output.def_4_3_sup_inf
-
-open MeasureTheory
+import ToyApollo.Output.thm_4_4
 
 /-!
-Theorem 4.7: measurability of pointwise supremum and infimum of a countable
-family of measurable `EReal`-valued functions.
+# Measurability of countable pointwise suprema and infima
+
+The proof checks lower-ray preimages through Theorem 4.4, identifies the
+supremum level set with a countable intersection, and reduces infimum to the
+negative of the supremum of the negated family.
 -/
 
-theorem measurable_seqSupEReal {Ω : Type*} [MeasurableSpace Ω] (f : ℕ → Ω → EReal)
-    (hf : ∀ i, Measurable (f i)) : Measurable (fun ω => seqSup (fun i => f i ω)) := by
-  simpa [seqSup] using (Measurable.iSup hf)
+open Set MeasureTheory
 
-theorem measurable_seqInfEReal {Ω : Type*} [MeasurableSpace Ω] (f : ℕ → Ω → EReal)
-    (hf : ∀ i, Measurable (f i)) : Measurable (fun ω => seqInf (fun i => f i ω)) := by
-  simpa [seqInf] using (Measurable.iInf hf)
+noncomputable section
 
-/-- Textbook theorem 4.7 in bundled form. -/
+def erealLowerRays : Set (Set EReal) :=
+  Set.range (fun a : EReal => Iic a)
+
+theorem erealLowerRays_generateFrom_eq_borel :
+    MeasurableSpace.generateFrom erealLowerRays = borel EReal := by
+  simpa [erealLowerRays] using (borel_eq_generateFrom_Iic EReal).symm
+
+theorem measurable_of_erealLowerRays_preimage {Ω : Type*} [MeasurableSpace Ω]
+    {F : Ω → EReal}
+    (hF : ∀ A ∈ erealLowerRays, MeasurableSet (F ⁻¹' A)) :
+    Measurable F := by
+  have hgen :
+      (inferInstance : MeasurableSpace EReal) =
+        MeasurableSpace.generateFrom erealLowerRays := by
+    calc
+      (inferInstance : MeasurableSpace EReal) = borel EReal := BorelSpace.measurable_eq
+      _ = MeasurableSpace.generateFrom erealLowerRays :=
+        erealLowerRays_generateFrom_eq_borel.symm
+  have hsrc :
+      @Measurable Ω EReal inferInstance
+        (MeasurableSpace.generateFrom erealLowerRays) F :=
+    (thm_4_4 F).2 hF
+  convert hsrc using 1
+
+theorem seqSup_levelSet_eq_iInter {Ω : Type*} (f : ℕ → Ω → EReal) (a : EReal) :
+    {ω | seqSup (fun i => f i ω) ≤ a} = ⋂ i, {ω | f i ω ≤ a} := by
+  ext ω
+  simp [seqSup]
+
+theorem seqSup_levelSet_measurable {Ω : Type*} [MeasurableSpace Ω]
+    (f : ℕ → Ω → EReal) (hf : ∀ i, Measurable (f i)) (a : EReal) :
+    MeasurableSet {ω | seqSup (fun i => f i ω) ≤ a} := by
+  rw [seqSup_levelSet_eq_iInter f a]
+  exact MeasurableSet.iInter fun i => hf i measurableSet_Iic
+
+theorem measurable_seqSupEReal {Ω : Type*} [MeasurableSpace Ω]
+    (f : ℕ → Ω → EReal) (hf : ∀ i, Measurable (f i)) :
+    Measurable (fun ω => seqSup (fun i => f i ω)) := by
+  refine measurable_of_erealLowerRays_preimage ?_
+  rintro A ⟨a, rfl⟩
+  exact seqSup_levelSet_measurable f hf a
+
+theorem seqInf_eq_neg_seqSup_neg (a : ℕ → EReal) :
+    seqInf a = -(seqSup fun i => -a i) := by
+  unfold seqInf seqSup
+  apply le_antisymm
+  · exact EReal.le_neg.mpr
+      (iSup_le fun i => EReal.neg_le_neg_iff.mpr (iInf_le a i))
+  · refine le_iInf ?_
+    intro i
+    exact EReal.neg_le.mpr (le_iSup (fun j : ℕ => -a j) i)
+
+theorem measurable_seqInfEReal {Ω : Type*} [MeasurableSpace Ω]
+    (f : ℕ → Ω → EReal) (hf : ∀ i, Measurable (f i)) :
+    Measurable (fun ω => seqInf (fun i => f i ω)) := by
+  have hneg : ∀ i, Measurable (fun ω => -f i ω) := fun i => (hf i).neg
+  have hsup :
+      Measurable (fun ω => seqSup (fun i => -f i ω)) :=
+    measurable_seqSupEReal (fun i ω => -f i ω) hneg
+  have hfinal : Measurable (fun ω => -(seqSup (fun i => -f i ω))) := hsup.neg
+  convert hfinal using 1
+  ext ω
+  exact seqInf_eq_neg_seqSup_neg (fun i => f i ω)
+
 theorem thm_4_7 {Ω : Type*} [MeasurableSpace Ω] (f : ℕ → Ω → EReal)
     (hf : ∀ i, Measurable (f i)) :
     Measurable (fun ω => seqSup (fun i => f i ω)) ∧

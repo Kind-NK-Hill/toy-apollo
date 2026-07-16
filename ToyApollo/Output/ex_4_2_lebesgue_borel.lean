@@ -38,29 +38,55 @@ The measure of a set scaled by 1/3 is 1/3 of the original measure.
 -/
 lemma volume_image_div3 (S : Set ℝ) :
     volume ((· / 3) '' S) = ENNReal.ofReal (1/3) * volume S := by
-      convert Real.volume_preimage_mul_left ( show ( 3 : ℝ ) ≠ 0 by norm_num ) ( S ) using 1 <;> ring_nf;
-      congr with x ; aesop
+  rw [image_div3_eq_preimage_mul3]
+  have hmul : (fun x : ℝ => x * 3) = fun x : ℝ => 3 * x := by
+    funext x
+    ring
+  rw [hmul, Real.volume_preimage_mul_left (show (3 : ℝ) ≠ 0 by norm_num)]
+  norm_num
 
 /-
 The measure of a set under the map `(2 + ·) / 3` is 1/3 of the original measure.
 -/
 lemma volume_image_add2_div3 (S : Set ℝ) :
     volume ((fun x => (2 + x) / 3) '' S) = ENNReal.ofReal (1/3) * volume S := by
-      convert volume_image_div3 ( ( fun y => y + 2 ) '' S ) using 1 ; norm_num;
-      · grind +suggestions;
-      · norm_num [ Set.image_add_right ]
+  have himage :
+      (fun x : ℝ => (2 + x) / 3) '' S =
+        (· / 3) '' ((fun y : ℝ => y + 2) '' S) := by
+    ext z
+    constructor
+    · rintro ⟨x, hx, rfl⟩
+      refine ⟨x + 2, ⟨x, hx, rfl⟩, ?_⟩
+      ring
+    · rintro ⟨y, ⟨x, hx, rfl⟩, rfl⟩
+      exact ⟨x, hx, by ring⟩
+  rw [himage, volume_image_div3]
+  norm_num [Set.image_add_right]
 
 /-
 volume of preCantorSet n is at most (2/3)^n.
 -/
 lemma volume_preCantorSet_le (n : ℕ) :
     volume (preCantorSet n) ≤ ENNReal.ofReal ((2/3 : ℝ) ^ n) := by
-      induction' n with n ih;
-      · erw [ Real.volume_Icc ] ; norm_num;
-      · refine' le_trans ( MeasureTheory.measure_union_le _ _ ) _;
-        rw [ volume_image_div3, volume_image_add2_div3 ];
-        convert mul_le_mul_left' ih ( ENNReal.ofReal ( 1 / 3 ) + ENNReal.ofReal ( 1 / 3 ) ) using 1 ; ring;
-        rw [ ← ENNReal.ofReal_add ] <;> norm_num ; ring
+  induction n with
+  | zero =>
+      erw [Real.volume_Icc]
+      norm_num
+  | succ n ih =>
+      refine le_trans (MeasureTheory.measure_union_le _ _) ?_
+      rw [volume_image_div3, volume_image_add2_div3]
+      calc
+        ENNReal.ofReal (1 / 3) * volume (preCantorSet n) +
+            ENNReal.ofReal (1 / 3) * volume (preCantorSet n) =
+            (ENNReal.ofReal (1 / 3) + ENNReal.ofReal (1 / 3)) *
+              volume (preCantorSet n) := by ring
+        _ ≤ (ENNReal.ofReal (1 / 3) + ENNReal.ofReal (1 / 3)) *
+            ENNReal.ofReal ((2 / 3 : ℝ) ^ n) :=
+          mul_le_mul_right ih _
+        _ = ENNReal.ofReal ((2 / 3 : ℝ) ^ (n + 1)) := by
+          rw [← ENNReal.ofReal_add] <;> norm_num
+          rw [pow_succ]
+          ring
 
 /-
 The Cantor set has Lebesgue measure zero.
@@ -123,7 +149,66 @@ lemma exists_non_borel_subset_cantorSet :
         grind +revert;
       grind +suggestions
 
-/-! ## Part 3: Non-measurability of the composition -/
+/-! ## Part 3: The Lebesgue/Borel composition seam -/
+
+/--
+A real function is measurable from the Lebesgue σ-field on the domain to the Borel σ-field
+on the codomain when the preimage of each Borel set is Lebesgue measurable.  In this file
+Lebesgue measurability is represented by `NullMeasurableSet _ volume`, i.e. membership in
+the completion of the Borel σ-field with respect to Lebesgue measure.
+-/
+def LebesgueBorelMeasurable (f : ℝ → ℝ) : Prop :=
+  ∀ ⦃B : Set ℝ⦄, MeasurableSet B → NullMeasurableSet (f ⁻¹' B) volume
+
+/-- A real function is measurable from the Borel σ-field to the Borel σ-field. -/
+def BorelBorelMeasurable (f : ℝ → ℝ) : Prop :=
+  Measurable f
+
+/--
+The specific mismatch in Example 4.2.1: `f` and `g` have the `(Lebesgue, Borel)` type
+used in the example, but Theorem 4.3 would need `g` to be `(Borel, Borel)`-measurable
+as the second map after a `(Lebesgue, Borel)` first map.
+-/
+def theorem43MiddleSigmaFieldMismatch (f g : ℝ → ℝ) : Prop :=
+  LebesgueBorelMeasurable f ∧ LebesgueBorelMeasurable g ∧ ¬ BorelBorelMeasurable g
+
+/-- Every Borel/Borel measurable map is also Lebesgue/Borel measurable. -/
+lemma LebesgueBorelMeasurable.of_borel {f : ℝ → ℝ} (hf : Measurable f) :
+    LebesgueBorelMeasurable f := by
+  intro B hB
+  exact (hf hB).nullMeasurableSet
+
+/-- The square map is measurable from the Lebesgue σ-field to the Borel σ-field. -/
+lemma lebesgueBorelMeasurable_sq :
+    LebesgueBorelMeasurable (fun x : ℝ => x ^ 2) :=
+  LebesgueBorelMeasurable.of_borel (measurable_id.pow_const 2)
+
+/-- The indicator of `N` has only the values `0` and `1`, so its Borel preimages are simple. -/
+lemma indicator_one_preimage (N B : Set ℝ) :
+    (Set.indicator N (fun _ => (1 : ℝ))) ⁻¹' B =
+      {x : ℝ | x ∈ N ∧ (1 : ℝ) ∈ B} ∪ {x : ℝ | x ∉ N ∧ (0 : ℝ) ∈ B} := by
+  ext x
+  by_cases hx : x ∈ N <;> simp [Set.indicator, hx]
+
+/--
+If `N` is Lebesgue measurable, then its indicator is measurable from the Lebesgue σ-field
+to the Borel σ-field.
+-/
+lemma LebesgueBorelMeasurable.indicator_one {N : Set ℝ}
+    (hN : NullMeasurableSet N volume) :
+    LebesgueBorelMeasurable (Set.indicator N (fun _ => (1 : ℝ))) := by
+  intro B _hB
+  rw [indicator_one_preimage]
+  exact (hN.inter (NullMeasurableSet.const ((1 : ℝ) ∈ B))).union
+    (hN.compl.inter (NullMeasurableSet.const ((0 : ℝ) ∈ B)))
+
+/--
+If `N` is not Borel, then its `{0,1}`-indicator is not Borel/Borel measurable.
+-/
+lemma not_borelBorelMeasurable_indicator_one {N : Set ℝ} (hN : ¬ MeasurableSet N) :
+    ¬ BorelBorelMeasurable (Set.indicator N (fun _ => (1 : ℝ))) := by
+  intro hg
+  exact hN ((measurable_indicator_const_iff (α := ℝ) (β := ℝ) (s := N) (1 : ℝ)).1 hg)
 
 /-
 If N ⊆ [0, ∞) and the preimage of N under squaring is measurable, then N is measurable.
@@ -139,8 +224,9 @@ lemma measurableSet_of_sq_preimage {N : Set ℝ}
       · exact Real.continuous_sqrt.measurable
 
 /-
-The composition of indicator_N with x^2 is not measurable when N is a non-Borel
-subset of [0,1].
+As an auxiliary Borel/Borel fact, the composition of indicator_N with x^2 is not
+measurable when N is a non-Borel subset of [0,1].  The main theorem below does not use this
+as the source claim; it records the textbook's σ-field mismatch instead.
 -/
 lemma not_measurable_indicator_comp_sq {N : Set ℝ}
     (hN : N ⊆ Set.Icc 0 1) (hNm : ¬ MeasurableSet N) :
@@ -156,14 +242,11 @@ lemma not_measurable_indicator_comp_sq {N : Set ℝ}
 /-! ## Main theorem -/
 
 /-
-There exists a subset N of the Cantor set that is:
-- Lebesgue measurable (null measurable, since it's a null set)
-- Has Lebesgue measure zero
-- Is not Borel measurable
-- The composition of the indicator function of N with x² is not (Borel-)measurable
-
-This corrects the original statement which used `CantorSet` (→ `cantorSet`) and had
-a contradictory `MeasurableSet N ∧ ¬ MeasurableSet[Borel ℝ] N` condition.
+There exists a subset N of the Cantor set that is Lebesgue measurable but not Borel
+measurable.  For `f(x)=x²` and `g=1_N`, both maps have the `(Lebesgue, Borel)` type used
+in the example, but `g` is not `(Borel, Borel)`-measurable.  Hence the composition theorem
+cannot be applied directly because the codomain σ-field of `f` and the domain σ-field of
+`g` do not match.
 -/
 theorem ex_4_2_lebesgue_borel : ∃ (N : Set ℝ), N ⊆ cantorSet ∧
     NullMeasurableSet N volume ∧
@@ -171,10 +254,20 @@ theorem ex_4_2_lebesgue_borel : ∃ (N : Set ℝ), N ⊆ cantorSet ∧
     ¬ MeasurableSet N ∧
     let f : ℝ → ℝ := fun x => x ^ 2
     let g : ℝ → ℝ := Set.indicator N (fun _ => (1 : ℝ))
-    ¬ Measurable (g ∘ f) := by
-      obtain ⟨ N, hN₁, hN₂ ⟩ := exists_non_borel_subset_cantorSet;
-      refine' ⟨ N, hN₁, _, _, hN₂, _ ⟩;
-      · exact MeasureTheory.NullMeasurableSet.of_null ( MeasureTheory.measure_mono_null hN₁ volume_cantorSet_eq_zero );
-      · exact MeasureTheory.measure_mono_null hN₁ ( volume_cantorSet_eq_zero );
-      · refine' not_measurable_indicator_comp_sq ( hN₁.trans _ ) hN₂;
-        exact cantorSet_subset_unitInterval
+    LebesgueBorelMeasurable f ∧
+      LebesgueBorelMeasurable g ∧
+      ¬ BorelBorelMeasurable g ∧
+      theorem43MiddleSigmaFieldMismatch f g := by
+      obtain ⟨ N, hN₁, hN₂ ⟩ := exists_non_borel_subset_cantorSet
+      have hNnullMeasure : volume N = 0 :=
+        MeasureTheory.measure_mono_null hN₁ volume_cantorSet_eq_zero
+      have hNnull : NullMeasurableSet N volume :=
+        MeasureTheory.NullMeasurableSet.of_null hNnullMeasure
+      refine' ⟨ N, hN₁, hNnull, hNnullMeasure, hN₂, _ ⟩
+      dsimp
+      have hf : LebesgueBorelMeasurable (fun x : ℝ => x ^ 2) := lebesgueBorelMeasurable_sq
+      have hg : LebesgueBorelMeasurable (Set.indicator N (fun _ => (1 : ℝ))) :=
+        LebesgueBorelMeasurable.indicator_one hNnull
+      have hng : ¬ BorelBorelMeasurable (Set.indicator N (fun _ => (1 : ℝ))) :=
+        not_borelBorelMeasurable_indicator_one hN₂
+      exact ⟨hf, hg, hng, hf, hg, hng⟩
