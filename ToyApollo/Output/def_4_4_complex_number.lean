@@ -22,6 +22,9 @@ noncomputable def complexHomeomorphRealProd : Homeomorph ℂ (ℝ × ℝ) :=
 noncomputable def complexMeasurableEquivRealProd : ℂ ≃ᵐ (ℝ × ℝ) :=
   complexHomeomorphRealProd.toMeasurableEquiv
 
+noncomputable def def_4_4_complex_number : ℂ ≃ᵐ (ℝ × ℝ) :=
+  complexMeasurableEquivRealProd
+
 def complexOpenRectangle (a b c d : ℝ) : Set ℂ :=
   {z : ℂ | a < z.re ∧ z.re < b ∧ c < z.im ∧ z.im < d}
 
@@ -33,15 +36,15 @@ theorem complexToPair_pairToComplex (p : ℝ × ℝ) : complexToPair (pairToComp
   simp [pairToComplex, complexToPair]
 
 theorem measurable_complexToPair : Measurable complexToPair := by
-  fun_prop
+  change Measurable (fun z : ℂ => (z.re, z.im))
+  exact Complex.measurable_re.prodMk Complex.measurable_im
 
 theorem measurable_pairToComplex : Measurable pairToComplex := by
-  have h : Measurable (fun p : ℝ × ℝ => ((p.1 : ℂ) + (p.2 : ℂ) * Complex.I)) := by
-    fun_prop
-  simpa [pairToComplex] using h
+  change Measurable (fun p : ℝ × ℝ => (p.1 : ℂ) + (p.2 : ℂ) * Complex.I)
+  fun_prop
 
 theorem isOpen_complexOpenRectangle (a b c d : ℝ) : IsOpen (complexOpenRectangle a b c d) := by
-  simpa [complexOpenRectangle] using
+  simpa only [complexOpenRectangle, Set.setOf_and] using
     (isOpen_lt continuous_const Complex.continuous_re).inter
       ((isOpen_lt Complex.continuous_re continuous_const).inter
         ((isOpen_lt continuous_const Complex.continuous_im).inter

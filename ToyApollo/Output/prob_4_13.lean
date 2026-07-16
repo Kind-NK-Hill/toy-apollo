@@ -292,6 +292,13 @@ private def prob_4_13_measurableEquivCode :
     simp [prob_4_13_codeToFun, prob_4_13_encode_decodeBlock,
       prob_4_13_decodeBlock_sameStatus]
 
+private noncomputable instance prob_4_13_measurableFintype :
+    Fintype {f : prob_4_13_A → prob_4_13_B //
+      prob_4_13_isMeasurable f} :=
+  Fintype.ofEquiv
+    (prob_4_13_BlockChoice × prob_4_13_BlockChoice)
+    prob_4_13_measurableEquivCode.symm
+
 private lemma prob_4_13_blockChoice_card :
     Fintype.card prob_4_13_BlockChoice = 5 := by
   rw [Fintype.card_sum, Fintype.card_prod]
