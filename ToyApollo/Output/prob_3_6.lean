@@ -4,8 +4,6 @@ SOURCE MATERIAL: omitted from the public source snapshot; see docs/repository_sc
 -/
 
 import ToyApollo.Output.thm_3_8
-import ToyApollo.Output.def_3_10
-import ToyApollo.Output.thm_3_7
 import Mathlib
 
 open MeasureTheory MeasurableSpace Set
@@ -60,6 +58,16 @@ theorem prob_3_6c : P36 ≠ Q36 := by
   intro h; have := congr_arg ( · { Omega6.a } ) h; norm_num [ P36, Q36 ] at this;
   simp +decide [ Pi.single_apply ] at this
 
+theorem prob_3_6c_not_piSystem : ¬ IsPiSystem C36 := by
+  intro hpi
+  have hmem := hpi
+    ({Omega6.a, b, c} : Set Omega6) (by simp [C36])
+    ({b, c, d} : Set Omega6) (by simp [C36])
+    ⟨b, by simp⟩
+  simpa +decide [C36, Set.ext_iff, Set.subset_def] using hmem
+
 theorem prob_3_6 :
-    MeasurableSpace.generateFrom C36 = ⊤ ∧ (∀ A ∈ C36, P36 A = Q36 A) ∧ P36 ≠ Q36 :=
-  ⟨prob_3_6a, prob_3_6b, prob_3_6c⟩
+    MeasurableSpace.generateFrom C36 = ⊤ ∧
+      (∀ A ∈ C36, P36 A = Q36 A) ∧
+        P36 ≠ Q36 ∧ ¬ IsPiSystem C36 :=
+  ⟨prob_3_6a, prob_3_6b, prob_3_6c, prob_3_6c_not_piSystem⟩

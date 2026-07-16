@@ -120,7 +120,10 @@ theorem prob_3_9 (Ω : Type _) (P L : Set (Set Ω))
       refine ⟨?_, ?_, ?_⟩
       · refine ⟨hS_lambda_struct.univ_mem, ?_⟩
         intro B hB
-        simpa using Set.mem_sInter.2 fun M hM => hM.2.2 hB
+        have hB_S : B ∈ S := by
+          change B ∈ ⋂₀ {M | M ⊆ L ∧ LambdaSystem M ∧ P ⊆ M}
+          exact Set.mem_sInter.2 fun M hM => hM.2.2 hB
+        simpa using hB_S
       · intro A hA
         rcases hA with ⟨hA_mem, hA_inter⟩
         refine ⟨hS_lambda_struct.compl_mem hA_mem, ?_⟩

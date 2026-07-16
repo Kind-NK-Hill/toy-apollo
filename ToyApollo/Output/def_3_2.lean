@@ -8,6 +8,12 @@ import Mathlib.MeasureTheory.Measure.MeasureSpace
 
 open MeasureTheory ENNReal
 
-def IsExtension {X : Type*} (F₀ : Set (Set X)) (μ₀ : Set X → ℝ≥0∞)
-    (μ : @Measure X (MeasurableSpace.generateFrom F₀)) : Prop :=
-  ∀ E ∈ F₀, μ E = μ₀ E
+def IsExtension {X : Type*}
+    (F₀ : FieldOfSets X) (pm : Premeasure F₀)
+    (μ : @Measure X (MeasurableSpace.generateFrom F₀.carrier)) : Prop :=
+  ∀ (E : Set X) (hE : E ∈ F₀.carrier), μ E = pm.μ₀ ⟨E, hE⟩
+
+def def_3_2 {X : Type*}
+    (F₀ : FieldOfSets X) (pm : Premeasure F₀)
+    (μ : @Measure X (MeasurableSpace.generateFrom F₀.carrier)) : Prop :=
+  IsExtension F₀ pm μ

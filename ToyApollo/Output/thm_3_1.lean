@@ -7,9 +7,8 @@ import Mathlib
 import ToyApollo.Output.def_3_1
 import ToyApollo.Output.def_3_2
 import ToyApollo.Output.def_3_3
-import ToyApollo.Output.def_3_10
-import ToyApollo.Output.def_3_5
-import ToyApollo.Output.def_3_6
+
+-- Public extension contracts use Definition 3.2's canonical `IsExtension` interface.
 
 open Set MeasureTheory ENNReal
 
@@ -21,7 +20,11 @@ lemma FieldOfSets.inter_mem (F₀ : FieldOfSets X) {s t : Set X}
 
 lemma FieldOfSets.diff_mem (F₀ : FieldOfSets X) {s t : Set X}
     (hs : s ∈ F₀.carrier) (ht : t ∈ F₀.carrier) : s \ t ∈ F₀.carrier := by
-  convert FieldOfSets.inter_mem F₀ hs (F₀.compl_mem t ht) using 1
+  have hset : s \ t = s ∩ tᶜ := by
+    ext x
+    simp
+  rw [hset]
+  exact FieldOfSets.inter_mem F₀ hs (F₀.compl_mem t ht)
 
 lemma FieldOfSets.univ_mem (F₀ : FieldOfSets X) : univ ∈ F₀.carrier := by
   simpa using F₀.compl_mem _ F₀.empty_mem
@@ -70,8 +73,10 @@ lemma Premeasure.mono {F₀ : FieldOfSets X} (pm : Premeasure F₀)
     apply Premeasure.additive;
     exact disjoint_sdiff_self_right
   generalize_proofs at *;
-  convert h_add.ge.trans' ( le_add_right le_rfl ) using 1;
-  exact congr_arg _ ( Subtype.ext ht_eq )
+  calc
+    pm.μ₀ ⟨s, hs⟩ ≤ pm.μ₀ ⟨s, hs⟩ + pm.μ₀ ⟨t \ s, by assumption⟩ := le_add_right le_rfl
+    _ = pm.μ₀ ⟨s ∪ (t \ s), by assumption⟩ := h_add.symm
+    _ = pm.μ₀ ⟨t, ht⟩ := congrArg pm.μ₀ (Subtype.ext ht_eq.symm)
 
 noncomputable def Premeasure.outerMeasure {F₀ : FieldOfSets X} (pm : Premeasure F₀) :
     OuterMeasure X :=
@@ -153,11 +158,13 @@ lemma Premeasure.isCaratheodory {F₀ : FieldOfSets X} (pm : Premeasure F₀)
     · rw [ ← ENNReal.tsum_add ];
       refine' ENNReal.tsum_le_tsum fun i => _;
       by_cases hi : f i ∈ F₀.carrier <;> by_cases hi' : f i ∩ s ∈ F₀.carrier <;> by_cases hi'' : f i \ s ∈ F₀.carrier <;> simp +decide [ *, extend ];
-      · rw [ ← Premeasure.additive ];
-        any_goals rw [ Set.disjoint_left ] ; simp +contextual [ Set.disjoint_left ];
-        convert le_rfl;
-        · ext x; by_cases hx : x ∈ s <;> simp +decide [ hx ] ;
-        · exact F₀.union_mem _ _ hi' hi'';
+      · have hdisj : Disjoint (f i ∩ s) (f i \ s) := by
+          exact Set.disjoint_left.mpr fun _ hx₁ hx₂ => hx₂.2 hx₁.2
+        have hunion_mem : (f i ∩ s) ∪ (f i \ s) ∈ F₀.carrier :=
+          F₀.union_mem _ _ hi' hi''
+        have hadd := Premeasure.additive pm hi' hi'' hdisj hunion_mem
+        have hunion : (f i ∩ s) ∪ (f i \ s) = f i := Set.inter_union_sdiff _ _
+        exact (hadd.symm.trans (congrArg pm.μ₀ (Subtype.ext hunion))).le
       · exact False.elim ( hi'' ( F₀.diff_mem hi hs ) );
       · exact False.elim ( hi' ( F₀.inter_mem hi hs ) );
       · exact False.elim ( hi' ( F₀.inter_mem hi hs ) );
@@ -173,31 +180,35 @@ lemma Premeasure.generateFrom_le_caratheodory {F₀ : FieldOfSets X} (pm : Preme
 
 theorem extension_exists (F₀ : FieldOfSets X) (pm : Premeasure F₀) :
     ∃ μ : @Measure X (MeasurableSpace.generateFrom F₀.carrier),
-      ∀ (s : Set X) (hs : s ∈ F₀.carrier), μ s = pm.μ₀ ⟨s, hs⟩ := by
-  fconstructor;
-  convert Premeasure.outerMeasure pm |> OuterMeasure.toMeasure <| Premeasure.generateFrom_le_caratheodory pm;
+      IsExtension F₀ pm μ := by
+  letI : MeasurableSpace X := MeasurableSpace.generateFrom F₀.carrier
+  let μ : Measure X :=
+    Premeasure.outerMeasure pm |>.toMeasure <| Premeasure.generateFrom_le_caratheodory pm
+  refine ⟨μ, ?_⟩
+  unfold IsExtension
   intro s hs;
-  simp +decide [ Premeasure.outerMeasure_eq pm hs ];
-  convert Premeasure.outerMeasure_eq pm hs using 1;
-  convert MeasureTheory.Measure.ofMeasurable_apply _ _;
-  exact MeasurableSpace.measurableSet_generateFrom hs
+  have hmeas : MeasurableSet s := MeasurableSpace.measurableSet_generateFrom hs
+  calc
+    μ s = Premeasure.outerMeasure pm s := MeasureTheory.toMeasure_apply _ _ hmeas
+    _ = pm.μ₀ ⟨s, hs⟩ := Premeasure.outerMeasure_eq pm hs
 
 theorem extension_unique (F₀ : FieldOfSets X) (pm : Premeasure F₀)
     (hσ : IsSigmaFinite pm) :
     ∃! μ : @Measure X (MeasurableSpace.generateFrom F₀.carrier),
-      ∀ (s : Set X) (hs : s ∈ F₀.carrier), μ s = pm.μ₀ ⟨s, hs⟩ := by
+      IsExtension F₀ pm μ := by
   obtain ⟨ μ, hμ ⟩ := @extension_exists X F₀ pm;
   refine' ⟨ μ, hμ, fun ν hν => _ ⟩;
   obtain ⟨ A, hA₁, hA₂, hA₃ ⟩ := hσ;
   apply_rules [ MeasureTheory.Measure.ext_of_generateFrom_of_iUnion ];
   · exact?;
   · exact fun i => by rw [ hν _ ( hA₁ i ) ] ; exact ne_of_lt ( hA₃ i ) ;
-  · grind
+  · intro s hs
+    exact (hν s hs).trans (hμ s hs).symm
 
 theorem thm_3_1 (F₀ : FieldOfSets X) (pm : Premeasure F₀) :
     (∃ μ : @Measure X (MeasurableSpace.generateFrom F₀.carrier),
-      ∀ (s : Set X) (hs : s ∈ F₀.carrier), μ s = pm.μ₀ ⟨s, hs⟩) ∧
+      IsExtension F₀ pm μ) ∧
     (IsSigmaFinite pm →
       ∃! μ : @Measure X (MeasurableSpace.generateFrom F₀.carrier),
-        ∀ (s : Set X) (hs : s ∈ F₀.carrier), μ s = pm.μ₀ ⟨s, hs⟩) :=
+        IsExtension F₀ pm μ) :=
   ⟨extension_exists F₀ pm, extension_unique F₀ pm⟩

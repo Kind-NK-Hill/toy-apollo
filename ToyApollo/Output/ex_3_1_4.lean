@@ -7,7 +7,6 @@ import ToyApollo.Output.def_3_2
 import ToyApollo.Output.thm_3_1
 import ToyApollo.Output.ex_3_1_2
 import ToyApollo.Output.def_3_3
-import ToyApollo.Output.def_3_1
 import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 import Mathlib.MeasureTheory.Constructions.BorelSpace.Order
 import Mathlib.Tactic
@@ -32,8 +31,7 @@ theorem Example_3_1_2_sigmaFinite : IsSigmaFinite Example_3_1_2 := by
       · have hright : x ≤ |x| := le_abs_self x
         linarith
   · intro n
-    change volume (Ioc (-(n : ℝ)) n) < ⊤
-    rw [Real.volume_Ioc]
+    rw [Example_3_1_2_apply, intervalLength_Ioc]
     exact ENNReal.ofReal_lt_top
 
 theorem generateFrom_B0_eq_borel : MeasurableSpace.generateFrom B0.carrier = borel ℝ := by
@@ -46,7 +44,8 @@ theorem generateFrom_B0_eq_borel : MeasurableSpace.generateFrom B0.carrier = bor
 
 theorem volume_extends_Example_3_1_2 (s : Set ℝ) (hs : s ∈ B0.carrier) :
     volume s = Example_3_1_2.μ₀ ⟨s, hs⟩ := by
-  rfl
+  rw [Example_3_1_2_apply]
+  exact volume_eq_intervalLength s hs
 
 theorem borel_measure_extension_unique (μ : Measure ℝ)
     (h : ∀ a b, μ (Ioc a b) = ENNReal.ofReal (b - a)) :
@@ -61,3 +60,42 @@ theorem borel_measure_extension_unique (μ : Measure ℝ)
   apply Measure.ext_of_Ioc
   intro a b _
   rw [h a b, Real.volume_Ioc]
+
+private theorem castMeasure_apply {X : Type*} {m₁ m₂ : MeasurableSpace X}
+    (h : m₁ = m₂) (μ : @Measure X m₂) (s : Set X) :
+    (Eq.mpr (congrArg (fun m => @Measure X m) h) μ) s = μ s := by
+  subst m₂
+  rfl
+
+private theorem generateFrom_B0_eq_real_measurable :
+    MeasurableSpace.generateFrom B0.carrier =
+      (inferInstance : MeasurableSpace ℝ) :=
+  generateFrom_B0_eq_borel.trans BorelSpace.measurable_eq.symm
+
+noncomputable def borelVolumeOnGenerated :
+    @Measure ℝ (MeasurableSpace.generateFrom B0.carrier) :=
+  Eq.mpr
+    (congrArg (fun m => @Measure ℝ m) generateFrom_B0_eq_real_measurable)
+    volume
+
+theorem borelVolumeOnGenerated_isExtension :
+    IsExtension B0 Example_3_1_2 borelVolumeOnGenerated := by
+  intro s hs
+  change
+    (Eq.mpr
+      (congrArg (fun m => @Measure ℝ m) generateFrom_B0_eq_real_measurable)
+      volume) s = Example_3_1_2.μ₀ ⟨s, hs⟩
+  exact
+    (castMeasure_apply generateFrom_B0_eq_real_measurable volume s).trans
+      (volume_extends_Example_3_1_2 s hs)
+
+theorem ex_3_1_4 :
+    ∃! μ : @Measure ℝ (MeasurableSpace.generateFrom B0.carrier),
+      IsExtension B0 Example_3_1_2 μ :=
+  extension_unique B0 Example_3_1_2 Example_3_1_2_sigmaFinite
+
+theorem borelVolumeOnGenerated_unique
+    (μ : @Measure ℝ (MeasurableSpace.generateFrom B0.carrier))
+    (hμ : IsExtension B0 Example_3_1_2 μ) :
+    μ = borelVolumeOnGenerated :=
+  ex_3_1_4.unique hμ borelVolumeOnGenerated_isExtension
