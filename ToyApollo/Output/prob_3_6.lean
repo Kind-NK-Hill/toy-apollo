@@ -1,6 +1,4 @@
 import ToyApollo.Output.thm_3_8
-import ToyApollo.Output.def_3_10
-import ToyApollo.Output.thm_3_7
 import Mathlib
 
 open MeasureTheory MeasurableSpace Set
@@ -65,8 +63,21 @@ theorem prob_3_6c : P36 ≠ Q36 := by
   intro h; have := congr_arg ( · { Omega6.a } ) h; norm_num [ P36, Q36 ] at this;
   simp +decide [ Pi.single_apply ] at this
 
-/-- Problem 3.6: C generates the full sigma-algebra, P and Q agree on C, but P != Q.
-This does not violate Theorem 3.8 because C is not a pi-system. -/
+/-- The family `C36` is not a pi-system: two adjacent members have a
+nonempty intersection that is absent from the family. -/
+theorem prob_3_6c_not_piSystem : ¬ IsPiSystem C36 := by
+  intro hpi
+  have hmem := hpi
+    ({Omega6.a, b, c} : Set Omega6) (by simp [C36])
+    ({b, c, d} : Set Omega6) (by simp [C36])
+    ⟨b, by simp⟩
+  simpa +decide [C36, Set.ext_iff, Set.subset_def] using hmem
+
+/-- Problem 3.6: `C36` generates the full sigma-algebra and the two measures
+agree on `C36`, but they are distinct.  There is no contradiction with the
+uniqueness theorem because `C36` is not a pi-system. -/
 theorem prob_3_6 :
-    MeasurableSpace.generateFrom C36 = ⊤ ∧ (∀ A ∈ C36, P36 A = Q36 A) ∧ P36 ≠ Q36 :=
-  ⟨prob_3_6a, prob_3_6b, prob_3_6c⟩
+    MeasurableSpace.generateFrom C36 = ⊤ ∧
+      (∀ A ∈ C36, P36 A = Q36 A) ∧
+        P36 ≠ Q36 ∧ ¬ IsPiSystem C36 :=
+  ⟨prob_3_6a, prob_3_6b, prob_3_6c, prob_3_6c_not_piSystem⟩

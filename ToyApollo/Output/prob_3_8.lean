@@ -67,9 +67,10 @@ lemma disjointed_mem (h_univ : univ ∈ L) (h_compl : ∀ A ∈ L, Aᶜ ∈ L)
     disjointed f n ∈ L := by
   induction' n with n ih
   · simpa using hf 0
-  · convert lambda_pi_diff h_compl h_pi (hf (n + 1)) _ using 1
-    convert lambda_pi_finset_union h_univ h_compl h_pi f hf (n + 1) using 1
-    simp +decide [Finset.ext_iff, Set.ext_iff]
+  · rw [disjointed_add_one f n]
+    apply lambda_pi_diff h_compl h_pi (hf (n + 1))
+    rw [partialSups_eq_biUnion_range]
+    exact lambda_pi_finset_union h_univ h_compl h_pi f hf (n + 1)
 
 lemma sigma_to_pi (h_univ : univ ∈ L) (h_compl : ∀ A ∈ L, Aᶜ ∈ L)
     (h_union : ∀ (f : ℕ → Set Ω), (∀ i, f i ∈ L) → ⋃ i, f i ∈ L) :
