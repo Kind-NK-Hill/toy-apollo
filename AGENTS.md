@@ -14,6 +14,23 @@ If this file conflicts with older notes, trust current runtime code and the rule
 - Remember that must-protect is not the same as must-track: important runtime/provenance files may be ignored by Git while still being protected from deletion or cleanup.
 - Validate changes with the smallest relevant check before finishing.
 
+## Repository Flow (Hard Boundary)
+
+- Active formalization code flows from `ToyApollo/Output` to the
+  `MAT3280-formalization-output` refinement repository only. Reviewed MAT code
+  does not flow back into `ToyApollo/Output`.
+- Kenneth's `wkshum/ProbabilityTheory` is bidirectional only with MAT: copy an
+  exact current Kenneth file into a MAT review branch, review/repair it there,
+  then return the accepted MAT version through a PR branch.
+- Never copy, port, or merge an active Kenneth candidate into
+  `ToyApollo/Output`. Review tools may run from this checkout, but that does not
+  make ToyApollo the owner of the candidate.
+- `Kind-NK-Hill/ProbabilityTheory` is PR transport only. It is not a refinement
+  repository or an additional source of truth.
+- Frozen Kenneth snapshots under provenance/history paths are read-only
+  evidence, not active imports and not authorization for Kenneth-to-Toy code
+  flow.
+
 ## Phase Map
 
 - Phase 0:
