@@ -10,7 +10,7 @@ Use this folder for current runbooks and stable operator-facing policy docs.
 
 - Keep root `AGENTS.md` and `CLAUDE.md` short; put detail here or in `.claude/rules/`.
 - Match docs to current runtime behavior, not planned behavior.
-- If Phase 4 is disabled in code, say so plainly.
+- Describe Phase 4 as unavailable when the compatibility entry exits nonzero; never present it as a successful no-op or manual ledger path.
 - Prefer one topic per file over one giant overview document.
 - Follow `docs/README.md` for the current runtime and policy boundary.
 - Keep Phase2 proof-fidelity, adapter, proof-debt, public Support/Spine, and

@@ -1,9 +1,15 @@
 import argparse
 import asyncio
+import io
+import json
+import os
 import runpy
 import shutil
 import sys
+import tempfile
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
+from dataclasses import replace
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
@@ -368,9 +374,10 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             cli_app.main()
         self.assertEqual(caught.exception.code, 2)
 
-    def test_cli_phase3_soft_modes_are_merged_into_phase2(self):
+    def test_cli_phase3_soft_modes_are_deprecated_and_unavailable(self):
         from src.toy_apollo.cli import app as cli_app
 
+        stderr = io.StringIO()
         with patch.object(
             sys,
             "argv",
@@ -383,9 +390,154 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 "--tasks",
                 "prob_4_2",
             ],
+        ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock, redirect_stderr(
+            stderr
         ), self.assertRaises(SystemExit) as caught:
             cli_app.main()
+
         self.assertEqual(caught.exception.code, 2)
+        message = stderr.getvalue()
+        self.assertIn("deprecated", message)
+        self.assertIn("migrated", message)
+        self.assertIn("--phase 2 --phase2-mode soft-pack", message)
+        self.assertIn("--phase 2 --phase2-mode soft-apply", message)
+        process_target_mock.assert_not_awaited()
+
+    def test_cli_phase4_is_unavailable_and_never_runs_process_target(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        stderr = io.StringIO()
+        with patch.object(sys, "argv", ["toy-apollo", "--phase", "4"]), patch.object(
+            cli_app,
+            "process_target",
+            new=AsyncMock(),
+        ) as process_target_mock, redirect_stderr(stderr), self.assertRaises(SystemExit) as caught:
+            cli_app.main()
+
+        self.assertEqual(caught.exception.code, 2)
+        message = stderr.getvalue()
+        self.assertIn("Phase 4 is unavailable", message)
+        self.assertIn("review-apply", message)
+        self.assertNotIn("manual", message.lower())
+        self.assertNotIn("update ledger", message.lower())
+        process_target_mock.assert_not_awaited()
+
+    def test_status_reports_default_source_and_does_not_create_missing_roots(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "missing-runtime"
+            settings = replace(
+                self._make_settings(root, root / "plans"),
+                phase1_prompt_packs_dir=root / "phase1_prompt_packs",
+                dependency_decisions_dir=root / "dependency_decisions",
+            )
+            stdout = io.StringIO()
+            with patch.object(sys, "argv", ["toy-apollo", "--status"]), patch.object(
+                cli_app,
+                "get_settings",
+                return_value=settings,
+            ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock, patch.dict(
+                os.environ,
+                {},
+                clear=True,
+            ), redirect_stdout(stdout):
+                code = cli_app.main()
+
+            self.assertEqual(code, 0)
+            output = stdout.getvalue()
+            self.assertIn("STATUS_SCOPE=resolved_for_this_process_not_global_authority", output)
+            self.assertIn(f"ARTIFACT_ROOT={root}", output)
+            self.assertIn("ARTIFACT_ROOT_SOURCE=default", output)
+            self.assertIn("ARTIFACT_ROOT_ENV_VAR=TOY_APOLLO_ARTIFACT_ROOT", output)
+            self.assertIn("ARTIFACT_ROOT_ENV_PRESENT=false", output)
+            self.assertIn("ARTIFACT_ROOT_ENV_VALUE=<unset>", output)
+            self.assertIn(f"PLAN_ROOT={root / 'plans'}", output)
+            self.assertIn(f"LEDGER_ROOT={root}", output)
+            self.assertIn(f"PHASE1_PROMPT_PACK_ROOT={root / 'phase1_prompt_packs'}", output)
+            self.assertIn(f"PHASE2_PROMPT_PACK_ROOT={root / 'phase2_prompt_packs'}", output)
+            self.assertIn(f"DEPENDENCY_DECISION_ROOT={root / 'dependency_decisions'}", output)
+            self.assertIn(f"OUTPUT_ROOT={root / 'ToyApollo' / 'Output'}", output)
+            self.assertIn("LEDGER_STATUS=missing_not_created", output)
+            self.assertFalse(root.exists())
+            process_target_mock.assert_not_awaited()
+
+    def test_status_reports_environment_values_and_preserves_existing_tree(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "runtime"
+            root.mkdir()
+            settings = replace(
+                self._make_settings(root, root / "plans"),
+                phase1_prompt_packs_dir=root / "phase1_prompt_packs",
+                dependency_decisions_dir=root / "dependency_decisions",
+            )
+            settings.plans_dir.mkdir()
+            settings.phase1_prompt_packs_dir.mkdir()
+            settings.phase2_prompt_packs_dir.mkdir()
+            settings.toyapollo_output_dir.mkdir(parents=True)
+            settings.project_ledger_file.write_text(
+                json.dumps({"tasks": {}}, indent=2),
+                encoding="utf-8",
+            )
+            (settings.plans_dir / "sentinel.json").write_text("plan sentinel\n", encoding="utf-8")
+            (settings.phase1_prompt_packs_dir / "sentinel.txt").write_text("phase1 sentinel\n", encoding="utf-8")
+            (settings.phase2_prompt_packs_dir / "sentinel.txt").write_text("phase2 sentinel\n", encoding="utf-8")
+            (settings.toyapollo_output_dir / "Sentinel.lean").write_text("theorem sentinel : True := by trivial\n", encoding="utf-8")
+
+            def snapshot() -> dict[str, tuple[bytes, int]]:
+                return {
+                    path.relative_to(root).as_posix(): (path.read_bytes(), path.stat().st_mtime_ns)
+                    for path in root.rglob("*")
+                    if path.is_file()
+                }
+
+            before = snapshot()
+            stdout = io.StringIO()
+            env = {
+                "TOY_APOLLO_RUNTIME_ROOT": str(root),
+                "TOY_APOLLO_ARTIFACT_ROOT": str(root),
+            }
+            with patch.object(sys, "argv", ["toy-apollo", "--status"]), patch.object(
+                cli_app,
+                "get_settings",
+                return_value=settings,
+            ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock, patch.dict(
+                os.environ,
+                env,
+                clear=True,
+            ), redirect_stdout(stdout):
+                code = cli_app.main()
+
+            self.assertEqual(code, 0)
+            output = stdout.getvalue()
+            self.assertIn("ARTIFACT_ROOT_SOURCE=environment", output)
+            self.assertIn("ARTIFACT_ROOT_ENV_PRESENT=true", output)
+            self.assertIn(f"ARTIFACT_ROOT_ENV_VALUE={root}", output)
+            self.assertIn("LEDGER_STATUS=loaded_read_only", output)
+            self.assertEqual(snapshot(), before)
+            self.assertFalse(settings.dependency_decisions_dir.exists())
+            process_target_mock.assert_not_awaited()
+
+    def test_status_rejects_operational_arguments_before_loading_settings(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        stderr = io.StringIO()
+        with patch.object(sys, "argv", ["toy-apollo", "--status", "--phase", "2"]), patch.object(
+            cli_app,
+            "get_settings",
+        ) as get_settings_mock, patch.object(
+            cli_app,
+            "process_target",
+            new=AsyncMock(),
+        ) as process_target_mock, redirect_stderr(stderr), self.assertRaises(SystemExit) as caught:
+            cli_app.main()
+
+        self.assertEqual(caught.exception.code, 2)
+        self.assertIn("strictly read-only", stderr.getvalue())
+        get_settings_mock.assert_not_called()
+        process_target_mock.assert_not_awaited()
 
     def test_cli_phase3_mode_flag_is_not_valid_with_phase2(self):
         from src.toy_apollo.cli import app as cli_app

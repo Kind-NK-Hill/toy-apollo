@@ -25,6 +25,12 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-pack --tasks <problem_ids>
 python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids> --selection <path>
 ```
 
+`--status` is strictly read-only. It reports roots resolved for this process,
+the presence/value of `TOY_APOLLO_RUNTIME_ROOT` and
+`TOY_APOLLO_ARTIFACT_ROOT`, the artifact-root source, and
+`STATUS_SCOPE=resolved_for_this_process_not_global_authority`. It must not be
+used as global campaign authority and must not create a missing ledger or root.
+
 ## Phase Contract
 
 - Phase 0:
@@ -97,8 +103,9 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids>
     default; it records repair-required evidence and continues through repair
     unless an operator explicitly opts into quarantine after downstream import
     checks
-  - `debt-fix` and `promote-obligations` are non-default maintenance paths.
-    They do not create a separate completion authority.
+  - `debt-fix` is a non-default maintenance path. Real obligation material is
+    absorbed into the parent or stable support; child-obligation promotion is
+    not an active CLI path. Neither creates a separate completion authority.
   - `COMPLETED_WITH_PROOF_DEBT` is not a clean dependency; hard dependents and
     selected soft imports must wait until `debt-fix` removes the accepted debt
   - before adding a new proof-debt support object or helper obligation, inspect
@@ -115,12 +122,14 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids>
   - `soft-apply` records the reason for each selected soft import when rationale is available
   - `soft-apply` does not call an external provider and does not perform a Lean acceptance gate
 - Phase 3:
-  - merged into Phase 2
-  - old soft-dependency commands should fail with a migration message
+  - CLI modes [deprecated phase=3]: `soft-pack`, `soft-apply`
+  - the old entry is deprecated/unavailable and exits nonzero with the exact
+    Phase 2 migration commands
   - ordinary failed local tasks remain in Phase 2 review/repair workflows
 - Phase 4:
-  - CLI branch is currently disabled/no-op
-  - do not document it as automated until the code path is restored
+  - unavailable; the compatibility entry exits nonzero
+  - clean completion remains under Phase 2 `review-apply`; do not prescribe a
+    successful no-op, manual ledger edit, or automated closeout
 
 ## Interface Dependency Policy
 

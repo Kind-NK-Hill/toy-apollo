@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import glob
 import os
+import sys
 from pathlib import Path
 
 from src.block_id_naming import (
@@ -15,6 +16,59 @@ from ..phase2_failure_budget import (
     PHASE2_AUTO_LOOP_NONPROGRESS_LIMIT,
     PHASE2_AUTO_LOOP_REVIEW_ROUNDS,
 )
+
+
+PHASE0_MODES = ("pack", "validate", "apply")
+PHASE1_MODES = ("pack", "apply")
+PHASE2_MODES = (
+    "pack",
+    "build-check",
+    "verify",
+    "audit",
+    "review-pack",
+    "review-existing",
+    "review-support",
+    "review-now",
+    "review-fix",
+    "debt-fix",
+    "auto-loop",
+    "review-existing-queue",
+    "review-apply",
+    "soft-pack",
+    "soft-apply",
+    "batch-plan",
+    "batch-run",
+)
+PHASE2_SINGLE_TASK_MODES = (
+    "pack",
+    "build-check",
+    "verify",
+    "review-pack",
+    "review-existing",
+    "review-support",
+    "review-now",
+    "review-fix",
+    "debt-fix",
+    "auto-loop",
+    "review-apply",
+)
+PHASE2_SOFT_MODES = ("soft-pack", "soft-apply")
+DEPRECATED_PHASE3_MODES = ("soft-pack", "soft-apply")
+
+PHASE3_DEPRECATED_MESSAGE = (
+    "Phase 3 is deprecated and unavailable. Its former soft-dependency commands "
+    "migrated to Phase 2; use '--phase 2 --phase2-mode soft-pack' or "
+    "'--phase 2 --phase2-mode soft-apply'."
+)
+PHASE4_UNAVAILABLE_MESSAGE = (
+    "Phase 4 is unavailable. Clean completion remains under "
+    "'--phase 2 --phase2-mode review-apply'."
+)
+
+RUNTIME_ROOT_ENV_VAR = "TOY_APOLLO_RUNTIME_ROOT"
+ARTIFACT_ROOT_ENV_VAR = "TOY_APOLLO_ARTIFACT_ROOT"
+STATUS_SCOPE = "resolved_for_this_process_not_global_authority"
+
 
 def parse_task_ids(raw: str) -> list[str]:
     seen: set[str] = set()
@@ -54,6 +108,46 @@ def parse_batch_task_kinds(raw: str) -> list[str]:
     return kinds
 
 
+def print_read_only_status(settings) -> None:
+    runtime_env_present = RUNTIME_ROOT_ENV_VAR in os.environ
+    artifact_env_present = ARTIFACT_ROOT_ENV_VAR in os.environ
+    runtime_env_value = os.environ.get(RUNTIME_ROOT_ENV_VAR, "")
+    artifact_env_value = os.environ.get(ARTIFACT_ROOT_ENV_VAR, "")
+
+    resolved_roots = (
+        ("STATUS_SCOPE", STATUS_SCOPE),
+        ("RUNTIME_ROOT", settings.runtime_root),
+        ("RUNTIME_ROOT_SOURCE", "environment" if runtime_env_value else "default"),
+        ("RUNTIME_ROOT_ENV_VAR", RUNTIME_ROOT_ENV_VAR),
+        ("RUNTIME_ROOT_ENV_PRESENT", str(runtime_env_present).lower()),
+        ("RUNTIME_ROOT_ENV_VALUE", runtime_env_value if runtime_env_present else "<unset>"),
+        ("ARTIFACT_ROOT", settings.artifact_root),
+        ("ARTIFACT_ROOT_SOURCE", "environment" if artifact_env_value else "default"),
+        ("ARTIFACT_ROOT_ENV_VAR", ARTIFACT_ROOT_ENV_VAR),
+        ("ARTIFACT_ROOT_ENV_PRESENT", str(artifact_env_present).lower()),
+        ("ARTIFACT_ROOT_ENV_VALUE", artifact_env_value if artifact_env_present else "<unset>"),
+        ("PLAN_ROOT", settings.plans_dir),
+        ("LEDGER_ROOT", settings.project_ledger_file.parent),
+        ("LEDGER_FILE", settings.project_ledger_file),
+        ("PHASE1_PROMPT_PACK_ROOT", settings.phase1_prompt_packs_dir),
+        ("PHASE2_PROMPT_PACK_ROOT", settings.phase2_prompt_packs_dir),
+        ("DEPENDENCY_DECISION_ROOT", settings.dependency_decisions_dir),
+        ("OUTPUT_ROOT", settings.toyapollo_output_dir),
+    )
+    for label, value in resolved_roots:
+        print(f"{label}={value if value is not None else '<unset>'}")
+
+    if not settings.project_ledger_file.is_file():
+        print("LEDGER_STATUS=missing_not_created")
+        return
+
+    from ..core import LedgerManager
+
+    ledger = LedgerManager(ledger_path=str(settings.project_ledger_file))
+    print("LEDGER_STATUS=loaded_read_only")
+    ledger.print_status_summary()
+
+
 async def process_target(args):
     settings = get_settings()
     if getattr(settings, "dependency_decisions_dir", None) is not None:
@@ -90,14 +184,6 @@ async def process_target(args):
     selected_task_ids: set[str] | None = None
     if args.tasks:
         selected_task_ids = set(args.task_ids)
-        if phase == 4:
-            known_task_ids = {canonicalize_block_id(tid) for tid in ledger.ledger.get("tasks", {}).keys()}
-            unknown = sorted(selected_task_ids - known_task_ids)
-            if unknown:
-                print(f"⚠️ [Task Filter] Unknown task ids ignored: {', '.join(unknown)}")
-            selected_task_ids = selected_task_ids & known_task_ids
-            if not selected_task_ids:
-                print("⚠️ [Task Filter] No valid task ids remain after validation.")
 
     if phase == 1:
         from ..phase1_prompt_pack import (
@@ -369,60 +455,17 @@ async def process_target(args):
         except FileNotFoundError as exc:
             print(f"❌ {exc}")
             return
-    elif phase == 3:
-        print("❌ Phase 3 soft dependency selection has been merged into Phase 2; use --phase 2 --phase2-mode soft-pack/soft-apply.")
-    elif phase == 4:
-        # Phase 4 is temporarily disabled.
-        print("⚠️ Phase 4 is temporarily disabled. Use manual local verification and update ledger statuses directly.")
-    elif args.status:
-        ledger.print_status_summary()
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description="Toy Apollo Ledger-Driven Pipeline")
-    phase2_modes = (
-        "pack",
-        "build-check",
-        "verify",
-        "audit",
-        "review-pack",
-        "review-existing",
-        "review-support",
-        "review-now",
-        "review-fix",
-        "debt-fix",
-        "auto-loop",
-        "review-existing-queue",
-        "review-apply",
-        "soft-pack",
-        "soft-apply",
-        "batch-plan",
-        "batch-run",
-    )
-    phase2_single_task_modes = (
-        "pack",
-        "build-check",
-        "verify",
-        "review-pack",
-        "review-existing",
-        "review-support",
-        "review-now",
-        "review-fix",
-        "debt-fix",
-        "auto-loop",
-        "review-apply",
-    )
-    phase2_soft_modes = ("soft-pack", "soft-apply")
-    phase3_migration_message = "Phase 3 soft dependency selection has been merged into Phase 2; use --phase 2 --phase2-mode soft-pack/soft-apply."
-    parser.add_argument("--phase", type=int, choices=[0, 1, 2, 3, 4], required=False, help="0: Ingest, 1: Plan, 2: Local including Problem soft dependency selection, 3: merged into Phase 2, 4: disabled")
+    parser.add_argument("--phase", type=int, choices=[0, 1, 2, 3, 4], required=False, help="0: Ingest, 1: Plan, 2: Local including Problem soft dependency selection, 3: deprecated/migrated, 4: unavailable")
     parser.add_argument("--input", type=str, required=False, default="", help="Path for Phase 0 pack and Phase 1 inputs")
-    parser.add_argument("--phase0-mode", type=str, choices=["pack", "validate", "apply"], default="pack", dest="phase0_mode", help="Phase 0 mode: pack extracts source materials, validate checks draft_input.tex, apply writes inputs/<stem>.tex")
+    parser.add_argument("--phase0-mode", type=str, choices=PHASE0_MODES, default="pack", dest="phase0_mode", help="Phase 0 mode: pack extracts source materials, validate checks draft_input.tex, apply writes inputs/<stem>.tex")
     parser.add_argument("--page-range", type=str, required=False, default="", dest="page_range", help="Physical PDF page range for --phase 0 --phase0-mode pack, 1-based inclusive, for example 157-160")
     parser.add_argument("--phase0-output", type=str, required=False, default="", dest="phase0_output", help="Output stem for Phase 0 packs and inputs/<stem>.tex, for example chapter9-moments-mgf")
-    parser.add_argument("--phase1-mode", type=str, choices=["pack", "apply"], default="pack", dest="phase1_mode", help="Phase 1 mode: pack generates operator prompt packs, apply validates and registers a filled draft_plan.json")
+    parser.add_argument("--phase1-mode", type=str, choices=PHASE1_MODES, default="pack", dest="phase1_mode", help="Phase 1 mode: pack generates operator prompt packs, apply validates and registers a filled draft_plan.json")
     parser.add_argument("--tasks", type=str, required=False, default="", help="Comma-separated block_id filter for Phase 2 modes")
-    parser.add_argument("--phase2-mode", type=str, choices=phase2_modes, default="pack", help="Phase 2 mode: default workflow is pack -> build-check -> review-now --review-subject candidate -> review-apply. review-apply is the only completion landing gate. batch-plan reports next actions from ledger state; batch-run executes a small number of selected review/auto-loop actions; review-pack/review-existing/review-support/review-existing-queue are prepare-only compatibility modes; review-fix repairs failed semantic review; debt-fix is a non-default maintenance path; soft-pack/soft-apply handle Problem soft dependency selection; auto-loop advances same-session repair/review state; verify/audit are diagnostics and do not land completion.")
-    parser.add_argument("--phase3-mode", type=str, choices=["soft-pack", "soft-apply"], default=None, help=argparse.SUPPRESS)
+    parser.add_argument("--phase2-mode", type=str, choices=PHASE2_MODES, default="pack", help="Phase 2 mode: default workflow is pack -> build-check -> review-now --review-subject candidate -> review-apply. review-apply is the only completion landing gate. batch-plan reports next actions from ledger state; batch-run executes a small number of selected review/auto-loop actions; review-pack/review-existing/review-support/review-existing-queue are prepare-only compatibility modes; review-fix repairs failed semantic review; debt-fix is a non-default maintenance path; soft-pack and soft-apply handle Problem soft dependency selection; auto-loop advances same-session repair/review state; verify and audit are diagnostics and do not land completion.")
+    parser.add_argument("--phase3-mode", type=str, choices=DEPRECATED_PHASE3_MODES, default=None, help=argparse.SUPPRESS)
     parser.add_argument("--candidate", type=str, required=False, default="", help="Optional external Lean file for --phase 2 --phase2-mode build-check/verify; review-pack only accepts ToyApollo/Output/<task>.lean as a compatibility alias for review-existing")
     parser.add_argument("--review-result", type=str, required=False, default="", dest="review_result", help="Filled semantic review result JSON for --phase 2 --phase2-mode review-apply")
     parser.add_argument("--review-subject", type=str, choices=["current", "existing", "candidate", "support"], default="current", dest="review_subject", help="Review subject selector for --phase 2 --phase2-mode review-now/auto-loop")
@@ -437,9 +480,15 @@ def main() -> int:
     parser.add_argument("--batch-workers", type=int, default=0, dest="batch_workers", help="Worker slots to annotate in batch-plan/batch-run output; 0 means no worker assignment")
     parser.add_argument("--batch-include-legacy", action="store_true", dest="batch_include_legacy", help="Show quarantined legacy obligation/audit rows in batch-plan/batch-run; default hides them from the ordinary queue")
     parser.add_argument("--selection", type=str, required=False, default="", help="Selection JSON for --phase 2 --phase2-mode soft-apply")
-    parser.add_argument("--status", action="store_true", help="Show project status summary")
+    parser.add_argument("--status", action="store_true", help="Show process-local resolved roots and a read-only project status summary")
 
     args = parser.parse_args()
+    if args.status:
+        if any(token != "--status" for token in sys.argv[1:]):
+            parser.error("--status is strictly read-only and must be used alone.")
+        print_read_only_status(get_settings())
+        return 0
+
     args.task_ids = parse_task_ids(args.tasks)
     args.batch_task_kinds = parse_batch_task_kinds(args.batch_task_kinds_raw)
     if args.tasks and not args.task_ids:
@@ -461,13 +510,17 @@ def main() -> int:
     if args.task_ids and args.phase == 1:
         parser.error("--tasks is not supported for Phase 1.")
     if args.phase3_mode is not None and args.phase != 3:
-        parser.error("--phase3-mode has been merged into --phase2-mode; use --phase 2 --phase2-mode soft-pack/soft-apply.")
-    if args.phase == 2 and args.phase2_mode in phase2_modes and not args.task_ids:
+        parser.error(PHASE3_DEPRECATED_MESSAGE)
+    if args.phase == 3:
+        parser.error(PHASE3_DEPRECATED_MESSAGE)
+    if args.phase == 4:
+        parser.error(PHASE4_UNAVAILABLE_MESSAGE)
+    if args.phase == 2 and args.phase2_mode in PHASE2_MODES and not args.task_ids:
         if args.phase2_mode not in {"batch-plan", "batch-run", "review-existing-queue"}:
             parser.error("--phase 2 modes require task ids via --tasks.")
-    if args.phase == 2 and args.phase2_mode in phase2_single_task_modes and len(args.task_ids) > 1:
+    if args.phase == 2 and args.phase2_mode in PHASE2_SINGLE_TASK_MODES and len(args.task_ids) > 1:
         parser.error("--phase 2 pack/build-check/verify/review-pack/review-existing/review-now/review-fix/debt-fix/auto-loop/review-apply modes support exactly one task at a time.")
-    if args.phase == 2 and args.phase2_mode in phase2_soft_modes:
+    if args.phase == 2 and args.phase2_mode in PHASE2_SOFT_MODES:
         invalid = [task_id for task_id in args.task_ids if not task_id.startswith("prob_")]
         if invalid:
             parser.error(f"--phase 2 --phase2-mode {args.phase2_mode} only supports problem tasks: {', '.join(invalid)}")
@@ -478,8 +531,6 @@ def main() -> int:
             parser.error("--nonprogress-limit cannot be below the hard-coded Phase 2 repair budget of 15.")
         if args.max_build_attempts_per_round < PHASE2_AUTO_LOOP_BUILD_ATTEMPTS_PER_REVIEW:
             parser.error("--max-build-attempts-per-round cannot be below the hard-coded Phase 2 repair budget of 15.")
-    if args.phase == 3:
-        parser.error(phase3_migration_message)
     if args.phase == 2 and args.input:
         parser.error("--input is not used with --phase 2.")
     if args.candidate and not (args.phase == 2 and args.phase2_mode in ("build-check", "verify", "review-pack")):
@@ -520,10 +571,7 @@ def main() -> int:
         parser.error("--selection is required with --phase 2 --phase2-mode soft-apply.")
     if args.selection and not (args.phase == 2 and args.phase2_mode == "soft-apply"):
         parser.error("--selection is only supported with --phase 2 --phase2-mode soft-apply.")
-    if args.task_ids and args.status:
-        parser.error("--tasks cannot be combined with --status.")
-
-    if args.phase is None and not args.status:
+    if args.phase is None:
         parser.print_help()
         return 0
 

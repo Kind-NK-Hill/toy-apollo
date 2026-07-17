@@ -28,6 +28,17 @@ Read the task-local artifacts next:
 4. Existing `phase2_prompt_packs/...` review, build, obligation, audit, and hash artifacts
 5. Classification history, dependency status, downstream/import evidence, and ledger runtime status
 
+## CLI Boundary
+
+- Active execution phases are Phase 0, Phase 1, and Phase 2.
+- CLI modes [deprecated phase=3]: `soft-pack`, `soft-apply`. The old Phase 3
+  entry exits nonzero and points to the corresponding Phase 2 commands.
+- Phase 4 is unavailable and exits nonzero. Never route completion through a
+  successful no-op or manual ledger edit.
+- `--status` is strictly read-only. Its roots are resolved for the current
+  process and are not global campaign authority; it does not decide or sync
+  plans.
+
 ## Start Checklist
 
 Before editing, state the following in working notes:
@@ -50,6 +61,8 @@ task-status projection, adapter/proof-debt boundary, and strict review rules.
 ## Operation Route
 
 Use the repository workflow rather than ad hoc state changes:
+
+CLI completion [active phase=2]: `pack -> build-check -> review-now -> review-apply`.
 
 0. For a chapter or task-set scope, run `batch-plan` first:
    `python .\run_chapter.py --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id>`.
