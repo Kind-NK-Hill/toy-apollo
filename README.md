@@ -127,6 +127,9 @@ Phase 3 已弃用且不可执行；旧入口会返回非零迁移提示。Proble
 
 - 本仓库只保留源码、配置和最小输入。
 - `ToyApollo.lean` 是库级 smoke test；教材章节输出位于 `ToyApollo/Output/`，不要把两者混为一谈。
+- 正式化文件只允许从 ToyApollo 单向进入 `MAT3280-formalization-output` 精炼库；MAT 的审查结果不得回写 `ToyApollo/Output/`。
+- Kenneth 文件需要复审时，必须复制到 MAT 的 review 分支处理；通过后再由 PR 返回 Kenneth，不得先放进 ToyApollo。
+- `Kind-NK-Hill/ProbabilityTheory` 只承载发给 Kenneth 的 PR 分支，不是第四份正式内容库。
 - 运行产物（输出、日志、归档、大文件）应进入 `toy-apollo-artifacts` 仓库。
 - 被保护的运行状态不一定要进入 Git；被 ignore 的文件也不是删除候选。
 - 一键同步脚本：`.\tools\sync_artifacts.ps1 -Mode push|pull`

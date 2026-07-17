@@ -1,6 +1,5 @@
 import Mathlib.Probability.CDF
 import ToyApollo.Output.def_1_4
-import ToyApollo.Output.def_1_3_kenneth_finite_support
 
 open MeasureTheory ProbabilityTheory
 
@@ -11,8 +10,7 @@ noncomputable section
 
 The public integrator is `ProbabilityTheory.cdf μ` for an actual probability
 measure `μ`. Whole-line values use the proof-carrying double-limit interface of
-Definition 1.4. Kenneth's finite discrete, jump, density, and variance proofs
-remain compiled support through the import above.
+Definition 1.4.
 -/
 
 /-- The textbook whole-line CDF expectation exists and is finite. -/

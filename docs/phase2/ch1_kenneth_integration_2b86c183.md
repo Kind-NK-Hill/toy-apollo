@@ -1,4 +1,10 @@
-# Chapter 1 Kenneth intake and integration matrix
+# Historical Chapter 1 Kenneth intake and integration matrix
+
+> **Superseded active-flow decision (2026-07-17).** This file records a past
+> Kenneth-to-Toy integration attempt. It is retained only as historical
+> provenance. Current policy is `ToyApollo -> MAT` one way and
+> `MAT <-> Kenneth` for review/PR work; active Kenneth candidates and support
+> code must not be imported into `ToyApollo/Output`.
 
 Upstream is read-only `wkshum/ProbabilityTheory` `main` at
 `2b86c183a7da2bd1af77a99870b93197067d7558`, tree
