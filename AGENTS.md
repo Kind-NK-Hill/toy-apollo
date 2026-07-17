@@ -6,7 +6,8 @@ If this file conflicts with older notes, trust current runtime code and the rule
 
 ## Always Do
 
-- Keep the stable entrypoints working: `python run_chapter.py --phase {0,1,2,3}` and `python run_chapter.py --status`; Phase 3 now reports a migration message, and Phase 4 is currently disabled/no-op.
+- Keep active execution under `python run_chapter.py --phase {0,1,2}`. Phase 3 remains only as a deprecated migration error, Phase 4 remains only as an unavailable error, and both exit nonzero.
+- Keep `python run_chapter.py --status` strictly read-only. Its resolved roots describe only the current process, not an active campaign's global authority.
 - Treat `.claude/rules/10-phase-runtime.md` as the phase behavior source of truth before making any phase-routing decision.
 - Prefer active package paths under `src/toy_apollo/*` for new code.
 - Treat `project_ledger.json` as persistent runtime state, not disposable scratch data.
@@ -31,16 +32,17 @@ If this file conflicts with older notes, trust current runtime code and the rule
   - proof-fidelity verdicts are governed by `docs/phase2/status_contract.md` and `docs/phase2/review_criteria.md`; do not treat Lean build success, `#print axioms` cleanliness, ledger cleanliness, audit cleanliness, or classification cleanliness as textbook proof completion
   - `#print axioms` cleanliness is only a proof-dependency-debt check for checked declarations; it does not prove source fidelity, human validation, or semantic completion. For detailed proof-status semantics, follow `docs/phase2/status_contract.md`.
   - default authority is three-gate: build gate only proves technical build readiness; review gate supplies a strict semantic verdict and proof class; apply gate lands clean completion only when `phase2_status=pass`
-  - default operator path: `pack -> build-check -> review-now -> review-apply`
+  - CLI completion [active phase=2]: `pack -> build-check -> review-now -> review-apply`
   - for chapter-wide or task-set work, start with `batch-plan`; use `--batch-task-kinds theorem,definition --batch-limit 15 --batch-workers <n>` for a non-Problem worker queue, and use `batch-run --batch-max-actions 1` only as a bounded dispatcher over existing review/auto-loop actions
-  - non-default compatibility/maintenance/diagnostic modes include `batch-plan`, `batch-run`, `review-pack`, `review-existing`, `review-existing-queue`, `review-fix`, `debt-fix`, `promote-obligations`, `auto-loop`, `verify`, `audit`, `soft-pack`, and `soft-apply`; these modes do not independently decide clean completion
+  - CLI modes [active phase=2, non-default examples]: `batch-plan`, `batch-run`, `review-pack`, `review-existing`, `review-support`, `review-existing-queue`, `review-fix`, `debt-fix`, `auto-loop`, `verify`, `audit`, `soft-pack`, `soft-apply`; these modes do not independently decide clean completion
   - `soft-pack` and `soft-apply` are the Problem soft-dependency special case inside Phase 2
 - Phase 3:
-  - merged into Phase 2; old Phase 3 soft-dependency commands should report the migration path
+  - CLI modes [deprecated phase=3]: `soft-pack`, `soft-apply`
+  - old Phase 3 entries must exit nonzero and report the two Phase 2 migration commands
   - ordinary failed local tasks stay in Phase 2 review/repair workflows
 - Phase 4:
-  - CLI branch is currently disabled/no-op
-  - do not document or route work as if it were an active automated path
+  - unavailable; the compatibility entry exits nonzero
+  - do not document a successful no-op, manual ledger update, or automated closeout path
 
 ## Key Boundaries
 

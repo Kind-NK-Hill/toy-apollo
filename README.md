@@ -6,12 +6,12 @@ Toy Apollo 是一个 Lean 4 教材自动形式化流水线，当前执行模型�
 - Phase 1: `pack` -> agent/human writes `draft_plan.json` -> `apply` writes `plans/*_plan.json`
 - Phase 2: 本地 formalization 与验证
 - Phase 2 Problem 特例: soft dependency selection（`soft-pack` / `soft-apply`）
-- Phase 3: merged into Phase 2；旧命令只给迁移提示
-- Phase 4: disabled/no-op；旧自动回收/对齐流程仅作 legacy/manual 参考
+- Phase 3: deprecated/unavailable；旧入口以非零状态退出，并明确迁移到 Phase 2
+- Phase 4: unavailable；不存在成功 no-op、手工 ledger 更新或自动 closeout 路径
 
 注：
 
-- 当前 CLI 中，Phase 4 自动分支 disabled/no-op。
+- `--status` 严格只读；它只显示本进程解析到的 roots 和 ledger 摘要，不声明活动 campaign 的全局 authority。
 - Protected 不等于 tracked；ignored 不等于 deletion candidate。
 
 ## 快速开始（Windows PowerShell）
@@ -55,10 +55,13 @@ python .\run_chapter.py --phase 1 --phase1-mode apply --input .\inputs
 python .\run_chapter.py --phase 2 --phase2-mode pack --tasks ex_1_2_3
 python .\run_chapter.py --phase 2 --phase2-mode build-check --tasks thm_4_7
 python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks thm_4_7 --review-subject candidate
+python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks thm_4_7 --review-result .\phase2_prompt_packs\thm_4_7\semantic_review_result_vN.json
 python .\run_chapter.py --phase 2 --phase2-mode soft-pack --tasks prob_4_2,prob_4_4
 python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks prob_4_2,prob_4_4 --selection .\selection.json
 python .\run_chapter.py --status
 ```
+
+`--status` 会显示 artifact、plan、ledger、Phase 1/2 prompt-pack、dependency-decision 和 Output roots，同时报告 `TOY_APOLLO_RUNTIME_ROOT` / `TOY_APOLLO_ARTIFACT_ROOT` 是否设置。`STATUS_SCOPE=resolved_for_this_process_not_global_authority` 表示这些值只对当前进程成立。
 
 `--tasks` 适用范围：
 
@@ -75,8 +78,8 @@ Problem task 的 soft imports 必须先通过 `soft-pack -> soft-apply` 写入 `
 
 当前状态：
 
-- Phase 4 CLI 分支暂时禁用/no-op。
-- 如需恢复自动对齐流程，应先修改代码与 runbook，再把命令重新写回 README。
+- Phase 3 旧入口已弃用并返回非零；Problem soft dependency selection 使用 Phase 2 的两个独立 mode。
+- Phase 4 明确 unavailable，并返回非零；clean completion 仍由 Phase 2 `review-apply` 落地。
 
 ## 推荐的 Phase 2 路径
 
@@ -86,7 +89,11 @@ Problem task 的 soft imports 必须先通过 `soft-pack -> soft-apply` 写入 `
 2. 在 `phase2_prompt_packs/<task_id>/draft.lean` 中由 Codex 编辑
 3. `build-check`
 4. `review-now --review-subject candidate`
-5. 根据 build/review 结果继续下一轮
+5. 独立、只读 reviewer 写入 fresh semantic review result
+6. `review-apply`
+7. 若 review fail/inconclusive，先由 `review-apply` 记录 repair evidence，再进入 `auto-loop`
+
+CLI completion [active phase=2]: `pack -> build-check -> review-now -> review-apply`.
 
 示例：
 
@@ -94,11 +101,12 @@ Problem task 的 soft imports 必须先通过 `soft-pack -> soft-apply` 写入 `
 python .\run_chapter.py --phase 2 --phase2-mode pack --tasks ex_4_4_3
 python .\run_chapter.py --phase 2 --phase2-mode build-check --tasks ex_4_4_3
 python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks ex_4_4_3 --review-subject candidate
+python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks ex_4_4_3 --review-result .\phase2_prompt_packs\ex_4_4_3\semantic_review_result_vN.json
 ```
 
 说明：
 
-- `pack -> build-check -> review-now` 是推荐主路径
+- `pack -> build-check -> review-now -> review-apply` 是推荐主路径；`review-now` 本身不是完成点
 - 旧 direct-generation/orchestrator Phase 2 路径已从 active CLI 移除
 - 新路径强制依赖本地 Mathlib grounding 与本地验证
 - 对带证明或解答的任务，必须回到 `inputs/<source>.tex` 检查原始证明主线；prompt pack 中的复制文本只是镜像。
@@ -111,7 +119,9 @@ python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks ex_4_4_3 --re
 
 ## Phase 3/4 边界
 
-Phase 3 已并入 Phase 2，作为 Problem soft dependency selection 的特殊处理：`--phase 2 --phase2-mode soft-pack/soft-apply`。旧 provider offload、post-harvest repair、Phase 4 closure 脚本和 runbook 不再作为 tracked operator docs 保留；如需恢复，必须先恢复对应 CLI 代码，再补回文档。
+CLI modes [deprecated phase=3]: `soft-pack`, `soft-apply`.
+
+Phase 3 已弃用且不可执行；旧入口会返回非零迁移提示。Problem soft dependency selection 的活动入口分别是 `--phase 2 --phase2-mode soft-pack` 和 `--phase 2 --phase2-mode soft-apply`。Phase 4 明确 unavailable；旧 provider offload、post-harvest repair、Phase 4 closure 脚本和 runbook 不是当前 operator contract。
 
 ## 仓库边界
 

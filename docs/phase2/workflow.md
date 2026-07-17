@@ -2,6 +2,8 @@
 
 The only default Phase2 workflow is:
 
+CLI completion [active phase=2]: `pack -> build-check -> review-now -> review-apply`.
+
 ```text
 pack -> edit draft -> build-check -> review-now -> review-apply
 ```
@@ -66,8 +68,8 @@ proof skeleton has been reviewed with verdict `go`; and any build-ready
 candidate still goes through independent semantic review plus `review-apply`.
 
 This gate is not completion authority. It must not edit `project_ledger.json` by
-hand, must not restore `promote-obligations`, must not create nested `obl`
-tasks, and must not replace semantic review or `review-apply`.
+hand, restore child-obligation promotion, create nested `obl` tasks, or replace
+semantic review or `review-apply`.
 
 The runtime records Math Review Gate evidence in pack metadata/status fields:
 `math_review_gate_required`, `math_review_gate_status`,
@@ -335,8 +337,8 @@ still lands only through `review-apply` with `phase2_status=pass`.
 - `verify`: diagnostics/report only; it does not land completion.
 - `audit`: diagnostics/report only; it does not quarantine by default and does
   not complete a task.
-- `review-pack`, `review-existing`, `review-existing-queue`: prepare review
-  materials; not completion authority.
+- `review-pack`, `review-existing`, `review-support`,
+  `review-existing-queue`: prepare review materials; not completion authority.
 - `debt-fix`: maintenance repair path for accepted proof debt; not proof.
 - foundational support: maintenance planning for splitting super-long official
   output and absorbing proof-obligation material into stable support or parent

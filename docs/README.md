@@ -59,9 +59,9 @@ Use these when changing dependency modeling or source-plan boundaries:
 
 ## Runtime Boundary
 
-- Problem soft dependency selection is a Phase 2 special case: `--phase 2 --phase2-mode soft-pack/soft-apply`.
-- Phase 3 is merged into Phase 2 and does not run an external provider, create execution batches, repair harvested output, or verify Lean.
-- Phase 4 is disabled/no-op in the current CLI.
+- Problem soft dependency selection is a Phase 2 special case with two active entries: `--phase 2 --phase2-mode soft-pack` and `--phase 2 --phase2-mode soft-apply`.
+- Phase 3 is deprecated/unavailable; its old entries exit nonzero with the Phase 2 migration commands and do not run an external provider, create execution batches, repair harvested output, or verify Lean.
+- Phase 4 is unavailable and exits nonzero; clean completion remains under Phase 2 `review-apply`.
 - Removed legacy mode names such as `plan-batches`, `offload-batch`, `repair-pack`, and `repair-verify` are not active contracts.
 
 ## Search Boundary

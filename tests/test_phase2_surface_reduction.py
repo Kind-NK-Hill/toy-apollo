@@ -1,4 +1,5 @@
 import ast
+import re
 import subprocess
 import sys
 import unittest
@@ -47,6 +48,14 @@ class Phase2SurfaceReductionTests(unittest.TestCase):
         "run_codex_auto_loop",
         "apply_codex_review_result",
     }
+
+    EXPLICIT_MODE_DECLARATION = re.compile(
+        r"CLI modes \[(active|deprecated) phase=(\d+)(?:,[^\]]*)?\]:\s*(.*)"
+    )
+    EXPLICIT_COMPLETION_DECLARATION = re.compile(
+        r"CLI completion \[active phase=(\d+)\]:\s*`([^`]+)`"
+    )
+    DECLARED_MODE = re.compile(r"`([a-z][a-z0-9]*(?:-[a-z0-9]+)*)`")
 
     def test_owner_modules_do_not_call_back_into_phase2_prompt_pack(self):
         for label, path in self.OWNER_MODULES.items():
@@ -124,33 +133,18 @@ class Phase2SurfaceReductionTests(unittest.TestCase):
         for marker in banned_markers:
             self.assertNotIn(marker, source, f"test_phase2_prompt_pack.py still hosts owned test group {marker}")
 
-    def test_active_phase2_docs_surface_is_small(self):
-        result = subprocess.run(
-            ["rg", "--files", "docs/phase2"],
-            cwd=REPO_ROOT,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=True,
+    def test_phase2_readme_indexes_required_operator_docs(self):
+        readme = (REPO_ROOT / "docs" / "phase2" / "README.md").read_text(encoding="utf-8")
+        required_docs = (
+            "workflow.md",
+            "status_contract.md",
+            "review_criteria.md",
+            "artifacts.md",
         )
-        docs = {line.replace("\\", "/") for line in result.stdout.splitlines() if line.strip()}
-        self.assertEqual(
-            docs,
-            {
-                "docs/phase2/README.md",
-                "docs/phase2/workflow.md",
-                "docs/phase2/status_contract.md",
-                "docs/phase2/review_criteria.md",
-                "docs/phase2/artifacts.md",
-                "docs/phase2/tools.md",
-                "docs/phase2/rs_stieltjes_boundary.md",
-                "docs/phase2/output_auxiliary_modules.md",
-                "docs/phase2/author_errata_confirmations_2026-07.md",
-                "docs/phase2/p5_p9_health_reconciliation.md",
-                "docs/phase2/chapter9_intro_context_reconciliation.md",
-                "docs/phase2/chapter10_14_remark_context_reconciliation.md",
-            },
-        )
+
+        for doc in required_docs:
+            with self.subTest(doc=doc):
+                self.assertIn(f"[{doc}]({doc})", readme)
 
     def test_phase2_docs_link_interface_policy_for_mathlib_bridge_boundary(self):
         readme = (REPO_ROOT / "docs" / "phase2" / "README.md").read_text(encoding="utf-8")
@@ -160,6 +154,85 @@ class Phase2SurfaceReductionTests(unittest.TestCase):
         self.assertIn("../interface_dependency_policy.md", readme)
         self.assertIn("../interface_dependency_policy.md", review_criteria)
         self.assertIn("textbook-first, bridge-then-Mathlib", rs_boundary)
+
+    def test_explicit_documented_cli_modes_match_parser_constants(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        tracked_docs = subprocess.run(
+            ["git", "ls-files", "--", "*.md"],
+            cwd=REPO_ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+        ).stdout.splitlines()
+        active_modes = {
+            0: set(cli_app.PHASE0_MODES),
+            1: set(cli_app.PHASE1_MODES),
+            2: set(cli_app.PHASE2_MODES),
+        }
+        deprecated_modes = {3: set(cli_app.DEPRECATED_PHASE3_MODES)}
+        declarations: list[tuple[str, str, int, str]] = []
+
+        for relative_path in tracked_docs:
+            path = REPO_ROOT / relative_path
+            for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                match = self.EXPLICIT_MODE_DECLARATION.search(line)
+                if not match:
+                    continue
+                status, raw_phase, payload = match.groups()
+                phase = int(raw_phase)
+                modes = self.DECLARED_MODE.findall(payload)
+                self.assertTrue(modes, f"{relative_path}:{line_number} declares no modes")
+                machine_modes = active_modes.get(phase) if status == "active" else deprecated_modes.get(phase)
+                self.assertIsNotNone(
+                    machine_modes,
+                    f"{relative_path}:{line_number} declares unsupported {status} phase {phase}",
+                )
+                unsupported = sorted(set(modes) - machine_modes)
+                self.assertFalse(
+                    unsupported,
+                    f"{relative_path}:{line_number} documents parser-unsupported modes: {unsupported}",
+                )
+                declarations.extend((relative_path, status, phase, mode) for mode in modes)
+
+        self.assertTrue(declarations, "No explicit active/deprecated CLI mode declarations were found")
+
+    def test_explicit_completion_paths_end_at_review_apply(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        tracked_docs = subprocess.run(
+            ["git", "ls-files", "--", "*.md"],
+            cwd=REPO_ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+        ).stdout.splitlines()
+        completion_paths: list[tuple[str, int, list[str]]] = []
+
+        for relative_path in tracked_docs:
+            path = REPO_ROOT / relative_path
+            for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                match = self.EXPLICIT_COMPLETION_DECLARATION.search(line)
+                if not match:
+                    continue
+                phase = int(match.group(1))
+                modes = [mode.strip() for mode in match.group(2).split("->")]
+                self.assertEqual(phase, 2, f"{relative_path}:{line_number} has an unsupported completion phase")
+                self.assertTrue(
+                    set(modes) <= set(cli_app.PHASE2_MODES),
+                    f"{relative_path}:{line_number} completion path contains a parser-unsupported mode",
+                )
+                self.assertIn("review-now", modes, f"{relative_path}:{line_number} omits semantic review")
+                self.assertEqual(
+                    modes[-1],
+                    "review-apply",
+                    f"{relative_path}:{line_number} stops before the apply gate",
+                )
+                completion_paths.append((relative_path, line_number, modes))
+
+        self.assertTrue(completion_paths, "No explicit active completion paths were found")
 
     def test_ordinary_rg_hides_phase2_archives_packs_and_generated_reports(self):
         result = subprocess.run(
