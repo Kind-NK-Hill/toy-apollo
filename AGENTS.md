@@ -99,6 +99,20 @@ If this file conflicts with older notes, trust current runtime code and the rule
 
 ## Codex Review Contract
 
+- Before chapter-wide review or state reconciliation, investigate each task's
+  exact current status and actual formalization route. Record the textbook
+  claim, exact subject/hash that was reviewed, review verdict/class/evidence,
+  current Toy/MAT/Kenneth subjects, and any drift between them.
+- For a theorem, "actual proof route" means the proof spine that Lean really
+  checks: principal Mathlib theorem or construction, locally proved helpers,
+  task-owned support files, important premises, and downstream declarations
+  that consume the result. For a definition/example/problem, record the
+  corresponding construction/API or solution route. Do not infer this route
+  from filenames, imports, comments, build success, or a stored `pass` alone.
+- Treat `review_scope_rebind_required` as a request to investigate bundle
+  coverage, not as proof failure and not as permission for automatic rebind.
+  Decide mechanical rebind versus fresh semantic review only after comparing
+  the reviewed route and bundle with the exact current route and bundle.
 - For chapter-wide or task-set Phase 2 work, prefer Codex durable goals (`/goal`) when the
   current Codex client supports them.
 - Use `/goal` for requests that require continuing across many build/review/repair iterations,
