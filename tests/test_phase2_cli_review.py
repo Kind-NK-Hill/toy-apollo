@@ -515,7 +515,7 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertIn("ARTIFACT_ROOT_SOURCE=environment", output)
             self.assertIn("ARTIFACT_ROOT_ENV_PRESENT=true", output)
             self.assertIn(f"ARTIFACT_ROOT_ENV_VALUE={root}", output)
-            self.assertIn("LEDGER_STATUS=loaded_read_only", output)
+            self.assertIn("LEDGER_STATUS=legacy_present_frozen", output)
             self.assertEqual(snapshot(), before)
             self.assertFalse(settings.dependency_decisions_dir.exists())
             process_target_mock.assert_not_awaited()
@@ -620,7 +620,7 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 status=False,
             )
             with patch.object(cli_app, "get_settings", return_value=settings), patch(
-                "src.toy_apollo.core.LedgerManager",
+                "src.toy_apollo.core.open_runtime_ledger",
                 return_value=ledger,
             ), patch(
                 "src.toy_apollo.phase2_review_loop.run_codex_review_now",
@@ -663,7 +663,7 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 status=False,
             )
             with patch.object(cli_app, "get_settings", return_value=settings), patch(
-                "src.toy_apollo.core.LedgerManager",
+                "src.toy_apollo.core.open_runtime_ledger",
                 return_value=ledger,
             ), patch(
                 "src.toy_apollo.phase2_review_loop.run_codex_review_now",
@@ -704,7 +704,7 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 status=False,
             )
             with patch.object(cli_app, "get_settings", return_value=settings), patch(
-                "src.toy_apollo.core.LedgerManager",
+                "src.toy_apollo.core.open_runtime_ledger",
                 return_value=ledger,
             ), patch(
                 "src.toy_apollo.phase2_review_loop.run_codex_auto_loop",
@@ -746,7 +746,7 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 status=False,
             )
             with patch.object(cli_app, "get_settings", return_value=settings), patch(
-                "src.toy_apollo.core.LedgerManager",
+                "src.toy_apollo.core.open_runtime_ledger",
                 return_value=ledger,
             ), patch(
                 "src.toy_apollo.phase2_review_loop.run_codex_auto_loop",

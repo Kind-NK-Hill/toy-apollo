@@ -14,6 +14,7 @@ Use these when operating or modifying Phase 2:
 - `phase2/review_criteria.md`
 - `phase2/artifacts.md`
 - `phase2/tools.md`
+- `workspace_state.md`
 
 `phase2/textbook_complete_targets.json` is a data artifact, not a policy entry.
 
@@ -26,15 +27,12 @@ refresh. Keep them in root `docs/` unless the tools are updated at the same time
 - `phase2_completion_classification.json`
 - `phase2_ch10_14_clean_debt_surface_audit.md`
 - `phase2_ch10_14_clean_debt_surface_audit.json`
-- `phase2_current_status_snapshot.md`
-- `phase2_current_status_snapshot.json`
 - `phase2_unfinished_tasks_audit.md`
 - `phase2_unfinished_tasks_audit.json`
 - `phase2_source_output_alignment_audit.md`
 
-These are reports/cache. They do not decide Phase2 completion. The current
-status snapshot is a tracked summary of ignored runtime ledger state; it is not
-a replacement for `review-apply`.
+These are reports/cache. They do not decide Phase2 completion. Current state is
+queried from the local workspace database; it is not checked in as a snapshot.
 
 Short-lived manifest files produced by cleanup tools should not be kept in this
 root directory unless a current tool reads them as input. Tools that need those

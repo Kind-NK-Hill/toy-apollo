@@ -127,7 +127,7 @@ def _validate_review_input_internal_binding(review_input: dict[str, Any]) -> str
         return "review input task payload does not match review_basis.task"
 
     review_subject_kind = str(review_input.get("review_subject_kind", "") or "")
-    if review_subject_kind not in {"candidate", "official_output", "existing_support"}:
+    if review_subject_kind not in {"candidate", "official_output", "existing_support", "external_pr"}:
         return "review input review_subject_kind is invalid"
     recorded_subject_hash = str(review_input.get("review_subject_hash", "") or "")
     candidate_hash = str(candidate_payload.get("hash", "") or "")
@@ -140,6 +140,34 @@ def _validate_review_input_internal_binding(review_input: dict[str, Any]) -> str
     candidate_file = str(candidate_payload.get("file", "") or "").strip()
     if not review_subject_file or candidate_file != review_subject_file:
         return "review input candidate.file does not match review_subject_file"
+
+    subject_bundle = review_input.get("subject_bundle")
+    if subject_bundle is not None:
+        if not isinstance(subject_bundle, dict):
+            return "review input subject_bundle must be an object"
+        files = subject_bundle.get("files")
+        if not isinstance(files, list) or not files:
+            return "review input subject_bundle.files must be a non-empty list"
+        if str(subject_bundle.get("task_id", "") or "") != str(task_payload.get("block_id", "") or ""):
+            return "review input subject_bundle.task_id does not match task"
+        if str(subject_bundle.get("primary_path", "") or "").replace("\\", "/") != review_subject_file.replace("\\", "/"):
+            return "review input subject_bundle.primary_path does not match review subject file"
+        if str(subject_bundle.get("primary_hash", "") or "") != recorded_subject_hash:
+            return "review input subject_bundle.primary_hash does not match review subject hash"
+        if _hash_json(files) != str(subject_bundle.get("bundle_hash", "") or ""):
+            return "review input subject_bundle.files do not match bundle_hash"
+        primary = next(
+            (
+                item
+                for item in files
+                if isinstance(item, dict)
+                and str(item.get("path", "") or "").replace("\\", "/")
+                == review_subject_file.replace("\\", "/")
+            ),
+            None,
+        )
+        if primary is None or str(primary.get("content_sha256", "") or "") != recorded_subject_hash:
+            return "review input subject_bundle primary file does not match candidate"
 
     context_markdown = review_input.get("review_context_markdown")
     context_hash = str(review_input.get("review_context_hash", "") or "")
@@ -224,6 +252,8 @@ def build_semantic_review_input(
     review_context_markdown: str = "",
     review_basis: dict[str, Any] | None = None,
     review_basis_hash: str = "",
+    runtime_root: Path | None = None,
+    subject_bundle_override: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if not isinstance(review_basis, dict):
         review_basis = {}
@@ -244,10 +274,50 @@ def build_semantic_review_input(
     dependency_summary_hash = _hash_json(dependency_summary)
     task_source_hash = _hash_json(task_payload)
     candidate_hash = _hash_text(candidate_code)
+    task_id = str(task_payload.get("block_id", "") or "")
+    if subject_bundle_override is not None:
+        subject_bundle = json.loads(json.dumps(subject_bundle_override))
+        files = subject_bundle.get("files")
+        if not isinstance(files, list) or not files:
+            raise ValueError("External review subject bundle must contain files.")
+        if str(subject_bundle.get("task_id", "") or "") != task_id:
+            raise ValueError("External review subject bundle task does not match the review task.")
+        if str(subject_bundle.get("primary_path", "") or "").replace("\\", "/") != str(candidate_path).replace("\\", "/"):
+            raise ValueError("External review subject bundle primary path does not match the review subject.")
+        if str(subject_bundle.get("primary_hash", "") or "") != candidate_hash:
+            raise ValueError("External review subject bundle primary hash does not match the candidate.")
+        if _hash_json(files) != str(subject_bundle.get("bundle_hash", "") or ""):
+            raise ValueError("External review subject bundle manifest does not match its bundle hash.")
+        subject_bundle.setdefault("schema", "toy-apollo.subject-bundle.v1")
+    else:
+        from .state_reconcile import discover_runtime_support_files
+        from .state_store import SubjectBundle
+
+        subject_files: dict[str, bytes | str] = {str(candidate_path): candidate_code}
+        if runtime_root is not None:
+            subject_files.update(discover_runtime_support_files(Path(runtime_root), task_id))
+        review_subject = SubjectBundle.from_files(
+            task_id=task_id,
+            files=subject_files,
+            primary_path=str(candidate_path),
+            source_repo="toy_apollo",
+            layout=f"review_{review_subject_kind}",
+            subject_kind="review_bundle",
+        )
+        subject_bundle = {
+            "schema": "toy-apollo.subject-bundle.v1",
+            "task_id": task_id,
+            "primary_path": review_subject.primary_path,
+            "primary_hash": review_subject.primary_hash,
+            "bundle_hash": review_subject.bundle_hash,
+            "files": review_subject.manifest(),
+        }
     if review_subject_kind == "candidate":
         build_precondition_kind = "candidate_build_ready"
     elif review_subject_kind == "existing_support":
         build_precondition_kind = "existing_support_sanity"
+    elif review_subject_kind == "external_pr":
+        build_precondition_kind = "external_pr_exact_head_build"
     else:
         build_precondition_kind = "official_output_sanity"
     build_precondition = {
@@ -278,6 +348,7 @@ def build_semantic_review_input(
         "review_basis_hash": resolved_review_basis_hash,
         "review_context_hash": review_context_hash,
         "review_subject_kind": review_subject_kind,
+        "subject_bundle_hash": subject_bundle["bundle_hash"],
         "prompt_version": SEMANTIC_REVIEW_PROMPT_VERSION,
         "rubric_version": SEMANTIC_REVIEW_RUBRIC_VERSION,
         "backend_id": backend_id,
@@ -294,6 +365,7 @@ def build_semantic_review_input(
         "review_subject_kind": review_subject_kind,
         "review_subject_file": str(candidate_path),
         "review_subject_hash": candidate_hash,
+        "subject_bundle": subject_bundle,
         "candidate": {
             "file": str(candidate_path),
             "hash": candidate_hash,

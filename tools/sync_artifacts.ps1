@@ -48,7 +48,6 @@ $artifactPaths = @(
     "aristole-example-outputs",
     "mathlib_index.faiss",
     "mathlib_corpus.json",
-    "project_ledger.json",
     "lab_notebook.json"
 )
 

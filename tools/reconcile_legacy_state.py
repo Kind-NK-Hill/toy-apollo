@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from src.toy_apollo.state_store import refuse_legacy_ledger_write
+
 try:
     from src.ledger_manager import TaskStatus
 
@@ -544,6 +546,9 @@ def main() -> int:
     current_ledger = Path(args.current_ledger).resolve()
     report_dir = Path(args.report_dir).resolve()
     ctx = ReconcileContext(legacy_root=legacy_root, current_ledger=current_ledger, report_dir=report_dir)
+
+    if args.apply or args.restore:
+        refuse_legacy_ledger_write(current_ledger.parent, operation="legacy ledger reconcile/restore")
 
     if args.restore:
         restore_file = Path(args.restore).resolve()

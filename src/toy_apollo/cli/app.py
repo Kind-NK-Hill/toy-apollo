@@ -11,6 +11,7 @@ from src.block_id_naming import (
     canonicalize_block_id,
 )
 from ..core.settings import get_settings
+from ..state_store import canonical_state_path
 from ..phase2_failure_budget import (
     PHASE2_AUTO_LOOP_BUILD_ATTEMPTS_PER_REVIEW,
     PHASE2_AUTO_LOOP_NONPROGRESS_LIMIT,
@@ -126,6 +127,8 @@ def print_read_only_status(settings) -> None:
         ("ARTIFACT_ROOT_ENV_VAR", ARTIFACT_ROOT_ENV_VAR),
         ("ARTIFACT_ROOT_ENV_PRESENT", str(artifact_env_present).lower()),
         ("ARTIFACT_ROOT_ENV_VALUE", artifact_env_value if artifact_env_present else "<unset>"),
+        ("WORKSPACE_ROOT", settings.workspace_root),
+        ("STATE_DB_FILE", settings.state_db_file or canonical_state_path(settings.runtime_root)),
         ("PLAN_ROOT", settings.plans_dir),
         ("LEDGER_ROOT", settings.project_ledger_file.parent),
         ("LEDGER_FILE", settings.project_ledger_file),
@@ -137,15 +140,27 @@ def print_read_only_status(settings) -> None:
     for label, value in resolved_roots:
         print(f"{label}={value if value is not None else '<unset>'}")
 
+    from ..state_store import StateIntegrityError, WorkspaceStateStore
+
+    state_store = WorkspaceStateStore(settings.state_db_file or canonical_state_path(settings.runtime_root))
+    if not state_store.exists:
+        print("STATE_DB_STATUS=missing_not_created")
+    else:
+        try:
+            summary = state_store.summary()
+            print("STATE_DB_STATUS=loaded_read_only")
+            print(f"STATE_DB_SCHEMA_VERSION={summary['schema_version']}")
+            print(f"STATE_DB_SUBJECTS={summary['subjects']}")
+            print(f"STATE_DB_REVIEWS={summary['reviews']}")
+            print(f"STATE_DB_TASK_HEADS={summary['task_heads']}")
+        except StateIntegrityError as exc:
+            print(f"STATE_DB_STATUS=integrity_error:{exc}")
+
     if not settings.project_ledger_file.is_file():
         print("LEDGER_STATUS=missing_not_created")
         return
 
-    from ..core import LedgerManager
-
-    ledger = LedgerManager(ledger_path=str(settings.project_ledger_file))
-    print("LEDGER_STATUS=loaded_read_only")
-    ledger.print_status_summary()
+    print("LEDGER_STATUS=legacy_present_frozen")
 
 
 async def process_target(args):
@@ -177,10 +192,9 @@ async def process_target(args):
                 print(f"📝 Input written: {target_input}")
         return
 
-    from ..core import LedgerManager
+    from ..core import open_runtime_ledger
 
-    settings.project_ledger_file.parent.mkdir(parents=True, exist_ok=True)
-    ledger = LedgerManager(ledger_path=str(settings.project_ledger_file))
+    ledger = open_runtime_ledger(settings)
     selected_task_ids: set[str] | None = None
     if args.tasks:
         selected_task_ids = set(args.task_ids)
@@ -456,6 +470,10 @@ async def process_target(args):
             print(f"❌ {exc}")
             return
 def main() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] in {"status", "worklist", "state", "pr-review"}:
+        from ..state_cli import main as state_main
+
+        return state_main(sys.argv[1:], get_settings())
     parser = argparse.ArgumentParser(description="Toy Apollo Ledger-Driven Pipeline")
     parser.add_argument("--phase", type=int, choices=[0, 1, 2, 3, 4], required=False, help="0: Ingest, 1: Plan, 2: Local including Problem soft dependency selection, 3: deprecated/migrated, 4: unavailable")
     parser.add_argument("--input", type=str, required=False, default="", help="Path for Phase 0 pack and Phase 1 inputs")

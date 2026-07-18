@@ -9,6 +9,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Iterable
 
+from src.toy_apollo.state_store import refuse_legacy_ledger_write
+
 
 TASK_RE = re.compile(r"^(?:def|thm|prob|ex)_(?P<chapter>\d+)(?:_|$)")
 DECL_RE = re.compile(
@@ -637,6 +639,7 @@ def _should_reopen_proved_debt(
 
 
 def apply_status_fixes(root: Path, start_chapter: int, end_chapter: int) -> dict[str, Any]:
+    refuse_legacy_ledger_write(root, operation="clean-debt status repair")
     declarations = scan_declarations(root)
     projection_wrappers = theorem_projection_wrappers(root)
     changed_tasks: dict[str, dict[str, Any]] = {}

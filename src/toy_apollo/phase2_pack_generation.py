@@ -37,7 +37,7 @@ def _prepare_existing_output_review_materials(*, task: dict[str, Any], ledger, s
     )
 
 
-def _write_codex_handoff_review_artifacts(*, task: dict[str, Any], ledger, settings, pack_dir: Path, attempt: int, candidate_path: Path, candidate_code: str, build_summary: dict[str, Any], mode: str = "review-pack", review_subject_kind: str = "candidate", build_result_file: str = "", build_candidate_file: str = "", build_candidate_hash: str = "") -> dict[str, Any]:
+def _write_codex_handoff_review_artifacts(*, task: dict[str, Any], ledger, settings, pack_dir: Path, attempt: int, candidate_path: Path, candidate_code: str, build_summary: dict[str, Any], mode: str = "review-pack", review_subject_kind: str = "candidate", build_result_file: str = "", build_candidate_file: str = "", build_candidate_hash: str = "", subject_bundle_override: dict[str, Any] | None = None, review_basis_subject_file: Path | None = None, review_basis_extra: dict[str, Any] | None = None, review_context_suffix: str = "", materialize_proof_obligations: bool = True) -> dict[str, Any]:
     from .phase2_prompt_pack import _write_codex_handoff_review_artifacts as _impl
 
     return _impl(
@@ -54,6 +54,11 @@ def _write_codex_handoff_review_artifacts(*, task: dict[str, Any], ledger, setti
         build_result_file=build_result_file,
         build_candidate_file=build_candidate_file,
         build_candidate_hash=build_candidate_hash,
+        subject_bundle_override=subject_bundle_override,
+        review_basis_subject_file=review_basis_subject_file,
+        review_basis_extra=review_basis_extra,
+        review_context_suffix=review_context_suffix,
+        materialize_proof_obligations=materialize_proof_obligations,
     )
 
 

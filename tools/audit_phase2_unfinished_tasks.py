@@ -12,6 +12,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from src.toy_apollo.state_store import refuse_legacy_ledger_write
+
 
 TASK_RE = re.compile(r"^(?:def|thm|prob|ex)_(?P<chapter>\d+)(?:_|$)")
 REPORT_JSON = "docs/phase2_unfinished_tasks_audit.json"
@@ -753,6 +755,7 @@ def apply_metadata_drift_fixes(
     build_timeout_seconds: int,
     build_checker: Any | None = None,
 ) -> dict[str, Any]:
+    refuse_legacy_ledger_write(root, operation="unfinished-task metadata repair")
     checker = build_checker or build_result
     ledger_path = root / "project_ledger.json"
     ledger = read_json(ledger_path)
@@ -871,6 +874,7 @@ def sync_ledger_proof_obligation_summaries(
     end_chapter: int,
     include_tasks: list[str],
 ) -> dict[str, Any]:
+    refuse_legacy_ledger_write(root, operation="proof-obligation ledger summary sync")
     ledger_path = root / "project_ledger.json"
     ledger = read_json(ledger_path)
     if not isinstance(ledger, dict) or not isinstance(ledger.get("tasks"), dict):

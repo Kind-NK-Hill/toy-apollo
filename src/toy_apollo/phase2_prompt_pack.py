@@ -4169,6 +4169,7 @@ def _run_semantic_review_for_candidate(
         review_context_file=str(context_path),
         review_context_hash=_sha256_text(context_markdown),
         review_context_markdown=context_markdown,
+        runtime_root=Path(settings.runtime_root),
     )
     return run_semantic_review(
         pack_dir=pack_dir,
@@ -5676,12 +5677,19 @@ def _write_codex_handoff_review_artifacts(
     build_result_file: str = "",
     build_candidate_file: str = "",
     build_candidate_hash: str = "",
+    subject_bundle_override: dict[str, Any] | None = None,
+    review_basis_subject_file: Path | None = None,
+    review_basis_extra: dict[str, Any] | None = None,
+    review_context_suffix: str = "",
+    materialize_proof_obligations: bool = True,
 ) -> dict[str, Any]:
     paths = next_semantic_review_artifact_paths(pack_dir, attempt)
     latest = latest_semantic_review_artifact_paths(pack_dir)
     context_path = next_semantic_review_context_path(pack_dir, attempt)
     request_path = _review_request_path(pack_dir, attempt)
     context_markdown = build_semantic_review_context_markdown(task, ledger, settings, pack_dir)
+    if review_context_suffix.strip():
+        context_markdown = context_markdown.rstrip() + "\n\n" + review_context_suffix.strip() + "\n"
     _shared_write_text(context_path, context_markdown)
     review_basis = build_semantic_review_basis(
         task,
@@ -5689,8 +5697,11 @@ def _write_codex_handoff_review_artifacts(
         settings,
         review_subject_kind=review_subject_kind,
         review_subject_hash=_sha256_text(candidate_code) if candidate_code else "",
-        review_subject_file=candidate_path,
+        review_subject_file=review_basis_subject_file or candidate_path,
+        materialize_proof_obligations=materialize_proof_obligations,
     )
+    if review_basis_extra:
+        review_basis.update(review_basis_extra)
     review_input = build_semantic_review_input(
         task=task,
         mode=mode,
@@ -5714,6 +5725,8 @@ def _write_codex_handoff_review_artifacts(
         review_context_file=str(context_path),
         review_context_hash=_sha256_text(context_markdown),
         review_context_markdown=context_markdown,
+        runtime_root=Path(settings.runtime_root),
+        subject_bundle_override=subject_bundle_override,
     )
     prompt_text = render_semantic_review_prompt(review_input)
     _write_json(paths["input"], review_input)
@@ -6949,6 +6962,7 @@ def build_semantic_review_basis(
     review_subject_kind: str,
     review_subject_hash: str = "",
     review_subject_file: str | Path | None = None,
+    materialize_proof_obligations: bool = True,
 ) -> dict[str, Any]:
     from .phase2_review_request import build_semantic_review_basis as _owner_build_semantic_review_basis
     return _owner_build_semantic_review_basis(
@@ -6958,6 +6972,7 @@ def build_semantic_review_basis(
         review_subject_kind=review_subject_kind,
         review_subject_hash=review_subject_hash,
         review_subject_file=review_subject_file,
+        materialize_proof_obligations=materialize_proof_obligations,
     )
 
 

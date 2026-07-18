@@ -176,6 +176,8 @@ class Phase2SurfaceReductionTests(unittest.TestCase):
 
         for relative_path in tracked_docs:
             path = REPO_ROOT / relative_path
+            if not path.is_file():
+                continue
             for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
                 match = self.EXPLICIT_MODE_DECLARATION.search(line)
                 if not match:
@@ -213,6 +215,8 @@ class Phase2SurfaceReductionTests(unittest.TestCase):
 
         for relative_path in tracked_docs:
             path = REPO_ROOT / relative_path
+            if not path.is_file():
+                continue
             for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
                 match = self.EXPLICIT_COMPLETION_DECLARATION.search(line)
                 if not match:
@@ -255,8 +259,6 @@ class Phase2SurfaceReductionTests(unittest.TestCase):
             "docs/phase2_completion_classification.json",
             "docs/phase2_ch10_14_clean_debt_surface_audit.md",
             "docs/phase2_ch10_14_clean_debt_surface_audit.json",
-            "docs/phase2_current_status_snapshot.md",
-            "docs/phase2_current_status_snapshot.json",
             "docs/phase2_unfinished_tasks_audit.md",
             "docs/phase2_unfinished_tasks_audit.json",
             "docs/phase2_source_output_alignment_audit.md",

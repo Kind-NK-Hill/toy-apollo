@@ -34,6 +34,7 @@ Classify important files before proposing Git tracking or cleanup:
 - Runtime state, usually do not hand-edit unless the task explicitly requires it:
   - `plans/`
   - `project_ledger.json`
+  - sibling `toy-apollo-artifacts/state.sqlite3`
   - `lab_notebook.json`
   - `output_lean_files/`
   - `formalized_chapters/`
@@ -53,7 +54,7 @@ Classify important files before proposing Git tracking or cleanup:
 
 High-risk protected boundaries:
 
-- Ledger and notebook files are `must-ignore-but-preserve` unless a task explicitly targets ledger migration.
+- The SQLite state database, legacy ledger, and notebook files are `must-ignore-but-preserve` unless a task explicitly targets state migration.
 - Prompt packs are generated handoff state: ignore/search-hide them by default, preserve them locally, and summarize or archive rather than delete.
 - `dependency_decisions/` is protected provenance; decide chapter-by-chapter whether any curated summary belongs in Git.
 - Chapter outputs, especially Chapter 1-8/9 source, plan, output, ledger, and provenance material, are not cleanup targets.

@@ -67,8 +67,8 @@ identified; parent theorem/interface has no public premise relocation; the math
 proof skeleton has been reviewed with verdict `go`; and any build-ready
 candidate still goes through independent semantic review plus `review-apply`.
 
-This gate is not completion authority. It must not edit `project_ledger.json` by
-hand, restore child-obligation promotion, create nested `obl` tasks, or replace
+This gate is not completion authority. It must not edit the workspace state or
+legacy `project_ledger.json` by hand, restore child-obligation promotion, create nested `obl` tasks, or replace
 semantic review or `review-apply`.
 
 The runtime records Math Review Gate evidence in pack metadata/status fields:
@@ -86,7 +86,7 @@ Edit:
 phase2_prompt_packs/<task_id>/draft.lean
 ```
 
-Do not edit `project_ledger.json` by hand. Do not treat old candidate,
+Do not edit workspace state or legacy `project_ledger.json` by hand. Do not treat old candidate,
 classification, audit, or verify files as completion evidence.
 
 ## 4. Build Gate

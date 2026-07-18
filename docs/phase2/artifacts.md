@@ -72,7 +72,7 @@ These must be read when relevant, but they do not complete tasks:
 
 These are not authorities:
 
-- `project_ledger.json` by itself;
+- the frozen legacy `project_ledger.json` by itself;
 - `metadata.json`;
 - `context.md`;
 - `operator_prompt.md`;

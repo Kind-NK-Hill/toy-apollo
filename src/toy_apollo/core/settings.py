@@ -27,6 +27,8 @@ class Settings:
     phase0_ingestion_packs_dir: Path | None = None
     phase1_prompt_packs_dir: Path | None = None
     dependency_decisions_dir: Path | None = None
+    workspace_root: Path | None = None
+    state_db_file: Path | None = None
 
 
 def _to_path(raw: str, fallback: Path) -> Path:
@@ -40,6 +42,13 @@ def get_settings() -> Settings:
     cwd = Path(".").resolve()
     runtime_root = _to_path(os.getenv("TOY_APOLLO_RUNTIME_ROOT", ""), cwd)
     artifact_root = _to_path(os.getenv("TOY_APOLLO_ARTIFACT_ROOT", ""), runtime_root)
+    workspace_root = runtime_root.parent
+    state_artifact_name = (
+        "toy-apollo-artifacts"
+        if runtime_root.name.lower() == "toy-apollo"
+        else f"{runtime_root.name}-artifacts"
+    )
+    state_db_file = workspace_root / state_artifact_name / "state.sqlite3"
     return Settings(
         runtime_root=runtime_root,
         artifact_root=artifact_root,
@@ -61,4 +70,6 @@ def get_settings() -> Settings:
         lab_notebook_file=artifact_root / "lab_notebook.json",
         mathlib_path=runtime_root / ".lake" / "packages" / "mathlib" / "Mathlib",
         phase0_ingestion_packs_dir=artifact_root / "phase0_ingestion_packs",
+        workspace_root=workspace_root,
+        state_db_file=state_db_file,
     )

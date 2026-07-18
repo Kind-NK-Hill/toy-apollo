@@ -8,9 +8,11 @@ If this file conflicts with older notes, trust current runtime code and the rule
 
 - Keep active execution under `python run_chapter.py --phase {0,1,2}`. Phase 3 remains only as a deprecated migration error, Phase 4 remains only as an unavailable error, and both exit nonzero.
 - Keep `python run_chapter.py --status` strictly read-only. Its resolved roots describe only the current process, not an active campaign's global authority.
+- Use `python run_chapter.py status <task>` or `worklist` for live derived repository/review/PR state; these refresh GitHub by default and never commit, push, open, or merge a PR.
+- Use `python run_chapter.py pr-review prepare/apply` for an exact Kenneth PR head. This path records external review coverage only; it never lands the candidate in Toy output or changes PR readiness/merge state.
 - Treat `.claude/rules/10-phase-runtime.md` as the phase behavior source of truth before making any phase-routing decision.
 - Prefer active package paths under `src/toy_apollo/*` for new code.
-- Treat `project_ledger.json` as persistent runtime state, not disposable scratch data.
+- Treat `toy-apollo-artifacts/state.sqlite3` as the workspace operational state described in `docs/workspace_state.md`. Legacy `project_ledger.json` is protected, frozen import evidence after SQLite activation.
 - Remember that must-protect is not the same as must-track: important runtime/provenance files may be ignored by Git while still being protected from deletion or cleanup.
 - Validate changes with the smallest relevant check before finishing.
 
