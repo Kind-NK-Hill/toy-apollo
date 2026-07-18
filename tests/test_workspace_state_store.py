@@ -15,7 +15,11 @@ from src.toy_apollo.state_migration import (
     rebuild_workspace_database,
 )
 from src.toy_apollo.state_review import record_review_apply_state
-from src.toy_apollo.state_reconcile import is_task_owned_path, task_id_from_path
+from src.toy_apollo.state_reconcile import (
+    discover_formal_plan_task_ids,
+    is_task_owned_path,
+    task_id_from_path,
+)
 from src.toy_apollo.state_store import (
     StateIntegrityError,
     StateDatabaseMissingError,
@@ -102,6 +106,56 @@ class WorkspaceStateStoreTests(unittest.TestCase):
             )
         )
 
+    def test_chapters_two_to_four_formal_plan_catalog_is_exact(self):
+        plans_dir = Path(__file__).resolve().parents[1] / "plans"
+        task_ids = discover_formal_plan_task_ids(plans_dir, chapters=(2, 3, 4))
+        counts = {
+            chapter: sum(1 for task_id in task_ids if task_id.split("_", 2)[1] == str(chapter))
+            for chapter in (2, 3, 4)
+        }
+        self.assertEqual(counts, {2: 36, 3: 39, 4: 39})
+        self.assertEqual(len(task_ids), 114)
+        self.assertTrue(
+            {
+                "def_4_2_inverse_image",
+                "def_4_3_limsup_liminf",
+                "def_4_3_sup_inf",
+                "def_4_4_complex_number",
+                "def_4_4_complex_operations",
+                "def_4_4_complex_random_variable",
+                "def_4_4_polar_form",
+                "ex_4_1_indicator_examples",
+                "ex_4_2_lebesgue_borel",
+            }.issubset(task_ids)
+        )
+        self.assertFalse(any(task_id.startswith(("rem_", "intro_")) for task_id in task_ids))
+
+    def test_named_formal_primary_is_not_support_of_shorter_task_id(self):
+        formal_task_ids = {"def_4_2", "def_4_2_inverse_image"}
+        primary = "ToyApollo/Output/def_4_2.lean"
+        named_primary = "ToyApollo/Output/def_4_2_inverse_image.lean"
+        ordinary_support = "ToyApollo/Output/def_4_2_helper.lean"
+
+        self.assertEqual(
+            task_id_from_path(named_primary, formal_task_ids=formal_task_ids),
+            "def_4_2_inverse_image",
+        )
+        self.assertFalse(
+            is_task_owned_path(
+                named_primary,
+                "def_4_2",
+                primary,
+                formal_task_ids=formal_task_ids,
+            )
+        )
+        self.assertTrue(
+            is_task_owned_path(
+                ordinary_support,
+                "def_4_2",
+                primary,
+                formal_task_ids=formal_task_ids,
+            )
+        )
     def test_workspace_review_binding_reuses_only_an_eligible_applied_basis(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

@@ -9,14 +9,27 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
-from src.block_id_naming import canonicalize_block_id
+from src.block_id_naming import (
+    canonicalize_block_id,
+    extract_chapter,
+    is_canonical_base_id,
+)
+
+from .phase1_plan_audit import normalize_phase1_task_type
 
 from .state_store import SubjectBundle, WorkspaceStateStore, utc_now
 
 
-TASK_FILE_RE = re.compile(r"^(def|thm|ex|prob|rem|intro)_(\d+)(?:_(\d+))+(?:_proof)?$", re.IGNORECASE)
 CHAPTER_RE = re.compile(r"chapter_?(\d+)", re.IGNORECASE)
 KENNETH_REPO = "wkshum/ProbabilityTheory"
+
+FORMAL_PLAN_TYPE_PREFIXES = {
+    "Definition": "def_",
+    "Theorem_Statement": "thm_",
+    "Theorem_with_Proof": "thm_",
+    "Example_Proof": "ex_",
+    "Problem": "prob_",
+}
 
 # Kenneth's repository uses this filename for the implementation of part 4 of
 # Theorem 1.2.  In the ToyApollo ledger it is support owned by task `thm_1_2`,
@@ -61,13 +74,60 @@ def run_command(argv: list[str], *, cwd: Path | None = None, timeout: int = 30) 
     return CommandResult(completed.returncode, completed.stdout, completed.stderr)
 
 
-def task_id_from_path(path: str) -> str:
+def discover_formal_plan_task_ids(
+    plans_dir: Path,
+    *,
+    chapters: Iterable[int] | None = None,
+) -> set[str]:
+    """Return canonical non-Remark task ids declared by Phase 1 plans.
+
+    Plan type decides whether an entry is a formal task.  Canonical block-id
+    utilities decide whether its id is valid.  This keeps named formal entries
+    distinct from similarly prefixed support files.
+    """
+
+    requested_chapters = set(chapters or [])
+    task_ids: set[str] = set()
+    if not plans_dir.is_dir():
+        return task_ids
+    for plan_path in sorted(plans_dir.rglob("*_plan.json")):
+        try:
+            payload = json.loads(plan_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        entries = payload if isinstance(payload, list) else []
+        for raw in entries:
+            if not isinstance(raw, dict):
+                continue
+            normalized_type, _note = normalize_phase1_task_type(raw.get("type", ""))
+            expected_prefix = FORMAL_PLAN_TYPE_PREFIXES.get(str(normalized_type or ""))
+            if not expected_prefix:
+                continue
+            task_id = canonicalize_block_id(str(raw.get("block_id", "") or ""))
+            if not is_canonical_base_id(task_id) or not task_id.startswith(expected_prefix):
+                continue
+            chapter = extract_chapter(task_id)
+            if requested_chapters and chapter not in requested_chapters:
+                continue
+            task_ids.add(task_id)
+    return task_ids
+
+
+def task_id_from_path(
+    path: str,
+    *,
+    formal_task_ids: Iterable[str] | None = None,
+) -> str:
     stem = Path(path).stem
-    match = TASK_FILE_RE.match(stem)
-    if not match:
-        return ""
     task_id = canonicalize_block_id(stem)
-    return TASK_PARENT_ALIASES.get(task_id, task_id)
+    task_id = TASK_PARENT_ALIASES.get(task_id, task_id)
+    if not is_canonical_base_id(task_id):
+        return ""
+    if formal_task_ids is not None:
+        allowed = {canonicalize_block_id(item) for item in formal_task_ids}
+        if task_id not in allowed:
+            return ""
+    return task_id
 
 
 def chapter_for_task(task_id: str) -> int | None:
@@ -79,7 +139,13 @@ def is_primary_task_path(path: str, task_id: str) -> bool:
     return Path(path).stem.lower() == task_id.lower()
 
 
-def is_task_owned_path(path: str, task_id: str, primary_path: str) -> bool:
+def is_task_owned_path(
+    path: str,
+    task_id: str,
+    primary_path: str,
+    *,
+    formal_task_ids: Iterable[str] | None = None,
+) -> bool:
     normalized = path.replace("\\", "/")
     normalized_primary = primary_path.replace("\\", "/")
     if normalized == normalized_primary:
@@ -104,12 +170,24 @@ def is_task_owned_path(path: str, task_id: str, primary_path: str) -> bool:
     stem = Path(normalized).stem.lower()
     task = task_id.lower()
     parts = [part.lower() for part in Path(normalized).parts]
+    if formal_task_ids is not None:
+        candidate_task = task_id_from_path(
+            normalized,
+            formal_task_ids=formal_task_ids,
+        )
+        if candidate_task and candidate_task != task_id and stem == candidate_task.lower():
+            return False
     if f"{task}_support" in parts:
         return True
     return stem.startswith(f"{task}_") and not stem.startswith(f"{task}_review")
 
 
-def discover_runtime_support_files(runtime_root: Path, task_id: str) -> dict[str, bytes]:
+def discover_runtime_support_files(
+    runtime_root: Path,
+    task_id: str,
+    *,
+    formal_task_ids: Iterable[str] | None = None,
+) -> dict[str, bytes]:
     """Return every current task-owned support file, excluding the public primary file."""
 
     root = runtime_root.resolve()
@@ -117,6 +195,8 @@ def discover_runtime_support_files(runtime_root: Path, task_id: str) -> dict[str
     primary = f"ToyApollo/Output/{task_id}.lean"
     if not output_root.is_dir():
         return {}
+    if formal_task_ids is None:
+        formal_task_ids = discover_formal_plan_task_ids(runtime_root / "plans")
     support: dict[str, bytes] = {}
     for path in output_root.rglob("*.lean"):
         if not path.is_file():
@@ -124,7 +204,12 @@ def discover_runtime_support_files(runtime_root: Path, task_id: str) -> dict[str
         logical_path = path.resolve().relative_to(root).as_posix()
         if logical_path == primary:
             continue
-        if is_task_owned_path(logical_path, task_id, primary):
+        if is_task_owned_path(
+            logical_path,
+            task_id,
+            primary,
+            formal_task_ids=formal_task_ids,
+        ):
             support[logical_path] = path.read_bytes()
     return support
 
@@ -164,6 +249,7 @@ def discover_git_subjects(
     layout: str,
     chapters: Iterable[int] | None = None,
     task_ids: Iterable[str] | None = None,
+    formal_task_ids: Iterable[str] | None = None,
 ) -> dict[str, SubjectBundle]:
     if not (repo / ".git").exists():
         return {}
@@ -173,7 +259,7 @@ def discover_git_subjects(
     paths = [path for path in git_ref_paths(repo, ref) if path.lower().endswith(".lean")]
     primary_by_task: dict[str, str] = {}
     for path in paths:
-        task_id = task_id_from_path(path)
+        task_id = task_id_from_path(path, formal_task_ids=formal_task_ids)
         if not task_id or not is_primary_task_path(path, task_id):
             continue
         chapter = chapter_for_task(task_id)
@@ -184,7 +270,16 @@ def discover_git_subjects(
         primary_by_task.setdefault(task_id, path)
     subjects: dict[str, SubjectBundle] = {}
     for task_id, primary in sorted(primary_by_task.items()):
-        owned_paths = [path for path in paths if is_task_owned_path(path, task_id, primary)]
+        owned_paths = [
+            path
+            for path in paths
+            if is_task_owned_path(
+                path,
+                task_id,
+                primary,
+                formal_task_ids=formal_task_ids,
+            )
+        ]
         files = {path: git_file_at_ref(repo, ref, path) for path in owned_paths}
         subjects[task_id] = SubjectBundle.from_files(
             task_id=task_id,
@@ -205,6 +300,7 @@ def discover_worktree_subjects(
     layout: str,
     chapters: Iterable[int] | None = None,
     task_ids: Iterable[str] | None = None,
+    formal_task_ids: Iterable[str] | None = None,
 ) -> dict[str, SubjectBundle]:
     if not (repo / ".git").exists():
         return {}
@@ -223,7 +319,7 @@ def discover_worktree_subjects(
                 paths.append((Path(directory) / filename).relative_to(repo).as_posix())
     primary_by_task: dict[str, str] = {}
     for path in paths:
-        task_id = task_id_from_path(path)
+        task_id = task_id_from_path(path, formal_task_ids=formal_task_ids)
         if not task_id or not is_primary_task_path(path, task_id):
             continue
         chapter = chapter_for_task(task_id)
@@ -234,7 +330,16 @@ def discover_worktree_subjects(
         primary_by_task.setdefault(task_id, path)
     subjects: dict[str, SubjectBundle] = {}
     for task_id, primary in sorted(primary_by_task.items()):
-        owned_paths = [path for path in paths if is_task_owned_path(path, task_id, primary)]
+        owned_paths = [
+            path
+            for path in paths
+            if is_task_owned_path(
+                path,
+                task_id,
+                primary,
+                formal_task_ids=formal_task_ids,
+            )
+        ]
         files = {path: (repo / path).read_bytes() for path in owned_paths}
         subjects[task_id] = SubjectBundle.from_files(
             task_id=task_id,
@@ -279,6 +384,7 @@ def refresh_local_repositories(
     runtime_root: Path,
     chapters: Iterable[int] = (1, 2, 3, 4),
     task_ids: Iterable[str] | None = None,
+    formal_task_ids: Iterable[str] | None = None,
     fetch: bool = False,
 ) -> dict[str, Any]:
     result: dict[str, Any] = {"mat_main": 0, "mat_candidate": 0, "toy_current": 0, "errors": []}
@@ -304,6 +410,7 @@ def refresh_local_repositories(
                 layout="mat",
                 chapters=chapters,
                 task_ids=task_ids,
+                formal_task_ids=formal_task_ids,
             )
             result["mat_main"] = store_subject_heads(
                 store,
@@ -321,6 +428,7 @@ def refresh_local_repositories(
                 layout="mat",
                 chapters=chapters,
                 task_ids=task_ids,
+                formal_task_ids=formal_task_ids,
             )
             result["mat_candidate"] = store_subject_heads(
                 store,
@@ -338,6 +446,7 @@ def refresh_local_repositories(
                 layout="toy",
                 chapters=chapters,
                 task_ids=task_ids,
+                formal_task_ids=formal_task_ids,
             )
             result["toy_current"] = store_subject_heads(
                 store,
@@ -371,6 +480,7 @@ def discover_github_subjects(
     layout: str,
     task_ids: Iterable[str] | None = None,
     chapters: Iterable[int] | None = None,
+    formal_task_ids: Iterable[str] | None = None,
 ) -> tuple[str, dict[str, SubjectBundle]]:
     requested_tasks = {canonicalize_block_id(task_id) for task_id in (task_ids or []) if canonicalize_block_id(task_id)}
     requested_chapters = set(chapters or [])
@@ -385,7 +495,7 @@ def discover_github_subjects(
     primary_by_task: dict[str, str] = {}
     by_path = {str(entry["path"]): entry for entry in entries}
     for path in by_path:
-        task_id = task_id_from_path(path)
+        task_id = task_id_from_path(path, formal_task_ids=formal_task_ids)
         if not task_id or not is_primary_task_path(path, task_id):
             continue
         chapter = chapter_for_task(task_id)
@@ -398,7 +508,12 @@ def discover_github_subjects(
     for task_id, primary in sorted(primary_by_task.items()):
         manifests: list[dict[str, Any]] = []
         for path, entry in by_path.items():
-            if not is_task_owned_path(path, task_id, primary):
+            if not is_task_owned_path(
+                path,
+                task_id,
+                primary,
+                formal_task_ids=formal_task_ids,
+            ):
                 continue
             blob_sha = str(entry.get("sha", ""))
             content_hash = ""
@@ -439,6 +554,7 @@ def refresh_kenneth_github(
     *,
     task_ids: Iterable[str] | None = None,
     chapters: Iterable[int] = (1, 2, 3, 4),
+    formal_task_ids: Iterable[str] | None = None,
 ) -> dict[str, Any]:
     requested = list(task_ids or [])
     result: dict[str, Any] = {"repo": KENNETH_REPO, "subjects": 0, "pull_requests": 0, "errors": []}
@@ -455,6 +571,7 @@ def refresh_kenneth_github(
             layout="kenneth",
             task_ids=requested or None,
             chapters=chapters,
+            formal_task_ids=formal_task_ids,
         )
         result["commit_sha"] = commit_sha
         result["subjects"] = store_subject_heads(
@@ -489,9 +606,15 @@ def refresh_kenneth_github(
                     continue
                 files = _gh_json(f"repos/{KENNETH_REPO}/pulls/{number}/files", query={"per_page": "100"})
                 affected = {
-                    task_id_from_path(str(item.get("filename", "")))
+                    task_id_from_path(
+                        str(item.get("filename", "")),
+                        formal_task_ids=formal_task_ids,
+                    )
                     for item in files
-                    if task_id_from_path(str(item.get("filename", "")))
+                    if task_id_from_path(
+                        str(item.get("filename", "")),
+                        formal_task_ids=formal_task_ids,
+                    )
                 }
                 selected = requested_set & affected if requested_set else affected
                 head_repo = str((pull.get("head", {}).get("repo") or {}).get("full_name", "") or "")
@@ -508,6 +631,7 @@ def refresh_kenneth_github(
                                 source_repo="kenneth_pr",
                                 layout="kenneth",
                                 task_ids=[task_id],
+                                formal_task_ids=formal_task_ids,
                             )
                             head_subject = head_subjects.get(task_id)
                             if head_subject is not None:
@@ -546,6 +670,10 @@ def refresh_workspace_state(
     refresh_remote: bool = False,
 ) -> dict[str, Any]:
     store.initialize()
+    formal_task_ids = discover_formal_plan_task_ids(
+        runtime_root / "plans",
+        chapters=chapters,
+    )
     result = {
         "local": refresh_local_repositories(
             store,
@@ -553,11 +681,17 @@ def refresh_workspace_state(
             runtime_root=runtime_root,
             chapters=chapters,
             task_ids=task_ids,
+            formal_task_ids=formal_task_ids,
             fetch=refresh_remote,
         ),
         "remote": None,
     }
     if refresh_remote:
-        result["remote"] = refresh_kenneth_github(store, task_ids=task_ids, chapters=chapters)
+        result["remote"] = refresh_kenneth_github(
+            store,
+            task_ids=task_ids,
+            chapters=chapters,
+            formal_task_ids=formal_task_ids,
+        )
     result["dependency_pins"] = store.revalidate_dependency_pins()
     return result

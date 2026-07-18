@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Iterator, Mapping
 
-from src.block_id_naming import canonicalize_block_id
+from src.block_id_naming import canonicalize_block_id, is_canonical_base_id
 
 from .state_reconcile import refresh_workspace_state
 from .state_store import (
@@ -18,9 +18,6 @@ from .state_store import (
     sha256_json,
     utc_now,
 )
-
-
-TASK_ID_RE = re.compile(r"^(?:def|thm|ex|prob|rem|intro)_\d+(?:_\d+)+$", re.IGNORECASE)
 
 
 @dataclass
@@ -66,7 +63,7 @@ def _file_time(path: Path) -> str:
 
 
 def _looks_like_task_id(value: str) -> bool:
-    return bool(TASK_ID_RE.match(value))
+    return is_canonical_base_id(canonicalize_block_id(value))
 
 
 def _task_id(payload: Mapping[str, Any], fallback: str = "") -> str:
