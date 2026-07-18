@@ -59,9 +59,16 @@ python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks thm_4_7 --r
 python .\run_chapter.py --phase 2 --phase2-mode soft-pack --tasks prob_4_2,prob_4_4
 python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks prob_4_2,prob_4_4 --selection .\selection.json
 python .\run_chapter.py --status
+python .\run_chapter.py status thm_1_1
+python .\run_chapter.py worklist
+python .\run_chapter.py pr-review prepare --task ex_1_3_1 --pr 9 --checkout <clean-exact-head-checkout>
 ```
 
 `--status` 会显示 artifact、plan、ledger、Phase 1/2 prompt-pack、dependency-decision 和 Output roots，同时报告 `TOY_APOLLO_RUNTIME_ROOT` / `TOY_APOLLO_ARTIFACT_ROOT` 是否设置。`STATUS_SCOPE=resolved_for_this_process_not_global_authority` 表示这些值只对当前进程成立。
+
+`status <task>` 与 `worklist` 查询工作区级 `toy-apollo-artifacts/state.sqlite3`，并默认刷新本地 Git 与 Kenneth GitHub 状态；它们不会自动 commit、push、开 PR 或 merge。完整规则见 `docs/workspace_state.md`。旧 `project_ledger.json` 在数据库启用后只作为冻结的兼容/迁移证据。
+
+Kenneth PR 的语义复审使用 `pr-review prepare/apply`：它把审查绑定到准确的 PR head、文件包和构建收据，且绝不把外部候选写入 `ToyApollo/Output`。该命令也不会修改 PR 的 draft/ready/merge 状态。
 
 `--tasks` 适用范围：
 

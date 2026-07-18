@@ -736,6 +736,23 @@ async def apply_codex_review_result_once(
                 latest_applied_review_result_hash=sha256_json(normalized_review),
                 latest_applied_review_subject_kind=review_subject_kind,
             )
+        from .state_review import record_review_apply_state
+
+        reviewed_output = None
+        if success and review_subject_kind in {"candidate", "official_output"}:
+            reviewed_output = select_latest_existing_task_file(task_id, source_plan, settings)
+        record_review_apply_state(
+            settings=settings,
+            task_id=task_id,
+            review_input=review_input,
+            semantic_review=semantic_review,
+            candidate_path=candidate_path,
+            candidate_code=candidate_code,
+            success=success,
+            final_build_success=final_build_success,
+            disposition=disposition,
+            output_path=reviewed_output,
+        )
         return ApplyOutcome(success=success, detail=detail_text, disposition=disposition, next_action=next_action, repair_ready=repair_ready)
 
     validation_error = ""

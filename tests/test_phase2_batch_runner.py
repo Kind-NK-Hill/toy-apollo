@@ -1738,7 +1738,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(actions["downstream"].command, "")
         self.assertIn("root", actions["downstream"].reason)
 
-    def test_pack_metadata_final_import_union_feeds_dependency_projection(self):
+    def test_ledger_final_import_union_feeds_dependency_projection(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             settings = self._settings(root)
@@ -1763,6 +1763,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
                         "block_id": "ex_14_4_3",
                         "type": "Exercise",
                         "status": NONTERMINAL,
+                        "final_import_union": ["thm_14_8"],
                     },
                 }
             )
@@ -1773,7 +1774,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(actions["ex_14_4_3"].action, "skip_blocked")
         self.assertIn("thm_14_8", actions["ex_14_4_3"].reason)
 
-    def test_diagnoser_required_dependency_blocks_downstream_from_metadata_imports(self):
+    def test_diagnoser_required_dependency_blocks_downstream_from_ledger_imports(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             settings = self._settings(root)
@@ -1812,6 +1813,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
                         "status": NONTERMINAL,
                         "phase2_status": "fail",
                         "latest_verify_result_file": str(downstream_pack / "verify_result_v1.json"),
+                        "final_import_union": ["prob_14_8"],
                     },
                 }
             )

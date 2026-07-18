@@ -2,11 +2,12 @@
 
 ## Purpose
 
-`project_ledger.json` records the current state of each task.  It tells us
-which hard dependencies and soft imports are currently active.
+The workspace state database records the current task projection, including
+which hard dependencies and soft imports are active. The frozen legacy
+`project_ledger.json` remains compatibility/history evidence.
 
 The dependency decision trail records why an import was chosen.  It is an audit
-log, not a replacement for the ledger.
+log, not a replacement for workspace state.
 
 ## Storage
 

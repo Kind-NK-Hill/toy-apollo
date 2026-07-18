@@ -634,7 +634,6 @@ def _dependencies_from_record(record: dict[str, Any], *, task_id: str = "", sett
         raw = record.get(key)
         if isinstance(raw, list):
             dependencies.extend(canonicalize_block_id(str(item)) for item in raw if canonicalize_block_id(str(item)))
-    dependencies.extend(_metadata_final_import_union(task_id, settings))
     return _dedupe_dependencies(dependencies, task_id=task_id)
 
 
@@ -654,25 +653,6 @@ def _pack_manifest_hard_dependencies(task_id: str, settings=None) -> list[str] |
     if not isinstance(raw_dependencies, list):
         return []
     return [canonicalize_block_id(str(item)) for item in raw_dependencies if canonicalize_block_id(str(item))]
-
-
-def _metadata_final_import_union(task_id: str, settings=None) -> list[str]:
-    if not task_id:
-        return []
-    prompt_root = Path(getattr(settings, "phase2_prompt_packs_dir", "phase2_prompt_packs"))
-    metadata_path = prompt_root / task_id / "metadata.json"
-    if not metadata_path.exists():
-        return []
-    try:
-        payload = json.loads(metadata_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return []
-    if not isinstance(payload, dict):
-        return []
-    raw_union = payload.get("final_import_union", [])
-    if not isinstance(raw_union, list):
-        return []
-    return [canonicalize_block_id(str(item)) for item in raw_union if canonicalize_block_id(str(item))]
 
 
 def _dedupe_dependencies(dependencies: list[str], *, task_id: str) -> list[str]:

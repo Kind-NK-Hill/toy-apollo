@@ -3,6 +3,7 @@ import json
 import shutil
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -365,6 +366,39 @@ class Phase2ReviewDecisionTests(unittest.TestCase):
         )
 
         self.assertNotEqual(first["cache_key"], second["cache_key"])
+
+    def test_review_bundle_and_cache_bind_task_owned_support_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            runtime = Path(tmp)
+            support = runtime / "ToyApollo" / "Output" / "thm_1_1_support" / "core.lean"
+            support.parent.mkdir(parents=True)
+            support.write_text("theorem helper : True := by trivial\n", encoding="utf-8")
+            task = self._review_input("thm_1_1")["task"]
+            common = {
+                "task": task,
+                "mode": "review-pack",
+                "attempt": 1,
+                "candidate_path": Path("candidate.lean"),
+                "candidate_code": "theorem fixture : True := by trivial\n",
+                "import_lines": ["import Mathlib"],
+                "dependency_summary": [],
+                "search_summary": {},
+                "build_summary": {"success": True},
+                "backend_id": "test",
+                "reviewer_argv_hash": "runner",
+                "review_basis": {"task": task},
+                "runtime_root": runtime,
+            }
+
+            first = build_semantic_review_input(**common)
+            support.write_text("theorem helper : True := by exact True.intro\n", encoding="utf-8")
+            second = build_semantic_review_input(**common)
+
+            self.assertEqual(len(first["subject_bundle"]["files"]), 2)
+            self.assertNotEqual(
+                first["subject_bundle"]["bundle_hash"], second["subject_bundle"]["bundle_hash"]
+            )
+            self.assertNotEqual(first["cache_key"], second["cache_key"])
 
     def test_tracked_collector_cli_reports_authoritative_projection_without_mutating_inputs(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_decision_cli"

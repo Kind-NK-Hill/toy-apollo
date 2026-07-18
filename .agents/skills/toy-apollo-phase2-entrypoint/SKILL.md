@@ -24,7 +24,7 @@ Read the task-local artifacts next:
 
 1. `plans/<chapter>/<task>.json` or the relevant plan entry
 2. `inputs/<source>.tex` for the original textbook statement and proof
-3. Existing `ToyApollo/Output/*.lean` dependencies and `project_ledger.json`
+3. Existing `ToyApollo/Output/*.lean` dependencies and live workspace state (`run_chapter.py status <task>`); use frozen `project_ledger.json` only as imported history/compatibility evidence
 4. Existing `phase2_prompt_packs/...` review, build, obligation, audit, and hash artifacts
 5. Classification history, dependency status, downstream/import evidence, and ledger runtime status
 

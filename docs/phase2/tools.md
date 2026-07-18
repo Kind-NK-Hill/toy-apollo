@@ -22,7 +22,8 @@ python .\run_chapter.py --phase 2 --phase2-mode batch-plan --tasks <task_id>,<ta
 python tools/validate_phase2_completion_classification.py --require-proof-contract
 python tools/validate_phase2_obligation_contracts.py --write-report
 python tools/audit_phase2_clean_debt_surface.py --write-report --fail-on-errors
-python tools/snapshot_phase2_current_status.py --write
+python .\run_chapter.py status <task_id>
+python .\run_chapter.py worklist
 python .\run_chapter.py --phase 2 --phase2-mode verify --tasks <task_id>
 python .\run_chapter.py --phase 2 --phase2-mode audit --tasks <task_id>
 ```
@@ -73,9 +74,9 @@ debt, classification inconsistencies, and review/build diagnostics. These tools
 are not completion authorities. Their results must feed semantic review or
 repair.
 
-`tools/snapshot_phase2_current_status.py --write` creates a small tracked
-summary of the ignored runtime ledger. It is audit context for git history only;
-it must not be used to declare completion outside `review-apply`.
+`status` and `worklist` derive a live view from the workspace database and
+repository evidence. They do not create tracked snapshots and cannot declare
+completion outside `review-apply`.
 
 ## Maintenance
 

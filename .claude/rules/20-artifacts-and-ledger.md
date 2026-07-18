@@ -14,7 +14,8 @@ Typical artifact sets:
 - `aristotle_archives/` (legacy/protected local provider artifact)
 - `mathlib_index.faiss`
 - `mathlib_corpus.json`
-- `project_ledger.json`
+- `state.sqlite3` (workspace operational state)
+- `project_ledger.json` (legacy protected evidence)
 - `lab_notebook.json`
 
 ## Artifact Glossary
@@ -32,15 +33,17 @@ Settings come from `src/toy_apollo/core/settings.py`:
 - `TOY_APOLLO_RUNTIME_ROOT`
 - `TOY_APOLLO_ARTIFACT_ROOT`
 
-Without overrides, artifact paths resolve inside the main repo.
+The canonical state database always resolves to the sibling artifacts root;
+campaign/artifact overrides do not move it into a campaign.
 
 ## Ledger Rules
 
-- `project_ledger.json` is persistent runtime state and is `ignored-but-protected`.
+- `toy-apollo-artifacts/state.sqlite3` is the single operational state database and is `ignored-but-protected`.
+- `project_ledger.json` is frozen legacy evidence after SQLite activation; compatibility code reads its imported copy but must not rewrite the file.
 - `lab_notebook.json` follows the same preserve-by-default rule.
 - Do not delete it as cleanup.
 - Do not rename status strings without deliberate migration work.
-- Treat ledger snapshots and prompt-pack metadata as generated state unless the task explicitly requires editing them.
+- Treat legacy ledger snapshots and prompt-pack metadata as generated evidence, never as a second current authority.
 
 ## Protected Provenance And Prompt Packs
 
