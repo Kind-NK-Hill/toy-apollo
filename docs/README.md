@@ -33,6 +33,9 @@ refresh. Keep them in root `docs/` unless the tools are updated at the same time
 
 These are reports/cache. They do not decide Phase2 completion. Current state is
 queried from the local workspace database; it is not checked in as a snapshot.
+The checked-in completion-classification files predate the MAT-only output
+migration: default validation is structural, while fresh file/line validation
+requires a classification regenerated against the current MAT checkout.
 
 Short-lived manifest files produced by cleanup tools should not be kept in this
 root directory unless a current tool reads them as input. Tools that need those

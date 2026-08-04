@@ -14,7 +14,7 @@ class Phase2CompletionClassificationTests(unittest.TestCase):
         errors = validate_classification(DEFAULT_CLASSIFICATION)
         self.assertEqual(errors, [])
 
-    def test_classification_evidence_freshness_is_explicit_diagnostic(self) -> None:
+    def test_historical_classification_freshness_is_explicit_diagnostic(self) -> None:
         payload = json.loads(Path(DEFAULT_CLASSIFICATION).read_text(encoding="utf-8"))
         payload["tasks"][0]["evidence"][0]["text"] = "definitely-not-at-this-line"
         with tempfile.TemporaryDirectory() as tmp:
@@ -24,7 +24,8 @@ class Phase2CompletionClassificationTests(unittest.TestCase):
             freshness_errors = validate_classification(path, require_fresh_evidence=True)
 
         self.assertEqual(default_errors, [])
-        self.assertTrue(any("definitely-not-at-this-line" in error for error in freshness_errors))
+        self.assertTrue(freshness_errors)
+        self.assertTrue(any("does not exist" in error for error in freshness_errors))
 
     def test_beyond_book_exception_is_unique(self) -> None:
         payload = json.loads(Path(DEFAULT_CLASSIFICATION).read_text(encoding="utf-8"))

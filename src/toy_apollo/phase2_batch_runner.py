@@ -10,6 +10,7 @@ from typing import Any
 
 from src.block_id_naming import canonicalize_block_id
 
+from .core.formal_output import formal_task_path
 from .phase2_batch_controller import BatchReport, analyze_batch_state, _task_has_family_consumable_support
 from .phase2_math_review_gate import math_review_gate_blocker, math_review_gate_state
 from .phase2_pack_shared.io import read_json_safely, sha256_json
@@ -1181,8 +1182,7 @@ def _transitive_fanout(raw_tasks: dict[str, dict[str, Any]]) -> dict[str, int]:
 
 
 def _official_output_exists(settings, task_id: str) -> bool:
-    output_dir = Path(getattr(settings, "toyapollo_output_dir", "ToyApollo/Output"))
-    return (output_dir / f"{task_id}.lean").exists()
+    return formal_task_path(task_id, settings).exists()
 
 
 def _review_or_build_candidate_exists(raw_task: dict[str, Any]) -> bool:

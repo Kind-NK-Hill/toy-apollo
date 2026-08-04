@@ -60,8 +60,57 @@ def task_id_in_scope(task_id: str, start_chapter: int, end_chapter: int) -> bool
     return chapter is not None and start_chapter <= chapter <= end_chapter
 
 
+def mat_repo_root(root: Path) -> Path:
+    workspace_raw = os.getenv("TOY_APOLLO_WORKSPACE_ROOT", "").strip()
+    workspace_root = Path(workspace_raw).resolve() if workspace_raw else root.resolve().parent
+    mat_raw = os.getenv("TOY_APOLLO_MAT_REPO_ROOT", "").strip()
+    if not mat_raw:
+        return workspace_root / "MAT3280-formalization-output"
+    mat_path = Path(mat_raw)
+    return mat_path.resolve() if mat_path.is_absolute() else (workspace_root / mat_path).resolve()
+
+
+def _legacy_fixture_output_root(root: Path) -> Path | None:
+    """Recognize old, self-contained audit fixtures without reviving them in production."""
+
+    if os.getenv("TOY_APOLLO_WORKSPACE_ROOT") or os.getenv("TOY_APOLLO_MAT_REPO_ROOT"):
+        return None
+    candidate = root / "ToyApollo" / "Output"
+    return candidate if candidate.is_dir() else None
+
+
+def formal_output_root(root: Path) -> Path:
+    legacy_fixture = _legacy_fixture_output_root(root)
+    if legacy_fixture is not None:
+        return legacy_fixture
+    return mat_repo_root(root) / "ProbabilityTheory"
+
+
+def formal_build_root(root: Path) -> Path:
+    return root if _legacy_fixture_output_root(root) is not None else mat_repo_root(root)
+
+
+def iter_formal_output_files(root: Path) -> list[Path]:
+    output_dir = formal_output_root(root)
+    if not output_dir.exists():
+        return []
+    if _legacy_fixture_output_root(root) is not None:
+        return sorted(output_dir.glob("*.lean"))
+    return sorted(output_dir.glob("chapter_[0-9][0-9]/*.lean"))
+
+
 def output_path(root: Path, task_id: str) -> Path:
-    return root / "ToyApollo" / "Output" / f"{task_id}.lean"
+    legacy_fixture = _legacy_fixture_output_root(root)
+    if legacy_fixture is not None:
+        return legacy_fixture / f"{task_id}.lean"
+    chapter = chapter_for_task_id(task_id)
+    if chapter is None:
+        return formal_output_root(root) / f"{task_id}.lean"
+    chapter_root = formal_output_root(root) / f"chapter_{chapter:02d}"
+    for candidate in chapter_root.glob("*.lean") if chapter_root.is_dir() else []:
+        if candidate.stem.casefold() == task_id.casefold():
+            return candidate
+    return chapter_root / f"{task_id}.lean"
 
 
 def rel(path: Path, root: Path) -> str:
@@ -90,10 +139,7 @@ DECL_KIND_RE = re.compile(
 
 def declaration_kinds(root: Path) -> dict[str, str]:
     declarations: dict[str, str] = {}
-    output_dir = root / "ToyApollo" / "Output"
-    if not output_dir.exists():
-        return declarations
-    for path in sorted(output_dir.glob("*.lean")):
+    for path in iter_formal_output_files(root):
         try:
             text = path.read_text(encoding="utf-8", errors="replace")
         except OSError:
@@ -107,10 +153,7 @@ def declaration_kinds(root: Path) -> dict[str, str]:
 
 def theorem_projection_wrappers(root: Path) -> dict[str, str]:
     wrappers: dict[str, str] = {}
-    output_dir = root / "ToyApollo" / "Output"
-    if not output_dir.exists():
-        return wrappers
-    for path in sorted(output_dir.glob("*.lean")):
+    for path in iter_formal_output_files(root):
         try:
             text = path.read_text(encoding="utf-8", errors="replace")
         except OSError:
@@ -543,11 +586,8 @@ def clean_debt_error_tasks(root: Path) -> set[str]:
 
 
 def output_task_ids(root: Path, start_chapter: int, end_chapter: int) -> set[str]:
-    output_dir = root / "ToyApollo" / "Output"
     ids: set[str] = set()
-    if not output_dir.exists():
-        return ids
-    for path in output_dir.glob("*.lean"):
+    for path in iter_formal_output_files(root):
         task_id = path.stem
         if task_id.startswith("PackBuildCheck_") or task_id.startswith("PackVerify_"):
             continue
@@ -557,13 +597,19 @@ def output_task_ids(root: Path, start_chapter: int, end_chapter: int) -> set[str
 
 
 def output_importers(root: Path, task_id: str) -> list[str]:
-    output_dir = root / "ToyApollo" / "Output"
-    if not output_dir.exists():
+    target = output_path(root, task_id)
+    if not target.exists():
         return []
-    needle = f"import ToyApollo.Output.{task_id}"
+    if _legacy_fixture_output_root(root) is not None:
+        needle = f"import ToyApollo.Output.{target.stem}"
+    else:
+        chapter = chapter_for_task_id(task_id)
+        if chapter is None:
+            return []
+        needle = f"import ProbabilityTheory.chapter_{chapter:02d}.{target.stem}"
     importers: list[str] = []
-    for path in sorted(output_dir.glob("*.lean")):
-        if path.stem == task_id:
+    for path in iter_formal_output_files(root):
+        if path.resolve() == target.resolve():
             continue
         try:
             text = path.read_text(encoding="utf-8", errors="replace")
@@ -702,7 +748,7 @@ def build_result(root: Path, task_id: str, timeout_seconds: int) -> dict[str, An
         popen_kwargs["start_new_session"] = True
     proc = subprocess.Popen(
         ["lake", "env", "lean", str(path)],
-        cwd=root,
+        cwd=formal_build_root(root),
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

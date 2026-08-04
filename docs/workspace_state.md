@@ -13,14 +13,16 @@ derives the current worklist.
 
 ## Repository Flow
 
-- New ToyApollo output may be reviewed and promoted into MAT.
+- New Phase 2 candidates are reviewed against, and applied to, their single
+  configured MAT `ProbabilityTheory/chapter_XX` target. ToyApollo stores the
+  candidate and immutable review/build evidence, not a second Lean result.
 - A Kenneth file that needs review is copied into a MAT review branch. The
   accepted MAT version returns to Kenneth only through an explicit PR.
 - Provisionally, when Kenneth already has the file, the latest Kenneth `main`
   file supplies textbook wording and public interface while the reviewed MAT
   file supplies proof evidence to be reconciled into it. This operating rule
   may change after author feedback; changing it does not rewrite old evidence.
-- Kenneth candidates never enter `ToyApollo/Output`.
+- Kenneth candidates never enter a ToyApollo Lean-output tree.
 - The PR transport fork is not another refinement repository.
 - No state command commits, pushes, opens a PR, or merges automatically.
 
@@ -74,8 +76,8 @@ manifest, primary content hash, and exact-head build receipt.
 `pr-review apply` refreshes GitHub again and refuses stale base/head/file sets,
 non-draft PRs, changed build receipts, changed review inputs, self-review, and
 schema-invalid results. A clean pass is recorded against the exact PR subject
-with authority scope `kenneth_pr_exact_head_review`. It does not copy anything
-to `ToyApollo/Output`, promote MAT, push a branch, mark a PR ready, or merge it.
+with authority scope `kenneth_pr_exact_head_review`. It does not alter the MAT
+formal output, push a branch, mark a PR ready, or merge it.
 Any Lean-token change creates a new PR head and therefore requires a new pack
 and independent review.
 

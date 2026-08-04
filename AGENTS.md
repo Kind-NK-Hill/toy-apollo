@@ -9,7 +9,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
 - Keep active execution under `python run_chapter.py --phase {0,1,2}`. Phase 3 remains only as a deprecated migration error, Phase 4 remains only as an unavailable error, and both exit nonzero.
 - Keep `python run_chapter.py --status` strictly read-only. Its resolved roots describe only the current process, not an active campaign's global authority.
 - Use `python run_chapter.py status <task>` or `worklist` for live derived repository/review/PR state; these refresh GitHub by default and never commit, push, open, or merge a PR.
-- Use `python run_chapter.py pr-review prepare/apply` for an exact Kenneth PR head. This path records external review coverage only; it never lands the candidate in Toy output or changes PR readiness/merge state.
+- Use `python run_chapter.py pr-review prepare/apply` for an exact Kenneth PR head. This path records external review coverage only; it never lands the external candidate in MAT or changes PR readiness/merge state.
 - Treat `.claude/rules/10-phase-runtime.md` as the phase behavior source of truth before making any phase-routing decision.
 - Prefer active package paths under `src/toy_apollo/*` for new code.
 - Treat `toy-apollo-artifacts/state.sqlite3` as the workspace operational state described in `docs/workspace_state.md`. Legacy `project_ledger.json` is protected, frozen import evidence after SQLite activation.
@@ -18,15 +18,16 @@ If this file conflicts with older notes, trust current runtime code and the rule
 
 ## Repository Flow (Hard Boundary)
 
-- Active formalization code flows from `ToyApollo/Output` to the
-  `MAT3280-formalization-output` refinement repository only. Reviewed MAT code
-  does not flow back into `ToyApollo/Output`.
+- `MAT3280-formalization-output/ProbabilityTheory` is the only active reviewed
+  Lean output root. Phase 2 stages, builds, reviews, and lands accepted task
+  files there; ToyApollo stores workflow code and review/provenance artifacts,
+  not a second formal-output copy.
 - Kenneth's `wkshum/ProbabilityTheory` is bidirectional only with MAT: copy an
   exact current Kenneth file into a MAT review branch, review/repair it there,
   then return the accepted MAT version through a PR branch.
-- Never copy, port, or merge an active Kenneth candidate into
-  `ToyApollo/Output`. Review tools may run from this checkout, but that does not
-  make ToyApollo the owner of the candidate.
+- Never copy, port, or merge an active Kenneth candidate into a ToyApollo Lean
+  output directory. Review tools may run from this checkout, but MAT remains
+  the formal Lean owner.
 - `Kind-NK-Hill/ProbabilityTheory` is PR transport only. It is not a refinement
   repository or an additional source of truth.
 - Frozen Kenneth snapshots under provenance/history paths are read-only
@@ -91,7 +92,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
   - same-session orchestration: `auto-loop`
   - current default workflow: `docs/phase2/workflow.md`
   - `review-pack` / `review-existing` are low-level prepare-only modes and should not be presented as the preferred Codex operator path.
-- If `ToyApollo/Output/<task_id>.lean` is newer than and differs from the latest
+- If `MAT3280-formalization-output/ProbabilityTheory/chapter_XX/<task_id>.lean` is newer than and differs from the latest
   `draft.lean` / `candidate_vN.lean`, the candidate review target is stale.
   Do not build-check or review that stale candidate. Review the official output
   with `review-now --review-subject existing`, or intentionally sync the output
@@ -137,7 +138,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
 - `nonprogress` is a semantic stop reason, not a generic build stop.
 - Only stop the same-session loop on `completed`, `freshness_error`, `hard_failure`, `nonprogress`, `max_rounds`, `build_budget_exhausted`, or explicit user interruption.
 - For proof-bearing tasks, adapter/debt decisions, complex decomposition, hard-failure admission, and public proof-package rules, follow `docs/phase2/status_contract.md` and `docs/phase2/review_criteria.md`; prompt-pack mirrors, clean ledgers, and successful builds are not substitutes for that contract.
-- Before inventing a new proof obligation, bridge, or foundation API, search existing `ToyApollo/Output`, bridge/foundation files, ledger state, dependency decisions, plans, and Mathlib; reuse or repair metadata before adding new scaffold.
+- Before inventing a new proof obligation, bridge, or foundation API, search existing MAT `ProbabilityTheory` modules, bridge/foundation files, ledger state, dependency decisions, plans, and Mathlib; reuse or repair metadata before adding new scaffold.
 - Timed-out or manually aborted build/review runs without a canonical result file are mechanism blockers, not substantive proof failures; record them and continue with a narrower diagnostic.
 - When the user asks to review an existing chapter, section, or ordered task set, interpret that as a same-session self-driving existing-output batch review unless the user explicitly asks for prepare-only behavior.
 - In chapter-wide or task-set Phase 2 goals, a hard-stopped task makes its hard-dependency downstream tasks dependency-failed for that goal; mark/skip those blocked tasks and continue with independent tasks instead of stopping the whole goal.
@@ -160,7 +161,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
 
 - Deleting or bulk-moving runtime outputs, prompt packs, logs, or historical plans.
 - Changing ledger status names, plan JSON schema, or stable CLI flags.
-- Reworking directory layout for `ToyApollo/Output`, `output_lean_files`, or artifacts sync.
+- Reworking the MAT formal-output layout or artifacts sync after this migration.
 - Reintroducing retired external-provider behavior or adding new external service dependencies.
 
 ## Never Do
@@ -178,7 +179,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
 - Active CLI: `src/toy_apollo/cli/app.py`
 - New package home: `src/toy_apollo/`
 - Root-level `src/*.py` modules are retained only where active package code imports them; old direct-generation/orchestrator modules are not a supported runtime layer.
-- Lean output module root: `ToyApollo/Output`
+- Lean output module root: sibling `MAT3280-formalization-output/ProbabilityTheory`
 - Runtime state and generated outputs: artifact-rooted paths from `src/toy_apollo/core/settings.py`
 
 ## Minimum Verification
@@ -186,7 +187,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
 - `python run_chapter.py -h`
 - `python run_chapter.py --status`
 - `python tools/check_repo_hygiene.py`
-- `lake build ToyApollo.Output.<block_id>` for any touched Lean-facing task path
+- in the configured MAT repository, `lake build ProbabilityTheory.chapter_XX.<block_id>` for any touched Lean-facing task path
 
 ## Progressive Disclosure
 

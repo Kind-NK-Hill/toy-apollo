@@ -167,7 +167,7 @@ def next_action_for(audit_class: str) -> str:
         return "Use the existing theorem part; split or replace each missing support landing with a source lemma or interface translation."
     if audit_class in {"C_support_predicate_or_structure_only", "C_support_field_gap_no_decl"}:
         return "Do not count this as proof; replace the support predicate, structure, or field with theorem-level evidence."
-    return "Re-open the source and ToyApollo/Output search, then assign a real Lean landing before repair."
+    return "Re-open the source and MAT ProbabilityTheory search, then assign a real Lean landing before repair."
 
 
 def classify_alignment(names: list[str], declarations: dict[str, Declaration]) -> tuple[str, list[Declaration], list[str]]:

@@ -69,7 +69,7 @@ used as global campaign authority and must not create a missing ledger or root.
   - default workflow is two-stage:
     1. `pack`
     2. edit `draft.lean`
-    3. `build-check` until `lake build ToyApollo.Output.<task_id>` passes
+    3. `build-check` until `lake build ProbabilityTheory.chapter_XX.<task_id>` passes in the configured MAT repository
     4. `review-now --review-subject candidate` for a new candidate, `review-now --review-subject existing` for one runnable official output, or `review-existing-queue` followed by existing-output review/apply in deterministic queue order for a batch existing-output queue
     5. reviewer writes `semantic_review_result_vM.json`
     6. `review-apply`
@@ -84,7 +84,7 @@ used as global campaign authority and must not create a missing ledger or root.
     `batch-run --batch-max-actions 1` may advance a bounded number of selected
     actions, but it only dispatches existing review/auto-loop commands and does
     not decide completion.
-  - if `ToyApollo/Output/<task_id>.lean` is newer than and differs from the
+  - if the canonical MAT `ProbabilityTheory/chapter_XX/<task_id>.lean` is newer than and differs from the
     latest `draft.lean` or build-ready `candidate_vN.lean`, candidate review is
     stale; do not build-check or review that stale candidate. Review the
     official output with `review-now --review-subject existing`, or
@@ -109,7 +109,7 @@ used as global campaign authority and must not create a missing ledger or root.
   - `COMPLETED_WITH_PROOF_DEBT` is not a clean dependency; hard dependents and
     selected soft imports must wait until `debt-fix` removes the accepted debt
   - before adding a new proof-debt support object or helper obligation, inspect
-    existing `ToyApollo/Output` files, including older textbook outputs,
+    existing MAT `ProbabilityTheory` files, including older textbook outputs,
     definition files, bridge/foundation files, renamed helper variants, and
     downstream-imported files; reuse or register buildable local outputs before
     treating an obligation as unavailable
@@ -208,7 +208,7 @@ used as global campaign authority and must not create a missing ledger or root.
   `COMPLETED` dependency still records `accepted_as_proof_debt`, skip the
   downstream task as proof-debt-blocked and repair the blocker first.
 - Use `review-pack` and `review-existing` only as prepare-only/compatibility material-generation modes
-- Use `python .\run_chapter.py --phase 2 --phase2-mode review-existing-queue` to build the batch Codex reviewer queue from `ToyApollo/Output`
+- Use `python .\run_chapter.py --phase 2 --phase2-mode review-existing-queue` to build the batch Codex reviewer queue from MAT `ProbabilityTheory/chapter_XX`
 - Use `python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids> --selection <path>` only to persist selected soft imports
-- Use `lake build ToyApollo.Output.<block_id>` as the Lean-facing health signal
+- Use `lake build ProbabilityTheory.chapter_XX.<block_id>` in the MAT repository as the Lean-facing health signal
 - Avoid treating `lake build ToyApollo` as the only health signal

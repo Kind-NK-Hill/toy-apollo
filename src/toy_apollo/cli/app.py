@@ -11,6 +11,7 @@ from src.block_id_naming import (
     canonicalize_block_id,
 )
 from ..core.settings import get_settings
+from ..core.formal_output import formal_output_root, formal_scratch_binding, mat_output_configured
 from ..state_store import canonical_state_path
 from ..phase2_failure_budget import (
     PHASE2_AUTO_LOOP_BUILD_ATTEMPTS_PER_REVIEW,
@@ -68,6 +69,8 @@ PHASE4_UNAVAILABLE_MESSAGE = (
 
 RUNTIME_ROOT_ENV_VAR = "TOY_APOLLO_RUNTIME_ROOT"
 ARTIFACT_ROOT_ENV_VAR = "TOY_APOLLO_ARTIFACT_ROOT"
+WORKSPACE_ROOT_ENV_VAR = "TOY_APOLLO_WORKSPACE_ROOT"
+MAT_REPO_ROOT_ENV_VAR = "TOY_APOLLO_MAT_REPO_ROOT"
 STATUS_SCOPE = "resolved_for_this_process_not_global_authority"
 
 
@@ -112,8 +115,12 @@ def parse_batch_task_kinds(raw: str) -> list[str]:
 def print_read_only_status(settings) -> None:
     runtime_env_present = RUNTIME_ROOT_ENV_VAR in os.environ
     artifact_env_present = ARTIFACT_ROOT_ENV_VAR in os.environ
+    workspace_env_present = WORKSPACE_ROOT_ENV_VAR in os.environ
+    mat_repo_env_present = MAT_REPO_ROOT_ENV_VAR in os.environ
     runtime_env_value = os.environ.get(RUNTIME_ROOT_ENV_VAR, "")
     artifact_env_value = os.environ.get(ARTIFACT_ROOT_ENV_VAR, "")
+    workspace_env_value = os.environ.get(WORKSPACE_ROOT_ENV_VAR, "")
+    mat_repo_env_value = os.environ.get(MAT_REPO_ROOT_ENV_VAR, "")
 
     resolved_roots = (
         ("STATUS_SCOPE", STATUS_SCOPE),
@@ -128,6 +135,15 @@ def print_read_only_status(settings) -> None:
         ("ARTIFACT_ROOT_ENV_PRESENT", str(artifact_env_present).lower()),
         ("ARTIFACT_ROOT_ENV_VALUE", artifact_env_value if artifact_env_present else "<unset>"),
         ("WORKSPACE_ROOT", settings.workspace_root),
+        ("WORKSPACE_ROOT_SOURCE", "environment" if workspace_env_value else "default"),
+        ("WORKSPACE_ROOT_ENV_VAR", WORKSPACE_ROOT_ENV_VAR),
+        ("WORKSPACE_ROOT_ENV_PRESENT", str(workspace_env_present).lower()),
+        ("WORKSPACE_ROOT_ENV_VALUE", workspace_env_value if workspace_env_present else "<unset>"),
+        ("MAT_REPO_ROOT", settings.mat_repo_dir),
+        ("MAT_REPO_ROOT_SOURCE", "environment" if mat_repo_env_value else "default"),
+        ("MAT_REPO_ROOT_ENV_VAR", MAT_REPO_ROOT_ENV_VAR),
+        ("MAT_REPO_ROOT_ENV_PRESENT", str(mat_repo_env_present).lower()),
+        ("MAT_REPO_ROOT_ENV_VALUE", mat_repo_env_value if mat_repo_env_present else "<unset>"),
         ("STATE_DB_FILE", settings.state_db_file or canonical_state_path(settings.runtime_root)),
         ("PLAN_ROOT", settings.plans_dir),
         ("LEDGER_ROOT", settings.project_ledger_file.parent),
@@ -135,7 +151,8 @@ def print_read_only_status(settings) -> None:
         ("PHASE1_PROMPT_PACK_ROOT", settings.phase1_prompt_packs_dir),
         ("PHASE2_PROMPT_PACK_ROOT", settings.phase2_prompt_packs_dir),
         ("DEPENDENCY_DECISION_ROOT", settings.dependency_decisions_dir),
-        ("OUTPUT_ROOT", settings.toyapollo_output_dir),
+        ("FORMAL_OUTPUT_ROOT", formal_output_root(settings)),
+        ("LEAN_SCRATCH_ROOT", formal_scratch_binding("probe", settings)[0].parent),
     )
     for label, value in resolved_roots:
         print(f"{label}={value if value is not None else '<unset>'}")
@@ -265,7 +282,15 @@ async def process_target(args):
         settings.phase2_prompt_packs_dir.mkdir(parents=True, exist_ok=True)
         settings.error_logs_dir.mkdir(parents=True, exist_ok=True)
         settings.formalized_chapters_dir.mkdir(parents=True, exist_ok=True)
-        settings.toyapollo_output_dir.mkdir(parents=True, exist_ok=True)
+        scratch_root = formal_scratch_binding("probe", settings)[0].parent
+        if mat_output_configured(settings):
+            configured_output_root = formal_output_root(settings)
+            if not configured_output_root.is_dir():
+                print(f"❌ Configured MAT formal-output root does not exist: {configured_output_root}")
+                return
+            scratch_root.mkdir(exist_ok=True)
+        else:
+            scratch_root.mkdir(parents=True, exist_ok=True)
         if args.phase2_mode in {"soft-pack", "soft-apply"}:
             settings.phase2_softdep_packs_dir.mkdir(parents=True, exist_ok=True)
         if not selected_task_ids and args.phase2_mode not in {"batch-plan", "batch-run", "review-existing-queue"}:
@@ -484,7 +509,7 @@ def main() -> int:
     parser.add_argument("--tasks", type=str, required=False, default="", help="Comma-separated block_id filter for Phase 2 modes")
     parser.add_argument("--phase2-mode", type=str, choices=PHASE2_MODES, default="pack", help="Phase 2 mode: default workflow is pack -> build-check -> review-now --review-subject candidate -> review-apply. review-apply is the only completion landing gate. batch-plan reports next actions from ledger state; batch-run executes a small number of selected review/auto-loop actions; review-pack/review-existing/review-support/review-existing-queue are prepare-only compatibility modes; review-fix repairs failed semantic review; debt-fix is a non-default maintenance path; soft-pack and soft-apply handle Problem soft dependency selection; auto-loop advances same-session repair/review state; verify and audit are diagnostics and do not land completion.")
     parser.add_argument("--phase3-mode", type=str, choices=DEPRECATED_PHASE3_MODES, default=None, help=argparse.SUPPRESS)
-    parser.add_argument("--candidate", type=str, required=False, default="", help="Optional external Lean file for --phase 2 --phase2-mode build-check/verify; review-pack only accepts ToyApollo/Output/<task>.lean as a compatibility alias for review-existing")
+    parser.add_argument("--candidate", type=str, required=False, default="", help="Optional external Lean file for --phase 2 --phase2-mode build-check/verify; review-pack accepts the canonical MAT task file as a compatibility alias for review-existing")
     parser.add_argument("--review-result", type=str, required=False, default="", dest="review_result", help="Filled semantic review result JSON for --phase 2 --phase2-mode review-apply")
     parser.add_argument("--review-subject", type=str, choices=["current", "existing", "candidate", "support"], default="current", dest="review_subject", help="Review subject selector for --phase 2 --phase2-mode review-now/auto-loop")
     parser.add_argument("--auto-apply-pass", action="store_true", dest="auto_apply_pass", help="Agent-side hint for --phase 2 --phase2-mode review-now: after the Codex reviewer writes a pass result, continue with review-apply")

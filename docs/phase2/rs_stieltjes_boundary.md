@@ -10,13 +10,13 @@ This is the Riemann-Stieltjes instance of
 
 ## Current Diagnosis
 
-`ToyApollo/Output/def_1_2.lean` grew because it replaced the old
+MAT `ProbabilityTheory/chapter_01/def_1_2.lean` grew because it replaced the old
 axiom-backed interface with a source-faithful Darboux upper/lower and tagged
 sum core. That direction is acceptable for Definition 1.2 and Theorem 1.3
 style properties, but it should not absorb later examples, problem
 calculations, or Lebesgue-Stieltjes theory.
 
-`ToyApollo/Output/rs_stieltjes_bridge.lean` historically grew because it became
+The retired `ToyApollo/Output/rs_stieltjes_bridge.lean` historically grew because it became
 a holding file for four different kinds of work:
 
 - reusable Mathlib/Stieltjes measure wrappers;
@@ -81,7 +81,7 @@ Still requires task-owned repair or blocker evidence before clean completion:
   the current closed-interval Darboux definition the unconditional statement is
   unsafe when `alpha` and `f` jump together at the split point.
 
-Retired from `ToyApollo.Output` as public axiom debt. Do not re-export or wrap
+Retired from the active MAT `ProbabilityTheory` surface as public axiom debt. Do not re-export or wrap
 these old bridge names as completion evidence:
 
 - `lsIntegral_eq_rsIntegral_stieltjesFunction`;
@@ -120,11 +120,11 @@ routes need source-facing hypothesis packages plus the Math Review Gate.
 
 ## Theorem 1.2(4) Impact Boundary
 
-The interval-concatenation clause in Theorem 1.2 has no direct downstream
-consumer in the current Phase2 review context for `thm_1_2`, and no official
-`ToyApollo/Output` module currently imports `ToyApollo.Output.thm_1_2`. This
-means the blocker should be isolated; it should not stop independent Chapter
-1--9 repair.
+The corrected interval-concatenation support now lives in
+`ProbabilityTheory/chapter_01/thm_1_2_glue_support.lean`, with the author-
+confirmed condition that either `α` or `f` is continuous at the split point.
+It is consumed by Chapter 1 material, including `Ex_1_3_2.lean`; it is not a
+global blocker for independent later chapters.
 
 The clause is still conceptually important. It is the textbook-level interval
 localization/additivity property one would use for piecewise RS calculations.

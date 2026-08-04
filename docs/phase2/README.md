@@ -1,7 +1,7 @@
 # Phase2
 
-Phase2 turns one task candidate into an official ToyApollo output only through
-three completion gates:
+Phase2 turns one task candidate into the official MAT `ProbabilityTheory`
+output only through three completion gates:
 
 1. Build gate: the candidate must build.
 2. Semantic review gate: an independent read-only reviewer judges textbook
@@ -58,7 +58,7 @@ is repair evidence, not a completion state, unless it is recorded through
 - [artifacts.md](artifacts.md): authority files versus cache/report/history.
 - [tools.md](tools.md): short notes for diagnostics-only tools.
 - [output_auxiliary_modules.md](output_auxiliary_modules.md): classification
-  for non-task `ToyApollo/Output` support, bridge, family-member, and retired
+  rules for non-task MAT support, bridge, family-member, and retired
   build-probe modules.
 - [../interface_dependency_policy.md](../interface_dependency_policy.md): the
   textbook-first, bridge-then-Mathlib policy for shared mathematical

@@ -35,7 +35,12 @@ pip install -r requirements.txt
 ```powershell
 $env:TOY_APOLLO_RUNTIME_ROOT="D:\Grad_Study\Practimum\toy_apollo_archive\_migration_20260330_211429\toy-apollo"
 $env:TOY_APOLLO_ARTIFACT_ROOT="D:\Grad_Study\Practimum\toy_apollo_archive\_migration_20260330_211429\toy-apollo-artifacts"
+$env:TOY_APOLLO_WORKSPACE_ROOT="D:\Grad_Study\Practimum\Formalization"
+$env:TOY_APOLLO_MAT_REPO_ROOT="D:\Grad_Study\Practimum\Formalization\MAT3280-formalization-output"
 ```
+
+未设置后两项时，MAT 默认解析为 ToyApollo 相邻的
+`MAT3280-formalization-output`；使用 worktree 或非标准目录布局时应显式设置。
 
 4. 查看命令帮助：
 
@@ -64,11 +69,11 @@ python .\run_chapter.py worklist
 python .\run_chapter.py pr-review prepare --task ex_1_3_1 --pr 9 --checkout <clean-exact-head-checkout>
 ```
 
-`--status` 会显示 artifact、plan、ledger、Phase 1/2 prompt-pack、dependency-decision 和 Output roots，同时报告 `TOY_APOLLO_RUNTIME_ROOT` / `TOY_APOLLO_ARTIFACT_ROOT` 是否设置。`STATUS_SCOPE=resolved_for_this_process_not_global_authority` 表示这些值只对当前进程成立。
+`--status` 会显示 artifact、plan、ledger、Phase 1/2 prompt-pack、dependency-decision、MAT formal-output 和临时编译 roots，同时报告相关环境变量是否设置。`STATUS_SCOPE=resolved_for_this_process_not_global_authority` 表示这些值只对当前进程成立。
 
 `status <task>` 与 `worklist` 查询工作区级 `toy-apollo-artifacts/state.sqlite3`，并默认刷新本地 Git 与 Kenneth GitHub 状态；它们不会自动 commit、push、开 PR 或 merge。完整规则见 `docs/workspace_state.md`。旧 `project_ledger.json` 在数据库启用后只作为冻结的兼容/迁移证据。
 
-Kenneth PR 的语义复审使用 `pr-review prepare/apply`：它把审查绑定到准确的 PR head、文件包和构建收据，且绝不把外部候选写入 `ToyApollo/Output`。该命令也不会修改 PR 的 draft/ready/merge 状态。
+Kenneth PR 的语义复审使用 `pr-review prepare/apply`：它把审查绑定到准确的 PR head、文件包和构建收据，且不会把尚未接受的外部候选写入 MAT。该命令也不会修改 PR 的 draft/ready/merge 状态。
 
 `--tasks` 适用范围：
 
@@ -118,7 +123,7 @@ python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks ex_4_4_3 --
 - 新路径强制依赖本地 Mathlib grounding 与本地验证
 - 对带证明或解答的任务，必须回到 `inputs/<source>.tex` 检查原始证明主线；prompt pack 中的复制文本只是镜像。
 - `hard_failure` 是最后手段，必须有原始 TeX proof-spine 拆解和具体 blocker 记录，不能用来代替大证明的分解工作。
-- 复杂证明任务必须先写 task-local decomposition/reconstruction plan；拆新 obligation 前要先查 `ToyApollo/Output`、ledger、dependency decisions、plans 和 Mathlib，已有输出要复用或修元数据；under-evidenced hard stop 后重试时，完成前或累计 15 次 substantive build/review failure 前不能再次 hard-failure。
+- 复杂证明任务必须先写 task-local decomposition/reconstruction plan；拆新 obligation 前要先查 MAT 的 `ProbabilityTheory` 模块、ledger、dependency decisions、plans 和 Mathlib，已有输出要复用或修元数据；under-evidenced hard stop 后重试时，完成前或累计 15 次 substantive build/review failure 前不能再次 hard-failure。
 
 权威 runbook 见：
 
@@ -133,8 +138,8 @@ Phase 3 已弃用且不可执行；旧入口会返回非零迁移提示。Proble
 ## 仓库边界
 
 - 本仓库只保留源码、配置和最小输入。
-- `ToyApollo.lean` 是库级 smoke test；教材章节输出位于 `ToyApollo/Output/`，不要把两者混为一谈。
-- 正式化文件只允许从 ToyApollo 单向进入 `MAT3280-formalization-output` 精炼库；MAT 的审查结果不得回写 `ToyApollo/Output/`。
+- `ToyApollo.lean` 是工具仓库的库级 smoke test；教材章节的正式 Lean 输出只位于相邻 MAT 仓库的 `ProbabilityTheory/`。
+- Phase 2 可以在 MAT 中临时替换候选并构建，只有 `review-apply` 才能保留通过审查的版本；ToyApollo 只保留候选/审查凭据和自动删除的临时编译文件。
 - Kenneth 文件需要复审时，必须复制到 MAT 的 review 分支处理；通过后再由 PR 返回 Kenneth，不得先放进 ToyApollo。
 - `Kind-NK-Hill/ProbabilityTheory` 只承载发给 Kenneth 的 PR 分支，不是第四份正式内容库。
 - 运行产物（输出、日志、归档、大文件）应进入 `toy-apollo-artifacts` 仓库。

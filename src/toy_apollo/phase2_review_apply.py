@@ -8,6 +8,7 @@ from typing import Any
 from src.block_id_naming import canonicalize_block_id
 
 from .core import LedgerManager, TaskStatus
+from .core.formal_output import formal_task_module
 from .phase2_pack_shared.artifacts import (
     latest_review_repair_request_path,
     latest_review_repair_summary_path,
@@ -937,7 +938,7 @@ async def apply_codex_review_result_once(
                 diagnostics = parse_diagnostics(apply_build_output, "final_build_failed", "apply_official_output_build")
                 fail_detail = (
                     apply_build_output
-                    or f"lake build ToyApollo.Output.{task_id} failed at review-apply."
+                    or f"lake build {formal_task_module(task_id, settings)} failed at review-apply."
                 )
                 outcome = finish(
                     success=False,
@@ -1061,7 +1062,7 @@ async def apply_codex_review_result_once(
         diagnostics = parse_diagnostics(final_output, "final_build_failed", "final_build")
         return finish(
             success=False,
-            detail_text=final_output or f"lake build ToyApollo.Output.{task_id} failed after Codex review pass.",
+            detail_text=final_output or f"lake build {formal_task_module(task_id, settings)} failed after Codex review pass.",
             diagnostics=diagnostics,
             semantic_review=normalized_review,
             disposition="codex_review_apply_final_build_failed",

@@ -167,14 +167,14 @@ def build_operator_prompt(
             rule_lines = [
                 "1. Work only on the blocking theorem targets listed by the Math Review Gate.",
                 "2. You may edit `draft.lean` or scratch support files only when the edit directly serves an allowed next target.",
-                "3. Do not write into `ToyApollo/Output`, request semantic review, or promote completion while any listed blocker remains.",
+                "3. Do not write into the canonical MAT output, request semantic review, or promote completion while any listed blocker remains.",
                 "4. Do not author unrelated parent assembly, adapters, or convenience lemmas that do not shorten the listed blocker path.",
                 "5. If a blocking target stalls, report the exact theorem name, current Lean goal, missing support lemma, and next replacement route.",
             ]
         else:
             role_line = "You are Codex's local Math Review Gate operator for exactly one Lean task in this repository."
             rule_lines = [
-                "1. Do not write Lean proof code, edit `draft.lean`, or write into `ToyApollo/Output` while this gate blocks.",
+                "1. Do not write Lean proof code, edit `draft.lean`, or write into the canonical MAT output while this gate blocks.",
                 "2. Write or update the natural language proof skeleton artifact before any Lean author/build work.",
                 "3. Use an independent read-only math reviewer for three rounds: source statement, proof route closure, and Lean theorem-shape feasibility.",
                 "4. Write the review verdict into `math_review_result_vN.json` with verdict `go` or `stop`.",

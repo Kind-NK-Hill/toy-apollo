@@ -253,6 +253,7 @@ def build_semantic_review_input(
     review_basis: dict[str, Any] | None = None,
     review_basis_hash: str = "",
     runtime_root: Path | None = None,
+    formal_source_root: Path | None = None,
     subject_bundle_override: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if not isinstance(review_basis, dict):
@@ -290,23 +291,57 @@ def build_semantic_review_input(
             raise ValueError("External review subject bundle manifest does not match its bundle hash.")
         subject_bundle.setdefault("schema", "toy-apollo.subject-bundle.v1")
     else:
-        from .state_reconcile import discover_runtime_support_files
+        from .state_reconcile import (
+            discover_formal_plan_task_ids,
+            discover_formal_support_files,
+            discover_runtime_support_files,
+        )
         from .state_store import SubjectBundle
 
         subject_files: dict[str, bytes | str] = {str(candidate_path): candidate_code}
-        if runtime_root is not None:
+        if formal_source_root is not None:
+            formal_ids = (
+                discover_formal_plan_task_ids(Path(runtime_root) / "plans")
+                if runtime_root is not None
+                else None
+            )
+            subject_files.update(
+                discover_formal_support_files(
+                    Path(formal_source_root),
+                    task_id,
+                    formal_task_ids=formal_ids,
+                )
+            )
+        elif runtime_root is not None:
             subject_files.update(discover_runtime_support_files(Path(runtime_root), task_id))
+        source_repo = "toy_apollo"
+        subject_layout = f"review_{review_subject_kind}"
+        if formal_source_root is not None:
+            try:
+                Path(candidate_path).resolve().relative_to(Path(formal_source_root).resolve())
+                primary_is_mat = True
+            except ValueError:
+                primary_is_mat = False
+            source_repo = (
+                "MAT3280-formalization-output"
+                if primary_is_mat
+                else "toy_apollo_candidate_with_mat_support"
+            )
+            subject_layout = f"mat_bound_review_{review_subject_kind}"
         review_subject = SubjectBundle.from_files(
             task_id=task_id,
             files=subject_files,
             primary_path=str(candidate_path),
-            source_repo="toy_apollo",
-            layout=f"review_{review_subject_kind}",
+            source_repo=source_repo,
+            layout=subject_layout,
             subject_kind="review_bundle",
         )
         subject_bundle = {
             "schema": "toy-apollo.subject-bundle.v1",
+            "subject_id": review_subject.subject_id,
             "task_id": task_id,
+            "source_repo": review_subject.source_repo,
+            "layout": review_subject.layout,
             "primary_path": review_subject.primary_path,
             "primary_hash": review_subject.primary_hash,
             "bundle_hash": review_subject.bundle_hash,

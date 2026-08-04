@@ -29,6 +29,11 @@ class Settings:
     dependency_decisions_dir: Path | None = None
     workspace_root: Path | None = None
     state_db_file: Path | None = None
+    # The reviewed Lean source of truth.  Older tests and one-off callers that
+    # construct Settings directly may leave this unset; production settings
+    # always bind it to the sibling MAT repository.
+    mat_repo_dir: Path | None = None
+    lean_scratch_dir: Path | None = None
 
 
 def _to_path(raw: str, fallback: Path) -> Path:
@@ -42,7 +47,22 @@ def get_settings() -> Settings:
     cwd = Path(".").resolve()
     runtime_root = _to_path(os.getenv("TOY_APOLLO_RUNTIME_ROOT", ""), cwd)
     artifact_root = _to_path(os.getenv("TOY_APOLLO_ARTIFACT_ROOT", ""), runtime_root)
-    workspace_root = runtime_root.parent
+    workspace_raw = os.getenv("TOY_APOLLO_WORKSPACE_ROOT", "").strip()
+    if workspace_raw:
+        workspace_path = Path(workspace_raw)
+        workspace_root = (
+            workspace_path
+            if workspace_path.is_absolute()
+            else (runtime_root / workspace_path).resolve()
+        )
+    else:
+        workspace_root = runtime_root.parent
+    mat_raw = os.getenv("TOY_APOLLO_MAT_REPO_ROOT", "").strip()
+    if mat_raw:
+        mat_path = Path(mat_raw)
+        mat_repo_dir = mat_path if mat_path.is_absolute() else (workspace_root / mat_path).resolve()
+    else:
+        mat_repo_dir = workspace_root / "MAT3280-formalization-output"
     state_artifact_name = (
         "toy-apollo-artifacts"
         if runtime_root.name.lower() == "toy-apollo"
@@ -72,4 +92,6 @@ def get_settings() -> Settings:
         phase0_ingestion_packs_dir=artifact_root / "phase0_ingestion_packs",
         workspace_root=workspace_root,
         state_db_file=state_db_file,
+        mat_repo_dir=mat_repo_dir,
+        lean_scratch_dir=mat_repo_dir / "ProbabilityTheory" / "Scratch",
     )

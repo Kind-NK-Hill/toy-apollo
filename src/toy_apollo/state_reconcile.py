@@ -214,6 +214,50 @@ def discover_runtime_support_files(
     return support
 
 
+def discover_formal_support_files(
+    formal_output_root: Path,
+    task_id: str,
+    *,
+    formal_task_ids: Iterable[str] | None = None,
+) -> dict[str, bytes]:
+    """Return MAT task-owned support files for a canonical task.
+
+    ``formal_output_root`` is the repository's ``ProbabilityTheory`` directory.
+    Paths in the returned bundle remain relative to the MAT repository root so
+    review hashes bind to the same layout that is built and eventually landed.
+    """
+
+    output_root = formal_output_root.resolve()
+    chapter = chapter_for_task(task_id)
+    if chapter is None:
+        return {}
+    repo_root = output_root.parent
+    chapter_root = output_root / f"chapter_{chapter:02d}"
+    primary_path = chapter_root / f"{task_id}.lean"
+    if not chapter_root.is_dir():
+        return {}
+    for candidate in chapter_root.glob("*.lean"):
+        if candidate.stem.casefold() == task_id.casefold():
+            primary_path = candidate
+            break
+    primary = primary_path.relative_to(repo_root).as_posix()
+    support: dict[str, bytes] = {}
+    for path in chapter_root.rglob("*.lean"):
+        if not path.is_file():
+            continue
+        logical_path = path.resolve().relative_to(repo_root).as_posix()
+        if logical_path.casefold() == primary.casefold():
+            continue
+        if is_task_owned_path(
+            logical_path,
+            task_id,
+            primary,
+            formal_task_ids=formal_task_ids,
+        ):
+            support[logical_path] = path.read_bytes()
+    return support
+
+
 def _git(repo: Path, *args: str, timeout: int = 30) -> bytes:
     result = run_command(["git", "-C", str(repo), *args], timeout=timeout)
     if result.returncode != 0:

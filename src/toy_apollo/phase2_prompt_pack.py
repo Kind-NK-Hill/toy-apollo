@@ -23,6 +23,16 @@ from src.block_id_naming import (
 from src.compiler import LeanCompiler
 
 from .core import LedgerManager, TaskStatus
+from .core.formal_output import (
+    formal_build_root,
+    formal_output_root,
+    formal_scratch_binding,
+    formal_task_module,
+    formal_task_path,
+    iter_formal_task_files,
+    mat_output_configured,
+    official_output_targets,
+)
 from .dependency_decisions import DependencyDecision, load_dependency_decisions, record_dependency_decision
 from .phase2_failure_budget import (
     PHASE2_AUTO_LOOP_BUILD_ATTEMPTS_PER_REVIEW,
@@ -60,6 +70,7 @@ from .phase2_semantic_review import (
     render_semantic_review_report,
     run_semantic_review,
 )
+from .state_reconcile import discover_formal_plan_task_ids
 from .phase2_proof_obligations import (
     PROOF_OBLIGATIONS_FILE_NAME,
     maybe_ensure_proof_obligations_file,
@@ -879,12 +890,21 @@ def extract_search_terms(title: str, content: str, limit: int = 8) -> list[str]:
     return terms[:limit]
 
 
-def build_import_lines(task: dict[str, Any]) -> list[str]:
+def build_import_lines(task: dict[str, Any], settings=None) -> list[str]:
     final_union = _task_final_import_union(task)
     import_lines = ["import Mathlib"]
     for dep in final_union:
-        import_lines.append(f"import ToyApollo.Output.{canonicalize_block_id(dep)}")
+        import_lines.append(f"import {formal_task_module(canonicalize_block_id(dep), settings)}")
     return import_lines
+
+
+def _formal_lean_compiler(settings) -> LeanCompiler:
+    validation_file, validation_target = formal_scratch_binding("Temp_Validation", settings)
+    return LeanCompiler(
+        root_dir=str(formal_build_root(settings)),
+        validation_file=validation_file,
+        validation_target=validation_target,
+    )
 
 
 def build_dependency_decision_context(task: dict[str, Any], settings) -> dict[str, Any]:
@@ -1186,20 +1206,7 @@ def load_or_create_intent_contract(pack_dir: Path, task: dict[str, Any]) -> dict
 
 
 def iter_official_output_targets(task_id: str, source_plan: str, settings) -> list[Path]:
-    targets = [
-        settings.toyapollo_output_dir / f"{task_id}.lean",
-        settings.output_lean_files_dir / "general" / f"{task_id}.lean",
-    ]
-    if source_plan and source_plan != "unknown":
-        targets.append(settings.output_lean_files_dir / source_plan / f"{task_id}.lean")
-
-    deduped: list[Path] = []
-    seen: set[Path] = set()
-    for target in targets:
-        if target not in seen:
-            seen.add(target)
-            deduped.append(target)
-    return deduped
+    return official_output_targets(task_id, source_plan, settings)
 
 
 def _has_active_official_output(task_id: str, source_plan: str, ledger: LedgerManager, settings) -> bool:
@@ -1619,7 +1626,11 @@ def _task_local_import_allowlist(task: dict[str, Any], ledger: LedgerManager | N
 
 def _candidate_local_imports(candidate_code: str) -> list[str]:
     imports: list[str] = []
-    for match in re.finditer(r"(?m)^\s*import\s+ToyApollo\.Output\.([A-Za-z0-9_']+)\s*$", candidate_code):
+    pattern = (
+        r"(?m)^\s*import\s+(?:ToyApollo\.Output|"
+        r"ProbabilityTheory\.chapter_\d{2})\.([A-Za-z0-9_']+)\s*$"
+    )
+    for match in re.finditer(pattern, candidate_code):
         dep = str(match.group(1) or "").strip().lower()
         if dep:
             imports.append(dep)
@@ -1677,7 +1688,7 @@ def validate_candidate_hard_checks(
     for candidate_target in target_task_ids:
         self_import_names.update(legacy_ids_for(candidate_target))
     if any(module in self_import_names for module in imported_modules):
-        detail = f"Candidate self-imports ToyApollo.Output.{target_task_id}, which would bypass verification."
+        detail = f"Candidate self-imports its target task {target_task_id}, which would bypass verification."
         return False, _hard_check_diagnostic("self_import", detail), detail
 
     imported = _task_like_local_imports(imported_modules)
@@ -2468,7 +2479,7 @@ def _collect_local_dependency_entries(
         dep_id = canonicalize_block_id(dep)
         dep_record = ledger.ledger.get("tasks", {}).get(dep_id, {})
         dep_file = find_existing_task_file(dep_id, dep_record.get("source_plan", "unknown"), settings)
-        import_path = f"ToyApollo.Output.{dep_id}"
+        import_path = formal_task_module(dep_id, settings)
         exported = dep_record.get("exported_symbols", [])
         symbols = exported if exported else [dep_id]
         skipped_symbol_count = max(0, len(symbols) - symbol_check_limit)
@@ -2587,7 +2598,7 @@ def _collect_optional_faiss_entries(
     try:
         searcher = MathlibSearcher(
             lib_root_dir=str(settings.mathlib_path),
-            local_output_dir=str(settings.toyapollo_output_dir),
+            local_output_dir=str(formal_output_root(settings)),
         )
         hits = searcher.search(
             {"keywords": [term], "signatures": [], "paths": [], "aliases": []},
@@ -2648,9 +2659,9 @@ def _collect_optional_faiss_entries(
 
 def build_search_manifest(task: dict[str, Any], ledger: LedgerManager, settings) -> dict[str, Any]:
     started = time.perf_counter()
-    compiler = LeanCompiler(root_dir=str(settings.runtime_root))
+    compiler = _formal_lean_compiler(settings)
     mathlib_root = settings.mathlib_path
-    local_root = settings.toyapollo_output_dir
+    local_root = formal_output_root(settings)
     terms = extract_search_terms(task.get("title", ""), task.get("content", ""))
     entries: list[dict[str, Any]] = []
     file_cache: dict[Path, list[Path]] = {}
@@ -2696,7 +2707,7 @@ def build_search_manifest(task: dict[str, Any], ledger: LedgerManager, settings)
             scoped_verified_any = True
         entries.extend(term_entries)
         if local_root.exists():
-            record_root("ToyApollo.Output")
+            record_root(str(local_root))
             local_project_started = time.perf_counter()
             entries.extend(
                 _collect_text_search_entries(
@@ -3630,16 +3641,22 @@ def _is_canonical_official_output(file_path: Path) -> bool:
     if file_path.suffix != ".lean":
         return False
     stem = file_path.stem
-    return bool(stem) and stem == canonicalize_block_id(stem) and extract_chapter(stem) is not None
+    canonical = canonicalize_block_id(stem)
+    return bool(stem) and stem.casefold() == canonical.casefold() and extract_chapter(canonical) is not None
 
 
 def _iter_review_existing_queue_outputs(settings, selected_task_ids: set[str] | None = None) -> tuple[list[Path], list[str]]:
     outputs_by_task: dict[str, Path] = {}
     skipped_non_official: list[str] = []
-    root = settings.toyapollo_output_dir
+    root = formal_output_root(settings)
     if not root.exists():
         return [], skipped_non_official
-    for file_path in sorted(root.glob("*.lean")):
+    planned_task_ids = (
+        discover_formal_plan_task_ids(settings.plans_dir)
+        if selected_task_ids is None and mat_output_configured(settings)
+        else None
+    )
+    for file_path in iter_formal_task_files(settings):
         if _is_queue_skipped_temp_output(file_path):
             continue
         if not _is_canonical_official_output(file_path):
@@ -3647,6 +3664,9 @@ def _iter_review_existing_queue_outputs(settings, selected_task_ids: set[str] | 
             continue
         canonical_task_id = canonicalize_block_id(file_path.stem)
         if selected_task_ids is not None and canonical_task_id not in selected_task_ids:
+            continue
+        if planned_task_ids is not None and canonical_task_id not in planned_task_ids:
+            skipped_non_official.append(str(file_path))
             continue
         outputs_by_task[canonical_task_id] = file_path
     return [outputs_by_task[task_id] for task_id in sorted(outputs_by_task)], skipped_non_official
@@ -4000,10 +4020,10 @@ def _queue_source_resolution(task_id: str, task: dict[str, Any] | None) -> dict[
     }
 
 
-def _queue_sanity_build_status(task_id: str, success: bool, detail: str) -> dict[str, Any]:
+def _queue_sanity_build_status(task_id: str, success: bool, detail: str, settings=None) -> dict[str, Any]:
     return {
         "status": "passed" if success else "failed",
-        "module": f"ToyApollo.Output.{task_id}",
+        "module": formal_task_module(task_id, settings),
         "detail": detail,
     }
 
@@ -4158,7 +4178,7 @@ def _run_semantic_review_for_candidate(
         attempt=attempt,
         candidate_path=candidate_path,
         candidate_code=candidate_code,
-        import_lines=build_import_lines(task),
+        import_lines=build_import_lines(task, settings),
         dependency_summary=_build_dependency_review_summary(task, ledger, settings),
         search_summary=_build_search_review_summary(pack_dir),
         build_summary=build_summary,
@@ -4170,6 +4190,7 @@ def _run_semantic_review_for_candidate(
         review_context_hash=_sha256_text(context_markdown),
         review_context_markdown=context_markdown,
         runtime_root=Path(settings.runtime_root),
+        formal_source_root=formal_output_root(settings),
     )
     return run_semantic_review(
         pack_dir=pack_dir,
@@ -4251,12 +4272,19 @@ def _review_diagnostics(review_result: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _run_official_module_build(task_id: str, settings) -> tuple[bool, str]:
-    proc = subprocess.run(
-        ["lake", "build", f"ToyApollo.Output.{task_id}"],
-        cwd=str(settings.runtime_root),
-        capture_output=True,
-        text=True,
-    )
+    module_name = formal_task_module(task_id, settings)
+    build_root = formal_build_root(settings)
+    if not build_root.is_dir():
+        return False, f"Configured formal build root does not exist: {build_root}"
+    try:
+        proc = subprocess.run(
+            ["lake", "build", module_name],
+            cwd=str(build_root),
+            capture_output=True,
+            text=True,
+        )
+    except OSError as exc:
+        return False, f"Could not run lake build for {module_name} in {build_root}: {exc}"
     output = "\n".join([part for part in (proc.stdout, proc.stderr) if part])
     return proc.returncode == 0, output
 
@@ -4522,7 +4550,7 @@ def audit_completed_task_output(task_id: str, ledger: LedgerManager, settings) -
         pack_dir = write_prompt_pack(task_id, ledger, settings, task=task)
 
     source_plan = str(task.get("source_plan", "unknown") or "unknown")
-    output_path = settings.toyapollo_output_dir / f"{task_id}.lean"
+    output_path = formal_task_path(task_id, settings)
     if not output_path.exists():
         existing = find_existing_task_file(task_id, source_plan, settings)
         if existing is None or not existing.exists():
@@ -4615,7 +4643,7 @@ def audit_completed_task_output(task_id: str, ledger: LedgerManager, settings) -
     final_success, final_output = _run_official_module_build(task_id, settings)
     if not final_success:
         diagnostics = _parse_diagnostics(final_output, "final_build_failed", "audit_final_build")
-        detail = final_output or f"lake build ToyApollo.Output.{task_id} failed during audit."
+        detail = final_output or f"lake build {formal_task_module(task_id, settings)} failed during audit."
         disposition = "audit_final_build_failed"
         write_audit_result(
             success=False,
@@ -4783,7 +4811,7 @@ def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[
     if latest_pack_candidate is not None:
         latest_candidate = str(latest_pack_candidate)
 
-    import_lines = build_import_lines(task)
+    import_lines = build_import_lines(task, settings)
     existing_file = find_existing_task_file(
         output_binding.output_owner_task_id,
         task.get("source_plan", "unknown"),
@@ -5575,12 +5603,11 @@ async def build_check_prompt_pack_candidate(
     if len(temp_module_basename) > 96:
         digest = hashlib.sha256(task_id.encode("utf-8")).hexdigest()[:16]
         temp_module_basename = f"PackBuildCheck_{digest}_{attempt}"
-    temp_module_file = settings.toyapollo_output_dir / f"{temp_module_basename}.lean"
-    temp_module_name = f"ToyApollo.Output.{temp_module_basename}"
-    settings.toyapollo_output_dir.mkdir(parents=True, exist_ok=True)
+    temp_module_file, temp_module_name = formal_scratch_binding(temp_module_basename, settings)
+    temp_module_file.parent.mkdir(parents=True, exist_ok=True)
     temp_module_file.write_text(candidate_code, encoding="utf-8")
 
-    compiler = LeanCompiler(root_dir=str(settings.runtime_root))
+    compiler = _formal_lean_compiler(settings)
     try:
         repl_success, repl_output = await compiler.validate_with_repl_async(candidate_code)
         temp_build_success, temp_build_output = await compiler.build_module_async(temp_module_name)
@@ -5708,7 +5735,7 @@ def _write_codex_handoff_review_artifacts(
         attempt=attempt,
         candidate_path=candidate_path,
         candidate_code=candidate_code,
-        import_lines=build_import_lines(task),
+        import_lines=build_import_lines(task, settings),
         dependency_summary=_build_dependency_review_summary(task, ledger, settings),
         search_summary=_build_search_review_summary(pack_dir),
         build_summary=build_summary,
@@ -5720,12 +5747,13 @@ def _write_codex_handoff_review_artifacts(
         build_result_file=build_result_file,
         build_candidate_file=build_candidate_file,
         build_candidate_hash=build_candidate_hash,
-        sanity_build_module=f"ToyApollo.Output.{task['block_id']}" if review_subject_kind == "official_output" else "",
+        sanity_build_module=formal_task_module(task["block_id"], settings) if review_subject_kind == "official_output" else "",
         sanity_build_passed=review_subject_kind == "official_output",
         review_context_file=str(context_path),
         review_context_hash=_sha256_text(context_markdown),
         review_context_markdown=context_markdown,
         runtime_root=Path(settings.runtime_root),
+        formal_source_root=formal_output_root(settings),
         subject_bundle_override=subject_bundle_override,
     )
     prompt_text = render_semantic_review_prompt(review_input)
@@ -6133,13 +6161,13 @@ async def write_existing_output_review_pack(
             mode="review-existing",
             candidate_path=output_path,
             candidate_code=candidate_code,
-            detail_text=sanity_output or f"lake build ToyApollo.Output.{task_id} failed before review-existing.",
+            detail_text=sanity_output or f"lake build {formal_task_module(task_id, settings)} failed before review-existing.",
             diagnostics=diagnostics,
             disposition="review_existing_build_failed_no_review",
             semantic_review=None,
             state_transition="none",
         )
-        return False, sanity_output or f"lake build ToyApollo.Output.{task_id} failed before review-existing."
+        return False, sanity_output or f"lake build {formal_task_module(task_id, settings)} failed before review-existing."
 
     prepared = _prepare_existing_output_review_materials(
         task=task,
@@ -6215,7 +6243,7 @@ async def write_existing_output_review_queue(task_ids: list[str], ledger: Ledger
         source_resolution = _queue_source_resolution(task_id, resolved_task)
 
         sanity_success, sanity_output = _run_official_module_build(task_id, settings)
-        sanity_build_status = _queue_sanity_build_status(task_id, sanity_success, sanity_output)
+        sanity_build_status = _queue_sanity_build_status(task_id, sanity_success, sanity_output, settings)
 
         task_report: dict[str, Any] = {
             "task_id": task_id,
@@ -6242,7 +6270,7 @@ async def write_existing_output_review_queue(task_ids: list[str], ledger: Ledger
                     _refresh_pack_runtime_view(canonicalize_task_dict(resolved_task), ledger, settings, pack_dir)
             task_report["queue_status"] = "blocked_build"
             task_report["next_action"] = "fix_build"
-            task_report["detail"] = sanity_output or f"lake build ToyApollo.Output.{task_id} failed."
+            task_report["detail"] = sanity_output or f"lake build {formal_task_module(task_id, settings)} failed."
             counts[task_report["queue_status"]] += 1
             task_reports.append(task_report)
             continue
@@ -6765,13 +6793,12 @@ async def verify_prompt_pack_candidate(task_id: str, ledger: LedgerManager, sett
         return finalize_failure(config_error, diagnostics, disposition="verify_reviewer_config_missing")
 
     temp_module_basename = f"PackVerify_{re.sub(r'[^A-Za-z0-9_]', '_', task_id)}_{attempt}"
-    temp_module_file = settings.toyapollo_output_dir / f"{temp_module_basename}.lean"
-    temp_module_name = f"ToyApollo.Output.{temp_module_basename}"
+    temp_module_file, temp_module_name = formal_scratch_binding(temp_module_basename, settings)
 
-    settings.toyapollo_output_dir.mkdir(parents=True, exist_ok=True)
+    temp_module_file.parent.mkdir(parents=True, exist_ok=True)
     temp_module_file.write_text(candidate_code, encoding="utf-8")
 
-    compiler = LeanCompiler(root_dir=str(settings.runtime_root))
+    compiler = _formal_lean_compiler(settings)
     repl_success, repl_output = await compiler.validate_with_repl_async(candidate_code)
     temp_build_success, temp_build_output = await compiler.build_module_async(temp_module_name)
 

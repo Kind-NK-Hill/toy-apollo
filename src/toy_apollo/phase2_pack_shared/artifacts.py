@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from .io import read_file_safely, read_json_safely, sha256_text
+from ..core.formal_output import formal_task_path, official_output_targets
 
 DRAFT_FILE_NAME = "draft.lean"
 SEARCH_MANIFEST_FILE_NAME = "search_manifest.json"
@@ -153,19 +154,7 @@ def intent_contract_path(pack_dir: Path) -> Path:
 
 
 def iter_official_output_targets(task_id: str, source_plan: str, settings) -> list[Path]:
-    targets = [
-        settings.toyapollo_output_dir / f"{task_id}.lean",
-        settings.output_lean_files_dir / "general" / f"{task_id}.lean",
-    ]
-    if source_plan and source_plan != "unknown":
-        targets.append(settings.output_lean_files_dir / source_plan / f"{task_id}.lean")
-    deduped: list[Path] = []
-    seen: set[Path] = set()
-    for target in targets:
-        if target not in seen:
-            seen.add(target)
-            deduped.append(target)
-    return deduped
+    return official_output_targets(task_id, source_plan, settings)
 
 
 def find_existing_task_file(task_id: str, source_plan: str, settings) -> Path | None:
@@ -178,13 +167,12 @@ def find_existing_task_file(task_id: str, source_plan: str, settings) -> Path | 
 def select_latest_existing_task_file(task_id: str, source_plan: str, settings) -> Path | None:
     """Return the canonical deployed output used as an existing-review subject.
 
-    Legacy ``output_lean_files`` copies remain discoverable through
-    ``find_existing_task_file`` for historical/dependency recovery, but they
-    are never allowed to replace ``ToyApollo/Output`` based on mtime.
+    Historical mirrors remain discoverable only for legacy synthetic Settings.
+    MAT-configured runs have one canonical reviewed file.
     """
 
     del source_plan
-    canonical = settings.toyapollo_output_dir / f"{task_id}.lean"
+    canonical = formal_task_path(task_id, settings)
     return canonical if canonical.exists() else None
 
 

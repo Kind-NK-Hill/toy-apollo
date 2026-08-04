@@ -296,7 +296,7 @@ def _render_diagnoser_prompt(
         "",
         "## Hard Rules",
         "",
-        "- Do not edit Lean files, ToyApollo/Output, project_ledger.json, or review artifacts.",
+        "- Do not edit Lean files, the canonical MAT output, project_ledger.json, or review artifacts.",
         "- Do not run review-apply.",
         "- Diagnose the proof route/source statement only; do not act as the semantic reviewer.",
         "- Do not hallucinate Mathlib theorem names. If a theorem/API is not in the provided local evidence, mark it as needing local `rg`/`#check` verification.",

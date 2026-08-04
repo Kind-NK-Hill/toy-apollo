@@ -165,14 +165,25 @@ class LeanREPL:
 class LeanCompiler:
     """
     Updated Compiler that uses both 'lake build' and REPL feedback.
-    Isolated Validation: Uses a temporary file in ToyApollo/Output to avoid poisoning the main project.
+    Isolated validation uses a caller-selected scratch module.  The legacy
+    default remains available for callers outside the current Phase 2 runtime.
     """
-    def __init__(self, root_dir=PROJECT_ROOT):
-        self.root_dir = root_dir
-        # Physical Isolation: Write to a specific submodule instead of the root ToyApollo.lean
-        self.validation_dir = os.path.join(self.root_dir, "ToyApollo", "Output")
-        self.validation_file = os.path.join(self.validation_dir, "Temp_Validation.lean")
-        self.validation_target = "ToyApollo.Output.Temp_Validation"
+    def __init__(
+        self,
+        root_dir=PROJECT_ROOT,
+        *,
+        validation_file: str | Path | None = None,
+        validation_target: str | None = None,
+    ):
+        self.root_dir = str(Path(root_dir).resolve())
+        if (validation_file is None) != (validation_target is None):
+            raise ValueError("validation_file and validation_target must be supplied together")
+        if validation_file is None:
+            validation_file = Path(self.root_dir) / "ToyApollo" / "Output" / "Temp_Validation.lean"
+            validation_target = "ToyApollo.Output.Temp_Validation"
+        self.validation_file = str(Path(validation_file).resolve())
+        self.validation_dir = str(Path(self.validation_file).parent)
+        self.validation_target = str(validation_target)
         
         # Legacy support/compatibility (can be removed later if ToyApollo.lean is no longer needed)
         self.target_file = os.path.join(self.root_dir, "ToyApollo.lean")

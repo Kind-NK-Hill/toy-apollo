@@ -7,6 +7,8 @@ from typing import Any
 from src.block_id_naming import canonicalize_block_id
 from src.ledger_manager import LedgerManager
 
+from .core.formal_output import formal_task_module, official_output_targets
+
 
 @dataclass(frozen=True)
 class Phase2OutputBinding:
@@ -52,7 +54,7 @@ def resolve_phase2_output_binding(task: dict[str, Any], ledger: LedgerManager, s
     return Phase2OutputBinding(
         pack_task_id=pack_task_id,
         output_owner_task_id=output_owner_task_id,
-        output_module=f"ToyApollo.Output.{output_owner_task_id}",
+        output_module=formal_task_module(output_owner_task_id, settings),
         pack_dir=settings.phase2_prompt_packs_dir / pack_task_id,
         owner_pack_dir=settings.phase2_prompt_packs_dir / output_owner_task_id,
         official_targets=official_targets,
@@ -63,17 +65,4 @@ def resolve_phase2_output_binding(task: dict[str, Any], ledger: LedgerManager, s
 
 
 def _official_output_targets(task_id: str, source_plan: str, settings) -> list[Path]:
-    targets = [
-        settings.toyapollo_output_dir / f"{task_id}.lean",
-        settings.output_lean_files_dir / "general" / f"{task_id}.lean",
-    ]
-    if source_plan and source_plan != "unknown":
-        targets.append(settings.output_lean_files_dir / source_plan / f"{task_id}.lean")
-
-    deduped: list[Path] = []
-    seen: set[Path] = set()
-    for target in targets:
-        if target not in seen:
-            seen.add(target)
-            deduped.append(target)
-    return deduped
+    return official_output_targets(task_id, source_plan, settings)
