@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, TypeVar
 
-from .core.settings import DEFAULT_PROFILE, PROFILE_SPECS
+from .core.settings import DEFAULT_PROFILE, PROFILE_SPECS, canonical_state_path
 from .review_versions import prompt_version_sql_predicate, rubric_version_sql_predicate
 
 
@@ -40,12 +40,6 @@ class StateConcurrencyError(StateStoreError):
 
 class StatePathError(StateStoreError):
     """Raised when the canonical state database resolves into a campaign/repo root."""
-
-
-def canonical_state_path(runtime_root: str | Path) -> Path:
-    runtime = Path(runtime_root).expanduser().resolve()
-    state_dir_name = "toy-apollo-artifacts" if runtime.name.lower() == "toy-apollo" else f"{runtime.name}-artifacts"
-    return runtime.parent / state_dir_name / "state.sqlite3"
 
 
 def refuse_legacy_ledger_write(runtime_root: str | Path, *, operation: str) -> None:

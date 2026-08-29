@@ -400,7 +400,7 @@ def apply_softdep_selection(task_ids: list[str], ledger: LedgerManager, settings
         proof_debt_materials = [item for item in normalized if _material_has_proof_debt(item, ledger)]
         if proof_debt_materials:
             raise ValueError(
-                f"Selection for {task_id} contains {', '.join(proof_debt_materials)} carrying a legacy non-clean proof-debt status; re-review and repair that material first."
+                f"Selection for {task_id} contains {', '.join(proof_debt_materials)} carrying a legacy non-clean proof debt status; re-review and repair that material first."
             )
         ledger.add_or_update_task(plan_task)
         normalized_payload[task_id] = normalized

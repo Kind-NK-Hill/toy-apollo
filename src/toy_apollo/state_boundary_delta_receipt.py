@@ -35,6 +35,7 @@ from .state_reconcile import ReconciliationError, discover_catalog_git_subjects
 from .state_store import (
     SubjectBundle,
     canonical_subject_bytes,
+    filesystem_path,
     git_blob_sha,
     sha256_file,
     sha256_json,
@@ -113,16 +114,18 @@ def _atomic_publish_no_replace(path: Path, payload: bytes, *, label: str) -> dic
     path = path.resolve()
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+    io_path = filesystem_path(path)
+    io_temporary = filesystem_path(temporary)
     published = False
     cleanup_complete = True
     try:
-        with temporary.open("xb") as stream:
+        with io_temporary.open("xb") as stream:
             stream.write(payload)
             stream.flush()
             os.fsync(stream.fileno())
         # Same-directory hard links are atomic no-replace publication on
         # Windows and POSIX; rename/replace primitives may overwrite on POSIX.
-        os.link(temporary, path)
+        os.link(io_temporary, io_path)
         published = True
     except FileExistsError as exc:
         raise BoundaryDeltaReceiptError(f"{label}: immutable output appeared during publish") from exc
@@ -131,14 +134,14 @@ def _atomic_publish_no_replace(path: Path, payload: bytes, *, label: str) -> dic
     finally:
         for _attempt in range(3):
             try:
-                temporary.unlink()
+                io_temporary.unlink()
                 break
             except FileNotFoundError:
                 break
             except OSError:
                 cleanup_complete = False
-        cleanup_complete = not temporary.exists()
-    if not path.is_file() or path.read_bytes() != payload:
+        cleanup_complete = not io_temporary.exists()
+    if not io_path.is_file() or io_path.read_bytes() != payload:
         raise BoundaryDeltaReceiptError(
             f"{label}: output was published but final byte revalidation failed"
         )

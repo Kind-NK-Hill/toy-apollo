@@ -47,7 +47,7 @@ python .\run_chapter.py -h
 # Tracked-artifact policy
 python .\tools\check_repo_hygiene.py
 
-# Embedded private-source excerpt policy
+# Fail-closed Task Parent source-excerpt policy
 python .\tools\prepare_public_snapshot.py
 
 # One Python test Module
@@ -66,6 +66,11 @@ For a broader Python run:
 ```powershell
 python -m unittest discover -s tests -p "test_*.py"
 ```
+
+In a public checkout, tests whose authority is the omitted private evidence
+plane report explicit skips instead of silently fabricating fixtures. The
+source-only runtime, state, review, publication-boundary, and hygiene tests
+still run normally; each skip names the missing private evidence class.
 
 The repository does not yet have a single command combining formatter, lint,
 type, Python test, Lean build, and documentation checks. Do not describe that

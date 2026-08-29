@@ -8,7 +8,20 @@ from tools.validate_phase2_completion_classification import (
     validate_classification,
 )
 
+PRIVATE_EVIDENCE_AVAILABLE = (
+    Path(DEFAULT_CLASSIFICATION).is_file()
+    and (
+        Path(DEFAULT_CLASSIFICATION).parents[1]
+        / "phase2_prompt_packs"
+        / "ex_10_3_2"
+        / "proof_obligations.json"
+    ).is_file()
+)
 
+@unittest.skipUnless(
+    PRIVATE_EVIDENCE_AVAILABLE,
+    "private Phase 2 classification evidence is not included in the public source snapshot",
+)
 class Phase2CompletionClassificationTests(unittest.TestCase):
     def test_classification_artifact_is_valid(self) -> None:
         errors = validate_classification(DEFAULT_CLASSIFICATION)

@@ -1567,14 +1567,21 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            fixture = (
-                REPO_ROOT
-                / "phase2_prompt_packs"
-                / "ex_8_2_1"
-                / "semantic_fail_diagnosis_result_v1.json"
+            result_path = pack_dir / "semantic_fail_diagnosis_result_v1.json"
+            result_path.write_text(
+                json.dumps(
+                    {
+                        "diagnosis_verdict": "source_decision_required",
+                        "route_wrong": True,
+                        "statement_mismatch": True,
+                        "local_repair_allowed": False,
+                        "source_decision_needed": True,
+                        "public_api_change": True,
+                        "recommended_next_action": "obtain an explicit owner decision",
+                    }
+                ),
+                encoding="utf-8",
             )
-            result_path = pack_dir / fixture.name
-            result_path.write_text(fixture.read_text(encoding="utf-8"), encoding="utf-8")
             (pack_dir / "diagnoser_result_v2.json").write_text(
                 json.dumps({"diagnosis_verdict": "incomplete_newer_result"}),
                 encoding="utf-8",

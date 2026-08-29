@@ -60,7 +60,7 @@ class BoundaryDeltaReceiptTests(unittest.TestCase):
         for raw, content in files.items():
             path = repo / raw
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(content, encoding="utf-8")
+            path.write_text(content, encoding="utf-8", newline="\n")
         subprocess.run(["git", "add", "."], cwd=repo, check=True)
         subprocess.run(["git", "commit", "-qm", "fixture"], cwd=repo, check=True)
         commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
@@ -367,6 +367,8 @@ class BoundaryDeltaReceiptTests(unittest.TestCase):
     def test_real_boundary97_authority_manifest_parses_reanchored_inputs_dry(self):
         workspace = Path(__file__).resolve().parents[2]
         authority = workspace / "_analysis_tmp" / "boundary97_policy_preflight_manifest_mat11a7948f_final_20260808.json"
+        if not authority.is_file():
+            self.skipTest("private boundary-97 evidence is not included in the public source snapshot")
         payload, entries = load_boundary_batch_authority_manifest(
             authority, workspace_root=workspace,
             expected_sha256="bef49d50c374679062c2ddfd42812da85f6f7a3f3428d462809583842830e2a1",
@@ -841,6 +843,8 @@ class BoundaryDeltaReceiptTests(unittest.TestCase):
             workspace / "toy-apollo-artifacts" / "validated_boundary_deltas"
             / "11a7948f" / "def_5_2" / "boundary_input_manifest_reanchored_v1.json"
         )
+        if not manifest_path.is_file():
+            self.skipTest("private boundary-97 evidence is not included in the public source snapshot")
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         authority_ref = manifest["source_authority"]
         authority_path = workspace / authority_ref["path"]
@@ -872,6 +876,11 @@ class BoundaryDeltaReceiptTests(unittest.TestCase):
             "def_10_1": "recovery_exact_bundle",
             "ex_11_5_2": "legacy_embedded_single_file",
         }
+        if not all(
+            (root / task_id / "boundary_input_manifest_reanchored_v1.json").is_file()
+            for task_id in cases
+        ):
+            self.skipTest("private boundary-97 evidence is not included in the public source snapshot")
         for task_id, shape in cases.items():
             with self.subTest(task_id=task_id, shape=shape):
                 manifest_path = root / task_id / "boundary_input_manifest_reanchored_v1.json"

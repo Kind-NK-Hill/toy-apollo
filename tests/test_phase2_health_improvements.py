@@ -10,6 +10,12 @@ if str(REPO_ROOT) not in sys.path:
 
 
 class Phase2HealthImprovementTests(unittest.TestCase):
+    def _private_obligations(self, task_id: str) -> dict:
+        path = REPO_ROOT / "phase2_prompt_packs" / task_id / "proof_obligations.json"
+        if not path.is_file():
+            self.skipTest("private prompt-pack evidence is not included in the public source snapshot")
+        return json.loads(path.read_text(encoding="utf-8"))
+
     def test_coupon_active_obligation_metadata_does_not_repeat_superseded_private_axiom_debt(self):
         stale_phrases = [
             "private axiom",
@@ -19,8 +25,7 @@ class Phase2HealthImprovementTests(unittest.TestCase):
             "Reopened on 2026-05-21",
         ]
         for task_id in ["ex_14_4_3", "prob_14_11"]:
-            path = REPO_ROOT / "phase2_prompt_packs" / task_id / "proof_obligations.json"
-            payload = json.loads(path.read_text(encoding="utf-8"))
+            payload = self._private_obligations(task_id)
             active_text = json.dumps(payload.get("obligations", []), ensure_ascii=False)
             for phrase in stale_phrases:
                 self.assertNotIn(phrase, active_text, f"{task_id} active obligation metadata is stale")
@@ -67,7 +72,7 @@ class Phase2HealthImprovementTests(unittest.TestCase):
             "structure prob_14_11_CouponRatioTriangularArraySetup",
             "def prob_14_11_couponProbabilitySpace",
             "def prob_14_11_exactStandardizedRowSumLaws",
-            "def prob_14_11_theoremSetupExact",
+            "def prob_14_11_theoremSetup",
             "theorem prob_14_11_generalized_lyapunov_condition",
             "def prob_14_11_ExactStandardizedConvergence",
         ]
@@ -99,8 +104,7 @@ class Phase2HealthImprovementTests(unittest.TestCase):
             "thm_7_8": "obl_thm_7_8_",
         }
         for task_id, prefix in retired_prefixes.items():
-            path = REPO_ROOT / "phase2_prompt_packs" / task_id / "proof_obligations.json"
-            payload = json.loads(path.read_text(encoding="utf-8"))
+            payload = self._private_obligations(task_id)
             for obligation in payload.get("obligations", []):
                 landing = obligation.get("lean_landing", "")
                 self.assertNotIn(prefix, landing)

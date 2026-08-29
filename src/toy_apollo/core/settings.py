@@ -6,8 +6,16 @@ from pathlib import Path
 
 
 DEFAULT_RUNTIME_ROOT = Path(__file__).resolve().parents[3]
+CANONICAL_STATE_DIR_NAME = "toy-apollo-artifacts"
 
 DEFAULT_PROFILE = "mat"
+
+
+def canonical_state_path(runtime_root: str | Path) -> Path:
+    """Return the checkout-name-independent operational state path."""
+
+    runtime = Path(runtime_root).expanduser().resolve()
+    return runtime.parent / CANONICAL_STATE_DIR_NAME / "state.sqlite3"
 
 
 @dataclass(frozen=True)
@@ -107,8 +115,7 @@ def get_settings() -> Settings:
     ).resolve()
     artifact_root = _to_path(os.getenv("TOY_APOLLO_ARTIFACT_ROOT", ""), runtime_root)
     workspace_root = runtime_root.parent
-    state_artifact_name = "toy-apollo-artifacts"
-    state_db_file = workspace_root / state_artifact_name / "state.sqlite3"
+    state_db_file = canonical_state_path(runtime_root)
     active_profile = resolve_profile(runtime_root)
     spec = profile_spec(active_profile)
     return Settings(

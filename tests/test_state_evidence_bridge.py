@@ -188,7 +188,7 @@ class EvidenceBridgeTests(unittest.TestCase):
         for raw, content in files.items():
             path = repo / raw
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(content, encoding="utf-8")
+            path.write_text(content, encoding="utf-8", newline="\n")
         subprocess.run(["git", "add", "."], cwd=repo, check=True)
         subprocess.run(["git", "commit", "-qm", "fixture"], cwd=repo, check=True)
         commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()

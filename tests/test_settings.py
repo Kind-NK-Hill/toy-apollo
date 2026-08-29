@@ -6,7 +6,13 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from src.toy_apollo.core.settings import DEFAULT_RUNTIME_ROOT, get_settings, profile_spec
+from src.toy_apollo.core.settings import (
+    DEFAULT_RUNTIME_ROOT,
+    canonical_state_path,
+    get_settings,
+    profile_spec,
+)
+from src.toy_apollo.state_store import canonical_state_path as state_store_canonical_state_path
 
 
 class SettingsTests(unittest.TestCase):
@@ -49,6 +55,21 @@ class SettingsTests(unittest.TestCase):
             self.assertEqual(settings.runtime_root, runtime.resolve())
             self.assertEqual(settings.artifact_root, artifacts)
             self.assertEqual(settings.workspace_root, runtime.resolve().parent)
+
+    def test_canonical_state_path_is_checkout_name_independent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            runtime = Path(tmp) / "renamed-checkout"
+            expected = runtime.parent / "toy-apollo-artifacts" / "state.sqlite3"
+            with patch.dict(
+                os.environ,
+                {"TOY_APOLLO_RUNTIME_ROOT": str(runtime)},
+                clear=True,
+            ):
+                settings = get_settings()
+
+            self.assertEqual(settings.state_db_file, expected)
+            self.assertEqual(canonical_state_path(runtime), expected)
+            self.assertEqual(state_store_canonical_state_path(runtime), expected)
 
 
 if __name__ == "__main__":

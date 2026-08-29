@@ -4,8 +4,11 @@ import unittest
 
 from tools.prepare_public_snapshot import (
     PUBLIC_SOURCE_NOTICE,
+    block_comments,
     sanitize_source_comments,
+    sanitize_task_parent,
     sanitize_task_header,
+    task_parent_is_public,
 )
 
 
@@ -84,6 +87,43 @@ theorem public_code : True := by trivial
         self.assertNotIn("private theorem", result.text)
         self.assertIn(PUBLIC_SOURCE_NOTICE, result.text)
         self.assertIn("theorem public_code", result.text)
+
+    def test_task_parent_sanitizer_removes_unclassified_and_nested_block_comments(self) -> None:
+        original = '''import Mathlib
+
+/-!
+TASK ID: thm_1_1
+Unmarked source prose that the legacy marker list missed.
+/- nested source note -/
+-/
+
+/-- A second textbook statement. -/
+def marker : String := "/- this is string data, not a comment -/"
+theorem public_code : True := by trivial
+'''
+
+        result = sanitize_task_parent(original, task_id="thm_1_1")
+
+        self.assertTrue(result.changed)
+        self.assertNotIn("Unmarked source prose", result.text)
+        self.assertNotIn("textbook statement", result.text)
+        self.assertIn('"/- this is string data, not a comment -/"', result.text)
+        self.assertEqual(len(block_comments(result.text)), 1)
+        self.assertNotIn("\n\n\n", result.text)
+        self.assertTrue(task_parent_is_public(result.text))
+
+    def test_task_parent_policy_fails_closed(self) -> None:
+        missing_notice = "import Mathlib\n\ntheorem answer : True := by trivial\n"
+        extra_comment = f"""/-!
+TASK ID: thm_1_1
+{PUBLIC_SOURCE_NOTICE}
+-/
+/-- Extra prose. -/
+theorem answer : True := by trivial
+"""
+
+        self.assertFalse(task_parent_is_public(missing_notice))
+        self.assertFalse(task_parent_is_public(extra_comment))
 
 
 if __name__ == "__main__":

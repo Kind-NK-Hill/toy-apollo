@@ -20,7 +20,7 @@ class StateCliTests(unittest.TestCase):
             runtime_root=runtime,
             artifact_root=runtime,
             workspace_root=root,
-            state_db_file=root / "runtime-artifacts" / "state.sqlite3",
+            state_db_file=root / "toy-apollo-artifacts" / "state.sqlite3",
             phase2_prompt_packs_dir=runtime / "phase2_prompt_packs",
         )
 

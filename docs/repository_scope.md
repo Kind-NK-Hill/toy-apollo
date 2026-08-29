@@ -9,7 +9,7 @@ not deletion candidates.
 | Material | Public source plane | Private evidence plane | Reason |
 | --- | --- | --- | --- |
 | Python runtime, tests, tools | Yes | Optional snapshots | Required to inspect and develop the pipeline |
-| Lean Task Parents and support Modules | Yes | Build snapshots | Central project output |
+| Lean Task Parents and support Modules | Yes | Build snapshots | Central project output; Task Parent block prose is removed |
 | Stable architecture and operator contracts | Yes | Historical drafts | Public Interface and current behavior |
 | Full source-derived `inputs/` corpus | No | Yes | Copyright, provenance, and unnecessary public weight |
 | Full `plans/` corpus | No | Yes | Derived from the private source corpus and mutable across ingestion work |
@@ -53,6 +53,19 @@ retained for diagnosis and provenance but do not decide semantic completion.
 pipeline can generate both for a user's own source, but ToyApollo does not need
 to distribute the complete private corpus to expose its runtime and review
 mechanism.
+
+## Public Task Parent contract
+
+Task-named files under `ToyApollo/Output/` retain executable Lean and ordinary
+line comments. Their historical block comments are removed because those
+comments mixed source excerpts, generated prompts, and implementation notes.
+Each file instead carries one uniform source-omission notice and minimal task
+metadata. `tools/prepare_public_snapshot.py` applies this transformation and
+then verifies it with a fail-closed rule: an extra block comment, a missing
+notice, or a known source marker fails the check.
+
+The 19 shared support Modules are not Task Parents and keep implementation
+documentation unless it matches a known source marker.
 
 ## Public case-study contract
 

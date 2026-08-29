@@ -37,6 +37,8 @@ plans/
 # history, but do not belong to the current public documentation surface.
 docs/archive/
 docs/phase2/archive/
+docs/plans/
+docs/superpowers/
 
 # Machine/workspace-specific inventory policy is private operational context.
 data/workspace_inventory/

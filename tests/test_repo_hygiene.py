@@ -12,6 +12,8 @@ class RepositoryHygieneTest(unittest.TestCase):
             "plans/chapter_plan.json",
             "phase2_prompt_packs/def_8_5/metadata.json",
             "docs/archive/old_handoff.md",
+            "docs/plans/private-campaign-plan.md",
+            "docs/superpowers/specs/private-repair-design.md",
             "docs/phase2_completion_classification.json",
             "data/workspace_inventory/policy_v1.json",
             "upstream/kenneth/f81f1450/def_1_2a.lean",
