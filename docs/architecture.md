@@ -59,7 +59,7 @@ flowchart LR
     LEAN[Lean Task Parents and support]
     TESTS[Tests and hygiene tools]
     DOCS[Stable docs]
-    CASES[Two curated case studies]
+    CASES[Seven curated case studies]
   end
 
   subgraph EVIDENCE[Private evidence plane]

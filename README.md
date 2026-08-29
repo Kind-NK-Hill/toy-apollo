@@ -36,22 +36,29 @@ flowchart LR
 Prompt packs, build receipts, review requests, repair histories, batch queues,
 and the operational SQLite database live in a private evidence plane. The
 public source plane keeps the runtime, tests, Lean Modules, documentation, and
-two small immutable case-study exports. See
+seven small immutable case-study exports. See
 [`docs/repository_scope.md`](docs/repository_scope.md).
 
 ## Start with the failures
 
-Both public examples contain an initial Lean subject that compiles. Semantic
-review still rejects it.
+All seven public examples contain an initial Lean subject that compiles.
+Semantic review still rejects it or invalidates an earlier pass.
 
 | Case | What the build gate missed | What the review loop added |
 | --- | --- | --- |
 | [`def_8_5`](examples/case-studies/def_8_5/) | Total variation accepted arbitrary measures even though the source domain was probability measures | Probability guards, then a second repair for downstream evidence plumbing |
 | [`def_10_1`](examples/case-studies/def_10_1/) | Almost-sure convergence mixed incompatible measure assumptions and later omitted the random-variable carrier | Reusable event/a.e. bridges, carrier preservation, and high-fanout consumer review |
+| [`def_5_5`](examples/case-studies/def_5_5/) | A Mathlib alias replaced the source-facing finite-subfamily definition | An explicit equation plus a bridge to the library predicate |
+| [`def_6_6`](examples/case-studies/def_6_6/) | Missing measurability and `EReal.toReal` made an undefined integral look total | A componentwise integrability gate and an explicit `Option` result |
+| [`ex_8_2_1`](examples/case-studies/ex_8_2_1/) | The carrier drifted from `ℝ × ℝ` to `ℕ × ℝ` | An owner-level contract decision and a real-carrier pushforward |
+| [`ex_8_3_4`](examples/case-studies/ex_8_3_4/) | One feasible transport plan was presented as solving an optimization problem | Optimizer quantification and the missing Wasserstein Interface |
+| [`thm_8_2`](examples/case-studies/thm_8_2/) | A finished Mathlib product theorem bypassed the requested construction | An explicit fibre set function, measure construction, and uniqueness route |
 
 These cases are mechanism demonstrations, not benchmark scores. Their public
 timelines retain verdict classes and private-evidence hashes without publishing
-the complete source corpus or mutable runtime packs.
+the complete source corpus or mutable runtime packs. The collection covers at
+least six distinct primary failure modes; six cases expose statement or
+Interface drift, while `thm_8_2` isolates proof-route drift.
 
 ## Five-minute inspection
 
@@ -72,6 +79,7 @@ pip install -r requirements.txt
 python .\run_chapter.py -h
 python .\tools\check_repo_hygiene.py
 python .\tools\prepare_public_snapshot.py
+python .\tools\check_case_studies.py
 lake build ToyApollo.Output.def_8_5
 
 lake env lean .\examples\case-studies\def_8_5\initial.lean
@@ -80,7 +88,8 @@ lake env lean .\examples\case-studies\def_8_5\final.lean
 
 The last two commands should both compile. Compare the code and then read the
 case's `review-timeline.json`: compilation alone cannot distinguish the two
-Interfaces.
+Interfaces. The case-study index contains the command for compiling all 14
+public snapshots.
 
 More setup and focused test commands are in
 [`docs/development.md`](docs/development.md).
@@ -130,5 +139,4 @@ correctness.
 
 ## License
 
-License selection is intentionally pending before the first public release.
-Do not treat the absence of a license as permission to reuse the code.
+ToyApollo is released under the [MIT License](LICENSE).

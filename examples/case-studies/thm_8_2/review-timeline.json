@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "case_id": "thm_8_2",
+  "failure_modes": [
+    "adapter_only_proof",
+    "proof_route_omission",
+    "downstream_route_validation"
+  ],
+  "statement_drift": false,
+  "curation": {
+    "source": "private phase2 prompt pack",
+    "snapshot_kind": "sanitized_proof_route_snapshot",
+    "full_pack_tracked_publicly": false,
+    "purpose": "inspectable mechanism example, not benchmark evidence"
+  },
+  "counts": {
+    "build_candidate_files": 3,
+    "semantic_review_results": 3,
+    "review_failures": 1,
+    "review_passes": 2
+  },
+  "private_evidence_sha256": {
+    "attempt_history.json": "3850936c2e944b2a924bf1c5cda7493392e5982018c113b30006ace6613cec14",
+    "official_snapshot_v1.lean": "6d2d15dd3727507a830980ad8e2773072c932b1cf6a9ba7ef05274c49f89baf4",
+    "official_snapshot_v3.lean": "e60b2c491445d7af16c4fd4fc5750e3c514ee4047f9e08c7a6adc9923c707236"
+  },
+  "reviews": [
+    {
+      "round": 1,
+      "private_file": "semantic_review_result_v1.json",
+      "mode": "review-existing",
+      "prompt_version": 11,
+      "rubric_version": 9,
+      "verdict": "fail",
+      "proof_class": "adapter_only_shortcut",
+      "completion_class": "source_route_not_completed",
+      "phase2_status": "fail",
+      "candidate_hash": "d9e4a2b02cbf15e537822e3e2dfa62296ea89b69ef4edcc4191c0dc138a1b287",
+      "finding": "The correct proposition is obtained by selecting the already-finished library product, so the requested construction spine has no landing.",
+      "private_review_sha256": "f4a13121065408780a85b5fa430fc489bbe10685f88bcee16b43d967ccfd2655"
+    },
+    {
+      "round": 2,
+      "private_file": "semantic_review_result_v2.json",
+      "mode": "review-pack",
+      "prompt_version": 11,
+      "rubric_version": 9,
+      "verdict": "pass",
+      "proof_class": "source_route_theorem",
+      "completion_class": "source_faithful_proof_completed",
+      "phase2_status": "pass",
+      "candidate_hash": "132ad7ba7f3d0111c0f3a5bdec143fc12bac3a3d684946e7e49f5ef556efb732",
+      "finding": "The fibre set function, countable additivity, extension, rectangle calculation, and post-construction uniqueness bridge are explicit.",
+      "private_review_sha256": "6e24021ea9e3c3867b686d9f5235f6476de26a97141f2d4dabcc8178a308419f"
+    },
+    {
+      "round": 3,
+      "private_file": "semantic_review_result_v3.json",
+      "mode": "review-existing",
+      "prompt_version": 11,
+      "rubric_version": 9,
+      "verdict": "pass",
+      "proof_class": "source_route_theorem_completed",
+      "completion_class": "source_route_theorem_completed",
+      "phase2_status": "pass",
+      "candidate_hash": "132ad7ba7f3d0111c0f3a5bdec143fc12bac3a3d684946e7e49f5ef556efb732",
+      "finding": "The unchanged construction remains source-faithful and the rebound downstream example genuinely consumes the public witness and uniqueness Interface.",
+      "private_review_sha256": "6114e5d4df0d9ff0547204b21b939d278415b5b7219cee423e8bf554f7fa98b5"
+    }
+  ]
+}

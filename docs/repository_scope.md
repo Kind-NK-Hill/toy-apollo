@@ -84,7 +84,22 @@ The current selections are:
 - `def_8_5`: build success, owner semantic failure, downstream migration
   failure, then a hash-bound pass;
 - `def_10_1`: eight reviews, an older pass superseded by a stronger source
-  check, and a recorded 40-target fanout inspection.
+  check, and a recorded 40-target fanout inspection;
+- `def_5_5`: a library alias rejected as an incomplete source-facing
+  definition, then repaired with an explicit finite-subfamily equation;
+- `def_6_6`: a previous pass invalidated because measurability was absent and
+  an undefined integral had been totalized;
+- `ex_8_2_1`: a carrier change requiring an owner-level statement decision;
+- `ex_8_3_4`: a feasible witness mistaken for an optimizer, followed by a
+  second repair for the omitted Wasserstein Interface;
+- `thm_8_2`: a true statement rejected because a finished library theorem
+  bypassed the requested construction route.
+
+[`../examples/case-studies/cases.json`](../examples/case-studies/cases.json)
+is the machine-checked catalog. The public set must contain 7–10 cases, at
+least six distinct primary failure modes, and at least five statement-drift
+cases. This is a diversity rule for explanatory examples, not a sampling or
+benchmark claim.
 
 ## Publication history rule
 

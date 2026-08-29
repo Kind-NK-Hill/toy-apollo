@@ -22,8 +22,18 @@ jobs:
       - name: Check Public Snapshot Scope
         run: |
           python tools/prepare_public_snapshot.py
-          python -m unittest tests.test_repo_hygiene tests.test_prepare_public_snapshot
+          python tools/check_case_studies.py
+          python -m unittest tests.test_repo_hygiene tests.test_prepare_public_snapshot tests.test_case_studies
       - uses: leanprover/lean-action@v1
+      - name: Run Python Test Suite
+        run: python -m unittest discover -s tests -p "test_*.py"
+      - name: Compile Public Case Snapshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r snapshot; do
+            lake env lean "$snapshot"
+          done < <(find examples/case-studies -type f -name '*.lean' | sort)
       - name: Generate docs
         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         uses: leanprover-community/docgen-action@v1

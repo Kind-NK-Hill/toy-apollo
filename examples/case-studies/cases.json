@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "selection_policy": {
+    "minimum_cases": 7,
+    "maximum_cases": 10,
+    "minimum_distinct_primary_failure_modes": 6,
+    "minimum_statement_drift_cases": 5,
+    "full_private_packs_public": false
+  },
+  "cases": [
+    {
+      "case_id": "def_8_5",
+      "primary_failure_mode": "domain_drift",
+      "statement_drift": true,
+      "interview_hook": "Compiling total variation on the wrong measure domain"
+    },
+    {
+      "case_id": "def_10_1",
+      "primary_failure_mode": "review_basis_invalidation",
+      "statement_drift": true,
+      "interview_hook": "An older pass overturned by a stricter high-fanout review"
+    },
+    {
+      "case_id": "def_5_5",
+      "primary_failure_mode": "adapter_only_interface",
+      "statement_drift": true,
+      "interview_hook": "Why a Mathlib alias is not automatically a textbook definition"
+    },
+    {
+      "case_id": "def_6_6",
+      "primary_failure_mode": "undefinedness_totalized",
+      "statement_drift": true,
+      "interview_hook": "A previous pass missed measurability and a totalized undefined value"
+    },
+    {
+      "case_id": "ex_8_2_1",
+      "primary_failure_mode": "carrier_drift",
+      "statement_drift": true,
+      "interview_hook": "A valid formula on N x R did not implement the required R x R object"
+    },
+    {
+      "case_id": "ex_8_3_4",
+      "primary_failure_mode": "quantifier_drift",
+      "statement_drift": true,
+      "interview_hook": "A feasible transport plan was mistaken for an optimizer"
+    },
+    {
+      "case_id": "thm_8_2",
+      "primary_failure_mode": "adapter_only_proof",
+      "statement_drift": false,
+      "interview_hook": "A true proposition still omitted the requested construction route"
+    }
+  ]
+}

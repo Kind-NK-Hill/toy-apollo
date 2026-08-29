@@ -50,15 +50,22 @@ python .\tools\check_repo_hygiene.py
 # Fail-closed Task Parent source-excerpt policy
 python .\tools\prepare_public_snapshot.py
 
+# Public case catalog, timeline, and diversity policy
+python .\tools\check_case_studies.py
+
 # One Python test Module
 python -m unittest tests.test_settings
 
 # One Lean Task Parent
 lake build ToyApollo.Output.def_8_5
 
-# Public case snapshots
-lake env lean .\examples\case-studies\def_8_5\initial.lean
-lake env lean .\examples\case-studies\def_8_5\final.lean
+# All public case snapshots
+Get-ChildItem .\examples\case-studies -Directory | ForEach-Object {
+    lake env lean (Join-Path $_.FullName 'initial.lean')
+    if ($LASTEXITCODE -ne 0) { throw "initial snapshot failed: $($_.Name)" }
+    lake env lean (Join-Path $_.FullName 'final.lean')
+    if ($LASTEXITCODE -ne 0) { throw "final snapshot failed: $($_.Name)" }
+}
 ```
 
 For a broader Python run:

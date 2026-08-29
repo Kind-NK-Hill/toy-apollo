@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "case_id": "ex_8_2_1",
+  "failure_modes": [
+    "carrier_drift",
+    "source_contract_decision",
+    "missing_reusable_bridge"
+  ],
+  "statement_drift": true,
+  "curation": {
+    "source": "private phase2 prompt pack",
+    "snapshot_kind": "sanitized_interface_slice",
+    "full_pack_tracked_publicly": false,
+    "purpose": "inspectable mechanism example, not benchmark evidence"
+  },
+  "counts": {
+    "official_output_snapshots": 2,
+    "semantic_review_results": 2,
+    "review_failures": 1,
+    "review_passes": 1,
+    "owner_decisions_required": 1
+  },
+  "private_evidence_sha256": {
+    "attempt_history.json": "42ba4190181365ead22aedfe281942bc8805958aca02b248c82d70a938bcfc2e",
+    "official_snapshot_v1.lean": "e1c7af6e1e8cd5180e2f8d73b983765be8ef5f88852e82cba0f5a6de4897bb03",
+    "official_snapshot_v2.lean": "607c96ea9890af9ad1d6691834a0b4332763079833f02028b3a46ec2cc9581d0"
+  },
+  "diagnosis": {
+    "verdict": "source_decision_required",
+    "statement_mismatch": true,
+    "route_wrong": true,
+    "local_repair_allowed": false
+  },
+  "reviews": [
+    {
+      "round": 1,
+      "private_file": "semantic_review_result_v1.json",
+      "mode": "review-existing",
+      "prompt_version": 11,
+      "rubric_version": 9,
+      "verdict": "fail",
+      "proof_class": "partial_formula_proof_unbridged_carrier_encoding",
+      "completion_class": "incomplete_source_interface_requires_reassembly",
+      "phase2_status": "fail",
+      "candidate_hash": "3bd66cf7efcde9cc0e7bece123a39a8f1ab13d0f0d33c4e7146598630debc133",
+      "finding": "The rectangle formula is correct on the intrinsic carrier, but no reviewed bridge returns it to the required real-carrier object and support Interface.",
+      "private_review_sha256": "727dd2de05ef41853d61a0955d6cea6979e5c7549d3df64c95929bc80994e985"
+    },
+    {
+      "round": 2,
+      "private_file": "semantic_review_result_v2.json",
+      "mode": "review-existing",
+      "prompt_version": 11,
+      "rubric_version": 9,
+      "verdict": "pass",
+      "proof_class": "source_faithful_proof_completed_owner_a_real_carrier",
+      "completion_class": "source_route_proof_completed_ex_8_2_1",
+      "phase2_status": "pass",
+      "candidate_hash": "96fad510411c3a435072d2001fe39b0fe849c48f8d1ed2ee847bb61f8e2272d5",
+      "finding": "The real pushforward carrier, Borel product, rectangle, uniqueness, support, and explicit dependency route are all present.",
+      "private_review_sha256": "01c82f1fac42f10f892a78449943b326d78962de9464b4b54172234bab58c4bf"
+    }
+  ]
+}

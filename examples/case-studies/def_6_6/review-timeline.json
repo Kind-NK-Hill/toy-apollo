@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "case_id": "def_6_6",
+  "failure_modes": [
+    "review_basis_invalidation",
+    "missing_measurability",
+    "undefinedness_totalized"
+  ],
+  "statement_drift": true,
+  "curation": {
+    "source": "private phase2 prompt pack",
+    "snapshot_kind": "sanitized_interface_slice",
+    "full_pack_tracked_publicly": false,
+    "purpose": "inspectable mechanism example, not benchmark evidence"
+  },
+  "counts": {
+    "build_candidate_files": 2,
+    "semantic_review_results": 3,
+    "review_failures": 1,
+    "review_passes": 2
+  },
+  "private_evidence_sha256": {
+    "attempt_history.json": "234a31a9f12b3926a23f397f3b518664b9d3241acad4f0c4c1953d7de53cbb8d",
+    "official_snapshot_v1.lean": "f55564950d0a34994c97bbfac9aa05d30c9812a1d44e7e25b74f2ae993ba9380",
+    "candidate_v2.lean": "3b4c07d9a2110a3846393dc179891a51bb49bdbfcdaca5da86cfa3fae0b108b4"
+  },
+  "reviews": [
+    {
+      "round": 1,
+      "private_file": "semantic_review_result_v1.json",
+      "mode": "review-existing",
+      "prompt_version": 9,
+      "rubric_version": 9,
+      "verdict": "pass",
+      "proof_class": "textbook_definition_completed",
+      "completion_class": "textbook_definition_completed",
+      "phase2_status": "pass",
+      "candidate_hash": "d467f901acfe0747d4dc9179c815c31754e814f6b9502ede269e1040e6e79053",
+      "finding": "The first basis accepted the componentwise Option construction.",
+      "private_review_sha256": "06b6c691a71a7f8a326aa385fa209ee6668bf0cce20d56ab39e153081bfda2cf"
+    },
+    {
+      "round": 2,
+      "private_file": "semantic_review_result_v3.json",
+      "mode": "review-existing",
+      "prompt_version": 11,
+      "rubric_version": 9,
+      "verdict": "fail",
+      "proof_class": "definition_interface_failed",
+      "completion_class": "definition_interface_revision_required",
+      "phase2_status": "fail",
+      "candidate_hash": "d467f901acfe0747d4dc9179c815c31754e814f6b9502ede269e1040e6e79053",
+      "finding": "A stricter review of the same hash finds missing measurability and a totalized value outside the defined branch.",
+      "private_review_sha256": "9fc24b83f9d170874c2024a90ca14003c5e818064f997b2782e92e0cce37743f"
+    },
+    {
+      "round": 3,
+      "private_file": "semantic_review_result_v4.json",
+      "mode": "review-pack",
+      "prompt_version": 11,
+      "rubric_version": 9,
+      "verdict": "pass",
+      "proof_class": "source_faithful_definition_bridge_completed",
+      "completion_class": "source_faithful_definition_bridge_completed",
+      "phase2_status": "pass",
+      "candidate_hash": "0aeaa3be7239a5486fabf9bc26aa6b9f66e2b7ce61555062f721504a38a21168",
+      "finding": "The repaired gate is exactly componentwise Integrable, the Option branch remains explicit, and the value agrees with the standard integral.",
+      "private_review_sha256": "1072926b56b11531826c3a8014e3514b99d87c338ce8dd7b1523d053f7d8c504"
+    }
+  ]
+}

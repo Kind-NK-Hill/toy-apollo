@@ -1,8 +1,15 @@
 {
   "schema_version": 1,
   "case_id": "def_8_5",
+  "failure_modes": [
+    "domain_drift",
+    "unsafe_totalization",
+    "downstream_migration"
+  ],
+  "statement_drift": true,
   "curation": {
     "source": "private phase2 prompt pack",
+    "snapshot_kind": "sanitized_interface_slice",
     "full_pack_tracked_publicly": false,
     "purpose": "inspectable mechanism example, not benchmark evidence"
   },

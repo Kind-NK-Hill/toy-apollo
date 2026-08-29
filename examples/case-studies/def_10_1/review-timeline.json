@@ -1,8 +1,15 @@
 {
   "schema_version": 1,
   "case_id": "def_10_1",
+  "failure_modes": [
+    "review_basis_invalidation",
+    "missing_random_variable_carrier",
+    "high_fanout_downstream_migration"
+  ],
+  "statement_drift": true,
   "curation": {
     "source": "private phase2 prompt pack",
+    "snapshot_kind": "sanitized_interface_slice",
     "full_pack_tracked_publicly": false,
     "purpose": "inspectable mechanism example, not benchmark evidence"
   },

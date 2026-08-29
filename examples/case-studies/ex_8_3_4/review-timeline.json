@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "case_id": "ex_8_3_4",
+  "failure_modes": [
+    "quantifier_drift",
+    "feasibility_not_optimization",
+    "source_claim_omission"
+  ],
+  "statement_drift": true,
+  "curation": {
+    "source": "private phase2 prompt pack",
+    "snapshot_kind": "sanitized_interface_slice",
+    "full_pack_tracked_publicly": false,
+    "purpose": "inspectable mechanism example, not benchmark evidence"
+  },
+  "counts": {
+    "official_output_snapshots": 3,
+    "semantic_review_results": 3,
+    "review_failures": 2,
+    "review_passes": 1
+  },
+  "private_evidence_sha256": {
+    "attempt_history.json": "fc12de0a5637878352acfba35e24fac970ca6c8b7c6637cab87de726cbe06ef3",
+    "official_snapshot_v1.lean": "3b8b1f67cf729f8324549f16474ab3705189fa61f558062275368d618243bd38",
+    "official_snapshot_v3.lean": "5e06536e04b827f764a9d2bb941a630a3865f2b19eca42d3ef3a99b8e551ac63"
+  },
+  "reviews": [
+    {
+      "round": 1,
+      "private_file": "semantic_review_result_v1.json",
+      "mode": "review-existing",
+      "prompt_version": 11,
+      "rubric_version": 9,
+      "verdict": "fail",
+      "proof_class": "incomplete_source_route",
+      "completion_class": "incomplete_source_route",
+      "phase2_status": "fail",
+      "candidate_hash": "bb546b4a076211ae360ac0cb1a06ffb079fe7debb192228f96f1669f292b6015",
+      "finding": "The fixed matrix is feasible, but the result has no comparison against feasible competitors and therefore no optimization claim.",
+      "private_review_sha256": "016db5b654ee664c03b9e36242cdd56cc244c10f59c54a78d82e7112c8f4f9c4"
+    },
+    {
+      "round": 2,
+      "private_file": "semantic_review_result_v2.json",
+      "mode": "review-existing",
+      "prompt_version": 11,
+      "rubric_version": 9,
+      "verdict": "fail",
+      "proof_class": "incomplete_source_coverage",
+      "completion_class": "incomplete_source_coverage",
+      "phase2_status": "fail",
+      "candidate_hash": "ca998482beb981133f135866155aecbab1bf54d598ced6969d98e0b97d101033",
+      "finding": "The finite optimizer is now complete, but the metric-cost and p-Wasserstein source claim is still absent.",
+      "private_review_sha256": "2be98c8f7eb6ea9611b1a8b7a4fdb26a69b7def229ab22f17e798a458e5e9c47"
+    },
+    {
+      "round": 3,
+      "private_file": "semantic_review_result_v3.json",
+      "mode": "review-existing",
+      "prompt_version": 11,
+      "rubric_version": 9,
+      "verdict": "pass",
+      "proof_class": "source_faithful_proof_completed",
+      "completion_class": "source_faithful_proof_completed",
+      "phase2_status": "pass",
+      "candidate_hash": "7b4d5c979de29b86f9c8aa23e8b571d7f11ac6e39f8b07736d56c15ca48f7a16",
+      "finding": "The parametric linear program, attained optimizer, finite coupling Interface, metric-power cost, and guarded distance are all present.",
+      "private_review_sha256": "d7e933b2db2c3666e0f7f18e55db48144a2258f04d471ae2e905b0ad23ea508f"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "case_id": "def_5_5",
+  "failure_modes": [
+    "adapter_only_interface",
+    "hidden_domain_contract",
+    "downstream_revalidation"
+  ],
+  "statement_drift": true,
+  "curation": {
+    "source": "private phase2 prompt pack",
+    "snapshot_kind": "sanitized_interface_slice",
+    "full_pack_tracked_publicly": false,
+    "purpose": "inspectable mechanism example, not benchmark evidence"
+  },
+  "counts": {
+    "official_output_snapshots": 5,
+    "semantic_review_results": 4,
+    "review_failures": 1,
+    "review_passes": 3
+  },
+  "private_evidence_sha256": {
+    "attempt_history.json": "7123df19985fe13cd3f8477a94e520aba2d3aad5e1d3e5db6f7a2be1521b4d93",
+    "official_snapshot_v2.lean": "f0aff5b4f2919af5b14fb192c3be588e681bf51d40da5b490615f18c929440c9",
+    "official_snapshot_v5.lean": "966f04643e4764b86cecf50f9ecd77924aa3939e3ff5bc16e005c3d40d501d26"
+  },
+  "reviews": [
+    {
+      "round": 1,
+      "private_file": "semantic_review_result_v2.json",
+      "mode": "review-existing",
+      "verdict": "fail",
+      "proof_class": "interface_bridge_incomplete",
+      "completion_class": "interface_bridge_incomplete",
+      "phase2_status": "fail",
+      "candidate_hash": "76df3b67dc04dcaff46df81a957ed0053d17fa56034fb3d42209f60f515b91f0",
+      "finding": "A direct library alias hides the finite-subfamily equation and lacks a reviewed equivalence bridge on the intended domain.",
+      "private_review_sha256": "8967011794ad1686b1d092f4a93c1ba6938ad3a67dcdf3f487c2b6109cc8d865"
+    },
+    {
+      "round": 2,
+      "private_file": "semantic_review_result_v3.json",
+      "mode": "review-existing",
+      "verdict": "pass",
+      "proof_class": "source_faithful_definition_bridge_completed",
+      "completion_class": "source_faithful_definition_bridge_completed",
+      "phase2_status": "pass",
+      "candidate_hash": "10bbaddbd1ec1e425740c11877faf02c73f7fc7203f1826c1e41b47e429e24d0",
+      "finding": "The source equation is explicit and a reusable bridge handles the empty and singleton convention gap.",
+      "private_review_sha256": "c4b8aa3c3cfc1362081d9ce59d6ce4616c1b2a80e1c648fc3ed9eca4a3761ab9"
+    },
+    {
+      "round": 3,
+      "private_file": "semantic_review_result_v4.json",
+      "mode": "review-existing",
+      "verdict": "pass",
+      "proof_class": "source_faithful_definition_bridge_completed",
+      "completion_class": "source_faithful_definition_bridge_completed",
+      "phase2_status": "pass",
+      "candidate_hash": "10bbaddbd1ec1e425740c11877faf02c73f7fc7203f1826c1e41b47e429e24d0",
+      "finding": "Fresh downstream inspection separates a repaired shared Interface from still-stale consumer files.",
+      "private_review_sha256": "1dc816e7731ba7865c89e6506cfdb286b7ee6a5c343c3d2bb40595ae79467bcc"
+    },
+    {
+      "round": 4,
+      "private_file": "semantic_review_result_v5.json",
+      "mode": "review-existing",
+      "verdict": "pass",
+      "proof_class": "source_faithful_definition_bridge_completed",
+      "completion_class": "source_faithful_definition_bridge_completed",
+      "phase2_status": "pass",
+      "candidate_hash": "10bbaddbd1ec1e425740c11877faf02c73f7fc7203f1826c1e41b47e429e24d0",
+      "finding": "Both direct consumers are live at reviewed hashes and genuinely consume the shared bridge.",
+      "private_review_sha256": "b50f470c29d3ad8b146126deac0ccdd30b2bfe195f801d202c6f6de38af55c72"
+    }
+  ]
+}

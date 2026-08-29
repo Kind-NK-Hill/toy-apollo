@@ -33,20 +33,27 @@ flowchart LR
 
 完整 prompt pack、构建收据、review 请求、修复历史、批量队列和运行态
 SQLite 数据库位于私有 evidence plane。公开 source plane 只保留运行代码、
-测试、Lean Modules、稳定文档和两份固定的案例导出。详见
+测试、Lean Modules、稳定文档和七份固定的案例导出。详见
 [`docs/repository_scope.md`](docs/repository_scope.md)。
 
 ## 先看失败案例
 
-两个案例的初始 Lean 文件都能够编译，但仍被语义复审拒绝。
+七个案例的初始 Lean 文件都能够编译，但仍被语义复审拒绝，或使先前的
+pass 在更强 review basis 下失效。
 
 | 案例 | Build gate 没有发现什么 | Review loop 增加了什么 |
 | --- | --- | --- |
 | [`def_8_5`](examples/case-studies/def_8_5/) | 源定义针对概率测度，但公开 Interface 接受任意测度 | 概率测度约束，以及第二轮下游证据迁移 |
 | [`def_10_1`](examples/case-studies/def_10_1/) | 几乎处处收敛的事件形式混用了测度假设，后续又发现缺失随机变量 carrier | 可复用 bridge、carrier 保持和高 fanout 下游检查 |
+| [`def_5_5`](examples/case-studies/def_5_5/) | 用 Mathlib 别名替代了面向教材的有限子族定义 | 显式有限子族等式，以及到库谓词的 bridge |
+| [`def_6_6`](examples/case-studies/def_6_6/) | 缺失可测性且 `EReal.toReal` 把未定义积分伪装成全函数 | 分量可积性 gate 和显式 `Option` 结果 |
+| [`ex_8_2_1`](examples/case-studies/ex_8_2_1/) | carrier 从 `ℝ × ℝ` 漂移成 `ℕ × ℝ` | owner 级契约决策和实数 carrier 上的 pushforward |
+| [`ex_8_3_4`](examples/case-studies/ex_8_3_4/) | 把一个可行运输计划写成了解优化问题 | 最优解量化和缺失的 Wasserstein Interface |
+| [`thm_8_2`](examples/case-studies/thm_8_2/) | 直接调用成品 Mathlib 乘积测度定理，绕过要求的构造路线 | 显式 fibre 集函数、测度构造与唯一性证明 |
 
 这些是机制展示，不是 benchmark 分数。公开 timeline 保留 verdict 分类和私有
-证据哈希，但不公开完整教材语料与可变运行目录。
+证据哈希，但不公开完整教材语料与可变运行目录。集合至少覆盖六种主要失效
+模式；六个案例展示陈述或 Interface 漂移，`thm_8_2` 单独展示证明路线漂移。
 
 ## 五分钟检查
 
@@ -64,6 +71,7 @@ pip install -r requirements.txt
 python .\run_chapter.py -h
 python .\tools\check_repo_hygiene.py
 python .\tools\prepare_public_snapshot.py
+python .\tools\check_case_studies.py
 lake build ToyApollo.Output.def_8_5
 
 lake env lean .\examples\case-studies\def_8_5\initial.lean
@@ -72,6 +80,7 @@ lake env lean .\examples\case-studies\def_8_5\final.lean
 
 最后两个文件都应编译。真正的差异要结合
 `review-timeline.json` 阅读：build gate 无法单独判断两个 Interface 的语义。
+案例索引提供了一次编译全部 14 个公开快照的命令。
 
 ## 仓库地图
 
@@ -95,7 +104,7 @@ Implementation 应进入 `src/toy_apollo/`。
 - 语义复审是模型辅助证据，不能替代 Lean kernel 或专家判断。
 - Lean 构建只证明技术有效性，不证明教材忠实度。
 - 完整教材输入与可变 prompt packs 不在公开 source plane 中分发。
-- 两个公开案例经过选择，不能用来推断无偏准确率、成本或生产率。
+- 七个公开案例经过选择，不能用来推断无偏准确率、成本或生产率。
 - 当前 CLI 以本地运行为主，完整跨平台支持矩阵尚未建立。
 
 ## 文档
@@ -111,4 +120,4 @@ Implementation 应进入 `src/toy_apollo/`。
 
 ## 许可证
 
-首次公开发布前仍需确认许可证。当前没有许可证不代表允许复制或复用代码。
+ToyApollo 采用 [MIT 许可证](LICENSE)。
