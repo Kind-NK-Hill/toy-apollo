@@ -57,6 +57,8 @@ FORBIDDEN_FILES = {
     "lab_notebook.json",
 }
 
+FORBIDDEN_SUFFIXES = (".sqlite3",)
+
 
 def tracked_files() -> list[str]:
     result = subprocess.run(
@@ -73,6 +75,9 @@ def find_forbidden_tracked_files(paths: list[str]) -> list[str]:
     for path in paths:
         normalized = path.replace("\\", "/")
         if normalized in FORBIDDEN_FILES:
+            bad.append(normalized)
+            continue
+        if normalized.lower().endswith(FORBIDDEN_SUFFIXES):
             bad.append(normalized)
             continue
         if any(normalized.startswith(prefix) for prefix in FORBIDDEN_PREFIXES):

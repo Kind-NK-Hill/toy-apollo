@@ -17,6 +17,7 @@ class RepositoryHygieneTest(unittest.TestCase):
             "docs/phase2_completion_classification.json",
             "data/workspace_inventory/policy_v1.json",
             "upstream/kenneth/f81f1450/def_1_2a.lean",
+            "tests/toy-apollo-artifacts/state.sqlite3",
         ]
 
         self.assertEqual(find_forbidden_tracked_files(paths), paths)

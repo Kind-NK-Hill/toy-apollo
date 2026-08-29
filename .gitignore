@@ -13,6 +13,7 @@ htmlcov/
 *.pyc
 *.pyo
 *.pyd
+*.sqlite3
 
 output_lean_files/
 formalized_chapters/
