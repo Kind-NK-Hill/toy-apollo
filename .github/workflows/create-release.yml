@@ -2,21 +2,52 @@ name: Create Release
 
 on:
   push:
-    branches:
-      - 'main'
-      - 'master'
-    paths:
-      - 'lean-toolchain'
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
 
 jobs:
-  lean-release-tag:
-    name: Add Lean release tag
+  verify:
+    name: Verify release
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+
     steps:
-    - name: lean-release-tag action
-      uses: leanprover-community/lean-release-tag@v1
-      with:
-        do-release: true
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Enforce repository hygiene
+        run: python tools/check_repo_hygiene.py
+      - name: Check public snapshot and case studies
+        run: |
+          python tools/prepare_public_snapshot.py
+          python tools/check_case_studies.py
+          python -m unittest tests.test_repo_hygiene tests.test_prepare_public_snapshot tests.test_case_studies
+      - uses: leanprover/lean-action@v1
+      - name: Run Python test suite
+        run: python -m unittest discover -s tests -p "test_*.py"
+      - name: Compile public case snapshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r snapshot; do
+            lake env lean "$snapshot"
+          done < <(find examples/case-studies -type f -name '*.lean' | sort)
+
+  release:
+    name: Publish GitHub release
+    needs: verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create release from verified tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME"
+          --repo "$GITHUB_REPOSITORY"
+          --verify-tag
+          --generate-notes
+          --title "ToyApollo $GITHUB_REF_NAME"
