@@ -18,11 +18,11 @@ class ContextManager:
         """在启动时，扫描 output 目录，将已成功的代码加载到内存池中"""
         if not os.path.exists(self.output_dir):
             return
-            
+
         # 查找所有 .lean 文件 (递归)
         cache_files = glob.glob(os.path.join(self.output_dir, "**", "*.lean"), recursive=True)
         loaded_count = 0
-        
+
         for file_path in cache_files:
             filename = os.path.basename(file_path)
             # 文件名为 block_id.lean
@@ -33,7 +33,7 @@ class ContextManager:
                     loaded_count += 1
             except Exception as e:
                 print(f"   ⚠️ [ContextManager] Failed to load cache {filename}: {e}")
-                    
+
         if loaded_count > 0:
             print(f"   🧠 [ContextManager] Successfully loaded {loaded_count} cached blocks into Global Pool.")
 
@@ -62,7 +62,7 @@ class ContextManager:
                 if stored_id.startswith(f"{block_id}__") or parent_block_id(stored_id) == block_id:
                     deps.add(stored_id)
             return deps
-            
+
         direct_deps = all_blocks_dict[block_id].get('dependencies', [])
         for dep in direct_deps:
             dep = canonicalize_block_id(dep)
@@ -80,7 +80,7 @@ class ContextManager:
                     else:
                         # Fallback: still treat it as a dependency to trigger warnings or deep search
                         deps.add(dep)
-                
+
                 # Recursive call
                 deps.update(self._get_transitive_dependencies(dep, all_blocks_dict))
         return deps
@@ -102,10 +102,10 @@ class ContextManager:
             all_blocks_dict[canonical_id] = canonical_task
 
         required_deps = self._get_transitive_dependencies(current_task['block_id'], all_blocks_dict)
-        
+
         if not required_deps:
-            return "" 
-            
+            return ""
+
         ordered_context_codes = []
         # 按照任务列表的顺序提取上下文，保证 Lean 编译的自上而下顺序
         for task in all_tasks_list:
@@ -125,5 +125,5 @@ class ContextManager:
         final_context = "\n\n".join(ordered_context_codes)
         if final_context:
             print(f"   🧩 [ContextManager] Assembled context from {len(ordered_context_codes)} dependencies.")
-            
+
         return final_context

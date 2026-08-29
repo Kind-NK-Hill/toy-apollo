@@ -54,10 +54,10 @@ class LeanREPL:
         query_id = str(uuid.uuid4())[:8]
         input_filename = f"repl_input_{query_id}.json"
         input_file = self.project_dir / input_filename
-        
+
         with open(input_file, "w", encoding="utf-8") as f:
             json.dump(query, f)
-            
+
         stdout = ""
         stderr = ""
         try:
@@ -98,7 +98,7 @@ class LeanREPL:
 
             if stdout:
                 # REPL may output multiple JSON objects if there are multiple commands
-                # We take the last one or combine them. 
+                # We take the last one or combine them.
                 # For a single "cmd" query, it should be one object.
                 try:
                     return json.loads(stdout)
@@ -127,7 +127,7 @@ class LeanREPL:
         """
         query = {"cmd": code}
         response = self._run_oneshot(query)
-        
+
         if "error" in response:
             return {
                 "success": False,
@@ -145,12 +145,12 @@ class LeanREPL:
             if msg.get("severity") == "error":
                 pos = msg.get('pos', {})
                 errors.append(f"Line {pos.get('line')}, Col {pos.get('column')}: {msg.get('data')}")
-        
+
         # Incomplete proofs are treated as failure in our pipeline
         for s in sorries:
             pos = s.get('pos', {})
             errors.append(f"Incomplete proof (sorry) at Line {pos.get('line')}, Col {pos.get('column')}")
-            
+
         return {
             "success": len(errors) == 0,
             "errors": errors,
@@ -173,10 +173,10 @@ class LeanCompiler:
         self.validation_dir = os.path.join(self.root_dir, "ToyApollo", "Output")
         self.validation_file = os.path.join(self.validation_dir, "Temp_Validation.lean")
         self.validation_target = "ToyApollo.Output.Temp_Validation"
-        
+
         # Legacy support/compatibility (can be removed later if ToyApollo.lean is no longer needed)
         self.target_file = os.path.join(self.root_dir, "ToyApollo.lean")
-        
+
         self._repl = LeanREPL(self.root_dir)
         os.makedirs(self.validation_dir, exist_ok=True)
 
@@ -215,10 +215,10 @@ class LeanCompiler:
         This ensures we only check the current task and its dependencies.
         """
         result = subprocess.run(
-            ["lake", "build", self.validation_target], 
-            capture_output=True, 
-            text=True, 
-            cwd=self.root_dir 
+            ["lake", "build", self.validation_target],
+            capture_output=True,
+            text=True,
+            cwd=self.root_dir
         )
         full_output = (result.stdout or "") + "\n" + (result.stderr or "")
         return result.returncode == 0, full_output
@@ -234,7 +234,7 @@ class LeanCompiler:
         import asyncio
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(None, self._repl.validate_code, code)
-        
+
         if result['success']:
             return True, "Code is valid and complete."
         else:

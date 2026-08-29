@@ -30,9 +30,9 @@ class ReflectionManager:
         """
         if task_id not in self.notebook:
             self.notebook[task_id] = []
-        
+
         # Simple extraction of the last few lines of the error
-        clean_error = error_msg.split('\n')[-3:] 
+        clean_error = error_msg.split('\n')[-3:]
         lesson = {
             "error_summary": " ".join(clean_error),
             "timestamp": os.path.getmtime(self.memory_file) if os.path.exists(self.memory_file) else 0
@@ -46,7 +46,7 @@ class ReflectionManager:
         """Formats the lessons into a prompt string."""
         if task_id not in self.notebook or not self.notebook[task_id]:
             return ""
-        
+
         prompt = "\n[LAB NOTEBOOK - LESSONS FROM PREVIOUS ATTEMPTS]:\n"
         for i, lesson in enumerate(self.notebook[task_id]):
             prompt += f"{i+1}. Encountered Error: {lesson['error_summary']}\n"

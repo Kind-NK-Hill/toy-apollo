@@ -187,7 +187,7 @@ def _inject_cross_references(blocks: list[dict[str, Any]]) -> dict[str, dict[str
         (re.compile(r"Problem\s+(\d+)\.(\d+)"), "prob_{0}_{1}"),
     ]
     injected_evidence: dict[str, dict[str, str]] = {}
-    
+
     for block in blocks:
         task_type = str(block.get("type", "")).strip()
         if task_type not in (
@@ -200,14 +200,14 @@ def _inject_cross_references(blocks: list[dict[str, Any]]) -> dict[str, dict[str
             "Example_Proof",
         ):
             continue
-            
+
         content = block.get("content", "")
         if not content:
             continue
-            
+
         current_id = block.get("block_id", "")
         deps = list(block.get("dependencies") or [])
-        
+
         injected: dict[str, str] = {}
         for pattern, fmt in patterns:
             for match in pattern.finditer(content):
@@ -216,7 +216,7 @@ def _inject_cross_references(blocks: list[dict[str, Any]]) -> dict[str, dict[str
                     continue
                 if target_id not in deps and target_id not in injected:
                     injected[target_id] = match.group(0)
-                    
+
         if injected:
             for dep_id in sorted(injected):
                 deps.append(dep_id)
