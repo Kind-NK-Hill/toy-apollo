@@ -39,7 +39,7 @@ private lemma prob_10_8_floor_ratio_tendsto (x : ℝ) :
         atTop (nhds (Real.sqrt x)) :=
     tendsto_nat_floor_mul_div_atTop (R := ℝ) (a := Real.sqrt x)
       (Real.sqrt_nonneg x)
-  simpa [mul_comm, mul_left_comm, mul_assoc] using hfloor.comp hN
+  simpa only [Function.comp_def, mul_comm, mul_left_comm, mul_assoc] using hfloor.comp hN
 
 private lemma prob_10_8_finiteSquareUniformCdf_eq_zero_of_lt_zero
     {x : ℝ} (hx : x < 0) :
@@ -64,8 +64,9 @@ private lemma prob_10_8_finiteSquareUniformCdf_eq_one_of_one_lt
   simp [prob_10_8_finiteSquareUniformCdf, hx0, hx1]
 
 theorem prob_10_8 :
-    CdfConvergesInDistribution
-      prob_10_8_finiteSquareUniformCdf squareUniformLimitCdf := by
+    ∀ x : ℝ, ContinuousAt squareUniformLimitCdf x →
+      Tendsto (fun n : ℕ => prob_10_8_finiteSquareUniformCdf n x)
+        atTop (𝓝 (squareUniformLimitCdf x)) := by
   intro x _hcont
   by_cases hxneg : x < 0
   · have hseq := prob_10_8_finiteSquareUniformCdf_eq_zero_of_lt_zero hxneg

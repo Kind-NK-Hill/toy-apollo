@@ -68,16 +68,20 @@ private lemma tendsto_of_not_mem_deviationInfinitelyOften_all {Ω : Type*}
 theorem thm_10_1 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ) :
     ConvergesAlmostSurely μ Xn X ↔
-      ∀ ε : ℝ, 0 < ε → μ (deviationInfinitelyOften Xn X ε) = 0 := by
+      (∀ n : ℕ, AEStronglyMeasurable (Xn n) μ) ∧
+        AEStronglyMeasurable X μ ∧
+          ∀ ε : ℝ, 0 < ε → μ (deviationInfinitelyOften Xn X ε) = 0 := by
   constructor
-  · intro has ε hε
+  · rintro ⟨hXn, hX, has⟩
+    refine ⟨hXn, hX, ?_⟩
+    intro ε hε
     have hbad : μ {ω : Ω | ¬ Tendsto (fun n : ℕ => Xn n ω) atTop (nhds (X ω))} = 0 :=
       ae_iff.1 has
     refine MeasureTheory.measure_mono_null ?_ hbad
     intro ω hω hconv
     exact not_mem_deviationInfinitelyOften_of_tendsto hε hconv hω
-  · intro hio
-    refine ae_iff.2 ?_
+  · rintro ⟨hXn, hX, hio⟩
+    refine ⟨hXn, hX, ae_iff.2 ?_⟩
     have hbad_subset :
         {ω : Ω | ¬ Tendsto (fun n : ℕ => Xn n ω) atTop (nhds (X ω))} ⊆
           ⋃ k : ℕ, deviationInfinitelyOften Xn X (1 / ((k : ℝ) + 1)) := by

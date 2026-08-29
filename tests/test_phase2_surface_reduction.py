@@ -171,7 +171,6 @@ class Phase2SurfaceReductionTests(unittest.TestCase):
             1: set(cli_app.PHASE1_MODES),
             2: set(cli_app.PHASE2_MODES),
         }
-        deprecated_modes = {3: set(cli_app.DEPRECATED_PHASE3_MODES)}
         declarations: list[tuple[str, str, int, str]] = []
 
         for relative_path in tracked_docs:
@@ -186,7 +185,7 @@ class Phase2SurfaceReductionTests(unittest.TestCase):
                 phase = int(raw_phase)
                 modes = self.DECLARED_MODE.findall(payload)
                 self.assertTrue(modes, f"{relative_path}:{line_number} declares no modes")
-                machine_modes = active_modes.get(phase) if status == "active" else deprecated_modes.get(phase)
+                machine_modes = active_modes.get(phase) if status == "active" else None
                 self.assertIsNotNone(
                     machine_modes,
                     f"{relative_path}:{line_number} declares unsupported {status} phase {phase}",

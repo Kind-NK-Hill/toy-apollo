@@ -7,6 +7,7 @@ SOURCE MATERIAL: omitted from the public source snapshot; see docs/repository_sc
 
 import Mathlib
 import ToyApollo.Output.def_14_1
+import ToyApollo.Output.ex_10_3_1
 import ToyApollo.Output.thm_14_4_density_support
 
 -- WRITE FINAL LEAN CODE BELOW
@@ -64,30 +65,39 @@ theorem thm_14_4
   exact thm_14_4_of_boundedContinuousTestDifferenceBound Pseq P hTV
     (thm_14_4_boundedContinuousTestDifferenceBound_from_rn Pseq P)
 
-structure thm_14_4_ConverseFailureWitness where
-  discrete_laws : ℕ → ProbabilityMeasure ℝ
-  continuous_law : ProbabilityMeasure ℝ
-  weak_convergence : def_14_1 discrete_laws continuous_law
-  total_variation_distance_one :
-    ∀ n : ℕ,
-      totalVariationDistance (discrete_laws n : Measure ℝ) (continuous_law : Measure ℝ) = 1
+theorem thm_14_4_converseFailure_weakConvergence :
+    def_14_1 ex_10_3_1_empiricalLaw ex_10_3_1_uniformLaw := by
+  apply (def_14_1_iff_tendsto).2
+  simpa [MeasuresConvergeInDistribution] using
+    ex_10_3_1_distribution_convergence
 
 theorem thm_14_4_converseFailure_not_totalVariation
-    (W : thm_14_4_ConverseFailureWitness) :
-    ¬ thm_14_4_totalVariationConvergence W.discrete_laws W.continuous_law := by
+    : ¬ thm_14_4_totalVariationConvergence
+      ex_10_3_1_empiricalLaw ex_10_3_1_uniformLaw := by
   intro hTV
-  have hconst :
-      Tendsto
+  rw [thm_14_4_totalVariationConvergence] at hTV
+  have hlt :
+      ∀ᶠ n : ℕ in atTop,
+        totalVariationDistance
+          (ex_10_3_1_empiricalLaw n : Measure ℝ)
+          (ex_10_3_1_uniformLaw : Measure ℝ) < (1 / 2 : ℝ) := by
+    exact hTV (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1 / 2))
+  have hge :
+      ∀ᶠ n : ℕ in atTop,
+        (1 : ℝ) ≤
         (fun n : ℕ =>
           totalVariationDistance
-            (W.discrete_laws n : Measure ℝ) (W.continuous_law : Measure ℝ))
-        atTop (𝓝 (1 : ℝ)) := by
-    simp [W.total_variation_distance_one]
-  have huniq := tendsto_nhds_unique hTV hconst
-  exact one_ne_zero huniq.symm
+            (ex_10_3_1_empiricalLaw n : Measure ℝ)
+            (ex_10_3_1_uniformLaw : Measure ℝ)) n := by
+    filter_upwards with n
+    simpa [ex_10_3_1_empiricalLaw, ex_10_3_1_uniformLaw] using
+      ex_10_3_1_totalVariationDistance_ge_one n
+  rcases (hlt.and hge).exists with ⟨_n, hnlt, hnge⟩
+  linarith
 
 theorem thm_14_4_converseFailure_note
-    (W : thm_14_4_ConverseFailureWitness) :
-    def_14_1 W.discrete_laws W.continuous_law ∧
-      ¬ thm_14_4_totalVariationConvergence W.discrete_laws W.continuous_law :=
-  ⟨W.weak_convergence, thm_14_4_converseFailure_not_totalVariation W⟩
+    : def_14_1 ex_10_3_1_empiricalLaw ex_10_3_1_uniformLaw ∧
+      ¬ thm_14_4_totalVariationConvergence
+        ex_10_3_1_empiricalLaw ex_10_3_1_uniformLaw :=
+  ⟨thm_14_4_converseFailure_weakConvergence,
+    thm_14_4_converseFailure_not_totalVariation⟩

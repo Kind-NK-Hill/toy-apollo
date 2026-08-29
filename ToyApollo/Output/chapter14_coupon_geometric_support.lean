@@ -29,9 +29,14 @@ theorem chapter14_geometric_mgf_hasSum
   let r : ℝ := (1 - p) * Real.exp t
   have hgeom := (hasSum_geometric_of_norm_lt_one (ξ := r) ht).mul_left
     (p * Real.exp t)
-  convert hgeom using 1
-  · ext m
-    rw [ProbabilityTheory.geometricPMFReal]
+  have hterm :
+      (fun m : ℕ =>
+        ProbabilityTheory.geometricPMFReal p m *
+          Real.exp (t * Prob63Support.scalarStageWait m)) =
+        (fun m : ℕ => p * Real.exp t * r ^ m) := by
+    funext m
+    change ((1 - p) ^ m * p) *
+        Real.exp (t * Prob63Support.scalarStageWait m) = _
     dsimp [r, Prob63Support.scalarStageWait]
     have hexp :
         Real.exp (t * ((m : ℝ) + 1)) =
@@ -52,6 +57,11 @@ theorem chapter14_geometric_mgf_hasSum
             ring
       _ = p * Real.exp t * (((1 - p) * Real.exp t) ^ m) := by
             rw [hpow]
+  have htarget :
+      p * Real.exp t * (1 - r)⁻¹ = chapter14_geometricMgf p t := by
+    simp [chapter14_geometricMgf, r, div_eq_mul_inv]
+  rw [hterm, ← htarget]
+  exact hgeom
 
 /-- The mean of a geometric waiting time with success probability `p`. -/
 def chapter14_geometricMean (p : ℝ) : ℝ :=
@@ -123,9 +133,16 @@ theorem chapter14_geometric_centered_second_hasSum
     dsimp [chapter14_geometricVariance, r]
     field_simp [hp_ne]
     ring
-  convert hsum using 1
-  · ext m
-    rw [ProbabilityTheory.geometricPMFReal]
+  have hterm :
+      (fun m : ℕ =>
+        (((m : ℝ) + 1 - 1 / p) ^ 2) *
+          ProbabilityTheory.geometricPMFReal p m) =
+        (fun m : ℕ =>
+          2 * p * (↑((m + 2).choose 2) * r ^ m) +
+            -(p + 2) * (↑((m + 1).choose 1) * r ^ m) +
+              1 / p * (↑((m + 0).choose 0) * r ^ m)) := by
+    funext m
+    change (((m : ℝ) + 1 - 1 / p) ^ 2) * ((1 - p) ^ m * p) = _
     dsimp [r]
     calc
       ((m : ℝ) + 1 - 1 / p) ^ 2 * ((1 - p) ^ m * p)
@@ -142,7 +159,8 @@ theorem chapter14_geometric_centered_second_hasSum
               1 / p * (↑((m + 0).choose 0) * (1 - p) ^ m) := by
           simp
           ring
-  · exact htarget.symm
+  rw [hterm, ← htarget]
+  exact hsum
 
 theorem chapter14_geometric_centered_second_tsum_eq
     {p : ℝ} (hp_pos : 0 < p) (hp_le : p ≤ 1) :
@@ -239,9 +257,20 @@ theorem chapter14_geometric_centered_fourth_hasSum
     dsimp [chapter14_geometricCenteredFourthMoment, r]
     field_simp [hp_ne]
     ring
-  convert hsum using 1
-  · ext m
-    rw [ProbabilityTheory.geometricPMFReal]
+  have hterm :
+      (fun m : ℕ =>
+        (((m : ℝ) + 1 - 1 / p) ^ 4) *
+          ProbabilityTheory.geometricPMFReal p m) =
+        (fun m : ℕ =>
+          24 * p * (↑((m + 4).choose 4) * r ^ m) +
+              -(36 * p + 24) * (↑((m + 3).choose 3) * r ^ m) +
+            (14 * p + 24 + 12 / p) *
+                (↑((m + 2).choose 2) * r ^ m) +
+          -(p + 4 + 6 / p + 4 / p ^ 2) *
+              (↑((m + 1).choose 1) * r ^ m) +
+        1 / p ^ 3 * (↑((m + 0).choose 0) * r ^ m)) := by
+    funext m
+    change (((m : ℝ) + 1 - 1 / p) ^ 4) * ((1 - p) ^ m * p) = _
     dsimp [r]
     calc
       ((m : ℝ) + 1 - 1 / p) ^ 4 * ((1 - p) ^ m * p)
@@ -265,7 +294,8 @@ theorem chapter14_geometric_centered_fourth_hasSum
         1 / p ^ 3 * (↑((m + 0).choose 0) * (1 - p) ^ m) := by
           simp
           ring
-  · exact htarget.symm
+  rw [hterm, ← htarget]
+  exact hsum
 
 theorem chapter14_geometric_centered_fourth_tsum_eq
     {p : ℝ} (hp_pos : 0 < p) (hp_le : p ≤ 1) :
@@ -303,11 +333,8 @@ lemma chapter14_couponStageMgfIntegrable
   apply MeasureTheory.integrable_sum_dirac
   · intro m
     haveI : IsProbabilityMeasure (Prob63Support.stageMeasure n k hk hkn i) := by
-      simpa [Prob63Support.stageMeasure, Prob63Support.stagePMF] using
-        (ProbabilityTheory.isProbabilityMeasure_geometricMeasure
-          (p := Prob63Support.stageSuccessProb n i)
-          (Prob63Support.stageSuccessProb_pos hk hkn i)
-          (Prob63Support.stageSuccessProb_le_one hk hkn i))
+      unfold Prob63Support.stageMeasure
+      infer_instance
     have hle :
         Prob63Support.stageMeasure n k hk hkn i {m} ≤
           Prob63Support.stageMeasure n k hk hkn i Set.univ := by
@@ -400,11 +427,8 @@ lemma chapter14_couponStageCenteredSecondIntegrable
   apply MeasureTheory.integrable_sum_dirac
   · intro m
     haveI : IsProbabilityMeasure (Prob63Support.stageMeasure n k hk hkn i) := by
-      simpa [Prob63Support.stageMeasure, Prob63Support.stagePMF] using
-        (ProbabilityTheory.isProbabilityMeasure_geometricMeasure
-          (p := Prob63Support.stageSuccessProb n i)
-          (Prob63Support.stageSuccessProb_pos hk hkn i)
-          (Prob63Support.stageSuccessProb_le_one hk hkn i))
+      unfold Prob63Support.stageMeasure
+      infer_instance
     have hle :
         Prob63Support.stageMeasure n k hk hkn i {m} ≤
           Prob63Support.stageMeasure n k hk hkn i Set.univ := by
@@ -502,11 +526,8 @@ lemma chapter14_couponStageCenteredFourthIntegrable
   apply MeasureTheory.integrable_sum_dirac
   · intro m
     haveI : IsProbabilityMeasure (Prob63Support.stageMeasure n k hk hkn i) := by
-      simpa [Prob63Support.stageMeasure, Prob63Support.stagePMF] using
-        (ProbabilityTheory.isProbabilityMeasure_geometricMeasure
-          (p := Prob63Support.stageSuccessProb n i)
-          (Prob63Support.stageSuccessProb_pos hk hkn i)
-          (Prob63Support.stageSuccessProb_le_one hk hkn i))
+      unfold Prob63Support.stageMeasure
+      infer_instance
     have hle :
         Prob63Support.stageMeasure n k hk hkn i {m} ≤
           Prob63Support.stageMeasure n k hk hkn i Set.univ := by

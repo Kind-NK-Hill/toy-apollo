@@ -291,6 +291,330 @@ theorem ex722LimitFun_hits_zero_on_every_open_subinterval {a b : ℝ}
   obtain ⟨x, hxirr, hax, hxb⟩ := exists_irrational_btwn hab
   exact ⟨x, ⟨hax, hxb⟩, ex722LimitFun_eq_zero_of_irrational hxirr⟩
 
+abbrev Ex722RiemannIndex := Fin 1
+
+noncomputable def ex722RiemannUnitBox : BoxIntegral.Box Ex722RiemannIndex where
+  lower := fun _ => 0
+  upper := fun _ => 1
+  lower_lt_upper := fun _ => zero_lt_one
+
+def ex722LiftToRiemannBox (f : ℝ → ℝ) : (Ex722RiemannIndex → ℝ) → ℝ :=
+  fun x => f (x 0)
+
+noncomputable def ex722RiemannVolume :
+    BoxIntegral.BoxAdditiveMap Ex722RiemannIndex (ℝ →L[ℝ] ℝ) ⊤ :=
+  (volume : Measure (Ex722RiemannIndex → ℝ)).toBoxAdditive.toSMul
+
+theorem ex722RiemannUnitBox_hasIntegralVertices :
+    BoxIntegral.hasIntegralVertices ex722RiemannUnitBox := by
+  refine ⟨fun _ => 0, fun _ => 1, ?_, ?_⟩
+  · intro i
+    simp [ex722RiemannUnitBox]
+  · intro i
+    simp [ex722RiemannUnitBox]
+
+def ex722LiftedPartialSupport (n : ℕ) : Set (Ex722RiemannIndex → ℝ) :=
+  {x | x 0 ∈ ex722PartialSupport n}
+
+theorem ex722LiftedPartialSupport_finite (n : ℕ) :
+    (ex722LiftedPartialSupport n).Finite := by
+  have hEval : Function.Injective (fun x : Ex722RiemannIndex → ℝ => x 0) := by
+    intro x y hxy
+    funext i
+    fin_cases i
+    exact hxy
+  exact (ex722PartialSupport_finite n).preimage hEval.injOn
+
+theorem ex722LiftedPartialSupport_measure_zero (n : ℕ) :
+    (volume : Measure (Ex722RiemannIndex → ℝ)) (ex722LiftedPartialSupport n) = 0 := by
+  exact (ex722LiftedPartialSupport_finite n).measure_zero volume
+
+theorem ex722LiftedPartialFun_ae_eq_zero (n : ℕ) :
+    ex722LiftToRiemannBox (ex722PartialFun n) =ᵐ[
+      (volume : Measure (Ex722RiemannIndex → ℝ))] fun _ => 0 := by
+  have hzero : ∀ᵐ x ∂(volume : Measure (Ex722RiemannIndex → ℝ)),
+      ex722LiftToRiemannBox (ex722PartialFun n) x = 0 := by
+    rw [MeasureTheory.ae_iff]
+    refine measure_mono_null ?_ (ex722LiftedPartialSupport_measure_zero n)
+    intro x hx
+    by_contra hxSupport
+    apply hx
+    exact ex722PartialFun_eq_zero_of_notMem n hxSupport
+  filter_upwards [hzero] with x hx
+  exact hx
+
+theorem ex722LiftedPartialFun_ae_continuous (n : ℕ) :
+    ∀ᵐ x ∂(volume : Measure (Ex722RiemannIndex → ℝ)),
+      ContinuousAt (ex722LiftToRiemannBox (ex722PartialFun n)) x := by
+  filter_upwards [compl_mem_ae_iff.mpr (ex722LiftedPartialSupport_measure_zero n)] with x hx
+  have hx' : x 0 ∉ ex722PartialSupport n := by
+    simpa [ex722LiftedPartialSupport] using hx
+  have hscalar : ContinuousAt (ex722PartialFun n) (x 0) :=
+    ex722PartialFun_continuousAt_of_notMem n hx'
+  have heval : ContinuousAt (fun y : Ex722RiemannIndex → ℝ => y 0) x :=
+    continuousAt_apply (0 : Ex722RiemannIndex) x
+  change ContinuousAt (fun y : Ex722RiemannIndex → ℝ => ex722PartialFun n (y 0)) x
+  exact ContinuousAt.comp' (f := fun y : Ex722RiemannIndex → ℝ => y 0) hscalar heval
+
+theorem ex722LiftedPartialFun_bounded (n : ℕ) :
+    ∃ C : ℝ, ∀ x ∈ BoxIntegral.Box.Icc ex722RiemannUnitBox,
+      ‖ex722LiftToRiemannBox (ex722PartialFun n) x‖ ≤ C := by
+  refine ⟨n, ?_⟩
+  intro x hx
+  rw [ex722LiftToRiemannBox, ex722PartialFun]
+  calc
+    ‖∑ k ∈ Finset.range n,
+        (({ex722RatReal k} : Set ℝ).indicator (fun _ : ℝ => (1 : ℝ))) (x 0)‖
+        ≤ ∑ k ∈ Finset.range n,
+            ‖(({ex722RatReal k} : Set ℝ).indicator (fun _ : ℝ => (1 : ℝ))) (x 0)‖ :=
+      norm_sum_le _ _
+    _ ≤ ∑ k ∈ Finset.range n, (1 : ℝ) := by
+      gcongr with k hk
+      by_cases hmem : x 0 ∈ ({ex722RatReal k} : Set ℝ)
+      · simp [Set.indicator_of_mem hmem]
+      · simp [Set.indicator_of_notMem hmem]
+    _ = (n : ℝ) := by simp
+
+theorem ex722PartialFun_hasRiemannIntegral_zero (n : ℕ) :
+    BoxIntegral.HasIntegral ex722RiemannUnitBox
+      BoxIntegral.IntegrationParams.Riemann
+      (ex722LiftToRiemannBox (ex722PartialFun n)) ex722RiemannVolume 0 := by
+  have hbox :
+      BoxIntegral.HasIntegral ex722RiemannUnitBox
+        BoxIntegral.IntegrationParams.Riemann
+        (ex722LiftToRiemannBox (ex722PartialFun n))
+        ((volume : Measure (Ex722RiemannIndex → ℝ)).toBoxAdditive.toSMul)
+        (∫ x in (ex722RiemannUnitBox : Set (Ex722RiemannIndex → ℝ)),
+          ex722LiftToRiemannBox (ex722PartialFun n) x
+          ∂(volume : Measure (Ex722RiemannIndex → ℝ))) :=
+    MeasureTheory.AEContinuous.hasBoxIntegral
+      (volume : Measure (Ex722RiemannIndex → ℝ))
+      (ex722LiftedPartialFun_bounded n)
+      (ex722LiftedPartialFun_ae_continuous n)
+      BoxIntegral.IntegrationParams.Riemann
+  have hzero :
+      ∫ x in (ex722RiemannUnitBox : Set (Ex722RiemannIndex → ℝ)),
+          ex722LiftToRiemannBox (ex722PartialFun n) x
+          ∂(volume : Measure (Ex722RiemannIndex → ℝ)) = 0 := by
+    have hae : ex722LiftToRiemannBox (ex722PartialFun n) =ᵐ[
+        (volume : Measure (Ex722RiemannIndex → ℝ)).restrict ex722RiemannUnitBox]
+        fun _ => 0 :=
+      Filter.Eventually.filter_mono
+        (ae_mono (Measure.restrict_le_self :
+          (volume : Measure (Ex722RiemannIndex → ℝ)).restrict ex722RiemannUnitBox ≤ volume))
+        (ex722LiftedPartialFun_ae_eq_zero n)
+    calc
+      ∫ x in (ex722RiemannUnitBox : Set (Ex722RiemannIndex → ℝ)),
+          ex722LiftToRiemannBox (ex722PartialFun n) x
+          ∂(volume : Measure (Ex722RiemannIndex → ℝ)) =
+          ∫ x in (ex722RiemannUnitBox : Set (Ex722RiemannIndex → ℝ)),
+            (0 : ℝ) ∂(volume : Measure (Ex722RiemannIndex → ℝ)) :=
+        integral_congr_ae hae
+      _ = 0 := by simp
+  simpa [ex722RiemannVolume, hzero] using hbox
+
+theorem ex722PartialFun_riemannIntegrable (n : ℕ) :
+    BoxIntegral.Integrable ex722RiemannUnitBox
+      BoxIntegral.IntegrationParams.Riemann
+      (ex722LiftToRiemannBox (ex722PartialFun n)) ex722RiemannVolume :=
+  (ex722PartialFun_hasRiemannIntegral_zero n).integrable
+
+noncomputable def ex722IrrationalTag
+    (J : BoxIntegral.Box Ex722RiemannIndex) : Ex722RiemannIndex → ℝ :=
+  fun _ => Classical.choose (exists_irrational_btwn (J.lower_lt_upper 0))
+
+theorem ex722IrrationalTag_irrational (J : BoxIntegral.Box Ex722RiemannIndex) :
+    Irrational (ex722IrrationalTag J 0) := by
+  exact (Classical.choose_spec (exists_irrational_btwn (J.lower_lt_upper 0))).1
+
+theorem ex722IrrationalTag_mem_Icc (J : BoxIntegral.Box Ex722RiemannIndex) :
+    ex722IrrationalTag J ∈ BoxIntegral.Box.Icc J := by
+  change J.lower ≤ ex722IrrationalTag J ∧ ex722IrrationalTag J ≤ J.upper
+  constructor <;> intro i
+  · have hi : i = 0 := Subsingleton.elim _ _
+    subst i
+    exact (Classical.choose_spec (exists_irrational_btwn (J.lower_lt_upper 0))).2.1.le
+  · have hi : i = 0 := Subsingleton.elim _ _
+    subst i
+    exact (Classical.choose_spec (exists_irrational_btwn (J.lower_lt_upper 0))).2.2.le
+
+noncomputable def ex722IrrationalRetag
+    (π : BoxIntegral.TaggedPrepartition ex722RiemannUnitBox) :
+    BoxIntegral.TaggedPrepartition ex722RiemannUnitBox := by
+  classical
+  exact
+    { toPrepartition := π.toPrepartition
+      tag J := if hJ : J ∈ π then ex722IrrationalTag J else π.tag J
+      tag_mem_Icc J := by
+        by_cases hJ : J ∈ π
+        · rw [dif_pos hJ]
+          exact BoxIntegral.Box.le_iff_Icc.1 (π.le_of_mem' J hJ)
+            (ex722IrrationalTag_mem_Icc J)
+        · rw [dif_neg hJ]
+          exact π.tag_mem_Icc J }
+
+@[simp] theorem ex722IrrationalRetag_mem
+    {π : BoxIntegral.TaggedPrepartition ex722RiemannUnitBox}
+    {J : BoxIntegral.Box Ex722RiemannIndex} :
+    J ∈ ex722IrrationalRetag π ↔ J ∈ π := Iff.rfl
+
+theorem ex722IrrationalRetag_tag_of_mem
+    {π : BoxIntegral.TaggedPrepartition ex722RiemannUnitBox}
+    {J : BoxIntegral.Box Ex722RiemannIndex} (hJ : J ∈ π) :
+    (ex722IrrationalRetag π).tag J = ex722IrrationalTag J := by
+  classical
+  simp [ex722IrrationalRetag, hJ]
+
+theorem ex722IrrationalRetag_isPartition
+    {π : BoxIntegral.TaggedPrepartition ex722RiemannUnitBox}
+    (hπ : π.IsPartition) : (ex722IrrationalRetag π).IsPartition := hπ
+
+theorem ex722IrrationalRetag_isHenstock
+    (π : BoxIntegral.TaggedPrepartition ex722RiemannUnitBox) :
+    (ex722IrrationalRetag π).IsHenstock := by
+  intro J hJ
+  have hJ' : J ∈ π := hJ
+  rw [ex722IrrationalRetag_tag_of_mem (π := π) hJ']
+  exact ex722IrrationalTag_mem_Icc J
+
+theorem ex722RiemannVolume_unit_one :
+    ex722RiemannVolume ex722RiemannUnitBox 1 = (1 : ℝ) := by
+  rw [ex722RiemannVolume, BoxIntegral.BoxAdditiveMap.toSMul_apply]
+  rw [smul_eq_mul, mul_one]
+  change (volume : Measure (Ex722RiemannIndex → ℝ)).toBoxAdditive
+    ex722RiemannUnitBox = 1
+  rw [BoxIntegral.Box.volume_apply]
+  simp [ex722RiemannUnitBox]
+
+theorem ex722UnitPartition_limit_value_one (N : ℕ) [NeZero N]
+    {J : BoxIntegral.Box Ex722RiemannIndex}
+    (hJ : J ∈ BoxIntegral.unitPartition.prepartition N ex722RiemannUnitBox) :
+    ex722LiftToRiemannBox ex722LimitFun
+      ((BoxIntegral.unitPartition.prepartition N ex722RiemannUnitBox).tag J) = 1 := by
+  rcases BoxIntegral.unitPartition.mem_prepartition_iff.mp hJ with ⟨ν, hν, rfl⟩
+  rw [BoxIntegral.unitPartition.prepartition_tag N hν]
+  let q : ℚ := ((ν 0 + 1 : ℤ) : ℚ) / (N : ℚ)
+  have hqcast : (q : ℝ) = BoxIntegral.unitPartition.tag N ν 0 := by
+    simp [q, BoxIntegral.unitPartition.tag_apply]
+  have htag :=
+    (BoxIntegral.unitPartition.prepartition N ex722RiemannUnitBox).tag_mem_Icc
+      (BoxIntegral.unitPartition.box N ν)
+  have hscalar : BoxIntegral.unitPartition.tag N ν 0 ∈ Set.Icc (0 : ℝ) 1 := by
+    rw [BoxIntegral.unitPartition.prepartition_tag N hν] at htag
+    exact ⟨by simpa [ex722RiemannUnitBox] using htag.1 0,
+      by simpa [ex722RiemannUnitBox] using htag.2 0⟩
+  rw [← hqcast] at hscalar
+  change ex722LimitFun (BoxIntegral.unitPartition.tag N ν 0) = 1
+  rw [← hqcast]
+  exact ex722LimitFun_eq_one_of_rational hscalar
+
+theorem ex722IrrationalRetag_limit_value_zero
+    (π : BoxIntegral.TaggedPrepartition ex722RiemannUnitBox)
+    {J : BoxIntegral.Box Ex722RiemannIndex} (hJ : J ∈ π) :
+    ex722LiftToRiemannBox ex722LimitFun ((ex722IrrationalRetag π).tag J) = 0 := by
+  rw [ex722IrrationalRetag_tag_of_mem (π := π) hJ]
+  exact ex722LimitFun_eq_zero_of_irrational (ex722IrrationalTag_irrational J)
+
+theorem ex722UnitPartition_integralSum_one (N : ℕ) [NeZero N] :
+    BoxIntegral.integralSum (ex722LiftToRiemannBox ex722LimitFun)
+      ex722RiemannVolume
+      (BoxIntegral.unitPartition.prepartition N ex722RiemannUnitBox) = 1 := by
+  let π := BoxIntegral.unitPartition.prepartition N ex722RiemannUnitBox
+  have hπ : π.IsPartition :=
+    BoxIntegral.unitPartition.prepartition_isPartition N
+      ex722RiemannUnitBox_hasIntegralVertices
+  calc
+    BoxIntegral.integralSum (ex722LiftToRiemannBox ex722LimitFun)
+        ex722RiemannVolume π =
+        ∑ J ∈ π.boxes, ex722RiemannVolume J 1 := by
+      rw [BoxIntegral.integralSum]
+      exact Finset.sum_congr rfl fun J hJ => by
+        rw [ex722UnitPartition_limit_value_one N hJ]
+    _ = ex722RiemannVolume ex722RiemannUnitBox 1 := by
+      exact
+        (ex722RiemannVolume.map
+          ⟨⟨fun g : ℝ →L[ℝ] ℝ => g 1, rfl⟩, fun _ _ => rfl⟩).sum_partition_boxes
+            le_top hπ
+    _ = 1 := ex722RiemannVolume_unit_one
+
+theorem ex722IrrationalRetag_integralSum_zero
+    (π : BoxIntegral.TaggedPrepartition ex722RiemannUnitBox) :
+    BoxIntegral.integralSum (ex722LiftToRiemannBox ex722LimitFun)
+      ex722RiemannVolume (ex722IrrationalRetag π) = 0 := by
+  rw [BoxIntegral.integralSum]
+  apply Finset.sum_eq_zero
+  intro J hJ
+  have hJ' : J ∈ π := hJ
+  rw [ex722IrrationalRetag_limit_value_zero π hJ']
+  exact map_zero (ex722RiemannVolume J)
+
+theorem ex722IrrationalUnitPartition_isSubordinate (N : ℕ) [NeZero N]
+    {r : (Ex722RiemannIndex → ℝ) → Set.Ioi (0 : ℝ)}
+    (hr : ∀ x, r x = r 0) (hN : 1 / (N : ℝ) ≤ (r 0 : ℝ)) :
+    (ex722IrrationalRetag
+      (BoxIntegral.unitPartition.prepartition N ex722RiemannUnitBox)).IsSubordinate r := by
+  let π := BoxIntegral.unitPartition.prepartition N ex722RiemannUnitBox
+  intro J hJ x hx
+  have hJ' : J ∈ π := hJ
+  rcases BoxIntegral.unitPartition.mem_prepartition_iff.mp hJ' with ⟨ν, hν, hνJ⟩
+  have htag : (ex722IrrationalRetag π).tag J ∈ BoxIntegral.Box.Icc J :=
+    ex722IrrationalRetag_isHenstock π J hJ
+  change dist x ((ex722IrrationalRetag π).tag J) ≤ (r ((ex722IrrationalRetag π).tag J) : ℝ)
+  calc
+    dist x ((ex722IrrationalRetag π).tag J) ≤ Metric.diam (BoxIntegral.Box.Icc J) :=
+      Metric.dist_le_diam_of_mem (BoxIntegral.Box.isBounded_Icc J) hx htag
+    _ ≤ 1 / (N : ℝ) := by
+      rw [← hνJ]
+      exact BoxIntegral.unitPartition.diam_boxIcc N ν
+    _ ≤ (r 0 : ℝ) := hN
+    _ = (r ((ex722IrrationalRetag π).tag J) : ℝ) := by
+      exact congrArg Subtype.val (hr _).symm
+
+theorem ex722LimitFun_not_riemannIntegrable :
+    ¬ BoxIntegral.Integrable ex722RiemannUnitBox
+      BoxIntegral.IntegrationParams.Riemann
+      (ex722LiftToRiemannBox ex722LimitFun) ex722RiemannVolume := by
+  intro hIntegrable
+  obtain ⟨r, hrCond, hCauchy⟩ :=
+    (BoxIntegral.integrable_iff_cauchy_basis.mp hIntegrable)
+      (1 / 2 : ℝ) (by norm_num)
+  let N : ℕ := ⌈(r 0 0 : ℝ)⁻¹⌉₊
+  haveI : NeZero N :=
+    ⟨Nat.ne_zero_iff_zero_lt.mpr
+      (Nat.ceil_pos.mpr (inv_pos.mpr (r 0 0).prop))⟩
+  have hN : 1 / (N : ℝ) ≤ (r 0 0 : ℝ) := by
+    rw [one_div, inv_le_comm₀ (mod_cast (Nat.pos_of_neZero N)) (r 0 0).prop]
+    exact Nat.le_ceil _
+  let π := BoxIntegral.unitPartition.prepartition N ex722RiemannUnitBox
+  let πIrr := ex722IrrationalRetag π
+  have hπ : π.IsPartition :=
+    BoxIntegral.unitPartition.prepartition_isPartition N
+      ex722RiemannUnitBox_hasIntegralVertices
+  have hπIrr : πIrr.IsPartition := ex722IrrationalRetag_isPartition hπ
+  have hsub : π.IsSubordinate (r 0) := by
+    rw [show r 0 = fun _ => r 0 0 from funext_iff.mpr (hrCond 0 rfl)]
+    exact BoxIntegral.unitPartition.prepartition_isSubordinate N
+      ex722RiemannUnitBox (r 0 0).prop hN
+  have hsubIrr : πIrr.IsSubordinate (r 0) := by
+    exact ex722IrrationalUnitPartition_isSubordinate N (hrCond 0 rfl) hN
+  have hbase : BoxIntegral.IntegrationParams.Riemann.MemBaseSet
+      ex722RiemannUnitBox 0 (r 0) π := by
+    refine ⟨hsub, fun _ => BoxIntegral.unitPartition.prepartition_isHenstock N
+      ex722RiemannUnitBox, fun h => ?_, fun h => ?_⟩
+    · simp only [BoxIntegral.IntegrationParams.Riemann, Bool.false_eq_true] at h
+    · simp only [BoxIntegral.IntegrationParams.Riemann, Bool.false_eq_true] at h
+  have hbaseIrr : BoxIntegral.IntegrationParams.Riemann.MemBaseSet
+      ex722RiemannUnitBox 0 (r 0) πIrr := by
+    refine ⟨hsubIrr, fun _ => ex722IrrationalRetag_isHenstock π,
+      fun h => ?_, fun h => ?_⟩
+    · simp only [BoxIntegral.IntegrationParams.Riemann, Bool.false_eq_true] at h
+    · simp only [BoxIntegral.IntegrationParams.Riemann, Bool.false_eq_true] at h
+  have hdist := hCauchy 0 0 π πIrr hbase hπ hbaseIrr hπIrr
+  have : dist (1 : ℝ) 0 ≤ (1 / 2 : ℝ) := by
+    simpa only [π, πIrr, ex722UnitPartition_integralSum_one,
+      ex722IrrationalRetag_integralSum_zero] using hdist
+  norm_num [Real.dist_eq] at this
+
 structure LimitOfRiemannIntegrableFunctionsCounterexample where
   ratEnum : ℕ → UnitIntervalRat
   ratEnum_def : ratEnum = ex722Rat
@@ -304,9 +628,18 @@ structure LimitOfRiemannIntegrableFunctionsCounterexample where
   support_subset_unitInterval : ∀ n, partialSupport n ⊆ Set.Icc (0 : ℝ) 1
   continuous_off_support : ∀ n {x}, x ∉ partialSupport n → ContinuousAt (partialSeq n) x
   integral_unitInterval_zero : ∀ n, ∫ x in Set.Icc (0 : ℝ) 1, partialSeq n x ∂volume = 0
+  partial_riemann_integral_zero : ∀ n,
+    BoxIntegral.HasIntegral ex722RiemannUnitBox BoxIntegral.IntegrationParams.Riemann
+      (ex722LiftToRiemannBox (partialSeq n)) ex722RiemannVolume 0
+  partial_riemann_integrable : ∀ n,
+    BoxIntegral.Integrable ex722RiemannUnitBox BoxIntegral.IntegrationParams.Riemann
+      (ex722LiftToRiemannBox (partialSeq n)) ex722RiemannVolume
   limitFun : ℝ → ℝ
   limitFun_def : limitFun = ex722LimitFun
   pointwise_tendsto : ∀ x, Tendsto (fun n => partialSeq n x) atTop (nhds (limitFun x))
+  limit_not_riemann_integrable :
+    ¬ BoxIntegral.Integrable ex722RiemannUnitBox BoxIntegral.IntegrationParams.Riemann
+      (ex722LiftToRiemannBox limitFun) ex722RiemannVolume
   rational_value : ∀ {q : ℚ}, (q : ℝ) ∈ Set.Icc (0 : ℝ) 1 → limitFun (q : ℝ) = 1
   irrational_value : ∀ {x : ℝ}, Irrational x → limitFun x = 0
   hits_one_on_every_open_subinterval :
@@ -327,9 +660,12 @@ noncomputable def ex_7_2_2 : LimitOfRiemannIntegrableFunctionsCounterexample whe
   support_subset_unitInterval := ex722PartialSupport_subset_unitInterval
   continuous_off_support := fun n {x} hx => ex722PartialFun_continuousAt_of_notMem n hx
   integral_unitInterval_zero := ex722PartialFun_integral_unitInterval_zero
+  partial_riemann_integral_zero := ex722PartialFun_hasRiemannIntegral_zero
+  partial_riemann_integrable := ex722PartialFun_riemannIntegrable
   limitFun := ex722LimitFun
   limitFun_def := rfl
   pointwise_tendsto := ex722PartialFun_tendsto_limit
+  limit_not_riemann_integrable := ex722LimitFun_not_riemannIntegrable
   rational_value := fun {_q} hq => ex722LimitFun_eq_one_of_rational hq
   irrational_value := fun {_x} hx => ex722LimitFun_eq_zero_of_irrational hx
   hits_one_on_every_open_subinterval := fun {_a _b} ha hab hb =>

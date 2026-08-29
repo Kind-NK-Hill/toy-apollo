@@ -51,7 +51,7 @@ campaign/artifact overrides do not move it into a campaign.
 - `phase0_ingestion_packs/` and `phase1_prompt_packs/` are prompt-pack handoff state: ignore them, preserve them locally, and archive summaries when needed instead of deleting packs.
 - Chapter 9 prompt packs and related provenance deserve special preserve-before-review handling; do not collapse them into a generic cleanup bucket.
 - Phase 2 prompt packs and Phase 2 Problem soft-dependency packs are generated runtime state. They are normally `must-ignore-but-preserve`, not tracked source.
-- Retired Phase 3 provider artifacts are still protected local artifacts. Do not delete them as cleanup, and do not treat them as active workflow inputs.
+- Retired provider artifacts are still protected local artifacts. Do not delete them as cleanup, and do not treat them as active workflow inputs.
 
 ## Sync Commands
 

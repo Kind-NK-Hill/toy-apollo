@@ -33,11 +33,8 @@ MATH_REVIEW_GATE_TEXT_MARKERS = (
     ("source_mismatch", "source_mismatch"),
     ("source mismatch", "source_mismatch"),
     ("statement mismatch", "statement_mismatch"),
-    ("needs_concrete_decomposition", "needs_concrete_decomposition"),
     ("dirty family", "family_dirty_or_blocked"),
     ("family blocked", "family_dirty_or_blocked"),
-    ("nested obl_obl", "nested_obligation"),
-    ("obl_obl_", "nested_obligation"),
 )
 MATH_REVIEW_PROOF_SKELETON_PREFIX = "math_proof_skeleton"
 MATH_REVIEW_RESULT_PREFIX = "math_review_result"
@@ -270,8 +267,6 @@ def _math_review_gate_triggers(task_id: str, record: dict[str, Any]) -> tuple[st
     triggers: list[str] = []
     if task_id in MATH_REVIEW_GATE_PILOT_TASK_IDS:
         triggers.append(f"pilot_task:{task_id}")
-    if task_id.startswith("obl_obl_"):
-        triggers.append("nested_obligation")
 
     category = str(record.get("latest_semantic_fail_triage_category", "") or "").strip().lower()
     if category in MATH_REVIEW_GATE_TRIAGE_CATEGORIES:
@@ -279,14 +274,6 @@ def _math_review_gate_triggers(task_id: str, record: dict[str, Any]) -> tuple[st
     if category.startswith("semantic_fail_public_premise"):
         triggers.append("semantic_fail_public_premise")
 
-    proof_summary = record.get("proof_obligation_summary", {})
-    if _needs_concrete_decomposition(proof_summary):
-        triggers.append("needs_concrete_decomposition")
-    obligations = record.get("proof_obligations", {})
-    if _needs_concrete_decomposition(obligations):
-        triggers.append("needs_concrete_decomposition")
-    if _contains_nested_obligation_id(proof_summary) or _contains_nested_obligation_id(obligations):
-        triggers.append("nested_obligation")
 
     text = _record_text(record)
     for marker, trigger in MATH_REVIEW_GATE_TEXT_MARKERS:
@@ -315,25 +302,6 @@ def _record_text(record: dict[str, Any]) -> str:
     return "\n".join(chunks).lower()
 
 
-def _needs_concrete_decomposition(payload: Any) -> bool:
-    if not isinstance(payload, dict):
-        return False
-    if bool(payload.get("needs_concrete_decomposition", False)):
-        return True
-    classification = payload.get("classification", {})
-    if isinstance(classification, dict) and bool(classification.get("requires_decomposition", False)):
-        return True
-    return False
-
-
-def _contains_nested_obligation_id(payload: Any) -> bool:
-    if isinstance(payload, str):
-        return "obl_obl_" in payload
-    if isinstance(payload, list):
-        return any(_contains_nested_obligation_id(item) for item in payload)
-    if isinstance(payload, dict):
-        return any(_contains_nested_obligation_id(item) for item in payload.values())
-    return False
 
 
 def _latest_artifact_path(

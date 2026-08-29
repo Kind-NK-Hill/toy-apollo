@@ -61,11 +61,11 @@ theorem L2Function.cauchySchwarz_product_support {Ω : Type*}
     L2Function.CauchySchwarzProductSupport hX hY := by
   have hX2 : Integrable (fun ω => ‖X ω‖ ^ (2 : ℕ)) μ := by
     exact MemLp.integrable_norm_pow
-      (show MemLp X ((2 : ℕ) : ENNReal) μ from by simpa using hX)
+      (show MemLp X ((2 : ℕ) : ENNReal) μ from hX)
       (by norm_num)
   have hY2 : Integrable (fun ω => ‖Y ω‖ ^ (2 : ℕ)) μ := by
     exact MemLp.integrable_norm_pow
-      (show MemLp Y ((2 : ℕ) : ENNReal) μ from by simpa using hY)
+      (show MemLp Y ((2 : ℕ) : ENNReal) μ from hY)
       (by norm_num)
   have hquad :
       Integrable

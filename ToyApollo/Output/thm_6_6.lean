@@ -34,7 +34,33 @@ def textbookIntegrable {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
 
 noncomputable def realAbsIntegral {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     (X : Ω → EReal) : ENNReal :=
-  posLIntegral μ X + negLIntegral μ X
+  ∫⁻ ω, (X ω).abs ∂μ
+
+theorem ereal_abs_eq_pos_add_neg (x : EReal) :
+    x.abs = x.toENNReal + (-x).toENNReal := by
+  induction x
+  · simp [EReal.abs_bot]
+  · rename_i x
+    rcases le_total 0 x with hx | hx
+    · simp [EReal.abs_def, abs_of_nonneg hx, ENNReal.ofReal_of_nonpos (neg_nonpos.mpr hx)]
+    · simp [EReal.abs_def, abs_of_nonpos hx, ENNReal.ofReal_of_nonpos hx]
+  · simp [EReal.abs_top, EReal.toENNReal_top]
+
+theorem toENNReal_le_abs (x : EReal) : x.toENNReal ≤ x.abs := by
+  rw [ereal_abs_eq_pos_add_neg]
+  exact le_add_of_nonneg_right bot_le
+
+theorem neg_toENNReal_le_abs (x : EReal) : (-x).toENNReal ≤ x.abs := by
+  rw [ereal_abs_eq_pos_add_neg]
+  exact le_add_of_nonneg_left bot_le
+
+theorem realAbsIntegral_eq_parts {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (X : Ω → EReal) (hXm : Measurable X) :
+    realAbsIntegral μ X = posLIntegral μ X + negLIntegral μ X := by
+  change (∫⁻ ω, (X ω).abs ∂μ) =
+    (∫⁻ ω, (X ω).toENNReal ∂μ) + (∫⁻ ω, (-X ω).toENNReal ∂μ)
+  rw [lintegral_congr (fun ω => ereal_abs_eq_pos_add_neg (X ω)),
+    lintegral_add_left hXm.ereal_toENNReal]
 
 noncomputable def realPartAbsIntegral {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     (Z : Ω → ℂ) : ENNReal :=
@@ -53,15 +79,22 @@ noncomputable def complexAbsIntegral {Ω : Type*} [MeasurableSpace Ω] (μ : Mea
   ∫⁻ ω, ENNReal.ofReal ‖Z ω‖ ∂μ
 
 theorem textbookIntegrable_iff_realAbsIntegral_lt_top {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) (X : Ω → EReal) :
+    (μ : Measure Ω) (X : Ω → EReal) (hXm : Measurable X) :
     textbookIntegrable μ X ↔ realAbsIntegral μ X < ⊤ := by
   constructor
   · intro hX
-    simpa [textbookIntegrable, realAbsIntegral] using (ENNReal.add_lt_top.mpr hX)
+    rw [realAbsIntegral_eq_parts μ X hXm]
+    exact ENNReal.add_lt_top.mpr hX
   · intro hAbs
     constructor
-    · exact lt_of_le_of_lt (le_add_of_nonneg_right bot_le) (by simpa [realAbsIntegral] using hAbs)
-    · exact lt_of_le_of_lt (le_add_of_nonneg_left bot_le) (by simpa [realAbsIntegral] using hAbs)
+    · change (∫⁻ ω, (X ω).toENNReal ∂μ) < ⊤
+      exact lt_of_le_of_lt
+        (thm_6_3 μ (fun ω => toENNReal_le_abs (X ω)))
+        (by simpa [realAbsIntegral] using hAbs)
+    · change (∫⁻ ω, (-X ω).toENNReal ∂μ) < ⊤
+      exact lt_of_le_of_lt
+        (thm_6_3 μ (fun ω => neg_toENNReal_le_abs (X ω)))
+        (by simpa [realAbsIntegral] using hAbs)
 
 theorem complexTextbookIntegrable_iff_complexAbsIntegral_lt_top {Ω : Type*}
     [MeasurableSpace Ω] (μ : Measure Ω) (Z : Ω → ℂ) (hZm : Measurable Z) :
@@ -100,13 +133,13 @@ theorem complexTextbookIntegrable_iff_complexAbsIntegral_lt_top {Ω : Type*}
 end Thm66Support
 
 theorem thm_6_6 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) (X : Ω → EReal)
-    (_hXm : Measurable X) :
+    (hXm : Measurable X) :
     ((∫⁻ ω, (X ω).toENNReal ∂μ) < ⊤ ∧
         (∫⁻ ω, (-X ω).toENNReal ∂μ) < ⊤) ↔
-      (∫⁻ ω, (X ω).toENNReal ∂μ) + (∫⁻ ω, (-X ω).toENNReal ∂μ) < ⊤ := by
+      (∫⁻ ω, (X ω).abs ∂μ) < ⊤ := by
   simpa [Thm66Support.textbookIntegrable, Thm66Support.realAbsIntegral,
     Thm66Support.posLIntegral, Thm66Support.negLIntegral, Thm66Support.posPart, Thm66Support.negPart]
-    using Thm66Support.textbookIntegrable_iff_realAbsIntegral_lt_top μ X
+    using Thm66Support.textbookIntegrable_iff_realAbsIntegral_lt_top μ X hXm
 
 theorem thm_6_6_complex {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) (Z : Ω → ℂ)
     (hZm : Measurable Z) :

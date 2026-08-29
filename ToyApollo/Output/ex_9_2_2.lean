@@ -51,10 +51,7 @@ theorem symmetricUniformCharacteristicSource_zero {a : ℝ} (ha : a ≠ 0) :
   unfold symmetricUniformCharacteristicSource
   have haC : (a : ℂ) ≠ 0 := by exact_mod_cast ha
   simp [div_eq_mul_inv, haC]
-  change ((a + a : ℝ) : ℂ) * ((a : ℂ)⁻¹ * 2⁻¹) = 1
-  field_simp [haC, Complex.ofReal_mul]
-  ring_nf
-  norm_num [Complex.ofReal_mul]
+  field_simp [haC] <;> ring
 
 theorem ex_9_2_2_nonzero {a t : ℝ} (ha : a ≠ 0) (ht : t ≠ 0) :
     symmetricUniformCharacteristicSource a t =

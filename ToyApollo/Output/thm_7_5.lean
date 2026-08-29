@@ -48,7 +48,11 @@ theorem thm_7_5 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
       tendsto_const_nhds
     have hsub : Tendsto (fun n => Xn n ω - X ω) atTop (nhds (0 : ℝ)) := by
       simpa using hω_lim.sub hconst
-    simpa using (continuous_norm.tendsto (0 : ℝ)).comp hsub
+    change Tendsto
+      ((fun a : ℝ => ‖a‖) ∘ fun n => Xn n ω - X ω)
+      atTop (nhds 0)
+    simpa only [norm_zero] using
+      (continuous_norm.tendsto (0 : ℝ)).comp hsub
   have h_twoY_int : Integrable (fun ω => (2 : ℝ) * Y ω) μ :=
     hYint.const_mul 2
   simpa using MeasureTheory.tendsto_integral_of_dominated_convergence

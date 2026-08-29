@@ -118,9 +118,15 @@ private lemma not_indep_X_Y {Ω : Type} [MeasurableSpace Ω] {P : Measure Ω}
           (P {ω | Z ω > 0 ∧ C ω}) = (P {ω | Z ω > 0}) * (P {ω | C ω}) ∧
             (P {ω | Z ω > 0 ∧ ¬ C ω}) = (P {ω | Z ω > 0}) * (P {ω | ¬ C ω}) := by
         constructor <;> rw [ProbabilityTheory.indepFun_iff_measure_inter_preimage_eq_mul] at h_indep
-        · convert h_indep {x : ℝ | 0 < x} {true} measurableSet_Ioi (by norm_num) using 1
-        · convert h_indep {x : ℝ | 0 < x} {x : Bool | ¬ x = true}
-            measurableSet_Ioi (by norm_num) using 1
+        · change
+            P (Z ⁻¹' Set.Ioi 0 ∩ C ⁻¹' ({true} : Set Bool)) =
+              P (Z ⁻¹' Set.Ioi 0) * P (C ⁻¹' ({true} : Set Bool))
+          exact h_indep (Set.Ioi 0) {true} measurableSet_Ioi (by norm_num)
+        · change
+            P (Z ⁻¹' Set.Ioi 0 ∩ C ⁻¹' {b : Bool | ¬ b = true}) =
+              P (Z ⁻¹' Set.Ioi 0) * P (C ⁻¹' {b : Bool | ¬ b = true})
+          exact h_indep (Set.Ioi 0) {b : Bool | ¬ b = true}
+            measurableSet_Ioi (by norm_num)
       aesop
     convert h_pos using 3 <;> aesop
   have h_zero :
@@ -208,7 +214,10 @@ private lemma joint_cdf_XZ {Ω : Type} [MeasurableSpace Ω] {P : Measure Ω}
           P {ω | C ω = false} * P {ω | Z ω ≤ z} := by
       have := h_indep.symm
       rw [ProbabilityTheory.indepFun_iff_measure_inter_preimage_eq_mul] at this
-      simpa using this {false} (Set.Iic z) (by norm_num) (by norm_num)
+      change
+        P (C ⁻¹' ({false} : Set Bool) ∩ Z ⁻¹' Set.Iic z) =
+          P (C ⁻¹' ({false} : Set Bool)) * P (Z ⁻¹' Set.Iic z)
+      exact this {false} (Set.Iic z) (by norm_num) measurableSet_Iic
     rw [h_case2, hC_fair, Measure.map_apply] <;> aesop
   convert congr_arg₂ (· + ·) h_case1 h_case2 using 1
   · rw [← MeasureTheory.measure_union]

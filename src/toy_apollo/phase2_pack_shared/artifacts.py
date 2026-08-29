@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import re
 from pathlib import Path
 from typing import Any
@@ -152,7 +154,62 @@ def intent_contract_path(pack_dir: Path) -> Path:
     return pack_dir / INTENT_CONTRACT_FILE_NAME
 
 
+def cordis_task_declarations(settings) -> dict[str, list[str]]:
+    """Cordis policy map: task id -> official declaration names in the host module."""
+
+    if str(getattr(settings, "profile", "mat")).lower() != "cordis":
+        return {}
+    policy_path = Path(settings.runtime_root) / "data" / "task_catalog" / "catalog_policy_v1.json"
+    try:
+        policy = json.loads(policy_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    raw = policy.get("task_declarations") or {}
+    if not isinstance(raw, dict):
+        return {}
+    return {str(k): [str(x) for x in v] for k, v in raw.items() if isinstance(v, list)}
+
+
+def cordis_task_host_module(task_id: str, settings) -> Path | None:
+    """Resolve a Cordis task's official output (its shared host module).
+
+    Cordis tasks multi-home inside whole module files; the mapping comes from
+    the Cordis catalog policy pinned in the runtime repository.
+    """
+
+    if str(getattr(settings, "profile", "mat")).lower() != "cordis":
+        return None
+    policy_path = Path(settings.runtime_root) / "data" / "task_catalog" / "catalog_policy_v1.json"
+    try:
+        policy = json.loads(policy_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    mapped = (policy.get("task_module_map") or {}).get(task_id)
+    if not mapped:
+        return None
+    return Path(settings.runtime_root) / str(mapped)
+
+
+def cordis_task_host_module_name(task_id: str, settings) -> str | None:
+    """Return the Lean module name for a Cordis task's policy-mapped host."""
+
+    host = cordis_task_host_module(task_id, settings)
+    if host is None:
+        return None
+    try:
+        relative = host.resolve().relative_to(Path(settings.runtime_root).resolve())
+    except ValueError:
+        return None
+    parts = relative.with_suffix("").parts
+    if not parts or any(not re.fullmatch(r"[A-Za-z0-9_']+", part) for part in parts):
+        return None
+    return ".".join(parts)
+
+
 def iter_official_output_targets(task_id: str, source_plan: str, settings) -> list[Path]:
+    host_module = cordis_task_host_module(task_id, settings)
+    if host_module is not None:
+        return [host_module]
     targets = [
         settings.toyapollo_output_dir / f"{task_id}.lean",
         settings.output_lean_files_dir / "general" / f"{task_id}.lean",
@@ -184,6 +241,9 @@ def select_latest_existing_task_file(task_id: str, source_plan: str, settings) -
     """
 
     del source_plan
+    host_module = cordis_task_host_module(task_id, settings)
+    if host_module is not None:
+        return host_module if host_module.exists() else None
     canonical = settings.toyapollo_output_dir / f"{task_id}.lean"
     return canonical if canonical.exists() else None
 

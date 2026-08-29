@@ -10,7 +10,7 @@ import time
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping, Sequence
 
 from src.block_id_naming import (
     canonicalize_block_id,
@@ -52,19 +52,12 @@ from .phase2_semantic_review import (
     build_semantic_review_input,
     latest_semantic_review_artifact_paths,
     latest_semantic_review_context_path,
-    load_reviewer_config_from_env,
+    is_supported_semantic_review_prompt_version,
     next_semantic_review_artifact_paths,
     next_semantic_review_context_path,
     normalize_reviewer_result,
     render_semantic_review_prompt,
     render_semantic_review_report,
-    run_semantic_review,
-)
-from .phase2_proof_obligations import (
-    PROOF_OBLIGATIONS_FILE_NAME,
-    maybe_ensure_proof_obligations_file,
-    render_proof_obligations_markdown,
-    summarize_proof_obligations,
 )
 
 IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_']*$")
@@ -73,7 +66,10 @@ DECL_RE = re.compile(
     r"(?ms)^\s*(?:@[^\n]+\n\s*)*(?:noncomputable\s+)?(?:theorem|lemma|def)\s+[^\n]*?(?=\s*:=|\s*\bwhere\b)",
 )
 TOP_LEVEL_DECL_RE = re.compile(r"(?m)^\s*(?:noncomputable\s+)?(?:theorem|lemma|def)\s+[A-Za-z0-9_']+")
-NAMED_DECL_RE_TEMPLATE = r"(?m)^\s*(?:noncomputable\s+)?(?P<kind>theorem|lemma|def|axiom)\s+{name}\b"
+NAMED_DECL_RE_TEMPLATE = (
+    r"(?m)^\s*(?:noncomputable\s+)?"
+    r"(?P<kind>theorem|lemma|def|abbrev|structure|class|inductive|opaque|axiom)\s+{name}\b"
+)
 VACUOUS_THEOREM_RE = re.compile(
     r"(?ms)^\s*(?:noncomputable\s+)?(?:theorem|lemma)\s+[A-Za-z0-9_']+(?:\s*\([^)]*\))*\s*:\s*(True|PUnit|Unit)\b"
 )
@@ -550,7 +546,16 @@ def resolve_phase2_task(task_id: str, ledger: LedgerManager, settings) -> dict[s
     if isinstance(tasks, dict):
         task_record = tasks.get(canonical_task_id)
         if isinstance(task_record, dict):
-            task = canonicalize_task_dict(task_record)
+            # Older imported ledger rows can contain runtime/review status and
+            # source content while omitting the Phase 1 dependency fields.  A
+            # plain record-first return silently turns those tasks into graph
+            # roots.  Fill only fields that are absent from the ledger row
+            # from the tracked plan; explicit ledger values (including an
+            # intentional empty dependency list) still win.
+            plan_task = find_task_in_plans(canonical_task_id, settings.plans_dir)
+            merged_record = dict(plan_task) if isinstance(plan_task, dict) else {}
+            merged_record.update(task_record)
+            task = canonicalize_task_dict(merged_record)
             if task.get("block_id") == canonical_task_id and str(task.get("content", "")).strip():
                 return _merge_effective_task_imports(task, canonical_task_id, ledger, settings)
 
@@ -879,11 +884,11 @@ def extract_search_terms(title: str, content: str, limit: int = 8) -> list[str]:
     return terms[:limit]
 
 
-def build_import_lines(task: dict[str, Any]) -> list[str]:
+def build_import_lines(task: dict[str, Any], lean_module_root: str = "ToyApollo.Output") -> list[str]:
     final_union = _task_final_import_union(task)
     import_lines = ["import Mathlib"]
     for dep in final_union:
-        import_lines.append(f"import ToyApollo.Output.{canonicalize_block_id(dep)}")
+        import_lines.append(f"import {lean_module_root}.{canonicalize_block_id(dep)}")
     return import_lines
 
 
@@ -1186,6 +1191,11 @@ def load_or_create_intent_contract(pack_dir: Path, task: dict[str, Any]) -> dict
 
 
 def iter_official_output_targets(task_id: str, source_plan: str, settings) -> list[Path]:
+    from .phase2_pack_shared.artifacts import cordis_task_host_module
+
+    host_module = cordis_task_host_module(task_id, settings)
+    if host_module is not None:
+        return [host_module]
     targets = [
         settings.toyapollo_output_dir / f"{task_id}.lean",
         settings.output_lean_files_dir / "general" / f"{task_id}.lean",
@@ -1209,41 +1219,9 @@ def _has_active_official_output(task_id: str, source_plan: str, ledger: LedgerMa
     return status in completed_statuses and existing is not None and existing.exists()
 
 
-def _status_counts_have_accepted_proof_debt(status_counts: Any) -> bool:
-    if not isinstance(status_counts, dict):
-        return False
-    try:
-        return int(status_counts.get("accepted_as_proof_debt", 0) or 0) > 0
-    except (TypeError, ValueError):
-        return False
-
 
 def _ledger_record_has_accepted_proof_debt(record: dict[str, Any]) -> bool:
-    status = str(record.get("status", "") or "").strip()
-    if status == TaskStatus.COMPLETED_WITH_PROOF_DEBT.value:
-        return True
-    summary = record.get("proof_obligation_summary")
-    if isinstance(summary, dict) and _status_counts_have_accepted_proof_debt(summary.get("status_counts", {})):
-        return True
-    obligations = record.get("proof_obligations")
-    if isinstance(obligations, dict):
-        if _status_counts_have_accepted_proof_debt(obligations.get("status_counts", {})):
-            return True
-        raw_items = obligations.get("obligations", [])
-        if isinstance(raw_items, list) and any(
-            isinstance(item, dict) and str(item.get("status", "") or "").strip().lower() == "accepted_as_proof_debt"
-            for item in raw_items
-        ):
-            return True
-    obligation_review = record.get("obligation_review")
-    if isinstance(obligation_review, dict):
-        raw_items = obligation_review.get("items", [])
-        if isinstance(raw_items, list) and any(
-            isinstance(item, dict) and str(item.get("status", "") or "").strip().lower() == "accepted_as_proof_debt"
-            for item in raw_items
-        ):
-            return True
-    return False
+    return str(record.get("status", "") or "").strip() == TaskStatus.COMPLETED_WITH_PROOF_DEBT.value
 
 
 def _ledger_record_is_explicit_allowed_exception(record: dict[str, Any]) -> bool:
@@ -1297,7 +1275,7 @@ def hard_dependency_proof_debt_blocker_message(task: dict[str, Any], ledger: Led
     blocker_text = ", ".join(blockers)
     return (
         f"Task {task_id} is blocked because hard dependency {blocker_text} carries accepted proof debt. "
-        "Run debt-fix on the blocker and finish the repair loop before generating downstream Phase 2 work."
+        "Re-review and repair the blocker through the ordinary source-spine workflow before generating downstream Phase 2 work."
     )
 
 
@@ -1641,6 +1619,8 @@ def validate_candidate_hard_checks(
     task: dict[str, Any],
     candidate_code: str,
     ledger: LedgerManager | None = None,
+    lean_module_root: str = "ToyApollo.Output",
+    target_declaration_names: Mapping[str, Sequence[str]] | None = None,
 ) -> tuple[bool, list[dict[str, Any]], str]:
     task_id = canonicalize_block_id(str(task.get("block_id", "")))
     target_task_ids = _hard_check_target_task_ids(task, ledger)
@@ -1664,11 +1644,22 @@ def validate_candidate_hard_checks(
         if exported_kind is not None:
             exported_target_task_id = candidate_target
             break
+    if exported_kind is None and target_declaration_names:
+        # Cordis multi-homing: the official declarations inside a shared host
+        # module carry paper-semantic names, not the task id.
+        for candidate_target in target_task_ids:
+            for decl_name in target_declaration_names.get(candidate_target, ()):
+                exported_kind = _candidate_decl_kind(decl_name, candidate_code)
+                if exported_kind is not None:
+                    exported_target_task_id = candidate_target
+                    break
+            if exported_kind is not None:
+                break
     if exported_kind is None:
         rendered_targets = "`, `".join(target_task_ids)
         detail = (
             "Candidate does not declare the target task id "
-            f"`{rendered_targets}` as a top-level def/theorem/lemma."
+            f"`{rendered_targets}` through an accepted top-level declaration."
         )
         return False, _hard_check_diagnostic("missing_target_declaration", detail), detail
 
@@ -1677,7 +1668,7 @@ def validate_candidate_hard_checks(
     for candidate_target in target_task_ids:
         self_import_names.update(legacy_ids_for(candidate_target))
     if any(module in self_import_names for module in imported_modules):
-        detail = f"Candidate self-imports ToyApollo.Output.{target_task_id}, which would bypass verification."
+        detail = f"Candidate self-imports {lean_module_root}.{target_task_id}, which would bypass verification."
         return False, _hard_check_diagnostic("self_import", detail), detail
 
     imported = _task_like_local_imports(imported_modules)
@@ -2468,7 +2459,7 @@ def _collect_local_dependency_entries(
         dep_id = canonicalize_block_id(dep)
         dep_record = ledger.ledger.get("tasks", {}).get(dep_id, {})
         dep_file = find_existing_task_file(dep_id, dep_record.get("source_plan", "unknown"), settings)
-        import_path = f"ToyApollo.Output.{dep_id}"
+        import_path = f"{getattr(settings, "lean_module_root", "ToyApollo.Output")}.{dep_id}"
         exported = dep_record.get("exported_symbols", [])
         symbols = exported if exported else [dep_id]
         skipped_symbol_count = max(0, len(symbols) - symbol_check_limit)
@@ -2696,7 +2687,7 @@ def build_search_manifest(task: dict[str, Any], ledger: LedgerManager, settings)
             scoped_verified_any = True
         entries.extend(term_entries)
         if local_root.exists():
-            record_root("ToyApollo.Output")
+            record_root(getattr(settings, "lean_module_root", "ToyApollo.Output"))
             local_project_started = time.perf_counter()
             entries.extend(
                 _collect_text_search_entries(
@@ -3155,11 +3146,6 @@ def build_semantic_review_context_markdown(task: dict[str, Any], ledger: LedgerM
     output_owner_record = ledger.ledger.get("tasks", {}).get(output_owner_id, {})
     if not isinstance(output_owner_record, dict):
         output_owner_record = {}
-    output_owner_task = canonicalize_task_dict(output_owner_record) if output_owner_record else task
-    if output_binding.is_obligation_task and output_owner_task.get("block_id") != output_owner_id:
-        output_owner_task = dict(output_owner_task)
-        output_owner_task["block_id"] = output_owner_id
-    obligations_pack_dir = output_binding.owner_pack_dir if output_binding.is_obligation_task else pack_dir
     downstream = _collect_direct_downstream_consumers(output_owner_id, settings)
     hard_deps = canonicalize_id_list(task.get("dependencies", []))
     soft_imports = canonicalize_id_list(task.get("soft_imports", []))
@@ -3168,6 +3154,12 @@ def build_semantic_review_context_markdown(task: dict[str, Any], ledger: LedgerM
     public_exports = public_exports_source.get("exported_symbols", []) if isinstance(public_exports_source, dict) else []
     if not isinstance(public_exports, list):
         public_exports = []
+    from .phase2_pack_shared.artifacts import cordis_task_declarations
+
+    declaration_map = cordis_task_declarations(settings)
+    scoped_declarations = declaration_map.get(task_id, [])
+    if not scoped_declarations and output_owner_id != task_id:
+        scoped_declarations = declaration_map.get(output_owner_id, [])
     lines = [
         f"# Semantic Review Context for {task_id}",
         "",
@@ -3238,9 +3230,11 @@ def build_semantic_review_context_markdown(task: dict[str, Any], ledger: LedgerM
             )
     lines.extend(["", "## Current Public Interface Summary", ""])
     lines.append(f"- Output owner task: `{output_owner_id}`")
-    if output_binding.focus_obligation_ids:
-        lines.append(f"- Focused obligation ids: `{', '.join(output_binding.focus_obligation_ids)}`")
+    lines.append(f"- Official Lean module: `{output_binding.output_module}`")
     lines.append(f"- Official output targets: `{', '.join(str(path) for path in active_targets) if active_targets else '(none)'}`")
+    lines.append(
+        f"- Task-scoped official declarations: `{', '.join(scoped_declarations) if scoped_declarations else '(not policy-mapped)'}`"
+    )
     lines.append(f"- Recorded exported symbols: `{', '.join(str(item) for item in public_exports) if public_exports else '(none recorded)'}`")
     lines.append(f"- Current ledger status: `{current_record.get('status', 'UNKNOWN')}`")
     if output_binding.is_obligation_task:
@@ -3248,33 +3242,6 @@ def build_semantic_review_context_markdown(task: dict[str, Any], ledger: LedgerM
     lines.append(f"- Build candidate state: `{current_record.get('pack_candidate_state', 'draft')}`")
     latest_review_result = str(current_record.get("latest_semantic_review_result_file", "") or "")
     lines.append(f"- Last completed semantic review result: `{latest_review_result or '(none)'}`")
-    obligations_record = output_owner_record if output_binding.is_obligation_task else current_record
-    proof_obligations = maybe_ensure_proof_obligations_file(
-        obligations_pack_dir,
-        output_owner_task,
-        current_record=obligations_record if isinstance(obligations_record, dict) else {},
-        tracking_level=2,
-    )
-    if proof_obligations is None:
-        lines.extend(
-            [
-                "",
-                "## Proof Obligation Tracking",
-                "",
-                "- Proof obligation tracking: `Level 0 ordinary Phase2 path`.",
-                "- No task-local `proof_obligations.json` is generated for this normal task.",
-            ]
-        )
-    else:
-        lines.extend(
-            [
-                "",
-                render_proof_obligations_markdown(
-                    proof_obligations,
-                    path=obligations_pack_dir / PROOF_OBLIGATIONS_FILE_NAME,
-                ).rstrip(),
-            ]
-        )
     lines.extend(["", "## Allowed Abstraction Layer", ""])
     for item in _review_allowed_abstractions(task):
         lines.append(f"- {item}")
@@ -3770,7 +3737,10 @@ def _queue_review_result_is_valid(result_path: Path, review_input: dict[str, Any
         return False
     if canonicalize_block_id(str(raw_result.get("task_id", "") or "")) != task_id:
         return False
-    if int(raw_result.get("prompt_version") or 0) != SEMANTIC_REVIEW_PROMPT_VERSION:
+    input_prompt_version = int(review_input.get("prompt_version") or 0)
+    if not is_supported_semantic_review_prompt_version(input_prompt_version):
+        return False
+    if int(raw_result.get("prompt_version") or 0) != input_prompt_version:
         return False
     if int(raw_result.get("rubric_version") or 0) != SEMANTIC_REVIEW_RUBRIC_VERSION:
         return False
@@ -3828,7 +3798,7 @@ def _find_matching_existing_review_materials(
             or input_hash != subject_hash
             or not input_basis_hash
             or input_basis_hash != review_basis_hash
-            or prompt_version != SEMANTIC_REVIEW_PROMPT_VERSION
+            or not is_supported_semantic_review_prompt_version(prompt_version)
             or rubric_version != SEMANTIC_REVIEW_RUBRIC_VERSION
             or not prompt_path.exists()
             or not template_path.exists()
@@ -3852,6 +3822,8 @@ def _find_matching_existing_review_materials(
             continue
         if result_path.exists():
             stale_result_files.append(str(result_path))
+            continue
+        if prompt_version != SEMANTIC_REVIEW_PROMPT_VERSION:
             continue
         if matching_without_result is None:
             matching_without_result = candidate
@@ -4000,10 +3972,10 @@ def _queue_source_resolution(task_id: str, task: dict[str, Any] | None) -> dict[
     }
 
 
-def _queue_sanity_build_status(task_id: str, success: bool, detail: str) -> dict[str, Any]:
+def _queue_sanity_build_status(task_id: str, success: bool, detail: str, lean_module_root: str = "ToyApollo.Output") -> dict[str, Any]:
     return {
         "status": "passed" if success else "failed",
-        "module": f"ToyApollo.Output.{task_id}",
+        "module": f"{lean_module_root}.{task_id}",
         "detail": detail,
     }
 
@@ -4041,6 +4013,7 @@ def _review_existing_queue_material_summary(counts: dict[str, Any]) -> dict[str,
     stale_review_result = int(counts.get("stale_review_result", 0) or 0)
     review_result_present = int(counts.get("review_result_present", 0) or 0)
     blocked_build = int(counts.get("blocked_build", 0) or 0)
+    blocked_hard_check = int(counts.get("blocked_hard_check", 0) or 0)
     source_missing = int(counts.get("source_missing", 0) or 0)
     return {
         "prepared_review_materials": ready_for_codex_review + stale_review_result + review_result_present,
@@ -4049,6 +4022,7 @@ def _review_existing_queue_material_summary(counts: dict[str, Any]) -> dict[str,
         "stale_or_invalid_prior_results": stale_review_result,
         "current_matching_review_results": review_result_present,
         "blocked_build": blocked_build,
+        "blocked_hard_check": blocked_hard_check,
         "source_missing": source_missing,
     }
 
@@ -4073,6 +4047,7 @@ def _render_review_existing_queue_markdown(report: dict[str, Any]) -> str:
     if counts:
         for status in (
             "blocked_build",
+            "blocked_hard_check",
             "source_missing",
             "review_result_present",
             "stale_review_result",
@@ -4092,6 +4067,7 @@ def _render_review_existing_queue_markdown(report: dict[str, Any]) -> str:
             f"- Stale or invalid prior results: `{material_summary.get('stale_or_invalid_prior_results', 0)}`",
             f"- Current matching review results: `{material_summary.get('current_matching_review_results', 0)}`",
             f"- Blocked build: `{material_summary.get('blocked_build', 0)}`",
+            f"- Blocked hard check: `{material_summary.get('blocked_hard_check', 0)}`",
             f"- Source missing: `{material_summary.get('source_missing', 0)}`",
             "",
             "Note: `stale_review_result` means review materials are prepared, but the prior semantic review result is stale or invalid. A reviewer should write a fresh result for that prepared request.",
@@ -4111,73 +4087,6 @@ def _render_review_existing_queue_markdown(report: dict[str, Any]) -> str:
         lines.append(f"  - output: `{task_report.get('official_output_file', '')}`")
         lines.append(f"  - detail: {task_report.get('detail', '')}")
     return "\n".join(lines).rstrip() + "\n"
-
-
-def _reviewer_config_or_detail(*, require_config: bool) -> tuple[Any, str]:
-    try:
-        config = load_reviewer_config_from_env()
-    except ValueError as exc:
-        return None, str(exc)
-    if config is None and require_config:
-        return None, (
-            "semantic reviewer is required for verify but TOY_APOLLO_PHASE2_REVIEWER_ARGV_JSON is not configured. "
-            "Use review-pack/review-apply for Codex or manual review."
-        )
-    return config, ""
-
-
-def _run_semantic_review_for_candidate(
-    *,
-    task: dict[str, Any],
-    ledger: LedgerManager,
-    settings,
-    pack_dir: Path,
-    attempt: int,
-    mode: str,
-    candidate_path: Path,
-    candidate_code: str,
-    build_summary: dict[str, Any],
-    config: Any,
-    allow_missing_config: bool,
-) -> dict[str, Any]:
-    reviewer_argv_hash = config.argv_hash if config is not None else ""
-    backend_id = config.backend_id if config is not None else "missing-reviewer-config"
-    context_markdown = build_semantic_review_context_markdown(task, ledger, settings, pack_dir)
-    context_path = next_semantic_review_context_path(pack_dir, attempt)
-    review_basis = build_semantic_review_basis(
-        task,
-        ledger,
-        settings,
-        review_subject_kind="candidate",
-        review_subject_hash=_sha256_text(candidate_code),
-        review_subject_file=candidate_path,
-    )
-    review_input = build_semantic_review_input(
-        task=task,
-        mode=mode,
-        attempt=attempt,
-        candidate_path=candidate_path,
-        candidate_code=candidate_code,
-        import_lines=build_import_lines(task),
-        dependency_summary=_build_dependency_review_summary(task, ledger, settings),
-        search_summary=_build_search_review_summary(pack_dir),
-        build_summary=build_summary,
-        backend_id=backend_id,
-        reviewer_argv_hash=reviewer_argv_hash,
-        review_basis=review_basis,
-        review_basis_hash=_sha256_json(review_basis),
-        review_context_file=str(context_path),
-        review_context_hash=_sha256_text(context_markdown),
-        review_context_markdown=context_markdown,
-        runtime_root=Path(settings.runtime_root),
-    )
-    return run_semantic_review(
-        pack_dir=pack_dir,
-        attempt=attempt,
-        review_input=review_input,
-        config=config,
-        allow_missing_config=allow_missing_config,
-    )
 
 
 def _semantic_review_summary(review_result: dict[str, Any]) -> dict[str, Any]:
@@ -4250,9 +4159,19 @@ def _review_diagnostics(review_result: dict[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
+def _official_module_name_for_build(task_id: str, settings) -> str:
+    # Cordis: the official output is the shared host module (multi-homing).
+    from .phase2_pack_shared.artifacts import cordis_task_host_module_name
+
+    host_module_name = cordis_task_host_module_name(task_id, settings)
+    if host_module_name:
+        return host_module_name
+    return f"{getattr(settings, "lean_module_root", "ToyApollo.Output")}.{task_id}"
+
+
 def _run_official_module_build(task_id: str, settings) -> tuple[bool, str]:
     proc = subprocess.run(
-        ["lake", "build", f"ToyApollo.Output.{task_id}"],
+        ["lake", "build", _official_module_name_for_build(task_id, settings)],
         cwd=str(settings.runtime_root),
         capture_output=True,
         text=True,
@@ -4270,165 +4189,6 @@ def _run_lean_module_build(module_name: str, settings) -> tuple[bool, str]:
     )
     output = "\n".join([part for part in (proc.stdout, proc.stderr) if part])
     return proc.returncode == 0, output
-
-
-def _module_name_from_lean_file(path: Path, settings) -> str:
-    try:
-        rel = path.resolve().relative_to(Path(settings.runtime_root).resolve())
-    except ValueError:
-        return ""
-    if rel.suffix != ".lean":
-        return ""
-    return ".".join(rel.with_suffix("").parts)
-
-
-def _resolve_support_landing_file(raw_path: str, *, pack_dir: Path, settings) -> Path:
-    path = Path(raw_path).expanduser()
-    if path.is_absolute():
-        return path
-    candidates = [
-        Path(settings.runtime_root) / path,
-        pack_dir / path,
-        Path.cwd() / path,
-    ]
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate.resolve()
-    return (Path(settings.runtime_root) / path).resolve()
-
-
-def _support_review_target_from_obligations(pack_dir: Path, settings) -> dict[str, str]:
-    obligations_path = pack_dir / PROOF_OBLIGATIONS_FILE_NAME
-    payload = _read_json_safely(obligations_path, {})
-    obligations = payload.get("obligations", []) if isinstance(payload, dict) else []
-    if not isinstance(obligations, list):
-        obligations = []
-    for item in obligations:
-        if not isinstance(item, dict):
-            continue
-        landing_file_raw = str(item.get("landing_file", "") or "").strip()
-        landing_source = str(item.get("landing_source", "") or "").strip()
-        if not landing_file_raw and landing_source != "existing_support":
-            continue
-        if not landing_file_raw:
-            continue
-        landing_file = _resolve_support_landing_file(landing_file_raw, pack_dir=pack_dir, settings=settings)
-        landing_module = str(item.get("landing_module", "") or "").strip() or _module_name_from_lean_file(landing_file, settings)
-        landing_decl = str(item.get("landing_decl", "") or item.get("lean_landing", "") or "").strip()
-        return {
-            "file": str(landing_file),
-            "module": landing_module,
-            "decl": landing_decl,
-            "obligation_id": str(item.get("id", "") or "").strip(),
-        }
-    return {}
-
-
-async def write_existing_support_review_pack(
-    task_id: str,
-    ledger: LedgerManager,
-    settings,
-    *,
-    force_new_attempt: bool = False,
-) -> tuple[bool, str]:
-    task = ensure_task_registered(resolve_phase2_task(task_id, ledger, settings), ledger)
-    task_id = task["block_id"]
-    pack_dir = settings.phase2_prompt_packs_dir / task_id
-    if not _path_exists(pack_dir):
-        pack_dir = write_prompt_pack(task_id, ledger, settings, task=task)
-
-    target = _support_review_target_from_obligations(pack_dir, settings)
-    if not target:
-        return False, (
-            "No existing support landing was declared. Add landing_source=existing_support "
-            "and landing_file to a proof_obligations.json item first."
-        )
-    output_path = Path(target["file"])
-    if not output_path.exists():
-        return False, f"Support landing file does not exist: {output_path}"
-    module_name = str(target.get("module", "") or "")
-    if not module_name:
-        return False, f"Could not infer Lean module name for support landing file: {output_path}"
-    candidate_code = _read_file_safely(output_path)
-
-    sanity_success, sanity_output = _run_lean_module_build(module_name, settings)
-    if not sanity_success:
-        _clear_current_review_metadata(task_id, ledger)
-        diagnostics = _parse_diagnostics(sanity_output, "final_build_failed", "review_support_sanity_build")
-        _write_review_compat_summary(
-            task_id=task_id,
-            ledger=ledger,
-            task=task,
-            settings=settings,
-            pack_dir=pack_dir,
-            mode="review-support",
-            candidate_path=output_path,
-            candidate_code=candidate_code,
-            detail_text=sanity_output or f"lake build {module_name} failed before review-support.",
-            diagnostics=diagnostics,
-            disposition="review_support_build_failed_no_review",
-            semantic_review=None,
-            state_transition="none",
-        )
-        return False, sanity_output or f"lake build {module_name} failed before review-support."
-
-    prepared = _prepare_existing_output_review_materials(
-        task=task,
-        ledger=ledger,
-        settings=settings,
-        pack_dir=pack_dir,
-        output_path=output_path,
-        mode="review-support",
-        build_output=sanity_output,
-        force_new_attempt=force_new_attempt,
-        review_subject_kind="existing_support",
-    )
-    snapshot_path = prepared["snapshot_path"]
-    ledger.update_runtime_metadata(task_id, latest_support_snapshot_file=str(snapshot_path))
-    _set_current_review_metadata(
-        task_id,
-        ledger,
-        input_file=str(prepared["input_path"]),
-        prompt_file=str(prepared["prompt_path"]),
-        template_file=str(prepared["template_path"]),
-        context_file=str(prepared["context_path"]),
-        request_file=str(prepared.get("request_path") or ""),
-        backend_id="codex-handoff",
-        expected_result_file=str(prepared["result_path"] if prepared["result_path"] is not None else next_semantic_review_artifact_paths(pack_dir, prepared["attempt"])["result"]),
-        subject_kind="existing_support",
-        subject_file=str(snapshot_path),
-        subject_hash=str(prepared["candidate_hash"]),
-        origin="review-support",
-    )
-    semantic_review = {
-        "verdict": "inconclusive",
-        "runner": {"status": "codex_handoff_pending"},
-        "summary": "Existing support landing frozen for semantic review.",
-        "recommended_disposition": "manual_review",
-        "review_input_file": str(prepared["input_path"]),
-        "review_prompt_file": str(prepared["prompt_path"]),
-        "review_context_file": str(prepared["context_path"]),
-        "review_result_template_file": str(prepared["template_path"]),
-        "expected_review_result_file": str(prepared["result_path"]) if prepared["result_path"] is not None else str(next_semantic_review_artifact_paths(pack_dir, prepared["attempt"])["result"]),
-        "cache_hit": False,
-        "reviewer_backend_id": "codex-handoff",
-    }
-    _write_review_compat_summary(
-        task_id=task_id,
-        ledger=ledger,
-        task=task,
-        settings=settings,
-        pack_dir=pack_dir,
-        mode="review-support",
-        candidate_path=snapshot_path,
-        candidate_code=str(prepared["candidate_code"]),
-        detail_text="Existing support landing frozen for semantic review; apply a filled semantic_review_result JSON with review-apply.",
-        diagnostics=[],
-        disposition="review_support_required",
-        semantic_review=semantic_review,
-        state_transition="none",
-    )
-    return True, "Existing support landing frozen for semantic review; apply a filled semantic_review_result JSON with review-apply."
 
 
 def _next_quarantine_dir(pack_dir: Path) -> Path:
@@ -4512,244 +4272,6 @@ def _remove_symbols_owned_by_task(task_id: str, ledger: LedgerManager) -> None:
     ledger.remove_symbols_owned_by_task(task_id)
 
 
-def audit_completed_task_output(task_id: str, ledger: LedgerManager, settings) -> tuple[bool, str]:
-    task = ensure_task_registered(resolve_phase2_task(task_id, ledger, settings), ledger)
-    task_id = task["block_id"]
-    audit_original_status = str(ledger.ledger.get("tasks", {}).get(task_id, {}).get("status", ""))
-
-    pack_dir = settings.phase2_prompt_packs_dir / task_id
-    if not _path_exists(pack_dir):
-        pack_dir = write_prompt_pack(task_id, ledger, settings, task=task)
-
-    source_plan = str(task.get("source_plan", "unknown") or "unknown")
-    output_path = settings.toyapollo_output_dir / f"{task_id}.lean"
-    if not output_path.exists():
-        existing = find_existing_task_file(task_id, source_plan, settings)
-        if existing is None or not existing.exists():
-            raise FileNotFoundError(f"Official output file does not exist for audit: {task_id}")
-        output_path = existing
-
-    candidate_code = _read_file_safely(output_path)
-    attempt = len(_list_versioned_json_files(pack_dir, "verify_result")) + 1
-    verify_result_path = _next_verify_result_path(pack_dir, attempt)
-    verified_at = datetime.now(UTC).isoformat().replace("+00:00", "Z")
-
-    def write_audit_result(
-        *,
-        success: bool,
-        diagnostics: list[dict[str, Any]],
-        detail: str,
-        final_build_success: bool = True,
-        final_build_output: str = "",
-        semantic_review: dict[str, Any] | None = None,
-        disposition: str = "",
-        state_transition: str = "none",
-    ) -> dict[str, Any]:
-        verify_result = _build_verify_result_payload(
-            task_id=task_id,
-            attempt=attempt,
-            candidate_path=output_path,
-            candidate_code=candidate_code,
-            verified_at=verified_at,
-            repl_success=success,
-            repl_output=detail,
-            temp_build_success=success,
-            temp_build_output=detail,
-            final_build_success=final_build_success,
-            final_build_output=final_build_output or detail,
-            diagnostics=diagnostics,
-        )
-        verify_result["mode"] = "audit"
-        verify_result["success"] = success
-        verify_result["disposition"] = disposition
-        verify_result["state_transition"] = state_transition
-        if semantic_review is not None:
-            verify_result["semantic_review"] = _semantic_review_summary(semantic_review)
-        verify_result["verify_result_file"] = str(verify_result_path)
-        _write_json(verify_result_path, verify_result)
-        history = _append_attempt_history(pack_dir, task_id, verify_result)
-        (pack_dir / FAILURE_SUMMARY_FILE_NAME).write_text(
-            build_failure_summary_markdown(task_id, history),
-            encoding="utf-8",
-        )
-        (pack_dir / "build_feedback.txt").write_text("" if success else detail, encoding="utf-8")
-        _append_verification_report(pack_dir, verify_result, detail)
-        ledger.mark_verifying(
-            task_id,
-            latest_verify_result_file=str(verify_result_path),
-            verify_attempts=attempt,
-        )
-        _set_latest_operation(task_id, ledger, kind="audit", file_path=str(verify_result_path))
-        _refresh_pack_runtime_view(task, ledger, settings, pack_dir)
-        return verify_result
-
-    def preserve_official_output_after_audit_failure(disposition: str, detail: str) -> None:
-        if audit_original_status:
-            try:
-                ledger.update_status(task_id, TaskStatus(audit_original_status))
-            except ValueError:
-                pass
-        ledger.update_runtime_metadata(
-            task_id,
-            latest_official_audit_disposition=disposition,
-            latest_official_audit_result_file=str(verify_result_path),
-            latest_official_audit_requires_repair=True,
-            latest_official_audit_detail=detail,
-            official_output_quarantine_policy="not_quarantined_by_default",
-        )
-
-    hard_ok, diagnostics, detail = validate_candidate_hard_checks(task, candidate_code, ledger)
-    if not hard_ok:
-        disposition = "audit_hard_check_failed"
-        write_audit_result(
-            success=False,
-            diagnostics=diagnostics,
-            detail=detail,
-            final_build_success=False,
-            disposition=disposition,
-            state_transition="audit_failed_no_quarantine",
-        )
-        preserve_official_output_after_audit_failure(disposition, detail)
-        return False, detail
-
-    final_success, final_output = _run_official_module_build(task_id, settings)
-    if not final_success:
-        diagnostics = _parse_diagnostics(final_output, "final_build_failed", "audit_final_build")
-        detail = final_output or f"lake build ToyApollo.Output.{task_id} failed during audit."
-        disposition = "audit_final_build_failed"
-        write_audit_result(
-            success=False,
-            diagnostics=diagnostics,
-            detail=detail,
-            final_build_success=False,
-            final_build_output=final_output,
-            disposition=disposition,
-            state_transition="audit_failed_no_quarantine",
-        )
-        preserve_official_output_after_audit_failure(disposition, detail)
-        return False, detail
-
-    config, config_error = _reviewer_config_or_detail(require_config=False)
-    if config_error:
-        detail = config_error
-        review_result = _run_semantic_review_for_candidate(
-            task=task,
-            ledger=ledger,
-            settings=settings,
-            pack_dir=pack_dir,
-            attempt=attempt,
-            mode="audit",
-            candidate_path=output_path,
-            candidate_code=candidate_code,
-            build_summary={"final_build": {"success": final_success, "output": final_output}, "config_error": config_error},
-            config=None,
-            allow_missing_config=True,
-        )
-    else:
-        review_result = _run_semantic_review_for_candidate(
-            task=task,
-            ledger=ledger,
-            settings=settings,
-            pack_dir=pack_dir,
-            attempt=attempt,
-            mode="audit",
-            candidate_path=output_path,
-            candidate_code=candidate_code,
-            build_summary={"final_build": {"success": final_success, "output": final_output}},
-            config=config,
-            allow_missing_config=True,
-        )
-        detail = str(review_result.get("summary", ""))
-
-    verdict = str(review_result.get("verdict", "inconclusive"))
-    cache_class = str(review_result.get("cache_class", "semantic_verdict") or "semantic_verdict").strip().lower()
-    if cache_class != "semantic_verdict":
-        detail = detail or str(review_result.get("normalization_reason", "") or "Semantic audit reviewer output was invalid.")
-        diagnostics = _hard_check_diagnostic("invalid_reviewer_output", detail)
-        write_audit_result(
-            success=False,
-            diagnostics=diagnostics,
-            detail=detail,
-            final_build_success=True,
-            final_build_output=final_output,
-            semantic_review=review_result,
-            disposition="audit_invalid_reviewer_output",
-            state_transition="none",
-        )
-        if audit_original_status:
-            try:
-                ledger.update_status(task_id, TaskStatus(audit_original_status))
-            except ValueError:
-                pass
-        return False, detail
-    review_result = _record_phase2_task_status_projection(task_id, task, ledger, review_result)
-    verdict = str(review_result.get("verdict", "inconclusive"))
-    if verdict == "pass":
-        non_clean = str(review_result.get("task_status", "") or "") != "pass"
-        disposition = "audit_pass_non_clean_report" if non_clean else "audit_pass_report"
-        detail_text = detail or "Semantic audit passed; report only."
-        if non_clean:
-            detail_text = (
-                f"{detail_text} Non-clean audit: review verdict is pass, but task_status="
-                f"{review_result.get('task_status', '')}; this is not textbook completion."
-            )
-        write_audit_result(
-            success=not non_clean,
-            diagnostics=[] if not non_clean else _hard_check_diagnostic("phase2_status_not_pass", str(review_result.get("task_status_reason", "") or "")),
-            detail=detail_text,
-            final_build_success=True,
-            final_build_output=final_output,
-            semantic_review=review_result,
-            disposition=disposition,
-            state_transition="none",
-        )
-        if audit_original_status:
-            try:
-                ledger.update_status(task_id, TaskStatus(audit_original_status))
-            except ValueError:
-                pass
-        return not non_clean, detail_text
-
-    diagnostics = _review_diagnostics(review_result)
-    if verdict == "fail":
-        detail = detail or "Semantic audit failed."
-        disposition = "audit_semantic_fail"
-        write_audit_result(
-            success=False,
-            diagnostics=diagnostics,
-            detail=detail,
-            final_build_success=True,
-            final_build_output=final_output,
-            semantic_review=review_result,
-            disposition=disposition,
-            state_transition="audit_failed_no_quarantine",
-        )
-        preserve_official_output_after_audit_failure(disposition, detail)
-        return False, detail
-
-    detail = (
-        f"Semantic audit inconclusive: {detail}"
-        if detail
-        else "Semantic audit was inconclusive; ledger and official output were left unchanged."
-    )
-    write_audit_result(
-        success=False,
-        diagnostics=diagnostics,
-        detail=detail,
-        final_build_success=True,
-        final_build_output=final_output,
-        semantic_review=review_result,
-        disposition="audit_inconclusive_no_state_change",
-        state_transition="none",
-    )
-    if audit_original_status:
-        try:
-            ledger.update_status(task_id, TaskStatus(audit_original_status))
-        except ValueError:
-            pass
-    return False, detail
-
-
 def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[str, Any] | None = None) -> Path:
     if task is None:
         task = ensure_task_registered(resolve_phase2_task(task_id, ledger, settings), ledger)
@@ -4783,7 +4305,7 @@ def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[
     if latest_pack_candidate is not None:
         latest_candidate = str(latest_pack_candidate)
 
-    import_lines = build_import_lines(task)
+    import_lines = build_import_lines(task, lean_module_root=getattr(settings, "lean_module_root", "ToyApollo.Output"))
     existing_file = find_existing_task_file(
         output_binding.output_owner_task_id,
         task.get("source_plan", "unknown"),
@@ -4799,13 +4321,6 @@ def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[
     target_stub_path = pack_dir / "target_stub.lean"
     draft_path = pack_dir / DRAFT_FILE_NAME
     intent_contract = ensure_intent_contract(pack_dir, task)
-    proof_obligations = maybe_ensure_proof_obligations_file(
-        pack_dir,
-        task,
-        current_record=current_record if isinstance(current_record, dict) else {},
-        tracking_level=2,
-    )
-    proof_obligation_summary = summarize_proof_obligations(proof_obligations) if proof_obligations is not None else {}
     search_manifest = build_search_manifest(task, ledger, settings)
     search_manifest_path = pack_dir / SEARCH_MANIFEST_FILE_NAME
     history = _ensure_attempt_history(pack_dir, task_id)
@@ -4854,13 +4369,9 @@ def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[
         "final_import_union": canonicalize_id_list(task.get("dependencies", []) + task.get("soft_imports", [])),
         "draft_file": str(draft_path),
         "intent_contract_file": str(_intent_contract_path(pack_dir)),
-        "proof_obligations_file": str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME) if proof_obligations is not None else "",
-        "proof_obligation_summary": proof_obligation_summary,
         "output_owner_task_id": output_binding.output_owner_task_id,
         "output_module": output_binding.output_module,
         "official_output_targets": [target.as_posix() for target in output_binding.official_targets],
-        "proof_obligations_owner_file": output_binding.proof_obligations_file.as_posix(),
-        "focus_obligation_ids": output_binding.focus_obligation_ids,
         "search_manifest_file": str(search_manifest_path),
         "attempt_history_file": str(pack_dir / ATTEMPT_HISTORY_FILE_NAME),
         "failure_summary_file": str(failure_summary_path),
@@ -4893,8 +4404,6 @@ def write_prompt_pack(task_id: str, ledger: LedgerManager, settings, task: dict[
         task_id,
         pack_candidate_state=next_pack_state,
         draft_file=str(draft_path),
-        proof_obligations_file=str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME) if proof_obligations is not None else "",
-        proof_obligation_summary=proof_obligation_summary,
     )
     _refresh_pack_runtime_view(task, ledger, settings, pack_dir)
     return pack_dir
@@ -5575,9 +5084,10 @@ async def build_check_prompt_pack_candidate(
     if len(temp_module_basename) > 96:
         digest = hashlib.sha256(task_id.encode("utf-8")).hexdigest()[:16]
         temp_module_basename = f"PackBuildCheck_{digest}_{attempt}"
-    temp_module_file = settings.toyapollo_output_dir / f"{temp_module_basename}.lean"
-    temp_module_name = f"ToyApollo.Output.{temp_module_basename}"
-    settings.toyapollo_output_dir.mkdir(parents=True, exist_ok=True)
+    lean_module_dir = Path(getattr(settings, "lean_module_dir", None) or settings.toyapollo_output_dir)
+    temp_module_file = lean_module_dir / f"{temp_module_basename}.lean"
+    temp_module_name = f"{getattr(settings, "lean_module_root", "ToyApollo.Output")}.{temp_module_basename}"
+    lean_module_dir.mkdir(parents=True, exist_ok=True)
     temp_module_file.write_text(candidate_code, encoding="utf-8")
 
     compiler = LeanCompiler(root_dir=str(settings.runtime_root))
@@ -5681,7 +5191,6 @@ def _write_codex_handoff_review_artifacts(
     review_basis_subject_file: Path | None = None,
     review_basis_extra: dict[str, Any] | None = None,
     review_context_suffix: str = "",
-    materialize_proof_obligations: bool = True,
 ) -> dict[str, Any]:
     paths = next_semantic_review_artifact_paths(pack_dir, attempt)
     latest = latest_semantic_review_artifact_paths(pack_dir)
@@ -5698,17 +5207,17 @@ def _write_codex_handoff_review_artifacts(
         review_subject_kind=review_subject_kind,
         review_subject_hash=_sha256_text(candidate_code) if candidate_code else "",
         review_subject_file=review_basis_subject_file or candidate_path,
-        materialize_proof_obligations=materialize_proof_obligations,
     )
     if review_basis_extra:
         review_basis.update(review_basis_extra)
+    output_binding = resolve_phase2_output_binding(task, ledger, settings)
     review_input = build_semantic_review_input(
         task=task,
         mode=mode,
         attempt=attempt,
         candidate_path=candidate_path,
         candidate_code=candidate_code,
-        import_lines=build_import_lines(task),
+        import_lines=build_import_lines(task, lean_module_root=getattr(settings, "lean_module_root", "ToyApollo.Output")),
         dependency_summary=_build_dependency_review_summary(task, ledger, settings),
         search_summary=_build_search_review_summary(pack_dir),
         build_summary=build_summary,
@@ -5720,7 +5229,7 @@ def _write_codex_handoff_review_artifacts(
         build_result_file=build_result_file,
         build_candidate_file=build_candidate_file,
         build_candidate_hash=build_candidate_hash,
-        sanity_build_module=f"ToyApollo.Output.{task['block_id']}" if review_subject_kind == "official_output" else "",
+        sanity_build_module=output_binding.output_module if review_subject_kind == "official_output" else "",
         sanity_build_passed=review_subject_kind == "official_output",
         review_context_file=str(context_path),
         review_context_hash=_sha256_text(context_markdown),
@@ -5734,8 +5243,11 @@ def _write_codex_handoff_review_artifacts(
 
     template_path = _result_template_path(pack_dir, attempt)
     expected_result_path = paths["result"]
+    task_status_contract = review_input.get("task_status_contract", {})
+    if not isinstance(task_status_contract, dict):
+        task_status_contract = {}
     template = {
-        "schema_version": "phase2.semantic_review.result.v7",
+        "schema_version": "phase2.semantic_review.result.v8",
         "task_id": task["block_id"],
         "mode": mode,
         "attempt": attempt,
@@ -5774,16 +5286,9 @@ def _write_codex_handoff_review_artifacts(
         "spine_alignment": {
             "status": "unclear",
             "summary": "",
-            "obligations_checked": [],
-            "missing_obligations": [],
+            "source_steps_checked": [],
+            "missing_source_steps": [],
             "shortcut_assessment": "unclear",
-        },
-        "obligation_review": {
-            "status": "unclear",
-            "summary": "",
-            "items": [],
-            "open_blockers": [],
-            "scaffold_assessment": [],
         },
         "evidence_review": {
             "status": "unclear",
@@ -5809,6 +5314,13 @@ def _write_codex_handoff_review_artifacts(
                 "required_fields": ["proof_class", "completion_class"],
                 "must_be_non_empty": True,
                 "authority": "reviewer_classification_then_official_task_status_projection",
+                "task_role": task_status_contract.get("task_role", "unknown"),
+                "clean_pass_prefixes": task_status_contract.get("clean_pass_prefixes", []),
+                "allowed_exception_classes": task_status_contract.get("allowed_exception_classes", []),
+                "projection_rule": (
+                    "For clean pass, both class fields must use a clean pass prefix allowed for the projected task role; "
+                    "task-specific allowed exceptions are non-clean."
+                ),
             },
             "reviewer_independence_shape": {
                 "role": "independent_read_only_reviewer",
@@ -5834,27 +5346,17 @@ def _write_codex_handoff_review_artifacts(
                 "unclear",
                 "not_applicable",
             ],
-            "obligation_item_status_values": [
-                "covered",
-                "partial",
-                "missing",
-                "violated",
-                "unclear",
-                "not_applicable",
-                "accepted_as_proof_debt",
-            ],
-            "obligation_item_contract_fields": {
-                "expected_theorem_signature": "<source-faithful theorem/lemma type expected for this obligation>",
-                "lean_landing": "<Lean theorem/lemma declaration proving the obligation>",
+            "source_step_entry_shape": {
+                "source_step": "<essential step from the source proof spine>",
+                "lean_landing": "<Lean theorem/lemma or transparent derivation discharging the source step>",
                 "landing_kind": "theorem | lemma | private_axiom | structure_field | support_predicate | support_constructor | adapter | public_premise | empty | unknown",
-                "proof_contract_status": "unverified | verified | failed | not_applicable | accepted_adapter | open_math_debt | beyond_book_exception",
                 "signature_match": "unverified | passed | failed | not_applicable",
                 "body_reassumption_check": "unverified | passed | failed | not_applicable",
                 "public_premise_check": "unverified | passed | failed | not_applicable",
-                "proof_contract_notes": "<why the landing satisfies or fails the contract>",
+                "notes": "<why this landing does or does not preserve the source proof step>",
             },
             "evidence_item_shape": {
-                "evidence_class": "source_tex | lean_subject | proof_obligations | audit | classification | dependency_status | downstream | ledger_status | hashes",
+                "evidence_class": "source_tex | lean_subject | audit | classification | dependency_status | downstream | ledger_status | hashes",
                 "status": "covered | partial | missing | violated | unclear | not_applicable",
                 "evidence": "<what was checked and how conflicts/staleness were resolved>",
             },
@@ -5871,6 +5373,25 @@ def _write_codex_handoff_review_artifacts(
             ),
         },
     }
+    if str(getattr(settings, "profile", "mat") or "mat").strip().lower() == "cordis":
+        template["source_statement_divergence"] = []
+        template["reviewer_schema_hints"]["source_statement_divergence_contract"] = {
+            "required": True,
+            "no_divergence_value": "[] or null after explicit review",
+            "entry_required_fields": [
+                "paper_literal",
+                "paper_intended",
+                "lean_implements",
+                "evidence",
+                "verdict",
+            ],
+            "verdict_values": [
+                "documented_divergence",
+                "resolve_to_intended",
+                "weakening_risk",
+            ],
+            "pass_rule": "pass cannot contain weakening_risk",
+        }
     _write_json(template_path, template)
     review_request = _build_semantic_review_request(
         task_id=task["block_id"],
@@ -6120,6 +5641,32 @@ async def write_existing_output_review_pack(
         raise FileNotFoundError(f"Official output file does not exist for review-existing: {task_id}")
     candidate_code = _read_file_safely(output_path)
 
+    from .phase2_pack_shared.artifacts import cordis_task_declarations
+
+    hard_ok, hard_diagnostics, hard_detail = validate_candidate_hard_checks(
+        task,
+        candidate_code,
+        ledger,
+        target_declaration_names=cordis_task_declarations(settings),
+    )
+    if not hard_ok:
+        _clear_current_review_metadata(task_id, ledger)
+        _write_review_compat_summary(
+            task_id=task_id,
+            ledger=ledger,
+            task=task,
+            settings=settings,
+            pack_dir=pack_dir,
+            mode="review-existing",
+            candidate_path=output_path,
+            candidate_code=candidate_code,
+            detail_text=hard_detail,
+            diagnostics=hard_diagnostics,
+            disposition="review_existing_hard_check_failed",
+            state_transition="none",
+        )
+        return False, hard_detail
+
     sanity_success, sanity_output = _run_official_module_build(task_id, settings)
     if not sanity_success:
         _clear_current_review_metadata(task_id, ledger)
@@ -6133,13 +5680,13 @@ async def write_existing_output_review_pack(
             mode="review-existing",
             candidate_path=output_path,
             candidate_code=candidate_code,
-            detail_text=sanity_output or f"lake build ToyApollo.Output.{task_id} failed before review-existing.",
+            detail_text=sanity_output or f"lake build {getattr(settings, "lean_module_root", "ToyApollo.Output")}.{task_id} failed before review-existing.",
             diagnostics=diagnostics,
             disposition="review_existing_build_failed_no_review",
             semantic_review=None,
             state_transition="none",
         )
-        return False, sanity_output or f"lake build ToyApollo.Output.{task_id} failed before review-existing."
+        return False, sanity_output or f"lake build {getattr(settings, "lean_module_root", "ToyApollo.Output")}.{task_id} failed before review-existing."
 
     prepared = _prepare_existing_output_review_materials(
         task=task,
@@ -6215,7 +5762,7 @@ async def write_existing_output_review_queue(task_ids: list[str], ledger: Ledger
         source_resolution = _queue_source_resolution(task_id, resolved_task)
 
         sanity_success, sanity_output = _run_official_module_build(task_id, settings)
-        sanity_build_status = _queue_sanity_build_status(task_id, sanity_success, sanity_output)
+        sanity_build_status = _queue_sanity_build_status(task_id, sanity_success, sanity_output, lean_module_root=getattr(settings, "lean_module_root", "ToyApollo.Output"))
 
         task_report: dict[str, Any] = {
             "task_id": task_id,
@@ -6242,7 +5789,7 @@ async def write_existing_output_review_queue(task_ids: list[str], ledger: Ledger
                     _refresh_pack_runtime_view(canonicalize_task_dict(resolved_task), ledger, settings, pack_dir)
             task_report["queue_status"] = "blocked_build"
             task_report["next_action"] = "fix_build"
-            task_report["detail"] = sanity_output or f"lake build ToyApollo.Output.{task_id} failed."
+            task_report["detail"] = sanity_output or f"lake build {getattr(settings, "lean_module_root", "ToyApollo.Output")}.{task_id} failed."
             counts[task_report["queue_status"]] += 1
             task_reports.append(task_report)
             continue
@@ -6265,6 +5812,33 @@ async def write_existing_output_review_queue(task_ids: list[str], ledger: Ledger
         pack_dir = settings.phase2_prompt_packs_dir / task_id
         if not pack_dir.exists():
             pack_dir = _ensure_queue_pack_dir(task, ledger, settings)
+
+        candidate_code = _read_file_safely(output_path)
+        hard_ok, hard_diagnostics, hard_detail = validate_candidate_hard_checks(task, candidate_code, ledger)
+        if not hard_ok:
+            _clear_current_review_metadata_for_existing_subjects(task_id, ledger)
+            _write_review_compat_summary(
+                task_id=task_id,
+                ledger=ledger,
+                task=task,
+                settings=settings,
+                pack_dir=pack_dir,
+                mode="review-existing-queue",
+                candidate_path=output_path,
+                candidate_code=candidate_code,
+                detail_text=hard_detail,
+                diagnostics=hard_diagnostics,
+                disposition="review_existing_hard_check_failed",
+                final_build_success=True,
+                final_build_output=sanity_output,
+                state_transition="none",
+            )
+            task_report["queue_status"] = "blocked_hard_check"
+            task_report["next_action"] = "fix_output"
+            task_report["detail"] = hard_detail
+            counts[task_report["queue_status"]] += 1
+            task_reports.append(task_report)
+            continue
 
         prepared = _prepare_existing_output_review_materials(
             task=task,
@@ -6316,6 +5890,7 @@ async def write_existing_output_review_queue(task_ids: list[str], ledger: Ledger
         status: counts.get(status, 0)
         for status in (
             "blocked_build",
+            "blocked_hard_check",
             "source_missing",
             "review_result_present",
             "stale_review_result",
@@ -6664,275 +6239,6 @@ def _write_review_repair_artifacts(
 
 
 
-async def verify_prompt_pack_candidate(task_id: str, ledger: LedgerManager, settings, candidate_arg: str | None = None) -> tuple[bool, str]:
-    task = ensure_task_registered(resolve_phase2_task(task_id, ledger, settings), ledger)
-    task_id = task["block_id"]
-    proof_debt_blocker = hard_dependency_proof_debt_blocker_message(task, ledger)
-    if proof_debt_blocker:
-        return False, proof_debt_blocker
-    verify_original_status = str(ledger.ledger.get("tasks", {}).get(task_id, {}).get("status", ""))
-
-    pack_dir = settings.phase2_prompt_packs_dir / task_id
-    if not pack_dir.exists():
-        pack_dir = write_prompt_pack(task_id, ledger, settings, task=task)
-
-    source_candidate_path = resolve_candidate_path(pack_dir, candidate_arg)
-    candidate_code = _read_file_safely(source_candidate_path)
-    build_feedback_path = pack_dir / "build_feedback.txt"
-    attempt, snapshot_path = _next_candidate_path(pack_dir)
-    snapshot_path.write_text(candidate_code, encoding="utf-8")
-    verify_result_path = _next_verify_result_path(pack_dir, attempt)
-    verified_at = datetime.now(UTC).isoformat().replace("+00:00", "Z")
-    source_plan = task.get("source_plan", "unknown")
-    existing_official_output = find_existing_task_file(task_id, str(source_plan), settings)
-    completed_statuses = {TaskStatus.COMPLETED.value, TaskStatus.COMPLETED_WITH_PROOF_DEBT.value}
-    existing_completed_output = (
-        verify_original_status in completed_statuses
-        and existing_official_output is not None
-        and existing_official_output.exists()
-    )
-
-    ledger.update_status(task_id, TaskStatus.VERIFYING)
-    ledger.mark_verifying(
-        task_id,
-        latest_candidate_file=str(snapshot_path),
-        verify_attempts=attempt,
-    )
-
-    def finalize_failure(
-        detail_text: str,
-        diagnostics: list[dict[str, Any]],
-        *,
-        repl_success: bool = False,
-        repl_output: str = "",
-        temp_build_success: bool = False,
-        temp_build_output: str = "",
-        final_build_success: bool = False,
-        final_build_output: str = "",
-        semantic_review: dict[str, Any] | None = None,
-        disposition: str = "",
-        state_transition: str | None = None,
-    ) -> tuple[bool, str]:
-        transition = state_transition or ("none" if existing_completed_output else "verify_to_failed_local")
-        verify_result = _build_verify_result_payload(
-            task_id=task_id,
-            attempt=attempt,
-            candidate_path=snapshot_path,
-            candidate_code=candidate_code,
-            verified_at=verified_at,
-            repl_success=repl_success,
-            repl_output=repl_output,
-            temp_build_success=temp_build_success,
-            temp_build_output=temp_build_output,
-            final_build_success=final_build_success,
-            final_build_output=final_build_output,
-            diagnostics=diagnostics,
-        )
-        verify_result["success"] = False
-        verify_result["mode"] = "verify"
-        verify_result["disposition"] = disposition or "verify_failed"
-        verify_result["state_transition"] = transition
-        if semantic_review is not None:
-            verify_result["semantic_review"] = _semantic_review_summary(semantic_review)
-        verify_result["verify_result_file"] = str(verify_result_path)
-        _write_json(verify_result_path, verify_result)
-        history = _append_attempt_history(pack_dir, task_id, verify_result)
-        failure_summary = build_failure_summary_markdown(task_id, history)
-        (pack_dir / FAILURE_SUMMARY_FILE_NAME).write_text(failure_summary, encoding="utf-8")
-        build_feedback_path.write_text(detail_text, encoding="utf-8")
-        if existing_completed_output:
-            ledger.update_status(task_id, TaskStatus(verify_original_status))
-        else:
-            ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=detail_text)
-        ledger.mark_verifying(
-            task_id,
-            latest_candidate_file=str(snapshot_path),
-            latest_verify_result_file=str(verify_result_path),
-            verify_attempts=attempt,
-        )
-        _set_latest_operation(task_id, ledger, kind="verify", file_path=str(verify_result_path))
-        _refresh_pack_runtime_view(task, ledger, settings, pack_dir)
-        _append_verification_report(pack_dir, verify_result, detail_text)
-        return False, detail_text
-
-    hard_ok, hard_diagnostics, hard_detail = validate_candidate_hard_checks(task, candidate_code, ledger)
-    if not hard_ok:
-        return finalize_failure(hard_detail, hard_diagnostics, disposition="verify_hard_check_failed")
-
-    config, config_error = _reviewer_config_or_detail(require_config=True)
-    if config_error:
-        diagnostics = _hard_check_diagnostic("semantic_reviewer_config_missing", config_error)
-        return finalize_failure(config_error, diagnostics, disposition="verify_reviewer_config_missing")
-
-    temp_module_basename = f"PackVerify_{re.sub(r'[^A-Za-z0-9_]', '_', task_id)}_{attempt}"
-    temp_module_file = settings.toyapollo_output_dir / f"{temp_module_basename}.lean"
-    temp_module_name = f"ToyApollo.Output.{temp_module_basename}"
-
-    settings.toyapollo_output_dir.mkdir(parents=True, exist_ok=True)
-    temp_module_file.write_text(candidate_code, encoding="utf-8")
-
-    compiler = LeanCompiler(root_dir=str(settings.runtime_root))
-    repl_success, repl_output = await compiler.validate_with_repl_async(candidate_code)
-    temp_build_success, temp_build_output = await compiler.build_module_async(temp_module_name)
-
-    try:
-        if repl_success and temp_build_success:
-            review_result = _run_semantic_review_for_candidate(
-                task=task,
-                ledger=ledger,
-                settings=settings,
-                pack_dir=pack_dir,
-                attempt=attempt,
-                mode="verify",
-                candidate_path=snapshot_path,
-                candidate_code=candidate_code,
-                build_summary={
-                    "repl": {"success": repl_success, "output": repl_output},
-                    "temp_build": {"success": temp_build_success, "output": temp_build_output},
-                },
-                config=config,
-                allow_missing_config=False,
-            )
-            review_verdict = str(review_result.get("verdict", "inconclusive"))
-            review_cache_class = str(review_result.get("cache_class", "semantic_verdict") or "semantic_verdict").strip().lower()
-            if review_cache_class != "semantic_verdict":
-                detail_text = str(
-                    review_result.get("normalization_reason", "")
-                    or review_result.get("summary", "")
-                    or "Semantic reviewer output was invalid."
-                )
-                diagnostics = _hard_check_diagnostic("invalid_reviewer_output", detail_text)
-                return finalize_failure(
-                    detail_text,
-                    diagnostics,
-                    repl_success=repl_success,
-                    repl_output=repl_output,
-                    temp_build_success=temp_build_success,
-                    temp_build_output=temp_build_output,
-                    semantic_review=review_result,
-                    disposition="verify_invalid_reviewer_output",
-                )
-            review_result = _record_phase2_task_status_projection(task_id, task, ledger, review_result)
-            review_verdict = str(review_result.get("verdict", "inconclusive"))
-            if review_verdict != "pass":
-                diagnostics = _review_diagnostics(review_result)
-                detail_text = str(review_result.get("summary", "") or f"Semantic reviewer verdict: {review_verdict}")
-                return finalize_failure(
-                    detail_text,
-                    diagnostics,
-                    repl_success=repl_success,
-                    repl_output=repl_output,
-                    temp_build_success=temp_build_success,
-                    temp_build_output=temp_build_output,
-                    semantic_review=review_result,
-                    disposition=f"verify_semantic_{review_verdict}",
-                )
-
-            final_success, final_output = _run_staged_official_build(
-                task_id,
-                str(source_plan),
-                settings,
-                pack_dir,
-                candidate_code,
-                attempt=attempt,
-                mode="verify",
-                restore_on_success=True,
-            )
-            if not final_success:
-                diagnostics = _parse_diagnostics(final_output, "final_build_failed", "final_build")
-                detail_text = _compose_detail_text(repl_output, temp_build_output, final_output)
-                return finalize_failure(
-                    detail_text,
-                    diagnostics,
-                    repl_success=repl_success,
-                    repl_output=repl_output,
-                    temp_build_success=temp_build_success,
-                    temp_build_output=temp_build_output,
-                    final_build_success=final_success,
-                    final_build_output=final_output,
-                    semantic_review=review_result,
-                    disposition="verify_final_build_failed",
-                )
-
-            build_feedback_path.write_text("", encoding="utf-8")
-            non_clean = str(review_result.get("task_status", "") or "") != "pass"
-            verify_result = _build_verify_result_payload(
-                task_id=task_id,
-                attempt=attempt,
-                candidate_path=snapshot_path,
-                candidate_code=candidate_code,
-                verified_at=verified_at,
-                repl_success=repl_success,
-                repl_output=repl_output,
-                temp_build_success=temp_build_success,
-                temp_build_output=temp_build_output,
-                final_build_success=final_success,
-                final_build_output=final_output,
-                diagnostics=[],
-            )
-            verify_result["mode"] = "verify"
-            verify_result["success"] = not non_clean
-            verify_result["disposition"] = "verify_pass_non_clean_report" if non_clean else "verify_pass_report"
-            verify_result["state_transition"] = "none"
-            verify_result["semantic_review"] = _semantic_review_summary(review_result)
-            verify_result["verify_result_file"] = str(verify_result_path)
-            _write_json(verify_result_path, verify_result)
-            history = _append_attempt_history(pack_dir, task_id, verify_result)
-            (pack_dir / FAILURE_SUMMARY_FILE_NAME).write_text(
-                build_failure_summary_markdown(task_id, history),
-                encoding="utf-8",
-            )
-            ledger.mark_verifying(
-                task_id,
-                latest_candidate_file=str(snapshot_path),
-                latest_verify_result_file=str(verify_result_path),
-                verify_attempts=attempt,
-            )
-            if verify_original_status:
-                try:
-                    ledger.update_status(task_id, TaskStatus(verify_original_status))
-                except ValueError:
-                    ledger.update_status(task_id, TaskStatus.PACKED)
-            else:
-                ledger.update_status(task_id, TaskStatus.PACKED)
-            _set_latest_operation(task_id, ledger, kind="verify", file_path=str(verify_result_path))
-            _refresh_pack_runtime_view(task, ledger, settings, pack_dir)
-            success_detail = (
-                "REPL, temporary build, and final build all succeeded as a report-only verify check. "
-                f"Task status: {review_result.get('task_status', '')} ({review_result.get('task_status_reason', '')})."
-                " Run review-apply with a fresh semantic review result to land completion."
-            )
-            if non_clean:
-                success_detail = (
-                    f"{success_detail} Non-clean verify: review verdict is pass, but task_status="
-                    f"{review_result.get('task_status', '')}; this is not textbook completion."
-                )
-            _append_verification_report(pack_dir, verify_result, success_detail)
-            return not non_clean, success_detail
-
-        diagnostics = []
-        if not repl_success:
-            diagnostics.extend(_parse_diagnostics(repl_output, "repl_failed", "repl"))
-        if not temp_build_success:
-            diagnostics.extend(_parse_diagnostics(temp_build_output, "temp_build_failed", "temp_build"))
-        detail_text = _compose_detail_text(repl_output, temp_build_output)
-        return finalize_failure(
-            detail_text or "Candidate verification failed.",
-            diagnostics,
-            repl_success=repl_success,
-            repl_output=repl_output,
-            temp_build_success=temp_build_success,
-            temp_build_output=temp_build_output,
-            disposition="verify_build_failed",
-        )
-    finally:
-        if temp_module_file.exists():
-            try:
-                temp_module_file.unlink()
-            except Exception:
-                pass
-
-
 # Final thin compatibility wrappers. Keep these at true EOF so they win over legacy definitions above.
 def build_operator_prompt(task: dict[str, Any], ledger: LedgerManager | None = None, settings=None, pack_dir: Path | None = None) -> str:
     from .phase2_pack_views import build_operator_prompt as _owner_build_operator_prompt
@@ -6962,7 +6268,6 @@ def build_semantic_review_basis(
     review_subject_kind: str,
     review_subject_hash: str = "",
     review_subject_file: str | Path | None = None,
-    materialize_proof_obligations: bool = True,
 ) -> dict[str, Any]:
     from .phase2_review_request import build_semantic_review_basis as _owner_build_semantic_review_basis
     return _owner_build_semantic_review_basis(
@@ -6972,7 +6277,6 @@ def build_semantic_review_basis(
         review_subject_kind=review_subject_kind,
         review_subject_hash=review_subject_hash,
         review_subject_file=review_subject_file,
-        materialize_proof_obligations=materialize_proof_obligations,
     )
 
 

@@ -57,7 +57,7 @@ private lemma prob_10_9_floor_ratio_tendsto {x : ℝ} (hx : 0 ≤ x) :
       Tendsto (fun y : ℝ => (Nat.floor (x * y) : ℝ) / y)
         atTop (nhds x) :=
     tendsto_nat_floor_mul_div_atTop (R := ℝ) (a := x) hx
-  simpa [mul_comm, mul_left_comm, mul_assoc] using hfloor.comp hN
+  simpa only [Function.comp_def, mul_comm, mul_left_comm, mul_assoc] using hfloor.comp hN
 
 private lemma prob_10_9_log_base_tendsto :
     Tendsto
@@ -135,8 +135,9 @@ private lemma prob_10_9_scaledGeometricCdf_tendsto_of_nonneg {x : ℝ}
   simpa [prob_10_9_scaledGeometricCdf, hxnot] using hcdf
 
 theorem prob_10_9 :
-    CdfConvergesInDistribution
-      prob_10_9_scaledGeometricCdf exponentialMeanOneCdf := by
+    ∀ x : ℝ, ContinuousAt exponentialMeanOneCdf x →
+      Tendsto (fun n : ℕ => prob_10_9_scaledGeometricCdf n x)
+        atTop (𝓝 (exponentialMeanOneCdf x)) := by
   intro x _hcont
   by_cases hxneg : x < 0
   · have hseq := prob_10_9_scaledGeometricCdf_eq_zero_of_lt_zero hxneg

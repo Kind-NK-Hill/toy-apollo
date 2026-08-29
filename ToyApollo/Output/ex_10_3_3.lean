@@ -12,7 +12,7 @@ import ToyApollo.Output.def_10_4
 -- WRITE FINAL LEAN CODE BELOW
 
 open Filter MeasureTheory Set
-open scoped ENNReal
+open scoped ENNReal Topology
 
 abbrev ex_10_3_3_SampleSpace := Bool × Bool
 
@@ -35,6 +35,18 @@ noncomputable def ex_10_3_3_mu : Measure ex_10_3_3_SampleSpace :=
   (1 / 4 : ENNReal) • Measure.dirac (true, false) +
   (1 / 4 : ENNReal) • Measure.dirac (false, true) +
   (1 / 4 : ENNReal) • Measure.dirac (false, false)
+
+noncomputable instance ex_10_3_3_mu_isProbabilityMeasure :
+    IsProbabilityMeasure ex_10_3_3_mu := by
+  refine ⟨?_⟩
+  simp [ex_10_3_3_mu, ex_10_3_3_quarter_add_quarter,
+    ex_10_3_3_half_add_quarter_add_quarter]
+  change ((↑(2 : NNReal) : ENNReal)⁻¹ + (↑(2 : NNReal) : ENNReal)⁻¹ =
+    ↑(1 : NNReal))
+  rw [← ENNReal.coe_inv' (r := (2 : NNReal))]
+  change (↑(((2 : NNReal)⁻¹ + (2 : NNReal)⁻¹)) : ENNReal) = ↑(1 : NNReal)
+  congr
+  exact NNReal.eq (by norm_num)
 
 def ex_10_3_3_X (ω : ex_10_3_3_SampleSpace) : ℝ :=
   if ω.1 then 1 else 0
@@ -113,20 +125,19 @@ theorem ex_10_3_3_separation_probability (n : ℕ) :
 
 theorem ex_10_3_3_converges_in_distribution :
     RandomVariablesConvergeInDistribution
-      ex_10_3_3_mu ex_10_3_3_Xseq ex_10_3_3_Y := by
-  intro x _
-  simpa [RandomVariablesConvergeInDistribution, MeasuresConvergeInDistribution,
-    CdfConvergesInDistribution, measureCdf, ex_10_3_3_Xseq, ex_10_3_3_equal_law] using
-      (tendsto_const_nhds :
-        Tendsto (fun _ : ℕ => (Measure.map ex_10_3_3_Y ex_10_3_3_mu).real (Iic x))
-          atTop
-          (nhds ((Measure.map ex_10_3_3_Y ex_10_3_3_mu).real (Iic x))))
+      (fun _ : ℕ => ex_10_3_3_mu) ex_10_3_3_Xseq
+      ex_10_3_3_mu ex_10_3_3_Y := by
+  refine MeasureTheory.tendstoInDistribution_of_identDistrib 0 (fun n => ?_) ?_
+  · refine ⟨by fun_prop, by fun_prop, ?_⟩
+    simp [ex_10_3_3_Xseq]
+  · refine ⟨by fun_prop, by fun_prop, ?_⟩
+    simpa [ex_10_3_3_Xseq] using ex_10_3_3_equal_law
 
 theorem ex_10_3_3_not_converges_in_probability :
     ¬ ConvergesInProbability ex_10_3_3_mu ex_10_3_3_Xseq ex_10_3_3_Y := by
   intro hprob
   have hε : (0 : ℝ) < (99 : ℝ) / 100 := by norm_num
-  have hzero := hprob ((99 : ℝ) / 100) hε
+  have hzero := hprob.2.2 ((99 : ℝ) / 100) hε
   have hconst :
       Tendsto
         (fun n : ℕ =>
@@ -142,7 +153,8 @@ theorem ex_10_3_3_not_converges_in_probability :
 
 theorem ex_10_3_3 :
     RandomVariablesConvergeInDistribution
-      ex_10_3_3_mu ex_10_3_3_Xseq ex_10_3_3_Y ∧
+      (fun _ : ℕ => ex_10_3_3_mu) ex_10_3_3_Xseq
+        ex_10_3_3_mu ex_10_3_3_Y ∧
       ¬ ConvergesInProbability ex_10_3_3_mu ex_10_3_3_Xseq ex_10_3_3_Y := by
   exact ⟨ex_10_3_3_converges_in_distribution,
     ex_10_3_3_not_converges_in_probability⟩

@@ -33,6 +33,14 @@ noncomputable def ex844PMeasure : Measure Bool := ex844PPMF.toMeasure
 
 noncomputable def ex844QMeasure : Measure Bool := ex844QPMF.toMeasure
 
+instance : IsProbabilityMeasure ex844PMeasure := by
+  unfold ex844PMeasure ex844PPMF
+  infer_instance
+
+instance : IsProbabilityMeasure ex844QMeasure := by
+  unfold ex844QMeasure ex844QPMF
+  infer_instance
+
 lemma ex844PPMF_eq_bernoulli :
     ex844PPMF = PMF.bernoulli ((1 : NNReal) / 3) oneThird_le_one := by
   rfl
@@ -140,7 +148,8 @@ theorem ex_8_4_4 :
   calc
     totalVariationDistance ex844PMeasure ex844QMeasure
         = |(1 : ℝ) / 3 - 3 / 4| := by
-            simpa [ex844PMeasure, ex844QMeasure, ex844PPMF_eq_bernoulli, ex844QPMF_eq_bernoulli] using
+            simpa [ex844PMeasure, ex844QMeasure, ex844PPMF_eq_bernoulli,
+              ex844QPMF_eq_bernoulli, Ch8BernoulliBoolCore.bernoulliMeasure] using
               boolBernoulli_totalVariationDistance_eq_abs ((1 : NNReal) / 3) ((3 : NNReal) / 4)
                 oneThird_le_one threeQuarters_le_one
     _ = 5 / 12 := by norm_num

@@ -15,14 +15,21 @@ open Filter MeasureTheory
 open scoped Topology
 
 theorem prob_10_4 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    [IsProbabilityMeasure μ]
     (Xn : ℕ → Ω → ℝ) (a : ℕ → ℝ) (c : ℝ)
     (hcenter :
       ConvergesInProbability μ (fun n ω => Xn n ω - a n) (fun _ => 0))
     (ha : Tendsto a atTop (nhds c)) :
     ConvergesInProbability μ Xn (fun _ => c) := by
+  have hXn : ∀ n : ℕ, Measurable (Xn n) := by
+    intro n
+    simpa only [sub_add_cancel] using
+      (hcenter.1 n).add
+        (show Measurable (fun _ : Ω => a n) from measurable_const)
+  refine ⟨hXn, measurable_const, ?_⟩
   intro ε hε
   have hhalf : 0 < ε / 2 := by linarith
-  have hcenter_half := hcenter (ε / 2) hhalf
+  have hcenter_half := hcenter.2.2 (ε / 2) hhalf
   have ha_small : ∀ᶠ n : ℕ in atTop, |a n - c| < ε / 2 := by
     have hball := ha.eventually (Metric.ball_mem_nhds c hhalf)
     filter_upwards [hball] with n hn
@@ -45,5 +52,5 @@ theorem prob_10_4 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     exact not_le_of_gt hω hleε
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le'
     tendsto_const_nhds hcenter_half
-    (Filter.Eventually.of_forall fun n => zero_le _)
+    (Filter.Eventually.of_forall fun _ => zero_le)
     hle

@@ -12,7 +12,6 @@ from .phase2_pack_shared.artifacts import (
     ATTEMPT_HISTORY_FILE_NAME,
     DRAFT_FILE_NAME,
     FAILURE_SUMMARY_FILE_NAME,
-    PROOF_OBLIGATIONS_FILE_NAME,
     REVIEW_REPAIR_REQUEST_PREFIX,
     REVIEW_REPAIR_SUMMARY_PREFIX,
     SEARCH_MANIFEST_FILE_NAME,
@@ -46,11 +45,6 @@ from .phase2_pack_shared.runtime_state import (
     recommended_action_for_kind,
 )
 from .phase2_math_review_gate import math_review_gate_state
-from .phase2_proof_obligations import (
-    maybe_ensure_proof_obligations_file,
-    render_proof_obligations_markdown,
-    summarize_proof_obligations,
-)
 from .phase2_review_request import _latest_review_request_path, _collect_direct_downstream_consumers
 from .phase2_semantic_review import (
     latest_semantic_review_artifact_paths,
@@ -195,7 +189,6 @@ def build_operator_prompt(
             "9. Run `build-check` after each meaningful edit loop; do not enter semantic review until the candidate is build-ready.",
             "10. Preserve the original TeX statement faithfully; use `review-now --review-subject candidate` after `build-check` passes.",
             "11. Use `review-now --review-subject existing` only for auditing an already runnable official output.",
-            "12. Use `verify` only when a stable external reviewer runner is configured.",
         ]
     lines = [
         f"# Operator Prompt for {task_id}",
@@ -323,7 +316,7 @@ def build_operator_prompt(
             "- `math_proof_skeleton_v*.md`: source-faithful natural language proof skeletons for Math Review Gate tasks",
             "- `math_review_result_v*.json`: independent math reviewer verdicts for Math Review Gate tasks",
             "- `build_result_v*.json` / `build_feedback.txt`: technical build loop outputs",
-            "- `semantic_review_*.json/md`: reviewer artifacts written by `review-pack`/`review-existing`/`review-apply` or runner-backed `verify`/`audit`",
+            "- `semantic_review_*.json/md`: reviewer artifacts written by `review-pack`/`review-existing`/`review-apply`; older packs may also contain retired verify/audit evidence",
             "- `semantic_review_context*.md`: the full review context that reviewers must treat as binding for interface/downstream adequacy",
             "- `review_repair_request*.json` / `review_repair_summary*.md`: repair-loop artifacts derived from failed semantic review cycles",
         ]
@@ -574,7 +567,7 @@ def build_context_markdown(task: dict[str, Any], ledger: LedgerManager, settings
         lines.append("- Active repair status: `(none)`")
 
     lines.extend(["", "## Compatibility State", ""])
-    lines.append(f"- Latest verify summary: `{current_record.get('latest_verify_result_file', '') or '(none)'}`")
+    lines.append(f"- Historical compatibility summary: `{current_record.get('latest_verify_result_file', '') or '(none)'}`")
 
     if current_record.get("last_error"):
         lines.extend(["", "## Recent Failure Feedback", "", "```text", current_record["last_error"], "```", ""])
@@ -709,24 +702,6 @@ def build_semantic_review_context_markdown(task: dict[str, Any], ledger: LedgerM
     lines.append("- Pass evidence requirements:")
     for item in spine_contract["pass_evidence_requirements"]:
         lines.append(f"  - {item}")
-    proof_obligations = maybe_ensure_proof_obligations_file(
-        pack_dir,
-        task,
-        current_record=current_record if isinstance(current_record, dict) else {},
-        tracking_level=2,
-    )
-    if proof_obligations is None:
-        lines.extend(
-            [
-                "",
-                "## Proof Obligation Tracking",
-                "",
-                "- Proof obligation tracking: `Level 0 ordinary Phase2 path`.",
-                "- No task-local `proof_obligations.json` is generated for this normal task.",
-            ]
-        )
-    else:
-        lines.extend(["", render_proof_obligations_markdown(proof_obligations, path=pack_dir / PROOF_OBLIGATIONS_FILE_NAME).rstrip()])
     lines.extend(["", "## Allowed Abstraction Layer", ""])
     for item in review_allowed_abstractions(task):
         lines.append(f"- {item}")
@@ -922,7 +897,6 @@ def build_failure_summary_markdown(
                 "Recommended next action:",
                 "- Read `search_manifest.json`, then edit `draft.lean` and run `build-check`.",
                 "- Once `build-check` succeeds, run `review-now --review-subject candidate`.",
-                "- Use `verify` only if `TOY_APOLLO_PHASE2_REVIEWER_ARGV_JSON` points to a stable local reviewer runner.",
             ]
         )
         if current_auto_loop.get("enabled"):
@@ -1045,9 +1019,6 @@ def refresh_pack_runtime_view(task: dict[str, Any], ledger: LedgerManager, setti
     metadata["latest_verify_result_file"] = str(current_record.get("latest_verify_result_file", "") or select_latest_verify_result(pack_dir) or "")
     metadata["draft_file"] = str(pack_dir / DRAFT_FILE_NAME)
     metadata["intent_contract_file"] = str(intent_contract_path(pack_dir))
-    proof_obligations = maybe_ensure_proof_obligations_file(pack_dir, task, current_record=current_record, tracking_level=2)
-    metadata["proof_obligations_file"] = str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME) if proof_obligations is not None else ""
-    metadata["proof_obligation_summary"] = summarize_proof_obligations(proof_obligations) if proof_obligations is not None else {}
     metadata["search_manifest_file"] = str(pack_dir / SEARCH_MANIFEST_FILE_NAME)
     metadata["attempt_history_file"] = str(pack_dir / ATTEMPT_HISTORY_FILE_NAME)
     metadata["failure_summary_file"] = str(pack_dir / FAILURE_SUMMARY_FILE_NAME)

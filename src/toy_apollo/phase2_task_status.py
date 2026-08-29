@@ -16,10 +16,18 @@ DEFINITION_INTERFACE_ROLE = "definition_interface"
 REMARK_ROLE = "remark"
 UNKNOWN_ROLE = "unknown"
 
-PROOF_BEARING_TYPE_MARKERS = ("theorem", "problem", "exercise", "example", "obligation")
+PROOF_BEARING_TYPE_MARKERS = (
+    "theorem",
+    "lemma",
+    "corollary",
+    "problem",
+    "exercise",
+    "example",
+    "obligation",
+)
 DEFINITION_INTERFACE_TYPE_MARKERS = ("definition", "notation", "interface", "bridge")
 REMARK_TYPE_MARKERS = ("remark",)
-PROOF_BEARING_ID_PREFIXES = ("thm_", "prob_", "ex_")
+PROOF_BEARING_ID_PREFIXES = ("thm_", "lem_", "cor_", "prob_", "ex_")
 DEFINITION_INTERFACE_ID_PREFIXES = ("def_", "notation_", "interface_", "bridge_")
 REMARK_ID_PREFIXES = ("rem_", "intro_")
 
@@ -84,6 +92,33 @@ ALLOWED_EXCEPTION_TASK_CLASSES = {
     "thm_11_8": {"cited_external_proof_exception"},
     "thm_14_8": {"beyond_book_exception"},
 }
+
+
+def phase2_pass_class_contract(task_id: str, task_type: str = "") -> dict[str, Any]:
+    """Return reviewer-facing pass classes from the authoritative projector.
+
+    This keeps generated semantic-review hints aligned with
+    ``classify_phase2_task_status`` instead of duplicating a second list in the
+    prompt/template code.
+    """
+
+    canonical_task_id = canonicalize_block_id(str(task_id or ""))
+    task_role = infer_phase2_task_role(canonical_task_id, task_type)
+    prefixes_by_role = {
+        PROOF_BEARING_ROLE: PROOF_BEARING_PASS_PREFIXES,
+        DEFINITION_INTERFACE_ROLE: DEFINITION_INTERFACE_PASS_PREFIXES,
+        REMARK_ROLE: REMARK_PASS_PREFIXES,
+    }
+    clean_pass_prefixes = list(prefixes_by_role.get(task_role, ()))
+    if _is_obligation_child_task(canonical_task_id, task_type):
+        clean_pass_prefixes.extend(
+            prefix for prefix in OBLIGATION_CHILD_PASS_CLASSES if prefix not in clean_pass_prefixes
+        )
+    return {
+        "task_role": task_role,
+        "clean_pass_prefixes": clean_pass_prefixes,
+        "allowed_exception_classes": sorted(ALLOWED_EXCEPTION_TASK_CLASSES.get(canonical_task_id, set())),
+    }
 
 
 @dataclass(frozen=True)

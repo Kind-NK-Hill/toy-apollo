@@ -130,7 +130,8 @@ theorem rightHalfPlane_gamma_kernel_hasDerivAt
         (-(x : ℂ) * Complex.exp (-(z * (x : ℂ))))) z := by
   have hlin :
       HasDerivAt (fun w : ℂ => -(w * (x : ℂ))) (-(x : ℂ)) z := by
-    simpa using ((hasDerivAt_id z).mul_const (x : ℂ)).neg
+    simpa only [Pi.neg_def, id_eq, one_mul] using
+      ((hasDerivAt_id z).mul_const (x : ℂ)).neg
   simpa [mul_assoc, mul_comm, mul_left_comm] using
     (hlin.cexp.const_mul ((x ^ (alpha - 1) : ℝ) : ℂ))
 

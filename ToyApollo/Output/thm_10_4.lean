@@ -17,12 +17,14 @@ open scoped ENNReal Topology BigOperators
 
 theorem thm_10_4 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     [IsProbabilityMeasure μ] (Xn : ℕ → Ω → ℝ)
+    (hXn : ∀ n : ℕ, AEStronglyMeasurable (Xn n) μ)
     (h_aemeas : ∀ n : ℕ,
       AEMeasurable (fun ω : Ω => ENNReal.ofReal |Xn n ω|) μ)
     (h_moment_summable :
       (∑' n : ℕ, ∫⁻ ω, ENNReal.ofReal |Xn n ω| ∂μ) ≠ ∞) :
     ConvergesAlmostSurely μ Xn (fun _ => 0) := by
   refine (thm_10_1 μ Xn (fun _ => 0)).2 ?_
+  refine ⟨hXn, aestronglyMeasurable_const, ?_⟩
   intro ε hε
   have hε_ne_zero : ENNReal.ofReal ε ≠ 0 := by
     exact ne_of_gt (ENNReal.ofReal_pos.mpr hε)

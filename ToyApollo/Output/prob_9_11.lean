@@ -58,7 +58,8 @@ theorem prob_9_11
     ∃ ν : Measure ℝ, IsProbabilityMeasure ν ∧
       ∀ t : ℝ,
         charFun ν t =
-          characteristicFunction P X t * star (characteristicFunction P X t) := by
+          characteristicFunction (P.map X) t *
+            star (characteristicFunction (P.map X) t) := by
   haveI : IsProbabilityMeasure (P.map X) := Measure.isProbabilityMeasure_map hX
   rcases prob_9_11_law (P.map X) with ⟨ν, hν, hν_charFun⟩
   refine ⟨ν, hν, ?_⟩

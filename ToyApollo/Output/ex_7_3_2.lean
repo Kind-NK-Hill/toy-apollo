@@ -20,9 +20,10 @@ private lemma exponentialPDFReal_eq (rate x : ℝ) :
 
 private lemma measurable_exponentialPDF (rate : ℝ) :
     Measurable (ProbabilityTheory.exponentialPDF rate) := by
-  simpa [ProbabilityTheory.exponentialPDF] using
-    ENNReal.measurable_ofReal.comp
-      (ProbabilityTheory.measurable_exponentialPDFReal rate)
+  change Measurable
+    (ENNReal.ofReal ∘ ProbabilityTheory.exponentialPDFReal rate)
+  exact ENNReal.measurable_ofReal.comp
+    (ProbabilityTheory.measurable_exponentialPDFReal rate)
 
 private lemma exponentialPDF_lt_top_ae (rate : ℝ) :
     ∀ᵐ x ∂(volume : Measure ℝ),
@@ -142,7 +143,11 @@ private lemma integral_id_expMeasure {rate : ℝ} (hrate : 0 < rate) :
     ∫ x : ℝ, x ∂ProbabilityTheory.expMeasure rate
         = ∫ x : ℝ,
             (ProbabilityTheory.exponentialPDF rate x).toReal * x := by
-            simpa [ProbabilityTheory.expMeasure, smul_eq_mul, mul_comm] using
+            change
+              (∫ x : ℝ, x ∂(volume.withDensity
+                (ProbabilityTheory.exponentialPDF rate))) =
+                ∫ x : ℝ, (ProbabilityTheory.exponentialPDF rate x).toReal * x
+            simpa [mul_comm] using
               (integral_withDensity_eq_integral_toReal_smul
                 (μ := (volume : Measure ℝ))
                 (f := ProbabilityTheory.exponentialPDF rate)
@@ -178,7 +183,8 @@ private theorem ex_7_3_2_id_source_regular (F : StieltjesFunction ℝ) :
   · intro a b _hab
     exact Thm11SourceRoute.finite_discontinuitySetOn_of_forall_continuousAt
       (fun x _hx => by
-        simpa using (continuousAt_id : ContinuousAt (fun y : ℝ => y) x))
+        change ContinuousAt id x
+        exact continuousAt_id)
   · intro a b _hab
     exact Thm11SourceRoute.finite_discontinuitySetOn_of_forall_continuousAt
       (fun x _hx => by
@@ -187,7 +193,8 @@ private theorem ex_7_3_2_id_source_regular (F : StieltjesFunction ℝ) :
   · intro _a _b x _hab hx
     exact False.elim
       (hx.2 (by
-        simpa using (continuousAt_id : ContinuousAt (fun y : ℝ => y) x)))
+        change ContinuousAt id x
+        exact continuousAt_id))
   · intro _a _b x _hab hx
     exact False.elim
       (hx.2 (by

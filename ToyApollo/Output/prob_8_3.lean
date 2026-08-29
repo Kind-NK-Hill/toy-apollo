@@ -20,7 +20,8 @@ def exponentialPdf (la : ℝ) (x : ℝ) : ℝ :=
 def Exponential (la : ℝ) : Measure ℝ :=
   TVCore.densityMeasure (exponentialPdf la)
 
-lemma totalVariationDistance_self {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) :
+lemma totalVariationDistance_self {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
+    [IsProbabilityMeasure P] :
     totalVariationDistance P P = 0 := by
   unfold totalVariationDistance
   have hset :
@@ -36,7 +37,8 @@ lemma totalVariationDistance_self {Ω : Type*} [MeasurableSpace Ω] (P : Measure
   rw [hset]
   simp
 
-lemma totalVariationDistance_comm {Ω : Type*} [MeasurableSpace Ω] (P Q : Measure Ω) :
+lemma totalVariationDistance_comm {Ω : Type*} [MeasurableSpace Ω] (P Q : Measure Ω)
+    [IsProbabilityMeasure P] [IsProbabilityMeasure Q] :
     totalVariationDistance P Q = totalVariationDistance Q P := by
   unfold totalVariationDistance
   congr 1
@@ -72,6 +74,13 @@ lemma exponentialPdf_integrable (la : ℝ) (hla : 0 < la) :
     Integrable (exponentialPdf la) volume := by
   refine' MeasureTheory.integrable_of_integral_eq_one _
   exact exponentialPdf_integral la hla
+
+lemma Exponential_isProbabilityMeasure (la : ℝ) (hla : 0 < la) :
+    IsProbabilityMeasure (Exponential la) := by
+  unfold Exponential
+  exact TVCore.densityMeasure_isProbabilityMeasure
+    (exponentialPdf_integrable la hla) (exponentialPdf_nonneg la hla)
+    (exponentialPdf_integral la hla)
 
 lemma intervalIntegrable_exp_density {r c : ℝ} (hr : 0 < r) (hc : 0 ≤ c) :
     IntervalIntegrable (fun x => r * Real.exp (-(r * x))) volume 0 c := by
@@ -248,9 +257,12 @@ lemma densityPositiveSet_exponentialPdf_eq_Ioo_of_gt {la mu : ℝ}
     simpa [TVCore.densityPositiveSet, TVCore.densityDiff] using hdiff
 
 lemma exponential_tv_gt {la mu : ℝ} (hla : 0 < la) (hmu : 0 < mu) (hgt : mu < la) :
-    totalVariationDistance (Exponential la) (Exponential mu) =
+    @totalVariationDistance ℝ _ (Exponential la) (Exponential mu)
+      (Exponential_isProbabilityMeasure la hla) (Exponential_isProbabilityMeasure mu hmu) =
       Real.exp (-(mu * (Real.log (la / mu) / (la - mu)))) -
         Real.exp (-(la * (Real.log (la / mu) / (la - mu)))) := by
+  letI : IsProbabilityMeasure (Exponential la) := Exponential_isProbabilityMeasure la hla
+  letI : IsProbabilityMeasure (Exponential mu) := Exponential_isProbabilityMeasure mu hmu
   let c := Real.log (la / mu) / (la - mu)
   have hc_nonneg : 0 ≤ c := (cross_pos_of_gt hla hmu hgt).le
   unfold Exponential
@@ -274,17 +286,23 @@ lemma exponential_tv_gt {la mu : ℝ} (hla : 0 < la) (hmu : 0 < mu) (hgt : mu < 
   ring
 
 lemma exponential_tv_gt_abs {la mu : ℝ} (hla : 0 < la) (hmu : 0 < mu) (hgt : mu < la) :
-    totalVariationDistance (Exponential la) (Exponential mu) =
+    @totalVariationDistance ℝ _ (Exponential la) (Exponential mu)
+      (Exponential_isProbabilityMeasure la hla) (Exponential_isProbabilityMeasure mu hmu) =
       |Real.exp (-(la * (Real.log (la / mu) / (la - mu)))) -
         Real.exp (-(mu * (Real.log (la / mu) / (la - mu))))| := by
+  letI : IsProbabilityMeasure (Exponential la) := Exponential_isProbabilityMeasure la hla
+  letI : IsProbabilityMeasure (Exponential mu) := Exponential_isProbabilityMeasure mu hmu
   rw [exponential_tv_gt hla hmu hgt]
   exact (abs_exp_cross_of_gt hgt (cross_pos_of_gt hla hmu hgt)).symm
 
 theorem prob_8_3 (la mu : ℝ) (hlapos : 0 < la) (hmupos : 0 < mu) :
-    totalVariationDistance (Exponential la) (Exponential mu) =
+    @totalVariationDistance ℝ _ (Exponential la) (Exponential mu)
+      (Exponential_isProbabilityMeasure la hlapos) (Exponential_isProbabilityMeasure mu hmupos) =
       if la = mu then 0 else
         |Real.exp (-(la * (Real.log (la / mu) / (la - mu)))) -
           Real.exp (-(mu * (Real.log (la / mu) / (la - mu))))| := by
+  letI : IsProbabilityMeasure (Exponential la) := Exponential_isProbabilityMeasure la hlapos
+  letI : IsProbabilityMeasure (Exponential mu) := Exponential_isProbabilityMeasure mu hmupos
   by_cases heq : la = mu
   · subst mu
     simp [totalVariationDistance_self]

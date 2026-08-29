@@ -51,7 +51,7 @@ theorem thm_10_12_divMap_continuousAt {v : Fin 2 → ℝ} (hv : v 1 ≠ 0) :
   intro i
   fin_cases i
   simpa [thm_10_12_divMap, thm_10_12_one] using
-    ((continuousAt_apply (0 : Fin 2) v).div (continuousAt_apply (1 : Fin 2) v) hv)
+    ((continuousAt_apply (0 : Fin 2) v).div₀ (continuousAt_apply (1 : Fin 2) v) hv)
 
 theorem thm_10_12_constMulMap_continuousAt (α : ℝ) (v : Fin 1 → ℝ) :
     ContinuousAt (thm_10_12_constMulMap α) v := by
@@ -66,7 +66,10 @@ theorem thm_10_12_almost_sure_add {Ω : Type*} [MeasurableSpace Ω] (μ : Measur
     (hX : ConvergesAlmostSurely μ Xn X) (hY : ConvergesAlmostSurely μ Yn Y) :
     ConvergesAlmostSurely μ
       (fun n ω => Xn n ω + Yn n ω) (fun ω => X ω + Y ω) := by
-  filter_upwards [hX, hY] with ω hXω hYω
+  rcases hX with ⟨hXn, hX, hXae⟩
+  rcases hY with ⟨hYn, hY, hYae⟩
+  refine ⟨fun n => (hXn n).add (hYn n), hX.add hY, ?_⟩
+  filter_upwards [hXae, hYae] with ω hXω hYω
   exact hXω.add hYω
 
 theorem thm_10_12_almost_sure_mul {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
@@ -74,14 +77,20 @@ theorem thm_10_12_almost_sure_mul {Ω : Type*} [MeasurableSpace Ω] (μ : Measur
     (hX : ConvergesAlmostSurely μ Xn X) (hY : ConvergesAlmostSurely μ Yn Y) :
     ConvergesAlmostSurely μ
       (fun n ω => Xn n ω * Yn n ω) (fun ω => X ω * Y ω) := by
-  filter_upwards [hX, hY] with ω hXω hYω
+  rcases hX with ⟨hXn, hX, hXae⟩
+  rcases hY with ⟨hYn, hY, hYae⟩
+  refine ⟨fun n => (hXn n).mul (hYn n), hX.mul hY, ?_⟩
+  filter_upwards [hXae, hYae] with ω hXω hYω
   exact hXω.mul hYω
 
 theorem thm_10_12_almost_sure_const_mul {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (α : ℝ) (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ)
     (hX : ConvergesAlmostSurely μ Xn X) :
     ConvergesAlmostSurely μ (fun n ω => α * Xn n ω) (fun ω => α * X ω) := by
-  filter_upwards [hX] with ω hXω
+  rcases hX with ⟨hXn, hX, hXae⟩
+  refine ⟨fun n => aestronglyMeasurable_const.mul (hXn n),
+    aestronglyMeasurable_const.mul hX, ?_⟩
+  filter_upwards [hXae] with ω hXω
   exact hXω.const_mul α
 
 theorem thm_10_12_almost_sure_div {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
@@ -91,11 +100,19 @@ theorem thm_10_12_almost_sure_div {Ω : Type*} [MeasurableSpace Ω] (μ : Measur
     (hY_ne : ∀ᵐ ω ∂μ, Y ω ≠ 0) :
     ConvergesAlmostSurely μ
       (fun n ω => Xn n ω / Yn n ω) (fun ω => X ω / Y ω) := by
-  filter_upwards [hX, hY, hY_ne] with ω hXω hYω hYω_ne
+  rcases hX with ⟨hXn, hX, hXae⟩
+  rcases hY with ⟨hYn, hY, hYae⟩
+  refine ⟨fun n => ?_, ?_, ?_⟩
+  · exact ((hXn n).mul (hYn n).inv₀).congr
+      (Eventually.of_forall fun _ => rfl)
+  · exact (hX.mul hY.inv₀).congr
+      (Eventually.of_forall fun _ => rfl)
+  filter_upwards [hXae, hYae, hY_ne] with ω hXω hYω hYω_ne
   exact hXω.div hYω hYω_ne
 
 theorem thm_10_12_pair_probability {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) (Xn Yn : ℕ → Ω → ℝ) (X Y : Ω → ℝ)
+    (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (Xn Yn : ℕ → Ω → ℝ) (X Y : Ω → ℝ)
     (hX : ConvergesInProbability μ Xn X) (hY : ConvergesInProbability μ Yn Y) :
     VectorConvergesInProbability μ
       (fun n ω => thm_10_12_pair (Xn n ω) (Yn n ω))
@@ -107,7 +124,8 @@ theorem thm_10_12_pair_probability {Ω : Type*} [MeasurableSpace Ω]
   · simpa [thm_10_12_pair] using hY
 
 theorem thm_10_12_one_probability {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ)
+    (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ)
     (hX : ConvergesInProbability μ Xn X) :
     VectorConvergesInProbability μ
       (fun n ω => thm_10_12_one (Xn n ω)) (fun ω => thm_10_12_one (X ω)) := by
@@ -136,9 +154,18 @@ theorem thm_10_12_probability_add {Ω : Type*} [MeasurableSpace Ω]
       (by simp) (by simp)
       (fun v _ => thm_10_12_addMap_continuousAt v)
       (thm_10_12_pair_probability μ Xn Yn X Y hX hY)
-  have hcomp := (thm_10_10_probability_iff μ
+  have hcomp := thm_10_10_vector_prob_to_component μ
     (fun n ω => thm_10_12_addMap (thm_10_12_pair (Xn n ω) (Yn n ω)))
-    (fun ω => thm_10_12_addMap (thm_10_12_pair (X ω) (Y ω)))).mp hvec 0
+    (fun ω => thm_10_12_addMap (thm_10_12_pair (X ω) (Y ω)))
+    (fun n i => by
+      fin_cases i
+      simpa [thm_10_12_addMap, thm_10_12_one, thm_10_12_pair] using
+        (hX.1 n).add (hY.1 n))
+    (fun i => by
+      fin_cases i
+      simpa [thm_10_12_addMap, thm_10_12_one, thm_10_12_pair] using
+        hX.2.1.add hY.2.1)
+    hvec 0
   simpa [thm_10_12_addMap, thm_10_12_one, thm_10_12_pair] using hcomp
 
 theorem thm_10_12_probability_mul {Ω : Type*} [MeasurableSpace Ω]
@@ -161,9 +188,18 @@ theorem thm_10_12_probability_mul {Ω : Type*} [MeasurableSpace Ω]
       (by simp) (by simp)
       (fun v _ => thm_10_12_mulMap_continuousAt v)
       (thm_10_12_pair_probability μ Xn Yn X Y hX hY)
-  have hcomp := (thm_10_10_probability_iff μ
+  have hcomp := thm_10_10_vector_prob_to_component μ
     (fun n ω => thm_10_12_mulMap (thm_10_12_pair (Xn n ω) (Yn n ω)))
-    (fun ω => thm_10_12_mulMap (thm_10_12_pair (X ω) (Y ω)))).mp hvec 0
+    (fun ω => thm_10_12_mulMap (thm_10_12_pair (X ω) (Y ω)))
+    (fun n i => by
+      fin_cases i
+      simpa [thm_10_12_mulMap, thm_10_12_one, thm_10_12_pair] using
+        (hX.1 n).mul (hY.1 n))
+    (fun i => by
+      fin_cases i
+      simpa [thm_10_12_mulMap, thm_10_12_one, thm_10_12_pair] using
+        hX.2.1.mul hY.2.1)
+    hvec 0
   simpa [thm_10_12_mulMap, thm_10_12_one, thm_10_12_pair] using hcomp
 
 theorem thm_10_12_probability_const_mul {Ω : Type*} [MeasurableSpace Ω]
@@ -184,9 +220,18 @@ theorem thm_10_12_probability_const_mul {Ω : Type*} [MeasurableSpace Ω]
       (by simp) (by simp)
       (fun v _ => thm_10_12_constMulMap_continuousAt α v)
       (thm_10_12_one_probability μ Xn X hX)
-  have hcomp := (thm_10_10_probability_iff μ
+  have hcomp := thm_10_10_vector_prob_to_component μ
     (fun n ω => thm_10_12_constMulMap α (thm_10_12_one (Xn n ω)))
-    (fun ω => thm_10_12_constMulMap α (thm_10_12_one (X ω)))).mp hvec 0
+    (fun ω => thm_10_12_constMulMap α (thm_10_12_one (X ω)))
+    (fun n i => by
+      fin_cases i
+      simpa [thm_10_12_constMulMap, thm_10_12_one] using
+        measurable_const.mul (hX.1 n))
+    (fun i => by
+      fin_cases i
+      simpa [thm_10_12_constMulMap, thm_10_12_one] using
+        measurable_const.mul hX.2.1)
+    hvec 0
   simpa [thm_10_12_constMulMap, thm_10_12_one] using hcomp
 
 theorem thm_10_12_probability_div {Ω : Type*} [MeasurableSpace Ω]
@@ -216,35 +261,28 @@ theorem thm_10_12_probability_div {Ω : Type*} [MeasurableSpace Ω]
       hS_meas hS_measure
       (fun v hv => thm_10_12_divMap_continuousAt hv)
       (thm_10_12_pair_probability μ Xn Yn X Y hX hY)
-  have hcomp := (thm_10_10_probability_iff μ
+  have hcomp := thm_10_10_vector_prob_to_component μ
     (fun n ω => thm_10_12_divMap (thm_10_12_pair (Xn n ω) (Yn n ω)))
-    (fun ω => thm_10_12_divMap (thm_10_12_pair (X ω) (Y ω)))).mp hvec 0
+    (fun ω => thm_10_12_divMap (thm_10_12_pair (X ω) (Y ω)))
+    (fun n i => by
+      fin_cases i
+      simpa [thm_10_12_divMap, thm_10_12_one, thm_10_12_pair] using
+        (hX.1 n).div (hY.1 n))
+    (fun i => by
+      fin_cases i
+      simpa [thm_10_12_divMap, thm_10_12_one, thm_10_12_pair] using
+        hX.2.1.div hY.2.1)
+    hvec 0
   simpa [thm_10_12_divMap, thm_10_12_one, thm_10_12_pair] using hcomp
 
 theorem thm_10_12 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     [IsProbabilityMeasure μ]
     (Xn Yn : ℕ → Ω → ℝ) (X Y : Ω → ℝ) (α : ℝ)
-    (hPair_meas :
-      ∀ n : ℕ, AEStronglyMeasurable
-        (fun ω => thm_10_12_pair (Xn n ω) (Yn n ω)) μ)
-    (hOne_meas :
-      ∀ n : ℕ, AEStronglyMeasurable (fun ω => thm_10_12_one (Xn n ω)) μ)
-    (hAdd_meas :
-      ∀ n : ℕ, AEStronglyMeasurable
-        (fun ω => thm_10_12_addMap (thm_10_12_pair (Xn n ω) (Yn n ω))) μ)
-    (hMul_meas :
-      ∀ n : ℕ, AEStronglyMeasurable
-        (fun ω => thm_10_12_mulMap (thm_10_12_pair (Xn n ω) (Yn n ω))) μ)
-    (hDiv_meas :
-      ∀ n : ℕ, AEStronglyMeasurable
-        (fun ω => thm_10_12_divMap (thm_10_12_pair (Xn n ω) (Yn n ω))) μ)
-    (hConst_meas :
-      ∀ n : ℕ, AEStronglyMeasurable
-        (fun ω => thm_10_12_constMulMap α (thm_10_12_one (Xn n ω))) μ)
+    (hXn_meas : ∀ n : ℕ, Measurable (Xn n))
+    (hYn_meas : ∀ n : ℕ, Measurable (Yn n))
+    (_hX_meas : Measurable X) (hY_meas : Measurable Y)
     (hY_ne_seq : ∀ n : ℕ, ∀ᵐ ω ∂μ, Yn n ω ≠ 0)
-    (hY_ne_ae : ∀ᵐ ω ∂μ, Y ω ≠ 0)
-    (hY_ne_meas : MeasurableSet {ω : Ω | Y ω ≠ 0})
-    (hY_ne_measure : μ {ω : Ω | Y ω ≠ 0} = 1) :
+    (hY_ne_ae : ∀ᵐ ω ∂μ, Y ω ≠ 0) :
     (ConvergesAlmostSurely μ Xn X → ConvergesAlmostSurely μ Yn Y →
       ConvergesAlmostSurely μ
         (fun n ω => Xn n ω + Yn n ω) (fun ω => X ω + Y ω)) ∧
@@ -267,6 +305,77 @@ theorem thm_10_12 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     (ConvergesInProbability μ Xn X → ConvergesInProbability μ Yn Y →
       ConvergesInProbability μ
         (fun n ω => Xn n ω / Yn n ω) (fun ω => X ω / Y ω)) := by
+  have hPair_meas :
+      ∀ n : ℕ, AEStronglyMeasurable
+        (fun ω => thm_10_12_pair (Xn n ω) (Yn n ω)) μ := by
+    intro n
+    apply Measurable.aestronglyMeasurable
+    rw [measurable_pi_iff]
+    intro i
+    fin_cases i
+    · simpa [thm_10_12_pair] using hXn_meas n
+    · simpa [thm_10_12_pair] using hYn_meas n
+  have hOne_meas :
+      ∀ n : ℕ, AEStronglyMeasurable (fun ω => thm_10_12_one (Xn n ω)) μ := by
+    intro n
+    apply Measurable.aestronglyMeasurable
+    rw [measurable_pi_iff]
+    intro i
+    fin_cases i
+    simpa [thm_10_12_one] using hXn_meas n
+  have hAdd_meas :
+      ∀ n : ℕ, AEStronglyMeasurable
+        (fun ω => thm_10_12_addMap (thm_10_12_pair (Xn n ω) (Yn n ω))) μ := by
+    intro n
+    apply Measurable.aestronglyMeasurable
+    rw [measurable_pi_iff]
+    intro i
+    fin_cases i
+    simpa [thm_10_12_addMap, thm_10_12_one, thm_10_12_pair] using
+      (hXn_meas n).add (hYn_meas n)
+  have hMul_meas :
+      ∀ n : ℕ, AEStronglyMeasurable
+        (fun ω => thm_10_12_mulMap (thm_10_12_pair (Xn n ω) (Yn n ω))) μ := by
+    intro n
+    apply Measurable.aestronglyMeasurable
+    rw [measurable_pi_iff]
+    intro i
+    fin_cases i
+    simpa [thm_10_12_mulMap, thm_10_12_one, thm_10_12_pair] using
+      (hXn_meas n).mul (hYn_meas n)
+  have hDiv_meas :
+      ∀ n : ℕ, AEStronglyMeasurable
+        (fun ω => thm_10_12_divMap (thm_10_12_pair (Xn n ω) (Yn n ω))) μ := by
+    intro n
+    apply Measurable.aestronglyMeasurable
+    rw [measurable_pi_iff]
+    intro i
+    fin_cases i
+    simpa [thm_10_12_divMap, thm_10_12_one, thm_10_12_pair] using
+      (hXn_meas n).div (hYn_meas n)
+  have hConst_meas :
+      ∀ n : ℕ, AEStronglyMeasurable
+        (fun ω => thm_10_12_constMulMap α (thm_10_12_one (Xn n ω))) μ := by
+    intro n
+    apply Measurable.aestronglyMeasurable
+    rw [measurable_pi_iff]
+    intro i
+    fin_cases i
+    simpa [thm_10_12_constMulMap, thm_10_12_one] using
+      measurable_const.mul (hXn_meas n)
+  have hY_ne_meas : MeasurableSet {ω : Ω | Y ω ≠ 0} := by
+    have h := hY_meas ((measurableSet_singleton (0 : ℝ)).compl)
+    convert h using 1
+    ext ω
+    simp
+  have hY_ne_compl_measure : μ {ω : Ω | Y ω ≠ 0}ᶜ = 0 := by
+    simpa only [Set.compl_setOf, not_ne_iff] using (ae_iff.mp hY_ne_ae)
+  have hY_ne_measure : μ {ω : Ω | Y ω ≠ 0} = 1 := by
+    have hfin : μ {ω : Ω | Y ω ≠ 0}ᶜ ≠ ⊤ := by
+      rw [hY_ne_compl_measure]
+      simp
+    simpa [hY_ne_compl_measure, IsProbabilityMeasure.measure_univ] using
+      (MeasureTheory.measure_compl hY_ne_meas.compl hfin)
   refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · exact fun hX hY => thm_10_12_almost_sure_add μ Xn Yn X Y hX hY
   · exact fun hX hY => thm_10_12_almost_sure_mul μ Xn Yn X Y hX hY

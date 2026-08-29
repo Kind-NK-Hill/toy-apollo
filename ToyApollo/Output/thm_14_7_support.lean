@@ -289,7 +289,9 @@ theorem thm_14_7_iIndepFun_centeredScaledSeq
   have hg : ∀ k, Measurable (g k) := by
     intro k
     fun_prop
-  simpa [thm_14_7_centeredScaledSeq, g, Function.comp_def] using
+  change ProbabilityTheory.iIndepFun
+    (fun k ω => (X k ω - mu) / sigma) P
+  simpa [g, Function.comp_def] using
     hIndep.comp g hg
 
 theorem thm_14_7_iIndepFun_centeredScaledSeq_fin
@@ -313,7 +315,10 @@ theorem thm_14_7_identDistrib_centeredScaledSeq
   let u : ℝ → ℝ := fun x => (x - mu) / sigma
   have hu : Measurable u := by
     fun_prop
-  simpa [thm_14_7_centeredScaledSeq, u, Function.comp_def] using
+  change IdentDistrib
+    (fun ω => (X k ω - mu) / sigma)
+    (fun ω => (X 0 ω - mu) / sigma) P P
+  simpa [u, Function.comp_def] using
     (hIdent k).comp hu
 
 def thm_14_7_standardizedSum
@@ -712,10 +717,15 @@ theorem thm_14_7_pointwiseCharacteristicConvergence
       (thm_14_7_law P (thm_14_7_centeredScaledSeq X mu sigma 0)
         (thm_14_7_centeredScaled_aemeasurable (P := P) mu sigma (hX 0))) s
   have hφ : thm_14_7_quadraticCharacteristicExpansion φ 1 := by
-    simpa [φ, thm_14_7_centeredScaledSeq, thm_14_7_centeredScaledVar] using
-      thm_14_7_centeredScaled_quadraticCharacteristicExpansion_of_variance
-        (P := P) (X0 := X 0) (mu := mu) (sigma := sigma)
-        (hX 0) hIntegrable hMean hVariance hsigma
+    change thm_14_7_quadraticCharacteristicExpansion
+      (fun s : ℝ =>
+        thm_14_1_characteristicFunction
+          (thm_14_7_law P (thm_14_7_centeredScaledVar (X 0) mu sigma)
+            (thm_14_7_centeredScaled_aemeasurable
+              (P := P) mu sigma (hX 0))) s) 1
+    exact thm_14_7_centeredScaled_quadraticCharacteristicExpansion_of_variance
+      (P := P) (X0 := X 0) (mu := mu) (sigma := sigma)
+      (hX 0) hIntegrable hMean hVariance hsigma
   have hφ0 : φ 0 = 1 := by
     simpa [φ] using
       thm_14_7_characteristicFunction_zero

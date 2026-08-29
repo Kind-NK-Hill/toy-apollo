@@ -111,7 +111,9 @@ lemma dependentPairPdf_integral_on_rect
     exact integrableOn_const (μ := μ) (s := s ×ˢ r) (C := (1 / 4 : ℝ)) hμBox
   have hIntMul : IntegrableOn (fun z : ℝ × ℝ => (1 / 4 : ℝ) * (z.1 * z.2)) (s ×ˢ r) μ := by
     have hcont : ContinuousOn (fun z : ℝ × ℝ => (1 / 4 : ℝ) * (z.1 * z.2)) (s ×ˢ r) := by
-      simpa using (continuous_const.mul (continuous_fst.mul continuous_snd)).continuousOn
+      change ContinuousOn
+        ((fun _ : ℝ × ℝ => (1 / 4 : ℝ)) * (Prod.fst * Prod.snd)) (s ×ˢ r)
+      exact (continuous_const.mul (continuous_fst.mul continuous_snd)).continuousOn
     exact hcont.integrableOn_compact ((isCompact_Icc).prod isCompact_Icc)
   change
     ∫ z in s ×ˢ r, dependentPairPdf z.1 z.2 ∂μ =
@@ -187,10 +189,15 @@ lemma dependentPairMeasure_rect
     have hIntMul :
         IntegrableOn (fun z : ℝ × ℝ => (1 / 4 : ℝ) * (z.1 * z.2)) box (volume : Measure (ℝ × ℝ)) := by
       have hcont : ContinuousOn (fun z : ℝ × ℝ => (1 / 4 : ℝ) * (z.1 * z.2)) box := by
-        simpa [box] using
-          (continuous_const.mul (continuous_fst.mul continuous_snd)).continuousOn
+        change ContinuousOn
+          ((fun _ : ℝ × ℝ => (1 / 4 : ℝ)) * (Prod.fst * Prod.snd)) box
+        exact (continuous_const.mul (continuous_fst.mul continuous_snd)).continuousOn
       exact hcont.integrableOn_compact ((isCompact_Icc).prod isCompact_Icc)
-    simpa [poly] using hIntConst.add hIntMul
+    change IntegrableOn
+      ((fun _ : ℝ × ℝ => (1 / 4 : ℝ)) +
+        (fun z : ℝ × ℝ => (1 / 4 : ℝ) * (z.1 * z.2)))
+      box (volume : Measure (ℝ × ℝ))
+    exact hIntConst.add hIntMul
   have hNonnegPoly :
       0 ≤ᵐ[(volume : Measure (ℝ × ℝ)).restrict box] poly := by
     simpa [box, poly] using dependentPairPdf_nonneg_on_rect hu huv hv hw hwt ht

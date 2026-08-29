@@ -22,7 +22,7 @@ class Phase2PackViewsTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertIn("Do not redefine any object", prompt)
         self.assertIn("review-now --review-subject candidate", prompt)
         self.assertIn("review-now --review-subject existing", prompt)
-        self.assertIn("Use `verify` only", prompt)
+        self.assertNotIn("Use `verify` only", prompt)
 
     def test_build_operator_prompt_auto_loop_authoring_requires_same_session_continuation(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_operator_prompt_auto_loop_authoring"

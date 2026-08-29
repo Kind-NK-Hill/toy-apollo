@@ -13,12 +13,7 @@ import ToyApollo.Output.ch8_bernoulli_bool_core
 open MeasureTheory Set
 open Ch8BernoulliBoolCore
 
-noncomputable def ex842TotalVariationDistance
-    {Ω : Type*} [MeasurableSpace Ω] (P Q : Measure Ω) : ℝ :=
-  sSup {d : ℝ | ∃ A : Set Ω, MeasurableSet A ∧ d = |P.real A - Q.real A|}
-
 theorem ex_8_4_2 (p q : NNReal) (hp : p ≤ 1) (hq : q ≤ 1) :
-    ex842TotalVariationDistance (bernoulliMeasure p hp) (bernoulliMeasure q hq)
+    totalVariationDistance (bernoulliMeasure p hp) (bernoulliMeasure q hq)
       = |(p : ℝ) - q| := by
-  simpa [ex842TotalVariationDistance, totalVariationDistance] using
-    boolBernoulli_totalVariationDistance_eq_abs p q hp hq
+  exact boolBernoulli_totalVariationDistance_eq_abs p q hp hq

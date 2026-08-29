@@ -18,11 +18,12 @@ def ex731StieltjesFun (x : ℝ) : ℝ :=
   ex731Clamp x ^ 2
 
 lemma continuous_ex731Clamp : Continuous ex731Clamp := by
-  simpa [ex731Clamp] using
-    (continuous_const.max (continuous_id.min continuous_const))
+  change Continuous (fun x : ℝ => max 0 (min x 1))
+  exact continuous_const.max (continuous_id.min continuous_const)
 
 lemma continuous_ex731StieltjesFun : Continuous ex731StieltjesFun := by
-  simpa [ex731StieltjesFun] using (continuous_ex731Clamp.pow 2)
+  change Continuous (fun x : ℝ => ex731Clamp x ^ 2)
+  exact continuous_ex731Clamp.pow 2
 
 lemma monotone_ex731Clamp : Monotone ex731Clamp := by
   intro x y hxy
@@ -242,9 +243,8 @@ lemma ex731Measure_singleton_zero : ex731Measure ({0} : Set ℝ) = 0 := by
   rw [ex731Measure, ex731F.measure_singleton]
   have hcont :
       ContinuousWithinAt (fun x : ℝ => ex731F x) (Set.Iic (0 : ℝ)) 0 := by
-    simpa using
-      (continuous_ex731StieltjesFun.continuousAt.continuousWithinAt :
-        ContinuousWithinAt ex731StieltjesFun (Set.Iic (0 : ℝ)) 0)
+    change ContinuousWithinAt ex731StieltjesFun (Set.Iic (0 : ℝ)) 0
+    exact continuous_ex731StieltjesFun.continuousAt.continuousWithinAt
   rw [hcont.leftLim_eq]
   simp [ex731F, ex731StieltjesFun, ex731Clamp_eq_zero_of_le_zero le_rfl]
 
@@ -313,7 +313,8 @@ lemma ex731_integral_x_sin_value :
     ∫ x in (0 : ℝ)..1, x * Real.sin (Real.pi * x) = 1 / Real.pi := by
   have hu : ∀ x ∈ Set.uIcc (0 : ℝ) 1, HasDerivAt (fun y : ℝ => y) 1 x := by
     intro x _
-    simpa using hasDerivAt_id x
+    change HasDerivAt id 1 x
+    exact hasDerivAt_id x
   have hv :
       ∀ x ∈ Set.uIcc (0 : ℝ) 1,
         HasDerivAt (fun y : ℝ => -(Real.cos (Real.pi * y) / Real.pi))
@@ -323,7 +324,10 @@ lemma ex731_integral_x_sin_value :
       simpa [mul_comm] using (hasDerivAt_id x).const_mul Real.pi
     have hcos : HasDerivAt (fun y : ℝ => Real.cos (Real.pi * y))
         (-Real.sin (Real.pi * x) * Real.pi) x := by
-      simpa using (Real.hasDerivAt_cos (Real.pi * x)).comp x hmul
+      change HasDerivAt
+        (Real.cos ∘ fun y : ℝ => Real.pi * y)
+        (-Real.sin (Real.pi * x) * Real.pi) x
+      exact (Real.hasDerivAt_cos (Real.pi * x)).comp x hmul
     have hdiv : HasDerivAt (fun y : ℝ => Real.cos (Real.pi * y) / Real.pi)
         ((-Real.sin (Real.pi * x) * Real.pi) / Real.pi) x := by
       exact hcos.div_const Real.pi

@@ -6,13 +6,13 @@ Toy Apollo 是一个 Lean 4 教材自动形式化流水线，当前执行模型�
 - Phase 1: `pack` -> agent/human writes `draft_plan.json` -> `apply` writes `plans/*_plan.json`
 - Phase 2: 本地 formalization 与验证
 - Phase 2 Problem 特例: soft dependency selection（`soft-pack` / `soft-apply`）
-- Phase 3: deprecated/unavailable；旧入口以非零状态退出，并明确迁移到 Phase 2
-- Phase 4: unavailable；不存在成功 no-op、手工 ledger 更新或自动 closeout 路径
 
 注：
 
 - `--status` 严格只读；它只显示本进程解析到的 roots 和 ledger 摘要，不声明活动 campaign 的全局 authority。
 - Protected 不等于 tracked；ignored 不等于 deletion candidate。
+- 项目完成度只由固定 catalog 对现有 `state.sqlite3` 的 `state validate` 结果判定。
+- `worklist` 显示工作树候选的 review/rebind/promotion 维护动作；即使其中有很多行，也不等于相同数量的 catalog 必需任务未完成。
 
 ## 快速开始（Windows PowerShell）
 
@@ -30,11 +30,11 @@ pip install -r requirements.txt
 - 不要把密钥写入代码或提交到 Git 历史。
 - 建议使用系统环境变量，不要在项目根目录放置 `.env` 文件。
 
-可选路径覆盖（不改 CLI，用于 artifacts 分仓）：
+可选路径覆盖（不改 CLI，用于从其他工作目录启动当前 workspace）：
 
 ```powershell
-$env:TOY_APOLLO_RUNTIME_ROOT="D:\Grad_Study\Practimum\toy_apollo_archive\_migration_20260330_211429\toy-apollo"
-$env:TOY_APOLLO_ARTIFACT_ROOT="D:\Grad_Study\Practimum\toy_apollo_archive\_migration_20260330_211429\toy-apollo-artifacts"
+$env:TOY_APOLLO_RUNTIME_ROOT="D:\Grad_Study\Practimum\Formalization\toy-apollo"
+$env:TOY_APOLLO_ARTIFACT_ROOT="D:\Grad_Study\Practimum\Formalization\toy-apollo-artifacts"
 ```
 
 4. 查看命令帮助：
@@ -60,7 +60,8 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-pack --tasks prob_4_2,prob_
 python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks prob_4_2,prob_4_4 --selection .\selection.json
 python .\run_chapter.py --status
 python .\run_chapter.py status thm_1_1
-python .\run_chapter.py worklist
+python .\run_chapter.py worklist  # candidate maintenance, not catalog completion
+python .\run_chapter.py state validate --json
 python .\run_chapter.py pr-review prepare --task ex_1_3_1 --pr 9 --checkout <clean-exact-head-checkout>
 ```
 
@@ -82,11 +83,6 @@ python .\run_chapter.py --phase 2 --phase2-mode soft-pack --tasks prob_3_1,prob_
 ```
 
 Problem task 的 soft imports 必须先通过 `soft-pack -> soft-apply` 写入 `soft_imports_confirmed_at`，空列表也需要显式确认。
-
-当前状态：
-
-- Phase 3 旧入口已弃用并返回非零；Problem soft dependency selection 使用 Phase 2 的两个独立 mode。
-- Phase 4 明确 unavailable，并返回非零；clean completion 仍由 Phase 2 `review-apply` 落地。
 
 ## 推荐的 Phase 2 路径
 
@@ -124,12 +120,6 @@ python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks ex_4_4_3 --
 
 - `docs/phase2/workflow.md`
 
-## Phase 3/4 边界
-
-CLI modes [deprecated phase=3]: `soft-pack`, `soft-apply`.
-
-Phase 3 已弃用且不可执行；旧入口会返回非零迁移提示。Problem soft dependency selection 的活动入口分别是 `--phase 2 --phase2-mode soft-pack` 和 `--phase 2 --phase2-mode soft-apply`。Phase 4 明确 unavailable；旧 provider offload、post-harvest repair、Phase 4 closure 脚本和 runbook 不是当前 operator contract。
-
 ## 仓库边界
 
 - 本仓库只保留源码、配置和最小输入。
@@ -141,5 +131,6 @@ Phase 3 已弃用且不可执行；旧入口会返回非零迁移提示。Proble
 - 被保护的运行状态不一定要进入 Git；被 ignore 的文件也不是删除候选。
 - 一键同步脚本：`.\tools\sync_artifacts.ps1 -Mode push|pull`
 - 仓库卫生检查：`python .\tools\check_repo_hygiene.py`
+- 统一 workspace/SQLite/452-task 状态：`python .\tools\workspace_status.py --write --compare-latest-rebuild`
 - agent 入口：`AGENTS.md`
 - 按需规则：`.claude/rules/`

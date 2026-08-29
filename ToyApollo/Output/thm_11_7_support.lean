@@ -19,18 +19,22 @@ open scoped BigOperators ENNReal Topology
 noncomputable section
 
 def thm_11_7_fourthMomentUniformBound {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) (X : ℕ → Ω → ℝ) (_μ c : ℝ) : Prop :=
+    (P : Measure Ω) [IsProbabilityMeasure P]
+    (X : ℕ → Ω → ℝ) (_μ c : ℝ) : Prop :=
   0 ≤ c ∧
     ∀ i : ℕ,
       MemLp (X i) 4 P ∧
-        rthMoment P (X i) 4 ≤ c
+        ∃ hXi : FiniteAbsMoment P (X i) 4,
+          rthMoment P (X i) positiveOrderFour hXi ≤ c
 
 def thm_11_7_centeredFourthMomentUniformBound {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) (X : ℕ → Ω → ℝ) (μ c : ℝ) : Prop :=
+    (P : Measure Ω) [IsProbabilityMeasure P]
+    (X : ℕ → Ω → ℝ) (μ c : ℝ) : Prop :=
   0 ≤ c ∧
     ∀ i : ℕ,
       MemLp (fun ω => X i ω - μ) 4 P ∧
-        rthMoment P (fun ω => X i ω - μ) 4 ≤ c
+        ∃ hXi : FiniteAbsMoment P (fun ω => X i ω - μ) 4,
+          rthMoment P (fun ω => X i ω - μ) positiveOrderFour hXi ≤ c
 
 noncomputable def thm_11_7_centeredPartialSum {Ω : Type*} (X : ℕ → Ω → ℝ)
     (μ : ℝ) (n : ℕ) : Ω → ℝ :=
@@ -90,16 +94,18 @@ theorem thm_11_7_centered_mean_zero {Ω : Type*} [MeasurableSpace Ω]
   simp [hMean i]
 
 theorem thm_11_7_centered_memLp_four_of_uniform {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) (X : ℕ → Ω → ℝ) (μ c : ℝ)
+    (P : Measure Ω) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ) (μ c : ℝ)
     (hFourth : thm_11_7_centeredFourthMomentUniformBound P X μ c) (i : ℕ) :
     MemLp (fun ω => X i ω - μ) 4 P :=
   (hFourth.2 i).1
 
 theorem thm_11_7_centered_fourth_integral_bound_of_uniform {Ω : Type*}
-    [MeasurableSpace Ω] (P : Measure Ω) (X : ℕ → Ω → ℝ) (μ c : ℝ)
+    [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
+    (X : ℕ → Ω → ℝ) (μ c : ℝ)
     (hFourth : thm_11_7_centeredFourthMomentUniformBound P X μ c) (i : ℕ) :
-    (∫ ω, (X i ω - μ) ^ 4 ∂P) ≤ c :=
-  (hFourth.2 i).2
+    (∫ ω, (X i ω - μ) ^ 4 ∂P) ≤ c := by
+  rcases (hFourth.2 i).2 with ⟨hXi, hbound⟩
+  simpa [rthMoment, generalMoment, moment] using hbound
 
 theorem thm_11_7_centered_integrable_of_uniform {Ω : Type*}
     [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
@@ -151,8 +157,13 @@ theorem thm_11_7_centeredFourthMomentUniformBound_of_fourthMomentUniformBound
   intro i
   have hXi4 : MemLp (X i) 4 P := (hFourth.2 i).1
   have hCentered4 : MemLp (fun ω => X i ω - μ) 4 P := by
-    simpa [Pi.sub_apply] using hXi4.sub (memLp_const (μ := P) μ)
-  refine ⟨hCentered4, ?_⟩
+    convert hXi4.sub (memLp_const (μ := P) μ) using 1
+    ext ω
+    rfl
+  rcases (hFourth.2 i).2 with ⟨hXiFinite, hXiBound⟩
+  have hCenteredFinite : FiniteAbsMoment P (fun ω => X i ω - μ) 4 :=
+    FiniteAbsMoment.of_memLp (hXiFinite.measurable.sub measurable_const) hCentered4
+  refine ⟨hCentered4, hCenteredFinite, ?_⟩
   have hXiPowInt : Integrable (fun ω => (X i ω) ^ 4) P :=
     thm_11_7_centered_fourth_power_integrable_of_memLp P (X i) hXi4
   have hCenteredPowInt : Integrable (fun ω => (X i ω - μ) ^ 4) P :=
@@ -161,9 +172,9 @@ theorem thm_11_7_centeredFourthMomentUniformBound_of_fourthMomentUniformBound
   have hMajorInt : Integrable (fun ω => 8 * ((X i ω) ^ 4 + μ ^ 4)) P :=
     (hXiPowInt.add (integrable_const (μ ^ 4))).const_mul 8
   have hXiMomentBound : (∫ ω, (X i ω) ^ 4 ∂P) ≤ c := by
-    simpa [rthMoment, moment] using (hFourth.2 i).2
+    simpa [rthMoment, generalMoment, moment] using hXiBound
   calc
-    rthMoment P (fun ω => X i ω - μ) 4
+    rthMoment P (fun ω => X i ω - μ) positiveOrderFour hCenteredFinite
         = ∫ ω, (X i ω - μ) ^ 4 ∂P := rfl
     _ ≤ ∫ ω, 8 * ((X i ω) ^ 4 + μ ^ 4) ∂P :=
         integral_mono hCenteredPowInt hMajorInt
@@ -176,7 +187,8 @@ theorem thm_11_7_centeredFourthMomentUniformBound_of_fourthMomentUniformBound
         nlinarith [hXiMomentBound]
 
 theorem thm_11_7_centeredPartialSum_fourth_integrable_of_uniform {Ω : Type*}
-    [MeasurableSpace Ω] (P : Measure Ω) (X : ℕ → Ω → ℝ) (μ c : ℝ)
+    [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
+    (X : ℕ → Ω → ℝ) (μ c : ℝ)
     (hFourth : thm_11_7_centeredFourthMomentUniformBound P X μ c) (n : ℕ) :
     Integrable (fun ω => (thm_11_7_centeredPartialSum X μ n ω) ^ 4) P := by
   have hSumMem : MemLp (thm_11_7_centeredPartialSum X μ n) 4 P := by
@@ -323,10 +335,9 @@ theorem thm_11_7_fourth_moment_sum_bound {Ω : Type*} [MeasurableSpace Ω]
     have hXint : ∀ i : ℕ, Integrable (X i) P := by
       intro i
       have hcint := thm_11_7_centered_integrable_of_uniform P X μ c hFourth i
-      convert hcint.add (integrable_const μ) using 1
-      ext ω
-      change X i ω = X i ω - μ + μ
-      ring
+      refine (hcint.add (integrable_const μ)).congr ?_
+      filter_upwards with ω
+      simp
     have hMeanZero : ∀ i : ℕ, (∫ ω, X i ω - μ ∂P) = 0 :=
       fun i => thm_11_7_centered_mean_zero P X μ hMean i (hXint i)
     have hTermInt : ∀ i j k l : Fin (n + 1),
@@ -432,7 +443,9 @@ theorem thm_11_7_fourth_moment_sum_bound {Ω : Type*} [MeasurableSpace Ω]
             simpa [Function.comp_def] using
               hPair.comp measurable_id (measurable_id.pow_const (3 : ℕ))
           have hRight : AEStronglyMeasurable (fun ω => (X b ω - μ) ^ 3) P := by
-            simpa [Pi.pow_apply] using (hYae b).pow 3
+            convert (hYae b).pow 3 using 1
+            ext ω
+            rfl
           have hProd := hIndPow.integral_fun_mul_eq_mul_integral (hYae a) hRight
           simpa [hMeanZero a, pow_succ, pow_two, mul_assoc] using hProd
         · have hPair :=

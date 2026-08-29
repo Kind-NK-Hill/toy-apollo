@@ -22,6 +22,9 @@ theorem ex_10_5_1_strong {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     ConvergesAlmostSurely μ
       (fun n ω => Real.sqrt (varianceEstimator n ω))
       (fun _ : Ω => Real.sqrt variance) := by
+  rcases hstrong with ⟨hEstimator, hVariance, hstrong⟩
+  refine ⟨fun n => Real.continuous_sqrt.comp_aestronglyMeasurable (hEstimator n),
+    Real.continuous_sqrt.comp_aestronglyMeasurable hVariance, ?_⟩
   filter_upwards [hstrong] with ω hω
   exact Real.continuous_sqrt.continuousAt.tendsto.comp hω
 
@@ -31,10 +34,6 @@ theorem ex_10_5_1_weak {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     (hVn_meas :
       ∀ n : ℕ,
         AEStronglyMeasurable (fun ω : Ω => fun _ : Fin 1 => varianceEstimator n ω) μ)
-    (hsqrt_meas :
-      ∀ n : ℕ,
-        AEStronglyMeasurable
-          (fun ω : Ω => fun _ : Fin 1 => Real.sqrt (varianceEstimator n ω)) μ)
     (hweak :
       ConvergesInProbability μ varianceEstimator (fun _ : Ω => variance)) :
     ConvergesInProbability μ
@@ -46,28 +45,55 @@ theorem ex_10_5_1_weak {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     fun _ _ => variance
   let sqrtMap : (Fin 1 → ℝ) → (Fin 1 → ℝ) :=
     fun v _ => Real.sqrt (v 0)
+  have hVn_coord_meas :
+      ∀ n : ℕ, ∀ i : Fin 1, Measurable (fun ω => Vn n ω i) := by
+    intro n i
+    fin_cases i
+    simpa [Vn] using hweak.1 n
+  have hV_coord_meas :
+      ∀ i : Fin 1, Measurable (fun ω => V ω i) := by
+    intro i
+    fin_cases i
+    simpa [V] using hweak.2.1
   have hvec : VectorConvergesInProbability μ Vn V := by
-    apply (thm_10_10_probability_iff μ Vn V).mpr
+    apply (thm_10_10_probability_iff μ Vn V hVn_coord_meas hV_coord_meas).mpr
     intro i
     fin_cases i
     simpa [Vn, V] using hweak
+  have hsqrtMap_cont : Continuous sqrtMap := by
+    apply continuous_pi
+    intro i
+    fin_cases i
+    exact Real.continuous_sqrt.comp (continuous_apply 0)
+  have hcomp_meas :
+      ∀ n : ℕ,
+        AEStronglyMeasurable (fun ω => sqrtMap (Vn n ω)) μ :=
+    fun n => hsqrtMap_cont.comp_aestronglyMeasurable (hVn_meas n)
   have hs_cont : ∀ v ∈ (Set.univ : Set (Fin 1 → ℝ)), ContinuousAt sqrtMap v := by
-    intro v _hv
-    have hcont : Continuous sqrtMap := by
-      apply continuous_pi
-      intro i
-      fin_cases i
-      exact Real.continuous_sqrt.comp (continuous_apply 0)
-    exact hcont.continuousAt
+    exact fun v _hv => hsqrtMap_cont.continuousAt
   have hvec_sqrt :
       VectorConvergesInProbability μ
         (fun n ω => sqrtMap (Vn n ω)) (fun ω => sqrtMap (V ω)) :=
-    thm_10_11_probability μ Vn V sqrtMap Set.univ hVn_meas hsqrt_meas
+    thm_10_11_probability μ Vn V sqrtMap Set.univ hVn_meas hcomp_meas
       (by simp) (by simp [MeasureTheory.IsProbabilityMeasure.measure_univ])
       hs_cont hvec
+  have hsqrtVn_coord_meas :
+      ∀ n : ℕ, ∀ i : Fin 1,
+        Measurable (fun ω => sqrtMap (Vn n ω) i) := by
+    intro n i
+    fin_cases i
+    simpa [sqrtMap, Vn, Function.comp_def] using
+      Real.continuous_sqrt.measurable.comp (hweak.1 n)
+  have hsqrtV_coord_meas :
+      ∀ i : Fin 1, Measurable (fun ω => sqrtMap (V ω) i) := by
+    intro i
+    fin_cases i
+    simpa [sqrtMap, V, Function.comp_apply] using
+      Real.continuous_sqrt.measurable.comp hweak.2.1
   have hcoord :=
     (thm_10_10_probability_iff μ
-      (fun n ω => sqrtMap (Vn n ω)) (fun ω => sqrtMap (V ω))).mp hvec_sqrt 0
+      (fun n ω => sqrtMap (Vn n ω)) (fun ω => sqrtMap (V ω))
+      hsqrtVn_coord_meas hsqrtV_coord_meas).mp hvec_sqrt 0
   simpa [sqrtMap, Vn, V] using hcoord
 
 theorem ex_10_5_1 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
@@ -75,11 +101,7 @@ theorem ex_10_5_1 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     (varianceEstimator : ℕ → Ω → ℝ) (variance : ℝ)
     (hVn_meas :
       ∀ n : ℕ,
-        AEStronglyMeasurable (fun ω : Ω => fun _ : Fin 1 => varianceEstimator n ω) μ)
-    (hsqrt_meas :
-      ∀ n : ℕ,
-        AEStronglyMeasurable
-          (fun ω : Ω => fun _ : Fin 1 => Real.sqrt (varianceEstimator n ω)) μ) :
+        AEStronglyMeasurable (fun ω : Ω => fun _ : Fin 1 => varianceEstimator n ω) μ) :
     (ConvergesAlmostSurely μ varianceEstimator (fun _ : Ω => variance) →
       ConvergesAlmostSurely μ
         (fun n ω => Real.sqrt (varianceEstimator n ω))
@@ -90,4 +112,4 @@ theorem ex_10_5_1 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
         (fun _ : Ω => Real.sqrt variance)) := by
   constructor
   · exact ex_10_5_1_strong μ varianceEstimator variance
-  · exact ex_10_5_1_weak μ varianceEstimator variance hVn_meas hsqrt_meas
+  · exact ex_10_5_1_weak μ varianceEstimator variance hVn_meas

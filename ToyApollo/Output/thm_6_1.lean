@@ -109,8 +109,7 @@ theorem integralValue_neg_of_defined (μ : Measure Ω) (X : SimpleFunc Ω EReal)
         = ∑ x ∈ X.range, -(term x) := by
             simpa [term, simpleFunctionIntegralTerm, neg_mul] using
               (integralValue_map (μ := μ) (g := fun x : EReal => -x) (f := X))
-    _ = -∑ x ∈ X.range, term x := by
-          exact hnegSum
+    _ = -∑ x ∈ X.range, term x := hnegSum
     _ = -simpleFunctionIntegralValue μ X := by
           simp [simpleFunctionIntegralValue, simpleFunctionIntegralTerm, term]
 
@@ -140,7 +139,8 @@ theorem integralValue_const_mul_real_of_defined (μ : Measure Ω) (X : SimpleFun
       (α : EReal) * simpleFunctionIntegralValue μ X := by
   by_cases hα : 0 ≤ α
   · exact integralValue_const_mul_of_nonneg μ X α hα
-  · have hneg : 0 ≤ -α := by linarith
+  · have hneg : 0 ≤ -α := by
+      linarith
     calc
       simpleFunctionIntegralValue μ (X.map fun x => (α : EReal) * x)
           = simpleFunctionIntegralValue μ
@@ -155,11 +155,19 @@ theorem integralValue_const_mul_real_of_defined (μ : Measure Ω) (X : SimpleFun
       _ = (α : EReal) * simpleFunctionIntegralValue μ X := by
             simp
 
-theorem integralValue_add_of_cellwise_distrib (μ : Measure Ω) (X Y : SimpleFunc Ω EReal)
-    (hcell : simpleFunctionIntegralAddCompatible μ X Y) :
+theorem integralValue_add_of_finite_pair_fibers (μ : Measure Ω)
+    (X Y : SimpleFunc Ω EReal)
+    (hCellFinite : ∀ p ∈ (X.pair Y).range, μ (X.pair Y ⁻¹' {p}) ≠ ⊤) :
     simpleFunctionIntegralValue μ (X + Y) =
       simpleFunctionIntegralValue μ X + simpleFunctionIntegralValue μ Y := by
   classical
+  have hcell : simpleFunctionIntegralAddCompatible μ X Y := by
+    intro p hp
+    have hμnonneg : 0 ≤ (μ (X.pair Y ⁻¹' {p}) : EReal) := by
+      positivity
+    have hμne : (μ (X.pair Y ⁻¹' {p}) : EReal) ≠ ⊤ := by
+      simpa using hCellFinite p hp
+    exact EReal.right_distrib_of_nonneg_of_ne_top hμnonneg hμne p.1 p.2
   calc
     simpleFunctionIntegralValue μ (X + Y)
         = ∑ p ∈ (X.pair Y).range,
@@ -186,42 +194,47 @@ theorem integralValue_add_of_cellwise_distrib (μ : Measure Ω) (X Y : SimpleFun
 
 end Thm61Support
 
-theorem thm_6_1 (μ : Measure Ω) (X Y : SimpleFunc Ω EReal) (α : ℝ) :
-    (∀ {x xα : EReal},
-        def_6_2 μ X = some x →
-        def_6_2 μ (X.map fun t => (α : EReal) * t) = some xα →
-        xα = (α : EReal) * x) ∧
-      (∀ {x y xy : EReal},
-        def_6_2 μ X = some x →
-        def_6_2 μ Y = some y →
-        simpleFunctionIntegralAdd μ X Y = some xy →
-        xy = x + y) ∧
-      (X ≤ Y →
-        ∀ {x y : EReal},
-          def_6_2 μ X = some x →
-          def_6_2 μ Y = some y →
-          x ≤ y) := by
-  refine ⟨?_, ?_, ?_⟩
-  · intro x xα hX hαX
-    rcases (def62_eq_some_iff (μ := μ) (f := X) (v := x)).1 hX with ⟨hXdef, hx⟩
-    rcases
-      (def62_eq_some_iff (μ := μ) (f := X.map fun t => (α : EReal) * t) (v := xα)).1 hαX with
-      ⟨_, hxα⟩
-    rw [← hxα,
-      Thm61Support.integralValue_const_mul_real_of_defined
-        (μ := μ) (X := X) (α := α) hXdef,
-      hx]
-  · intro x y xy hX hY hXY
-    unfold simpleFunctionIntegralAdd at hXY
-    split_ifs at hXY with hcell
-    · rcases (def62_eq_some_iff (μ := μ) (f := X) (v := x)).1 hX with ⟨_, hx⟩
-      rcases (def62_eq_some_iff (μ := μ) (f := Y) (v := y)).1 hY with ⟨_, hy⟩
-      rcases (def62_eq_some_iff (μ := μ) (f := X + Y) (v := xy)).1 hXY with ⟨_, hxy⟩
-      rw [← hxy,
-        Thm61Support.integralValue_add_of_cellwise_distrib (μ := μ) (X := X) (Y := Y) hcell,
-        hx, hy]
-  · intro hXY x y hX hY
-    rcases (def62_eq_some_iff (μ := μ) (f := X) (v := x)).1 hX with ⟨_, hx⟩
-    rcases (def62_eq_some_iff (μ := μ) (f := Y) (v := y)).1 hY with ⟨_, hy⟩
-    rw [← hx, ← hy]
-    exact integralValue_mono_fun (μ := μ) hXY
+theorem thm_6_1 (μ : Measure Ω) (X Y : SimpleFunc Ω EReal) (α : ℝ)
+    (hXdef : simpleFunctionIntegralDefined μ X)
+    (hYdef : simpleFunctionIntegralDefined μ Y)
+    (hαdef : simpleFunctionIntegralDefined μ (X.map fun x => (α : EReal) * x))
+    (hXYdef : simpleFunctionIntegralDefined μ (X + Y))
+    (hCellFinite : ∀ p ∈ (X.pair Y).range, μ (X.pair Y ⁻¹' {p}) ≠ ⊤)
+    (hValueAddDef : textbookERealAddDefined
+      (simpleFunctionIntegralValue μ X) (simpleFunctionIntegralValue μ Y)) :
+    def_6_2 μ X = some (simpleFunctionIntegralValue μ X) ∧
+      def_6_2 μ Y = some (simpleFunctionIntegralValue μ Y) ∧
+      def_6_2 μ (X.map fun x => (α : EReal) * x) =
+        some ((α : EReal) * simpleFunctionIntegralValue μ X) ∧
+      def_6_2 μ (X + Y) =
+        some (simpleFunctionIntegralValue μ X + simpleFunctionIntegralValue μ Y) ∧
+      textbookIntegralAdd (def_6_2 μ X) (def_6_2 μ Y) =
+        some (simpleFunctionIntegralValue μ X + simpleFunctionIntegralValue μ Y) ∧
+      (X ≤ Y → simpleFunctionIntegralValue μ X ≤ simpleFunctionIntegralValue μ Y) := by
+  have hXout : def_6_2 μ X = some (simpleFunctionIntegralValue μ X) :=
+    (def62_eq_some_iff μ X (simpleFunctionIntegralValue μ X)).2 ⟨hXdef, rfl⟩
+  have hYout : def_6_2 μ Y = some (simpleFunctionIntegralValue μ Y) :=
+    (def62_eq_some_iff μ Y (simpleFunctionIntegralValue μ Y)).2 ⟨hYdef, rfl⟩
+  have hαout :
+      def_6_2 μ (X.map fun x => (α : EReal) * x) =
+        some ((α : EReal) * simpleFunctionIntegralValue μ X) :=
+    (def62_eq_some_iff μ (X.map fun x => (α : EReal) * x)
+      ((α : EReal) * simpleFunctionIntegralValue μ X)).2
+      ⟨hαdef, Thm61Support.integralValue_const_mul_real_of_defined μ X α hXdef⟩
+  have hXYvalue :
+      simpleFunctionIntegralValue μ (X + Y) =
+        simpleFunctionIntegralValue μ X + simpleFunctionIntegralValue μ Y :=
+    Thm61Support.integralValue_add_of_finite_pair_fibers μ X Y hCellFinite
+  have hXYout :
+      def_6_2 μ (X + Y) =
+        some (simpleFunctionIntegralValue μ X + simpleFunctionIntegralValue μ Y) :=
+    (def62_eq_some_iff μ (X + Y)
+      (simpleFunctionIntegralValue μ X + simpleFunctionIntegralValue μ Y)).2
+      ⟨hXYdef, hXYvalue⟩
+  have hAddOut :
+      textbookIntegralAdd (def_6_2 μ X) (def_6_2 μ Y) =
+        some (simpleFunctionIntegralValue μ X + simpleFunctionIntegralValue μ Y) := by
+    simp [hXout, hYout, textbookIntegralAdd, textbookERealAdd, hValueAddDef]
+  refine ⟨hXout, hYout, hαout, hXYout, hAddOut, ?_⟩
+  intro hXY
+  exact integralValue_mono_fun μ hXY

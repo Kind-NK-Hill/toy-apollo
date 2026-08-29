@@ -159,45 +159,29 @@ structure CharacteristicFunctionBasicProperties (μ : Measure ℝ) : Prop where
 theorem characteristicFunction_law_eq_charFun
     {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} {X : Ω → ℝ}
     (hX : AEMeasurable X μ) (t : ℝ) :
-    characteristicFunction μ X t = charFun (μ.map X) t := by
-  rw [charFun_apply_real]
-  rw [integral_map hX.aestronglyMeasurable.aemeasurable (by fun_prop)]
-  simp [characteristicFunction, mul_comm, mul_left_comm, mul_assoc]
+    characteristicFunction (μ.map X) t = charFun (μ.map X) t := by
+  rfl
 
 theorem characteristicFunction_zero_source
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
-    {X : Ω → ℝ} :
-    characteristicFunction P X 0 = 1 := by
+    {X : Ω → ℝ} (hX : AEMeasurable X P) :
+    characteristicFunction (P.map X) 0 = 1 := by
+  letI : IsProbabilityMeasure (P.map X) := Measure.isProbabilityMeasure_map hX
   simp [characteristicFunction]
 
 theorem characteristicFunction_norm_le_one_source
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
-    {X : Ω → ℝ} (t : ℝ) :
-    ‖characteristicFunction P X t‖ ≤ 1 := by
-  unfold characteristicFunction
-  calc
-    ‖∫ ω, Complex.exp (Complex.I * (X ω : ℂ) * (t : ℂ)) ∂P‖
-        ≤ ∫ ω, ‖Complex.exp (Complex.I * (X ω : ℂ) * (t : ℂ))‖ ∂P :=
-          norm_integral_le_integral_norm _
-    _ = ∫ _ω : Ω, (1 : ℝ) ∂P := by
-          congr with ω
-          simp [Complex.norm_exp]
-    _ = 1 := by simp
+    {X : Ω → ℝ} (hX : AEMeasurable X P) (t : ℝ) :
+    ‖characteristicFunction (P.map X) t‖ ≤ 1 := by
+  letI : IsProbabilityMeasure (P.map X) := Measure.isProbabilityMeasure_map hX
+  simpa [characteristicFunction] using norm_charFun_le_one (μ := P.map X) t
 
 theorem characteristicFunction_conjugate_symmetry_source
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
     {X : Ω → ℝ} (t : ℝ) :
-    characteristicFunction P X (-t) = star (characteristicFunction P X t) := by
-  unfold characteristicFunction
-  calc
-    ∫ ω, Complex.exp (Complex.I * (X ω : ℂ) * ((-t : ℝ) : ℂ)) ∂P
-        = ∫ ω, conj (Complex.exp (Complex.I * (X ω : ℂ) * (t : ℂ))) ∂P := by
-          congr with ω
-          rw [← Complex.exp_conj]
-          congr 1
-          simp
-    _ = conj (∫ ω, Complex.exp (Complex.I * (X ω : ℂ) * (t : ℂ)) ∂P) :=
-          integral_conj
+    characteristicFunction (P.map X) (-t) =
+      star (characteristicFunction (P.map X) t) := by
+  simpa [characteristicFunction] using charFun_neg (μ := P.map X) t
 
 theorem characteristicFunction_law_basic_properties
     (μ : Measure ℝ) [IsFiniteMeasure μ] [BorelSpace ℝ] :
@@ -226,37 +210,25 @@ theorem characteristicFunction_indep_add_eq_mul
     {X Y : Ω → ℝ}
     (hX : AEMeasurable X P) (hY : AEMeasurable Y P)
     (hXY : X ⟂ᵢ[P] Y) (t : ℝ) :
-    characteristicFunction P (fun ω => X ω + Y ω) t =
-      characteristicFunction P X t * characteristicFunction P Y t := by
-  unfold characteristicFunction
-  let f : ℝ → ℂ := fun x => Complex.exp (Complex.I * (x : ℂ) * (t : ℂ))
-  have hf : AEStronglyMeasurable f (P.map X) := by
-    exact (by fun_prop)
-  have hg : AEStronglyMeasurable f (P.map Y) := by
-    exact (by fun_prop)
-  have hprod := hXY.integral_fun_comp_mul_comp hX hY hf hg
-  calc
-    ∫ ω, Complex.exp (Complex.I * ((X ω + Y ω : ℝ) : ℂ) * (t : ℂ)) ∂P
-        = ∫ ω, f (X ω) * f (Y ω) ∂P := by
-          congr with ω
-          simp only [f]
-          rw [← Complex.exp_add]
-          congr 1
-          norm_num [Complex.ofReal_add]
-          ring
-    _ = (∫ ω, f (X ω) ∂P) * ∫ ω, f (Y ω) ∂P := hprod
+    characteristicFunction (P.map (fun ω => X ω + Y ω)) t =
+      characteristicFunction (P.map X) t *
+        characteristicFunction (P.map Y) t := by
+  have hcf := hXY.charFun_map_fun_add_eq_mul hX hY
+  simpa [characteristicFunction] using congrFun hcf t
 
 structure CharacteristicFunctionRandomVariableProperties
     {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) (X : Ω → ℝ) : Prop where
-  bounded : ∀ t : ℝ, ‖characteristicFunction P X t‖ ≤ 1
-  zero : characteristicFunction P X 0 = 1
+  bounded : ∀ t : ℝ, ‖characteristicFunction (P.map X) t‖ ≤ 1
+  zero : characteristicFunction (P.map X) 0 = 1
   conjugate_symmetry :
-    ∀ t : ℝ, characteristicFunction P X (-t) = star (characteristicFunction P X t)
+    ∀ t : ℝ, characteristicFunction (P.map X) (-t) =
+      star (characteristicFunction (P.map X) t)
   independent_sum :
     ∀ {Y : Ω → ℝ}, AEMeasurable Y P → X ⟂ᵢ[P] Y → ∀ t : ℝ,
-      characteristicFunction P (fun ω => X ω + Y ω) t =
-        characteristicFunction P X t * characteristicFunction P Y t
-  uniform_continuous : UniformContinuous (characteristicFunction P X)
+      characteristicFunction (P.map (fun ω => X ω + Y ω)) t =
+        characteristicFunction (P.map X) t *
+          characteristicFunction (P.map Y) t
+  uniform_continuous : UniformContinuous (characteristicFunction (P.map X))
 
 theorem characteristicFunction_random_variable_basic_properties
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
@@ -265,17 +237,14 @@ theorem characteristicFunction_random_variable_basic_properties
   haveI : IsProbabilityMeasure (P.map X) := Measure.isProbabilityMeasure_map hX
   refine ⟨?_, ?_, ?_, ?_, ?_⟩
   · intro t
-    exact characteristicFunction_norm_le_one_source t
-  · exact characteristicFunction_zero_source
+    exact characteristicFunction_norm_le_one_source hX t
+  · exact characteristicFunction_zero_source hX
   · intro t
     exact characteristicFunction_conjugate_symmetry_source t
   · intro Y hY hXY t
     exact characteristicFunction_indep_add_eq_mul hX hY hXY t
   · have huc := characteristicFunction_uniform_continuous (P.map X)
-    have h_eq : characteristicFunction P X = charFun (P.map X) := by
-      funext t
-      exact characteristicFunction_law_eq_charFun (μ := P) (X := X) hX t
-    simpa [h_eq] using huc
+    simpa [characteristicFunction] using huc
 
 theorem thm_9_3_law (μ : Measure ℝ) [IsFiniteMeasure μ] [BorelSpace ℝ] :
     CharacteristicFunctionBasicProperties μ :=

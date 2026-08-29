@@ -14,5 +14,6 @@ theorem prob_8_2 (a : ℕ → ℕ → ℝ)
     (∑' i : ℕ, ∑' j : ℕ, a i j) = (∑' j : ℕ, ∑' i : ℕ, a i j) := by
   have ha : Summable (Function.uncurry a) := by
     rw [← summable_norm_iff]
-    simpa [Function.uncurry, Real.norm_eq_abs] using h
+    change Summable (fun p : ℕ × ℕ => |a p.1 p.2|)
+    exact h
   simpa [Function.uncurry] using (Summable.tsum_comm ha).symm

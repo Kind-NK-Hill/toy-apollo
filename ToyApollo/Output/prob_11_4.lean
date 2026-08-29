@@ -74,6 +74,7 @@ theorem prob_11_4_mean_of_density {Ω : Type*} [MeasurableSpace Ω]
 theorem prob_11_4 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ)
     (hInt : Integrable (X 0) P)
+    (hMeas : ∀ i, Measurable (X i))
     (hDensity : Measure.map (X 0) P = prob_11_4_densityMeasure)
     (hInd : def_5_10_randomVariables P X)
     (hIdent : ∀ i, IdentDistrib (X i) (X 0) P P) :
@@ -81,4 +82,4 @@ theorem prob_11_4 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
       (fun _ => (2 : ℝ)) := by
   have hMean : P[X 0] = (2 : ℝ) :=
     prob_11_4_mean_of_density P X hInt hDensity
-  exact thm_11_6 P X 2 hInt hInd hIdent hMean
+  exact thm_11_6 P X 2 hInt hMeas hInd hIdent hMean

@@ -52,13 +52,6 @@ class Phase2ReviewTestSupport:
             "mismatches": [],
         }
         forbidden_weakenings = [{"status": "not_present", "summary": "fake reviewer weakening check"}] if verdict == "pass" else []
-        obligation_review = {
-            "status": "covered" if verdict == "pass" else "violated",
-            "summary": f"fake reviewer obligation review {verdict}",
-            "items": [],
-            "open_blockers": [] if verdict == "pass" else [{"obligation_id": "source_claim", "issue": f"fake {verdict} blocker"}],
-            "scaffold_assessment": [],
-        }
         payload = {
             "verdict": verdict,
             "confidence": "high" if verdict == "pass" else "medium",
@@ -87,13 +80,22 @@ class Phase2ReviewTestSupport:
             "spine_alignment": {
                 "status": "covered" if verdict == "pass" else "violated",
                 "summary": f"fake reviewer spine {verdict}",
-                "obligations_checked": [{"source_obligation": "source claim", "lean_landing": "target declaration", "status": "covered"}]
+                "source_steps_checked": [
+                    {
+                        "source_step": "source claim",
+                        "lean_landing": "target declaration",
+                        "landing_kind": "theorem",
+                        "signature_match": "passed",
+                        "body_reassumption_check": "passed",
+                        "public_premise_check": "passed",
+                        "notes": "direct fixture proof",
+                    }
+                ]
                 if verdict == "pass"
                 else [],
-                "missing_obligations": [],
+                "missing_source_steps": [] if verdict == "pass" else [{"source_step": "source claim"}],
                 "shortcut_assessment": "faithful_abstraction" if verdict == "pass" else "unclear",
             },
-            "obligation_review": obligation_review,
             "interface_contract": interface_contract,
             "downstream_adequacy": {
                 "status": "covered" if verdict == "pass" else "violated",
@@ -239,7 +241,6 @@ class Phase2ReviewTestSupport:
             required_evidence = [
                 "source_tex",
                 "lean_subject",
-                "proof_obligations",
                 "audit",
                 "classification",
                 "dependency_status",
@@ -262,13 +263,55 @@ class Phase2ReviewTestSupport:
                     )
         normalized_proof_class = proof_class if proof_class is not None else ("textbook_proof_completed" if verdict == "pass" else "open_math_debt")
         normalized_completion_class = completion_class if completion_class is not None else normalized_proof_class
+        prompt_version = review_input.get("prompt_version", SEMANTIC_REVIEW_PROMPT_VERSION)
+        legacy_obligation_schema = int(prompt_version) <= 10
+        if legacy_obligation_schema:
+            spine_alignment = {
+                "status": "covered" if verdict == "pass" else "violated",
+                "summary": f"manual spine {verdict}",
+                "obligations_checked": (
+                    [
+                        {
+                            "source_obligation": "source claim",
+                            "lean_landing": review_input["task"]["block_id"],
+                            "status": "covered",
+                        }
+                    ]
+                    if verdict == "pass"
+                    else []
+                ),
+                "missing_obligations": [],
+                "shortcut_assessment": "faithful_abstraction" if verdict == "pass" else "unclear",
+            }
+        else:
+            spine_alignment = {
+                "status": "covered" if verdict == "pass" else "violated",
+                "summary": f"manual spine {verdict}",
+                "source_steps_checked": (
+                    [
+                        {
+                            "source_step": "source claim",
+                            "lean_landing": review_input["task"]["block_id"],
+                            "landing_kind": "theorem",
+                            "signature_match": "passed",
+                            "body_reassumption_check": "passed",
+                            "public_premise_check": "passed",
+                            "notes": "the theorem directly discharges the source step",
+                        }
+                    ]
+                    if verdict == "pass"
+                    else []
+                ),
+                "missing_source_steps": [] if verdict == "pass" else [{"source_step": "source claim"}],
+                "shortcut_assessment": "faithful_abstraction" if verdict == "pass" else "unclear",
+            }
         payload = {
                     "task_id": review_input["task"]["block_id"],
                     "review_input_hash": hashlib.sha256(
                         json.dumps(review_input, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
                     ).hexdigest(),
                     "candidate_hash": candidate_hash if candidate_hash is not None else review_input["candidate"]["hash"],
-                    "prompt_version": SEMANTIC_REVIEW_PROMPT_VERSION,
+                    "prompt_version": prompt_version,
                     "rubric_version": SEMANTIC_REVIEW_RUBRIC_VERSION,
                     "review_input_file": str(review_input_path),
                     "verdict": verdict,
@@ -297,28 +340,7 @@ class Phase2ReviewTestSupport:
                         "stop_go_verdict": "go" if verdict == "pass" else "stop",
                         "notes": f"manual route inspection {verdict}",
                     },
-                    "spine_alignment": {
-                        "status": "covered" if verdict == "pass" else "violated",
-                        "summary": f"manual spine {verdict}",
-                        "obligations_checked": (
-                            [{"source_obligation": "source claim", "lean_landing": review_input["task"]["block_id"], "status": "covered"}]
-                            if verdict == "pass"
-                            else []
-                        ),
-                        "missing_obligations": [],
-                        "shortcut_assessment": "faithful_abstraction" if verdict == "pass" else "unclear",
-                    },
-                    "obligation_review": obligation_review
-                    if obligation_review is not None
-                    else {
-                        "status": "covered" if verdict == "pass" else "violated",
-                        "summary": f"manual obligation review {verdict}",
-                        "items": [],
-                        "open_blockers": []
-                        if verdict == "pass"
-                        else [{"obligation_id": "source_claim", "issue": f"manual {verdict} blocker"}],
-                        "scaffold_assessment": [],
-                    },
+                    "spine_alignment": spine_alignment,
                     "evidence_review": evidence_review
                     if evidence_review is not None
                     else {
@@ -351,6 +373,20 @@ class Phase2ReviewTestSupport:
                     "findings": [],
                     "recommended_disposition": "promote" if verdict == "pass" else "revise",
                 }
+        if legacy_obligation_schema:
+            payload["obligation_review"] = (
+                obligation_review
+                if obligation_review is not None
+                else {
+                    "status": "covered" if verdict == "pass" else "violated",
+                    "summary": f"manual obligation review {verdict}",
+                    "items": [],
+                    "open_blockers": []
+                    if verdict == "pass"
+                    else [{"obligation_id": "source_claim", "issue": f"manual {verdict} blocker"}],
+                    "scaffold_assessment": [],
+                }
+            )
         result_path.write_text(
             json.dumps(
                 payload,

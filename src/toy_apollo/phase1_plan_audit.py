@@ -6,16 +6,42 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Iterable
 
-CANONICAL_PHASE1_TYPES = (
-    "Definition",
-    "Theorem_Statement",
-    "Theorem_with_Proof",
-    "Example_Proof",
-    "Problem",
-    "Remark",
-)
+# Per-profile canonical Phase 1 task-type tables. The default profile "mat"
+# keeps the historical six MAT types and only adds `Lemma`/`Corollary`
+# additively; the "cordis" profile uses the same shared set for now (Cordis
+# plan v1 only uses the pre-existing five kinds, `Lemma`/`Corollary` first
+# appear in paper section 3.1.3).
+_PROFILE_PHASE1_TYPES: dict[str, tuple[str, ...]] = {
+    "mat": (
+        "Definition",
+        "Theorem_Statement",
+        "Theorem_with_Proof",
+        "Example_Proof",
+        "Problem",
+        "Remark",
+        "Lemma",
+        "Corollary",
+    ),
+    "cordis": (
+        "Definition",
+        "Theorem_Statement",
+        "Theorem_with_Proof",
+        "Example_Proof",
+        "Problem",
+        "Remark",
+        "Lemma",
+        "Corollary",
+    ),
+}
+CANONICAL_PHASE1_TYPES = _PROFILE_PHASE1_TYPES["mat"]
+
+DEFAULT_PROFILE = "mat"
 
 _CANONICAL_TYPE_LOOKUP = {value.lower(): value for value in CANONICAL_PHASE1_TYPES}
+_PROFILE_TYPE_LOOKUP = {
+    profile: {value.lower(): value for value in values}
+    for profile, values in _PROFILE_PHASE1_TYPES.items()
+}
 _TYPE_ALIASES = {
     "exercise": "Problem",
 }
@@ -30,14 +56,18 @@ _PROBLEM_ITEM_RE = re.compile(r"\\item\b")
 _NUMBERED_PROBLEM_RE = re.compile(r"\\textbf\{\d+\.\d+\.\}")
 
 
-def normalize_phase1_task_type(raw_type: Any) -> tuple[str | None, str | None]:
+def normalize_phase1_task_type(raw_type: Any, profile: str = DEFAULT_PROFILE) -> tuple[str | None, str | None]:
     original = str(raw_type or "").strip()
     if not original:
         return None, "Task type is empty."
 
     lowered = original.lower()
-    if lowered in _CANONICAL_TYPE_LOOKUP:
-        return _CANONICAL_TYPE_LOOKUP[lowered], None
+    lookup = _PROFILE_TYPE_LOOKUP.get(
+        str(profile or DEFAULT_PROFILE).strip().lower() or DEFAULT_PROFILE,
+        _CANONICAL_TYPE_LOOKUP,
+    )
+    if lowered in lookup:
+        return lookup[lowered], None
     if lowered in _TYPE_ALIASES:
         canonical = _TYPE_ALIASES[lowered]
         return canonical, f"Task type {original!r} normalized to {canonical!r}."
@@ -82,7 +112,8 @@ def validate_phase1_plan_structure(
     theorem_like = [
         block
         for block in blocks
-        if str(block.get("type", "")).strip() in {"Theorem_Statement", "Theorem_with_Proof"}
+        if str(block.get("type", "")).strip()
+        in {"Theorem_Statement", "Theorem_with_Proof", "Lemma", "Corollary"}
     ]
     problem_like = [block for block in blocks if str(block.get("type", "")).strip() == "Problem"]
 

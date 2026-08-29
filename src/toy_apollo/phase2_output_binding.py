@@ -14,10 +14,7 @@ class Phase2OutputBinding:
     output_owner_task_id: str
     output_module: str
     pack_dir: Path
-    owner_pack_dir: Path
     official_targets: list[Path]
-    proof_obligations_file: Path
-    focus_obligation_ids: list[str]
     is_obligation_task: bool = False
 
 
@@ -42,27 +39,29 @@ def resolve_phase2_output_binding(task: dict[str, Any], ledger: LedgerManager, s
     if not output_owner_task_id:
         output_owner_task_id = pack_task_id
 
-    focus: list[str] = []
-    if is_obligation:
-        obligation_id = str(merged.get("obligation_id", "") or "").strip()
-        if obligation_id:
-            focus.append(obligation_id)
+
+    from .phase2_pack_shared.artifacts import cordis_task_host_module_name
 
     official_targets = _official_output_targets(output_owner_task_id, str(merged.get("source_plan", "") or ""), settings)
+    output_module = cordis_task_host_module_name(output_owner_task_id, settings)
+    if not output_module:
+        output_module = f"{getattr(settings, 'lean_module_root', 'ToyApollo.Output')}.{output_owner_task_id}"
     return Phase2OutputBinding(
         pack_task_id=pack_task_id,
         output_owner_task_id=output_owner_task_id,
-        output_module=f"ToyApollo.Output.{output_owner_task_id}",
+        output_module=output_module,
         pack_dir=settings.phase2_prompt_packs_dir / pack_task_id,
-        owner_pack_dir=settings.phase2_prompt_packs_dir / output_owner_task_id,
         official_targets=official_targets,
-        proof_obligations_file=settings.phase2_prompt_packs_dir / output_owner_task_id / "proof_obligations.json",
-        focus_obligation_ids=focus,
         is_obligation_task=is_obligation,
     )
 
 
 def _official_output_targets(task_id: str, source_plan: str, settings) -> list[Path]:
+    from .phase2_pack_shared.artifacts import cordis_task_host_module
+
+    host_module = cordis_task_host_module(task_id, settings)
+    if host_module is not None:
+        return [host_module]
     targets = [
         settings.toyapollo_output_dir / f"{task_id}.lean",
         settings.output_lean_files_dir / "general" / f"{task_id}.lean",

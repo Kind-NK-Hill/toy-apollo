@@ -91,21 +91,16 @@ theorem prob_11_9_uniformOfFintype_toMeasure_real
   · simp [PMF.uniformOfFintype_apply, Measure.real_def]
     rw [← Finset.mul_sum]
     have hsum :
-        (∑ x : α, A.indicator (fun _ : α => (1 : ℝ)) x) =
-          (Fintype.card {x : α // x ∈ A} : ℝ) := by
+        (∑ x : α, A.indicator (1 : α → ℝ) x) =
+          ((Finset.univ.filter (fun x : α => x ∈ A)).card : ℝ) := by
       calc
-        (∑ x : α, A.indicator (fun _ : α => (1 : ℝ)) x) =
+        (∑ x : α, A.indicator (1 : α → ℝ) x) =
             ∑ x : α, (if x ∈ A then (1 : ℝ) else 0) := by
               apply Finset.sum_congr rfl
               intro x _hx
-              rw [Set.indicator_apply]
+              simp [Set.indicator_apply]
         _ = ((Finset.univ.filter (fun x : α => x ∈ A)).card : ℝ) := by
           rw [Finset.sum_boole]
-        _ = (Fintype.card {x : α // x ∈ A} : ℝ) := by
-          rw [Fintype.card_subtype]
-    change ((Fintype.card α : ℝ)⁻¹) *
-        (∑ x : α, A.indicator (fun _ : α => (1 : ℝ)) x) =
-      (Fintype.card {x : α // x ∈ A} : ℝ) / (Fintype.card α : ℝ)
     rw [hsum]
     field_simp [show (Fintype.card α : ℝ) ≠ 0 by
       exact_mod_cast Fintype.card_ne_zero]

@@ -106,9 +106,8 @@ theorem thm_13_17_rawIncrement_condExp_zero {Ω : Type*}
   calc
     P[thm_13_17_rawIncrement X n | 𝓕n n]
         =ᵐ[P] P[X (n + 1) | 𝓕n n] - P[X n | 𝓕n n] := by
-          simpa [thm_13_17_rawIncrement] using
-            condExp_sub (def_13_7_integrable hM (n + 1))
-              (def_13_7_integrable hM n) (𝓕n n)
+          exact condExp_sub (def_13_7_integrable hM (n + 1))
+            (def_13_7_integrable hM n) (𝓕n n)
     _ =ᵐ[P] X n - X n := hstep.sub hself
     _ =ᵐ[P] (0 : Ω → ℝ) := by
       simp
@@ -141,7 +140,7 @@ theorem thm_13_17_stoppedIncrement_measurable {Ω : Type*}
     def_13_7_adapted hM (n + 1)
   have hraw :
       @Measurable Ω ℝ (𝓕n (n + 1)) _ (thm_13_17_rawIncrement X n) := by
-    simpa [thm_13_17_rawIncrement] using hXsucc.sub hXn
+    exact hXsucc.sub hXn
   have hA_sub : @MeasurableSet Ω (𝓕n n) (thm_13_17_activeEvent T n) :=
     thm_13_17_activeEvent_measurable hT n
   have hA : @MeasurableSet Ω (𝓕n (n + 1)) (thm_13_17_activeEvent T n) :=
@@ -280,6 +279,9 @@ theorem thm_13_17_expectation_constant {Ω : Type*}
       ∀ n : ℕ, SigmaFinite (P.trim ((def_13_7_isFiltration hStoppedM).1 n)) := by
     intro n
     exact hSigmaFinite n
+  have hStoppedFiltration := def_13_7_isFiltration hStoppedM
+  haveI : SigmaFinite (P.trim (hStoppedFiltration.1 0)) :=
+    hStoppedSigmaFinite 0
   intro n
   cases n with
   | zero =>
@@ -288,18 +290,24 @@ theorem thm_13_17_expectation_constant {Ω : Type*}
       calc
         ∫ ω, def_13_9_stoppedProcess X T (n + 1) ω ∂P =
             ∫ ω, def_13_9_stoppedProcess X T 0 ω ∂P :=
-          thm_13_16 hStoppedM hStoppedSigmaFinite (n + 1) (Nat.succ_pos n)
+          thm_13_16_integral_eq_of_condExp (hStoppedFiltration.1 0)
+            (thm_13_15_multiStep_of_martingale hStoppedM
+              hStoppedSigmaFinite 0 (n + 1) (Nat.zero_le (n + 1)))
         _ = ∫ ω, X 0 ω ∂P := by
           rw [thm_13_17_stoppedProcess_zero]
 
 theorem thm_13_17 {Ω : Type*}
-    [𝓕 : MeasurableSpace Ω] {P : Measure Ω}
+    [𝓕 : MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
     {𝓕n : ℕ → MeasurableSpace Ω} {X : ℕ → Ω → ℝ}
     {T : Ω → WithTop ℕ}
-    (hM : def_13_7 P 𝓕n X) (hT : def_13_8 𝓕n T)
-    (hSigmaFinite : ∀ n : ℕ, SigmaFinite (P.trim ((def_13_7_isFiltration hM).1 n))) :
+    (hM : def_13_7 P 𝓕n X) (hT : def_13_8 𝓕n T) :
     def_13_7 P 𝓕n (def_13_9_stoppedProcess X T) ∧
       ∀ n : ℕ,
         ∫ ω, def_13_9_stoppedProcess X T n ω ∂P = ∫ ω, X 0 ω ∂P := by
+  have hSigmaFinite :
+      ∀ n : ℕ,
+        SigmaFinite (P.trim ((def_13_7_isFiltration hM).1 n)) := by
+    intro n
+    infer_instance
   exact ⟨thm_13_17_stopped_martingale hM hT hSigmaFinite,
     thm_13_17_expectation_constant hM hT hSigmaFinite⟩

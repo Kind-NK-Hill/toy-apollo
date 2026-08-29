@@ -13,37 +13,34 @@ open MeasureTheory Set Filter Classical Measure
 
 noncomputable section
 
-noncomputable def ofCdf (F : ℝ → ℝ) : Measure ℝ :=
-  if h : Monotone F then h.stieltjesFunction.measure else 0
+noncomputable def ofCdf (F : StieltjesFunction ℝ)
+    (hF0 : Tendsto F atBot (nhds 0))
+    (hF1 : Tendsto F atTop (nhds 1)) : ProbabilityMeasure ℝ :=
+  ⟨F.measure, by
+    constructor
+    rw [F.measure_univ hF0 hF1]
+    norm_num⟩
 
-noncomputable def mean (μ : Measure ℝ) : ℝ := ∫ x, x ∂μ
+noncomputable def mean (μ : ProbabilityMeasure ℝ)
+    (_hμ : Integrable (fun x : ℝ => x) (μ : Measure ℝ)) : ℝ :=
+  ∫ x, x ∂(μ : Measure ℝ)
 
-noncomputable def variance (μ : Measure ℝ) : ℝ :=
-  ∫ x, x ^ 2 ∂μ - (∫ x, x ∂μ) ^ 2
+noncomputable def variance (μ : ProbabilityMeasure ℝ)
+    (_hμ1 : Integrable (fun x : ℝ => x) (μ : Measure ℝ))
+    (_hμ2 : Integrable (fun x : ℝ => x ^ 2) (μ : Measure ℝ)) : ℝ :=
+  ∫ x, x ^ 2 ∂(μ : Measure ℝ) -
+    (∫ x, x ∂(μ : Measure ℝ)) ^ 2
 
-private def F_cdf : ℝ → ℝ := fun x =>
+def F_cdf : ℝ → ℝ := fun x =>
   if x < 0 then 0 else if x < 1 then x / 3 else if x < 2 then 2 / 3 else 1
 
-private lemma F_cdf_mono : Monotone F_cdf := by
+theorem F_cdf_mono : Monotone F_cdf := by
   intro a b hab
   simp only [F_cdf]
   split_ifs with h1 h2 h3 h4 h5 h6 h7 h8 h9 <;> linarith
 
-private def F_sf : StieltjesFunction ℝ := F_cdf_mono.stieltjesFunction
+def F_sf : StieltjesFunction ℝ := F_cdf_mono.stieltjesFunction
 private def μ_F : Measure ℝ := F_sf.measure
-
-private lemma ofCdf_eq_μ_F :
-    ofCdf (fun x => if x < 0 then 0 else if x < 1 then x / 3 else
-      if x < 2 then 2 / 3 else 1) = μ_F := by
-  simp only [ofCdf, μ_F, F_sf]
-  have : Monotone
-      (fun x : ℝ => if x < 0 then (0 : ℝ) else if x < 1 then x / 3 else
-        if x < 2 then 2 / 3 else 1) := F_cdf_mono
-  rw [dif_pos this]
-  have hmono : this = F_cdf_mono := by
-    apply Subsingleton.elim
-  cases hmono
-  rfl
 
 private lemma F_cdf_rightContinuous (x : ℝ) :
     Tendsto F_cdf (nhdsWithin x (Ioi x)) (nhds (F_cdf x)) := by
@@ -67,10 +64,34 @@ private lemma F_cdf_rightContinuous (x : ℝ) :
       (Filter.eventuallyEq_of_mem self_mem_nhdsWithin
         fun y hy => by split_ifs <;> linarith [hy.out])
 
-private lemma F_sf_eq_F_cdf : (F_sf : ℝ → ℝ) = F_cdf := by
+theorem F_sf_eq_F_cdf : (F_sf : ℝ → ℝ) = F_cdf := by
   ext x
   simp only [F_sf, Monotone.stieltjesFunction_eq]
   exact tendsto_nhds_unique (F_cdf_mono.tendsto_rightLim x) (F_cdf_rightContinuous x)
+
+theorem F_sf_tendsto_atBot :
+    Tendsto F_sf atBot (nhds 0) := by
+  rw [F_sf_eq_F_cdf]
+  apply tendsto_const_nhds.congr'
+  filter_upwards [eventually_lt_atBot (0 : ℝ)] with x hx
+  simp [F_cdf, hx]
+
+theorem F_sf_tendsto_atTop :
+    Tendsto F_sf atTop (nhds 1) := by
+  rw [F_sf_eq_F_cdf]
+  apply tendsto_const_nhds.congr'
+  filter_upwards [eventually_ge_atTop (2 : ℝ)] with x hx
+  have hx0 : ¬x < 0 := by linarith
+  have hx1 : ¬x < 1 := by linarith
+  have hx2 : ¬x < 2 := by linarith
+  simp [F_cdf, hx0, hx1, hx2]
+
+noncomputable def prob_7_1_law : ProbabilityMeasure ℝ :=
+  ofCdf F_sf F_sf_tendsto_atBot F_sf_tendsto_atTop
+
+private lemma prob_7_1_law_toMeasure :
+    (prob_7_1_law : Measure ℝ) = μ_F := by
+  rfl
 
 private def μ_explicit : Measure ℝ :=
   (ENNReal.ofReal (1 / 3)) • volume.restrict (Ioo 0 1) +
@@ -134,16 +155,54 @@ private lemma μ_F_eq_μ_explicit : μ_F = μ_explicit := by
   · intro a b hab
     convert congr_arg ENNReal.ofReal (F_cdf_diff_eq a b hab) using 1
     · convert F_sf.measure_Ioc a b using 1
-      rw [F_sf_eq_F_cdf]
+      · rfl
+      · rw [F_sf_eq_F_cdf]
     · convert μ_explicit_Ioc a b hab using 1
       rw [← ENNReal.ofReal_add, ← ENNReal.ofReal_add] <;> split_ifs <;> norm_num
       · linarith
       · linarith
       · linarith
 
-private lemma mean_val : mean μ_F = (7 : ℝ) / 6 := by
+private lemma prob_7_1_law_toMeasure_eq_explicit :
+    (prob_7_1_law : Measure ℝ) = μ_explicit := by
+  exact prob_7_1_law_toMeasure.trans μ_F_eq_μ_explicit
+
+theorem prob_7_1_integrable_id :
+    Integrable (fun x : ℝ => x)
+      (prob_7_1_law : Measure ℝ) := by
+  rw [prob_7_1_law_toMeasure_eq_explicit, μ_explicit,
+    integrable_add_measure, integrable_add_measure]
+  constructor
+  · constructor
+    · rw [integrable_smul_measure] <;> norm_num
+      exact
+        continuous_id.integrableOn_Icc.mono_set
+          Ioo_subset_Icc_self
+    · rw [integrable_smul_measure] <;> norm_num
+      exact integrable_dirac (by norm_num)
+  · rw [integrable_smul_measure] <;> norm_num
+    exact integrable_dirac (by norm_num)
+
+theorem prob_7_1_integrable_sq :
+    Integrable (fun x : ℝ => x ^ 2)
+      (prob_7_1_law : Measure ℝ) := by
+  rw [prob_7_1_law_toMeasure_eq_explicit, μ_explicit,
+    integrable_add_measure, integrable_add_measure]
+  constructor
+  · constructor
+    · rw [integrable_smul_measure] <;> norm_num
+      exact
+        (Continuous.integrableOn_Icc (by continuity)).mono_set
+          Ioo_subset_Icc_self
+    · rw [integrable_smul_measure] <;> norm_num
+      exact integrable_dirac (by norm_num)
+  · rw [integrable_smul_measure] <;> norm_num
+    exact integrable_dirac (by norm_num)
+
+private lemma mean_val :
+    mean prob_7_1_law prob_7_1_integrable_id = (7 : ℝ) / 6 := by
   unfold mean
-  rw [μ_F_eq_μ_explicit, μ_explicit]
+  rw [prob_7_1_law_toMeasure_eq_explicit, μ_explicit]
   rw [integral_add_measure, integral_add_measure] <;> norm_num
   · rw [← integral_Ioc_eq_integral_Ioo, ← intervalIntegral.integral_of_le] <;> norm_num
   · rw [integrable_smul_measure] <;> norm_num
@@ -156,8 +215,9 @@ private lemma mean_val : mean μ_F = (7 : ℝ) / 6 := by
   · norm_num [integrable_smul_measure]
     norm_num [integrable_dirac]
 
-private lemma moment2_val : ∫ x : ℝ, x ^ 2 ∂μ_F = (16 : ℝ) / 9 := by
-  rw [μ_F_eq_μ_explicit, μ_explicit]
+private lemma moment2_val :
+    ∫ x : ℝ, x ^ 2 ∂(prob_7_1_law : Measure ℝ) = (16 : ℝ) / 9 := by
+  rw [prob_7_1_law_toMeasure_eq_explicit, μ_explicit]
   rw [integral_add_measure, integral_add_measure] <;> norm_num
   · rw [← integral_Ioc_eq_integral_Ioo, ← intervalIntegral.integral_of_le] <;> norm_num
   · rw [integrable_smul_measure] <;> norm_num
@@ -170,16 +230,18 @@ private lemma moment2_val : ∫ x : ℝ, x ^ 2 ∂μ_F = (16 : ℝ) / 9 := by
   · norm_num [integrable_smul_measure]
     norm_num [integrable_dirac]
 
-private lemma variance_val : variance μ_F = (5 : ℝ) / 12 := by
+private lemma variance_val :
+    variance prob_7_1_law prob_7_1_integrable_id prob_7_1_integrable_sq =
+      (5 : ℝ) / 12 := by
   unfold variance
-  rw [show ∫ x, x ∂μ_F = (7 : ℝ) / 6 from by rw [← mean]; exact mean_val]
-  rw [moment2_val]
+  have hmean :
+      (∫ x, x ∂(prob_7_1_law : Measure ℝ)) = (7 : ℝ) / 6 := by
+    simpa [mean] using mean_val
+  rw [hmean, moment2_val]
   norm_num
 
 theorem prob_7_1 :
-    mean (ofCdf (fun x => if x < 0 then 0 else if x < 1 then x / 3 else
-      if x < 2 then 2 / 3 else 1)) = (7 / 6 : ℝ) ∧
-    variance (ofCdf (fun x => if x < 0 then 0 else if x < 1 then x / 3 else
-      if x < 2 then 2 / 3 else 1)) = (5 / 12 : ℝ) := by
-  rw [ofCdf_eq_μ_F]
+    mean prob_7_1_law prob_7_1_integrable_id = (7 / 6 : ℝ) ∧
+    variance prob_7_1_law prob_7_1_integrable_id
+      prob_7_1_integrable_sq = (5 / 12 : ℝ) := by
   exact ⟨mean_val, variance_val⟩

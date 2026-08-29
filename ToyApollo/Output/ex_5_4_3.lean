@@ -21,28 +21,28 @@ noncomputable def bernoulliMeasure (q : ℝ≥0∞) : Measure Bool :=
 @[simp] lemma bernoulliMeasure_apply_true (q : ℝ≥0∞) :
     bernoulliMeasure q ({true} : Set Bool) = q := by
   by_cases hq : q = ∞
-  · simp [bernoulliMeasure, hq]
-  · simp [bernoulliMeasure, hq]
+  · simp [_root_.bernoulliMeasure, hq]
+  · simp [_root_.bernoulliMeasure, hq]
 
 @[simp] lemma bernoulliMeasure_apply_false (q : ℝ≥0∞) (hq : q ≤ 1) :
     bernoulliMeasure q ({false} : Set Bool) = 1 - q := by
   by_cases hq' : q = ∞
-  · simp [bernoulliMeasure, hq'] at hq
-  · simp [bernoulliMeasure, hq', hq]
+  · simp [_root_.bernoulliMeasure, hq'] at hq
+  · simp [_root_.bernoulliMeasure, hq', hq]
 
-instance bernoulliMeasure_isProbabilityMeasure (p : ℕ → ℝ≥0∞)
+lemma bernoulliMeasure_isProbabilityMeasure (p : ℕ → ℝ≥0∞)
     (hp : ∀ n, p n ≤ 1) (n : ℕ) :
     IsProbabilityMeasure (bernoulliMeasure (p n)) := by
   refine ⟨?_⟩
   have hpn := hp n
   have hsum : p n + (1 - p n) = 1 := by
     simpa [add_comm] using tsub_add_cancel_of_le hpn
-  simpa [bernoulliMeasure, hsum]
+  simpa [_root_.bernoulliMeasure, hsum]
 
 noncomputable def bitStreamMeasure (p : ℕ → ℝ≥0∞) : Measure (ℕ → Bool) :=
   Measure.infinitePi fun n : ℕ => bernoulliMeasure (p n)
 
-instance bitStreamMeasure_isProbabilityMeasure (p : ℕ → ℝ≥0∞)
+lemma bitStreamMeasure_isProbabilityMeasure (p : ℕ → ℝ≥0∞)
     (hp : ∀ n, p n ≤ 1) : IsProbabilityMeasure (bitStreamMeasure p) := by
   letI : ∀ n, IsProbabilityMeasure (bernoulliMeasure (p n)) := fun n =>
     bernoulliMeasure_isProbabilityMeasure (p := p) hp n
@@ -72,9 +72,13 @@ lemma iIndepSet_oneEvent (p : ℕ → ℝ≥0∞) (hp : ∀ n, p n ≤ 1) :
     (μ := bitStreamMeasure p)
     (hf := measurableSet_oneEvent)).2 ?_
   intro s
-  simpa [oneEvent] using
-    (iIndepFun_bits p hp).measure_inter_preimage_eq_mul s
-      (fun _ _ => measurableSet_singleton true)
+  change
+    bitStreamMeasure p
+        (⋂ i ∈ s, (fun x : ℕ → Bool => x i) ⁻¹' ({true} : Set Bool)) =
+      ∏ i ∈ s, bitStreamMeasure p
+        ((fun x : ℕ → Bool => x i) ⁻¹' ({true} : Set Bool))
+  exact (iIndepFun_bits p hp).measure_inter_preimage_eq_mul s
+    (fun _ _ => measurableSet_singleton true)
 
 @[simp] lemma bitStreamMeasure_oneEvent (p : ℕ → ℝ≥0∞) (hp : ∀ n, p n ≤ 1) (n : ℕ) :
     bitStreamMeasure p (oneEvent n) = p n := by

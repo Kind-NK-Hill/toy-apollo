@@ -470,7 +470,7 @@ theorem thm_14_5_source_route_single_tail_bound
   refine ⟨max M0 R, le_max_left M0 R, ?_⟩
   exact lt_of_le_of_lt
     (thm_14_5_tailMass_mono P (le_max_right M0 R))
-    (by simpa [Pconst] using hRtail 0)
+    (by simpa [Pconst, thm_14_5_tailMass] using hRtail 0)
 
 theorem thm_14_5_source_route_finite_prefix_tail_bound
     (Pseq : ℕ → ProbabilityMeasure ℝ) :

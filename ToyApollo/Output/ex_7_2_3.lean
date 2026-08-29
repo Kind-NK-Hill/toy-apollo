@@ -95,3 +95,14 @@ noncomputable def ex_7_2_3 : DominatedConvergenceCounterexample where
   integrals_tendsto_one := dctCounterexampleIntegrals_tendsto_one
   limit_integral_eq_zero := dctCounterexampleLimit_integral_eq_zero
   no_integrable_dominator := no_integrable_dctCounterexample_dominator
+
+theorem complex_tendsto_integral_of_dominated_convergence
+    {α : Type*} [MeasurableSpace α] {μ : Measure α}
+    {F : ℕ → α → ℂ} {f : α → ℂ} (bound : α → ℝ)
+    (F_measurable : ∀ n, AEStronglyMeasurable (F n) μ)
+    (bound_integrable : Integrable bound μ)
+    (h_bound : ∀ n, ∀ᵐ a ∂μ, ‖F n a‖ ≤ bound a)
+    (h_lim : ∀ᵐ a ∂μ, Tendsto (fun n => F n a) atTop (nhds (f a))) :
+    Tendsto (fun n => ∫ a, F n a ∂μ) atTop (nhds (∫ a, f a ∂μ)) :=
+  MeasureTheory.tendsto_integral_of_dominated_convergence
+    bound F_measurable bound_integrable h_bound h_lim

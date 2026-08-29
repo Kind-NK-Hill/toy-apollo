@@ -15,12 +15,14 @@ namespace Thm67Support
 theorem posPart_measurable {Ω : Type*} [MeasurableSpace Ω] {X : Ω → EReal}
     (hXm : Measurable X) :
     Measurable (Def65Support.posPart X) := by
-  simpa [Def65Support.posPart] using hXm.ereal_toENNReal
+  change Measurable (fun ω => (X ω).toENNReal)
+  exact hXm.ereal_toENNReal
 
 theorem negPart_measurable {Ω : Type*} [MeasurableSpace Ω] {X : Ω → EReal}
     (hXm : Measurable X) :
     Measurable (Def65Support.negPart X) := by
-  simpa [Def65Support.negPart] using hXm.neg.ereal_toENNReal
+  change Measurable (fun ω => (-X ω).toENNReal)
+  exact hXm.neg.ereal_toENNReal
 
 theorem posPart_ae_lt_top {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
     {X : Ω → EReal} (hXm : Measurable X) (hX : textbookIntegrable μ X) :
@@ -59,8 +61,10 @@ theorem toReal_eq_pos_sub_neg_ae {Ω : Type*} [MeasurableSpace Ω] {μ : Measure
           ((Def65Support.negPart X ω : ENNReal) : EReal)) = X ω := by
     lift (X ω) to ℝ using ⟨hxTop, hxBot⟩ with x hx
     rw [Def65Support.posPart, Def65Support.negPart, ← hx]
-    simpa [Def65Support.posPart, Def65Support.negPart, EReal.real_coe_toENNReal] using
-      (EReal.coe_real_ereal_eq_coe_toNNReal_sub_coe_toNNReal x).symm
+    change
+      (((x.toNNReal : ENNReal) : EReal) -
+        (((-x).toNNReal : ENNReal) : EReal)) = (x : EReal)
+    exact (EReal.coe_real_ereal_eq_coe_toNNReal_sub_coe_toNNReal x).symm
   have hposTop : Def65Support.posPart X ω ≠ ⊤ := by
     rw [Def65Support.posPart, EReal.toENNReal_ne_top_iff]
     exact hxTop
@@ -377,68 +381,17 @@ theorem textbookIntegrable_realCoe_of_integrable {Ω : Type*} [MeasurableSpace �
           exact MeasureTheory.ofReal_integral_eq_lintegral_ofReal hf.norm
             (Filter.Eventually.of_forall (by intro ω; exact abs_nonneg (f ω)))
       _ < ⊤ := by simp
+  have hAbs :
+      Thm66Support.realAbsIntegral μ (fun ω => (f ω : EReal)) < ⊤ := by
+    rw [Thm66Support.realAbsIntegral_eq_parts μ (fun ω => (f ω : EReal)) hMeasE]
+    exact hSum
   have hIff := thm_6_6 μ (fun ω => (f ω : EReal)) hMeasE
-  exact hIff.mpr hSum
-
-theorem def66Real_textbookValue_eq_integral {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    {X : Ω → EReal} (hXm : Measurable X) (hX : Def66RealSupport.textbookIntegrable μ X) :
-    Def66RealSupport.textbookValue μ X = ∫ ω, (X ω).toReal ∂μ := by
-  have hX' : textbookIntegrable μ X := by
-    simpa [Def66RealSupport.textbookIntegrable, textbookIntegrable,
-      Def66RealSupport.posLIntegral, Def66RealSupport.negLIntegral,
-      Def66RealSupport.posPart, Def66RealSupport.negPart,
-      Def65Support.posLIntegral, Def65Support.negLIntegral,
-      Def65Support.posPart, Def65Support.negPart] using hX
-  simpa [Def66RealSupport.textbookValue, Def66RealSupport.posLIntegral,
-      Def66RealSupport.negLIntegral, Def66RealSupport.posPart, Def66RealSupport.negPart,
-      Def65Support.posLIntegral, Def65Support.negLIntegral, Def65Support.posPart, Def65Support.negPart]
-    using textbookValue_eq_integral_toReal (μ := μ) (X := X) hXm hX'
+  exact hIff.mpr (by simpa [Thm66Support.realAbsIntegral] using hAbs)
 
 theorem complexTextbookIntegral_eq_some_integral {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
     {Z : Ω → ℂ} (hZm : Measurable Z) (hZ : complexTextbookIntegrable μ Z) :
     complexTextbookIntegral μ Z = some (∫ ω, Z ω ∂μ) := by
-  have hReMeas : Measurable fun ω => (((Z ω).re : ℝ) : EReal) := by
-    fun_prop
-  have hImMeas : Measurable fun ω => (((Z ω).im : ℝ) : EReal) := by
-    fun_prop
-  have hReVal :
-      Def66RealSupport.textbookValue μ (fun ω => (((Z ω).re : ℝ) : EReal)) =
-        ∫ ω, (Z ω).re ∂μ := by
-    exact def66Real_textbookValue_eq_integral hReMeas hZ.1
-  have hImVal :
-      Def66RealSupport.textbookValue μ (fun ω => (((Z ω).im : ℝ) : EReal)) =
-        ∫ ω, (Z ω).im ∂μ := by
-    exact def66Real_textbookValue_eq_integral hImMeas hZ.2
-  have hReInt : Integrable (fun ω => (Z ω).re) μ := by
-    have hTmp := integrable_toReal hReMeas (by
-      simpa [Def66RealSupport.textbookIntegrable, textbookIntegrable,
-        Def66RealSupport.posLIntegral, Def66RealSupport.negLIntegral,
-        Def66RealSupport.posPart, Def66RealSupport.negPart,
-        Def65Support.posLIntegral, Def65Support.negLIntegral,
-        Def65Support.posPart, Def65Support.negPart] using hZ.1)
-    simpa using hTmp
-  have hImInt : Integrable (fun ω => (Z ω).im) μ := by
-    have hTmp := integrable_toReal hImMeas (by
-      simpa [Def66RealSupport.textbookIntegrable, textbookIntegrable,
-        Def66RealSupport.posLIntegral, Def66RealSupport.negLIntegral,
-        Def66RealSupport.posPart, Def66RealSupport.negPart,
-        Def65Support.posLIntegral, Def65Support.negLIntegral,
-        Def65Support.posPart, Def65Support.negPart] using hZ.2)
-    simpa using hTmp
-  have hZInt : Integrable Z μ := by
-    have hReC : Integrable (fun ω => ((Z ω).re : ℂ)) μ := by
-      simpa using (MeasureTheory.Integrable.ofReal (𝕜 := ℂ) hReInt)
-    have hImC : Integrable (fun ω => ((Z ω).im : ℂ)) μ := by
-      simpa using (MeasureTheory.Integrable.ofReal (𝕜 := ℂ) hImInt)
-    refine (hReC.add (by simpa [smul_eq_mul, mul_comm] using hImC.smul Complex.I)).congr ?_
-    refine Filter.Eventually.of_forall ?_
-    intro ω
-    simpa [smul_eq_mul, mul_comm] using (Complex.re_add_im (Z ω))
-  unfold complexTextbookIntegral
-  rw [dif_pos hZ]
-  apply congrArg some
-  rw [hReVal, hImVal]
-  simpa [mul_comm] using (integral_re_add_im hZInt)
+  exact _root_.complexTextbookIntegral_eq_some_integral μ Z hZ
 
 end Thm67Support
 
@@ -500,79 +453,20 @@ theorem thm_6_7_complex {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
       complexTextbookIntegrable μ (fun ω => α * Z ω) ∧
       complexTextbookIntegral μ (fun ω => α * Z ω) =
         Option.map (fun z => α * z) (complexTextbookIntegral μ Z) := by
-  have hZRe :
-      Integrable (fun ω => (Z ω).re) μ := by
-    have hTmp := Thm67Support.integrable_toReal (μ := μ)
-      (X := fun ω => (((Z ω).re : ℝ) : EReal)) (by fun_prop)
-      (by
-        simpa [Def66RealSupport.textbookIntegrable, textbookIntegrable,
-          Def66RealSupport.posLIntegral, Def66RealSupport.negLIntegral,
-          Def66RealSupport.posPart, Def66RealSupport.negPart,
-          Def65Support.posLIntegral, Def65Support.negLIntegral,
-          Def65Support.posPart, Def65Support.negPart] using hZ.1)
-    simpa using hTmp
-  have hZIm :
-      Integrable (fun ω => (Z ω).im) μ := by
-    have hTmp := Thm67Support.integrable_toReal (μ := μ)
-      (X := fun ω => (((Z ω).im : ℝ) : EReal)) (by fun_prop)
-      (by
-        simpa [Def66RealSupport.textbookIntegrable, textbookIntegrable,
-          Def66RealSupport.posLIntegral, Def66RealSupport.negLIntegral,
-          Def66RealSupport.posPart, Def66RealSupport.negPart,
-          Def65Support.posLIntegral, Def65Support.negLIntegral,
-          Def65Support.posPart, Def65Support.negPart] using hZ.2)
-    simpa using hTmp
-  have hWRe :
-      Integrable (fun ω => (W ω).re) μ := by
-    have hTmp := Thm67Support.integrable_toReal (μ := μ)
-      (X := fun ω => (((W ω).re : ℝ) : EReal)) (by fun_prop)
-      (by
-        simpa [Def66RealSupport.textbookIntegrable, textbookIntegrable,
-          Def66RealSupport.posLIntegral, Def66RealSupport.negLIntegral,
-          Def66RealSupport.posPart, Def66RealSupport.negPart,
-          Def65Support.posLIntegral, Def65Support.negLIntegral,
-          Def65Support.posPart, Def65Support.negPart] using hW.1)
-    simpa using hTmp
-  have hWIm :
-      Integrable (fun ω => (W ω).im) μ := by
-    have hTmp := Thm67Support.integrable_toReal (μ := μ)
-      (X := fun ω => (((W ω).im : ℝ) : EReal)) (by fun_prop)
-      (by
-        simpa [Def66RealSupport.textbookIntegrable, textbookIntegrable,
-          Def66RealSupport.posLIntegral, Def66RealSupport.negLIntegral,
-          Def66RealSupport.posPart, Def66RealSupport.negPart,
-          Def65Support.posLIntegral, Def65Support.negLIntegral,
-          Def65Support.posPart, Def65Support.negPart] using hW.2)
-    simpa using hTmp
   have hZStd : Integrable Z μ := by
-    have hReC : Integrable (fun ω => ((Z ω).re : ℂ)) μ := by
-      simpa using (MeasureTheory.Integrable.ofReal (𝕜 := ℂ) hZRe)
-    have hImC : Integrable (fun ω => ((Z ω).im : ℂ)) μ := by
-      simpa using (MeasureTheory.Integrable.ofReal (𝕜 := ℂ) hZIm)
-    refine (hReC.add (by simpa [smul_eq_mul, mul_comm] using hImC.smul Complex.I)).congr ?_
-    refine Filter.Eventually.of_forall ?_
-    intro ω
-    simpa [smul_eq_mul, mul_comm] using (Complex.re_add_im (Z ω))
+    exact (complexTextbookIntegrable_iff_integrable μ Z).mp hZ
   have hWStd : Integrable W μ := by
-    have hReC : Integrable (fun ω => ((W ω).re : ℂ)) μ := by
-      simpa using (MeasureTheory.Integrable.ofReal (𝕜 := ℂ) hWRe)
-    have hImC : Integrable (fun ω => ((W ω).im : ℂ)) μ := by
-      simpa using (MeasureTheory.Integrable.ofReal (𝕜 := ℂ) hWIm)
-    refine (hReC.add (by simpa [smul_eq_mul, mul_comm] using hImC.smul Complex.I)).congr ?_
-    refine Filter.Eventually.of_forall ?_
-    intro ω
-    simpa [smul_eq_mul, mul_comm] using (Complex.re_add_im (W ω))
-  have hAddStd : Integrable (fun ω => Z ω + W ω) μ := by simpa using hZStd.add hWStd
+    exact (complexTextbookIntegrable_iff_integrable μ W).mp hW
+  have hAddStd : Integrable (fun ω => Z ω + W ω) μ := by
+    change Integrable (Z + W) μ
+    exact hZStd.add hWStd
   have hSmulStd : Integrable (fun ω => α * Z ω) μ := by
-    simpa [smul_eq_mul] using hZStd.smul α
+    change Integrable (α • Z) μ
+    exact hZStd.smul α
   have hAddIntegrable : complexTextbookIntegrable μ (fun ω => Z ω + W ω) := by
-    constructor
-    · exact Thm67Support.textbookIntegrable_realCoe_of_integrable (by fun_prop) hAddStd.re
-    · exact Thm67Support.textbookIntegrable_realCoe_of_integrable (by fun_prop) hAddStd.im
+    exact (complexTextbookIntegrable_iff_integrable μ (fun ω => Z ω + W ω)).mpr hAddStd
   have hSmulIntegrable : complexTextbookIntegrable μ (fun ω => α * Z ω) := by
-    constructor
-    · exact Thm67Support.textbookIntegrable_realCoe_of_integrable (by fun_prop) hSmulStd.re
-    · exact Thm67Support.textbookIntegrable_realCoe_of_integrable (by fun_prop) hSmulStd.im
+    exact (complexTextbookIntegrable_iff_integrable μ (fun ω => α * Z ω)).mpr hSmulStd
   have hAddVal :=
     Thm67Support.complexTextbookIntegral_eq_some_integral (μ := μ)
       (Z := fun ω => Z ω + W ω) (by fun_prop) hAddIntegrable

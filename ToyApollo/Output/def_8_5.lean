@@ -12,9 +12,11 @@ import Mathlib
 open MeasureTheory Set
 
 noncomputable def totalVariationDistance
-    {Ω : Type*} [MeasurableSpace Ω] (P Q : Measure Ω) : ℝ :=
+    {Ω : Type*} [MeasurableSpace Ω]
+    (P Q : Measure Ω) [IsProbabilityMeasure P] [IsProbabilityMeasure Q] : ℝ :=
   sSup {d : ℝ | ∃ A : Set Ω, MeasurableSet A ∧ d = |P.real A - Q.real A|}
 
 noncomputable def def_8_5
-    {Ω : Type*} [MeasurableSpace Ω] (P Q : Measure Ω) : ℝ :=
+    {Ω : Type*} [MeasurableSpace Ω]
+    (P Q : Measure Ω) [IsProbabilityMeasure P] [IsProbabilityMeasure Q] : ℝ :=
   totalVariationDistance P Q

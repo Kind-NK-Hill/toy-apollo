@@ -13,12 +13,12 @@ if str(REPO_ROOT) not in sys.path:
 
 from src.toy_apollo.phase2_review_loop import (  # noqa: E402
     run_codex_auto_loop,
-    run_codex_debt_fix,
     run_codex_review_fix,
     run_codex_review_now,
 )
-from src.toy_apollo.phase2_prompt_pack import build_check_prompt_pack_candidate  # noqa: E402
-from src.toy_apollo.phase2_proof_obligations import summarize_proof_obligations  # noqa: E402
+from src.toy_apollo.phase2_prompt_pack import (  # noqa: E402
+    build_check_prompt_pack_candidate,
+)
 from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E402
 
 
@@ -73,99 +73,18 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
         settings = self._make_settings(root, plans_dir)
         return ledger, settings, task_id, dep_id
 
-    def _write_accepted_debt_obligation(self, pack_dir: Path, task_id: str, *, kind: str = "proof_debt_support") -> dict:
-        payload = {
-            "schema_version": "phase2.proof_obligations.v1",
-            "task_id": task_id,
-            "classification": {
-                "requires_decomposition": True,
-                "reason": "test accepted proof debt",
-                "evidence": ["proof carries accepted debt"],
-            },
-            "obligations": [
-                {
-                    "id": "legacy_debt_step",
-                    "title": "Legacy debt step",
-                    "kind": kind,
-                    "source_ref": "test source proof debt",
-                    "depends_on": [],
-                    "lean_landing": "h_legacy_debt",
-                    "status": "accepted_as_proof_debt",
-                    "review_status": "accepted",
-                    "blocking": True,
-                    "scaffold_hypotheses": [
-                        {
-                            "name": "h_legacy_debt",
-                            "category": "proof_debt_support",
-                            "obligation_id": "legacy_debt_step",
-                            "discharge_plan": "replace the accepted debt by a proved local lemma",
-                            "status": "accepted_as_proof_debt",
-                        }
-                    ],
-                    "source_output_alignment": {
-                        "audit_class": "B_partial_theorem_plus_missing_or_support",
-                        "family": "cdf/weak/law",
-                        "existing_local_declarations": [
-                            {
-                                "name": "legacy_bridge",
-                                "kind": "theorem",
-                                "file": "ToyApollo/Output/legacy.lean",
-                                "line": 10,
-                            }
-                        ],
-                        "missing_landing_names": ["h_legacy_debt"],
-                        "next_action": "Use the bridge theorem and replace the support hypothesis.",
-                    },
-                    "notes": "This debt should be repairable even when the historical task status is COMPLETED.",
-                }
-            ],
-            "scaffold_hypotheses": [],
-            "review_history": [],
-        }
-        (pack_dir / "proof_obligations.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
-        return payload
-
-    def test_debt_fix_prepares_repair_cycle_for_legacy_completed_debt(self):
-        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_debt_fix_legacy"
+    def test_review_now_rejects_removed_support_subject(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_support_removed"
         try:
             self._clean_root(root)
-            task_id = "thm_4_review_loop_debt_fix_legacy"
-            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
-            obligations = self._write_accepted_debt_obligation(pack_dir, task_id, kind="source_step")
-            ledger.update_runtime_metadata(task_id, proof_obligation_summary=summarize_proof_obligations(obligations))
-
-            success, detail = asyncio.run(run_codex_debt_fix(task_id, ledger, settings))
-
-            self.assertTrue(success, detail)
-            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "COMPLETED_WITH_PROOF_DEBT")
-            request_path = pack_dir / "review_repair_request_v1.json"
-            self.assertTrue(request_path.exists())
-            request = json.loads(request_path.read_text(encoding="utf-8"))
-            self.assertEqual(request["origin_review_mode"], "debt-fix")
-            self.assertEqual(request["repair_trigger"], "proof_debt")
-            self.assertEqual(request["proof_obligation_blockers"][0]["obligation_id"], "legacy_debt_step")
-            self.assertIn("legacy_bridge", request["proof_obligation_blockers"][0]["issue"])
-            self.assertIn("Use the bridge theorem", request["must_fix"][0])
-            self.assertEqual(Path(request["next_draft_seed_file"]), output_path)
-
-            fix_success, fix_detail = asyncio.run(run_codex_review_fix(task_id, ledger, settings))
-            self.assertTrue(fix_success, fix_detail)
-            self.assertEqual((pack_dir / "draft.lean").read_text(encoding="utf-8"), output_path.read_text(encoding="utf-8"))
-        finally:
-            shutil.rmtree(root, ignore_errors=True)
-
-    def test_debt_fix_noops_when_task_has_no_accepted_debt(self):
-        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_debt_fix_noop"
-        try:
-            self._clean_root(root)
-            task_id = "thm_4_review_loop_debt_fix_noop"
+            task_id = "thm_4_review_loop_support_removed"
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id, completed=True)
 
-            success, detail = asyncio.run(run_codex_debt_fix(task_id, ledger, settings))
+            success, detail = asyncio.run(run_codex_review_now(task_id, ledger, settings, review_subject="support"))
 
-            self.assertTrue(success, detail)
-            self.assertIn("no accepted proof debt", detail.lower())
-            self.assertFalse((pack_dir / "review_repair_request_v1.json").exists())
+            self.assertFalse(success)
+            self.assertIn("unsupported review-now subject", detail.lower())
+            self.assertFalse((pack_dir / "semantic_review_request.json").exists())
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -825,6 +744,111 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
                 if item.get("stage") == "build" and int(item.get("auto_loop_round") or 0) == 2
             ]
             self.assertEqual(len(round_two_builds), 1)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_auto_loop_restart_preserves_seeded_repair_draft_and_rechecks_freshness(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_loop_restart_seeded_repair"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_review_loop_restart_seeded_repair"
+            from src.toy_apollo.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
+
+            ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            result_path = self._write_codex_review_result(
+                pack_dir,
+                verdict="fail",
+                source_claims=[],
+                claim_mapping=[],
+                proof_class="partial_source_route",
+                completion_class="partial_source_route",
+            )
+            result_payload = json.loads(result_path.read_text(encoding="utf-8"))
+            result_payload["summary"] = "The public interface must be rewritten after external diagnosis."
+            result_payload["findings"] = [
+                {"severity": "error", "category": "interface", "message": result_payload["summary"]}
+            ]
+            result_path.write_text(json.dumps(result_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+            asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
+
+            seed_success, seed_detail = asyncio.run(run_codex_review_fix(task_id, ledger, settings))
+            self.assertTrue(seed_success, seed_detail)
+            request_path = Path(ledger.ledger["tasks"][task_id]["current_review_repair_request_file"])
+            authored_draft = (pack_dir / "draft.lean").read_text(encoding="utf-8") + "\n-- author rewrite after diagnoser and Math Review Gate go\n"
+            (pack_dir / "draft.lean").write_text(authored_draft, encoding="utf-8")
+            archives_before_restart = sorted(pack_dir.glob("pre_repair_draft_v*.lean"))
+            ledger.update_runtime_metadata(
+                task_id,
+                current_auto_loop_enabled=True,
+                current_auto_loop_entry_subject="current",
+                current_auto_loop_round=1,
+                current_auto_loop_max_rounds=6,
+                current_auto_loop_max_build_attempts_per_round=3,
+                current_auto_loop_nonprogress_limit=2,
+                current_auto_loop_consecutive_nonprogress=0,
+                current_auto_loop_phase="stopped",
+                current_auto_loop_status="stopped",
+                current_auto_loop_stop_reason="math_review_gate_required",
+                current_auto_loop_last_candidate_hash="",
+                current_auto_loop_last_review_fingerprint="",
+                current_auto_loop_last_repair_request_file=str(request_path),
+            )
+
+            with patch(
+                "src.toy_apollo.phase2_review_loop.run_build_check_cycle",
+                new=AsyncMock(return_value=(False, "intentional build stop after repair seed decision")),
+            ) as build_check_mock:
+                success, detail = asyncio.run(
+                    run_codex_auto_loop(
+                        task_id,
+                        ledger,
+                        settings,
+                        review_subject="current",
+                        max_auto_rounds=6,
+                        nonprogress_limit=2,
+                        max_build_attempts_per_round=3,
+                    )
+                )
+
+            self.assertTrue(success, detail)
+            build_check_mock.assert_awaited_once()
+            self.assertEqual((pack_dir / "draft.lean").read_text(encoding="utf-8"), authored_draft)
+            self.assertEqual(sorted(pack_dir.glob("pre_repair_draft_v*.lean")), archives_before_restart)
+
+            request_payload = json.loads(request_path.read_text(encoding="utf-8"))
+            failed_result_path = Path(request_payload["failed_review_result_file"])
+            if not failed_result_path.is_absolute():
+                failed_result_path = (pack_dir / failed_result_path).resolve()
+            failed_result_path.write_text(
+                failed_result_path.read_text(encoding="utf-8") + "\n",
+                encoding="utf-8",
+            )
+            ledger.update_runtime_metadata(
+                task_id,
+                current_auto_loop_phase="stopped",
+                current_auto_loop_status="stopped",
+                current_auto_loop_stop_reason="math_review_gate_required",
+            )
+
+            stale_success, stale_detail = asyncio.run(
+                run_codex_auto_loop(
+                    task_id,
+                    ledger,
+                    settings,
+                    review_subject="current",
+                    max_auto_rounds=6,
+                    nonprogress_limit=2,
+                    max_build_attempts_per_round=3,
+                )
+            )
+
+            self.assertFalse(stale_success)
+            self.assertIn("stale", stale_detail.lower())
+            self.assertEqual(ledger.ledger["tasks"][task_id]["current_auto_loop_stop_reason"], "freshness_error")
+            self.assertEqual((pack_dir / "draft.lean").read_text(encoding="utf-8"), authored_draft)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

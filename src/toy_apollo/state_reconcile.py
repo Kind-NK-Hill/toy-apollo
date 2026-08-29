@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import base64
+import io
 import json
 import os
 import re
 import subprocess
+import tarfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
@@ -13,11 +15,19 @@ from src.block_id_naming import (
     canonicalize_block_id,
     extract_chapter,
     is_canonical_base_id,
+    is_canonical_block_id,
 )
 
 from .phase1_plan_audit import normalize_phase1_task_type
+from .review_versions import profile_for_catalog
 
-from .state_store import SubjectBundle, WorkspaceStateStore, utc_now
+from .state_store import (
+    SubjectBundle,
+    WorkspaceStateStore,
+    canonical_subject_bytes,
+    sha256_bytes,
+    utc_now,
+)
 
 
 CHAPTER_RE = re.compile(r"chapter_?(\d+)", re.IGNORECASE)
@@ -104,7 +114,7 @@ def discover_formal_plan_task_ids(
             if not expected_prefix:
                 continue
             task_id = canonicalize_block_id(str(raw.get("block_id", "") or ""))
-            if not is_canonical_base_id(task_id) or not task_id.startswith(expected_prefix):
+            if not is_canonical_block_id(task_id) or not task_id.startswith(expected_prefix):
                 continue
             chapter = extract_chapter(task_id)
             if requested_chapters and chapter not in requested_chapters:
@@ -211,6 +221,42 @@ def discover_runtime_support_files(
             formal_task_ids=formal_task_ids,
         ):
             support[logical_path] = path.read_bytes()
+    projection_path = root / "phase2_prompt_packs" / task_id / "subject_support_projection.json"
+    if projection_path.is_file():
+        try:
+            projection = json.loads(projection_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ReconciliationError(f"Invalid subject support projection {projection_path}: {exc}") from exc
+        if not isinstance(projection, dict):
+            raise ReconciliationError(f"Subject support projection must be an object: {projection_path}")
+        if projection.get("schema_version") != "toy-apollo.subject-support-projection.v1":
+            raise ReconciliationError(f"Unsupported subject support projection schema: {projection_path}")
+        if str(projection.get("task_id", "") or "") != task_id:
+            raise ReconciliationError(f"Subject support projection task mismatch: {projection_path}")
+        files = projection.get("files")
+        if not isinstance(files, list) or not files:
+            raise ReconciliationError(f"Subject support projection needs a non-empty files list: {projection_path}")
+        for entry in files:
+            if not isinstance(entry, dict):
+                raise ReconciliationError(f"Subject support projection file entry must be an object: {projection_path}")
+            logical_path = str(entry.get("path", "") or "").replace("\\", "/")
+            expected_hash = str(entry.get("content_sha256", "") or "").lower()
+            if not logical_path.startswith("ToyApollo/Output/") or not logical_path.endswith(".lean"):
+                raise ReconciliationError(f"Projected support must be a ToyApollo output Lean file: {logical_path}")
+            projected_path = (root / logical_path).resolve()
+            try:
+                projected_path.relative_to(root)
+            except ValueError as exc:
+                raise ReconciliationError(f"Projected support escapes runtime root: {logical_path}") from exc
+            if not projected_path.is_file():
+                raise ReconciliationError(f"Projected support file is missing: {logical_path}")
+            payload = projected_path.read_bytes()
+            actual_hash = sha256_bytes(canonical_subject_bytes(logical_path, payload))
+            if not expected_hash or actual_hash != expected_hash:
+                raise ReconciliationError(
+                    f"Projected support hash mismatch for {logical_path}: expected {expected_hash}, got {actual_hash}"
+                )
+            support[logical_path] = payload
     return support
 
 
@@ -239,6 +285,28 @@ def git_ref_paths(repo: Path, ref: str) -> list[str]:
 
 def git_file_at_ref(repo: Path, ref: str, path: str) -> bytes:
     return _git(repo, "show", f"{ref}:{path}")
+
+
+def git_files_at_ref(repo: Path, ref: str, paths: Iterable[str]) -> dict[str, bytes]:
+    """Read many pinned files with one Git archive process."""
+
+    requested = {str(path).replace("\\", "/") for path in paths}
+    if not requested:
+        return {}
+    roots = sorted({path.split("/", 1)[0] for path in requested})
+    raw = _git(repo, "archive", "--format=tar", ref, "--", *roots, timeout=120)
+    found: dict[str, bytes] = {}
+    with tarfile.open(fileobj=io.BytesIO(raw), mode="r:") as archive:
+        for member in archive.getmembers():
+            if not member.isfile() or member.name not in requested:
+                continue
+            handle = archive.extractfile(member)
+            if handle is not None:
+                found[member.name] = handle.read()
+    missing = sorted(requested - set(found))
+    if missing:
+        raise ReconciliationError(f"Git archive at {ref} omitted requested files: {missing}")
+    return found
 
 
 def discover_git_subjects(
@@ -293,6 +361,63 @@ def discover_git_subjects(
     return subjects
 
 
+def discover_catalog_git_subjects(
+    repo: Path,
+    *,
+    ref: str,
+    catalog: Any,
+    source_repo: str,
+    layout: str,
+    chapters: Iterable[int] | None = None,
+    task_ids: Iterable[str] | None = None,
+) -> dict[str, SubjectBundle]:
+    """Materialize exact bundles from explicit catalog ownership edges."""
+
+    if not (repo / ".git").exists():
+        return {}
+    requested_chapters = set(chapters or [])
+    requested_tasks = {
+        canonicalize_block_id(task_id)
+        for task_id in (task_ids or [])
+        if canonicalize_block_id(task_id)
+    }
+    commit = _git(repo, "rev-parse", ref).decode("ascii", errors="replace").strip()
+    available = set(git_ref_paths(repo, ref))
+    selected_tasks = [
+        task
+        for task in catalog.tasks
+        if (not requested_chapters or task.chapter in requested_chapters)
+        and (not requested_tasks or task.task_id in requested_tasks)
+    ]
+    requested_paths = {
+        path for task in selected_tasks for path in catalog.owned_paths(task.task_id)
+    }
+    file_payloads = git_files_at_ref(repo, ref, requested_paths)
+    subjects: dict[str, SubjectBundle] = {}
+    for task in selected_tasks:
+        owned_paths = list(catalog.owned_paths(task.task_id))
+        if not owned_paths or task.primary_path not in owned_paths:
+            raise ReconciliationError(
+                f"Catalog task {task.task_id} lacks its declared primary path in owned membership."
+            )
+        missing = sorted(set(owned_paths) - available)
+        if missing:
+            raise ReconciliationError(
+                f"Catalog task {task.task_id} has files absent from {ref}: {missing}"
+            )
+        files = {path: file_payloads[path] for path in owned_paths}
+        subjects[task.task_id] = SubjectBundle.from_files(
+            task_id=task.task_id,
+            files=files,
+            primary_path=task.primary_path,
+            source_repo=source_repo,
+            source_commit=commit,
+            layout=layout,
+            subject_kind="catalog_git_bundle",
+        )
+    return subjects
+
+
 def discover_worktree_subjects(
     repo: Path,
     *,
@@ -308,7 +433,10 @@ def discover_worktree_subjects(
     requested_tasks = {canonicalize_block_id(task_id) for task_id in (task_ids or []) if canonicalize_block_id(task_id)}
     commit = _git(repo, "rev-parse", "HEAD").decode("ascii", errors="replace").strip()
     paths: list[str] = []
-    for directory, names, files in os.walk(repo):
+    scan_root = repo
+    if not scan_root.is_dir():
+        return {}
+    for directory, names, files in os.walk(scan_root):
         names[:] = [
             name
             for name in names
@@ -353,6 +481,119 @@ def discover_worktree_subjects(
     return subjects
 
 
+def discover_catalog_worktree_subjects(
+    repo: Path,
+    *,
+    catalog: Any,
+    source_repo: str,
+    layout: str,
+    chapters: Iterable[int] | None = None,
+    task_ids: Iterable[str] | None = None,
+) -> dict[str, SubjectBundle]:
+    """Materialize a worktree view without repeated filename heuristics."""
+
+    if not (repo / ".git").exists():
+        return {}
+    profile = profile_for_catalog(catalog)
+    requested_chapters = set(chapters or []) if profile == "mat" else set()
+    requested_tasks = {
+        canonicalize_block_id(task_id, profile)
+        for task_id in (task_ids or [])
+        if canonicalize_block_id(task_id, profile)
+    }
+    commit = _git(repo, "rev-parse", "HEAD").decode("ascii", errors="replace").strip()
+    paths: list[str] = []
+    scan_root = repo / "ToyApollo/Output" if layout == "toy" else repo
+    if not scan_root.is_dir():
+        return {}
+    for directory, names, files in os.walk(scan_root):
+        names[:] = [
+            name
+            for name in names
+            if name not in {".lake", ".git", "_review-worktrees", "__pycache__", "node_modules"}
+        ]
+        for filename in files:
+            if filename.lower().endswith(".lean"):
+                paths.append((Path(directory) / filename).relative_to(repo).as_posix())
+    exact_paths = set(paths)
+    if getattr(catalog, "task_module_paths", None):
+        subjects: dict[str, SubjectBundle] = {}
+        for task in catalog.tasks:
+            if requested_chapters and task.chapter not in requested_chapters:
+                continue
+            if requested_tasks and task.task_id not in requested_tasks:
+                continue
+            owned_paths = list(catalog.owned_paths(task.task_id))
+            if not owned_paths or task.primary_path not in owned_paths:
+                raise ReconciliationError(
+                    f"Catalog task {task.task_id} lacks its declared primary path in owned membership."
+                )
+            missing = sorted(set(owned_paths) - exact_paths)
+            if missing:
+                raise ReconciliationError(
+                    f"Catalog task {task.task_id} has files absent from worktree {repo}: {missing}"
+                )
+            files = {path: (repo / path).read_bytes() for path in owned_paths}
+            subjects[task.task_id] = SubjectBundle.from_files(
+                task_id=task.task_id,
+                files=files,
+                primary_path=task.primary_path,
+                source_repo=source_repo,
+                source_commit=f"{commit}+worktree",
+                layout=layout,
+                subject_kind="catalog_worktree_bundle",
+            )
+        return subjects
+
+    by_basename: dict[str, list[str]] = {}
+    for path in paths:
+        by_basename.setdefault(Path(path).stem.lower(), []).append(path)
+    module_by_owner: dict[str, list[Any]] = {}
+    for module in catalog.modules:
+        if module.owner_task_id and module.module_role in {"primary", "owned_support"}:
+            module_by_owner.setdefault(module.owner_task_id, []).append(module)
+
+    subjects: dict[str, SubjectBundle] = {}
+    for task in catalog.tasks:
+        if requested_chapters and task.chapter not in requested_chapters:
+            continue
+        if requested_tasks and task.task_id not in requested_tasks:
+            continue
+        logical_files: dict[str, bytes] = {}
+        primary_path = ""
+        for module in module_by_owner.get(task.task_id, []):
+            if layout == "mat" and module.path in exact_paths:
+                matches = [module.path]
+            else:
+                matches = by_basename.get(module.basename.lower(), [])
+            if len(matches) > 1:
+                raise ReconciliationError(
+                    f"Catalog module {module.basename} is ambiguous in {repo}: {matches}"
+                )
+            if not matches:
+                if module.module_role == "primary":
+                    raise ReconciliationError(
+                        f"Catalog primary {module.basename} is missing from worktree {repo}."
+                    )
+                continue
+            logical_path = matches[0]
+            logical_files[logical_path] = (repo / logical_path).read_bytes()
+            if module.module_role == "primary":
+                primary_path = logical_path
+        if not primary_path:
+            raise ReconciliationError(f"Catalog task {task.task_id} has no worktree primary in {repo}.")
+        subjects[task.task_id] = SubjectBundle.from_files(
+            task_id=task.task_id,
+            files=logical_files,
+            primary_path=primary_path,
+            source_repo=source_repo,
+            source_commit=f"{commit}+worktree",
+            layout=layout,
+            subject_kind="catalog_worktree_bundle",
+        )
+    return subjects
+
+
 def store_subject_heads(
     store: WorkspaceStateStore,
     subjects: dict[str, SubjectBundle],
@@ -385,8 +626,55 @@ def refresh_local_repositories(
     chapters: Iterable[int] = (1, 2, 3, 4),
     task_ids: Iterable[str] | None = None,
     formal_task_ids: Iterable[str] | None = None,
+    catalog: Any | None = None,
     fetch: bool = False,
 ) -> dict[str, Any]:
+    profile = profile_for_catalog(catalog) if catalog is not None else "mat"
+    if catalog is not None and profile != "mat":
+        current_role = f"{profile}_current"
+        result: dict[str, Any] = {current_role: 0, "errors": []}
+        requested = [
+            canonicalize_block_id(task_id, profile)
+            for task_id in (task_ids or [])
+            if canonicalize_block_id(task_id, profile)
+        ]
+        if requested:
+            for task_id in requested:
+                store.mark_task_head_freshness(
+                    task_id=task_id,
+                    role=current_role,
+                    freshness="stale",
+                )
+        else:
+            store.mark_role_freshness(role=current_role, freshness="stale")
+        if not (runtime_root / ".git").exists():
+            result["errors"].append(
+                f"{profile} runtime repository is missing: {runtime_root}"
+            )
+            return result
+        try:
+            subjects = discover_catalog_worktree_subjects(
+                runtime_root,
+                catalog=catalog,
+                source_repo=profile,
+                layout=profile,
+                chapters=chapters,
+                task_ids=task_ids,
+            )
+            result[current_role] = store_subject_heads(
+                store,
+                subjects,
+                role=current_role,
+                detail={
+                    "repo": str(runtime_root),
+                    "working_tree": True,
+                    "profile": profile,
+                },
+            )
+        except ReconciliationError as exc:
+            result["errors"].append(str(exc))
+        return result
+
     result: dict[str, Any] = {"mat_main": 0, "mat_candidate": 0, "toy_current": 0, "errors": []}
     requested = [canonicalize_block_id(task_id) for task_id in (task_ids or []) if canonicalize_block_id(task_id)]
     for role in ("mat_main", "mat_candidate", "toy_current"):
@@ -401,17 +689,32 @@ def refresh_local_repositories(
             fetched = run_command(["git", "-C", str(mat_repo), "fetch", "--prune", "origin"], timeout=60)
             if fetched.returncode != 0:
                 result["errors"].append(f"MAT fetch failed: {fetched.error_text.strip()}")
-        main_ref = "origin/main" if git_ref_exists(mat_repo, "origin/main") else "main"
+        main_ref = (
+            str(catalog.mat_commit)
+            if catalog is not None
+            else ("origin/main" if git_ref_exists(mat_repo, "origin/main") else "main")
+        )
         try:
-            subjects = discover_git_subjects(
-                mat_repo,
-                ref=main_ref,
-                source_repo="mat",
-                layout="mat",
-                chapters=chapters,
-                task_ids=task_ids,
-                formal_task_ids=formal_task_ids,
-            )
+            if catalog is not None:
+                subjects = discover_catalog_git_subjects(
+                    mat_repo,
+                    ref=main_ref,
+                    catalog=catalog,
+                    source_repo="mat",
+                    layout="mat",
+                    chapters=chapters,
+                    task_ids=task_ids,
+                )
+            else:
+                subjects = discover_git_subjects(
+                    mat_repo,
+                    ref=main_ref,
+                    source_repo="mat",
+                    layout="mat",
+                    chapters=chapters,
+                    task_ids=task_ids,
+                    formal_task_ids=formal_task_ids,
+                )
             result["mat_main"] = store_subject_heads(
                 store,
                 subjects,
@@ -422,14 +725,24 @@ def refresh_local_repositories(
             result["errors"].append(str(exc))
         try:
             branch = git_current_branch(mat_repo)
-            subjects = discover_worktree_subjects(
-                mat_repo,
-                source_repo="mat",
-                layout="mat",
-                chapters=chapters,
-                task_ids=task_ids,
-                formal_task_ids=formal_task_ids,
-            )
+            if catalog is not None:
+                subjects = discover_catalog_worktree_subjects(
+                    mat_repo,
+                    catalog=catalog,
+                    source_repo="mat",
+                    layout="mat",
+                    chapters=chapters,
+                    task_ids=task_ids,
+                )
+            else:
+                subjects = discover_worktree_subjects(
+                    mat_repo,
+                    source_repo="mat",
+                    layout="mat",
+                    chapters=chapters,
+                    task_ids=task_ids,
+                    formal_task_ids=formal_task_ids,
+                )
             result["mat_candidate"] = store_subject_heads(
                 store,
                 subjects,
@@ -440,14 +753,24 @@ def refresh_local_repositories(
             result["errors"].append(str(exc))
     if (runtime_root / ".git").exists():
         try:
-            subjects = discover_worktree_subjects(
-                runtime_root,
-                source_repo="toy_apollo",
-                layout="toy",
-                chapters=chapters,
-                task_ids=task_ids,
-                formal_task_ids=formal_task_ids,
-            )
+            if catalog is not None:
+                subjects = discover_catalog_worktree_subjects(
+                    runtime_root,
+                    catalog=catalog,
+                    source_repo="toy_apollo",
+                    layout="toy",
+                    chapters=chapters,
+                    task_ids=task_ids,
+                )
+            else:
+                subjects = discover_worktree_subjects(
+                    runtime_root,
+                    source_repo="toy_apollo",
+                    layout="toy",
+                    chapters=chapters,
+                    task_ids=task_ids,
+                    formal_task_ids=formal_task_ids,
+                )
             result["toy_current"] = store_subject_heads(
                 store,
                 subjects,
@@ -668,11 +991,13 @@ def refresh_workspace_state(
     task_ids: Iterable[str] | None = None,
     chapters: Iterable[int] = (1, 2, 3, 4),
     refresh_remote: bool = False,
+    catalog: Any | None = None,
 ) -> dict[str, Any]:
     store.initialize()
-    formal_task_ids = discover_formal_plan_task_ids(
-        runtime_root / "plans",
-        chapters=chapters,
+    formal_task_ids = (
+        set(catalog.task_ids())
+        if catalog is not None
+        else discover_formal_plan_task_ids(runtime_root / "plans", chapters=chapters)
     )
     result = {
         "local": refresh_local_repositories(
@@ -682,6 +1007,7 @@ def refresh_workspace_state(
             chapters=chapters,
             task_ids=task_ids,
             formal_task_ids=formal_task_ids,
+            catalog=catalog,
             fetch=refresh_remote,
         ),
         "remote": None,

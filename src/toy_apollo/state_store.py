@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import sqlite3
 import tempfile
@@ -12,8 +13,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, TypeVar
 
+from .core.settings import DEFAULT_PROFILE, PROFILE_SPECS
+from .review_versions import prompt_version_sql_predicate, rubric_version_sql_predicate
+
 
 SCHEMA_VERSION = 1
+STATE_MODEL_VERSION = 2
 DEFAULT_BUSY_TIMEOUT_MS = 10_000
 
 
@@ -62,9 +67,24 @@ def sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def filesystem_path(path: str | Path) -> Path:
+    """Return a Windows extended-length spelling for local file I/O."""
+
+    resolved = Path(path)
+    raw = str(resolved)
+    if os.name == "nt" and resolved.is_absolute() and not raw.startswith("\\\\?\\"):
+        return Path("\\\\?\\" + raw)
+    return resolved
+
+
+def stable_absolute_path(path: str | Path) -> str:
+    candidate = Path(path).expanduser()
+    return str(candidate if candidate.is_absolute() else candidate.absolute())
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
-    with path.open("rb") as handle:
+    with filesystem_path(path).open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
@@ -366,6 +386,78 @@ CREATE TABLE IF NOT EXISTS transformations (
     UNIQUE(source_subject_id, target_subject_id, transformation_kind)
 );
 
+CREATE TABLE IF NOT EXISTS authority_bindings (
+    binding_id TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL,
+    source_subject_id TEXT NOT NULL REFERENCES subjects(subject_id),
+    target_subject_id TEXT NOT NULL REFERENCES subjects(subject_id),
+    transformation_id TEXT NOT NULL REFERENCES transformations(transformation_id),
+    bridge_route TEXT NOT NULL CHECK(bridge_route IN (
+        'kenneth_author_exact_bridge',
+        'reviewed_mat_sync_reassembly_bridge'
+    )),
+    authority_type TEXT NOT NULL CHECK(authority_type IN (
+        'kenneth_git_author_exact',
+        'historical_review_apply_recovery',
+        'mat_exact_review_apply',
+        'mat_sync_author_attested_selection'
+    )),
+    capability TEXT NOT NULL CHECK(capability IN (
+        'author_current_exact_acceptance',
+        'reviewed_source_mechanical_projection',
+        'sync_author_attested_acceptance'
+    )),
+    decision_path TEXT NOT NULL,
+    decision_hash TEXT NOT NULL,
+    evidence_path TEXT NOT NULL,
+    evidence_hash TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    UNIQUE(target_subject_id, capability),
+    UNIQUE(evidence_hash, target_subject_id)
+);
+CREATE INDEX IF NOT EXISTS authority_bindings_task_idx
+    ON authority_bindings(task_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS authority_bindings_target_idx
+    ON authority_bindings(target_subject_id, capability);
+
+CREATE VIEW IF NOT EXISTS valid_authority_bindings AS
+SELECT b.*
+FROM authority_bindings b
+JOIN subjects source ON source.subject_id = b.source_subject_id
+JOIN subjects target ON target.subject_id = b.target_subject_id
+JOIN transformations t ON t.transformation_id = b.transformation_id
+WHERE b.task_id = source.task_id
+  AND b.task_id = target.task_id
+  AND b.task_id = t.task_id
+  AND b.source_subject_id = t.source_subject_id
+  AND b.target_subject_id = t.target_subject_id
+  AND lower(target.source_repo) = 'mat'
+  AND t.transformation_kind = 'verified_evidence_bridge'
+  AND t.mechanical_status = 'pass'
+  AND t.build_status = 'pass'
+  AND (
+    (b.bridge_route = 'kenneth_author_exact_bridge'
+      AND b.authority_type = 'kenneth_git_author_exact'
+      AND b.capability = 'author_current_exact_acceptance')
+    OR
+    (b.bridge_route = 'reviewed_mat_sync_reassembly_bridge'
+      AND b.authority_type IN ('historical_review_apply_recovery', 'mat_exact_review_apply')
+      AND b.capability = 'reviewed_source_mechanical_projection')
+    OR
+    (b.bridge_route = 'reviewed_mat_sync_reassembly_bridge'
+      AND b.authority_type = 'mat_sync_author_attested_selection'
+      AND b.capability = 'sync_author_attested_acceptance')
+  )
+  AND b.decision_path <> '' AND length(b.decision_hash) = 64
+  AND b.decision_hash NOT GLOB '*[^0-9a-f]*'
+  AND b.evidence_path <> '' AND length(b.evidence_hash) = 64
+  AND b.evidence_hash NOT GLOB '*[^0-9a-f]*'
+  AND NOT EXISTS (
+    SELECT 1 FROM reviews r
+    WHERE r.subject_id = b.target_subject_id
+      AND r.evidence_hash = b.evidence_hash
+  );
+
 CREATE TABLE IF NOT EXISTS runs (
     run_id TEXT PRIMARY KEY,
     campaign_id TEXT NOT NULL DEFAULT '',
@@ -433,6 +525,160 @@ CREATE TABLE IF NOT EXISTS imports (
     imported_at TEXT NOT NULL,
     record_count INTEGER NOT NULL DEFAULT 0
 );
+
+CREATE TABLE IF NOT EXISTS catalog_versions (
+    catalog_id TEXT PRIMARY KEY,
+    schema_version TEXT NOT NULL,
+    catalog_name TEXT NOT NULL,
+    toy_commit TEXT NOT NULL,
+    mat_commit TEXT NOT NULL,
+    manifest_sha256 TEXT NOT NULL,
+    plan_set_sha256 TEXT NOT NULL,
+    policy_sha256 TEXT NOT NULL,
+    counts_json TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    imported_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS catalog_families (
+    catalog_id TEXT NOT NULL REFERENCES catalog_versions(catalog_id) ON DELETE CASCADE,
+    family_id TEXT NOT NULL,
+    book_label TEXT NOT NULL,
+    family_kind TEXT NOT NULL,
+    count_policy TEXT NOT NULL,
+    PRIMARY KEY(catalog_id, family_id)
+);
+
+CREATE TABLE IF NOT EXISTS catalog_tasks (
+    catalog_id TEXT NOT NULL REFERENCES catalog_versions(catalog_id) ON DELETE CASCADE,
+    task_id TEXT NOT NULL,
+    family_id TEXT NOT NULL,
+    chapter INTEGER NOT NULL,
+    task_kind TEXT NOT NULL,
+    source_plan TEXT NOT NULL,
+    source_plan_path TEXT NOT NULL,
+    source_hash TEXT NOT NULL,
+    primary_path TEXT NOT NULL,
+    legacy_manifest_role TEXT NOT NULL,
+    lifecycle_state TEXT NOT NULL,
+    PRIMARY KEY(catalog_id, task_id),
+    FOREIGN KEY(catalog_id, family_id)
+        REFERENCES catalog_families(catalog_id, family_id)
+);
+CREATE INDEX IF NOT EXISTS catalog_tasks_family_idx
+    ON catalog_tasks(catalog_id, family_id, task_id);
+
+CREATE TABLE IF NOT EXISTS catalog_family_members (
+    catalog_id TEXT NOT NULL,
+    family_id TEXT NOT NULL,
+    task_id TEXT NOT NULL,
+    member_order INTEGER NOT NULL,
+    PRIMARY KEY(catalog_id, family_id, task_id),
+    FOREIGN KEY(catalog_id, family_id)
+        REFERENCES catalog_families(catalog_id, family_id),
+    FOREIGN KEY(catalog_id, task_id)
+        REFERENCES catalog_tasks(catalog_id, task_id)
+);
+
+CREATE TABLE IF NOT EXISTS catalog_modules (
+    catalog_id TEXT NOT NULL REFERENCES catalog_versions(catalog_id) ON DELETE CASCADE,
+    path TEXT NOT NULL,
+    basename TEXT NOT NULL,
+    module_name TEXT NOT NULL,
+    module_role TEXT NOT NULL CHECK(module_role IN ('primary', 'owned_support', 'shared')),
+    owner_task_id TEXT,
+    legacy_manifest_role TEXT NOT NULL,
+    chapter INTEGER,
+    PRIMARY KEY(catalog_id, path),
+    UNIQUE(catalog_id, module_name),
+    UNIQUE(catalog_id, basename),
+    FOREIGN KEY(catalog_id, owner_task_id)
+        REFERENCES catalog_tasks(catalog_id, task_id),
+    CHECK(
+        (module_role = 'shared' AND owner_task_id IS NULL)
+        OR (module_role IN ('primary', 'owned_support') AND owner_task_id IS NOT NULL)
+    )
+);
+CREATE INDEX IF NOT EXISTS catalog_modules_owner_idx
+    ON catalog_modules(catalog_id, owner_task_id, module_role);
+
+CREATE TABLE IF NOT EXISTS catalog_cohorts (
+    catalog_id TEXT NOT NULL REFERENCES catalog_versions(catalog_id) ON DELETE CASCADE,
+    cohort_id TEXT NOT NULL,
+    task_id TEXT NOT NULL,
+    PRIMARY KEY(catalog_id, cohort_id, task_id),
+    FOREIGN KEY(catalog_id, task_id)
+        REFERENCES catalog_tasks(catalog_id, task_id)
+);
+
+CREATE TABLE IF NOT EXISTS evidence_roots (
+    root_id TEXT PRIMARY KEY,
+    root_path TEXT NOT NULL UNIQUE,
+    root_kind TEXT NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0, 1)),
+    detail_json TEXT NOT NULL DEFAULT '{}',
+    registered_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS review_metadata (
+    review_id TEXT PRIMARY KEY REFERENCES reviews(review_id) ON DELETE CASCADE,
+    prompt_version INTEGER,
+    rubric_version INTEGER,
+    review_input_path TEXT NOT NULL DEFAULT '',
+    review_input_hash TEXT NOT NULL DEFAULT '',
+    reviewer_backend_id TEXT NOT NULL DEFAULT '',
+    provenance_json TEXT NOT NULL DEFAULT '{}'
+);
+
+CREATE TABLE IF NOT EXISTS state_events (
+    event_id TEXT PRIMARY KEY,
+    event_type TEXT NOT NULL,
+    task_id TEXT NOT NULL DEFAULT '',
+    subject_id TEXT REFERENCES subjects(subject_id),
+    evidence_path TEXT NOT NULL DEFAULT '',
+    evidence_hash TEXT NOT NULL DEFAULT '',
+    occurred_at TEXT NOT NULL,
+    payload_json TEXT NOT NULL DEFAULT '{}',
+    imported_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS state_events_task_idx
+    ON state_events(task_id, occurred_at, event_type);
+CREATE INDEX IF NOT EXISTS state_events_evidence_idx
+    ON state_events(evidence_hash, event_type);
+
+CREATE TABLE IF NOT EXISTS dataset_snapshots (
+    dataset_id TEXT PRIMARY KEY,
+    schema_version TEXT NOT NULL,
+    catalog_id TEXT NOT NULL REFERENCES catalog_versions(catalog_id),
+    payload_path TEXT NOT NULL DEFAULT '',
+    payload_hash TEXT NOT NULL,
+    invariants_json TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+
+CREATE VIEW IF NOT EXISTS evaluations AS
+SELECT
+    r.review_id AS evaluation_id,
+    r.task_id,
+    r.subject_id,
+    r.verdict,
+    r.proof_class,
+    r.completion_class,
+    r.phase2_status,
+    r.evidence_path,
+    r.evidence_hash,
+    r.reviewer_independence,
+    r.authority_scope,
+    r.authority_eligible,
+    r.reviewed_at,
+    m.prompt_version,
+    m.rubric_version,
+    m.review_input_path,
+    m.review_input_hash,
+    m.reviewer_backend_id,
+    m.provenance_json
+FROM reviews r
+LEFT JOIN review_metadata m ON m.review_id = r.review_id;
 """
 
 
@@ -444,11 +690,32 @@ class WorkspaceStateStore:
     and hash so the database can be rebuilt without copying artifact contents.
     """
 
-    def __init__(self, path: str | Path, *, busy_timeout_ms: int = DEFAULT_BUSY_TIMEOUT_MS):
+    def __init__(
+        self,
+        path: str | Path,
+        *,
+        busy_timeout_ms: int = DEFAULT_BUSY_TIMEOUT_MS,
+        review_profile: str | None = None,
+    ):
         self.path = Path(path).expanduser().resolve()
         self.busy_timeout_ms = int(busy_timeout_ms)
         self._initialized = False
         self._bulk_connection: sqlite3.Connection | None = None
+        self._savepoint_serial = 0
+        # Per-profile supported review versions ("mat" keeps the historical
+        # prompt 9/10/11 + rubric 9 predicates; "cordis" uses prompt 1/rubric 1).
+        profile = str(review_profile or "").strip().lower()
+        if not profile:
+            artifact_name = self.path.parent.name.lower()
+            if artifact_name.endswith("-artifacts"):
+                profile = artifact_name.removesuffix("-artifacts")
+        self.review_profile = profile if profile in PROFILE_SPECS else DEFAULT_PROFILE
+
+    def _prompt_version_pred(self, column: str = "m.prompt_version") -> str:
+        return prompt_version_sql_predicate(self.review_profile, column)
+
+    def _rubric_version_pred(self, column: str = "m.rubric_version") -> str:
+        return rubric_version_sql_predicate(self.review_profile, column)
 
     @staticmethod
     def validate_canonical_path(path: Path, *, runtime_root: Path, artifact_root: Path) -> None:
@@ -510,9 +777,44 @@ class WorkspaceStateStore:
         try:
             connection.execute("PRAGMA journal_mode = MEMORY")
             connection.execute("PRAGMA synchronous = OFF")
+            connection.execute("PRAGMA temp_store = MEMORY")
+            connection.execute("PRAGMA cache_size = -262144")
+            connection.execute("PRAGMA cache_spill = OFF")
             connection.execute("BEGIN IMMEDIATE")
             self._bulk_connection = connection
             yield
+            connection.execute("COMMIT")
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
+        finally:
+            self._bulk_connection = None
+            connection.close()
+
+    @contextmanager
+    def atomic_write(self, label: str = "state_batch"):
+        """Run a mutation group atomically, nesting through a SQLite savepoint."""
+
+        self.initialize()
+        if self._bulk_connection is not None:
+            connection = self._bulk_connection
+            self._savepoint_serial += 1
+            name = f"{re.sub(r'[^A-Za-z0-9_]', '_', label)}_{self._savepoint_serial}"
+            connection.execute(f"SAVEPOINT {name}")
+            try:
+                yield connection
+                connection.execute(f"RELEASE SAVEPOINT {name}")
+            except Exception:
+                connection.execute(f"ROLLBACK TO SAVEPOINT {name}")
+                connection.execute(f"RELEASE SAVEPOINT {name}")
+                raise
+            return
+        connection = self._connect(write=True)
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            self._bulk_connection = connection
+            yield connection
             connection.execute("COMMIT")
         except Exception:
             if connection.in_transaction:
@@ -574,6 +876,12 @@ class WorkspaceStateStore:
         self.assert_integrity()
         with self._connection(write=self._bulk_connection is not None) as connection:
             def count(table: str) -> int:
+                present = connection.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name = ?",
+                    (table,),
+                ).fetchone()
+                if present is None:
+                    return 0
                 return int(connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
 
             version_row = connection.execute("SELECT value FROM meta WHERE key = 'schema_version'").fetchone()
@@ -583,12 +891,318 @@ class WorkspaceStateStore:
                 "campaign_ledgers": count("campaign_ledgers"),
                 "subjects": count("subjects"),
                 "reviews": count("reviews"),
+                "authority_bindings": count("authority_bindings"),
                 "runs": count("runs"),
                 "integrations": count("integrations"),
                 "task_heads": count("task_heads"),
                 "dependency_pins": count("dependency_pins"),
                 "imports": count("imports"),
+                "catalog_versions": count("catalog_versions"),
+                "catalog_tasks": count("catalog_tasks"),
+                "catalog_families": count("catalog_families"),
+                "catalog_modules": count("catalog_modules"),
+                "evaluations": count("evaluations"),
+                "state_events": count("state_events"),
+                "dataset_snapshots": count("dataset_snapshots"),
             }
+
+    def persist_catalog(self, catalog: Any, *, active: bool = True) -> str:
+        """Persist one immutable task/family/module catalog.
+
+        ``Any`` avoids coupling this low-level store to the catalog loader.  The
+        accepted object is intentionally structural and must expose the frozen
+        dataclass fields from :mod:`toy_apollo.task_catalog`.
+        """
+
+        self.initialize()
+        payload = catalog.as_dict()
+        serialized = json.dumps(payload, ensure_ascii=False, sort_keys=True)
+        counts_json = json.dumps(catalog.counts(), ensure_ascii=False, sort_keys=True)
+        with self._connection(write=True) as connection:
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO catalog_versions(
+                    catalog_id, schema_version, catalog_name, toy_commit, mat_commit,
+                    manifest_sha256, plan_set_sha256, policy_sha256, counts_json,
+                    payload_json, imported_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    catalog.catalog_id,
+                    catalog.schema_version,
+                    catalog.catalog_name,
+                    catalog.toy_commit,
+                    catalog.mat_commit,
+                    catalog.manifest_sha256,
+                    catalog.plan_set_sha256,
+                    catalog.policy_sha256,
+                    counts_json,
+                    serialized,
+                    utc_now(),
+                ),
+            )
+            existing = connection.execute(
+                "SELECT payload_json FROM catalog_versions WHERE catalog_id = ?",
+                (catalog.catalog_id,),
+            ).fetchone()
+            if existing is None or str(existing["payload_json"]) != serialized:
+                raise StateIntegrityError(f"Catalog identity collision for {catalog.catalog_id}.")
+            for family in catalog.families:
+                connection.execute(
+                    """
+                    INSERT OR IGNORE INTO catalog_families(
+                        catalog_id, family_id, book_label, family_kind, count_policy
+                    ) VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (
+                        catalog.catalog_id,
+                        family.family_id,
+                        family.book_label,
+                        family.family_kind,
+                        family.count_policy,
+                    ),
+                )
+            for task in catalog.tasks:
+                connection.execute(
+                    """
+                    INSERT OR IGNORE INTO catalog_tasks(
+                        catalog_id, task_id, family_id, chapter, task_kind,
+                        source_plan, source_plan_path, source_hash, primary_path,
+                        legacy_manifest_role, lifecycle_state
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        catalog.catalog_id,
+                        task.task_id,
+                        task.family_id,
+                        task.chapter,
+                        task.task_kind,
+                        task.source_plan,
+                        task.source_plan_path,
+                        task.source_hash,
+                        task.primary_path,
+                        task.legacy_manifest_role,
+                        task.lifecycle_state,
+                    ),
+                )
+            for family in catalog.families:
+                for index, task_id in enumerate(family.members):
+                    connection.execute(
+                        """
+                        INSERT OR IGNORE INTO catalog_family_members(
+                            catalog_id, family_id, task_id, member_order
+                        ) VALUES (?, ?, ?, ?)
+                        """,
+                        (catalog.catalog_id, family.family_id, task_id, index),
+                    )
+            for module in catalog.modules:
+                connection.execute(
+                    """
+                    INSERT OR IGNORE INTO catalog_modules(
+                        catalog_id, path, basename, module_name, module_role,
+                        owner_task_id, legacy_manifest_role, chapter
+                    ) VALUES (?, ?, ?, ?, ?, NULLIF(?, ''), ?, ?)
+                    """,
+                    (
+                        catalog.catalog_id,
+                        module.path,
+                        module.basename,
+                        module.module_name,
+                        module.module_role,
+                        module.owner_task_id,
+                        module.legacy_manifest_role,
+                        module.chapter,
+                    ),
+                )
+            for cohort_id, members in sorted(catalog.cohorts.items()):
+                for task_id in members:
+                    connection.execute(
+                        """
+                        INSERT OR IGNORE INTO catalog_cohorts(catalog_id, cohort_id, task_id)
+                        VALUES (?, ?, ?)
+                        """,
+                        (catalog.catalog_id, cohort_id, task_id),
+                    )
+            if active:
+                connection.execute(
+                    "INSERT OR REPLACE INTO meta(key, value) VALUES('active_catalog_id', ?)",
+                    (catalog.catalog_id,),
+                )
+                connection.execute(
+                    "INSERT OR REPLACE INTO meta(key, value) VALUES('state_model_version', ?)",
+                    (str(STATE_MODEL_VERSION),),
+                )
+        return str(catalog.catalog_id)
+
+    def active_catalog_id(self) -> str:
+        if not self.exists:
+            return ""
+        with self._connection(write=False) as connection:
+            present = connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'catalog_versions'"
+            ).fetchone()
+            if present is None:
+                return ""
+            row = connection.execute(
+                "SELECT value FROM meta WHERE key = 'active_catalog_id'"
+            ).fetchone()
+        return str(row["value"]) if row is not None else ""
+
+    def register_evidence_root(
+        self,
+        *,
+        root_path: str | Path,
+        root_kind: str,
+        active: bool = True,
+        detail: Mapping[str, Any] | None = None,
+    ) -> str:
+        self.initialize()
+        resolved = str(Path(root_path).expanduser().resolve())
+        root_id = sha256_json(
+            {"schema": "toy-apollo.evidence-root.v1", "path": resolved.lower()}
+        )
+        with self._connection(write=True) as connection:
+            connection.execute(
+                """
+                INSERT INTO evidence_roots(
+                    root_id, root_path, root_kind, active, detail_json, registered_at
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(root_id) DO UPDATE SET
+                    root_kind = excluded.root_kind,
+                    active = excluded.active,
+                    detail_json = excluded.detail_json
+                """,
+                (
+                    root_id,
+                    resolved,
+                    root_kind,
+                    1 if active else 0,
+                    json.dumps(dict(detail or {}), ensure_ascii=False, sort_keys=True),
+                    utc_now(),
+                ),
+            )
+        return root_id
+
+    @staticmethod
+    def _insert_event(
+        connection: sqlite3.Connection,
+        *,
+        event_type: str,
+        task_id: str = "",
+        subject_id: str = "",
+        evidence_path: str | Path = "",
+        evidence_hash: str = "",
+        occurred_at: str,
+        payload: Mapping[str, Any] | None = None,
+    ) -> str:
+        event_payload = dict(payload or {})
+        identity = {
+            "schema": "toy-apollo.state-event.v1",
+            "event_type": event_type,
+            "task_id": task_id,
+            "subject_id": subject_id,
+            "evidence_path": str(evidence_path),
+            "evidence_hash": evidence_hash,
+            "occurred_at": occurred_at,
+            "payload": event_payload,
+        }
+        event_id = sha256_json(identity)
+        connection.execute(
+            """
+            INSERT OR IGNORE INTO state_events(
+                event_id, event_type, task_id, subject_id, evidence_path,
+                evidence_hash, occurred_at, payload_json, imported_at
+            ) VALUES (?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?, ?)
+            """,
+            (
+                event_id,
+                event_type,
+                task_id,
+                subject_id,
+                str(evidence_path),
+                evidence_hash,
+                occurred_at,
+                json.dumps(event_payload, ensure_ascii=False, sort_keys=True),
+                utc_now(),
+            ),
+        )
+        return event_id
+
+    def record_event(
+        self,
+        *,
+        event_type: str,
+        task_id: str = "",
+        subject_id: str = "",
+        evidence_path: str | Path = "",
+        evidence_hash: str = "",
+        occurred_at: str | None = None,
+        payload: Mapping[str, Any] | None = None,
+    ) -> str:
+        self.initialize()
+        with self._connection(write=True) as connection:
+            return self._insert_event(
+                connection,
+                event_type=event_type,
+                task_id=task_id,
+                subject_id=subject_id,
+                evidence_path=evidence_path,
+                evidence_hash=evidence_hash,
+                occurred_at=occurred_at or utc_now(),
+                payload=payload,
+            )
+
+    def record_dataset_snapshot(
+        self,
+        *,
+        dataset_id: str,
+        schema_version: str,
+        catalog_id: str,
+        payload_path: str | Path = "",
+        payload_hash: str,
+        invariants: Mapping[str, Any] | None = None,
+        created_at: str | None = None,
+    ) -> str:
+        """Register one immutable, content-addressed analysis snapshot."""
+
+        self.initialize()
+        serialized_invariants = json.dumps(
+            dict(invariants or {}), ensure_ascii=False, sort_keys=True
+        )
+        with self._connection(write=True) as connection:
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO dataset_snapshots(
+                    dataset_id, schema_version, catalog_id, payload_path,
+                    payload_hash, invariants_json, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    dataset_id,
+                    schema_version,
+                    catalog_id,
+                    str(payload_path),
+                    payload_hash,
+                    serialized_invariants,
+                    created_at or utc_now(),
+                ),
+            )
+            row = connection.execute(
+                """
+                SELECT schema_version, catalog_id, payload_hash, invariants_json
+                FROM dataset_snapshots
+                WHERE dataset_id = ?
+                """,
+                (dataset_id,),
+            ).fetchone()
+        if row is None or (
+            str(row["schema_version"]) != schema_version
+            or str(row["catalog_id"]) != catalog_id
+            or str(row["payload_hash"]) != payload_hash
+            or str(row["invariants_json"]) != serialized_invariants
+        ):
+            raise StateIntegrityError(f"Dataset snapshot identity collision for {dataset_id}.")
+        return dataset_id
 
     def backup(self, *, label: str = "migration") -> Path:
         if not self.exists:
@@ -723,6 +1337,88 @@ class WorkspaceStateStore:
                 connection.execute("ROLLBACK")
                 raise
 
+    def mutate_campaign_with_normalized_state(
+        self,
+        *,
+        campaign_id: str,
+        artifact_root: str | Path,
+        expected_revision: int,
+        ledger_mutator: Callable[[dict[str, Any]], T],
+        normalized_mutator: Callable[["WorkspaceStateStore", dict[str, Any], T], None],
+        legacy_ledger_path: str | Path = "",
+    ) -> tuple[dict[str, Any], int, T]:
+        """Atomically CAS one campaign row and its normalized authority rows.
+
+        This path intentionally retains the database's normal DELETE/FULL
+        durability settings.  It is for small authority mutations, not rebuilds.
+        """
+
+        if self._bulk_connection is not None:
+            raise StateConcurrencyError("Nested normalized state transactions are not supported.")
+        self.initialize()
+        connection = self._connect(write=True)
+        try:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT ledger_json, revision FROM campaign_ledgers WHERE campaign_id = ?",
+                (campaign_id,),
+            ).fetchone()
+            if row is None:
+                raise StateConcurrencyError(
+                    f"Campaign {campaign_id!r} is missing; initialize operational state first."
+                )
+            current_revision = int(row["revision"])
+            if current_revision != int(expected_revision):
+                raise StateConcurrencyError(
+                    f"Campaign ledger changed since load: expected revision {expected_revision}, "
+                    f"current revision {current_revision}."
+                )
+            ledger = json.loads(row["ledger_json"])
+            if not isinstance(ledger, dict):
+                raise StateIntegrityError(f"Campaign {campaign_id!r} ledger is not an object.")
+            self._bulk_connection = connection
+            result = ledger_mutator(ledger)
+            normalized_mutator(self, ledger, result)
+            next_revision = current_revision + 1
+            cursor = connection.execute(
+                """
+                UPDATE campaign_ledgers
+                SET artifact_root = ?, legacy_ledger_path = ?, ledger_json = ?,
+                    revision = ?, updated_at = ?
+                WHERE campaign_id = ? AND revision = ?
+                """,
+                (
+                    str(Path(artifact_root).resolve()),
+                    str(legacy_ledger_path),
+                    json.dumps(ledger, ensure_ascii=False, sort_keys=True),
+                    next_revision,
+                    utc_now(),
+                    campaign_id,
+                    current_revision,
+                ),
+            )
+            if cursor.rowcount != 1:
+                raise StateConcurrencyError("Campaign ledger CAS update did not apply.")
+            connection.execute("COMMIT")
+            return ledger, next_revision, result
+        except Exception:
+            if connection.in_transaction:
+                connection.execute("ROLLBACK")
+            raise
+        finally:
+            self._bulk_connection = None
+            connection.close()
+
+    def run_record(self, run_id: str) -> dict[str, Any] | None:
+        if not self.exists:
+            return None
+        with self._connection(write=False) as connection:
+            row = connection.execute(
+                "SELECT * FROM runs WHERE run_id = ?",
+                (run_id,),
+            ).fetchone()
+        return dict(row) if row is not None else None
+
     def save_campaign_ledger(
         self,
         *,
@@ -806,6 +1502,23 @@ class WorkspaceStateStore:
                 "SELECT task_id, bundle_hash, primary_hash FROM subjects WHERE subject_id = ?",
                 (subject.subject_id,),
             ).fetchone()
+            self._insert_event(
+                connection,
+                event_type="subject_observed",
+                task_id=subject.task_id,
+                subject_id=subject.subject_id,
+                occurred_at=subject.created_at or utc_now(),
+                payload={
+                    "subject_kind": subject.subject_kind,
+                    "source_repo": subject.source_repo,
+                    "source_commit": subject.source_commit,
+                    "layout": subject.layout,
+                    "bundle_hash": subject.bundle_hash,
+                    "primary_hash": subject.primary_hash,
+                    "primary_path": subject.primary_path,
+                    "file_count": len(subject.files),
+                },
+            )
         if row is None or row["task_id"] != subject.task_id or row["bundle_hash"] != subject.bundle_hash:
             raise StateIntegrityError(f"Subject identity collision for {subject.subject_id}.")
         return subject.subject_id
@@ -825,6 +1538,12 @@ class WorkspaceStateStore:
         authority_scope: str = "phase2_review_apply",
         authority_eligible: bool = False,
         reviewed_at: str | None = None,
+        prompt_version: int | None = None,
+        rubric_version: int | None = None,
+        review_input_path: str | Path = "",
+        review_input_hash: str = "",
+        reviewer_backend_id: str = "",
+        provenance: Mapping[str, Any] | None = None,
     ) -> str:
         self.initialize()
         with self._connection(write=self._bulk_connection is not None) as connection:
@@ -845,6 +1564,7 @@ class WorkspaceStateStore:
             "authority_scope": authority_scope,
         }
         review_id = sha256_json(identity)
+        resolved_reviewed_at = reviewed_at or utc_now()
         with self._connection(write=True) as connection:
             connection.execute(
                 """
@@ -893,7 +1613,7 @@ class WorkspaceStateStore:
                     reviewer_independence,
                     authority_scope,
                     1 if authority_eligible else 0,
-                    reviewed_at or utc_now(),
+                    resolved_reviewed_at,
                 ),
             )
             row = connection.execute(
@@ -906,6 +1626,57 @@ class WorkspaceStateStore:
                 """,
                 (review_id, subject_id, evidence_hash),
             ).fetchone()
+            resolved_review_id = str(row["review_id"]) if row is not None else review_id
+            connection.execute(
+                """
+                INSERT INTO review_metadata(
+                    review_id, prompt_version, rubric_version, review_input_path,
+                    review_input_hash, reviewer_backend_id, provenance_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(review_id) DO UPDATE SET
+                    prompt_version = COALESCE(excluded.prompt_version, review_metadata.prompt_version),
+                    rubric_version = COALESCE(excluded.rubric_version, review_metadata.rubric_version),
+                    review_input_path = CASE
+                        WHEN excluded.review_input_path != '' THEN excluded.review_input_path
+                        ELSE review_metadata.review_input_path END,
+                    review_input_hash = CASE
+                        WHEN excluded.review_input_hash != '' THEN excluded.review_input_hash
+                        ELSE review_metadata.review_input_hash END,
+                    reviewer_backend_id = CASE
+                        WHEN excluded.reviewer_backend_id != '' THEN excluded.reviewer_backend_id
+                        ELSE review_metadata.reviewer_backend_id END,
+                    provenance_json = CASE
+                        WHEN excluded.provenance_json != '{}' THEN excluded.provenance_json
+                        ELSE review_metadata.provenance_json END
+                """,
+                (
+                    resolved_review_id,
+                    prompt_version,
+                    rubric_version,
+                    str(review_input_path),
+                    review_input_hash,
+                    reviewer_backend_id,
+                    json.dumps(dict(provenance or {}), ensure_ascii=False, sort_keys=True),
+                ),
+            )
+            self._insert_event(
+                connection,
+                event_type="review_evaluated",
+                task_id=task_id,
+                subject_id=subject_id,
+                evidence_path=evidence_path,
+                evidence_hash=evidence_hash,
+                occurred_at=resolved_reviewed_at,
+                payload={
+                    "review_id": resolved_review_id,
+                    "verdict": verdict,
+                    "phase2_status": phase2_status,
+                    "authority_scope": authority_scope,
+                    "authority_eligible": bool(authority_eligible),
+                    "prompt_version": prompt_version,
+                    "rubric_version": rubric_version,
+                },
+            )
         if row is None or row["task_id"] != task_id or row["subject_id"] != subject_id:
             raise StateIntegrityError(f"Review identity collision for {review_id}.")
         return str(row["review_id"])
@@ -930,6 +1701,7 @@ class WorkspaceStateStore:
             "kind": transformation_kind,
         }
         transformation_id = sha256_json(identity)
+        created_at = utc_now()
         with self._connection(write=True) as connection:
             connection.execute(
                 """
@@ -954,10 +1726,243 @@ class WorkspaceStateStore:
                     build_status,
                     str(evidence_path),
                     evidence_hash,
-                    utc_now(),
+                    created_at,
                 ),
             )
+            self._insert_event(
+                connection,
+                event_type="subject_transformed",
+                task_id=task_id,
+                subject_id=target_subject_id,
+                evidence_path=evidence_path,
+                evidence_hash=evidence_hash,
+                occurred_at=created_at,
+                payload={
+                    "transformation_id": transformation_id,
+                    "source_subject_id": source_subject_id,
+                    "target_subject_id": target_subject_id,
+                    "transformation_kind": transformation_kind,
+                    "mechanical_status": mechanical_status,
+                    "build_status": build_status,
+                },
+            )
         return transformation_id
+
+    def record_evidence_bridge_binding(
+        self,
+        *,
+        source: SubjectBundle,
+        target: SubjectBundle,
+        bridge_route: str,
+        authority_type: str,
+        capability: str,
+        decision_path: str | Path,
+        decision_hash: str,
+        evidence_path: str | Path,
+        evidence_hash: str,
+        created_at: str,
+        record_import: bool = True,
+    ) -> tuple[str, str]:
+        """Atomically import one immutable mechanical authority edge.
+
+        This deliberately does not touch ``reviews`` or ``task_heads``.  The
+        typed capability describes why the target may be consumed; it is not
+        a target semantic-review verdict.
+        """
+
+        routes = {
+            "kenneth_author_exact_bridge": {"kenneth_git_author_exact"},
+            "reviewed_mat_sync_reassembly_bridge": {
+                "historical_review_apply_recovery",
+                "mat_exact_review_apply",
+                "mat_sync_author_attested_selection",
+            },
+        }
+        capabilities = {
+            "kenneth_git_author_exact": "author_current_exact_acceptance",
+            "historical_review_apply_recovery": "reviewed_source_mechanical_projection",
+            "mat_exact_review_apply": "reviewed_source_mechanical_projection",
+            "mat_sync_author_attested_selection": "sync_author_attested_acceptance",
+        }
+        if source.task_id != target.task_id:
+            raise StateIntegrityError("Evidence bridge source and target tasks differ.")
+        if bridge_route not in routes or authority_type not in routes[bridge_route]:
+            raise StateIntegrityError("Evidence bridge route/authority type is outside the closed registry.")
+        if capabilities.get(authority_type) != capability:
+            raise StateIntegrityError("Evidence bridge typed capability does not match its authority.")
+        if not re.fullmatch(r"[0-9a-f]{64}", decision_hash) or not re.fullmatch(
+            r"[0-9a-f]{64}", evidence_hash
+        ):
+            raise StateIntegrityError("Evidence bridge decision/evidence hashes must be SHA-256.")
+        if not created_at:
+            raise StateIntegrityError("Evidence bridge lacks an immutable creation time.")
+
+        transformation_id = sha256_json(
+            {
+                "schema": "toy-apollo.transformation.v1",
+                "source": source.subject_id,
+                "target": target.subject_id,
+                "kind": "verified_evidence_bridge",
+            }
+        )
+        binding_id = sha256_json(
+            {
+                "schema": "toy-apollo.typed-authority-binding.v1",
+                "task_id": target.task_id,
+                "source_subject_id": source.subject_id,
+                "target_subject_id": target.subject_id,
+                "bridge_route": bridge_route,
+                "authority_type": authority_type,
+                "capability": capability,
+                "decision_hash": decision_hash,
+                "evidence_hash": evidence_hash,
+            }
+        )
+        self.initialize()
+        with self.atomic_write("evidence_bridge_item") as connection:
+            for subject in (source, target):
+                connection.execute(
+                    """
+                    INSERT OR IGNORE INTO subjects(
+                        subject_id, task_id, subject_kind, source_repo, source_commit,
+                        layout, bundle_hash, primary_hash, primary_git_sha, primary_path,
+                        manifest_json, parent_subject_id, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULLIF(?, ''), ?)
+                    """,
+                    (
+                        subject.subject_id, subject.task_id, subject.subject_kind,
+                        subject.source_repo, subject.source_commit, subject.layout,
+                        subject.bundle_hash, subject.primary_hash, subject.primary_git_sha(),
+                        subject.primary_path,
+                        json.dumps(subject.manifest(), ensure_ascii=False, sort_keys=True),
+                        subject.parent_subject_id, subject.created_at or created_at,
+                    ),
+                )
+                row = connection.execute(
+                    """
+                    SELECT task_id, subject_kind, source_repo, source_commit, layout,
+                           bundle_hash, primary_hash, primary_path, manifest_json
+                    FROM subjects WHERE subject_id = ?
+                    """,
+                    (subject.subject_id,),
+                ).fetchone()
+                expected = {
+                    "task_id": subject.task_id, "subject_kind": subject.subject_kind,
+                    "source_repo": subject.source_repo, "source_commit": subject.source_commit,
+                    "layout": subject.layout, "bundle_hash": subject.bundle_hash,
+                    "primary_hash": subject.primary_hash, "primary_path": subject.primary_path,
+                    "manifest_json": json.dumps(subject.manifest(), ensure_ascii=False, sort_keys=True),
+                }
+                if row is None or any(str(row[key]) != str(value) for key, value in expected.items()):
+                    raise StateIntegrityError(f"Evidence bridge subject collision for {subject.subject_id}.")
+
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO transformations(
+                    transformation_id, task_id, source_subject_id, target_subject_id,
+                    transformation_kind, mechanical_status, build_status,
+                    evidence_path, evidence_hash, created_at
+                ) VALUES (?, ?, ?, ?, 'verified_evidence_bridge', 'pass', 'pass', ?, ?, ?)
+                """,
+                (
+                    transformation_id, target.task_id, source.subject_id, target.subject_id,
+                    stable_absolute_path(evidence_path), evidence_hash, created_at,
+                ),
+            )
+            transformation = connection.execute(
+                "SELECT * FROM transformations WHERE transformation_id = ?",
+                (transformation_id,),
+            ).fetchone()
+            expected_transformation = {
+                "task_id": target.task_id, "source_subject_id": source.subject_id,
+                "target_subject_id": target.subject_id,
+                "transformation_kind": "verified_evidence_bridge",
+                "mechanical_status": "pass", "build_status": "pass",
+                "evidence_path": stable_absolute_path(evidence_path),
+                "evidence_hash": evidence_hash,
+            }
+            if transformation is None or any(
+                str(transformation[key]) != str(value)
+                for key, value in expected_transformation.items()
+            ):
+                raise StateIntegrityError("Evidence bridge transformation identity collision.")
+
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO authority_bindings(
+                    binding_id, task_id, source_subject_id, target_subject_id,
+                    transformation_id, bridge_route, authority_type, capability,
+                    decision_path, decision_hash, evidence_path, evidence_hash, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    binding_id, target.task_id, source.subject_id, target.subject_id,
+                    transformation_id, bridge_route, authority_type, capability,
+                    stable_absolute_path(decision_path), decision_hash,
+                    stable_absolute_path(evidence_path), evidence_hash, created_at,
+                ),
+            )
+            binding = connection.execute(
+                "SELECT * FROM authority_bindings WHERE binding_id = ?",
+                (binding_id,),
+            ).fetchone()
+            expected_binding = {
+                "task_id": target.task_id, "source_subject_id": source.subject_id,
+                "target_subject_id": target.subject_id,
+                "transformation_id": transformation_id, "bridge_route": bridge_route,
+                "authority_type": authority_type, "capability": capability,
+                "decision_path": stable_absolute_path(decision_path),
+                "decision_hash": decision_hash,
+                "evidence_path": stable_absolute_path(evidence_path),
+                "evidence_hash": evidence_hash,
+            }
+            if binding is None or any(
+                str(binding[key]) != str(value) for key, value in expected_binding.items()
+            ):
+                raise StateIntegrityError("Evidence bridge authority identity collision.")
+
+            if record_import:
+                source_path = stable_absolute_path(evidence_path)
+                connection.execute(
+                    """
+                    INSERT OR IGNORE INTO imports(
+                        source_path, source_hash, source_kind, imported_at, record_count
+                    ) VALUES (?, ?, 'validated_evidence_bridge_receipt', ?, 1)
+                    """,
+                    (source_path, evidence_hash, utc_now()),
+                )
+                imported = connection.execute(
+                    "SELECT source_hash, source_kind, record_count FROM imports WHERE source_path = ?",
+                    (source_path,),
+                ).fetchone()
+                if (
+                    imported is None or imported["source_hash"] != evidence_hash
+                    or imported["source_kind"] != "validated_evidence_bridge_receipt"
+                    or int(imported["record_count"]) != 1
+                ):
+                    raise StateIntegrityError("Evidence bridge import path already binds different bytes.")
+            self._insert_event(
+                connection,
+                event_type="validated_evidence_bridge_imported",
+                task_id=target.task_id,
+                subject_id=target.subject_id,
+                evidence_path=evidence_path,
+                evidence_hash=evidence_hash,
+                occurred_at=created_at,
+                payload={
+                    "binding_id": binding_id,
+                    "transformation_id": transformation_id,
+                    "bridge_route": bridge_route,
+                    "authority_type": authority_type,
+                    "capability": capability,
+                    "source_subject_id": source.subject_id,
+                    "target_subject_id": target.subject_id,
+                    "semantic_upgrade": False,
+                    "rubric_upgrade": False,
+                    "creates_review": False,
+                },
+            )
+        return binding_id, transformation_id
 
     def record_run(
         self,
@@ -971,10 +1976,13 @@ class WorkspaceStateStore:
         detail: Mapping[str, Any] | None = None,
         run_id: str = "",
         started_at: str | None = None,
+        updated_at: str | None = None,
         completed_at: str = "",
     ) -> str:
         self.initialize()
         now = utc_now()
+        resolved_started_at = started_at or now
+        resolved_updated_at = updated_at or now
         resolved_run_id = run_id or sha256_json(
             {
                 "schema": "toy-apollo.run.v1",
@@ -982,7 +1990,7 @@ class WorkspaceStateStore:
                 "operation": operation,
                 "campaign_id": campaign_id,
                 "artifact_path": str(artifact_path),
-                "started_at": started_at or now,
+                "started_at": resolved_started_at,
             }
         )
         with self._connection(write=True) as connection:
@@ -1009,10 +2017,25 @@ class WorkspaceStateStore:
                     subject_id,
                     str(artifact_path),
                     json.dumps(dict(detail or {}), ensure_ascii=False, sort_keys=True),
-                    started_at or now,
-                    now,
+                    resolved_started_at,
+                    resolved_updated_at,
                     completed_at,
                 ),
+            )
+            self._insert_event(
+                connection,
+                event_type="run_state_changed",
+                task_id=task_id,
+                subject_id=subject_id,
+                evidence_path=artifact_path,
+                occurred_at=completed_at or resolved_updated_at,
+                payload={
+                    "run_id": resolved_run_id,
+                    "campaign_id": campaign_id,
+                    "operation": operation,
+                    "status": status,
+                    "detail": dict(detail or {}),
+                },
             )
         return resolved_run_id
 
@@ -1302,7 +2325,14 @@ class WorkspaceStateStore:
                 (freshness, utc_now(), target_repo),
             )
 
-    def mark_imported(self, *, source_path: Path, source_kind: str, record_count: int) -> None:
+    def mark_imported(
+        self,
+        *,
+        source_path: Path,
+        source_kind: str,
+        record_count: int,
+        source_hash: str = "",
+    ) -> None:
         self.initialize()
         with self._connection(write=True) as connection:
             connection.execute(
@@ -1315,18 +2345,59 @@ class WorkspaceStateStore:
                     imported_at = excluded.imported_at,
                     record_count = excluded.record_count
                 """,
-                (str(source_path.resolve()), sha256_file(source_path), source_kind, utc_now(), int(record_count)),
+                (
+                    stable_absolute_path(source_path),
+                    source_hash or sha256_file(source_path),
+                    source_kind,
+                    utc_now(),
+                    int(record_count),
+                ),
             )
 
-    def import_is_current(self, source_path: Path) -> bool:
-        if not self.exists or not source_path.is_file():
+    def mark_imported_many(
+        self,
+        records: Iterable[tuple[Path, str, str, int]],
+    ) -> None:
+        """Register already-hashed evidence paths with one SQLite statement."""
+
+        prepared = [
+            (
+                stable_absolute_path(source_path),
+                source_hash,
+                source_kind,
+                utc_now(),
+                int(record_count),
+            )
+            for source_path, source_hash, source_kind, record_count in records
+        ]
+        if not prepared:
+            return
+        if any(not row[1] for row in prepared):
+            raise ValueError("Bulk import registration requires precomputed source hashes.")
+        self.initialize()
+        with self._connection(write=True) as connection:
+            connection.executemany(
+                """
+                INSERT INTO imports(source_path, source_hash, source_kind, imported_at, record_count)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(source_path) DO UPDATE SET
+                    source_hash = excluded.source_hash,
+                    source_kind = excluded.source_kind,
+                    imported_at = excluded.imported_at,
+                    record_count = excluded.record_count
+                """,
+                prepared,
+            )
+
+    def import_is_current(self, source_path: Path, *, source_hash: str = "") -> bool:
+        if not self.exists or (not source_hash and not source_path.is_file()):
             return False
         with self._connection(write=self._bulk_connection is not None) as connection:
             row = connection.execute(
                 "SELECT source_hash FROM imports WHERE source_path = ?",
-                (str(source_path.resolve()),),
+                (stable_absolute_path(source_path),),
             ).fetchone()
-        return bool(row and row["source_hash"] == sha256_file(source_path))
+        return bool(row and row["source_hash"] == (source_hash or sha256_file(source_path)))
 
     def eligible_review_basis(
         self,
@@ -1341,16 +2412,22 @@ class WorkspaceStateStore:
             return None
         with self._connection(write=self._bulk_connection is not None) as connection:
             row = connection.execute(
-                """
-                SELECT r.*, s.primary_hash, s.bundle_hash
+                f"""
+                SELECT r.*, s.primary_hash, s.bundle_hash,
+                       m.prompt_version, m.rubric_version,
+                       m.review_input_path, m.review_input_hash,
+                       m.reviewer_backend_id, m.provenance_json
                 FROM reviews r
                 JOIN subjects s ON s.subject_id = r.subject_id
+                JOIN review_metadata m ON m.review_id = r.review_id
                 WHERE r.task_id = ?
                   AND r.evidence_hash = ?
                   AND s.primary_hash = ?
                   AND r.verdict = 'pass'
                   AND r.phase2_status = 'pass'
                   AND r.authority_eligible = 1
+                  AND {self._prompt_version_pred()}
+                  AND {self._rubric_version_pred()}
                 ORDER BY r.reviewed_at DESC
                 LIMIT 1
                 """,
@@ -1362,6 +2439,11 @@ class WorkspaceStateStore:
         if not self.exists:
             return None
         with self._connection(write=False) as connection:
+            present = connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='authority_bindings'"
+            ).fetchone()
+            if present is None:
+                return None
             subject = connection.execute(
                 "SELECT task_id, bundle_hash FROM subjects WHERE subject_id = ?",
                 (subject_id,),
@@ -1369,14 +2451,19 @@ class WorkspaceStateStore:
             if subject is None:
                 return None
             row = connection.execute(
-                """
+                f"""
                 SELECT r.*, 'exact_bundle' AS coverage_kind,
                        ? AS covered_subject_id
                 FROM reviews r
                 JOIN subjects reviewed ON reviewed.subject_id = r.subject_id
+                LEFT JOIN review_metadata m ON m.review_id = r.review_id
                 WHERE reviewed.task_id = ? AND reviewed.bundle_hash = ?
                   AND r.verdict = 'pass' AND r.phase2_status = 'pass'
                   AND r.authority_eligible = 1
+                  AND (
+                    r.authority_scope = 'kenneth_pr_exact_head_review'
+                    OR ({self._prompt_version_pred()} AND {self._rubric_version_pred()})
+                  )
                 ORDER BY r.reviewed_at DESC
                 LIMIT 1
                 """,
@@ -1385,23 +2472,136 @@ class WorkspaceStateStore:
             if row is not None:
                 return dict(row)
             row = connection.execute(
-                """
+                f"""
                 SELECT r.*, t.transformation_kind AS coverage_kind,
                        t.mechanical_status, t.build_status, t.transformation_id
                 FROM transformations t
                 JOIN reviews r ON r.subject_id = t.source_subject_id
                 JOIN subjects transformed ON transformed.subject_id = t.target_subject_id
+                LEFT JOIN review_metadata m ON m.review_id = r.review_id
                 WHERE transformed.task_id = ? AND transformed.bundle_hash = ?
                   AND t.mechanical_status = 'pass'
                   AND (t.build_status = 'pass' OR t.build_status = 'not_required')
                   AND r.verdict = 'pass' AND r.phase2_status = 'pass'
                   AND r.authority_eligible = 1
+                  AND (
+                    r.authority_scope = 'kenneth_pr_exact_head_review'
+                    OR ({self._prompt_version_pred()} AND {self._rubric_version_pred()})
+                  )
                 ORDER BY r.reviewed_at DESC
                 LIMIT 1
                 """,
                 (subject["task_id"], subject["bundle_hash"]),
             ).fetchone()
         return dict(row) if row is not None else None
+
+    def authority_coverage(self, subject_id: str) -> dict[str, Any] | None:
+        """Return typed mechanical authority without calling it a review."""
+
+        if not self.exists:
+            return None
+        with self._connection(write=False) as connection:
+            subject = connection.execute(
+                "SELECT task_id, bundle_hash FROM subjects WHERE subject_id = ?",
+                (subject_id,),
+            ).fetchone()
+            if subject is None:
+                return None
+            row = connection.execute(
+                """
+                SELECT b.*, t.mechanical_status, t.build_status,
+                       'typed_evidence_bridge' AS coverage_kind,
+                       ? AS covered_subject_id
+                FROM valid_authority_bindings b
+                JOIN transformations t ON t.transformation_id = b.transformation_id
+                JOIN subjects target ON target.subject_id = b.target_subject_id
+                WHERE b.target_subject_id = ?
+                  AND target.task_id = ? AND target.bundle_hash = ?
+                ORDER BY b.created_at DESC, b.binding_id
+                LIMIT 1
+                """,
+                (subject_id, subject_id, subject["task_id"], subject["bundle_hash"]),
+            ).fetchone()
+        return dict(row) if row is not None else None
+
+    def validate_authority_bindings(self) -> dict[str, Any]:
+        """Read-only relational checks for the typed bridge authority table."""
+
+        if not self.exists:
+            return {"valid": True, "schema_present": False, "count": 0, "violations": []}
+        capability_by_type = {
+            "kenneth_git_author_exact": "author_current_exact_acceptance",
+            "historical_review_apply_recovery": "reviewed_source_mechanical_projection",
+            "mat_exact_review_apply": "reviewed_source_mechanical_projection",
+            "mat_sync_author_attested_selection": "sync_author_attested_acceptance",
+        }
+        violations: list[str] = []
+        with self._connection(write=False) as connection:
+            present = connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='authority_bindings'"
+            ).fetchone()
+            if present is None:
+                return {"valid": True, "schema_present": False, "count": 0, "violations": []}
+            rows = connection.execute(
+                """
+                SELECT b.*, source.task_id AS source_task,
+                       target.task_id AS target_task,
+                       target.source_repo AS target_repo,
+                       t.task_id AS transformation_task,
+                       t.source_subject_id AS transformation_source,
+                       t.target_subject_id AS transformation_target,
+                       t.transformation_kind, t.mechanical_status, t.build_status,
+                       r.review_id AS target_review_id
+                FROM authority_bindings b
+                JOIN subjects source ON source.subject_id = b.source_subject_id
+                JOIN subjects target ON target.subject_id = b.target_subject_id
+                JOIN transformations t ON t.transformation_id = b.transformation_id
+                LEFT JOIN reviews r
+                  ON r.subject_id = b.target_subject_id
+                 AND r.evidence_hash = b.evidence_hash
+                ORDER BY b.binding_id
+                """
+            ).fetchall()
+        for row in rows:
+            binding_id = str(row["binding_id"])
+            expected_route = {
+                "kenneth_git_author_exact": "kenneth_author_exact_bridge",
+                "historical_review_apply_recovery": "reviewed_mat_sync_reassembly_bridge",
+                "mat_exact_review_apply": "reviewed_mat_sync_reassembly_bridge",
+                "mat_sync_author_attested_selection": "reviewed_mat_sync_reassembly_bridge",
+            }.get(str(row["authority_type"]))
+            if row["bridge_route"] != expected_route:
+                violations.append(f"{binding_id}:route_authority_mismatch")
+            if row["capability"] != capability_by_type.get(str(row["authority_type"])):
+                violations.append(f"{binding_id}:capability_authority_mismatch")
+            if not (
+                row["task_id"] == row["source_task"] == row["target_task"]
+                == row["transformation_task"]
+            ):
+                violations.append(f"{binding_id}:task_mismatch")
+            if (
+                row["source_subject_id"] != row["transformation_source"]
+                or row["target_subject_id"] != row["transformation_target"]
+                or row["transformation_kind"] != "verified_evidence_bridge"
+                or row["mechanical_status"] != "pass"
+                or row["build_status"] != "pass"
+            ):
+                violations.append(f"{binding_id}:transformation_mismatch")
+            if str(row["target_repo"]).lower() != "mat":
+                violations.append(f"{binding_id}:target_not_mat")
+            if (
+                not str(row["decision_path"])
+                or re.fullmatch(r"[0-9a-f]{64}", str(row["decision_hash"])) is None
+                or not str(row["evidence_path"])
+                or re.fullmatch(r"[0-9a-f]{64}", str(row["evidence_hash"])) is None
+            ):
+                violations.append(f"{binding_id}:evidence_binding_malformed")
+            if row["target_review_id"] is not None:
+                violations.append(f"{binding_id}:bridge_evidence_created_target_review")
+        return {
+            "valid": not violations, "schema_present": True,
+            "count": len(rows), "violations": violations,
+        }
 
     def partial_review_coverage(self, subject_id: str) -> dict[str, Any] | None:
         """Return honest legacy evidence that binds the primary file but not the full bundle.
@@ -1421,18 +2621,23 @@ class WorkspaceStateStore:
             if subject is None:
                 return None
             row = connection.execute(
-                """
+                f"""
                 SELECT r.*, reviewed.bundle_hash AS reviewed_bundle_hash,
                        reviewed.primary_hash AS reviewed_primary_hash,
                        'primary_only_bundle_mismatch' AS coverage_kind,
                        ? AS compared_subject_id
                 FROM reviews r
                 JOIN subjects reviewed ON reviewed.subject_id = r.subject_id
+                LEFT JOIN review_metadata m ON m.review_id = r.review_id
                 WHERE reviewed.task_id = ?
                   AND reviewed.primary_hash = ?
                   AND reviewed.bundle_hash != ?
                   AND r.verdict = 'pass' AND r.phase2_status = 'pass'
                   AND r.authority_eligible = 1
+                  AND (
+                    r.authority_scope = 'kenneth_pr_exact_head_review'
+                    OR ({self._prompt_version_pred()} AND {self._rubric_version_pred()})
+                  )
                 ORDER BY r.reviewed_at DESC
                 LIMIT 1
                 """,
@@ -1451,6 +2656,31 @@ class WorkspaceStateStore:
         if verify_integrity:
             self.assert_integrity()
         with self._connection(write=False) as connection:
+            catalog_row = None
+            cohort_rows: list[sqlite3.Row] = []
+            catalog_table = connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'catalog_tasks'"
+            ).fetchone()
+            if catalog_table is not None:
+                active_catalog = connection.execute(
+                    "SELECT value FROM meta WHERE key = 'active_catalog_id'"
+                ).fetchone()
+                if active_catalog is not None:
+                    catalog_row = connection.execute(
+                        """
+                        SELECT * FROM catalog_tasks
+                        WHERE catalog_id = ? AND task_id = ?
+                        """,
+                        (active_catalog["value"], task_id),
+                    ).fetchone()
+                    cohort_rows = connection.execute(
+                        """
+                        SELECT cohort_id FROM catalog_cohorts
+                        WHERE catalog_id = ? AND task_id = ?
+                        ORDER BY cohort_id
+                        """,
+                        (active_catalog["value"], task_id),
+                    ).fetchall()
             head_rows = connection.execute(
                 """
                 SELECT h.*, s.subject_kind, s.source_repo, s.source_commit,
@@ -1520,13 +2750,14 @@ class WorkspaceStateStore:
         mat_main = current_heads.get("mat_main")
         kenneth_main = current_heads.get("kenneth_main")
         candidate_coverage = self.review_coverage(candidate["subject_id"]) if candidate else None
+        candidate_authority = self.authority_coverage(candidate["subject_id"]) if candidate else None
         candidate_partial_review = (
             self.partial_review_coverage(candidate["subject_id"])
-            if candidate and candidate_coverage is None
+            if candidate and candidate_coverage is None and candidate_authority is None
             else None
         )
         if candidate:
-            if candidate_coverage is None:
+            if candidate_coverage is None and candidate_authority is None:
                 actions.append(
                     "review_scope_rebind_required" if candidate_partial_review else "needs_review"
                 )
@@ -1536,6 +2767,12 @@ class WorkspaceStateStore:
             role: coverage
             for role, head in current_heads.items()
             if (coverage := self.review_coverage(head["subject_id"])) is not None
+        }
+        head_authority_coverage = {
+            role: coverage
+            for role, head in current_heads.items()
+            if role not in head_review_coverage
+            and (coverage := self.authority_coverage(head["subject_id"])) is not None
         }
         head_partial_review_coverage = {
             role: partial
@@ -1592,6 +2829,17 @@ class WorkspaceStateStore:
         if any(pin["state"] == "mismatch" for pin in dependency_pins):
             actions.append("dependency_pin_changed_requires_revalidation")
         active_runs = [dict(row) for row in run_rows if row["status"] in {"active", "running", "claimed"}]
+        if catalog_row is not None:
+            if not current_heads:
+                actions.append("current_subject_missing")
+            elif (
+                not head_review_coverage
+                and not head_authority_coverage
+                and not head_partial_review_coverage
+            ):
+                actions.append("current_bundle_review_missing")
+            if not review_rows:
+                actions.append("review_history_missing")
         report = {
             "task_id": task_id,
             "database_status": "ok",
@@ -1600,12 +2848,16 @@ class WorkspaceStateStore:
             "latest_review": dict(review_rows[0]) if review_rows else None,
             "latest_current_review": latest_current_review,
             "head_review_coverage": head_review_coverage,
+            "head_authority_coverage": head_authority_coverage,
             "head_partial_review_coverage": head_partial_review_coverage,
             "candidate_review_coverage": candidate_coverage,
+            "candidate_authority_coverage": candidate_authority,
             "candidate_partial_review": candidate_partial_review,
             "integrations": [dict(row) for row in integration_rows],
             "active_runs": active_runs,
             "dependency_pins": dependency_pins,
+            "catalog_task": dict(catalog_row) if catalog_row is not None else None,
+            "catalog_cohorts": [str(row["cohort_id"]) for row in cohort_rows],
             "actions": list(dict.fromkeys(actions)),
         }
         return report
@@ -1615,17 +2867,40 @@ class WorkspaceStateStore:
             return [{"task_id": "*", "actions": ["state_rebuild_required"]}]
         self.assert_integrity()
         with self._connection(write=False) as connection:
-            rows = connection.execute(
-                """
-                SELECT task_id FROM subjects
-                UNION SELECT task_id FROM reviews
-                UNION SELECT task_id FROM runs
-                UNION SELECT task_id FROM integrations
-                UNION SELECT task_id FROM task_heads
-                UNION SELECT consumer_task_id AS task_id FROM dependency_pins
-                ORDER BY task_id
-                """
-            ).fetchall()
+            catalog_table = connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'catalog_tasks'"
+            ).fetchone()
+            active_catalog = (
+                connection.execute("SELECT value FROM meta WHERE key = 'active_catalog_id'").fetchone()
+                if catalog_table is not None
+                else None
+            )
+            if active_catalog is not None:
+                rows = connection.execute(
+                    """
+                    SELECT task_id FROM catalog_tasks WHERE catalog_id = ?
+                    UNION SELECT task_id FROM subjects
+                    UNION SELECT task_id FROM reviews
+                    UNION SELECT task_id FROM runs
+                    UNION SELECT task_id FROM integrations
+                    UNION SELECT task_id FROM task_heads
+                    UNION SELECT consumer_task_id AS task_id FROM dependency_pins
+                    ORDER BY task_id
+                    """,
+                    (active_catalog["value"],),
+                ).fetchall()
+            else:
+                rows = connection.execute(
+                    """
+                    SELECT task_id FROM subjects
+                    UNION SELECT task_id FROM reviews
+                    UNION SELECT task_id FROM runs
+                    UNION SELECT task_id FROM integrations
+                    UNION SELECT task_id FROM task_heads
+                    UNION SELECT consumer_task_id AS task_id FROM dependency_pins
+                    ORDER BY task_id
+                    """
+                ).fetchall()
         reports = [
             self.task_report(str(row["task_id"]), verify_integrity=False) for row in rows
         ]

@@ -14,7 +14,9 @@ if str(REPO_ROOT) not in sys.path:
 from src.toy_apollo.phase2_batch_controller import COMPLETED, NONTERMINAL  # noqa: E402
 from src.toy_apollo.phase2_batch_runner import (  # noqa: E402
     _dependencies_from_record,
+    _normalize_kind,
     _obligation_fingerprint,
+    _task_kind,
     build_live_batch_state,
     plan_batch_from_ledger,
     render_batch_runner_plan,
@@ -33,12 +35,368 @@ class FakeLedger:
 
 
 class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
+    def test_lemma_and_corollary_are_proof_bearing_batch_kinds(self):
+        self.assertEqual(_normalize_kind("Lemma"), "theorem")
+        self.assertEqual(_normalize_kind("Corollary"), "theorem")
+        self.assertEqual(_task_kind("lem_18", {}), "theorem")
+        self.assertEqual(_task_kind("cor_21", {}), "theorem")
+
     def _settings(self, root: Path):
         output_dir = root / "ToyApollo" / "Output"
         output_dir.mkdir(parents=True)
+        plans_dir = root / "plans"
+        plans_dir.mkdir(parents=True)
         return SimpleNamespace(
             toyapollo_output_dir=output_dir,
             phase2_prompt_packs_dir=root / "phase2_prompt_packs",
+            plans_dir=plans_dir,
+        )
+
+    @staticmethod
+    def _write_plan(settings, tasks):
+        plan_path = settings.plans_dir / "chapter_test_plan.json"
+        plan_path.write_text(json.dumps(tasks), encoding="utf-8")
+        return plan_path
+
+    def _setup_applied_dependency_with_historical_triage(
+        self,
+        root: Path,
+        dependency_id: str,
+        consumer_id: str,
+        *,
+        blocking_dependency_id: str = "",
+        alias_current_result: bool = False,
+    ):
+        ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(
+            root,
+            dependency_id,
+            completed=True,
+        )
+        if blocking_dependency_id:
+            authority_plan_path = settings.plans_dir / "08_chap4_measurable_functions_plan.json"
+            authority_tasks = json.loads(authority_plan_path.read_text(encoding="utf-8"))
+            authority_tasks[0]["dependencies"] = [blocking_dependency_id]
+            authority_tasks.append(
+                {
+                    "block_id": blocking_dependency_id,
+                    "type": "Definition",
+                    "title": "Unresolved basis dependency",
+                    "content": "Supply the unresolved upstream basis.",
+                    "dependencies": [],
+                }
+            )
+            authority_plan_path.write_text(
+                json.dumps(authority_tasks),
+                encoding="utf-8",
+            )
+            ledger.update_runtime_metadata(
+                dependency_id,
+                dependencies=[blocking_dependency_id],
+            )
+            task_path = pack_dir / "task.json"
+            task_payload = json.loads(task_path.read_text(encoding="utf-8"))
+            task_payload["dependencies"] = [blocking_dependency_id]
+            task_payload["final_import_union"] = [blocking_dependency_id]
+            task_path.write_text(
+                json.dumps(task_payload, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            ledger.add_or_update_task(
+                {
+                    "block_id": blocking_dependency_id,
+                    "type": "Definition",
+                    "title": "Unresolved basis dependency",
+                    "content": "Supply the unresolved upstream basis.",
+                    "source_plan": "08_chap4_measurable_functions",
+                    "dependencies": [],
+                }
+            )
+            ledger.update_runtime_metadata(
+                blocking_dependency_id,
+                phase2_status="fail",
+                phase2_status_reason="ordinary unresolved upstream basis",
+            )
+        self._append_direct_downstream_consumer(settings.plans_dir, dependency_id, consumer_id)
+        ledger.add_or_update_task(
+            {
+                "block_id": consumer_id,
+                "type": "Theorem",
+                "title": "Downstream consumer",
+                "content": "Consume the reviewed dependency.",
+                "source_plan": "09_chap4_composition",
+                "dependencies": [dependency_id],
+            }
+        )
+        ledger.update_runtime_metadata(
+            consumer_id,
+            phase2_status="fail",
+            phase2_status_reason="ordinary downstream repair remains",
+        )
+        with patch(
+            "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+            return_value=(True, "build ok"),
+        ):
+            success, detail = asyncio.run(
+                write_existing_output_review_pack(
+                    dependency_id,
+                    ledger,
+                    settings,
+                    force_new_attempt=True,
+                )
+            )
+        self.assertTrue(success, detail)
+        result_path = self._write_codex_review_result(
+            pack_dir,
+            verdict="pass",
+            proof_class="textbook_proof_completed",
+            completion_class="textbook_proof_completed",
+        )
+        with patch(
+            "src.toy_apollo.phase2_review_apply.run_official_module_build",
+            return_value=(True, "build ok"),
+        ):
+            success, detail = asyncio.run(
+                apply_codex_review_result(
+                    dependency_id,
+                    ledger,
+                    settings,
+                    str(result_path),
+                )
+            )
+        self.assertTrue(success, detail)
+        if alias_current_result:
+            applied_result_path = Path(
+                ledger.ledger["tasks"][dependency_id]["latest_applied_review_result_file"]
+            )
+            alias_result_path = pack_dir / "semantic_review_result.json"
+            alias_result_path.write_bytes(applied_result_path.read_bytes())
+            ledger.update_runtime_metadata(
+                dependency_id,
+                latest_semantic_review_result_file=str(alias_result_path),
+            )
+
+        triage_path = pack_dir / "historical_semantic_fail_triage.json"
+        triage_path.write_text(
+            json.dumps(
+                {
+                    "needs_diagnoser": True,
+                    "local_repair_allowed": False,
+                    "category": "historical_wrong_route",
+                }
+            ),
+            encoding="utf-8",
+        )
+        ledger.update_runtime_metadata(
+            dependency_id,
+            latest_semantic_fail_triage_file=str(triage_path),
+            latest_semantic_fail_triage_needs_diagnoser=True,
+            latest_semantic_fail_triage_local_repair_allowed=False,
+            latest_semantic_fail_triage_category="historical_wrong_route",
+        )
+        return ledger, settings, pack_dir, output_path
+
+    def test_plan_backed_unregistered_tasks_feed_dependency_fanout_read_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            settings = self._settings(Path(tmp))
+            self._write_plan(
+                settings,
+                [
+                    {
+                        "block_id": "def_5_root",
+                        "type": "Definition",
+                        "content": "Root definition.",
+                        "dependencies": [],
+                        "source_plan": "chapter_test",
+                    },
+                    {
+                        "block_id": "thm_5_downstream",
+                        "type": "Theorem_Statement",
+                        "content": "Downstream theorem.",
+                        "dependencies": ["def_5_root"],
+                        "source_plan": "chapter_test",
+                    },
+                ],
+            )
+            ledger = FakeLedger({})
+
+            state = build_live_batch_state(
+                ["def_5_root", "thm_5_downstream"],
+                ledger,
+                settings,
+            )
+            plan = plan_batch_from_ledger(
+                ["def_5_root", "thm_5_downstream"],
+                ledger,
+                settings,
+            )
+
+        tasks = {task["task_id"]: task for task in state["tasks"]}
+        actions = {action.task_id: action for action in plan.actions}
+        self.assertEqual(tasks["thm_5_downstream"]["dependencies"], ["def_5_root"])
+        self.assertEqual(actions["def_5_root"].fanout, 1)
+        self.assertEqual(ledger.ledger["tasks"], {})
+
+    def test_imported_record_missing_dependency_field_falls_back_to_plan(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            settings = self._settings(Path(tmp))
+            self._write_plan(
+                settings,
+                [
+                    {
+                        "block_id": "def_5_root",
+                        "type": "Definition",
+                        "content": "Root definition.",
+                        "dependencies": [],
+                        "source_plan": "chapter_test",
+                    },
+                    {
+                        "block_id": "thm_5_downstream",
+                        "type": "Theorem_Statement",
+                        "content": "Plan theorem content.",
+                        "dependencies": ["def_5_root"],
+                        "source_plan": "chapter_test",
+                    },
+                ],
+            )
+            ledger = FakeLedger(
+                {
+                    "thm_5_downstream": {
+                        "block_id": "thm_5_downstream",
+                        "type": "Theorem_Statement",
+                        "content": "Imported theorem content.",
+                        "status": COMPLETED,
+                    }
+                }
+            )
+
+            state = build_live_batch_state(["thm_5_downstream"], ledger, settings)
+
+        self.assertEqual(state["tasks"][0]["dependencies"], ["def_5_root"])
+        self.assertNotIn("dependencies", ledger.ledger["tasks"]["thm_5_downstream"])
+
+    def test_explicit_empty_ledger_dependencies_override_plan_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            settings = self._settings(Path(tmp))
+            self._write_plan(
+                settings,
+                [
+                    {
+                        "block_id": "thm_5_downstream",
+                        "type": "Theorem_Statement",
+                        "content": "Plan theorem content.",
+                        "dependencies": ["def_5_root"],
+                        "source_plan": "chapter_test",
+                    }
+                ],
+            )
+            ledger = FakeLedger(
+                {
+                    "thm_5_downstream": {
+                        "block_id": "thm_5_downstream",
+                        "type": "Theorem_Statement",
+                        "content": "Imported theorem content.",
+                        "dependencies": [],
+                    }
+                }
+            )
+
+            state = build_live_batch_state(["thm_5_downstream"], ledger, settings)
+
+        self.assertEqual(state["tasks"][0]["dependencies"], [])
+
+    def test_plan_resolution_preserves_runtime_fields_from_snapshot_only_record(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            settings = self._settings(Path(tmp))
+            self._write_plan(
+                settings,
+                [
+                    {
+                        "block_id": "thm_5_snapshot",
+                        "type": "Theorem_Statement",
+                        "content": "Plan theorem content.",
+                        "dependencies": ["def_5_root"],
+                        "source_plan": "chapter_test",
+                    }
+                ],
+            )
+            ledger = FakeLedger(
+                {
+                    "thm_5_snapshot": {
+                        "block_id": "thm_5_snapshot",
+                        "status": COMPLETED,
+                        "phase2_status": "fail",
+                        "phase2_status_reason": "historical semantic failure",
+                        "latest_semantic_review_result_file": "old-review.json",
+                        "candidate_snapshot": {
+                            "dependencies": ["def_5_root"],
+                        },
+                    }
+                }
+            )
+
+            state = build_live_batch_state(["thm_5_snapshot"], ledger, settings)
+
+        task = state["tasks"][0]
+        self.assertEqual(task["dependencies"], ["def_5_root"])
+        self.assertEqual(task["phase2_status"], "fail")
+        self.assertEqual(task["phase2_status_reason"], "historical semantic failure")
+        self.assertEqual(
+            ledger.ledger["tasks"]["thm_5_snapshot"]["latest_semantic_review_result_file"],
+            "old-review.json",
+        )
+
+    def test_current_pack_import_manifest_overrides_stale_ledger_dependencies(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            settings = self._settings(root)
+            self._write_plan(
+                settings,
+                [
+                    {
+                        "block_id": "thm_5_pack_current",
+                        "type": "Theorem_Statement",
+                        "content": "Plan theorem content.",
+                        "dependencies": ["def_5_plan"],
+                        "source_plan": "chapter_test",
+                    }
+                ],
+            )
+            pack_dir = settings.phase2_prompt_packs_dir / "thm_5_pack_current"
+            pack_dir.mkdir(parents=True)
+            (pack_dir / "task.json").write_text(
+                json.dumps(
+                    {
+                        "block_id": "thm_5_pack_current",
+                        "type": "Theorem_Statement",
+                        "content": "Current packed theorem content.",
+                        "dependencies": ["def_5_pack"],
+                        "soft_imports": ["thm_5_soft"],
+                        "final_import_union": ["def_5_pack", "thm_5_soft"],
+                        "source_plan": "chapter_test",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            ledger = FakeLedger(
+                {
+                    "thm_5_pack_current": {
+                        "block_id": "thm_5_pack_current",
+                        "type": "Theorem_Statement",
+                        "content": "Stale ledger theorem content.",
+                        "dependencies": ["def_5_stale"],
+                        "status": COMPLETED,
+                    }
+                }
+            )
+
+            state = build_live_batch_state(["thm_5_pack_current"], ledger, settings)
+
+        task = state["tasks"][0]
+        self.assertEqual(task["dependencies"], ["def_5_pack", "thm_5_soft"])
+        self.assertEqual(task["status"], COMPLETED)
+        self.assertEqual(
+            ledger.ledger["tasks"]["thm_5_pack_current"]["dependencies"],
+            ["def_5_stale"],
         )
 
     def test_completed_without_phase2_status_requires_fresh_existing_review(self):
@@ -223,6 +581,150 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(plan.report.rows[0].report_status, "pass")
         self.assertEqual(plan.report.rows[0].task_status, "pass")
 
+    def test_alias_current_result_matching_versioned_applied_receipt_ignores_historical_triage_for_basis_only_stale_pass(
+        self,
+    ):
+        with tempfile.TemporaryDirectory() as tmp:
+            dependency_id = "thm_42_clean_dependency"
+            consumer_id = "thm_42_downstream_consumer"
+            blocking_dependency_id = "def_42_unresolved_basis"
+            ledger, settings, _, _ = self._setup_applied_dependency_with_historical_triage(
+                Path(tmp),
+                dependency_id,
+                consumer_id,
+                blocking_dependency_id=blocking_dependency_id,
+                alias_current_result=True,
+            )
+            record = ledger.ledger["tasks"][dependency_id]
+            current_result_path = Path(record["latest_semantic_review_result_file"])
+            applied_result_path = Path(record["latest_applied_review_result_file"])
+            result_paths_are_distinct = (
+                current_result_path.resolve() != applied_result_path.resolve()
+            )
+            result_bytes_match = (
+                current_result_path.read_bytes() == applied_result_path.read_bytes()
+            )
+
+            state = build_live_batch_state([consumer_id], ledger, settings)
+            plan = plan_batch_from_ledger([consumer_id], ledger, settings)
+
+        self.assertTrue(result_paths_are_distinct)
+        self.assertTrue(result_bytes_match)
+        projected_tasks = {task["task_id"]: task for task in state["tasks"]}
+        self.assertTrue(
+            projected_tasks[dependency_id]["latest_clean_applied_review_is_current"]
+        )
+        rows = {row.task_id: row for row in plan.report.rows}
+        self.assertEqual(rows[dependency_id].report_status, "needs_fresh_review")
+        self.assertEqual(rows[dependency_id].blocked_dependency, blocking_dependency_id)
+        self.assertEqual(plan.actions[0].task_id, consumer_id)
+        self.assertEqual(plan.actions[0].action, "skip_blocked")
+        self.assertIn(blocking_dependency_id, plan.actions[0].reason)
+        self.assertNotIn("diagnoser", plan.actions[0].reason)
+        self.assertNotIn("historical_wrong_route", plan.actions[0].reason)
+
+    def test_alias_current_result_identity_stays_fail_closed_for_content_or_receipt_mismatch(self):
+        for mismatch in ("different_content", "input_receipt"):
+            with self.subTest(mismatch=mismatch), tempfile.TemporaryDirectory() as tmp:
+                dependency_id = f"thm_42_alias_{mismatch}_dependency"
+                consumer_id = f"thm_42_alias_{mismatch}_consumer"
+                ledger, settings, pack_dir, _ = (
+                    self._setup_applied_dependency_with_historical_triage(
+                        Path(tmp),
+                        dependency_id,
+                        consumer_id,
+                        blocking_dependency_id=f"def_42_alias_{mismatch}_basis",
+                        alias_current_result=True,
+                    )
+                )
+                record = ledger.ledger["tasks"][dependency_id]
+                if mismatch == "different_content":
+                    alias_result_path = pack_dir / "semantic_review_result.json"
+                    alias_result = json.loads(alias_result_path.read_text(encoding="utf-8"))
+                    alias_result["summary"] = "different current review result"
+                    alias_result_path.write_text(
+                        json.dumps(alias_result, indent=2, ensure_ascii=False),
+                        encoding="utf-8",
+                    )
+                else:
+                    ledger.update_runtime_metadata(
+                        dependency_id,
+                        latest_applied_review_input_hash="mismatched-review-input-receipt",
+                    )
+
+                state = build_live_batch_state([consumer_id], ledger, settings)
+                plan = plan_batch_from_ledger([consumer_id], ledger, settings)
+
+            self.assertNotEqual(
+                Path(record["latest_semantic_review_result_file"]).resolve(),
+                Path(record["latest_applied_review_result_file"]).resolve(),
+            )
+            projected_tasks = {task["task_id"]: task for task in state["tasks"]}
+            self.assertFalse(
+                projected_tasks[dependency_id]["latest_clean_applied_review_is_current"]
+            )
+            self.assertEqual(plan.actions[0].task_id, consumer_id)
+            self.assertEqual(plan.actions[0].action, "skip_blocked")
+            self.assertIn("diagnoser-required semantic failure", plan.actions[0].reason)
+            self.assertIn(dependency_id, plan.actions[0].reason)
+
+    def test_nonconsumable_dependency_authority_keeps_historical_diagnoser_blocker(self):
+        for authority_state in ("needs_fresh_review", "current_fail"):
+            with self.subTest(authority_state=authority_state), tempfile.TemporaryDirectory() as tmp:
+                dependency_id = f"thm_42_{authority_state}_dependency"
+                consumer_id = f"thm_42_{authority_state}_consumer"
+                ledger, settings, pack_dir, output_path = (
+                    self._setup_applied_dependency_with_historical_triage(
+                        Path(tmp),
+                        dependency_id,
+                        consumer_id,
+                    )
+                )
+                if authority_state == "needs_fresh_review":
+                    output_path.write_text(
+                        output_path.read_text(encoding="utf-8") + "\n-- authority drift\n",
+                        encoding="utf-8",
+                    )
+                else:
+                    with patch(
+                        "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                        return_value=(True, "build ok"),
+                    ):
+                        success, detail = asyncio.run(
+                            write_existing_output_review_pack(
+                                dependency_id,
+                                ledger,
+                                settings,
+                                force_new_attempt=True,
+                            )
+                        )
+                    self.assertTrue(success, detail)
+                    fail_result_path = self._write_codex_review_result(
+                        pack_dir,
+                        verdict="fail",
+                        proof_class="open_math_debt",
+                        completion_class="open_math_debt",
+                    )
+                    success, detail = asyncio.run(
+                        apply_codex_review_result(
+                            dependency_id,
+                            ledger,
+                            settings,
+                            str(fail_result_path),
+                        )
+                    )
+                    self.assertFalse(success, detail)
+
+                plan = plan_batch_from_ledger([consumer_id], ledger, settings)
+
+                rows = {row.task_id: row for row in plan.report.rows}
+                expected_status = "needs_fresh_review" if authority_state == "needs_fresh_review" else "fail"
+                self.assertEqual(rows[dependency_id].report_status, expected_status)
+                self.assertEqual(plan.actions[0].task_id, consumer_id)
+                self.assertEqual(plan.actions[0].action, "skip_blocked")
+                self.assertIn("diagnoser-required semantic failure", plan.actions[0].reason)
+                self.assertIn(dependency_id, plan.actions[0].reason)
+
     def test_fresh_but_unapplied_pass_result_is_not_counted_as_pass(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -276,7 +778,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertIn("--phase2-mode auto-loop", plan.actions[0].command)
         self.assertIn("--tasks def_1_2", plan.actions[0].command)
 
-    def test_family_consumable_downstream_blocked_review_is_not_auto_looped(self):
+    def test_family_completion_class_not_summary_routes_to_inspection(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             settings = self._settings(root)
@@ -300,10 +802,6 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
                         "status": NONTERMINAL,
                         "phase2_status": "fail",
                         "current_review_expected_result_file": str(review_result),
-                        "proof_obligation_summary": {
-                            "open_blocking_ids": [],
-                            "needs_concrete_decomposition": False,
-                        },
                     }
                 }
             )
@@ -313,6 +811,28 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(plan.actions[0].action, "inspect")
         self.assertEqual(plan.actions[0].command, "")
         self.assertIn("direct downstream obligations", plan.actions[0].reason)
+
+    def test_worker_selection_reports_omitted_inspection_as_not_completion(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            settings = self._settings(root)
+            ledger = FakeLedger(
+                {
+                    "def_1_2": {
+                        "block_id": "def_1_2",
+                        "type": "Definition",
+                        "status": NONTERMINAL,
+                    }
+                }
+            )
+
+            plan = plan_batch_from_ledger(["def_1_2"], ledger, settings, limit=20)
+            rendered = render_batch_runner_plan(plan)
+
+        self.assertEqual(plan.actions, ())
+        self.assertIn("visible actions omitted by worker selection: `1` (inspect=1)", rendered)
+        self.assertIn("selected-worker-queue-empty-is-not-completion", rendered)
+        self.assertIn("Inspection is still required for: def_1_2", rendered)
 
     def test_semantic_fail_triage_requiring_diagnoser_is_not_auto_looped(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1030,6 +1550,66 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(queued.actions, ())
         self.assertIn("source_statement_decision_required=1", rendered)
 
+    def test_semantic_fail_diagnosis_result_routes_to_source_statement_decision(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            settings = self._settings(root)
+            pack_dir = root / "phase2_prompt_packs" / "ex_8_2_1"
+            pack_dir.mkdir(parents=True)
+            triage_path = pack_dir / "semantic_fail_triage.json"
+            triage_path.write_text(
+                json.dumps(
+                    {
+                        "needs_diagnoser": True,
+                        "local_repair_allowed": False,
+                        "category": "statement_mismatch",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            fixture = (
+                REPO_ROOT
+                / "phase2_prompt_packs"
+                / "ex_8_2_1"
+                / "semantic_fail_diagnosis_result_v1.json"
+            )
+            result_path = pack_dir / fixture.name
+            result_path.write_text(fixture.read_text(encoding="utf-8"), encoding="utf-8")
+            (pack_dir / "diagnoser_result_v2.json").write_text(
+                json.dumps({"diagnosis_verdict": "incomplete_newer_result"}),
+                encoding="utf-8",
+            )
+            (pack_dir / "diagnoser_result.json").write_text(
+                json.dumps(
+                    {
+                        "diagnosis_verdict": "ordinary_missing_step",
+                        "route_wrong": False,
+                        "statement_mismatch": False,
+                        "local_repair_allowed": True,
+                        "recommended_next_action": "continue ordinary local proof repair",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            ledger = FakeLedger(
+                {
+                    "ex_8_2_1": {
+                        "block_id": "ex_8_2_1",
+                        "type": "Exercise",
+                        "status": NONTERMINAL,
+                        "phase2_status": "fail",
+                        "current_auto_loop_stop_reason": "diagnoser_required",
+                        "latest_semantic_fail_triage_file": str(triage_path),
+                        "latest_semantic_fail_triage_needs_diagnoser": True,
+                    }
+                }
+            )
+
+            plan = plan_batch_from_ledger(["ex_8_2_1"], ledger, settings)
+
+        self.assertEqual(plan.actions[0].action, "source_statement_decision_required")
+        self.assertIn(result_path.name, plan.actions[0].reason)
+
     def test_child_obligation_is_blocked_by_parent_source_statement_decision(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -1090,7 +1670,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(plan.actions[0].action, "skip_blocked")
         self.assertIn("parent source/statement decision", plan.actions[0].reason)
 
-    def test_source_decision_resolution_routes_remaining_obligations_to_absorption(self):
+    def test_source_decision_resolution_ignores_historical_obligation_absorption_route(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             settings = self._settings(root)
@@ -1176,9 +1756,9 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
                 include_legacy=True,
             )
 
-        self.assertEqual(parent_plan.actions[0].action, "foundation_absorb_required")
-        self.assertIn("source decision resolved", parent_plan.actions[0].reason)
-        self.assertIn("absorb remaining concrete obligations", parent_plan.actions[0].reason)
+        self.assertEqual(parent_plan.actions[0].action, "auto_loop")
+        self.assertIn("--phase2-mode auto-loop", parent_plan.actions[0].command)
+        self.assertNotIn("absorb remaining concrete obligations", parent_plan.actions[0].reason)
         self.assertEqual(child_plan.actions[0].action, "auto_loop")
 
     def test_default_plan_hides_legacy_obligation_noise_when_parent_passed(self):
@@ -1754,10 +2334,6 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
                         "block_id": "thm_14_8",
                         "type": "Theorem",
                         "status": "COMPLETED_WITH_PROOF_DEBT",
-                        "proof_obligation_summary": {
-                            "status_counts": {"accepted_as_proof_debt": 1},
-                            "needs_concrete_decomposition": False,
-                        },
                     },
                     "ex_14_4_3": {
                         "block_id": "ex_14_4_3",

@@ -16,15 +16,18 @@ open ProbabilityTheory
 open scoped ENNReal
 
 theorem thm_11_2 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
-    (X : Ω → ℝ) (hX : MemLp X 2 P) {ε : ℝ} (hε : 0 < ε) :
-    P.real {ω | ε ≤ |X ω - P[X]|} ≤ _root_.variance P X / ε ^ 2 := by
+    (X : Ω → ℝ) (hXm : Measurable X) (hX : MemLp X 2 P)
+    {ε : ℝ} (hε : 0 < ε) :
+    P.real {ω | ε ≤ |X ω - P[X]|} ≤
+      _root_.variance P X (FiniteAbsMoment.of_memLp hXm hX) / ε ^ 2 := by
   let Y : Ω → ℝ := fun ω => (X ω - P[X]) ^ 2
   have hεsq_pos : 0 < ε ^ 2 := sq_pos_of_pos hε
   have hY_nonneg : 0 ≤ᵐ[P] Y :=
     Filter.Eventually.of_forall fun ω => sq_nonneg (X ω - P[X])
   have hCentered : MemLp (fun ω => X ω - P[X]) 2 P := by
-    simpa [Pi.sub_apply] using
-      hX.sub (memLp_const (P[X]) : MemLp (fun _ : Ω => P[X]) 2 P)
+    convert hX.sub (memLp_const (P[X]) : MemLp (fun _ : Ω => P[X]) 2 P) using 1
+    ext ω
+    rfl
   have hY_int : Integrable Y P := by
     simpa [Y] using hCentered.integrable_sq
   have hMarkov :
@@ -38,7 +41,9 @@ theorem thm_11_2 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProbabili
   have hmeasure :
       P.real {ω | ε ≤ |X ω - P[X]|} ≤ P.real {ω | ε ^ 2 ≤ Y ω} :=
     measureReal_mono (μ := P) hsubset
-  have hvar : _root_.variance P X = ∫ ω, Y ω ∂P := by
+  have hvar :
+      _root_.variance P X (FiniteAbsMoment.of_memLp hXm hX) =
+        ∫ ω, Y ω ∂P := by
     rw [_root_.variance, rthCentralMoment]
     rw [ProbabilityTheory.centralMoment_two_eq_variance (μ := P) (X := X) hX.aemeasurable]
     rw [ProbabilityTheory.variance_eq_integral (μ := P) (X := X) hX.aemeasurable]
@@ -46,4 +51,5 @@ theorem thm_11_2 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProbabili
     P.real {ω | ε ≤ |X ω - P[X]|}
         ≤ P.real {ω | ε ^ 2 ≤ Y ω} := hmeasure
     _ ≤ (∫ ω, Y ω ∂P) / ε ^ 2 := hMarkov
-    _ = _root_.variance P X / ε ^ 2 := by rw [← hvar]
+    _ = _root_.variance P X (FiniteAbsMoment.of_memLp hXm hX) / ε ^ 2 := by
+      rw [← hvar]

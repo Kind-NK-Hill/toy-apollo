@@ -83,5 +83,17 @@ theorem thm_7_6 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
       Tendsto (fun n => ∫ ω, Xn n ω ∂μ) atTop (nhds (∫ ω, X ω ∂μ)) := by
     have h_back :=
       (Complex.equivRealProdCLM.symm.continuous.tendsto _).comp h_pair_tendsto
-    simpa using h_back
+    change
+      Tendsto
+        (fun n =>
+          Complex.equivRealProdCLM.symm
+            ((∫ ω, Xn n ω ∂μ).re, (∫ ω, Xn n ω ∂μ).im))
+        atTop
+        (nhds
+          (Complex.equivRealProdCLM.symm
+            ((∫ ω, X ω ∂μ).re, (∫ ω, X ω ∂μ).im))) at h_back
+    have hcomplex_eta (z : ℂ) :
+        Complex.equivRealProdCLM.symm (z.re, z.im) = z := by
+      rfl
+    simpa only [hcomplex_eta] using h_back
   exact ⟨hX_int, h_tendsto⟩

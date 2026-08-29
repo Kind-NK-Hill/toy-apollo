@@ -20,10 +20,10 @@ theorem prob_7_3_finite_centers_to_partition_with_cell_margins
         P.mesh < δ ∧
         ∃ idx : ℝ → ℕ,
           (∀ x ∈ T, idx x < P.n) ∧
-          (∀ x ∈ T, ρ ≤ x - P.pts (idx x)) ∧
+          (∀ x ∈ T, ρ ≤ x - Prob73NatPartition.point P (idx x)) ∧
           (∀ x ∈ T,
-            ρ ≤ P.pts (idx x + 1) - x ∨
-              (x = b ∧ P.pts (idx x + 1) = b)) := by
+            ρ ≤ Prob73NatPartition.point P (idx x + 1) - x ∨
+              (x = b ∧ Prob73NatPartition.point P (idx x + 1) = b)) := by
   rcases prob_7_3_finset_Icc_away_left_has_uniform_partition_radius
       (T := T) (a := a) (b := b) (δ := δ) hδ hT haT with
     ⟨ρ, hρ, hρδ, hleft, hright, hsep⟩
@@ -60,17 +60,17 @@ theorem prob_7_3_finite_centers_to_protected_cell_cover
     (hcenter : ∀ x ∈ T, x ∈ prob_7_3_largeOscillationSet f a b n)
     (hidx : ∀ x ∈ T, idx x < P.n)
     (hballIoc : ∀ x ∈ T, Metric.ball x ρ ⊆
-      Ioc (P.pts (idx x)) (P.pts (idx x + 1)))
+      Ioc (Prob73NatPartition.point P (idx x)) (Prob73NatPartition.point P (idx x + 1)))
     (hprotected : ∀ x ∈ T, ∀ y : ℝ, y ∈ Icc a b → |y - x| < ρ →
-      y ∈ DarbouxRS.subinterval P (idx x)) :
+      y ∈ Prob73NatPartition.subinterval P (idx x)) :
     ∃ S : Finset ℕ,
       (∀ i ∈ S, i < P.n) ∧
-      K ⊆ ⋃ i ∈ S, Ioc (P.pts i) (P.pts (i + 1)) ∧
+      K ⊆ ⋃ i ∈ S, Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)) ∧
       (∀ i ∈ S, ∃ x r : ℝ,
         x ∈ prob_7_3_largeOscillationSet f a b n ∧
           0 < r ∧
           ∀ y : ℝ, y ∈ Icc a b → |y - x| < r →
-            y ∈ DarbouxRS.subinterval P i) := by
+            y ∈ Prob73NatPartition.subinterval P i) := by
   classical
   let S : Finset ℕ := T.image idx
   refine ⟨S, ?_, ?_, ?_⟩
@@ -103,17 +103,17 @@ theorem prob_7_3_finite_centers_to_protected_cell_cover_Icc
     (hcenter : ∀ x ∈ T, x ∈ prob_7_3_largeOscillationSet f a b n)
     (hidx : ∀ x ∈ T, idx x < P.n)
     (hballIoc : ∀ x ∈ T, ∀ y : ℝ, y ∈ Icc a b → y ∈ Metric.ball x ρ →
-      y ∈ Ioc (P.pts (idx x)) (P.pts (idx x + 1)))
+      y ∈ Ioc (Prob73NatPartition.point P (idx x)) (Prob73NatPartition.point P (idx x + 1)))
     (hprotected : ∀ x ∈ T, ∀ y : ℝ, y ∈ Icc a b → |y - x| < ρ →
-      y ∈ DarbouxRS.subinterval P (idx x)) :
+      y ∈ Prob73NatPartition.subinterval P (idx x)) :
     ∃ S : Finset ℕ,
       (∀ i ∈ S, i < P.n) ∧
-      K ⊆ ⋃ i ∈ S, Ioc (P.pts i) (P.pts (i + 1)) ∧
+      K ⊆ ⋃ i ∈ S, Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)) ∧
       (∀ i ∈ S, ∃ x r : ℝ,
         x ∈ prob_7_3_largeOscillationSet f a b n ∧
           0 < r ∧
           ∀ y : ℝ, y ∈ Icc a b → |y - x| < r →
-            y ∈ DarbouxRS.subinterval P i) := by
+            y ∈ Prob73NatPartition.subinterval P i) := by
   classical
   let S : Finset ℕ := T.image idx
   refine ⟨S, ?_, ?_, ?_⟩
@@ -139,22 +139,22 @@ theorem prob_7_3_finite_centers_to_protected_cell_cover_Icc
 
 theorem prob_7_3_cell_margins_give_relative_ball_Ioc_and_subinterval
     {a b ρ x : ℝ} (P : DarbouxRS.Partition a b) {i : ℕ}
-    (hleft : ρ ≤ x - P.pts i)
-    (hright : ρ ≤ P.pts (i + 1) - x ∨ (x = b ∧ P.pts (i + 1) = b)) :
+    (hleft : ρ ≤ x - Prob73NatPartition.point P i)
+    (hright : ρ ≤ Prob73NatPartition.point P (i + 1) - x ∨ (x = b ∧ Prob73NatPartition.point P (i + 1) = b)) :
     (∀ y : ℝ, y ∈ Icc a b → y ∈ Metric.ball x ρ →
-      y ∈ Ioc (P.pts i) (P.pts (i + 1))) ∧
+      y ∈ Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1))) ∧
     (∀ y : ℝ, y ∈ Icc a b → |y - x| < ρ →
-      y ∈ DarbouxRS.subinterval P i) := by
+      y ∈ Prob73NatPartition.subinterval P i) := by
   have hIoc : ∀ y : ℝ, y ∈ Icc a b → y ∈ Metric.ball x ρ →
-      y ∈ Ioc (P.pts i) (P.pts (i + 1)) := by
+      y ∈ Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)) := by
     intro y hyI hyBall
     have hydist : |y - x| < ρ := by
       simpa [Metric.mem_ball, Real.dist_eq] using hyBall
-    have hlt_left : P.pts i < y := by
+    have hlt_left : Prob73NatPartition.point P i < y := by
       have hneg : x - y < ρ := by
         exact lt_of_le_of_lt (le_abs_self (x - y)) (by simpa [abs_sub_comm] using hydist)
       linarith
-    have hle_right : y ≤ P.pts (i + 1) := by
+    have hle_right : y ≤ Prob73NatPartition.point P (i + 1) := by
       rcases hright with hright' | hend
       · have hpos : y - x < ρ := by
           exact lt_of_le_of_lt (le_abs_self (y - x)) hydist
@@ -165,7 +165,7 @@ theorem prob_7_3_cell_margins_give_relative_ball_Ioc_and_subinterval
   refine ⟨hIoc, ?_⟩
   intro y hyI hydist
   have hyIoc :
-      y ∈ Ioc (P.pts i) (P.pts (i + 1)) := by
+      y ∈ Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)) := by
     exact hIoc y hyI (by
       simpa [Metric.mem_ball, Real.dist_eq] using hydist)
   exact ⟨le_of_lt hyIoc.1, hyIoc.2⟩
@@ -178,17 +178,17 @@ theorem prob_7_3_finite_centers_with_cell_margins_to_protected_cell_cover
     (hKcover : K ⊆ ⋃ x ∈ T, Metric.ball x ρ)
     (hcenter : ∀ x ∈ T, x ∈ prob_7_3_largeOscillationSet f a b n)
     (hidx : ∀ x ∈ T, idx x < P.n)
-    (hleft : ∀ x ∈ T, ρ ≤ x - P.pts (idx x))
+    (hleft : ∀ x ∈ T, ρ ≤ x - Prob73NatPartition.point P (idx x))
     (hright : ∀ x ∈ T,
-      ρ ≤ P.pts (idx x + 1) - x ∨ (x = b ∧ P.pts (idx x + 1) = b)) :
+      ρ ≤ Prob73NatPartition.point P (idx x + 1) - x ∨ (x = b ∧ Prob73NatPartition.point P (idx x + 1) = b)) :
     ∃ S : Finset ℕ,
       (∀ i ∈ S, i < P.n) ∧
-      K ⊆ ⋃ i ∈ S, Ioc (P.pts i) (P.pts (i + 1)) ∧
+      K ⊆ ⋃ i ∈ S, Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)) ∧
       (∀ i ∈ S, ∃ x r : ℝ,
         x ∈ prob_7_3_largeOscillationSet f a b n ∧
           0 < r ∧
           ∀ y : ℝ, y ∈ Icc a b → |y - x| < r →
-            y ∈ DarbouxRS.subinterval P i) := by
+            y ∈ Prob73NatPartition.subinterval P i) := by
   refine prob_7_3_finite_centers_to_protected_cell_cover_Icc
     (n := n) (P := P) (T := T) (idx := idx) hρ hKIcc hKcover hcenter hidx ?_ ?_
   · intro x hxT y hyI hyBall
@@ -204,31 +204,31 @@ theorem prob_7_3_cell_oscillation_lower_bound_of_two_points
     (hAbove : BddAbove (f '' Icc a b))
     (hBelow : BddBelow (f '' Icc a b))
     {y z : ℝ}
-    (hy : y ∈ DarbouxRS.subinterval P i)
-    (hz : z ∈ DarbouxRS.subinterval P i)
+    (hy : y ∈ Prob73NatPartition.subinterval P i)
+    (hz : z ∈ Prob73NatPartition.subinterval P i)
     (hyz : eta ≤ |f y - f z|) :
-    eta ≤ DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i := by
-  have hcellBelow : BddBelow (f '' DarbouxRS.subinterval P i) :=
-    BddBelow.mono (Set.image_mono (DarbouxRS.subinterval_subset_Icc_core P hi)) hBelow
-  have hcellAbove : BddAbove (f '' DarbouxRS.subinterval P i) :=
-    BddAbove.mono (Set.image_mono (DarbouxRS.subinterval_subset_Icc_core P hi)) hAbove
-  have hlow_y : DarbouxRS.lowerStep P f i ≤ f y := by
-    unfold DarbouxRS.lowerStep
+    eta ≤ Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i := by
+  have hcellBelow : BddBelow (f '' Prob73NatPartition.subinterval P i) :=
+    BddBelow.mono (Set.image_mono (Prob73NatPartition.subinterval_subset_Icc P hi)) hBelow
+  have hcellAbove : BddAbove (f '' Prob73NatPartition.subinterval P i) :=
+    BddAbove.mono (Set.image_mono (Prob73NatPartition.subinterval_subset_Icc P hi)) hAbove
+  have hlow_y : Prob73NatPartition.lowerStep P f i ≤ f y := by
+    unfold Prob73NatPartition.lowerStep
     exact csInf_le hcellBelow ⟨y, hy, rfl⟩
-  have hlow_z : DarbouxRS.lowerStep P f i ≤ f z := by
-    unfold DarbouxRS.lowerStep
+  have hlow_z : Prob73NatPartition.lowerStep P f i ≤ f z := by
+    unfold Prob73NatPartition.lowerStep
     exact csInf_le hcellBelow ⟨z, hz, rfl⟩
-  have hy_up : f y ≤ DarbouxRS.upperStep P f i := by
-    unfold DarbouxRS.upperStep
+  have hy_up : f y ≤ Prob73NatPartition.upperStep P f i := by
+    unfold Prob73NatPartition.upperStep
     exact le_csSup hcellAbove ⟨y, hy, rfl⟩
-  have hz_up : f z ≤ DarbouxRS.upperStep P f i := by
-    unfold DarbouxRS.upperStep
+  have hz_up : f z ≤ Prob73NatPartition.upperStep P f i := by
+    unfold Prob73NatPartition.upperStep
     exact le_csSup hcellAbove ⟨z, hz, rfl⟩
   have hpos :
-      f y - f z ≤ DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i := by
+      f y - f z ≤ Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i := by
     linarith
   have hneg :
-      -(DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i) ≤ f y - f z := by
+      -(Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i) ≤ f y - f z := by
     linarith
   exact le_trans hyz (abs_le.mpr ⟨hneg, hpos⟩)
 
@@ -238,27 +238,27 @@ theorem prob_7_3_adjacent_cell_oscillation_lower_bound_of_endpoint_split
     (hAbove : BddAbove (f '' Icc a b))
     (hBelow : BddBelow (f '' Icc a b))
     {y z : ℝ}
-    (hy : y ∈ DarbouxRS.subinterval P i)
-    (hz : z ∈ DarbouxRS.subinterval P (i + 1))
+    (hy : y ∈ Prob73NatPartition.subinterval P i)
+    (hz : z ∈ Prob73NatPartition.subinterval P (i + 1))
     (hyz : eta ≤ |f y - f z|) :
     eta ≤
-      (DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i) +
-      (DarbouxRS.upperStep P f (i + 1) - DarbouxRS.lowerStep P f (i + 1)) := by
-  let c : ℝ := P.pts (i + 1)
+      (Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i) +
+      (Prob73NatPartition.upperStep P f (i + 1) - Prob73NatPartition.lowerStep P f (i + 1)) := by
+  let c : ℝ := Prob73NatPartition.point P (i + 1)
   have hi : i < P.n := Nat.lt_trans (Nat.lt_succ_self i) hiNext
-  have hc_i : c ∈ DarbouxRS.subinterval P i := by
-    dsimp [c, DarbouxRS.subinterval]
-    exact ⟨le_of_lt (P.strict_mono i hi), le_rfl⟩
-  have hc_next : c ∈ DarbouxRS.subinterval P (i + 1) := by
-    dsimp [c, DarbouxRS.subinterval]
-    exact ⟨le_rfl, le_of_lt (P.strict_mono (i + 1) hiNext)⟩
+  have hc_i : c ∈ Prob73NatPartition.subinterval P i := by
+    dsimp [c, Prob73NatPartition.subinterval]
+    exact ⟨le_of_lt (Prob73NatPartition.point_lt_succ P hi), le_rfl⟩
+  have hc_next : c ∈ Prob73NatPartition.subinterval P (i + 1) := by
+    dsimp [c, Prob73NatPartition.subinterval]
+    exact ⟨le_rfl, le_of_lt (Prob73NatPartition.point_lt_succ P hiNext)⟩
   have hyc :
-      |f y - f c| ≤ DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i := by
+      |f y - f c| ≤ Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i := by
     exact prob_7_3_cell_oscillation_lower_bound_of_two_points
       (P := P) (i := i) hi hAbove hBelow hy hc_i le_rfl
   have hcz :
       |f c - f z| ≤
-        DarbouxRS.upperStep P f (i + 1) - DarbouxRS.lowerStep P f (i + 1) := by
+        Prob73NatPartition.upperStep P f (i + 1) - Prob73NatPartition.lowerStep P f (i + 1) := by
     exact prob_7_3_cell_oscillation_lower_bound_of_two_points
       (P := P) (i := i + 1) hiNext hAbove hBelow hc_next hz le_rfl
   have htri : |f y - f z| ≤ |f y - f c| + |f c - f z| := by
@@ -273,21 +273,21 @@ theorem prob_7_3_adjacent_pair_oscillation_lower_bound_of_mem_union
     (hAbove : BddAbove (f '' Icc a b))
     (hBelow : BddBelow (f '' Icc a b))
     {y z : ℝ}
-    (hy : y ∈ DarbouxRS.subinterval P i ∪ DarbouxRS.subinterval P (i + 1))
-    (hz : z ∈ DarbouxRS.subinterval P i ∪ DarbouxRS.subinterval P (i + 1))
+    (hy : y ∈ Prob73NatPartition.subinterval P i ∪ Prob73NatPartition.subinterval P (i + 1))
+    (hz : z ∈ Prob73NatPartition.subinterval P i ∪ Prob73NatPartition.subinterval P (i + 1))
     (hyz : eta ≤ |f y - f z|) :
     eta ≤
-      (DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i) +
-      (DarbouxRS.upperStep P f (i + 1) - DarbouxRS.lowerStep P f (i + 1)) := by
+      (Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i) +
+      (Prob73NatPartition.upperStep P f (i + 1) - Prob73NatPartition.lowerStep P f (i + 1)) := by
   have hi : i < P.n := Nat.lt_trans (Nat.lt_succ_self i) hiNext
   have hgap_i_nonneg :
-      0 ≤ DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i := by
-    have hle := DarbouxRS.lowerStep_le_upperStep_core
+      0 ≤ Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i := by
+    have hle := Prob73NatPartition.lowerStep_le_upperStep
       (P := P) (i := i) hi hBelow hAbove
     linarith
   have hgap_next_nonneg :
-      0 ≤ DarbouxRS.upperStep P f (i + 1) - DarbouxRS.lowerStep P f (i + 1) := by
-    have hle := DarbouxRS.lowerStep_le_upperStep_core
+      0 ≤ Prob73NatPartition.upperStep P f (i + 1) - Prob73NatPartition.lowerStep P f (i + 1) := by
+    have hle := Prob73NatPartition.lowerStep_le_upperStep
       (P := P) (i := i + 1) hiNext hBelow hAbove
     linarith
   rcases hy with hyLeft | hyRight
@@ -315,9 +315,9 @@ theorem prob_7_3_largeOscillation_point_forces_protected_cell_gap
     (hx : x ∈ prob_7_3_largeOscillationSet f a b n)
     (hr : 0 < r)
     (hball : ∀ y : ℝ, y ∈ Icc a b → |y - x| < r →
-      y ∈ DarbouxRS.subinterval P i) :
+      y ∈ Prob73NatPartition.subinterval P i) :
     (1 : ℝ) / ((n : ℝ) + 1) ≤
-      DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i := by
+      Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i := by
   rcases hx with ⟨_hxI, _heta, hlocal⟩
   rcases hlocal r hr with ⟨y, hyI, hydist, z, hzI, hzdist, hyz⟩
   exact prob_7_3_cell_oscillation_lower_bound_of_two_points
@@ -333,10 +333,10 @@ theorem prob_7_3_largeOscillation_point_forces_adjacent_union_gap
     (hx : x ∈ prob_7_3_largeOscillationSet f a b n)
     (hr : 0 < r)
     (hball : ∀ y : ℝ, y ∈ Icc a b → |y - x| < r →
-      y ∈ DarbouxRS.subinterval P i ∪ DarbouxRS.subinterval P (i + 1)) :
+      y ∈ Prob73NatPartition.subinterval P i ∪ Prob73NatPartition.subinterval P (i + 1)) :
     (1 : ℝ) / ((n : ℝ) + 1) ≤
-      (DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i) +
-      (DarbouxRS.upperStep P f (i + 1) - DarbouxRS.lowerStep P f (i + 1)) := by
+      (Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i) +
+      (Prob73NatPartition.upperStep P f (i + 1) - Prob73NatPartition.lowerStep P f (i + 1)) := by
   rcases hx with ⟨_hxI, _heta, hlocal⟩
   rcases hlocal r hr with ⟨y, hyI, hydist, z, hzI, hzdist, hyz⟩
   exact prob_7_3_adjacent_pair_oscillation_lower_bound_of_mem_union
@@ -349,18 +349,18 @@ theorem prob_7_3_weighted_cell_oscillation_lower_bound_of_two_points
     (hAbove : BddAbove (f '' Icc a b))
     (hBelow : BddBelow (f '' Icc a b))
     {y z : ℝ}
-    (hy : y ∈ DarbouxRS.subinterval P i)
-    (hz : z ∈ DarbouxRS.subinterval P i)
+    (hy : y ∈ Prob73NatPartition.subinterval P i)
+    (hz : z ∈ Prob73NatPartition.subinterval P i)
     (hyz : eta ≤ |f y - f z|) :
-    eta * (F (P.pts (i + 1)) - F (P.pts i)) ≤
-      (DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i) *
-        (F (P.pts (i + 1)) - F (P.pts i)) := by
+    eta * (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i)) ≤
+      (Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i) *
+        (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i)) := by
   have hcell :
-      eta ≤ DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i :=
+      eta ≤ Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i :=
     prob_7_3_cell_oscillation_lower_bound_of_two_points
       (P := P) hi hAbove hBelow hy hz hyz
-  have hinc : 0 ≤ F (P.pts (i + 1)) - F (P.pts i) := by
-    exact sub_nonneg.mpr (F.mono (le_of_lt (P.strict_mono i hi)))
+  have hinc : 0 ≤ F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i) := by
+    exact sub_nonneg.mpr (F.mono (le_of_lt (Prob73NatPartition.point_lt_succ P hi)))
   exact mul_le_mul_of_nonneg_right hcell hinc
 
 theorem prob_7_3_largeOscillation_point_forces_weighted_protected_cell_gap
@@ -372,34 +372,69 @@ theorem prob_7_3_largeOscillation_point_forces_weighted_protected_cell_gap
     (hx : x ∈ prob_7_3_largeOscillationSet f a b n)
     (hr : 0 < r)
     (hball : ∀ y : ℝ, y ∈ Icc a b → |y - x| < r →
-      y ∈ DarbouxRS.subinterval P i) :
+      y ∈ Prob73NatPartition.subinterval P i) :
     ((1 : ℝ) / ((n : ℝ) + 1)) *
-        (F (P.pts (i + 1)) - F (P.pts i)) ≤
-      (DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i) *
-        (F (P.pts (i + 1)) - F (P.pts i)) := by
+        (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i)) ≤
+      (Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i) *
+        (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i)) := by
   have hcell :
       (1 : ℝ) / ((n : ℝ) + 1) ≤
-        DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i :=
+        Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i :=
     prob_7_3_largeOscillation_point_forces_protected_cell_gap
       (P := P) hi hAbove hBelow hx hr hball
-  have hinc : 0 ≤ F (P.pts (i + 1)) - F (P.pts i) := by
-    exact sub_nonneg.mpr (F.mono (le_of_lt (P.strict_mono i hi)))
+  have hinc : 0 ≤ F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i) := by
+    exact sub_nonneg.mpr (F.mono (le_of_lt (Prob73NatPartition.point_lt_succ P hi)))
   exact mul_le_mul_of_nonneg_right hcell hinc
 
 theorem prob_7_3_finset_weighted_cell_lower_bound
     (F : StieltjesFunction ℝ) {a b eta : ℝ} {f : ℝ → ℝ}
     (P : DarbouxRS.Partition a b) (S : Finset ℕ)
     (hcell : ∀ i ∈ S,
-      eta * (F (P.pts (i + 1)) - F (P.pts i)) ≤
-        (DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i) *
-          (F (P.pts (i + 1)) - F (P.pts i))) :
-    eta * (∑ i ∈ S, (F (P.pts (i + 1)) - F (P.pts i))) ≤
+      eta * (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i)) ≤
+        (Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i) *
+          (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i))) :
+    eta * (∑ i ∈ S, (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i))) ≤
       ∑ i ∈ S,
-        (DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i) *
-          (F (P.pts (i + 1)) - F (P.pts i)) := by
+        (Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i) *
+          (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i)) := by
   rw [Finset.mul_sum]
   exact Finset.sum_le_sum hcell
 
+theorem prob_7_3_partitionOscillation_eq_nat_sum
+    {a b : ℝ} (P : DarbouxRS.Partition a b) (f F : ℝ → ℝ) :
+    Thm11SourceRoute.partitionOscillation P f F =
+      ∑ i ∈ Finset.range P.n,
+        (Prob73NatPartition.upperStep P f i -
+            Prob73NatPartition.lowerStep P f i) *
+          (F (Prob73NatPartition.point P (i + 1)) -
+            F (Prob73NatPartition.point P i)) := by
+  unfold Thm11SourceRoute.partitionOscillation
+  calc
+    (∑ i : Fin P.n,
+        (DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i) *
+          (F (P.pts i.succ) - F (P.pts i.castSucc))) =
+      ∑ i : Fin P.n,
+        (Prob73NatPartition.upperStep P f i.val -
+            Prob73NatPartition.lowerStep P f i.val) *
+          (F (Prob73NatPartition.point P (i.val + 1)) -
+            F (Prob73NatPartition.point P i.val)) := by
+      refine Finset.sum_congr rfl ?_
+      intro i _
+      rw [Prob73NatPartition.upperStep_eq P f i.isLt,
+        Prob73NatPartition.lowerStep_eq P f i.isLt,
+        Prob73NatPartition.point_eq P (Nat.succ_le_of_lt i.isLt),
+        Prob73NatPartition.point_eq P (Nat.le_of_lt i.isLt)]
+      congr <;> apply Fin.ext <;> simp
+    _ = ∑ i ∈ Finset.range P.n,
+        (Prob73NatPartition.upperStep P f i -
+            Prob73NatPartition.lowerStep P f i) *
+          (F (Prob73NatPartition.point P (i + 1)) -
+            F (Prob73NatPartition.point P i)) := by
+      exact Fin.sum_univ_eq_sum_range (fun i : ℕ =>
+        (Prob73NatPartition.upperStep P f i -
+            Prob73NatPartition.lowerStep P f i) *
+          (F (Prob73NatPartition.point P (i + 1)) -
+            F (Prob73NatPartition.point P i))) P.n
 theorem prob_7_3_finset_weighted_cell_lower_bound_partitionOscillation
     (F : StieltjesFunction ℝ) {a b eta : ℝ} {f : ℝ → ℝ}
     (P : DarbouxRS.Partition a b) (S : Finset ℕ)
@@ -407,46 +442,46 @@ theorem prob_7_3_finset_weighted_cell_lower_bound_partitionOscillation
     (hAbove : BddAbove (f '' Icc a b))
     (hBelow : BddBelow (f '' Icc a b))
     (hcell : ∀ i ∈ S,
-      eta ≤ DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i) :
-    eta * (∑ i ∈ S, (F (P.pts (i + 1)) - F (P.pts i))) ≤
+      eta ≤ Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i) :
+    eta * (∑ i ∈ S, (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i))) ≤
       Thm11SourceRoute.partitionOscillation P f F := by
   have hcellWeighted : ∀ i ∈ S,
-      eta * (F (P.pts (i + 1)) - F (P.pts i)) ≤
-        (DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i) *
-          (F (P.pts (i + 1)) - F (P.pts i)) := by
+      eta * (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i)) ≤
+        (Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i) *
+          (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i)) := by
     intro i hiS
-    have hinc : 0 ≤ F (P.pts (i + 1)) - F (P.pts i) := by
-      exact sub_nonneg.mpr (F.mono (le_of_lt (P.strict_mono i (hS i hiS))))
+    have hinc : 0 ≤ F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i) := by
+      exact sub_nonneg.mpr (F.mono (le_of_lt (Prob73NatPartition.point_lt_succ P (hS i hiS))))
     exact mul_le_mul_of_nonneg_right (hcell i hiS) hinc
   have hsum :=
     prob_7_3_finset_weighted_cell_lower_bound
       (F := F) (P := P) (S := S) (eta := eta) (f := f) hcellWeighted
   refine le_trans hsum ?_
-  unfold Thm11SourceRoute.partitionOscillation
+  rw [prob_7_3_partitionOscillation_eq_nat_sum]
   refine Finset.sum_le_sum_of_subset_of_nonneg ?_ ?_
   · intro i hiS
     exact Finset.mem_range.mpr (hS i hiS)
   · intro i _hiRange _hiNotS
     have hi : i < P.n := Finset.mem_range.mp _hiRange
-    have hgap : 0 ≤ DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i := by
-      have hle := DarbouxRS.lowerStep_le_upperStep_core
+    have hgap : 0 ≤ Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i := by
+      have hle := Prob73NatPartition.lowerStep_le_upperStep
         (P := P) (i := i) hi hBelow hAbove
       linarith
-    have hinc : 0 ≤ F (P.pts (i + 1)) - F (P.pts i) := by
-      exact sub_nonneg.mpr (F.mono (le_of_lt (P.strict_mono i hi)))
+    have hinc : 0 ≤ F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i) := by
+      exact sub_nonneg.mpr (F.mono (le_of_lt (Prob73NatPartition.point_lt_succ P hi)))
     exact mul_nonneg hgap hinc
 
 theorem prob_7_3_restricted_measure_partition_cell_ne_top
     (F : StieltjesFunction ℝ) {a b : ℝ} (P : DarbouxRS.Partition a b)
     {i : ℕ} (hi : i < P.n) :
-    (F.measure.restrict (Icc a b)) (Ioc (P.pts i) (P.pts (i + 1))) ≠ ⊤ := by
+    (F.measure.restrict (Icc a b)) (Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1))) ≠ ⊤ := by
   rw [Measure.restrict_apply measurableSet_Ioc]
   have hcell_subset :
-      Ioc (P.pts i) (P.pts (i + 1)) ⊆ Icc a b :=
-    thm_7_8_partition_Ioc_subset_Icc P hi
+      Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)) ⊆ Icc a b :=
+    Prob73NatPartition.Ioc_subset_Icc P hi
   have hcell_inter :
-      Ioc (P.pts i) (P.pts (i + 1)) ∩ Icc a b =
-        Ioc (P.pts i) (P.pts (i + 1)) := by
+      Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)) ∩ Icc a b =
+        Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)) := by
     exact inter_eq_self_of_subset_left hcell_subset
   rw [hcell_inter]
   rw [F.measure_Ioc]
@@ -456,10 +491,10 @@ theorem prob_7_3_restricted_measure_finset_partition_cells_toReal_le_sum
     (F : StieltjesFunction ℝ) {a b : ℝ} (P : DarbouxRS.Partition a b)
     (S : Finset ℕ) (hS : ∀ i ∈ S, i < P.n) :
     ((F.measure.restrict (Icc a b))
-        (⋃ i ∈ S, Ioc (P.pts i) (P.pts (i + 1)))).toReal ≤
-      ∑ i ∈ S, (F (P.pts (i + 1)) - F (P.pts i)) := by
+        (⋃ i ∈ S, Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)))).toReal ≤
+      ∑ i ∈ S, (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i)) := by
   let μr : Measure ℝ := F.measure.restrict (Icc a b)
-  let cell : ℕ → Set ℝ := fun i => Ioc (P.pts i) (P.pts (i + 1))
+  let cell : ℕ → Set ℝ := fun i => Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1))
   have hle :
       μr (⋃ i ∈ S, cell i) ≤ ∑ i ∈ S, μr (cell i) := by
     exact measure_biUnion_finset_le S cell
@@ -472,7 +507,7 @@ theorem prob_7_3_restricted_measure_finset_partition_cells_toReal_le_sum
     ENNReal.toReal_mono hsum_ne_top hle
   calc
     ((F.measure.restrict (Icc a b))
-        (⋃ i ∈ S, Ioc (P.pts i) (P.pts (i + 1)))).toReal =
+        (⋃ i ∈ S, Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)))).toReal =
         (μr (⋃ i ∈ S, cell i)).toReal := by rfl
     _ ≤ (∑ i ∈ S, μr (cell i)).toReal := hto
     _ = ∑ i ∈ S, (μr (cell i)).toReal := by
@@ -480,7 +515,7 @@ theorem prob_7_3_restricted_measure_finset_partition_cells_toReal_le_sum
       intro i hi
       exact prob_7_3_restricted_measure_partition_cell_ne_top
         (F := F) (P := P) (i := i) (hS i hi)
-    _ = ∑ i ∈ S, (F (P.pts (i + 1)) - F (P.pts i)) := by
+    _ = ∑ i ∈ S, (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i)) := by
       refine Finset.sum_congr rfl ?_
       intro i hi
       exact prob_7_3_restricted_measure_partition_cell_toReal
@@ -490,32 +525,45 @@ theorem prob_7_3_partition_Ioc_cells_pairwiseDisjoint
     {a b : ℝ} (P : DarbouxRS.Partition a b)
     (S : Finset ℕ) (hS : ∀ i ∈ S, i < P.n) :
     (S : Set ℕ).PairwiseDisjoint
-      (fun i : ℕ => Ioc (P.pts i) (P.pts (i + 1))) := by
+      (fun i : ℕ => Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1))) := by
   rw [Set.PairwiseDisjoint]
   intro i hiS j hjS hij
   change Disjoint
-    (Ioc (P.pts i) (P.pts (i + 1)))
-    (Ioc (P.pts j) (P.pts (j + 1)))
+    (Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)))
+    (Ioc (Prob73NatPartition.point P j) (Prob73NatPartition.point P (j + 1)))
   rw [Set.disjoint_left]
   intro x hxi hxj
-  exact thm_7_8_partition_Ioc_disjoint_at
-    P (hS i hiS) (hS j hjS) hij.symm hxi hxj
+  rcases lt_or_gt_of_ne hij with hijlt | hjilt
+  · have hmono : Prob73NatPartition.point P (i + 1) ≤
+        Prob73NatPartition.point P j := by
+      rw [Prob73NatPartition.point_eq P (Nat.succ_le_of_lt (hS i hiS)),
+        Prob73NatPartition.point_eq P (Nat.le_of_lt (hS j hjS))]
+      exact P.strict_mono.monotone
+        (Fin.mk_le_mk.mpr (Nat.succ_le_of_lt hijlt))
+    exact (not_lt_of_ge (le_trans hxi.2 hmono)) hxj.1
+  · have hmono : Prob73NatPartition.point P (j + 1) ≤
+        Prob73NatPartition.point P i := by
+      rw [Prob73NatPartition.point_eq P (Nat.succ_le_of_lt (hS j hjS)),
+        Prob73NatPartition.point_eq P (Nat.le_of_lt (hS i hiS))]
+      exact P.strict_mono.monotone
+        (Fin.mk_le_mk.mpr (Nat.succ_le_of_lt hjilt))
+    exact (not_lt_of_ge (le_trans hxj.2 hmono)) hxi.1
 
 theorem prob_7_3_restricted_measure_finset_partition_cells_sum_eq_toReal_union
     (F : StieltjesFunction ℝ) {a b : ℝ} (P : DarbouxRS.Partition a b)
     (S : Finset ℕ) (hS : ∀ i ∈ S, i < P.n) :
-    ∑ i ∈ S, (F (P.pts (i + 1)) - F (P.pts i)) =
+    ∑ i ∈ S, (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i)) =
       ((F.measure.restrict (Icc a b))
-        (⋃ i ∈ S, Ioc (P.pts i) (P.pts (i + 1)))).toReal := by
+        (⋃ i ∈ S, Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)))).toReal := by
   let μr : Measure ℝ := F.measure.restrict (Icc a b)
-  let cell : ℕ → Set ℝ := fun i => Ioc (P.pts i) (P.pts (i + 1))
+  let cell : ℕ → Set ℝ := fun i => Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1))
   have hmeasure_eq :
       μr (⋃ i ∈ S, cell i) = ∑ i ∈ S, μr (cell i) := by
     exact MeasureTheory.measure_biUnion_finset
       (prob_7_3_partition_Ioc_cells_pairwiseDisjoint P S hS)
       (fun _ _ => measurableSet_Ioc)
   calc
-    ∑ i ∈ S, (F (P.pts (i + 1)) - F (P.pts i))
+    ∑ i ∈ S, (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i))
         = ∑ i ∈ S, (μr (cell i)).toReal := by
             refine Finset.sum_congr rfl ?_
             intro i hi
@@ -532,11 +580,11 @@ theorem prob_7_3_restricted_measure_finset_partition_cells_sum_eq_toReal_union
 theorem prob_7_3_partition_cell_increment_sum_le_open_measure_toReal
     (F : StieltjesFunction ℝ) {a b : ℝ} (P : DarbouxRS.Partition a b)
     (S : Finset ℕ) (hS : ∀ i ∈ S, i < P.n) {G : Set ℝ}
-    (hcellSub : ∀ i ∈ S, Ioc (P.pts i) (P.pts (i + 1)) ⊆ G) :
-    ∑ i ∈ S, (F (P.pts (i + 1)) - F (P.pts i)) ≤
+    (hcellSub : ∀ i ∈ S, Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)) ⊆ G) :
+    ∑ i ∈ S, (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i)) ≤
       (((F.measure.restrict (Icc a b)) G).toReal) := by
   let μr : Measure ℝ := F.measure.restrict (Icc a b)
-  let cell : ℕ → Set ℝ := fun i => Ioc (P.pts i) (P.pts (i + 1))
+  let cell : ℕ → Set ℝ := fun i => Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1))
   have hUnionSub : (⋃ i ∈ S, cell i) ⊆ G := by
     intro x hx
     rcases mem_iUnion.mp hx with ⟨i, hxi⟩
@@ -548,7 +596,7 @@ theorem prob_7_3_partition_cell_increment_sum_le_open_measure_toReal
       (μr (⋃ i ∈ S, cell i)).toReal ≤ (μr G).toReal :=
     ENNReal.toReal_mono hG_ne_top (measure_mono hUnionSub)
   have hsum_eq :
-      ∑ i ∈ S, (F (P.pts (i + 1)) - F (P.pts i)) =
+      ∑ i ∈ S, (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i)) =
         (μr (⋃ i ∈ S, cell i)).toReal := by
     exact prob_7_3_restricted_measure_finset_partition_cells_sum_eq_toReal_union
       (F := F) (P := P) (S := S) hS
@@ -559,18 +607,18 @@ theorem prob_7_3_covered_set_forces_partitionOscillation_lower_bound
     (P : DarbouxRS.Partition a b) (S : Finset ℕ) {K : Set ℝ}
     (heta : 0 ≤ eta)
     (hS : ∀ i ∈ S, i < P.n)
-    (hKcover : K ⊆ ⋃ i ∈ S, Ioc (P.pts i) (P.pts (i + 1)))
+    (hKcover : K ⊆ ⋃ i ∈ S, Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)))
     (hAbove : BddAbove (f '' Icc a b))
     (hBelow : BddBelow (f '' Icc a b))
     (hcell : ∀ i ∈ S,
-      eta ≤ DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i) :
+      eta ≤ Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i) :
     eta * (((F.measure.restrict (Icc a b)) K).toReal) ≤
       Thm11SourceRoute.partitionOscillation P f F := by
   let μr : Measure ℝ := F.measure.restrict (Icc a b)
-  let cell : ℕ → Set ℝ := fun i => Ioc (P.pts i) (P.pts (i + 1))
+  let cell : ℕ → Set ℝ := fun i => Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1))
   have hUnionToReal :
       (μr (⋃ i ∈ S, cell i)).toReal ≤
-        ∑ i ∈ S, (F (P.pts (i + 1)) - F (P.pts i)) := by
+        ∑ i ∈ S, (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i)) := by
     exact prob_7_3_restricted_measure_finset_partition_cells_toReal_le_sum
       (F := F) (P := P) (S := S) hS
   have hleUnionSum :
@@ -587,14 +635,14 @@ theorem prob_7_3_covered_set_forces_partitionOscillation_lower_bound
     ENNReal.toReal_mono hUnion_ne_top (measure_mono hKcover)
   have hKToRealLeSum :
       (μr K).toReal ≤
-        ∑ i ∈ S, (F (P.pts (i + 1)) - F (P.pts i)) :=
+        ∑ i ∈ S, (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i)) :=
     le_trans hKToRealLeUnion hUnionToReal
   have hmul :
       eta * (μr K).toReal ≤
-        eta * (∑ i ∈ S, (F (P.pts (i + 1)) - F (P.pts i))) :=
+        eta * (∑ i ∈ S, (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i))) :=
     mul_le_mul_of_nonneg_left hKToRealLeSum heta
   have hosc :
-      eta * (∑ i ∈ S, (F (P.pts (i + 1)) - F (P.pts i))) ≤
+      eta * (∑ i ∈ S, (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i))) ≤
         Thm11SourceRoute.partitionOscillation P f F :=
     prob_7_3_finset_weighted_cell_lower_bound_partitionOscillation
       (F := F) (P := P) (S := S) hS hAbove hBelow hcell
@@ -604,14 +652,14 @@ theorem prob_7_3_protected_largeOscillation_cell_cover_forces_partitionOscillati
     (F : StieltjesFunction ℝ) {a b : ℝ} {f : ℝ → ℝ}
     (P : DarbouxRS.Partition a b) (S : Finset ℕ) {K : Set ℝ} (n : ℕ)
     (hS : ∀ i ∈ S, i < P.n)
-    (hKcover : K ⊆ ⋃ i ∈ S, Ioc (P.pts i) (P.pts (i + 1)))
+    (hKcover : K ⊆ ⋃ i ∈ S, Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)))
     (hAbove : BddAbove (f '' Icc a b))
     (hBelow : BddBelow (f '' Icc a b))
     (hprotected : ∀ i ∈ S, ∃ x r : ℝ,
       x ∈ prob_7_3_largeOscillationSet f a b n ∧
         0 < r ∧
         ∀ y : ℝ, y ∈ Icc a b → |y - x| < r →
-          y ∈ DarbouxRS.subinterval P i) :
+          y ∈ Prob73NatPartition.subinterval P i) :
     ((1 : ℝ) / ((n : ℝ) + 1)) *
         (((F.measure.restrict (Icc a b)) K).toReal) ≤
       Thm11SourceRoute.partitionOscillation P f F := by
@@ -651,14 +699,14 @@ theorem prob_7_3_gapSmall_excludes_fine_protected_largeOscillation_cell_cover
     ∃ δ > 0, ∀ P : DarbouxRS.Partition a b, P.mesh < δ →
       ∀ S : Finset ℕ,
         (∀ i ∈ S, i < P.n) →
-        K ⊆ ⋃ i ∈ S, Ioc (P.pts i) (P.pts (i + 1)) →
+        K ⊆ ⋃ i ∈ S, Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)) →
         BddAbove (f '' Icc a b) →
         BddBelow (f '' Icc a b) →
         (∀ i ∈ S, ∃ x r : ℝ,
           x ∈ prob_7_3_largeOscillationSet f a b n ∧
             0 < r ∧
             ∀ y : ℝ, y ∈ Icc a b → |y - x| < r →
-              y ∈ DarbouxRS.subinterval P i) →
+              y ∈ Prob73NatPartition.subinterval P i) →
         False := by
   rcases prob_7_3_gapSmall_excludes_fine_partitionOscillation_lower_bound
       (F := F) (eta := (1 : ℝ) / ((n : ℝ) + 1)) (K := K) hgap hpos with
@@ -695,14 +743,14 @@ theorem prob_7_3_gapSmall_excludes_fine_protected_largeOscillation_cell_cover_of
     ∃ δ > 0, ∀ P : DarbouxRS.Partition a b, P.mesh < δ →
       ∀ S : Finset ℕ,
         (∀ i ∈ S, i < P.n) →
-        K \ {a} ⊆ ⋃ i ∈ S, Ioc (P.pts i) (P.pts (i + 1)) →
+        K \ {a} ⊆ ⋃ i ∈ S, Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)) →
         BddAbove (f '' Icc a b) →
         BddBelow (f '' Icc a b) →
         (∀ i ∈ S, ∃ x r : ℝ,
           x ∈ prob_7_3_largeOscillationSet f a b n ∧
             0 < r ∧
             ∀ y : ℝ, y ∈ Icc a b → |y - x| < r →
-              y ∈ DarbouxRS.subinterval P i) →
+              y ∈ Prob73NatPartition.subinterval P i) →
         False := by
   have hpos' :
       0 < ((1 : ℝ) / ((n : ℝ) + 1)) *

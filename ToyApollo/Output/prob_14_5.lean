@@ -68,9 +68,8 @@ theorem prob_14_5_weak_to_singleton_masses
 
 lemma prob_14_5_summable_singletonMass (P : ProbabilityMeasure ℤ) :
     Summable (fun k : ℤ => prob_14_5_singletonMass P k) := by
-  simpa [prob_14_5_singletonMass, TVCore.pmfReal,
-    Measure.toPMF_apply, Measure.real_def] using
-    TVCore.summable_pmfReal ((P : Measure ℤ).toPMF)
+  change Summable (TVCore.pmfReal ((P : Measure ℤ).toPMF))
+  exact TVCore.summable_pmfReal ((P : Measure ℤ).toPMF)
 
 lemma prob_14_5_tsum_singletonMass (P : ProbabilityMeasure ℤ) :
     (∑' k : ℤ, prob_14_5_singletonMass P k) = 1 := by
@@ -83,17 +82,10 @@ theorem prob_14_5_totalVariationDistance_eq_half_tsum_abs
     totalVariationDistance (P : Measure ℤ) (Q : Measure ℤ) =
       (1 / 2 : ℝ) * ∑' k : ℤ,
         |prob_14_5_singletonMass P k - prob_14_5_singletonMass Q k| := by
-  calc
-    totalVariationDistance (P : Measure ℤ) (Q : Measure ℤ)
-        = totalVariationDistance (((P : Measure ℤ).toPMF).toMeasure)
-            (((Q : Measure ℤ).toPMF).toMeasure) := by
-            rw [Measure.toPMF_toMeasure, Measure.toPMF_toMeasure]
-    _ = (1 / 2 : ℝ) * ∑' k : ℤ,
-          |prob_14_5_singletonMass P k - prob_14_5_singletonMass Q k| := by
-            simpa [TVCore.pmfDiff, TVCore.pmfReal, prob_14_5_singletonMass,
-              Measure.toPMF_apply, Measure.real_def] using
-              TVCore.discrete_totalVariationDistance_eq_half_tsum_abs
-                ((P : Measure ℤ).toPMF) ((Q : Measure ℤ).toPMF)
+  simpa [TVCore.pmfDiff, TVCore.pmfReal, prob_14_5_singletonMass,
+    Measure.toPMF_apply, Measure.real_def] using
+    TVCore.discrete_totalVariationDistance_eq_half_tsum_abs
+      ((P : Measure ℤ).toPMF) ((Q : Measure ℤ).toPMF)
 
 private lemma prob_14_5_abs_sub_eq_add_sub_two_min {a b : ℝ} :
     |a - b| = a + b - 2 * min a b := by
@@ -316,7 +308,7 @@ theorem prob_14_5_totalVariation_to_weak
     have hcont :=
       (LevyProkhorov.continuous_toMeasure_probabilityMeasure
         (Ω := ℤ)).tendsto (LevyProkhorov.ofMeasure P)
-    simpa using hcont.comp hLP
+    simpa [Function.comp_def] using hcont.comp hLP
   exact ProbabilityMeasure.tendsto_iff_forall_integral_tendsto.mp hWeak
 
 theorem prob_14_5_weak_to_totalVariation

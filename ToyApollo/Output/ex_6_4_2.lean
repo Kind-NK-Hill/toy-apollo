@@ -112,7 +112,7 @@ theorem positiveTruncation_mono (X : Ω → ℤ) :
       · have hright : positiveTruncation X l ω = ((X ω).toNat : ENNReal) := by
           simp [positiveTruncation, h0, hl]
         rw [hleft, hright]
-        exact zero_le _
+        exact zero_le
       · simp [positiveTruncation, h0, hk, hl]
   · have hleft : positiveTruncation X k ω = 0 := by simp [positiveTruncation, h0]
     have hright : positiveTruncation X l ω = 0 := by simp [positiveTruncation, h0]
@@ -190,7 +190,8 @@ theorem negativeTruncation_integral_formula (P : Measure Ω) (X : Ω → ℤ)
 
 theorem negativeTruncation_mono (X : Ω → ℤ) :
     Monotone (negativeTruncation X) := by
-  simpa [negativeTruncation] using positiveTruncation_mono (X := fun ω => -X ω)
+  change Monotone (positiveTruncation (fun ω => -X ω))
+  exact positiveTruncation_mono (X := fun ω => -X ω)
 
 theorem iSup_negativeTruncation (X : Ω → ℤ) (ω : Ω) :
     (⨆ k : ℕ, negativeTruncation X k ω) = ((-X ω).toNat : ENNReal) := by
@@ -301,7 +302,11 @@ theorem ex_6_4_2 {Ω : Type*} [MeasurableSpace Ω]
     have htmp :
         Filter.Tendsto (fun k : ℕ => ∑ i ∈ Finset.range (k + 1), fpos i) Filter.atTop
           (nhds (Ex642Support.positiveSeries P X)) := by
-      simpa [fpos] using hPosTendsto0.comp hN
+      change Filter.Tendsto
+        ((fun n : ℕ => ∑ i ∈ Finset.range n, fpos i) ∘
+          fun k : ℕ => k + 1)
+        Filter.atTop (nhds (Ex642Support.positiveSeries P X))
+      exact hPosTendsto0.comp hN
     refine htmp.congr' ?_
     exact Filter.Eventually.of_forall fun k => (hPosFinite k).symm
   let fneg : ℕ → ENNReal := fun i => (i : ENNReal) * P (X ⁻¹' ({(-(i : ℤ))} : Set ℤ))
@@ -319,7 +324,11 @@ theorem ex_6_4_2 {Ω : Type*} [MeasurableSpace Ω]
     have htmp :
         Filter.Tendsto (fun k : ℕ => ∑ i ∈ Finset.range (k + 1), fneg i) Filter.atTop
           (nhds (Ex642Support.negativeSeries P X)) := by
-      simpa [fneg] using hNegTendsto0.comp hN
+      change Filter.Tendsto
+        ((fun n : ℕ => ∑ i ∈ Finset.range n, fneg i) ∘
+          fun k : ℕ => k + 1)
+        Filter.atTop (nhds (Ex642Support.negativeSeries P X))
+      exact hNegTendsto0.comp hN
     refine htmp.congr' ?_
     exact Filter.Eventually.of_forall fun k => (hNegFinite k).symm
   have hPosL :

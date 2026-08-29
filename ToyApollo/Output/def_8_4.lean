@@ -7,12 +7,11 @@ SOURCE MATERIAL: omitted from the public source snapshot; see docs/repository_sc
 
 import Mathlib
 
--- WRITE FINAL LEAN CODE BELOW
-
 open MeasureTheory ProbabilityTheory
 
 structure ContinuousPdfCoupling (fX fY : ℝ → ENNReal) where
   jointDensity : ℝ → ℝ → ENNReal
+  jointDensity_measurable : Measurable (Function.uncurry jointDensity)
   totalMass : ∫⁻ p : ℝ × ℝ, jointDensity p.1 p.2 ∂(volume.prod volume) = 1
   marginal_X : ∀ x : ℝ, fX x = ∫⁻ y : ℝ, jointDensity x y ∂volume
   marginal_Y : ∀ y : ℝ, fY y = ∫⁻ x : ℝ, jointDensity x y ∂volume

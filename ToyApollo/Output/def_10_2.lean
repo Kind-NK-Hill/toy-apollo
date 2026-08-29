@@ -17,9 +17,11 @@ def deviationEvent {Ω : Type*} (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ) (n : 
   {ω : Ω | |Xn n ω - X ω| > ε}
 
 def ConvergesInProbability {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
-    (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ) : Prop :=
-  ∀ ε : ℝ, 0 < ε →
-    Tendsto (fun n : ℕ => μ (deviationEvent Xn X n ε)) atTop (nhds 0)
+    [IsProbabilityMeasure μ] (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ) : Prop :=
+  (∀ n : ℕ, Measurable (Xn n)) ∧
+    Measurable X ∧
+      ∀ ε : ℝ, 0 < ε →
+        Tendsto (fun n : ℕ => μ (deviationEvent Xn X n ε)) atTop (nhds 0)
 
 def def_10_2 :=
   @ConvergesInProbability

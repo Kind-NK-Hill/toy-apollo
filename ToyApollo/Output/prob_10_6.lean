@@ -50,8 +50,8 @@ private lemma prob_10_6_summable_singletonMass {Ω : Type*} [MeasurableSpace Ω]
     [Countable Ω] [MeasurableSingletonClass Ω] (ν : Measure Ω)
     [IsProbabilityMeasure ν] :
     Summable (fun x : Ω => ν.real ({x} : Set Ω)) := by
-  simpa [TVCore.pmfReal, Measure.toPMF_apply, Measure.real_def] using
-    TVCore.summable_pmfReal (ν.toPMF)
+  change Summable (TVCore.pmfReal ν.toPMF)
+  exact TVCore.summable_pmfReal ν.toPMF
 
 private lemma prob_10_6_tsum_singletonMass {Ω : Type*} [MeasurableSpace Ω]
     [Countable Ω] [MeasurableSingletonClass Ω] (ν : Measure Ω)

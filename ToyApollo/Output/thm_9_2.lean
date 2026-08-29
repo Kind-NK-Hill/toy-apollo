@@ -69,11 +69,23 @@ theorem thm_9_2_finiteMomentGeneratingFunction_eq_mgf_near_zero
   exact thm_9_2_finiteMomentGeneratingFunction_eq_mgf_of_integrable hXm
     htSet
 
+theorem thm_9_2_finiteAbsMoment
+    {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
+    [IsProbabilityMeasure μ] {X : Ω → ℝ}
+    (hXmeas : Measurable X) (hXm : AEMeasurable X μ)
+    (hX : HasMomentGeneratingFunction μ X hXm) (n : ℕ) :
+    FiniteAbsMoment μ X n := by
+  have hInterior :
+      (0 : ℝ) ∈ interior (integrableExpSet X μ) :=
+    thm_9_2_mem_interior_integrableExpSet_of_HasMomentGeneratingFunction hXm hX
+  exact ⟨hXmeas, integrable_pow_abs_of_mem_interior_integrableExpSet hInterior n⟩
+
 theorem thm_9_2 {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ}
-    (hXm : AEMeasurable X μ) (hX : HasMomentGeneratingFunction μ X hXm) (n : ℕ) :
-    Integrable (fun ω => X ω ^ n) μ ∧
-      rthMoment μ X n =
+    (hXmeas : Measurable X) (hXm : AEMeasurable X μ)
+    (hX : HasMomentGeneratingFunction μ X hXm) (n : ℕ) :
+    FiniteAbsMoment μ X n ∧
+      generalMoment μ X n (thm_9_2_finiteAbsMoment hXmeas hXm hX n) =
         iteratedDeriv n (finiteMomentGeneratingFunction μ X hXm) 0 := by
   have hInterior :
       (0 : ℝ) ∈ interior (integrableExpSet X μ) :=
@@ -82,7 +94,7 @@ theorem thm_9_2 {Ω : Type*} [MeasurableSpace Ω]
       finiteMomentGeneratingFunction μ X hXm =ᶠ[nhds (0 : ℝ)] mgf X μ :=
     thm_9_2_finiteMomentGeneratingFunction_eq_mgf_near_zero hXm hX
   constructor
-  · exact integrable_pow_of_mem_interior_integrableExpSet hInterior n
+  · exact thm_9_2_finiteAbsMoment hXmeas hXm hX n
   · rw [Filter.EventuallyEq.iteratedDeriv_eq n hEvent]
-    simpa [rthMoment, moment] using
+    simpa [generalMoment, moment] using
       (iteratedDeriv_mgf_zero (X := X) (μ := μ) hInterior n).symm

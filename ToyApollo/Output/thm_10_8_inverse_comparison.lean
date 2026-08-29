@@ -71,8 +71,9 @@ theorem thm_10_8_le_lowerQuantile_of_stieltjes_lt
 theorem thm_10_8_eventually_upperQuantile_le_of_continuity
     (Fs : ℕ → thm_10_8_ProbabilityCdf) (F : thm_10_8_ProbabilityCdf)
     (hconv :
-      CdfConvergesInDistribution
-        (fun n x => (Fs n).stieltjes x) (F.stieltjes : ℝ → ℝ))
+      ∀ x : ℝ, ContinuousAt (F.stieltjes : ℝ → ℝ) x →
+        Tendsto (fun n : ℕ => (Fs n).stieltjes x) atTop
+          (𝓝 (F.stieltjes x)))
     {omega y : ℝ} (homega : 0 < omega)
     (hcont : ContinuousAt (F.stieltjes : ℝ → ℝ) y)
     (hy : omega < F.stieltjes y) :
@@ -85,8 +86,9 @@ theorem thm_10_8_eventually_upperQuantile_le_of_continuity
 theorem thm_10_8_eventually_le_lowerQuantile_of_continuity
     (Fs : ℕ → thm_10_8_ProbabilityCdf) (F : thm_10_8_ProbabilityCdf)
     (hconv :
-      CdfConvergesInDistribution
-        (fun n x => (Fs n).stieltjes x) (F.stieltjes : ℝ → ℝ))
+      ∀ x : ℝ, ContinuousAt (F.stieltjes : ℝ → ℝ) x →
+        Tendsto (fun n : ℕ => (Fs n).stieltjes x) atTop
+          (𝓝 (F.stieltjes x)))
     {omega y : ℝ} (homega : omega < 1)
     (hcont : ContinuousAt (F.stieltjes : ℝ → ℝ) y)
     (hy : F.stieltjes y < omega) :
@@ -99,8 +101,9 @@ theorem thm_10_8_eventually_le_lowerQuantile_of_continuity
 theorem thm_10_8_limsup_upperQuantile_le_of_continuity
     (Fs : ℕ → thm_10_8_ProbabilityCdf) (F : thm_10_8_ProbabilityCdf)
     (hconv :
-      CdfConvergesInDistribution
-        (fun n x => (Fs n).stieltjes x) (F.stieltjes : ℝ → ℝ))
+      ∀ x : ℝ, ContinuousAt (F.stieltjes : ℝ → ℝ) x →
+        Tendsto (fun n : ℕ => (Fs n).stieltjes x) atTop
+          (𝓝 (F.stieltjes x)))
     {omega y : ℝ} (homega : 0 < omega)
     (hcont : ContinuousAt (F.stieltjes : ℝ → ℝ) y)
     (hy : omega < F.stieltjes y)
@@ -115,8 +118,9 @@ theorem thm_10_8_limsup_upperQuantile_le_of_continuity
 theorem thm_10_8_le_liminf_lowerQuantile_of_continuity
     (Fs : ℕ → thm_10_8_ProbabilityCdf) (F : thm_10_8_ProbabilityCdf)
     (hconv :
-      CdfConvergesInDistribution
-        (fun n x => (Fs n).stieltjes x) (F.stieltjes : ℝ → ℝ))
+      ∀ x : ℝ, ContinuousAt (F.stieltjes : ℝ → ℝ) x →
+        Tendsto (fun n : ℕ => (Fs n).stieltjes x) atTop
+          (𝓝 (F.stieltjes x)))
     {omega y : ℝ} (homega : omega < 1)
     (hcont : ContinuousAt (F.stieltjes : ℝ → ℝ) y)
     (hy : F.stieltjes y < omega)
@@ -131,8 +135,9 @@ theorem thm_10_8_le_liminf_lowerQuantile_of_continuity
 theorem thm_10_8_upper_lower_inverse_comparison
     (Fs : ℕ → thm_10_8_ProbabilityCdf) (F : thm_10_8_ProbabilityCdf)
     (hconv :
-      CdfConvergesInDistribution
-        (fun n x => (Fs n).stieltjes x) (F.stieltjes : ℝ → ℝ)) :
+      ∀ x : ℝ, ContinuousAt (F.stieltjes : ℝ → ℝ) x →
+        Tendsto (fun n : ℕ => (Fs n).stieltjes x) atTop
+          (𝓝 (F.stieltjes x))) :
     (∀ {omega y : ℝ}, 0 < omega →
       ContinuousAt (F.stieltjes : ℝ → ℝ) y →
       omega < F.stieltjes y →

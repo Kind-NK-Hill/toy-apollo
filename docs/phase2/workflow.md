@@ -14,6 +14,26 @@ For tasks that trigger the Math Review Gate, the author/build entry is:
 pack -> natural language proof skeleton -> xhigh independent math review, 3 rounds -> theorem-shape go/stop -> edit draft -> build-check
 ```
 
+## Narrow Dependency Reconciliation
+
+When evidence establishes that one registered task's
+`candidate_snapshot.dependencies` was contaminated by another task, reconcile
+only that task instead of re-applying the whole Phase 1 source unit:
+
+```powershell
+python .\run_chapter.py --phase 2 --phase2-mode dependency-reconcile --tasks <task_id> --expected-old-dependencies <dep_id>,<dep_id>
+```
+
+The replacement dependencies are not supplied by the operator. The runtime
+loads them from the task's unique tracked Phase 1 plan entry. The supplied old
+list is an exact compare-and-swap guard against concurrent or mistaken state;
+an empty old list must be passed explicitly as
+`--expected-old-dependencies ""`. The same ledger transaction records the plan path and hashes, updates the
+single candidate snapshot, and invalidates build-ready, review PASS, pending
+review/repair, and apply-receipt bindings. It never edits SQLite by hand,
+re-registers sibling tasks, or grants completion. Continue through fresh
+build/review/apply evidence as directed by `batch-plan`.
+
 ## 1. Pack
 
 ```powershell
@@ -21,8 +41,7 @@ python .\run_chapter.py --phase 2 --phase2-mode pack --tasks <task_id>
 ```
 
 This writes `phase2_prompt_packs/<task_id>/` with the task, source context,
-dependency context, draft, proof-obligation checklist when applicable, and
-review materials.
+dependency context, draft, and review materials.
 
 ## 2. Math Review Gate
 
@@ -31,10 +50,8 @@ when a task carries a route-risk signal such as:
 
 - `semantic_fail_public_premise*` or another public-premise relocation signal;
 - `source_mismatch` or statement/source mismatch;
-- `needs_concrete_decomposition`;
 - repeated build/review/auto-loop failures where the task is visibly
   struggling and the missing mathematical route is not yet clear;
-- historical nested `obl_obl_*` evidence in an imported legacy ledger;
 - dirty or blocked family state;
 - parent theorem setup that exposes a core proof result as a public premise;
 - pilot large analysis/probability tasks such as `prob_14_1` and `prob_14_8`.
@@ -42,8 +59,8 @@ when a task carries a route-risk signal such as:
 For these tasks the normal practice is to write the mathematical proof route in
 natural language first, before authoring more Lean.  The skeleton should state
 the source claim, the textbook proof route, the intended theorem shape, the
-available local/Mathlib support, and any support obligations that must be
-proved.  Only after an independent read-only Math Review Gate result returns
+available local/Mathlib support, and any parent-owned source steps or support
+theorems that must be proved. Only after an independent read-only Math Review Gate result returns
 `go` should the operator resume Lean author/build for the parent task.
 
 The gate requires:
@@ -116,10 +133,14 @@ For an already runnable official output:
 python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject existing
 ```
 
+The existing-output path runs the same static hard checks used by `build-check`
+before preparing semantic-review materials. This preserves the useful preflight
+formerly hidden inside the retired `audit` command.
+
 The reviewer must be independent and read-only. The reviewer must inspect the
-source TeX, Lean subject, proof obligations, audit/classification/dependency
-evidence, downstream/import evidence, ledger status, and freshness/hash
-evidence. See [review_criteria.md](review_criteria.md).
+source TeX, Lean subject, essential source proof steps and their Lean landings,
+audit/classification/dependency evidence, downstream/import evidence, ledger
+status, and freshness/hash evidence. See [review_criteria.md](review_criteria.md).
 
 ### Route Inspection Gate
 
@@ -130,8 +151,6 @@ completion under the normal parent/support `review-apply` gate.
 Route inspection is especially mandatory when any of these signals appear:
 
 - `semantic_fail_public_premise*` or another public-premise relocation signal;
-- `needs_concrete_decomposition`;
-- historical nested `obl_obl_*` evidence or dirty/blocked family state;
 - parent route and source statement/answer visibly disagree;
 - family closure says old `obl` material was absorbed but the parent/support
   route has not been independently reviewed.
@@ -145,10 +164,11 @@ The reviewer records:
 - `support_or_reassembly_decision`;
 - `stop_go_verdict`.
 
-`obl` is no longer a task type or public import surface. `proof_obligations.json`
-is checklist/review context only. A family closure report may say what should be
-reassembled, renamed, or deleted, but it must not create child tasks, write clean
-status, or replace parent/support `build-check -> review-now -> review-apply`.
+`obl` is no longer a task type or public import surface. Historical
+`proof_obligations.json` files are inert audit artifacts: the runtime must not
+generate, bind, review, apply, gate, or plan from them. Semantic review checks
+essential source steps directly in `spine_alignment.source_steps_checked`;
+completion remains under `build-check -> review-now -> review-apply`.
 
 ## 6. Apply Gate
 
@@ -334,19 +354,18 @@ still lands only through `review-apply` with `phase2_status=pass`.
 
 ## Non-Default Paths
 
-- `verify`: diagnostics/report only; it does not land completion.
-- `audit`: diagnostics/report only; it does not quarantine by default and does
-  not complete a task.
-- `review-pack`, `review-existing`, `review-support`,
-  `review-existing-queue`: prepare review materials; not completion authority.
-- `debt-fix`: maintenance repair path for accepted proof debt; not proof.
+- `review-pack`, `review-existing`, and `review-existing-queue`: prepare
+  review materials; not completion authority.
 - foundational support: maintenance planning for splitting super-long official
-  output and absorbing proof-obligation material into stable support or parent
+  output and moving reusable proof material into stable support or parent
   files. It may include already passing official outputs when their size or
   historical `obl_*` declarations create a reuse problem, but it does not land
   completion by itself.
 - `soft-pack` and `soft-apply`: Problem soft-dependency selection only; not a
   Lean acceptance gate.
+
+Historical `verify_result_v*.json` and audit artifacts remain read-only review
+context. No active CLI mode produces a standalone verify or audit report.
 
 ## Stops
 

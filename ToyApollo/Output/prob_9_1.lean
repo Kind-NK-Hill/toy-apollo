@@ -31,8 +31,16 @@ noncomputable def exponentialFiniteMGF
 
 private lemma measurable_exponentialPDF (rate : ℝ) :
     Measurable (ProbabilityTheory.exponentialPDF rate) := by
-  simpa [ProbabilityTheory.exponentialPDF] using
-    ENNReal.measurable_ofReal.comp (ProbabilityTheory.measurable_exponentialPDFReal rate)
+  change Measurable
+    (ENNReal.ofReal ∘ ProbabilityTheory.exponentialPDFReal rate)
+  exact ENNReal.measurable_ofReal.comp
+    (ProbabilityTheory.measurable_exponentialPDFReal rate)
+
+private lemma expMeasure_eq_withDensity_exponentialPDF (rate : ℝ) :
+    ProbabilityTheory.expMeasure rate =
+      (volume : Measure ℝ).withDensity
+        (ProbabilityTheory.exponentialPDF rate) := by
+  rfl
 
 private lemma exponentialPDF_lt_top_ae (rate : ℝ) :
     ∀ᵐ x ∂(volume : Measure ℝ), ProbabilityTheory.exponentialPDF rate x < ⊤ := by
@@ -108,7 +116,8 @@ theorem exponential_real_mgf_eq_formula
     ∫ x : ℝ, Real.exp (t * x) ∂ProbabilityTheory.expMeasure lam
         = ∫ x : ℝ,
             (ProbabilityTheory.exponentialPDF lam x).toReal * Real.exp (t * x) := by
-          simpa [ProbabilityTheory.expMeasure, smul_eq_mul, mul_comm] using
+          rw [expMeasure_eq_withDensity_exponentialPDF lam]
+          simpa [smul_eq_mul, mul_comm] using
             (integral_withDensity_eq_integral_toReal_smul
               (μ := (volume : Measure ℝ))
               (f := ProbabilityTheory.exponentialPDF lam)
@@ -178,7 +187,8 @@ theorem exponential_kth_moment_eq_formula
   calc
     ∫ x : ℝ, x ^ k ∂ProbabilityTheory.expMeasure lam
         = ∫ x : ℝ, (ProbabilityTheory.exponentialPDF lam x).toReal * x ^ k := by
-          simpa [ProbabilityTheory.expMeasure, smul_eq_mul, mul_comm] using
+          rw [expMeasure_eq_withDensity_exponentialPDF lam]
+          simpa [smul_eq_mul, mul_comm] using
             (integral_withDensity_eq_integral_toReal_smul
               (μ := (volume : Measure ℝ))
               (f := ProbabilityTheory.exponentialPDF lam)

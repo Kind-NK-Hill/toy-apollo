@@ -37,7 +37,8 @@ lemma pmfReal_nonneg (p : PMF α) (x : α) : 0 ≤ pmfReal p x := by
   simp [pmfReal]
 
 lemma summable_pmfReal (p : PMF α) : Summable (pmfReal p) := by
-  simpa [pmfReal] using ENNReal.summable_toReal p.tsum_coe_ne_top
+  change Summable (fun x => (p x).toReal)
+  exact ENNReal.summable_toReal p.tsum_coe_ne_top
 
 lemma tsum_pmfReal (p : PMF α) : ∑' x, pmfReal p x = 1 := by
   calc
@@ -296,6 +297,12 @@ lemma densityMeasure_apply_univ
   rw [← MeasureTheory.ofReal_integral_eq_lintegral_ofReal hf_int h_nonneg, hf_prob]
   norm_num
 
+lemma densityMeasure_isProbabilityMeasure
+    {f : ℝ → ℝ} (hf_int : Integrable f volume) (hf_nonneg : ∀ x, 0 ≤ f x)
+    (hf_prob : ∫ x, f x = 1) :
+    IsProbabilityMeasure (densityMeasure f) :=
+  ⟨densityMeasure_apply_univ hf_int hf_nonneg hf_prob⟩
+
 lemma densityMeasure_real_univ
     {f : ℝ → ℝ} (hf_int : Integrable f volume) (hf_nonneg : ∀ x, 0 ≤ f x)
     (hf_prob : ∫ x, f x = 1) :
@@ -329,7 +336,8 @@ lemma densityMeasure_real_compl_eq_one_sub
 lemma densityDiff_measurable {f g : ℝ → ℝ}
     (hf_meas : Measurable f) (hg_meas : Measurable g) :
     Measurable (densityDiff f g) := by
-  simpa [densityDiff] using hf_meas.sub hg_meas
+  change Measurable (fun x => f x - g x)
+  exact hf_meas.sub hg_meas
 
 lemma densityPositiveSet_measurable {f g : ℝ → ℝ}
     (hf_meas : Measurable f) (hg_meas : Measurable g) :
@@ -350,7 +358,8 @@ lemma integrable_densityPos {f g : ℝ → ℝ}
     (hf_int : Integrable f volume) (hg_int : Integrable g volume) :
     Integrable (densityPos f g) volume := by
   have hdiff : Integrable (densityDiff f g) volume := by
-    simpa [densityDiff] using hf_int.sub hg_int
+    change Integrable (f - g) volume
+    exact hf_int.sub hg_int
   have habs : Integrable (fun x => |densityDiff f g x|) volume := hdiff.norm
   have hadd : Integrable (fun x => |densityDiff f g x| + densityDiff f g x) volume := habs.add hdiff
   have hformula :
@@ -415,7 +424,8 @@ lemma densityPos_integral_eq_half_abs
     (hf_prob : ∫ x, f x = 1) (hg_prob : ∫ x, g x = 1) :
     ∫ x, densityPos f g x = (1 / 2 : ℝ) * ∫ x, |densityDiff f g x| := by
   have hdiff : Integrable (densityDiff f g) volume := by
-    simpa [densityDiff] using hf_int.sub hg_int
+    change Integrable (f - g) volume
+    exact hf_int.sub hg_int
   have habs : Integrable (fun x => |densityDiff f g x|) volume := hdiff.norm
   calc
     ∫ x, densityPos f g x
@@ -451,8 +461,14 @@ theorem continuous_totalVariationDistance_eq_half_integral_abs
     (hf_int : Integrable f volume) (hg_int : Integrable g volume)
     (hf_nonneg : ∀ x, 0 ≤ f x) (hg_nonneg : ∀ x, 0 ≤ g x)
     (hf_prob : ∫ x, f x = 1) (hg_prob : ∫ x, g x = 1) :
-    totalVariationDistance (densityMeasure f) (densityMeasure g)
+    @totalVariationDistance ℝ _ (densityMeasure f) (densityMeasure g)
+      (densityMeasure_isProbabilityMeasure hf_int hf_nonneg hf_prob)
+      (densityMeasure_isProbabilityMeasure hg_int hg_nonneg hg_prob)
       = (1 / 2 : ℝ) * ∫ x, |densityDiff f g x| := by
+  letI : IsProbabilityMeasure (densityMeasure f) :=
+    densityMeasure_isProbabilityMeasure hf_int hf_nonneg hf_prob
+  letI : IsProbabilityMeasure (densityMeasure g) :=
+    densityMeasure_isProbabilityMeasure hg_int hg_nonneg hg_prob
   let S : Set ℝ :=
     {d : ℝ | ∃ A : Set ℝ, MeasurableSet A ∧ d = |(densityMeasure f).real A - (densityMeasure g).real A|}
   have hnonempty : S.Nonempty := by

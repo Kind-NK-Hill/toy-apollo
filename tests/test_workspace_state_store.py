@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from contextlib import closing
 from pathlib import Path
+from unittest.mock import patch
 
 from src.ledger_manager import LedgerDangerousStateError, TaskStatus
 from src.toy_apollo.core.sqlite_ledger import SQLiteLedgerManager
@@ -17,6 +18,7 @@ from src.toy_apollo.state_migration import (
 from src.toy_apollo.state_review import record_review_apply_state
 from src.toy_apollo.state_reconcile import (
     discover_formal_plan_task_ids,
+    discover_runtime_support_files,
     is_task_owned_path,
     task_id_from_path,
 )
@@ -76,6 +78,40 @@ class WorkspaceStateStoreTests(unittest.TestCase):
                 toy_primary,
             )
         )
+
+    def test_subject_support_projection_binds_exact_shared_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            support_path = root / "ToyApollo" / "Output" / "shared_core.lean"
+            support_path.parent.mkdir(parents=True)
+            support_path.write_text("theorem sharedCore : True := by trivial\n", encoding="utf-8")
+            support_hash = SubjectBundle.from_files(
+                task_id="thm_8_6",
+                files={"ToyApollo/Output/shared_core.lean": support_path.read_bytes()},
+                primary_path="ToyApollo/Output/shared_core.lean",
+                source_repo="toy_apollo",
+            ).primary_hash
+            projection_path = root / "phase2_prompt_packs" / "thm_8_6" / "subject_support_projection.json"
+            projection_path.parent.mkdir(parents=True)
+            projection_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "toy-apollo.subject-support-projection.v1",
+                        "task_id": "thm_8_6",
+                        "files": [
+                            {
+                                "path": "ToyApollo/Output/shared_core.lean",
+                                "content_sha256": support_hash,
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            support = discover_runtime_support_files(root, "thm_8_6", formal_task_ids=set())
+
+            self.assertEqual(support, {"ToyApollo/Output/shared_core.lean": support_path.read_bytes()})
 
         mat_primary = "chapter_01/def_1_3.lean"
         self.assertTrue(
@@ -180,6 +216,8 @@ class WorkspaceStateStoreTests(unittest.TestCase):
                 evidence_path=root / "basis.json",
                 evidence_hash="basis-evidence",
                 authority_eligible=True,
+                prompt_version=11,
+                rubric_version=9,
             )
             binding_path = root / "workspace_review_binding_test.json"
             binding_path.write_text(
@@ -273,6 +311,8 @@ class WorkspaceStateStoreTests(unittest.TestCase):
                 evidence_path=evidence,
                 evidence_hash="evidence",
                 authority_eligible=True,
+                prompt_version=11,
+                rubric_version=9,
             )
 
             coverage = store.review_coverage(same_bundle_new_commit.subject_id)
@@ -296,6 +336,8 @@ class WorkspaceStateStoreTests(unittest.TestCase):
                 evidence_path=Path(tmp) / "review.json",
                 evidence_hash="review-a",
                 authority_eligible=True,
+                prompt_version=11,
+                rubric_version=9,
             )
             store.set_task_head(task_id=changed.task_id, role="mat_candidate", subject_id=changed.subject_id)
 
@@ -318,6 +360,8 @@ class WorkspaceStateStoreTests(unittest.TestCase):
                 "phase2_status": "pass",
                 "evidence_hash": "same-review-bytes",
                 "authority_scope": "phase2_review_artifact",
+                "prompt_version": 11,
+                "rubric_version": 9,
             }
             first_id = store.record_review(
                 **common,
@@ -363,6 +407,8 @@ class WorkspaceStateStoreTests(unittest.TestCase):
                 evidence_path=Path(tmp) / "semantic_review_result_v8.json",
                 evidence_hash="legacy-applied-review",
                 authority_eligible=True,
+                prompt_version=11,
+                rubric_version=9,
             )
             store.set_task_head(task_id=current.task_id, role="mat_candidate", subject_id=current.subject_id)
 
@@ -390,6 +436,8 @@ class WorkspaceStateStoreTests(unittest.TestCase):
                 evidence_path=Path(tmp) / "review.json",
                 evidence_hash="review-b",
                 authority_eligible=True,
+                prompt_version=11,
+                rubric_version=9,
             )
             store.record_transformation(
                 task_id=source.task_id,
@@ -426,6 +474,8 @@ class WorkspaceStateStoreTests(unittest.TestCase):
                 evidence_path=Path(tmp) / "review.json",
                 evidence_hash="reviewed-change",
                 authority_eligible=True,
+                prompt_version=11,
+                rubric_version=9,
             )
             store.set_task_head(task_id=reviewed.task_id, role="mat_candidate", subject_id=reviewed.subject_id)
             store.set_task_head(task_id=kenneth.task_id, role="kenneth_main", subject_id=kenneth.subject_id)
@@ -457,6 +507,8 @@ class WorkspaceStateStoreTests(unittest.TestCase):
                 evidence_path=Path(tmp) / "review-v2.json",
                 evidence_hash="reviewed-again",
                 authority_eligible=True,
+                prompt_version=11,
+                rubric_version=9,
             )
             store.set_task_head(task_id=reviewed.task_id, role="mat_candidate", subject_id=reviewed.subject_id)
             store.set_task_head(task_id=kenneth.task_id, role="kenneth_main", subject_id=kenneth.subject_id)
@@ -584,6 +636,59 @@ class WorkspaceStateStoreTests(unittest.TestCase):
             with self.assertRaises(LedgerDangerousStateError):
                 writer_a.save()
 
+    def test_atomic_normalized_mutation_rolls_back_ledger_and_subject_together(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "runtime"
+            root.mkdir()
+            legacy = root / "project_ledger.json"
+            legacy.write_text(json.dumps({"tasks": {}, "symbols": {}}), encoding="utf-8")
+            store = WorkspaceStateStore(Path(tmp) / "runtime-artifacts" / "state.sqlite3")
+            writer = SQLiteLedgerManager(
+                state_store=store,
+                artifact_root=root,
+                legacy_ledger_path=legacy,
+            )
+            writer.add_or_update_task(
+                {
+                    "block_id": "thm_1_1",
+                    "type": "Theorem",
+                    "title": "Atomic",
+                    "content": "A",
+                    "source_plan": "chapter1",
+                    "dependencies": [],
+                }
+            )
+            subject = self._bundle()
+            before_ledger, before_revision = store.load_campaign_ledger(writer.campaign_id)
+
+            def mutate_ledger():
+                writer.update_runtime_metadata("thm_1_1", atomic_marker="staged")
+                writer.update_status("thm_1_1", TaskStatus.COMPLETED)
+
+            def fail_normalized(state_store, _result):
+                state_store.upsert_subject(subject)
+                raise RuntimeError("force rollback")
+
+            with self.assertRaisesRegex(RuntimeError, "force rollback"):
+                writer.mutate_with_normalized_state(mutate_ledger, fail_normalized)
+
+            rolled_back, rolled_back_revision = store.load_campaign_ledger(writer.campaign_id)
+            self.assertEqual(rolled_back_revision, before_revision)
+            self.assertEqual(rolled_back, before_ledger)
+            self.assertNotIn("atomic_marker", writer.ledger["tasks"]["thm_1_1"])
+            with store._connection(write=False) as connection:
+                self.assertEqual(connection.execute("SELECT COUNT(*) FROM subjects").fetchone()[0], 0)
+
+            writer.mutate_with_normalized_state(
+                mutate_ledger,
+                lambda state_store, _result: state_store.upsert_subject(subject),
+            )
+            committed, committed_revision = store.load_campaign_ledger(writer.campaign_id)
+            self.assertEqual(committed_revision, before_revision + 1)
+            self.assertEqual(committed["tasks"]["thm_1_1"]["atomic_marker"], "staged")
+            with store._connection(write=False) as connection:
+                self.assertEqual(connection.execute("SELECT COUNT(*) FROM subjects").fetchone()[0], 1)
+
     def test_sqlite_ledger_missing_all_state_requires_explicit_rebuild(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "runtime"
@@ -596,6 +701,67 @@ class WorkspaceStateStoreTests(unittest.TestCase):
                     legacy_ledger_path=root / "project_ledger.json",
                 )
             self.assertFalse(state_path.exists())
+
+    def test_sqlite_ledger_read_only_loads_without_initialize_and_rejects_writes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "runtime"
+            root.mkdir()
+            legacy = root / "project_ledger.json"
+            legacy.write_text(json.dumps({"tasks": {}, "symbols": {}}), encoding="utf-8")
+            state_path = Path(tmp) / "runtime-artifacts" / "state.sqlite3"
+            writer = SQLiteLedgerManager(
+                state_store=WorkspaceStateStore(state_path),
+                artifact_root=root,
+                legacy_ledger_path=legacy,
+            )
+            writer.add_or_update_task(
+                {
+                    "block_id": "thm_5_1",
+                    "type": "Theorem",
+                    "title": "Read-only fixture",
+                    "content": "A",
+                    "source_plan": "chapter5",
+                    "dependencies": [],
+                }
+            )
+            before = state_path.read_bytes()
+            read_store = WorkspaceStateStore(state_path)
+
+            with patch.object(
+                read_store,
+                "initialize",
+                side_effect=AssertionError("read-only ledger must not initialize state"),
+            ):
+                reader = SQLiteLedgerManager(
+                    state_store=read_store,
+                    artifact_root=root,
+                    legacy_ledger_path=legacy,
+                    read_only=True,
+                )
+
+            self.assertIn("thm_5_1", reader.ledger["tasks"])
+            self.assertEqual(state_path.read_bytes(), before)
+            with self.assertRaises(LedgerDangerousStateError):
+                reader.save()
+            with self.assertRaises(LedgerDangerousStateError):
+                reader.update_status("thm_5_1", TaskStatus.LOCAL_FIXING)
+
+    def test_sqlite_ledger_read_only_missing_database_does_not_create_it(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "runtime"
+            root.mkdir()
+            state_path = Path(tmp) / "runtime-artifacts" / "state.sqlite3"
+
+            with self.assertRaises(LedgerDangerousStateError):
+                SQLiteLedgerManager(
+                    state_store=WorkspaceStateStore(state_path),
+                    artifact_root=root,
+                    legacy_ledger_path=root / "project_ledger.json",
+                    read_only=True,
+                )
+
+            self.assertFalse(state_path.exists())
+            self.assertFalse(state_path.parent.exists())
 
     def test_corrupt_database_fails_closed(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -638,6 +804,8 @@ class WorkspaceStateStoreTests(unittest.TestCase):
                 layout="review_candidate",
             )
             review_input = {
+                "prompt_version": 11,
+                "rubric_version": 9,
                 "review_subject_kind": "candidate",
                 "subject_bundle": {
                     "task_id": "thm_1_1",
@@ -675,6 +843,79 @@ class WorkspaceStateStoreTests(unittest.TestCase):
             self.assertEqual(len(queue), 1)
             self.assertEqual(queue[0]["state"], "ready")
             self.assertFalse(queue[0]["detail_json"] == "{}")
+
+    def test_review_apply_projection_uses_cordis_profile_without_mat_queue(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "cordis"
+            output = root / "Cordis" / "Foundations" / "EffectContext.lean"
+            pack = Path(tmp) / "cordis-artifacts" / "phase2_prompt_packs" / "thm_4"
+            output.parent.mkdir(parents=True)
+            pack.mkdir(parents=True)
+            code = "theorem theorem4_projection : True := by trivial\n"
+            output.write_text(code, encoding="utf-8")
+            evidence = pack / "semantic_review_result_v1.json"
+            evidence.write_text("{}\n", encoding="utf-8")
+
+            class Settings:
+                runtime_root = root
+                phase2_prompt_packs_dir = pack.parent
+                state_db_file = Path(tmp) / "cordis-artifacts" / "state.sqlite3"
+                profile = "cordis"
+                supported_prompt_versions = (1,)
+                supported_rubric_version = 1
+
+            WorkspaceStateStore(Settings.state_db_file).initialize()
+
+            candidate = SubjectBundle.from_files(
+                task_id="thm_4",
+                files={str(pack / "official_snapshot_v1.lean"): code},
+                primary_path=str(pack / "official_snapshot_v1.lean"),
+                source_repo="cordis",
+                layout="review_official_output",
+            )
+            review_input = {
+                "prompt_version": 1,
+                "rubric_version": 1,
+                "review_subject_kind": "official_output",
+                "subject_bundle": {
+                    "task_id": "thm_4",
+                    "primary_path": candidate.primary_path,
+                    "primary_hash": candidate.primary_hash,
+                    "bundle_hash": candidate.bundle_hash,
+                    "files": candidate.manifest(),
+                },
+            }
+            record_review_apply_state(
+                settings=Settings,
+                task_id="thm_4",
+                review_input=review_input,
+                semantic_review={
+                    "verdict": "pass",
+                    "phase2_status": "pass",
+                    "proof_class": "source_route_theorem",
+                    "completion_class": "textbook_source_route_completed",
+                    "review_result_file": str(evidence),
+                },
+                candidate_path=pack / "official_snapshot_v1.lean",
+                candidate_code=code,
+                success=True,
+                final_build_success=True,
+                disposition="accepted_existing_output",
+                output_path=output,
+            )
+
+            report = WorkspaceStateStore(Settings.state_db_file).task_report("thm_4")
+            self.assertIn("cordis_reviewed", report["head_review_coverage"])
+            self.assertNotIn("toy_reviewed", report["heads"])
+            self.assertEqual(report["integrations"], [])
+            receipt = pack / "review_apply_receipt_v1.json"
+            self.assertTrue(receipt.is_file())
+            receipt_payload = json.loads(receipt.read_text(encoding="utf-8"))
+            self.assertEqual(
+                receipt_payload["schema_version"],
+                "toy-apollo.phase2-review-apply-receipt.v1",
+            )
+            self.assertEqual(receipt_payload["reviewed_head_role"], "cordis_reviewed")
 
     def test_review_apply_requires_explicit_state_rebuild(self):
         with tempfile.TemporaryDirectory() as tmp:

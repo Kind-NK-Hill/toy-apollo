@@ -36,17 +36,39 @@ class SQLiteLedgerManager(LedgerManager):
         artifact_root: Path,
         legacy_ledger_path: Path,
         campaign_id: str = "",
+        read_only: bool = False,
     ) -> None:
         self.state_store = state_store
         self.artifact_root = artifact_root.expanduser().resolve()
         self.campaign_id = campaign_id or campaign_id_for_artifact_root(self.artifact_root)
+        self.read_only = bool(read_only)
         self._db_revision: int | None = None
+        self._normalized_mutation_depth = 0
 
         # The parent loader supplies schema migration and conservative recovery
         # for a legacy file. It does not write during construction.
         super().__init__(ledger_path=str(legacy_ledger_path))
         legacy_ledger = copy.deepcopy(self.ledger)
         legacy_load_error = self._load_error
+
+        if self.read_only:
+            if not self.state_store.exists:
+                raise LedgerDangerousStateError(
+                    "Read-only runtime ledger requires an existing workspace state database; "
+                    "refusing to create or import state."
+                )
+            self.state_store.assert_integrity()
+            stored = self.state_store.load_campaign_ledger(self.campaign_id)
+            if stored is None:
+                raise LedgerDangerousStateError(
+                    f"Read-only runtime ledger requires existing campaign {self.campaign_id!r}; "
+                    "refusing to initialize it."
+                )
+            payload, revision = stored
+            self.ledger = self._migrate_loaded_ledger(payload)
+            self._db_revision = revision
+            self._load_error = ""
+            return
 
         if legacy_load_error:
             raise LedgerDangerousStateError(
@@ -79,6 +101,16 @@ class SQLiteLedgerManager(LedgerManager):
         self._load_error = ""
 
     def _run_transaction(self, mutator, *, force_empty_save: bool = False):
+        if self.read_only:
+            raise LedgerDangerousStateError("Read-only runtime ledger cannot run mutations.")
+        if self._normalized_mutation_depth:
+            result = mutator()
+            self._normalize_ledger_for_runtime()
+            if self._is_ledger_empty() and not force_empty_save:
+                raise LedgerDangerousStateError(
+                    "Refusing to stage an empty ledger during an atomic normalized mutation."
+                )
+            return result
         original_ledger = self.ledger
         original_revision = self._db_revision
 
@@ -108,7 +140,50 @@ class SQLiteLedgerManager(LedgerManager):
             self._db_revision = original_revision
             raise
 
+    def mutate_with_normalized_state(self, ledger_mutator, normalized_mutator):
+        """CAS campaign JSON and normalized authority rows in one SQLite transaction."""
+
+        if self.read_only:
+            raise LedgerDangerousStateError("Read-only runtime ledger cannot run mutations.")
+        if self._db_revision is None:
+            raise LedgerDangerousStateError("Operational campaign revision is unavailable.")
+        original_ledger = self.ledger
+        original_revision = self._db_revision
+
+        def mutate(base: dict[str, Any]):
+            self.ledger = self._migrate_loaded_ledger(base)
+            self._normalized_mutation_depth += 1
+            try:
+                result = ledger_mutator()
+                self._normalize_ledger_for_runtime()
+                return result
+            finally:
+                self._normalized_mutation_depth -= 1
+
+        def mutate_normalized(store, _ledger, result):
+            normalized_mutator(store, result)
+
+        try:
+            ledger, revision, result = self.state_store.mutate_campaign_with_normalized_state(
+                campaign_id=self.campaign_id,
+                artifact_root=self.artifact_root,
+                legacy_ledger_path=self.ledger_path,
+                expected_revision=self._db_revision,
+                ledger_mutator=mutate,
+                normalized_mutator=mutate_normalized,
+            )
+            self.ledger = self._migrate_loaded_ledger(ledger)
+            self._db_revision = revision
+            self._load_error = ""
+            return result
+        except Exception:
+            self.ledger = original_ledger
+            self._db_revision = original_revision
+            raise
+
     def save(self, *, force_empty_save: bool = False) -> None:
+        if self.read_only:
+            raise LedgerDangerousStateError("Read-only runtime ledger cannot be saved.")
         self._normalize_ledger_for_runtime()
         if self._is_ledger_empty() and not force_empty_save:
             stored = self.state_store.load_campaign_ledger(self.campaign_id)
@@ -156,9 +231,12 @@ class SQLiteLedgerManager(LedgerManager):
         return False
 
 
-def open_runtime_ledger(settings) -> SQLiteLedgerManager:
+def open_runtime_ledger(settings, *, read_only: bool = False) -> SQLiteLedgerManager:
     state_path = Path(settings.state_db_file or canonical_state_path(settings.runtime_root))
-    store = WorkspaceStateStore(state_path)
+    store = WorkspaceStateStore(
+        state_path,
+        review_profile=str(getattr(settings, "profile", "mat") or "mat"),
+    )
     store.validate_canonical_path(
         state_path,
         runtime_root=Path(settings.runtime_root),
@@ -169,4 +247,5 @@ def open_runtime_ledger(settings) -> SQLiteLedgerManager:
         artifact_root=Path(settings.artifact_root),
         legacy_ledger_path=Path(settings.project_ledger_file),
         campaign_id="workspace:active",
+        read_only=read_only,
     )

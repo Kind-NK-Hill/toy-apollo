@@ -73,9 +73,12 @@ theorem ex_6_4_1 {Ω : Type*} [MeasurableSpace Ω]
         have hOne :
             ∫ a, Set.indicator (X ⁻¹' {x}) (fun _ : Ω => (1 : ℝ)) a ∂P =
               P.real (X ⁻¹' {x}) := by
-          simpa using
-            (MeasureTheory.integral_indicator_one
-              (μ := P) (s := X ⁻¹' {x}) (hs := hXm (measurableSet_singleton x)))
+          change
+            (∫ a, Set.indicator (X ⁻¹' {x}) (1 : Ω → ℝ) a ∂P) =
+              P.real (X ⁻¹' {x})
+          exact MeasureTheory.integral_indicator_one
+            (μ := P) (s := X ⁻¹' {x})
+            (hs := hXm (measurableSet_singleton x))
         exact congrArg (fun r : ℝ => x * r) hOne
   have hXmE : Measurable fun ω => (X ω : EReal) := by
     fun_prop

@@ -94,28 +94,26 @@ theorem thm_14_6_cdfSubsequenceConvergence_to_weak
     thm_10_8_lowerQuantileVariable (Fseq k)
   let Y : ℝ → ℝ := thm_10_8_lowerQuantileVariable F
   have hCdfConv :
-      CdfConvergesInDistribution
-        (fun k x => (Fseq k).stieltjes x)
-        (F.stieltjes : ℝ → ℝ) := by
+      ∀ x : ℝ, ContinuousAt (F.stieltjes : ℝ → ℝ) x →
+        Tendsto (fun k : ℕ => (Fseq k).stieltjes x) atTop
+          (𝓝 (F.stieltjes x)) := by
     have hDist :
-        CdfConvergesInDistribution
-          (fun k x => measureCdf (((Pseq (index k) : ProbabilityMeasure ℝ) : Measure ℝ)) x)
-          (measureCdf (((Q : ProbabilityMeasure ℝ) : Measure ℝ))) := by
-      simpa [thm_14_6_cdfSubsequenceConvergesInDistribution,
-        def_14_3_cdfsOfMeasures, def_14_3_cdfOfMeasure,
-        CdfConvergesInDistribution, measureCdf, measureReal_def] using h
+        CdfConvergesInDistribution (fun k : ℕ => Pseq (index k)) Q := by
+      change
+        thm_14_6_cdfSubsequenceConvergesInDistribution
+          (def_14_3_cdfsOfMeasures Pseq) index Q
+      exact h
     intro x hcont
     have hcont_measure :
-        ContinuousAt (measureCdf (((Q : ProbabilityMeasure ℝ) : Measure ℝ))) x := by
+        ContinuousAt (measureCdf Q) x := by
       have hfun :
-          (fun y : ℝ =>
-              measureCdf (((Q : ProbabilityMeasure ℝ) : Measure ℝ)) y) =
+          (fun y : ℝ => measureCdf Q y) =
             (fun y : ℝ => F.stieltjes y) := by
         funext y
         simp [F, thm_10_8_probabilityCdfOfMeasure, measureCdf,
           ProbabilityTheory.cdf_eq_real]
       change ContinuousAt
-        (fun y : ℝ => measureCdf (((Q : ProbabilityMeasure ℝ) : Measure ℝ)) y) x
+        (fun y : ℝ => measureCdf Q y) x
       rw [hfun]
       exact hcont
     have htendsto := hDist x hcont_measure

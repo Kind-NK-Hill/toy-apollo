@@ -16,14 +16,17 @@ open Filter MeasureTheory
 open scoped ENNReal
 
 theorem convergesInProbability_of_tendstoInMeasure {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ)
+    (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ)
+    (hXn : ∀ n : ℕ, Measurable (Xn n)) (hX : Measurable X)
     (h : TendstoInMeasure μ Xn atTop X) :
     ConvergesInProbability μ Xn X := by
+  refine ⟨hXn, hX, ?_⟩
   intro ε hε
   have hnorm :=
     (MeasureTheory.tendstoInMeasure_iff_norm (μ := μ) (f := Xn) (g := X)).mp h ε hε
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hnorm
-    (fun n => zero_le _) ?_
+    (fun _ => zero_le) ?_
   intro n
   apply measure_mono
   intro ω hω
@@ -31,12 +34,14 @@ theorem convergesInProbability_of_tendstoInMeasure {Ω : Type*} [MeasurableSpace
   simpa [deviationEvent, Real.norm_eq_abs] using hle
 
 theorem thm_10_5_of_tendsto_eLpNorm {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    [IsProbabilityMeasure μ]
     (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ) {p : ENNReal} (hp_ne_zero : p ≠ 0)
-    (hXn : ∀ n, AEStronglyMeasurable (Xn n) μ) (hX : AEStronglyMeasurable X μ)
+    (hXn : ∀ n, Measurable (Xn n)) (hX : Measurable X)
     (hLp : Tendsto (fun n : ℕ => eLpNorm (Xn n - X) p μ) atTop (nhds 0)) :
     ConvergesInProbability μ Xn X :=
-  convergesInProbability_of_tendstoInMeasure μ Xn X <|
-    MeasureTheory.tendstoInMeasure_of_tendsto_eLpNorm hp_ne_zero hXn hX hLp
+  convergesInProbability_of_tendstoInMeasure μ Xn X hXn hX <|
+    MeasureTheory.tendstoInMeasure_of_tendsto_eLpNorm hp_ne_zero
+      (fun n => (hXn n).aestronglyMeasurable) hX.aestronglyMeasurable hLp
 
 theorem thm_10_5_moment_aemeasurable {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ) {r : ℝ}
@@ -78,23 +83,25 @@ theorem thm_10_5_markov_moment_bound {Ω : Type*} [MeasurableSpace Ω]
     have hle : ε ≤ |Xn n ω - X ω| := le_of_lt hω
     have hpow_le : ε ^ r ≤ |Xn n ω - X ω| ^ r :=
       Real.rpow_le_rpow hε.le hle hr_nonneg
-    simpa using ENNReal.ofReal_le_ofReal hpow_le
+    simpa [A] using ENNReal.ofReal_le_ofReal hpow_le
   have hmeasure : μ (deviationEvent Xn X n ε) ≤ μ A :=
     measure_mono hsubset
   exact hmeasure.trans (by simpa [A, meanDeviationMoment] using hmarkov)
 
 theorem thm_10_5 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    [IsProbabilityMeasure μ]
     (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ) {r : ℝ}
-    (hXn : ∀ n, AEStronglyMeasurable (Xn n) μ) (hX : AEStronglyMeasurable X μ)
+    (hXn_meas : ∀ n : ℕ, Measurable (Xn n)) (hX_meas : Measurable X)
     (hMean : ConvergesInRthMean μ Xn X r) :
     ConvergesInProbability μ Xn X := by
-  rcases hMean with ⟨hr, hmoment⟩
+  rcases hMean with ⟨hXn_ae, hX_ae, hr, hmoment⟩
+  refine ⟨hXn_meas, hX_meas, ?_⟩
   intro ε hε
   have hbound : ∀ n : ℕ,
       μ (deviationEvent Xn X n ε) ≤
         meanDeviationMoment μ Xn X r n / ENNReal.ofReal (ε ^ r) := by
     intro n
-    exact thm_10_5_markov_moment_bound μ Xn X hr hε hXn hX n
+    exact thm_10_5_markov_moment_bound μ Xn X hr hε hXn_ae hX_ae n
   have hscale :
       Tendsto
         (fun n : ℕ => meanDeviationMoment μ Xn X r n / ENNReal.ofReal (ε ^ r))
@@ -111,4 +118,4 @@ theorem thm_10_5 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
         (b := (ENNReal.ofReal (ε ^ r))⁻¹) (Or.inr hinv_ne_top)
     simpa [div_eq_mul_inv] using hmul
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hscale
-    (fun _ => zero_le _) hbound
+    (fun _ => zero_le) hbound

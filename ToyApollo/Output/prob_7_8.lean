@@ -33,7 +33,7 @@ private lemma fprime_aesm {Ω : Type} [MeasurableSpace Ω] {μ : Measure Ω} {a 
           filter_upwards [ h2ae ] with ω hω;
           have := hω b ⟨ by linarith, by linarith ⟩;
           rw [ hasDerivAt_iff_tendsto_slope_zero ] at this;
-          simpa [ div_eq_inv_mul ] using this.comp ( show Filter.Tendsto ( fun n => hn_pos n ) Filter.atTop ( nhdsWithin 0 { 0 } ᶜ ) from tendsto_nhdsWithin_iff.mpr ⟨ hn_lim.2, Filter.Eventually.of_forall fun n => ne_of_lt ( hn_neg n ) ⟩ );
+          simpa [Function.comp_def, div_eq_inv_mul] using this.comp ( show Filter.Tendsto ( fun n => hn_pos n ) Filter.atTop ( nhdsWithin 0 { 0 } ᶜ ) from tendsto_nhdsWithin_iff.mpr ⟨ hn_lim.2, Filter.Eventually.of_forall fun n => ne_of_lt ( hn_neg n ) ⟩ );
         have h_measurable : ∀ n, Measurable (fun ω => (f ω (b + hn_pos n) - f ω b) / hn_pos n) := by
           exact fun n => Measurable.mul ( Measurable.sub ( h1 _ ( hn_lim.1 n ) |>.1 ) ( h1 _ ( Set.right_mem_Icc.mpr hab.le ) |>.1 ) ) measurable_const;
         exact ( aestronglyMeasurable_of_tendsto_ae _ ( fun n => ( h_measurable n |> Measurable.aestronglyMeasurable ) ) h_deriv ) |> fun h => h.congr ( by filter_upwards [ h_deriv ] with ω hω; aesop );
@@ -45,7 +45,7 @@ private lemma fprime_aesm {Ω : Type} [MeasurableSpace Ω] {μ : Measure Ω} {a 
           filter_upwards [ h2ae ] with ω hω;
           have := hω x hx;
           rw [ hasDerivAt_iff_tendsto_slope_zero ] at this;
-          simpa [ div_eq_inv_mul ] using this.comp ( show Filter.Tendsto ( fun n => hn n ) Filter.atTop ( nhdsWithin 0 { 0 } ᶜ ) from tendsto_nhdsWithin_iff.mpr ⟨ hhn.2, Filter.Eventually.of_forall fun n => ne_of_gt ( hhn.1 n |>.1 ) ⟩ );
+          simpa [Function.comp_def, div_eq_inv_mul] using this.comp ( show Filter.Tendsto ( fun n => hn n ) Filter.atTop ( nhdsWithin 0 { 0 } ᶜ ) from tendsto_nhdsWithin_iff.mpr ⟨ hhn.2, Filter.Eventually.of_forall fun n => ne_of_gt ( hhn.1 n |>.1 ) ⟩ );
         exact aestronglyMeasurable_of_tendsto_ae _ ( fun n => by exact ( h1 ( x + hn n ) ( hhn.1 n |>.2 ) |>.1.sub ( h1 x hx |>.1 ) |> Measurable.div_const <| hn n ) |> Measurable.aestronglyMeasurable ) h_diff_quot
 
 private lemma fprime_integrable {Ω : Type} [MeasurableSpace Ω] {μ : Measure Ω}

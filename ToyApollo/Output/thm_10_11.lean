@@ -26,14 +26,17 @@ theorem tendstoInMeasure_of_vectorConvergesInProbability {Ω : Type*}
   have hhalf : 0 < ε / 2 := by linarith
   have hprob_half := hProb (ε / 2) hhalf
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hprob_half
-    (fun _ => zero_le _) ?_
+    (fun _ => bot_le) ?_
   intro n
   apply measure_mono
   intro ω hω
   have hstrict : ε / 2 < ‖Vn n ω - V ω‖ := by
     have hle : ε ≤ ‖Vn n ω - V ω‖ := by simpa using hω
     linarith
-  simpa [vectorDeviationEvent] using hstrict
+  have hstrict_euclidean :
+      ε / 2 < vectorEuclideanNorm (Vn n ω - V ω) :=
+    hstrict.trans_le (piNorm_le_vectorEuclideanNorm (Vn n ω - V ω))
+  simpa [vectorDeviationEvent] using hstrict_euclidean
 
 theorem vectorConvergesInProbability_of_tendstoInMeasure {Ω : Type*}
     [MeasurableSpace Ω] {d : ℕ} (μ : Measure Ω)
@@ -41,14 +44,38 @@ theorem vectorConvergesInProbability_of_tendstoInMeasure {Ω : Type*}
     (h : TendstoInMeasure μ Vn atTop V) :
     VectorConvergesInProbability μ Vn V := by
   intro ε hε
-  have hnorm := (tendstoInMeasure_iff_norm (μ := μ) (f := Vn) (g := V)).mp h ε hε
-  refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hnorm
-    (fun _ => zero_le _) ?_
-  intro n
-  apply measure_mono
-  intro ω hω
-  have hle : ε ≤ ‖Vn n ω - V ω‖ := le_of_lt hω
-  simpa [vectorDeviationEvent] using hle
+  by_cases hd : d = 0
+  · subst d
+    simpa [vectorDeviationEvent, vectorEuclideanNorm, not_lt.mpr hε.le] using
+      (tendsto_const_nhds :
+        Tendsto (fun _ : ℕ => (0 : ENNReal)) atTop (nhds 0))
+  · have hd_pos : 0 < d := Nat.pos_of_ne_zero hd
+    have hsqrt_pos : 0 < Real.sqrt d :=
+      Real.sqrt_pos.2 (Nat.cast_pos.2 hd_pos)
+    let δ : ℝ := ε / (2 * Real.sqrt d)
+    have hδ : 0 < δ := div_pos hε (mul_pos zero_lt_two hsqrt_pos)
+    have hnorm :=
+      (tendstoInMeasure_iff_norm (μ := μ) (f := Vn) (g := V)).mp h δ hδ
+    refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hnorm
+      (fun _ => bot_le) ?_
+    intro n
+    apply measure_mono
+    intro ω hω
+    obtain ⟨i, hi⟩ :=
+      exists_abs_apply_gt_div_sqrt_of_vectorEuclideanNorm_gt
+        hd_pos (Vn n ω - V ω) hε hω
+    have hi_sup :
+        ε / Real.sqrt d < ‖Vn n ω - V ω‖ :=
+      hi.trans_le (by
+        simpa [Real.norm_eq_abs] using
+          norm_le_pi_norm (Vn n ω - V ω) i)
+    have hδ_lt : δ < ε / Real.sqrt d := by
+      dsimp [δ]
+      calc
+        ε / (2 * Real.sqrt d) = (ε / Real.sqrt d) / 2 := by ring
+        _ < ε / Real.sqrt d := by
+          linarith [div_pos hε hsqrt_pos]
+    exact le_of_lt (hδ_lt.trans hi_sup)
 
 theorem tendstoInMeasure_comp_of_ae_continuousAt {Ω : Type*} [MeasurableSpace Ω]
     {d m : ℕ} (μ : Measure Ω) [IsFiniteMeasure μ]

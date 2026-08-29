@@ -354,7 +354,7 @@ theorem ex_10_2_2_not_almost_sure_of_pointwise_failure_on_unit
       ex_10_2_2_unitIntervalMeasure
         {ω : ℝ |
           ¬ Tendsto (fun n : ℕ => ex_10_2_2_sequence n ω) atTop (nhds (0 : ℝ))} = 0 :=
-    ae_iff.1 hAS
+    ae_iff.1 hAS.2.2
   have hsub :
       Icc (0 : ℝ) 1 ⊆
         {ω : ℝ |
@@ -416,8 +416,11 @@ theorem ex_10_2_2_convergesInMean :
     ConvergesInMean ex_10_2_2_unitIntervalMeasure
       ex_10_2_2_sequence ex_10_2_2_zero := by
   unfold ConvergesInMean ConvergesInRthMean
-  constructor
-  · norm_num
+  refine ⟨?_, aestronglyMeasurable_const, by norm_num, ?_⟩
+  · intro n
+    exact
+      (measurable_const.indicator
+        (ex_10_2_2_event_measurable n)).aestronglyMeasurable
   · have hmoments :
         (fun n : ℕ =>
           meanDeviationMoment ex_10_2_2_unitIntervalMeasure

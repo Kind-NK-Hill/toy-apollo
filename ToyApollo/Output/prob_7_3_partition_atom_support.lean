@@ -15,7 +15,7 @@ theorem prob_7_3_exists_fine_partition_atom_free_internal_endpoints_for_measure
     ∃ P : DarbouxRS.Partition a b,
       P.mesh < δ ∧
       ∃ B : Finset ℝ,
-        (∀ j : ℕ, 0 < j → j < P.n → P.pts j ∈ B) ∧
+        (∀ j : ℕ, 0 < j → j < P.n → Prob73NatPartition.point P j ∈ B) ∧
         (∀ x ∈ B, x ∈ Ioo a b) ∧
         (∀ x ∈ B, μ ({x} : Set ℝ) = 0) ∧
         μ (B : Set ℝ) = 0 := by
@@ -31,7 +31,7 @@ theorem prob_7_3_exists_fine_partition_atom_free_internal_endpoints_for_measure
         exact disjoint_singleton.mpr hxy
     refine hpos.mono ?_
     intro x hx
-    exact lt_of_le_of_ne (zero_le _) (Ne.symm hx)
+    exact lt_of_le_of_ne bot_le (Ne.symm hx)
   have hCdense : Dense Cᶜ := hCcount.dense_compl ℝ
   obtain ⟨N, hNbig⟩ := exists_nat_gt (max ((3 * (b - a)) / (2 * δ)) 2)
   have hNgt2R : (2 : ℝ) < (N : ℝ) := lt_of_le_of_lt (le_max_right _ _) hNbig
@@ -119,73 +119,87 @@ theorem prob_7_3_exists_fine_partition_atom_free_internal_endpoints_for_measure
           rw [hui]
           linarith [hhpos]
         exact lt_trans hpi.2.2 (lt_trans this hpip.2.1)
+  let ptsFin : Fin (N + 1) → ℝ := fun j => pts j.val
+  have hptsFin0 : ptsFin 0 = a := by
+    simpa [ptsFin] using hpts0
+  have hptsFinLast : ptsFin (Fin.last N) = b := by
+    simpa [ptsFin] using hptsN
+  have hstrictFin : StrictMono ptsFin := by
+    rw [Fin.strictMono_iff_lt_succ]
+    intro i
+    simpa [ptsFin] using hstrict i.val i.isLt
   let P : DarbouxRS.Partition a b :=
     { n := N
       hn := hNpos
-      pts := pts
-      pts_start := hpts0
-      pts_end := hptsN
-      strict_mono := hstrict }
+      pts := ptsFin
+      pts_start := hptsFin0
+      pts_end := hptsFinLast
+      strict_mono := hstrictFin }
   have hmesh : P.mesh < δ := by
-    rw [DarbouxRS.Partition.mesh]
+    unfold DarbouxRS.Partition.mesh
     rw [Finset.sup'_lt_iff]
-    intro i hi
-    have hiN : i < N := Finset.mem_range.mp hi
-    by_cases hi0 : i = 0
-    · subst hi0
+    intro i _hi
+    change pts (i.val + 1) - pts i.val < δ
+    let k : ℕ := i.val
+    have hkN : k < N := by
+      dsimp [k]
+      exact i.isLt
+    change pts (k + 1) - pts k < δ
+    by_cases hk0 : k = 0
+    · rw [hk0]
       have h1N : 1 < N := hNgt1
       have hp1 := hpick 1
       have hpts1 : pts 1 = pick 1 := hpts_internal 1 (by norm_num) h1N
       have hu1 : u 1 = a + h := by simp [u]
-      dsimp [P]
       rw [hpts0, hpts1]
       have hle : pick 1 - a < 3 * h / 2 := by
         rw [hu1] at hp1
         linarith [hp1.2.2]
       exact lt_trans hle hmeshSmall
-    · have hi0pos : 0 < i := Nat.pos_of_ne_zero hi0
-      by_cases hlast : i + 1 = N
-      · have hptsi : pts i = pick i := hpts_internal i hi0pos hiN
-        have hptsn : pts (i + 1) = b := by
+    · have hk0pos : 0 < k := Nat.pos_of_ne_zero hk0
+      by_cases hlast : k + 1 = N
+      · have hptsk : pts k = pick k := hpts_internal k hk0pos hkN
+        have hptsn : pts (k + 1) = b := by
           rw [hlast]
           exact hptsN
-        have hpi := hpick i
-        have hui : u i = b - h := by
-          have hi_eq : (i : ℝ) = (N : ℝ) - 1 := by
-            have hi_nat : i = N - 1 := by omega
-            rw [hi_nat]
+        have hpk := hpick k
+        have huk : u k = b - h := by
+          have hk_eq : (k : ℝ) = (N : ℝ) - 1 := by
+            have hk_nat : k = N - 1 := by omega
+            rw [hk_nat]
             have hNpos' : 0 < N := hNpos
             norm_num [Nat.cast_sub hNpos']
           dsimp [u, h]
-          rw [hi_eq]
+          rw [hk_eq]
           field_simp [ne_of_gt hNposR]
           ring
-        dsimp [P]
-        rw [hptsi, hptsn]
-        have hle : b - pick i < 3 * h / 2 := by
-          rw [hui] at hpi
-          linarith [hpi.2.1]
+        rw [hptsk, hptsn]
+        have hle : b - pick k < 3 * h / 2 := by
+          rw [huk] at hpk
+          linarith [hpk.2.1]
         exact lt_trans hle hmeshSmall
-      · have hiplusN : i + 1 < N := Nat.lt_of_le_of_ne (Nat.succ_le_of_lt hiN) hlast
-        have hptsi : pts i = pick i := hpts_internal i hi0pos hiN
-        have hptsip : pts (i + 1) = pick (i + 1) :=
-          hpts_internal (i + 1) (Nat.succ_pos i) hiplusN
-        have hpi := hpick i
-        have hpip := hpick (i + 1)
-        have hui : u (i + 1) = u i + h := by
+      · have hkplusN : k + 1 < N :=
+          Nat.lt_of_le_of_ne (Nat.succ_le_of_lt hkN) hlast
+        have hptsk : pts k = pick k := hpts_internal k hk0pos hkN
+        have hptskp : pts (k + 1) = pick (k + 1) :=
+          hpts_internal (k + 1) (Nat.succ_pos k) hkplusN
+        have hpk := hpick k
+        have hpkp := hpick (k + 1)
+        have huk : u (k + 1) = u k + h := by
           dsimp [u]
           norm_num [Nat.cast_add]
           ring
-        dsimp [P]
-        rw [hptsi, hptsip]
-        have hle : pick (i + 1) - pick i < 3 * h / 2 := by
-          rw [hui] at hpip
-          linarith [hpi.2.1, hpip.2.2]
+        rw [hptsk, hptskp]
+        have hle : pick (k + 1) - pick k < 3 * h / 2 := by
+          rw [huk] at hpkp
+          linarith [hpk.2.1, hpkp.2.2]
         exact lt_trans hle hmeshSmall
   let B : Finset ℝ := (Finset.range N).filter (fun j => 0 < j) |>.image pick
   refine ⟨P, hmesh, B, ?_, ?_, ?_, ?_⟩
   · intro j hj0 hjN
-    dsimp [P] at hjN ⊢
+    dsimp [P] at hjN
+    rw [Prob73NatPartition.point_eq _ (Nat.le_of_lt hjN)]
+    change pts j ∈ B
     rw [hpts_internal j hj0 hjN]
     exact Finset.mem_image.mpr ⟨j, by simp [hjN, hj0], rfl⟩
   · intro x hxB
@@ -231,7 +245,7 @@ theorem prob_7_3_exists_fine_partition_atom_free_internal_endpoints
     ∃ P : DarbouxRS.Partition a b,
       P.mesh < δ ∧
       ∃ B : Finset ℝ,
-        (∀ j : ℕ, 0 < j → j < P.n → P.pts j ∈ B) ∧
+        (∀ j : ℕ, 0 < j → j < P.n → Prob73NatPartition.point P j ∈ B) ∧
         (∀ x ∈ B, x ∈ Ioo a b) ∧
         (∀ x ∈ B, (F.measure.restrict (Icc a b)) ({x} : Set ℝ) = 0) ∧
         (F.measure.restrict (Icc a b)) (B : Set ℝ) = 0 := by
@@ -253,20 +267,20 @@ theorem prob_7_3_partition_cells_cover_compact_diff_atom_free_endpoints
     (P : DarbouxRS.Partition a b) (B : Finset ℝ) {K : Set ℝ}
     (hKsub : K ⊆ prob_7_3_largeOscillationSet f a b n)
     (haK : a ∉ K)
-    (hInternal : ∀ j : ℕ, 0 < j → j < P.n → P.pts j ∈ B) :
+    (hInternal : ∀ j : ℕ, 0 < j → j < P.n → Prob73NatPartition.point P j ∈ B) :
     ∃ S : Finset ℕ,
       (∀ i ∈ S, i < P.n) ∧
       K \ (B : Set ℝ) ⊆
-        ⋃ i ∈ S, Ioc (P.pts i) (P.pts (i + 1)) ∧
+        ⋃ i ∈ S, Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)) ∧
       (∀ i ∈ S, ∃ x r : ℝ,
         x ∈ prob_7_3_largeOscillationSet f a b n ∧
           0 < r ∧
           ∀ y : ℝ, y ∈ Icc a b → |y - x| < r →
-            y ∈ DarbouxRS.subinterval P i) := by
+            y ∈ Prob73NatPartition.subinterval P i) := by
   classical
   let S : Finset ℕ :=
     (Finset.range P.n).filter fun i =>
-      ((K \ (B : Set ℝ)) ∩ Ioc (P.pts i) (P.pts (i + 1))).Nonempty
+      ((K \ (B : Set ℝ)) ∩ Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1))).Nonempty
   refine ⟨S, ?_, ?_, ?_⟩
   · intro i hiS
     exact Finset.mem_range.mp (Finset.mem_filter.mp hiS).1
@@ -277,7 +291,7 @@ theorem prob_7_3_partition_cells_cover_compact_diff_atom_free_endpoints
     have hxne : x ≠ a := by
       intro hxa
       exact haK (by simpa [hxa] using hxK)
-    rcases thm_7_8_partition_Ioc_cover_Icc_of_ne_left P hxI hxne with
+    rcases Prob73NatPartition.Ioc_cover_Icc_of_ne_left P hxI hxne with
       ⟨i, hi, hxcell⟩
     rw [mem_iUnion]
     refine ⟨i, ?_⟩
@@ -292,25 +306,25 @@ theorem prob_7_3_partition_cells_cover_compact_diff_atom_free_endpoints
     have hxnotB : x ∉ (B : Set ℝ) := hxKdiff.2
     have hxLarge : x ∈ prob_7_3_largeOscillationSet f a b n := hKsub hxK
     rcases lt_or_eq_of_le hxcell.2 with hxright | hxright
-    · let r : ℝ := min (x - P.pts i) (P.pts (i + 1) - x) / 2
-      have hleftgap : 0 < x - P.pts i := sub_pos.mpr hxcell.1
-      have hrightgap : 0 < P.pts (i + 1) - x := sub_pos.mpr hxright
+    · let r : ℝ := min (x - Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1) - x) / 2
+      have hleftgap : 0 < x - Prob73NatPartition.point P i := sub_pos.mpr hxcell.1
+      have hrightgap : 0 < Prob73NatPartition.point P (i + 1) - x := sub_pos.mpr hxright
       have hr : 0 < r := by
         dsimp [r]
         exact half_pos (lt_min hleftgap hrightgap)
       refine ⟨x, r, hxLarge, hr, ?_⟩
       intro y _hyI hydist
-      have hr_le_left : r ≤ x - P.pts i := by
+      have hr_le_left : r ≤ x - Prob73NatPartition.point P i := by
         dsimp [r]
         exact (half_le_self (le_of_lt (lt_min hleftgap hrightgap))).trans (min_le_left _ _)
-      have hr_le_right : r ≤ P.pts (i + 1) - x := by
+      have hr_le_right : r ≤ Prob73NatPartition.point P (i + 1) - x := by
         dsimp [r]
         exact (half_le_self (le_of_lt (lt_min hleftgap hrightgap))).trans (min_le_right _ _)
-      have hy_left_lt : P.pts i < y := by
+      have hy_left_lt : Prob73NatPartition.point P i < y := by
         have hxy : x - y < r := by
           exact lt_of_le_of_lt (le_abs_self (x - y)) (by simpa [abs_sub_comm] using hydist)
         linarith
-      have hy_right_lt : y < P.pts (i + 1) := by
+      have hy_right_lt : y < Prob73NatPartition.point P (i + 1) := by
         have hyx : y - x < r := by
           exact lt_of_le_of_lt (le_abs_self (y - x)) hydist
         linarith
@@ -322,23 +336,23 @@ theorem prob_7_3_partition_cells_cover_compact_diff_atom_free_endpoints
           exact hInternal (i + 1) (Nat.succ_pos i) hnext)
       have hlast : i + 1 = P.n := by
         exact le_antisymm (Nat.succ_le_of_lt hi) (le_of_not_gt hnot_internal)
-      have hright_end : P.pts (i + 1) = b := by
-        rw [hlast, P.pts_end]
-      let r : ℝ := (x - P.pts i) / 2
-      have hleftgap : 0 < x - P.pts i := sub_pos.mpr hxcell.1
+      have hright_end : Prob73NatPartition.point P (i + 1) = b := by
+        rw [hlast, Prob73NatPartition.point_end]
+      let r : ℝ := (x - Prob73NatPartition.point P i) / 2
+      have hleftgap : 0 < x - Prob73NatPartition.point P i := sub_pos.mpr hxcell.1
       have hr : 0 < r := by
         dsimp [r]
         exact half_pos hleftgap
       refine ⟨x, r, hxLarge, hr, ?_⟩
       intro y hyI hydist
-      have hr_le_left : r ≤ x - P.pts i := by
+      have hr_le_left : r ≤ x - Prob73NatPartition.point P i := by
         dsimp [r]
         exact half_le_self (le_of_lt hleftgap)
-      have hy_left_lt : P.pts i < y := by
+      have hy_left_lt : Prob73NatPartition.point P i < y := by
         have hxy : x - y < r := by
           exact lt_of_le_of_lt (le_abs_self (x - y)) (by simpa [abs_sub_comm] using hydist)
         linarith
-      have hy_right : y ≤ P.pts (i + 1) := by
+      have hy_right : y ≤ Prob73NatPartition.point P (i + 1) := by
         rw [hright_end]
         exact hyI.2
       exact ⟨le_of_lt hy_left_lt, hy_right⟩

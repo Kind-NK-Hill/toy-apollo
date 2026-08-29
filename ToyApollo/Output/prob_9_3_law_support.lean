@@ -18,7 +18,7 @@ def HasSourceScaleGammaLaw
 def HasGammaCharacteristicFunction
     {Omega : Type*} [MeasurableSpace Omega] (P : Measure Omega) (X : Omega -> ℝ)
     (alpha beta : ℝ) : Prop :=
-  ∀ t : ℝ, characteristicFunction P X t =
+  ∀ t : ℝ, characteristicFunction (P.map X) t =
     gammaCharacteristicFunctionFormula alpha beta t
 
 def SourceScaleGammaCharacteristicFunctionInterface : Prop :=
@@ -75,7 +75,7 @@ theorem hasGammaCharacteristicFunction_of_sourceScaleGammaLaw
     HasGammaCharacteristicFunction P X alpha beta := by
   intro t
   calc
-    characteristicFunction P X t = charFun (P.map X) t := by
+    characteristicFunction (P.map X) t = charFun (P.map X) t := by
       exact characteristicFunction_law_eq_charFun hX.aemeasurable t
     _ = charFun (sourceScaleGammaMeasure alpha beta) t := by
       rw [hX.map_eq]

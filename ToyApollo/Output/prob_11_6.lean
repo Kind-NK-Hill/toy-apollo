@@ -636,9 +636,11 @@ private theorem prob_11_6_tailSummability_of_sixthMoment {Ω : Type*} [Measurabl
 
 private theorem prob_11_6_of_tail_summability {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ)
+    (hScaled : ∀ n : ℕ, AEStronglyMeasurable (prob_11_6_scaledSum X n) P)
     (hTail : prob_11_6_tailSummabilitySupport P X) :
     ConvergesAlmostSurely P (prob_11_6_scaledSum X) (fun _ => 0) := by
   refine (thm_10_1 P (prob_11_6_scaledSum X) (fun _ : Ω => 0)).2 ?_
+  refine ⟨hScaled, aestronglyMeasurable_const, ?_⟩
   intro ε hε
   simpa [prob_11_6_tailSummabilitySupport, deviationInfinitelyOften] using
     (thm_5_8 P
@@ -655,5 +657,19 @@ theorem prob_11_6 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     ConvergesAlmostSurely P (prob_11_6_scaledSum X) (fun _ => 0) := by
   have hSixthSupport : prob_11_6_sixthMomentSupport P X :=
     prob_11_6_sixthMomentSupport_of_uniformAEBound P X hInd hXae hMean hUniformBound
-  exact prob_11_6_of_tail_summability P X
+  have hScaled : ∀ n, AEStronglyMeasurable (prob_11_6_scaledSum X n) P := by
+    intro n
+    have hsum :
+        AEStronglyMeasurable (fun ω => ∑ i : Fin (n + 1), X i.1 ω) P :=
+      (Finset.aestronglyMeasurable_sum (Finset.univ : Finset (Fin (n + 1)))
+        (fun i _hi => hXae i.1)).congr
+          (Eventually.of_forall fun _ => by simp)
+    have hdenom :
+        AEStronglyMeasurable (fun _ : Ω => prob_11_6_normalizer n) P :=
+      aestronglyMeasurable_const
+    change AEStronglyMeasurable
+      (fun ω => (∑ i : Fin (n + 1), X i.1 ω) / prob_11_6_normalizer n) P
+    exact (hsum.mul hdenom.inv₀).congr
+      (Eventually.of_forall fun _ => rfl)
+  exact prob_11_6_of_tail_summability P X hScaled
     (prob_11_6_tailSummability_of_sixthMoment P X hSixthSupport)

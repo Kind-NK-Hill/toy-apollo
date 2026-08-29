@@ -1,11 +1,13 @@
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -18,12 +20,48 @@ from src.toy_apollo.phase2_semantic_review import (  # noqa: E402
     SEMANTIC_REVIEW_PROMPT_VERSION,
     SEMANTIC_REVIEW_RUBRIC_VERSION,
     build_semantic_review_input,
+    _uses_legacy_obligation_review_schema,
     normalize_reviewer_result,
+    render_semantic_review_report,
+    render_semantic_review_prompt,
     run_semantic_review,
 )
 
 
 class Phase2ReviewDecisionTests(unittest.TestCase):
+    def test_legacy_obligation_schema_is_profile_scoped(self):
+        with patch.dict(os.environ, {"TOY_APOLLO_PROFILE": "mat"}):
+            self.assertTrue(_uses_legacy_obligation_review_schema({"prompt_version": 9}))
+            self.assertFalse(_uses_legacy_obligation_review_schema({"prompt_version": 11}))
+        with patch.dict(os.environ, {"TOY_APOLLO_PROFILE": "cordis"}):
+            self.assertFalse(_uses_legacy_obligation_review_schema({"prompt_version": 1}))
+
+    def test_bound_legacy_prompt_results_remain_valid_after_prompt_v11(self):
+        for prompt_version in (9, 10):
+            with self.subTest(prompt_version=prompt_version):
+                review_input = self._review_input()
+                review_input["prompt_version"] = prompt_version
+                raw = self._raw_result(review_input)
+
+                decision = evaluate_semantic_review_result(
+                    raw,
+                    review_input=review_input,
+                    runner_metadata={"status": f"legacy-v{prompt_version}-regression"},
+                )
+
+                self.assertTrue(decision.is_semantic_verdict)
+                self.assertTrue(decision.is_clean_pass)
+                self.assertEqual(decision.result["prompt_version"], prompt_version)
+                self.assertIn("obligation_review", raw)
+                self.assertIn("obligations_checked", raw["spine_alignment"])
+                self.assertNotIn("source_steps_checked", raw["spine_alignment"])
+                prompt = render_semantic_review_prompt(review_input)
+                self.assertIn("obligation_review", prompt)
+                if prompt_version == 9:
+                    self.assertNotIn("## Task-Level Pass Class Contract", prompt)
+                else:
+                    self.assertIn("## Task-Level Pass Class Contract", prompt)
+
     def _review_input(self, task_id: str = "thm_11_7", task_type: str = "Theorem") -> dict:
         task = {
             "block_id": task_id,
@@ -67,13 +105,50 @@ class Phase2ReviewDecisionTests(unittest.TestCase):
         proof_class: str = "source_route_proof_completed",
         completion_class: str = "source_route_proof_completed",
     ) -> dict:
-        return {
+        prompt_version = review_input["prompt_version"]
+        legacy_obligation_schema = int(prompt_version) <= 10
+        spine_alignment = {
+            "status": "covered",
+            "summary": "covered",
+            "shortcut_assessment": "covered",
+        }
+        if legacy_obligation_schema:
+            spine_alignment.update(
+                {
+                    "obligations_checked": [
+                        {
+                            "source_obligation": "source proof",
+                            "lean_landing": review_input["task"]["block_id"],
+                            "status": "covered",
+                        }
+                    ],
+                    "missing_obligations": [],
+                }
+            )
+        else:
+            spine_alignment.update(
+                {
+                    "source_steps_checked": [
+                        {
+                            "source_step": "source proof",
+                            "lean_landing": review_input["task"]["block_id"],
+                            "landing_kind": "theorem",
+                            "signature_match": "passed",
+                            "body_reassumption_check": "passed",
+                            "public_premise_check": "passed",
+                            "notes": "the theorem directly discharges the source step",
+                        }
+                    ],
+                    "missing_source_steps": [],
+                }
+            )
+        result = {
             "task_id": review_input["task"]["block_id"],
             "review_input_hash": hashlib.sha256(
                 json.dumps(review_input, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
             ).hexdigest(),
             "candidate_hash": review_input["candidate"]["hash"],
-            "prompt_version": SEMANTIC_REVIEW_PROMPT_VERSION,
+            "prompt_version": prompt_version,
             "rubric_version": SEMANTIC_REVIEW_RUBRIC_VERSION,
             "verdict": "pass",
             "confidence": "high",
@@ -98,20 +173,7 @@ class Phase2ReviewDecisionTests(unittest.TestCase):
                 "support_or_reassembly_decision": "direct proof",
                 "stop_go_verdict": "go",
             },
-            "spine_alignment": {
-                "status": "covered",
-                "summary": "covered",
-                "obligations_checked": [{"source_obligation": "source proof", "lean_landing": review_input["task"]["block_id"], "status": "covered"}],
-                "missing_obligations": [],
-                "shortcut_assessment": "covered",
-            },
-            "obligation_review": {
-                "status": "covered",
-                "summary": "covered",
-                "items": [],
-                "open_blockers": [],
-                "scaffold_assessment": [],
-            },
+            "spine_alignment": spine_alignment,
             "evidence_review": {"status": "covered", "summary": "covered", "items": [], "blocking_issues": []},
             "interface_contract": {"status": "covered", "summary": "covered", "mismatches": []},
             "downstream_adequacy": {"status": "covered", "summary": "covered", "consumers_checked": [], "blocking_issues": []},
@@ -119,6 +181,98 @@ class Phase2ReviewDecisionTests(unittest.TestCase):
             "findings": [],
             "recommended_disposition": "promote",
         }
+        if legacy_obligation_schema:
+            result["obligation_review"] = {
+                "status": "covered",
+                "summary": "covered",
+                "items": [],
+                "open_blockers": [],
+                "scaffold_assessment": [],
+            }
+        return result
+
+    def test_current_prompt_pass_uses_source_steps_without_obligation_review(self):
+        review_input = self._review_input()
+        raw = self._raw_result(review_input)
+
+        decision = evaluate_semantic_review_result(
+            raw,
+            review_input=review_input,
+            runner_metadata={"status": "current-schema-regression"},
+        )
+
+        self.assertEqual(review_input["prompt_version"], 11)
+        self.assertNotIn("obligation_review", raw)
+        self.assertIn("source_steps_checked", raw["spine_alignment"])
+        self.assertEqual(raw["spine_alignment"]["missing_source_steps"], [])
+        self.assertNotIn("obligations_checked", raw["spine_alignment"])
+        self.assertTrue(decision.is_semantic_verdict)
+        self.assertTrue(decision.is_clean_pass)
+
+    def test_cordis_requires_and_validates_source_statement_divergence(self):
+        review_input = self._review_input()
+        review_input["review_basis"]["review_profile"] = "cordis"
+        review_input["review_basis_hash"] = hashlib.sha256(
+            json.dumps(
+                review_input["review_basis"],
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+
+        missing = self._raw_result(review_input)
+        missing_decision = evaluate_semantic_review_result(
+            missing,
+            review_input=review_input,
+            runner_metadata={"status": "cordis-missing-divergence"},
+        )
+        self.assertFalse(missing_decision.is_semantic_verdict)
+        self.assertIn("source_statement_divergence", missing_decision.result["normalization_reason"])
+
+        clean = self._raw_result(review_input)
+        clean["source_statement_divergence"] = []
+        clean_decision = evaluate_semantic_review_result(
+            clean,
+            review_input=review_input,
+            runner_metadata={"status": "cordis-clean-divergence"},
+        )
+        self.assertTrue(clean_decision.is_clean_pass)
+
+        risky = self._raw_result(review_input)
+        risky["source_statement_divergence"] = [
+            {
+                "paper_literal": "literal statement",
+                "paper_intended": "intended statement",
+                "lean_implements": "weaker Lean statement",
+                "evidence": "counterexample",
+                "verdict": "weakening_risk",
+            }
+        ]
+        risky_decision = evaluate_semantic_review_result(
+            risky,
+            review_input=review_input,
+            runner_metadata={"status": "cordis-risky-divergence"},
+        )
+        self.assertFalse(risky_decision.is_semantic_verdict)
+        self.assertIn("weakening_risk", risky_decision.result["normalization_reason"])
+
+        rendered = render_semantic_review_report(
+            {
+                **clean_decision.result,
+                "source_statement_divergence": [
+                    {
+                        "paper_literal": "literal statement",
+                        "paper_intended": "intended statement",
+                        "lean_implements": "both readings",
+                        "evidence": "literal formula is vacuous",
+                        "verdict": "documented_divergence",
+                    }
+                ],
+            }
+        )
+        self.assertIn("## Source Statement Divergence", rendered)
+        self.assertIn("literal formula is vacuous", rendered)
 
     def test_authoritative_projection_overwrites_reviewer_self_reported_pass(self):
         review_input = self._review_input()
@@ -192,7 +346,7 @@ class Phase2ReviewDecisionTests(unittest.TestCase):
         self.assertEqual(decision.result["cache_key"], review_input["cache_key"])
         self.assertEqual(decision.result["reviewer_backend_id"], review_input["reviewer_backend_id"])
         self.assertEqual(decision.result["runner"], {"status": "trusted-runner"})
-        self.assertEqual(decision.result["schema_version"], "phase2.semantic_review.result.v7")
+        self.assertEqual(decision.result["schema_version"], "phase2.semantic_review.result.v8")
 
     def test_non_string_classes_and_malformed_versions_are_operational_failures(self):
         review_input = self._review_input()

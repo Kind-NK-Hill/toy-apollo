@@ -77,30 +77,54 @@ theorem standardGaussianPDF_hasDerivAt (x : ℝ) :
     simp only [NNReal.coe_one, mul_one, sub_zero]
     have h_inner : HasDerivAt (fun y : ℝ => -(y ^ 2) / 2) (-x) x := by
       have hsq : HasDerivAt (fun y : ℝ => y ^ 2) (2 * x) x := by
-        simpa using ((hasDerivAt_id x).pow 2)
-      convert hsq.neg.div_const 2 using 1
-      ring
-    have h_exp := h_inner.exp
-    have h_const := h_exp.const_mul ((Real.sqrt (2 * Real.pi))⁻¹)
-    convert h_const using 1
-    ring_nf
+        simpa using (hasDerivAt_pow 2 x)
+      have htwo : (2 : ℝ) ≠ 0 := by simp
+      simpa only [Pi.neg_apply, neg_div, mul_div_cancel_left₀ x htwo] using
+        hsq.neg.div_const (2 : ℝ)
+    have h_exp :
+        HasDerivAt (fun y : ℝ => Real.exp (-(y ^ 2) / 2))
+          (Real.exp (-(x ^ 2) / 2) * (-x)) x :=
+      h_inner.exp
+    have h_const :
+        HasDerivAt
+          (fun y : ℝ => (Real.sqrt (2 * Real.pi))⁻¹ *
+            Real.exp (-(y ^ 2) / 2))
+          ((Real.sqrt (2 * Real.pi))⁻¹ *
+            (Real.exp (-(x ^ 2) / 2) * (-x))) x :=
+      h_exp.const_mul ((Real.sqrt (2 * Real.pi))⁻¹)
+    convert h_const using 1 <;> ring
   have hclm :=
     (ContinuousLinearMap.hasFDerivAt Complex.ofRealCLM).comp_hasDerivAt x hreal
-  simpa using hclm
+  change HasDerivAt
+    (fun y : ℝ => Complex.ofReal
+      (ProbabilityTheory.gaussianPDFReal 0 (1 : NNReal) y))
+    (Complex.ofReal
+      (-x * ProbabilityTheory.gaussianPDFReal 0 (1 : NNReal) x)) x
+  exact hclm
 
 theorem standardGaussianExpKernel_hasDerivAt (t x : ℝ) :
     HasDerivAt (fun y : ℝ => standardGaussianExpKernel t y)
       (Complex.I * (t : ℂ) * standardGaussianExpKernel t x) x := by
   unfold standardGaussianExpKernel
   have h_ofReal : HasDerivAt (fun y : ℝ => (y : ℂ)) (1 : ℂ) x := by
-    simpa using (Complex.ofRealCLM.hasDerivAt (x := x))
+    change HasDerivAt (fun y : ℝ => Complex.ofReal y)
+      (Complex.ofReal (1 : ℝ)) x
+    exact Complex.ofRealCLM.hasDerivAt
   have h_inner : HasDerivAt
       (fun y : ℝ => Complex.I * (y : ℂ) * (t : ℂ))
       (Complex.I * (t : ℂ)) x := by
-    convert h_ofReal.const_mul (Complex.I * (t : ℂ)) using 1
-    · funext y
+    have h_scaled :
+        HasDerivAt
+          (fun y : ℝ => (Complex.I * (t : ℂ)) * (y : ℂ))
+          ((Complex.I * (t : ℂ)) * (1 : ℂ)) x :=
+      h_ofReal.const_mul (Complex.I * (t : ℂ))
+    have hfun :
+        (fun y : ℝ => Complex.I * (y : ℂ) * (t : ℂ)) =
+          (fun y : ℝ => (Complex.I * (t : ℂ)) * (y : ℂ)) := by
+      funext y
       ring
-    · ring
+    rw [hfun]
+    simpa only [mul_one] using h_scaled
   convert h_inner.cexp using 1
   ring
 
@@ -295,7 +319,9 @@ theorem standardGaussianPsiReal_deriv_source (t : ℝ) :
     (ContinuousLinearMap.hasFDerivAt Complex.reCLM).comp_hasDerivAt t hchar
   have hderiv : HasDerivAt standardGaussianPsiReal
       ((-(t : ℂ) * standardGaussianCharFun t).re) t := by
-    simpa [standardGaussianPsiReal] using hre
+    change HasDerivAt (fun s : ℝ => (standardGaussianCharFun s).re)
+      ((-(t : ℂ) * standardGaussianCharFun t).re) t
+    exact hre
   rw [hderiv.deriv]
   unfold standardGaussianPsiReal
   simp
@@ -310,9 +336,10 @@ theorem standardGaussianPositiveExp_hasDerivAt (t : ℝ) :
       (Complex.exp (((t ^ 2 : ℝ) / 2 : ℝ) : ℂ) * (t : ℂ)) t := by
   have hreal : HasDerivAt (fun s : ℝ => (s ^ 2 : ℝ) / 2) t t := by
     have hsq : HasDerivAt (fun s : ℝ => s ^ 2) (2 * t) t := by
-      simpa using ((hasDerivAt_id t).pow 2)
-    convert hsq.div_const 2 using 1
-    ring
+      simpa using (hasDerivAt_pow 2 t)
+    have htwo : (2 : ℝ) ≠ 0 := by simp
+    simpa only [mul_div_cancel_left₀ t htwo] using
+      hsq.div_const (2 : ℝ)
   have hcomplex :=
     (ContinuousLinearMap.hasFDerivAt Complex.ofRealCLM).comp_hasDerivAt t hreal
   exact hcomplex.cexp
@@ -486,11 +513,18 @@ theorem standardGaussianEvenMoment_fullIntegral_abs (k : ℕ) :
             rw [integral_const_mul]]
           ring
 
-theorem standardGaussianEvenMoment_eq_rthMoment (k : ℕ) :
-    rthMoment (ProbabilityTheory.gaussianReal 0 (1 : NNReal)) id (2 * k) =
+theorem standardGaussianFiniteAbsMoment (r : ℕ) :
+    FiniteAbsMoment (ProbabilityTheory.gaussianReal 0 (1 : NNReal)) id r := by
+  exact FiniteAbsMoment.of_memLp measurable_id
+    (ProbabilityTheory.memLp_id_gaussianReal'
+      (μ := 0) (v := (1 : NNReal)) (r : ENNReal) (by simp))
+
+theorem standardGaussianEvenMoment_eq_generalMoment (k : ℕ) :
+    generalMoment (ProbabilityTheory.gaussianReal 0 (1 : NNReal)) id (2 * k)
+        (standardGaussianFiniteAbsMoment (2 * k)) =
       standardGaussianEvenMoment k := by
   rw [standardGaussianEvenMoment_fullIntegral_abs k]
-  unfold rthMoment ProbabilityTheory.moment
+  unfold generalMoment ProbabilityTheory.moment
   rw [ProbabilityTheory.integral_gaussianReal_eq_integral_smul
     (μ := 0) (v := (1 : NNReal)) (hv := by norm_num)
     (f := (id : ℝ → ℝ) ^ (2 * k))]
@@ -555,9 +589,11 @@ theorem prob_9_5 :
       standardGaussianPsiReal t = Real.exp (-(t ^ 2) / 2) ∧
       standardGaussianCharFun t = Complex.exp (-(t ^ 2 : ℝ) / 2 : ℂ)) ∧
     (∀ k : ℕ,
-      rthMoment (ProbabilityTheory.gaussianReal 0 (1 : NNReal)) id (2 * k) =
+      generalMoment (ProbabilityTheory.gaussianReal 0 (1 : NNReal)) id (2 * k)
+          (standardGaussianFiniteAbsMoment (2 * k)) =
         standardGaussianEvenMoment k ∧
-      rthMoment (ProbabilityTheory.gaussianReal 0 (1 : NNReal)) id (2 * k) =
+      generalMoment (ProbabilityTheory.gaussianReal 0 (1 : NNReal)) id (2 * k)
+          (standardGaussianFiniteAbsMoment (2 * k)) =
         ((2 * k - 1 : ℕ)‼ : ℝ)) := by
   refine ⟨?_, ?_⟩
   · intro t
@@ -568,6 +604,6 @@ theorem prob_9_5 :
       standardGaussianPsiReal_eq_exp t,
       standardGaussianCharFun_eq_exp t⟩
   · intro k
-    exact ⟨standardGaussianEvenMoment_eq_rthMoment k,
-      (standardGaussianEvenMoment_eq_rthMoment k).trans
+    exact ⟨standardGaussianEvenMoment_eq_generalMoment k,
+      (standardGaussianEvenMoment_eq_generalMoment k).trans
         (standardGaussianEvenMoment_doubleFactorial k)⟩

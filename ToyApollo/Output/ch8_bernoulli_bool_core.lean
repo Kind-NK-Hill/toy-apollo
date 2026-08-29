@@ -12,6 +12,11 @@ namespace Ch8BernoulliBoolCore
 noncomputable def bernoulliMeasure (p : NNReal) (hp : p ≤ 1) : Measure Bool :=
   (PMF.bernoulli p hp).toMeasure
 
+instance bernoulliMeasure.instIsProbabilityMeasure (p : NNReal) (hp : p ≤ 1) :
+    IsProbabilityMeasure (bernoulliMeasure p hp) := by
+  unfold bernoulliMeasure
+  infer_instance
+
 lemma bernoulliMeasure_real_true (p : NNReal) (hp : p ≤ 1) :
     (bernoulliMeasure p hp).real {true} = p := by
   rw [bernoulliMeasure, Measure.real_def,

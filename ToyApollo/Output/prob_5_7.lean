@@ -73,7 +73,8 @@ theorem prob_5_7 {Ω : Type} [MeasurableSpace Ω] (P : MeasureTheory.Measure Ω)
       · exact eventually_map.mp h_eq_set
       · exact measurableSet_Ioo.compl
     filter_upwards [h_eq_set] with ω hω
-    simp [hF_inv (U i ω) hω]
+    apply propext
+    change F_inv (U i ω) ≤ x ↔ U i ω ≤ F x
     exact
       ⟨fun h => by simpa [hF_inv _ hω] using hF_strict.monotone h,
         fun h => by

@@ -14,8 +14,10 @@ noncomputable section
 
 private lemma measurable_gammaPDF (a r : ℝ) :
     Measurable (ProbabilityTheory.gammaPDF a r) := by
-  simpa [ProbabilityTheory.gammaPDF] using
-    ENNReal.measurable_ofReal.comp (ProbabilityTheory.measurable_gammaPDFReal a r)
+  change Measurable
+    (ENNReal.ofReal ∘ ProbabilityTheory.gammaPDFReal a r)
+  exact ENNReal.measurable_ofReal.comp
+    (ProbabilityTheory.measurable_gammaPDFReal a r)
 
 private lemma gammaPDF_lt_top_ae (a r : ℝ) :
     ∀ᵐ x ∂(volume : Measure ℝ), ProbabilityTheory.gammaPDF a r x < ⊤ := by

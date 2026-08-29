@@ -56,6 +56,13 @@ lemma thm_14_4_densityMeasure_apply_univ
   rw [← MeasureTheory.ofReal_integral_eq_lintegral_ofReal hf_int h_nonneg, hf_prob]
   norm_num
 
+lemma thm_14_4_densityMeasure_isProbabilityMeasure
+    {α : Type*} [MeasurableSpace α] {ν : Measure α}
+    {f : α → ℝ} (hf_int : Integrable f ν) (hf_nonneg : ∀ x, 0 ≤ f x)
+    (hf_prob : ∫ x, f x ∂ν = 1) :
+    IsProbabilityMeasure (thm_14_4_densityMeasure ν f) :=
+  ⟨thm_14_4_densityMeasure_apply_univ hf_int hf_nonneg hf_prob⟩
+
 lemma thm_14_4_densityMeasure_real_compl_eq_one_sub
     {α : Type*} [MeasurableSpace α] {ν : Measure α}
     {f : α → ℝ} (hf_int : Integrable f ν) (hf_nonneg : ∀ x, 0 ≤ f x)
@@ -89,7 +96,8 @@ lemma thm_14_4_densityDiff_measurable
     {α : Type*} [MeasurableSpace α] {f g : α → ℝ}
     (hf_meas : Measurable f) (hg_meas : Measurable g) :
     Measurable (thm_14_4_densityDiff f g) := by
-  simpa [thm_14_4_densityDiff] using hf_meas.sub hg_meas
+  change Measurable (fun x => f x - g x)
+  exact hf_meas.sub hg_meas
 
 lemma thm_14_4_densityPositiveSet_measurable
     {α : Type*} [MeasurableSpace α] {f g : α → ℝ}
@@ -115,7 +123,8 @@ lemma thm_14_4_integrable_densityPos
     (hf_int : Integrable f ν) (hg_int : Integrable g ν) :
     Integrable (thm_14_4_densityPos f g) ν := by
   have hdiff : Integrable (thm_14_4_densityDiff f g) ν := by
-    simpa [thm_14_4_densityDiff] using hf_int.sub hg_int
+    change Integrable (f - g) ν
+    exact hf_int.sub hg_int
   have habs : Integrable (fun x => |thm_14_4_densityDiff f g x|) ν := hdiff.norm
   have hadd :
       Integrable (fun x => |thm_14_4_densityDiff f g x| +
@@ -194,7 +203,8 @@ lemma thm_14_4_densityPos_integral_eq_half_abs
     ∫ x, thm_14_4_densityPos f g x ∂ν =
       (1 / 2 : ℝ) * ∫ x, |thm_14_4_densityDiff f g x| ∂ν := by
   have hdiff : Integrable (thm_14_4_densityDiff f g) ν := by
-    simpa [thm_14_4_densityDiff] using hf_int.sub hg_int
+    change Integrable (f - g) ν
+    exact hf_int.sub hg_int
   have habs : Integrable (fun x => |thm_14_4_densityDiff f g x|) ν := hdiff.norm
   calc
     ∫ x, thm_14_4_densityPos f g x ∂ν =
@@ -238,8 +248,15 @@ theorem thm_14_4_totalVariationDistance_withDensity_eq_half_integral_abs
     (hf_int : Integrable f ν) (hg_int : Integrable g ν)
     (hf_nonneg : ∀ x, 0 ≤ f x) (hg_nonneg : ∀ x, 0 ≤ g x)
     (hf_prob : ∫ x, f x ∂ν = 1) (hg_prob : ∫ x, g x ∂ν = 1) :
-    totalVariationDistance (thm_14_4_densityMeasure ν f) (thm_14_4_densityMeasure ν g) =
+    @totalVariationDistance α _ (thm_14_4_densityMeasure ν f)
+      (thm_14_4_densityMeasure ν g)
+      (thm_14_4_densityMeasure_isProbabilityMeasure hf_int hf_nonneg hf_prob)
+      (thm_14_4_densityMeasure_isProbabilityMeasure hg_int hg_nonneg hg_prob) =
       (1 / 2 : ℝ) * ∫ x, |thm_14_4_densityDiff f g x| ∂ν := by
+  letI : IsProbabilityMeasure (thm_14_4_densityMeasure ν f) :=
+    thm_14_4_densityMeasure_isProbabilityMeasure hf_int hf_nonneg hf_prob
+  letI : IsProbabilityMeasure (thm_14_4_densityMeasure ν g) :=
+    thm_14_4_densityMeasure_isProbabilityMeasure hg_int hg_nonneg hg_prob
   let S : Set ℝ :=
     {d : ℝ | ∃ A : Set α, MeasurableSet A ∧
       d = |(thm_14_4_densityMeasure ν f).real A -
@@ -351,6 +368,10 @@ theorem thm_14_4_rn_totalVariationDistance_eq_half_integral_abs
     dsimp [g]
     rw [Measure.integral_toReal_rnDeriv hQν]
     simp [Measure.real_def]
+  letI : IsProbabilityMeasure (thm_14_4_densityMeasure ν f) :=
+    thm_14_4_densityMeasure_isProbabilityMeasure hf_int hf_nonneg hf_prob
+  letI : IsProbabilityMeasure (thm_14_4_densityMeasure ν g) :=
+    thm_14_4_densityMeasure_isProbabilityMeasure hg_int hg_nonneg hg_prob
   have hPdens : P = thm_14_4_densityMeasure ν f := by
     dsimp [f]
     exact thm_14_4_rn_densityMeasure_eq P ν hPν
@@ -361,6 +382,7 @@ theorem thm_14_4_rn_totalVariationDistance_eq_half_integral_abs
     totalVariationDistance P Q =
         totalVariationDistance (thm_14_4_densityMeasure ν f)
           (thm_14_4_densityMeasure ν g) := by
+          unfold totalVariationDistance
           rw [hPdens, hQdens]
     _ = (1 / 2 : ℝ) * ∫ x, |thm_14_4_densityDiff f g x| ∂ν :=
           thm_14_4_totalVariationDistance_withDensity_eq_half_integral_abs

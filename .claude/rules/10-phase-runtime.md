@@ -19,6 +19,7 @@ python .\run_chapter.py --phase 2 --phase2-mode review-existing --tasks <task_id
 python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject candidate
 python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject existing
 python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks <task_id> --review-result <path>
+python .\run_chapter.py --phase 2 --phase2-mode dependency-reconcile --tasks <task_id> --expected-old-dependencies <dep_id>,<dep_id>
 python .\run_chapter.py --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id>
 python .\run_chapter.py --phase 2 --phase2-mode batch-run --tasks <task_id>,<task_id> --batch-max-actions 1
 python .\run_chapter.py --phase 2 --phase2-mode soft-pack --tasks <problem_ids>
@@ -59,9 +60,9 @@ used as global campaign authority and must not create a missing ledger or root.
     - Build gate decides only whether the Lean subject builds. Its canonical
       artifacts are `candidate_vN.lean` and `build_result_vN.json`.
     - Review gate is the only proof-status verdict. A valid review must inspect
-      source TeX, the Lean subject, `proof_obligations.json`, audit signals,
-      classification history, dependency status, downstream/import evidence,
-      ledger runtime status, and freshness/hash evidence.
+      source TeX, the Lean subject, essential source steps and their Lean
+      landings, audit signals, classification history, dependency status,
+      downstream/import evidence, ledger runtime status, and freshness/hashes.
     - Apply gate lands clean completion only when the latest valid semantic
       review projects to task-level `phase2_status=pass`. Failed
       existing-output review records repair-required/open-debt evidence and
@@ -93,9 +94,9 @@ used as global campaign authority and must not create a missing ledger or root.
   - `review-pack`, `review-existing`, and `review-existing-queue` only prepare review materials and are prepare-only/compatibility paths, not the default semantic review entrypoint
   - `review-now` is the current semantic review orchestration entrypoint
   - semantic review results must include `evidence_review` covering source TeX,
-    Lean subject, proof obligations, audit, classification, dependency status,
-    downstream/import evidence, ledger status, and hashes; if the reviewer does
-    not address that evidence, the review is not valid proof-status evidence
+    Lean subject, audit, classification, dependency status, downstream/import
+    evidence, ledger status, and hashes; `spine_alignment.source_steps_checked`
+    directly records the source proof spine and Lean landings
   - `review-apply` only validates and consumes an already existing review result
   - candidate `fail`, `inconclusive`, invalid, or stale review results must not
     promote the candidate
@@ -103,33 +104,33 @@ used as global campaign authority and must not create a missing ledger or root.
     default; it records repair-required evidence and continues through repair
     unless an operator explicitly opts into quarantine after downstream import
     checks
-  - `debt-fix` is a non-default maintenance path. Real obligation material is
-    absorbed into the parent or stable support; child-obligation promotion is
-    not an active CLI path. Neither creates a separate completion authority.
-  - `COMPLETED_WITH_PROOF_DEBT` is not a clean dependency; hard dependents and
-    selected soft imports must wait until `debt-fix` removes the accepted debt
-  - before adding a new proof-debt support object or helper obligation, inspect
+  - the proof-obligation checklist/child-task mechanism is retired. Historical
+    `proof_obligations.json` and `obl_*` artifacts are inert audit history,
+    not review, apply, status, planning, or output-binding authority.
+  - `COMPLETED_WITH_PROOF_DEBT` remains a legacy non-clean status; hard
+    dependents and selected soft imports wait until direct source-spine review
+    and ordinary `review-apply` clear it.
+  - before adding a reusable support theorem or helper, inspect
     existing `ToyApollo/Output` files, including older textbook outputs,
     definition files, bridge/foundation files, renamed helper variants, and
     downstream-imported files; reuse or register buildable local outputs before
-    treating an obligation as unavailable
-  - `verify` and `audit` are runner-backed diagnostics/report modes only. They
-    do not land completion.
+    treating the needed source step as unavailable
   - `pack` consumes hard deps plus confirmed soft imports and writes `dependency_decision_context.*`
   - `build-check` records undeclared local imports as dependency violations; it does not add them to the ledger
   - `soft-pack` and `soft-apply` are the Problem soft-dependency special case
+  - `dependency-reconcile` is a narrow single-task recovery path for a proven
+    hard-dependency field contamination. It reads the replacement list only
+    from the task's unique tracked Phase 1 plan entry, requires an exact
+    `--expected-old-dependencies` compare-and-swap against the live candidate
+    snapshot, records source hashes/audit in the workspace ledger, and does not
+    re-register the containing Phase 1 source unit.
+  - dependency reconciliation invalidates build-ready, semantic-review PASS,
+    current review/repair, and review-apply receipt bindings. Batch status must
+    route the task through fresh build/review/apply evidence; the command never
+    marks a task complete.
   - `soft-apply` only applies selected soft imports to the ledger and pack artifacts
   - `soft-apply` records the reason for each selected soft import when rationale is available
   - `soft-apply` does not call an external provider and does not perform a Lean acceptance gate
-- Phase 3:
-  - CLI modes [deprecated phase=3]: `soft-pack`, `soft-apply`
-  - the old entry is deprecated/unavailable and exits nonzero with the exact
-    Phase 2 migration commands
-  - ordinary failed local tasks remain in Phase 2 review/repair workflows
-- Phase 4:
-  - unavailable; the compatibility entry exits nonzero
-  - clean completion remains under Phase 2 `review-apply`; do not prescribe a
-    successful no-op, manual ledger edit, or automated closeout
 
 ## Interface Dependency Policy
 
@@ -181,11 +182,10 @@ used as global campaign authority and must not create a missing ledger or root.
   - current pending review section: `current_review_input_file` + `current_review_prompt_file` + `current_review_template_file`
   - last completed review section: `latest_semantic_review_result_file`
   - compatibility pointer: `latest_verify_result_file`
-- `proof_obligations.json`, classification artifacts, audit reports, batch
-  state JSON, ledger runtime status, and dependency/downstream status are
-  review evidence, caches, or reports. They must be read by review when
-  applicable, but none of them independently marks a task complete or overrides
-  the latest valid semantic review verdict.
+- Historical `proof_obligations.json` files are inert and ignored by active review.
+  Classification artifacts, audit reports, batch state JSON, ledger runtime
+  status, and dependency/downstream status are evidence, caches, or reports;
+  none overrides the latest valid semantic review verdict.
 
 ## Phase 2 Problem Soft-Dependency Source Of Truth
 
@@ -203,10 +203,10 @@ used as global campaign authority and must not create a missing ledger or root.
 - Use `python .\run_chapter.py --phase 2 --phase2-mode auto-loop --tasks <task_id> --review-subject current` for failed/inconclusive semantic-review repair
 - Use `python .\run_chapter.py --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id>` before chapter-wide or task-set routing decisions
 - Use `python .\run_chapter.py --phase 2 --phase2-mode batch-run --tasks <task_id>,<task_id> --batch-max-actions 1` only to dispatch a bounded number of existing review/auto-loop actions
-- Use `python .\run_chapter.py --phase 2 --phase2-mode debt-fix --tasks <task_id>` only for tasks with `accepted_as_proof_debt` in `proof_obligations.json` or the ledger proof-obligation summary, then return to `auto-loop`
-- If a hard dependency is `COMPLETED_WITH_PROOF_DEBT`, or a legacy
-  `COMPLETED` dependency still records `accepted_as_proof_debt`, skip the
-  downstream task as proof-debt-blocked and repair the blocker first.
+- If a hard dependency is explicitly `COMPLETED_WITH_PROOF_DEBT`, skip
+  downstream work, run `review-now --review-subject existing` on the blocker,
+  and use the ordinary review-fix/auto-loop plus `review-apply` workflow.
+- Never infer proof debt from a historical checklist or ledger summary.
 - Use `review-pack` and `review-existing` only as prepare-only/compatibility material-generation modes
 - Use `python .\run_chapter.py --phase 2 --phase2-mode review-existing-queue` to build the batch Codex reviewer queue from `ToyApollo/Output`
 - Use `python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids> --selection <path>` only to persist selected soft imports

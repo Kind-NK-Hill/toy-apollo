@@ -8,18 +8,40 @@ from typing import Iterable
 
 _ALIAS_PATH = Path(__file__).with_name("block_id_aliases.json")
 _IDENTIFIER_RE = re.compile(r"^[a-z0-9_]+$")
-_BASE_PREFIX_RE = re.compile(r"^(intro|rem|def|thm|ex|prob)_(\d+)(?:_|$)")
-_BASE_PATTERNS = (
-    re.compile(r"^intro_\d+(?:_\d+)?$"),
-    re.compile(r"^rem_\d+_\d+_[a-z0-9]+(?:_[a-z0-9]+)*$"),
-    re.compile(r"^def_\d+_\d+(?:_[a-z0-9]+(?:_[a-z0-9]+)*)?$"),
-    re.compile(r"^thm_\d+_\d+$"),
-    re.compile(r"^ex_\d+_\d+_(?:\d+|[a-z0-9]+(?:_[a-z0-9]+)*)$"),
-    re.compile(r"^prob_\d+_\d+$"),
-)
+_BASE_PREFIX_RE = re.compile(r"^(intro|rem|def|thm|ex|prob|lem|cor)_(\d+)(?:_|$)")
+
+# Per-profile canonical base-id syntax tables. The default profile "mat" keeps
+# the historical two-segment MAT syntax and only adds the new additive prefixes
+# `lem_`/`cor_`; the "cordis" profile uses the paper's continuous numbering
+# (`def_1`, `thm_4`, `lem_18`, `cor_21`, ...).
+_PROFILE_BASE_PATTERNS: dict[str, tuple[re.Pattern[str], ...]] = {
+    "mat": (
+        re.compile(r"^intro_\d+(?:_\d+)?$"),
+        re.compile(r"^rem_\d+_\d+_[a-z0-9]+(?:_[a-z0-9]+)*$"),
+        re.compile(r"^def_\d+_\d+(?:_[a-z0-9]+(?:_[a-z0-9]+)*)?$"),
+        re.compile(r"^thm_\d+_\d+$"),
+        re.compile(r"^ex_\d+_\d+_(?:\d+|[a-z0-9]+(?:_[a-z0-9]+)*)$"),
+        re.compile(r"^prob_\d+_\d+$"),
+        re.compile(r"^lem_\d+_\d+$"),
+        re.compile(r"^cor_\d+_\d+$"),
+    ),
+    "cordis": (
+        re.compile(r"^def_\d+$"),
+        re.compile(r"^thm_\d+$"),
+        re.compile(r"^lem_\d+$"),
+        re.compile(r"^cor_\d+$"),
+    ),
+}
+_BASE_PATTERNS = _PROFILE_BASE_PATTERNS["mat"]
 _DERIVED_SEGMENT_RE = re.compile(r"__(lemma_(\d+)|main)")
 _TOKEN_SEGMENT_RE = re.compile(r"(lemma_(\d+)|main)")
 _RESERVED_SUFFIX_TOKENS = {"lemma", "main", "proof", "task", "parent", "after", "before", "step"}
+
+DEFAULT_PROFILE = "mat"
+
+
+def base_patterns_for(profile: str = DEFAULT_PROFILE) -> tuple[re.Pattern[str], ...]:
+    return _PROFILE_BASE_PATTERNS.get(str(profile or DEFAULT_PROFILE).strip().lower() or DEFAULT_PROFILE, _BASE_PATTERNS)
 
 
 def _normalize_identifier(block_id: str) -> str:
@@ -89,21 +111,21 @@ def resolve_alias(block_id: str) -> str:
     return resolved
 
 
-def is_canonical_base_id(block_id: str) -> bool:
+def is_canonical_base_id(block_id: str, profile: str = DEFAULT_PROFILE) -> bool:
     normalized = _normalize_identifier(block_id)
     if not normalized or not _IDENTIFIER_RE.match(normalized):
         return False
     if re.search(r"(?:^|_)(?:lemma|main|proof|task|parent|after|before|step)(?:_|$)", normalized):
         return False
-    return any(pattern.match(normalized) for pattern in _BASE_PATTERNS)
+    return any(pattern.match(normalized) for pattern in base_patterns_for(profile))
 
 
-def _split_canonical_derived(block_id: str) -> tuple[str, list[str]] | None:
+def _split_canonical_derived(block_id: str, profile: str = DEFAULT_PROFILE) -> tuple[str, list[str]] | None:
     normalized = _normalize_identifier(block_id)
     if "__" not in normalized:
         return None
     base, _, remainder = normalized.partition("__")
-    if not is_canonical_base_id(base):
+    if not is_canonical_base_id(base, profile):
         return None
     suffixes: list[str] = []
     cursor = "__" + remainder
@@ -120,11 +142,11 @@ def _split_canonical_derived(block_id: str) -> tuple[str, list[str]] | None:
     return base, suffixes
 
 
-def is_canonical_block_id(block_id: str) -> bool:
+def is_canonical_block_id(block_id: str, profile: str = DEFAULT_PROFILE) -> bool:
     normalized = _normalize_identifier(block_id)
-    if is_canonical_base_id(normalized):
+    if is_canonical_base_id(normalized, profile):
         return True
-    return _split_canonical_derived(normalized) is not None
+    return _split_canonical_derived(normalized, profile) is not None
 
 
 def _parse_legacy_suffixes(tokens: list[str]) -> list[str]:
@@ -157,23 +179,23 @@ def _legacy_root_candidates(normalized: str) -> list[str]:
     return candidates
 
 
-def canonicalize_block_id(block_id: str) -> str:
+def canonicalize_block_id(block_id: str, profile: str = DEFAULT_PROFILE) -> str:
     normalized = _normalize_identifier(block_id)
     if not normalized:
         return ""
 
     resolved = resolve_alias(normalized)
-    if is_canonical_block_id(resolved):
+    if is_canonical_block_id(resolved, profile):
         return resolved
 
-    split = _split_canonical_derived(resolved)
+    split = _split_canonical_derived(resolved, profile)
     if split is not None:
         base, suffixes = split
         return base + "".join(f"__{suffix}" for suffix in suffixes)
 
     for prefix in _legacy_root_candidates(resolved):
         canonical_prefix = resolve_alias(prefix)
-        if not is_canonical_base_id(canonical_prefix):
+        if not is_canonical_base_id(canonical_prefix, profile):
             continue
         suffix_tokens = resolved.split("_")[len(prefix.split("_")) :]
         suffixes = _parse_legacy_suffixes(suffix_tokens)
@@ -184,7 +206,7 @@ def canonicalize_block_id(block_id: str) -> str:
     return resolved
 
 
-def canonicalize_id_list(raw_ids: Iterable[str] | object) -> list[str]:
+def canonicalize_id_list(raw_ids: Iterable[str] | object, profile: str = DEFAULT_PROFILE) -> list[str]:
     if not isinstance(raw_ids, Iterable) or isinstance(raw_ids, (str, bytes, dict)):
         return []
     ordered: list[str] = []
@@ -192,7 +214,7 @@ def canonicalize_id_list(raw_ids: Iterable[str] | object) -> list[str]:
     for raw_id in raw_ids:
         if not isinstance(raw_id, str):
             continue
-        canonical = canonicalize_block_id(raw_id)
+        canonical = canonicalize_block_id(raw_id, profile)
         if not canonical or canonical in seen:
             continue
         seen.add(canonical)
@@ -249,9 +271,9 @@ def base_block_id(block_id: str) -> str:
     return canonical.split("__", 1)[0] if canonical else ""
 
 
-def make_derived_id(base_id: str, kind: str, index_path: int | Iterable[int] | None = None) -> str:
-    parent = canonicalize_block_id(base_id)
-    if not parent or not is_canonical_block_id(parent):
+def make_derived_id(base_id: str, kind: str, index_path: int | Iterable[int] | None = None, profile: str = DEFAULT_PROFILE) -> str:
+    parent = canonicalize_block_id(base_id, profile)
+    if not parent or not is_canonical_block_id(parent, profile):
         raise ValueError(f"invalid_parent_block_id:{base_id}")
 
     normalized_kind = str(kind or "").strip().lower()
@@ -275,17 +297,17 @@ def make_derived_id(base_id: str, kind: str, index_path: int | Iterable[int] | N
     return derived
 
 
-def canonicalize_task_dict(task: dict) -> dict:
+def canonicalize_task_dict(task: dict, profile: str = DEFAULT_PROFILE) -> dict:
     if not isinstance(task, dict):
         return task
     canonical = dict(task)
     raw_block_id = canonical.get("block_id", "")
-    canonical_block_id = canonicalize_block_id(raw_block_id)
+    canonical_block_id = canonicalize_block_id(raw_block_id, profile)
     if canonical_block_id:
         canonical["block_id"] = canonical_block_id
-    canonical["dependencies"] = canonicalize_id_list(canonical.get("dependencies", []))
+    canonical["dependencies"] = canonicalize_id_list(canonical.get("dependencies", []), profile)
     if "soft_imports" in canonical:
-        canonical["soft_imports"] = canonicalize_id_list(canonical.get("soft_imports", []))
+        canonical["soft_imports"] = canonicalize_id_list(canonical.get("soft_imports", []), profile)
     return canonical
 
 

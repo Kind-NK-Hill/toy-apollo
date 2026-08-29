@@ -142,11 +142,11 @@ theorem prob_13_2_standardNormal_tail_exp_core :
     intro x hx
     have hinner : HasDerivAt (fun y : ℝ => -(y^2) / 2) (-x) x := by
       have hsq : HasDerivAt (fun y : ℝ => y ^ 2) (2 * x) x := by
-        simpa using ((hasDerivAt_id x).pow 2)
-      convert hsq.neg.div_const 2 using 1 <;> ring
-    have hexp := hinner.exp
-    have hneg := hexp.neg
-    convert hneg using 1 <;> ring
+        simpa using (hasDerivAt_pow 2 x)
+      have hscaled := hsq.const_mul (-(1 / 2 : ℝ))
+      simpa [div_eq_mul_inv, mul_comm] using hscaled
+    have hscaled := hinner.exp.const_mul (-1 : ℝ)
+    simpa [mul_comm] using hscaled
   have hint : IntegrableOn
       (fun x : ℝ => x * Real.exp (-(x^2) / 2)) (Set.Ioi (1 : ℝ)) := by
     have hglobal : Integrable
@@ -227,7 +227,8 @@ theorem prob_13_2_gaussian_scale_to_standard {Ω : Type*} [MeasurableSpace Ω]
   convert h using 2
   · simp
   · ext
-    simp [hsigma.ne']
+    change 1 = sigma ^ 2 / sigma ^ 2
+    exact (div_self (pow_ne_zero 2 hsigma.ne')).symm
 
 theorem prob_13_2_standard_threshold_right_event {Ω : Type*}
     {X : Ω → ℝ} {sigma : ℝ} (hsigma : 0 < sigma) :
@@ -326,11 +327,11 @@ theorem prob_13_2_standardNormal_left_tail_exp_core :
     intro x hx
     have hinner : HasDerivAt (fun y : ℝ => -(y^2) / 2) (-x) x := by
       have hsq : HasDerivAt (fun y : ℝ => y ^ 2) (2 * x) x := by
-        simpa using ((hasDerivAt_id x).pow 2)
-      convert hsq.neg.div_const 2 using 1 <;> ring
-    have hexp := hinner.exp
-    have hneg := hexp.neg
-    convert hneg using 1 <;> ring
+        simpa using (hasDerivAt_pow 2 x)
+      have hscaled := hsq.const_mul (-(1 / 2 : ℝ))
+      simpa [div_eq_mul_inv, mul_comm] using hscaled
+    have hscaled := hinner.exp.const_mul (-1 : ℝ)
+    simpa [mul_comm] using hscaled
   have hint : IntegrableOn
       (fun x : ℝ => x * Real.exp (-(x^2) / 2)) (Set.Iic (-(1 : ℝ))) := by
     have hglobal : Integrable

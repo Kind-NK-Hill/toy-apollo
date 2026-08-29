@@ -49,7 +49,7 @@ theorem symmetricRandomVariable_characteristicFunction_realValued
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
     {Z : Ω → ℝ} (hZ : AEMeasurable Z P)
     (hSymm : IsSymmetricRandomVariable P Z) :
-    CharacteristicFunctionIsRealValued (characteristicFunction P Z) := by
+    CharacteristicFunctionIsRealValued (characteristicFunction (P.map Z)) := by
   haveI : IsProbabilityMeasure (P.map Z) := Measure.isProbabilityMeasure_map hZ
   intro t
   rw [characteristicFunction_law_eq_charFun (μ := P) (X := Z) hZ t]
@@ -127,7 +127,7 @@ theorem prob_9_7
     (hZ : AEMeasurable Z P) (hSymmZ : IsSymmetricRandomVariable P Z)
     (hX : AEMeasurable X P) (hY : AEMeasurable Y P)
     (hXY : X ⟂ᵢ[P] Y) (hIdent : P.map X = P.map Y) :
-    CharacteristicFunctionIsRealValued (characteristicFunction P Z) ∧
+    CharacteristicFunctionIsRealValued (characteristicFunction (P.map Z)) ∧
       IsSymmetricCharacteristicLaw (P.map (fun ω => X ω - Y ω)) :=
   ⟨symmetricRandomVariable_characteristicFunction_realValued hZ hSymmZ,
     iid_difference_symmetric hX hY hXY hIdent⟩

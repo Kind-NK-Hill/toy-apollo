@@ -12,6 +12,7 @@ import ToyApollo.Output.thm_11_6
 -- WRITE FINAL LEAN CODE BELOW
 
 open Filter MeasureTheory ProbabilityTheory Set
+open scoped Topology
 
 noncomputable section
 
@@ -187,7 +188,7 @@ lemma prob_11_10_finite_grid_pointwise_ae {Ω : Type*} [MeasurableSpace Ω]
   refine Finset.induction_on grid ?empty ?insert
   · simp
   · intro a s has hs
-    filter_upwards [hPointwise a, hs] with ω ha hsω x hx
+    filter_upwards [(hPointwise a).2.2, hs] with ω ha hsω x hx
     simp only [Finset.mem_insert] at hx
     rcases hx with rfl | hx
     · exact ha
@@ -343,6 +344,162 @@ lemma prob_11_10_uniformCDFDeviation_nonneg {Ω : Type*}
     ⟨0, rfl⟩
   exact (abs_nonneg _).trans (le_csSup hbdd hmem)
 
+lemma prob_11_10_empiricalCDFIndicator_continuousWithinAt_Ici {Ω : Type*}
+    (X : ℕ → Ω → ℝ) (k : ℕ) (ω : Ω) (x : ℝ) :
+    ContinuousWithinAt (fun y : ℝ => empiricalCDFIndicator X y k ω)
+      (Set.Ici x) x := by
+  by_cases hk : X k ω ≤ x
+  · have heq :
+        (fun y : ℝ => empiricalCDFIndicator X y k ω) =ᶠ[𝓝[Set.Ici x] x]
+          (fun _ : ℝ => (1 : ℝ)) := by
+      filter_upwards [self_mem_nhdsWithin] with y hy
+      simp [empiricalCDFIndicator, le_trans hk hy]
+    exact
+      (continuousWithinAt_const :
+        ContinuousWithinAt (fun _ : ℝ => (1 : ℝ)) (Set.Ici x) x
+      ).congr_of_eventuallyEq heq (by simp [empiricalCDFIndicator, hk])
+  · have hxk : x < X k ω := lt_of_not_ge hk
+    have heq :
+        (fun y : ℝ => empiricalCDFIndicator X y k ω) =ᶠ[𝓝[Set.Ici x] x]
+          (fun _ : ℝ => 0) := by
+      apply mem_nhdsWithin_of_mem_nhds
+      filter_upwards [Iio_mem_nhds hxk] with y hy
+      have hy' : y < X k ω := by
+        simpa only [Set.mem_Iio] using hy
+      simp [empiricalCDFIndicator, hy']
+    exact
+      (continuousWithinAt_const :
+        ContinuousWithinAt (fun _ : ℝ => (0 : ℝ)) (Set.Ici x) x
+      ).congr_of_eventuallyEq heq (by simp [empiricalCDFIndicator, hk])
+
+lemma prob_11_10_empiricalCDFAt_continuousWithinAt_Ici {Ω : Type*}
+    (X : ℕ → Ω → ℝ) (n : ℕ) (ω : Ω) (x : ℝ) :
+    ContinuousWithinAt (fun y : ℝ => empiricalCDFAt X y n ω)
+      (Set.Ici x) x := by
+  unfold empiricalCDFAt thm_11_5_sampleMean
+  have hsum :
+      ContinuousWithinAt
+        (fun y : ℝ => ∑ i : Fin (n + 1), empiricalCDFIndicator X y i.1 ω)
+        (Set.Ici x) x := by
+    change Tendsto
+      (fun y : ℝ => ∑ i : Fin (n + 1), empiricalCDFIndicator X y i.1 ω)
+      (𝓝[Set.Ici x] x)
+      (𝓝 (∑ i : Fin (n + 1), empiricalCDFIndicator X x i.1 ω))
+    simpa using
+      (tendsto_finsetSum (Finset.univ : Finset (Fin (n + 1)))
+        (fun i _ =>
+          (prob_11_10_empiricalCDFIndicator_continuousWithinAt_Ici
+            X i.1 ω x).tendsto))
+  change ContinuousWithinAt
+    ((fun _ : ℝ => 1 / ((n : ℝ) + 1)) *
+      (fun y : ℝ => ∑ i : Fin (n + 1), empiricalCDFIndicator X y i.1 ω))
+    (Set.Ici x) x
+  exact continuousWithinAt_const.mul hsum
+
+lemma prob_11_10_empiricalCDFError_continuousWithinAt_Ici {Ω : Type*}
+    (X : ℕ → Ω → ℝ) (F : ℝ → ℝ)
+    (hCDF : prob_11_10_continuousCDF F) (n : ℕ) (ω : Ω) (x : ℝ) :
+    ContinuousWithinAt
+      (fun y : ℝ => |empiricalCDFAt X y n ω - F y|) (Set.Ici x) x := by
+  exact ((prob_11_10_empiricalCDFAt_continuousWithinAt_Ici X n ω x).sub
+    hCDF.2.1.continuousAt.continuousWithinAt).abs
+
+lemma prob_11_10_empiricalCDFError_le_one {Ω : Type*}
+    (X : ℕ → Ω → ℝ) (F : ℝ → ℝ)
+    (hCDF : prob_11_10_continuousCDF F) (n : ℕ) (ω : Ω) (x : ℝ) :
+    |empiricalCDFAt X x n ω - F x| ≤ 1 := by
+  have hE0 := prob_11_10_empiricalCDFAt_nonneg X x n ω
+  have hE1 := prob_11_10_empiricalCDFAt_le_one X x n ω
+  have hF0 := (prob_11_10_continuousCDF_bounds F hCDF x).1
+  have hF1 := (prob_11_10_continuousCDF_bounds F hCDF x).2
+  rw [abs_sub_le_iff]
+  constructor <;> linarith
+
+lemma prob_11_10_uniformCDFDeviation_eq_iSup_rat {Ω : Type*}
+    (X : ℕ → Ω → ℝ) (F : ℝ → ℝ)
+    (hCDF : prob_11_10_continuousCDF F) (n : ℕ) (ω : Ω) :
+    prob_11_10_uniformCDFDeviation X F n ω =
+      ⨆ q : ℚ, |empiricalCDFAt X (q : ℝ) n ω - F (q : ℝ)| := by
+  unfold prob_11_10_uniformCDFDeviation
+  rw [sSup_range]
+  have hbdd_real :
+      BddAbove
+        (Set.range fun x : ℝ => |empiricalCDFAt X x n ω - F x|) := by
+    refine ⟨1, ?_⟩
+    rintro _ ⟨x, rfl⟩
+    exact prob_11_10_empiricalCDFError_le_one X F hCDF n ω x
+  have hbdd_rat :
+      BddAbove
+        (Set.range fun q : ℚ =>
+          |empiricalCDFAt X (q : ℝ) n ω - F (q : ℝ)|) := by
+    refine ⟨1, ?_⟩
+    rintro _ ⟨q, rfl⟩
+    exact prob_11_10_empiricalCDFError_le_one X F hCDF n ω (q : ℝ)
+  apply le_antisymm
+  · refine ciSup_le fun x => ?_
+    let q : ℕ → ℚ := fun m =>
+      Classical.choose
+        (exists_rat_btwn (K := ℝ)
+          (show x < x + 1 / ((m : ℝ) + 1) by
+            have hm : 0 < 1 / ((m : ℝ) + 1) := by positivity
+            linarith))
+    have hq_spec (m : ℕ) :
+        x < (q m : ℝ) ∧ (q m : ℝ) < x + 1 / ((m : ℝ) + 1) :=
+      Classical.choose_spec
+        (exists_rat_btwn (K := ℝ)
+          (show x < x + 1 / ((m : ℝ) + 1) by
+            have hm : 0 < 1 / ((m : ℝ) + 1) := by positivity
+            linarith))
+    have hq_sub :
+        Tendsto (fun m : ℕ => (q m : ℝ) - x) atTop (𝓝 0) := by
+      exact squeeze_zero
+        (fun m => sub_nonneg.mpr (hq_spec m).1.le)
+        (fun m => by linarith [(hq_spec m).2])
+        tendsto_one_div_add_atTop_nhds_zero_nat
+    have hq_tendsto : Tendsto (fun m : ℕ => (q m : ℝ)) atTop (𝓝 x) := by
+      have hconst : Tendsto (fun _ : ℕ => x) atTop (𝓝 x) :=
+        tendsto_const_nhds
+      simpa only [add_sub_cancel, add_zero] using hconst.add hq_sub
+    have hq_within :
+        Tendsto (fun m : ℕ => (q m : ℝ)) atTop (𝓝[Set.Ici x] x) := by
+      exact tendsto_nhdsWithin_iff.mpr
+        ⟨hq_tendsto, Filter.Eventually.of_forall
+          (fun m => (hq_spec m).1.le)⟩
+    have herr_tendsto :
+        Tendsto
+          (fun m : ℕ =>
+            |empiricalCDFAt X (q m : ℝ) n ω - F (q m : ℝ)|)
+          atTop (𝓝 |empiricalCDFAt X x n ω - F x|) :=
+      (prob_11_10_empiricalCDFError_continuousWithinAt_Ici
+        X F hCDF n ω x).tendsto.comp hq_within
+    exact le_of_tendsto' herr_tendsto
+      (fun m => le_ciSup hbdd_rat (q m))
+  · exact ciSup_le fun q => le_ciSup hbdd_real (q : ℝ)
+
+theorem prob_11_10_uniformCDFDeviation_aestronglyMeasurable {Ω : Type*}
+    [MeasurableSpace Ω] (P : Measure Ω) (X : ℕ → Ω → ℝ) (F : ℝ → ℝ)
+    (hCDF : prob_11_10_continuousCDF F)
+    (hPointwise :
+      ∀ x : ℝ,
+        ConvergesAlmostSurely P
+          (fun n => empiricalCDFAt X x n) (fun _ : Ω => F x))
+    (n : ℕ) :
+    AEStronglyMeasurable (prob_11_10_uniformCDFDeviation X F n) P := by
+  have hrat :
+      ∀ q : ℚ,
+        AEMeasurable
+          (fun ω => |empiricalCDFAt X (q : ℝ) n ω - F (q : ℝ)|) P := by
+    intro q
+    exact (((hPointwise (q : ℝ)).1 n).aemeasurable.sub aemeasurable_const).abs
+  have hiSup :
+      AEStronglyMeasurable
+        (fun ω =>
+          ⨆ q : ℚ, |empiricalCDFAt X (q : ℝ) n ω - F (q : ℝ)|) P :=
+    (AEMeasurable.iSup hrat).aestronglyMeasurable
+  exact hiSup.congr
+    (Filter.Eventually.of_forall fun ω =>
+      (prob_11_10_uniformCDFDeviation_eq_iSup_rat X F hCDF n ω).symm)
+
 theorem prob_11_10_polya_uniformization_from_pointwise {Ω : Type*}
     [MeasurableSpace Ω] (P : Measure Ω) (X : ℕ → Ω → ℝ) (F : ℝ → ℝ)
     (hCDF : prob_11_10_continuousCDF F)
@@ -352,6 +509,9 @@ theorem prob_11_10_polya_uniformization_from_pointwise {Ω : Type*}
         ConvergesAlmostSurely P (fun n => empiricalCDFAt X x n) (fun _ : Ω => F x)) :
     ConvergesAlmostSurely P
       (fun n => prob_11_10_uniformCDFDeviation X F n) (fun _ : Ω => 0) := by
+  refine ⟨fun n =>
+    prob_11_10_uniformCDFDeviation_aestronglyMeasurable
+      P X F hCDF hPointwise n, aestronglyMeasurable_const, ?_⟩
   have hAll : ∀ᵐ ω ∂P, ∀ m : ℕ,
       ∀ᶠ n : ℕ in atTop,
         dist (prob_11_10_uniformCDFDeviation X F n ω) 0 <
@@ -435,7 +595,8 @@ theorem prob_11_10_continuous_grid_uniformization {Ω : Type*} [MeasurableSpace 
         ConvergesAlmostSurely P (fun n => empiricalCDFAt X x n) (fun _ : Ω => F x)) :
     ConvergesAlmostSurely P
       (fun n => prob_11_10_uniformCDFDeviation X F n) (fun _ : Ω => 0) := by
-  exact prob_11_10_finite_grid_uniformization P X F hCDF hIndicators hPointwise
+  exact prob_11_10_finite_grid_uniformization P X F hCDF hIndicators
+    hPointwise
 
 theorem prob_11_10_pointwise {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     (X : ℕ → Ω → ℝ) (F : ℝ → ℝ)
@@ -451,4 +612,5 @@ theorem prob_11_10 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     ConvergesAlmostSurely P
       (fun n => prob_11_10_uniformCDFDeviation X F n) (fun _ : Ω => 0) := by
   exact prob_11_10_continuous_grid_uniformization P X F
-    hCDF hIndicators (fun x => prob_11_10_pointwise P X F hIndicators x)
+    hCDF hIndicators
+      (fun x => prob_11_10_pointwise P X F hIndicators x)

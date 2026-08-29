@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
+from .phase2_review_apply_receipt import write_phase2_review_apply_receipt
 from .state_store import (
     SubjectBundle,
     StateDatabaseMissingError,
@@ -22,6 +23,7 @@ def _subject_from_review_input(
     review_input: Mapping[str, Any],
     candidate_path: Path,
     candidate_code: str,
+    source_repo: str,
 ) -> SubjectBundle:
     raw_bundle = review_input.get("subject_bundle")
     if isinstance(raw_bundle, Mapping) and isinstance(raw_bundle.get("files"), list):
@@ -29,7 +31,7 @@ def _subject_from_review_input(
             task_id=task_id,
             files=raw_bundle["files"],
             primary_path=str(raw_bundle.get("primary_path", "") or candidate_path),
-            source_repo="toy_apollo",
+            source_repo=source_repo,
             layout=f"review_{review_input.get('review_subject_kind', 'candidate')}",
             subject_kind="review_bundle",
         )
@@ -46,7 +48,7 @@ def _subject_from_review_input(
         task_id=task_id,
         files={str(candidate_path): candidate_code},
         primary_path=str(candidate_path),
-        source_repo="toy_apollo",
+        source_repo=source_repo,
         layout=f"legacy_review_{review_input.get('review_subject_kind', 'candidate')}",
         subject_kind="review_bundle",
     )
@@ -58,6 +60,8 @@ def _output_subject(
     output_path: Path,
     runtime_root: Path,
     source_subject: SubjectBundle,
+    source_repo: str,
+    layout: str,
 ) -> SubjectBundle:
     resolved_output = output_path.resolve()
     try:
@@ -88,8 +92,8 @@ def _output_subject(
         task_id=task_id,
         files=files,
         primary_path=logical_path,
-        source_repo="toy_apollo",
-        layout="toy",
+        source_repo=source_repo,
+        layout=layout,
         subject_kind="reviewed_output",
         parent_subject_id=source_subject.subject_id,
     )
@@ -123,6 +127,7 @@ def record_review_apply_state(
     final_build_success: bool,
     disposition: str,
     output_path: Path | None,
+    store: WorkspaceStateStore | None = None,
 ) -> None:
     """Project one completed review-apply operation into workspace state.
 
@@ -132,21 +137,28 @@ def record_review_apply_state(
     without pretending the two observations have the same identity.
     """
 
-    state_path = getattr(settings, "state_db_file", None)
-    if state_path is None:
-        return
-    store = WorkspaceStateStore(Path(state_path))
-    if not store.exists:
-        raise StateDatabaseMissingError(
-            f"Workspace state database is missing: {store.path}. "
-            "Run `python run_chapter.py state rebuild` before applying a review."
-        )
-    store.assert_integrity()
+    profile = str(getattr(settings, "profile", "mat") or "mat").strip().lower()
+    if store is None:
+        state_path = getattr(settings, "state_db_file", None)
+        if state_path is None:
+            return
+        store = WorkspaceStateStore(Path(state_path), review_profile=profile)
+        if not store.exists:
+            raise StateDatabaseMissingError(
+                f"Workspace state database is missing: {store.path}. "
+                "Run `python run_chapter.py state rebuild` before applying a review."
+            )
+        store.assert_integrity()
+    is_mat_profile = profile == "mat"
+    source_repo = "toy_apollo" if is_mat_profile else profile
+    output_layout = "toy" if is_mat_profile else profile
+    reviewed_head_role = "toy_reviewed" if is_mat_profile else f"{profile}_reviewed"
     subject = _subject_from_review_input(
         task_id=task_id,
         review_input=review_input,
         candidate_path=candidate_path,
         candidate_code=candidate_code,
+        source_repo=source_repo,
     )
     store.upsert_subject(subject)
 
@@ -166,7 +178,32 @@ def record_review_apply_state(
     reviewer_independence = semantic_review.get("reviewer_independence", "")
     if isinstance(reviewer_independence, Mapping):
         reviewer_independence = json.dumps(reviewer_independence, ensure_ascii=False, sort_keys=True)
-    store.record_review(
+    prompt_version = (
+        int(review_input.get("prompt_version"))
+        if str(review_input.get("prompt_version", "") or "").isdigit()
+        else None
+    )
+    rubric_version = (
+        int(review_input.get("rubric_version"))
+        if str(review_input.get("rubric_version", "") or "").isdigit()
+        else None
+    )
+    supported_prompt_versions = {
+        int(value)
+        for value in getattr(settings, "supported_prompt_versions", (9, 10, 11))
+    }
+    supported_rubric_version = int(getattr(settings, "supported_rubric_version", 9))
+    current_compatible = (
+        prompt_version in supported_prompt_versions
+        and rubric_version == supported_rubric_version
+    )
+    if success and not current_compatible:
+        raise ValueError(
+            "A successful review apply requires metadata compatible with the active "
+            f"{profile} profile: prompt in {sorted(supported_prompt_versions)} and "
+            f"rubric {supported_rubric_version}."
+        )
+    review_id = store.record_review(
         task_id=task_id,
         subject_id=subject.subject_id,
         verdict=verdict,
@@ -177,7 +214,20 @@ def record_review_apply_state(
         evidence_hash=evidence_hash,
         reviewer_independence=str(reviewer_independence),
         authority_scope="phase2_review_apply",
-        authority_eligible=bool(success and verdict == "pass" and phase2_status == "pass"),
+        authority_eligible=bool(
+            success
+            and verdict == "pass"
+            and phase2_status == "pass"
+            and current_compatible
+        ),
+        prompt_version=prompt_version,
+        rubric_version=rubric_version,
+        review_input_path=str(semantic_review.get("review_input_file", "") or ""),
+        review_input_hash=str(
+            semantic_review.get("review_input_hash", "") or sha256_json(dict(review_input))
+        ),
+        reviewer_backend_id=str(review_input.get("reviewer_backend_id", "") or ""),
+        provenance={"projection": "live_review_apply"},
     )
     store.set_task_head(
         task_id=task_id,
@@ -187,18 +237,21 @@ def record_review_apply_state(
     )
 
     projected_subject = subject
+    transformation_id = ""
     if success and output_path is not None and output_path.is_file():
         projected_subject = _output_subject(
             task_id=task_id,
             output_path=output_path,
             runtime_root=Path(settings.runtime_root),
             source_subject=subject,
+            source_repo=source_repo,
+            layout=output_layout,
         )
         store.upsert_subject(projected_subject)
         mechanical_status = (
             "pass" if _mechanically_equivalent_bundles(subject, projected_subject) else "fail"
         )
-        store.record_transformation(
+        transformation_id = store.record_transformation(
             task_id=task_id,
             source_subject_id=subject.subject_id,
             target_subject_id=projected_subject.subject_id,
@@ -214,19 +267,20 @@ def record_review_apply_state(
             )
         store.set_task_head(
             task_id=task_id,
-            role="toy_reviewed",
+            role=reviewed_head_role,
             subject_id=projected_subject.subject_id,
             detail={"review_subject_id": subject.subject_id},
         )
-        store.record_integration(
-            task_id=task_id,
-            subject_id=projected_subject.subject_id,
-            target_repo="mat",
-            integration_kind="mat_promotion",
-            state="ready",
-            remote_freshness="local",
-            detail={"source": "phase2_review_apply", "automatic_push": False},
-        )
+        if is_mat_profile:
+            store.record_integration(
+                task_id=task_id,
+                subject_id=projected_subject.subject_id,
+                target_repo="mat",
+                integration_kind="mat_promotion",
+                state="ready",
+                remote_freshness="local",
+                detail={"source": "phase2_review_apply", "automatic_push": False},
+            )
 
     store.record_run(
         run_id=sha256_json(
@@ -245,3 +299,33 @@ def record_review_apply_state(
         detail={"disposition": disposition, "phase2_status": phase2_status},
         completed_at=utc_now(),
     )
+    if success and output_path is not None and output_path.is_file():
+        receipt_path, receipt = write_phase2_review_apply_receipt(
+            settings=settings,
+            task_id=task_id,
+            review_input=review_input,
+            semantic_review=semantic_review,
+            review_subject=subject,
+            projected_subject=projected_subject,
+            review_id=review_id,
+            transformation_id=transformation_id,
+            evidence_path=evidence_path,
+            evidence_hash=evidence_hash,
+            disposition=disposition,
+            final_build_success=final_build_success,
+            reviewed_head_role=reviewed_head_role,
+        )
+        store.record_event(
+            event_type="phase2_review_apply_receipt_written",
+            task_id=task_id,
+            subject_id=projected_subject.subject_id,
+            evidence_path=receipt_path,
+            evidence_hash=sha256_file(receipt_path),
+            occurred_at=str(receipt.get("applied_at", "") or utc_now()),
+            payload={
+                "receipt_id": receipt.get("receipt_id", ""),
+                "review_id": review_id,
+                "transformation_id": transformation_id,
+                "profile": profile,
+            },
+        )

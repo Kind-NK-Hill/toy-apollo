@@ -132,7 +132,9 @@ theorem ex_13_6_2_naturalFiltration_succ_eq_mathlib {Ω : Type*}
                 z ⟨j, Nat.lt_succ_of_le hj⟩) ∘
               ex_13_6_1_history Y (n + 1)) :=
         (measurable_pi_apply ⟨j, Nat.lt_succ_of_le hj⟩).comp hhist
-      simpa [ex_13_6_1_history, Function.comp_apply] using hcoord'
+      convert hcoord' using 1
+      funext ω
+      rfl
     exact hcoord.comap_le
 
 theorem ex_13_6_2_fairIncrement_of_iIndep_zeroMean {Ω : Type*}

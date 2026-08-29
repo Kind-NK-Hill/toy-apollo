@@ -10,6 +10,110 @@ import ToyApollo.Output.thm_7_8_sandwich_support
 open MeasureTheory Set Filter
 
 noncomputable section
+namespace Prob73NatPartition
+
+def point {a b : ℝ} (P : DarbouxRS.Partition a b) (i : ℕ) : ℝ :=
+  if hi : i ≤ P.n then P.pts ⟨i, Nat.lt_succ_iff.mpr hi⟩ else b
+
+theorem point_eq {a b : ℝ} (P : DarbouxRS.Partition a b) {i : ℕ}
+    (hi : i ≤ P.n) :
+    point P i = P.pts ⟨i, Nat.lt_succ_iff.mpr hi⟩ := by simp [point, hi]
+
+theorem point_zero {a b : ℝ} (P : DarbouxRS.Partition a b) :
+    point P 0 = a := by
+  rw [point_eq P (Nat.zero_le P.n)]
+  simpa using P.pts_start
+
+theorem point_end {a b : ℝ} (P : DarbouxRS.Partition a b) :
+    point P P.n = b := by
+  rw [point_eq P le_rfl]
+  calc
+    P.pts ⟨P.n, Nat.lt_succ_self P.n⟩ =
+        P.pts (Fin.last P.n) := congrArg P.pts (Fin.ext (by rfl))
+    _ = b := P.pts_end
+
+theorem point_lt_succ {a b : ℝ} (P : DarbouxRS.Partition a b) {i : ℕ}
+    (hi : i < P.n) :
+    point P i < point P (i + 1) := by
+  rw [point_eq P (Nat.le_of_lt hi), point_eq P (Nat.succ_le_of_lt hi)]
+  exact P.strict_mono (by simp)
+
+theorem point_mem_Icc {a b : ℝ} (P : DarbouxRS.Partition a b) {i : ℕ}
+    (hi : i ≤ P.n) : point P i ∈ Icc a b := by
+  rw [point_eq P hi]
+  exact DarbouxRS.partition_pts_mem_Icc_core P
+
+def subinterval {a b : ℝ} (P : DarbouxRS.Partition a b) (i : ℕ) : Set ℝ :=
+  Icc (point P i) (point P (i + 1))
+
+def upperStep {a b : ℝ} (P : DarbouxRS.Partition a b)
+    (f : ℝ → ℝ) (i : ℕ) : ℝ := sSup (f '' subinterval P i)
+
+def lowerStep {a b : ℝ} (P : DarbouxRS.Partition a b)
+    (f : ℝ → ℝ) (i : ℕ) : ℝ := sInf (f '' subinterval P i)
+
+theorem subinterval_eq {a b : ℝ} (P : DarbouxRS.Partition a b) {i : ℕ}
+    (hi : i < P.n) :
+    subinterval P i = DarbouxRS.subinterval P (⟨i, hi⟩ : Fin P.n) := by
+  unfold subinterval DarbouxRS.subinterval DarbouxRS.Partition.subinterval
+  rw [point_eq P (Nat.le_of_lt hi), point_eq P (Nat.succ_le_of_lt hi)]
+  congr 1
+
+theorem upperStep_eq {a b : ℝ} (P : DarbouxRS.Partition a b)
+    (f : ℝ → ℝ) {i : ℕ} (hi : i < P.n) :
+    upperStep P f i = DarbouxRS.upperStep P f (⟨i, hi⟩ : Fin P.n) := by
+  unfold upperStep DarbouxRS.upperStep
+  rw [subinterval_eq P hi]
+
+theorem lowerStep_eq {a b : ℝ} (P : DarbouxRS.Partition a b)
+    (f : ℝ → ℝ) {i : ℕ} (hi : i < P.n) :
+    lowerStep P f i = DarbouxRS.lowerStep P f (⟨i, hi⟩ : Fin P.n) := by
+  unfold lowerStep DarbouxRS.lowerStep
+  rw [subinterval_eq P hi]
+
+theorem subinterval_subset_Icc {a b : ℝ} (P : DarbouxRS.Partition a b)
+    {i : ℕ} (hi : i < P.n) : subinterval P i ⊆ Icc a b := by
+  rw [subinterval_eq P hi]
+  exact DarbouxRS.subinterval_subset_Icc_core P
+
+theorem lowerStep_le_upperStep {a b : ℝ} (P : DarbouxRS.Partition a b)
+    {f : ℝ → ℝ} {i : ℕ} (hi : i < P.n)
+    (hBelow : BddBelow (f '' Icc a b))
+    (hAbove : BddAbove (f '' Icc a b)) :
+    lowerStep P f i ≤ upperStep P f i := by
+  rw [lowerStep_eq P f hi, upperStep_eq P f hi]
+  exact DarbouxRS.lowerStep_le_upperStep_core P ⟨i, hi⟩ hBelow hAbove
+
+theorem partition_length_le_mesh {a b : ℝ} (P : DarbouxRS.Partition a b)
+    {i : ℕ} (hi : i < P.n) :
+    point P (i + 1) - point P i ≤ P.mesh := by
+  rw [point_eq P (Nat.succ_le_of_lt hi), point_eq P (Nat.le_of_lt hi)]
+  change P.pts (⟨i, hi⟩ : Fin P.n).succ -
+      P.pts (⟨i, hi⟩ : Fin P.n).castSucc ≤ P.mesh
+  unfold DarbouxRS.Partition.mesh
+  exact Finset.le_sup' (s := (Finset.univ : Finset (Fin P.n)))
+    (f := fun j => P.pts j.succ - P.pts j.castSucc) (Finset.mem_univ ⟨i, hi⟩)
+
+theorem Ioc_subset_Icc {a b : ℝ} (P : DarbouxRS.Partition a b) {i : ℕ}
+    (hi : i < P.n) :
+    Ioc (point P i) (point P (i + 1)) ⊆ Icc a b := by
+  rw [point_eq P (Nat.le_of_lt hi), point_eq P (Nat.succ_le_of_lt hi)]
+  exact thm_7_8_partition_Ioc_subset_Icc P ⟨i, hi⟩
+
+theorem Ioc_cover_Icc_of_ne_left {a b x : ℝ}
+    (P : DarbouxRS.Partition a b) (hx : x ∈ Icc a b) (hxne : x ≠ a) :
+    ∃ i : ℕ, i < P.n ∧ x ∈ Ioc (point P i) (point P (i + 1)) := by
+  rcases thm_7_8_partition_Ioc_cover_Icc_of_ne_left P hx hxne with ⟨i, hi⟩
+  refine ⟨i, i.isLt, ?_⟩
+  rw [point_eq P (Nat.le_of_lt i.isLt),
+    point_eq P (Nat.succ_le_of_lt i.isLt)]
+  constructor
+  · convert hi.1 using 1
+    exact congrArg P.pts (Fin.ext (by rfl))
+  · convert hi.2 using 1
+    exact congrArg P.pts (Fin.ext (by simp))
+
+end Prob73NatPartition
 
 def prob_7_3_partA_strict_statement
     {a b : ℝ} {f : ℝ → ℝ} {α : StieltjesFunction ℝ}
@@ -149,7 +253,7 @@ theorem prob_7_3_restrict_left_endpoint_atom_zero
     (μ.restrict (Icc a b)) {a} = 0 := by
   have hle : (μ.restrict (Icc a b)) {a} ≤ μ {a} :=
     (Measure.restrict_le_self (μ := μ) (s := Icc a b)) {a}
-  exact le_antisymm (by simpa [hAtom] using hle) (zero_le _)
+  exact le_antisymm (by simpa [hAtom] using hle) bot_le
 
 theorem prob_7_3_endpoint_atom_convention_support
     {a b : ℝ} (α : StieltjesFunction ℝ) (hAtom : α.measure {a} = 0) :
@@ -183,31 +287,43 @@ theorem prob_7_3_rsIntegrable_unpacks_to_fine_upper_lower_gap_small
 theorem prob_7_3_restricted_measure_partition_cell_toReal
     (F : StieltjesFunction ℝ) {a b : ℝ} (P : DarbouxRS.Partition a b)
     {i : ℕ} (hi : i < P.n) :
-    ((F.measure.restrict (Icc a b)) (Ioc (P.pts i) (P.pts (i + 1)))).toReal =
-      F (P.pts (i + 1)) - F (P.pts i) := by
+    ((F.measure.restrict (Icc a b))
+        (Ioc (Prob73NatPartition.point P i)
+          (Prob73NatPartition.point P (i + 1)))).toReal =
+      F (Prob73NatPartition.point P (i + 1)) -
+        F (Prob73NatPartition.point P i) := by
   rw [Measure.restrict_apply measurableSet_Ioc]
-  have hcell_subset : Ioc (P.pts i) (P.pts (i + 1)) ⊆ Icc a b :=
-    thm_7_8_partition_Ioc_subset_Icc P hi
+  have hcell_subset :
+      Ioc (Prob73NatPartition.point P i)
+          (Prob73NatPartition.point P (i + 1)) ⊆ Icc a b :=
+    Prob73NatPartition.Ioc_subset_Icc P hi
   have hcell_inter :
-      Ioc (P.pts i) (P.pts (i + 1)) ∩ Icc a b =
-        Ioc (P.pts i) (P.pts (i + 1)) := by
+      Ioc (Prob73NatPartition.point P i)
+          (Prob73NatPartition.point P (i + 1)) ∩ Icc a b =
+        Ioc (Prob73NatPartition.point P i)
+          (Prob73NatPartition.point P (i + 1)) := by
     exact inter_eq_self_of_subset_left hcell_subset
   rw [hcell_inter]
   exact thm_7_8_stieltjes_measure_Ioc_toReal F
-    (le_of_lt (P.strict_mono i hi))
+    (le_of_lt (Prob73NatPartition.point_lt_succ P hi))
 
 theorem prob_7_3_stieltjes_restricted_measure_partition_cells_endpoint_atom
     (F : StieltjesFunction ℝ) {a b : ℝ} (P : DarbouxRS.Partition a b)
     (hAtom : F.measure {a} = 0) :
     (∀ i : ℕ, ∀ _hi : i < P.n,
-      ((F.measure.restrict (Icc a b)) (Ioc (P.pts i) (P.pts (i + 1)))).toReal =
-        F (P.pts (i + 1)) - F (P.pts i)) ∧
+      ((F.measure.restrict (Icc a b))
+          (Ioc (Prob73NatPartition.point P i)
+            (Prob73NatPartition.point P (i + 1)))).toReal =
+        F (Prob73NatPartition.point P (i + 1)) -
+          F (Prob73NatPartition.point P i)) ∧
     (F.measure.restrict (Icc a b)) {a} = 0 ∧
     (∀ x : ℝ, x ∈ Icc a b → x ≠ a →
-      ∃ i : ℕ, i < P.n ∧ x ∈ Ioc (P.pts i) (P.pts (i + 1))) := by
+      ∃ i : ℕ, i < P.n ∧
+        x ∈ Ioc (Prob73NatPartition.point P i)
+          (Prob73NatPartition.point P (i + 1))) := by
   refine ⟨?_, ?_, ?_⟩
   · intro i hi
     exact prob_7_3_restricted_measure_partition_cell_toReal F P hi
   · exact prob_7_3_endpoint_atom_convention_support F hAtom
   · intro x hx hxne
-    exact thm_7_8_partition_Ioc_cover_Icc_of_ne_left P hx hxne
+    exact Prob73NatPartition.Ioc_cover_Icc_of_ne_left P hx hxne

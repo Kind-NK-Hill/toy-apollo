@@ -30,16 +30,19 @@ def prob_11_5_tailSummabilitySupport {Ω : Type*} [MeasurableSpace Ω]
 
 theorem prob_11_5_scaled_tail_bound {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ)
-    (n : ℕ) (hX : MemLp (X n) 2 P) (hMean : P[X n] = 0)
+    (n : ℕ) (hXm : Measurable (X n)) (hX : MemLp (X n) 2 P)
+    (hMean : P[X n] = 0)
     {ε : ℝ} (hε : 0 < ε) :
     P.real {ω | ε ≤ |prob_11_5_scaledSeq X n ω - 0|} ≤
-      _root_.variance P (X n) / (((n : ℝ) + 1) ^ 2 * ε ^ 2) := by
+      _root_.variance P (X n) (FiniteAbsMoment.of_memLp hXm hX) /
+        (((n : ℝ) + 1) ^ 2 * ε ^ 2) := by
   have hNpos : 0 < (n : ℝ) + 1 := by positivity
   have hThreshold : 0 < ((n : ℝ) + 1) * ε := mul_pos hNpos hε
   have hCheb :
       P.real {ω | ((n : ℝ) + 1) * ε ≤ |X n ω - P[X n]|} ≤
-        _root_.variance P (X n) / (((n : ℝ) + 1) * ε) ^ 2 := by
-    exact thm_11_2 P (X n) hX hThreshold
+        _root_.variance P (X n) (FiniteAbsMoment.of_memLp hXm hX) /
+          (((n : ℝ) + 1) * ε) ^ 2 := by
+    exact thm_11_2 P (X n) hXm hX hThreshold
   have hsubset :
       {ω | ε ≤ |prob_11_5_scaledSeq X n ω - 0|} ⊆
         {ω | ((n : ℝ) + 1) * ε ≤ |X n ω - P[X n]|} := by
@@ -59,8 +62,10 @@ theorem prob_11_5_scaled_tail_bound {Ω : Type*} [MeasurableSpace Ω]
   calc
     P.real {ω | ε ≤ |prob_11_5_scaledSeq X n ω - 0|}
         ≤ P.real {ω | ((n : ℝ) + 1) * ε ≤ |X n ω - P[X n]|} := hmeasure
-    _ ≤ _root_.variance P (X n) / (((n : ℝ) + 1) * ε) ^ 2 := hCheb
-    _ = _root_.variance P (X n) / (((n : ℝ) + 1) ^ 2 * ε ^ 2) := by
+    _ ≤ _root_.variance P (X n) (FiniteAbsMoment.of_memLp hXm hX) /
+        (((n : ℝ) + 1) * ε) ^ 2 := hCheb
+    _ = _root_.variance P (X n) (FiniteAbsMoment.of_memLp hXm hX) /
+        (((n : ℝ) + 1) ^ 2 * ε ^ 2) := by
       ring_nf
 
 theorem prob_11_5_pseries_bound_ne_top (C : ℝ) (hC : 0 ≤ C) :
@@ -77,12 +82,14 @@ theorem prob_11_5_pseries_bound_ne_top (C : ℝ) (hC : 0 ≤ C) :
 
 theorem prob_11_5_deviation_event_bound {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ)
-    (n : ℕ) (hX : MemLp (X n) 2 P) (hMean : P[X n] = 0)
+    (n : ℕ) (hXm : Measurable (X n)) (hX : MemLp (X n) 2 P)
+    (hMean : P[X n] = 0)
     {ε : ℝ} (hε : 0 < ε) :
     P (almostSureDeviationEvent (prob_11_5_scaledSeq X) (fun _ : Ω => 0) n ε) ≤
       ENNReal.ofReal
-        (_root_.variance P (X n) / (((n : ℝ) + 1) ^ 2 * ε ^ 2)) := by
-  have hreal := prob_11_5_scaled_tail_bound P X n hX hMean hε
+        (_root_.variance P (X n) (FiniteAbsMoment.of_memLp hXm hX) /
+          (((n : ℝ) + 1) ^ 2 * ε ^ 2)) := by
+  have hreal := prob_11_5_scaled_tail_bound P X n hXm hX hMean hε
   have hfinite :
       P (almostSureDeviationEvent (prob_11_5_scaledSeq X) (fun _ : Ω => 0) n ε) ≠ ∞ := by
     exact measure_ne_top P _
@@ -100,10 +107,14 @@ theorem prob_11_5_deviation_event_bound {Ω : Type*} [MeasurableSpace Ω]
 
 theorem prob_11_5_tailSummability_of_variance_growth {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ)
+    (hMeas : ∀ n : ℕ, Measurable (X n))
     (hMemLp : ∀ n : ℕ, MemLp (X n) 2 P)
     (hMean : ∀ n : ℕ, P[X n] = 0)
     (hVarGrowth : ∃ c : ℝ, 0 < c ∧
-      ∀ n : ℕ, _root_.variance P (X n) ≤ c * Real.sqrt ((n : ℝ) + 1)) :
+      ∀ n : ℕ,
+        _root_.variance P (X n)
+            (FiniteAbsMoment.of_memLp (hMeas n) (hMemLp n)) ≤
+          c * Real.sqrt ((n : ℝ) + 1)) :
     prob_11_5_tailSummabilitySupport P X := by
   rcases hVarGrowth with ⟨c, hc, hVar⟩
   intro ε hε
@@ -117,13 +128,18 @@ theorem prob_11_5_tailSummability_of_variance_growth {Ω : Type*} [MeasurableSpa
   have htail :
       P (almostSureDeviationEvent (prob_11_5_scaledSeq X) (fun _ : Ω => 0) n ε) ≤
         ENNReal.ofReal
-          (_root_.variance P (X n) / (((n : ℝ) + 1) ^ 2 * ε ^ 2)) := by
-    exact prob_11_5_deviation_event_bound P X n (hMemLp n) (hMean n) hε
+          (_root_.variance P (X n)
+              (FiniteAbsMoment.of_memLp (hMeas n) (hMemLp n)) /
+            (((n : ℝ) + 1) ^ 2 * ε ^ 2)) := by
+    exact prob_11_5_deviation_event_bound P X n
+      (hMeas n) (hMemLp n) (hMean n) hε
   refine le_trans htail ?_
   refine ENNReal.ofReal_le_ofReal ?_
   have hden_nonneg : 0 ≤ ((n : ℝ) + 1) ^ 2 * ε ^ 2 := by positivity
   have hdiv :
-      _root_.variance P (X n) / (((n : ℝ) + 1) ^ 2 * ε ^ 2) ≤
+      _root_.variance P (X n)
+          (FiniteAbsMoment.of_memLp (hMeas n) (hMemLp n)) /
+          (((n : ℝ) + 1) ^ 2 * ε ^ 2) ≤
         (c * Real.sqrt ((n : ℝ) + 1)) / (((n : ℝ) + 1) ^ 2 * ε ^ 2) := by
     exact div_le_div_of_nonneg_right (hVar n) hden_nonneg
   have halg :
@@ -142,9 +158,11 @@ theorem prob_11_5_tailSummability_of_variance_growth {Ω : Type*} [MeasurableSpa
 
 private theorem prob_11_5_of_tail_summability {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ)
+    (hScaled : ∀ n : ℕ, AEStronglyMeasurable (prob_11_5_scaledSeq X n) P)
     (hTail : prob_11_5_tailSummabilitySupport P X) :
     ConvergesAlmostSurely P (prob_11_5_scaledSeq X) (fun _ => 0) := by
   refine (thm_10_1 P (prob_11_5_scaledSeq X) (fun _ : Ω => 0)).2 ?_
+  refine ⟨hScaled, aestronglyMeasurable_const, ?_⟩
   intro ε hε
   simpa [prob_11_5_tailSummabilitySupport, deviationInfinitelyOften] using
     (thm_5_8 P
@@ -155,10 +173,24 @@ private theorem prob_11_5_of_tail_summability {Ω : Type*} [MeasurableSpace Ω]
 theorem prob_11_5 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ)
     (_hInd : def_5_10_randomVariables P X)
+    (hMeas : ∀ n : ℕ, Measurable (X n))
     (hMemLp : ∀ n : ℕ, MemLp (X n) 2 P)
     (hMean : ∀ n : ℕ, P[X n] = 0)
     (hVarGrowth : ∃ c : ℝ, 0 < c ∧
-      ∀ n : ℕ, _root_.variance P (X n) ≤ c * Real.sqrt ((n : ℝ) + 1)) :
+      ∀ n : ℕ,
+        _root_.variance P (X n)
+            (FiniteAbsMoment.of_memLp (hMeas n) (hMemLp n)) ≤
+          c * Real.sqrt ((n : ℝ) + 1)) :
     ConvergesAlmostSurely P (prob_11_5_scaledSeq X) (fun _ => 0) := by
-  exact prob_11_5_of_tail_summability P X
-    (prob_11_5_tailSummability_of_variance_growth P X hMemLp hMean hVarGrowth)
+  have hScaled : ∀ n, AEStronglyMeasurable (prob_11_5_scaledSeq X n) P := by
+    intro n
+    have hdenom :
+        AEStronglyMeasurable (fun _ : Ω => (n : ℝ) + 1) P :=
+      aestronglyMeasurable_const
+    change AEStronglyMeasurable
+      (fun ω => X n ω / ((n : ℝ) + 1)) P
+    exact ((hMemLp n).1.mul hdenom.inv₀).congr
+      (Eventually.of_forall fun _ => rfl)
+  exact prob_11_5_of_tail_summability P X hScaled
+    (prob_11_5_tailSummability_of_variance_growth P X
+      hMeas hMemLp hMean hVarGrowth)

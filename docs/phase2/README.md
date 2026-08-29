@@ -1,5 +1,9 @@
 # Phase2
 
+For chapter-wide/task-set review, state reconciliation, `auto-loop`, or
+existing-output batch behavior, read
+[agent_review_contract.md](agent_review_contract.md).
+
 Phase2 turns one task candidate into an official ToyApollo output only through
 three completion gates:
 

@@ -27,9 +27,9 @@ class TaskStatus(str, Enum):
     PACKED = "PACKED"                  # Prompt pack prepared; awaiting operator/model candidate
     VERIFYING = "VERIFYING"            # Candidate is being locally verified
     FAILED_LOCAL = "FAILED_LOCAL"      # Phase 2: Failed locally
-    OFFLOADED = "OFFLOADED"            # Legacy external-offload status; current Phase 3 does not emit it
-    HARVESTED = "HARVESTED"            # Legacy external-result status; current Phase 3 does not emit it
-    ALIGNING = "ALIGNING"              # Legacy Phase 4 status; current Phase 4 is disabled/no-op
+    OFFLOADED = "OFFLOADED"            # Legacy external-offload status retained for ledger loading
+    HARVESTED = "HARVESTED"            # Legacy external-result status retained for ledger loading
+    ALIGNING = "ALIGNING"              # Legacy post-harvest status retained for ledger loading
     COMPLETED = "COMPLETED"            # Verified by lake build
     COMPLETED_WITH_PROOF_DEBT = "COMPLETED_WITH_PROOF_DEBT"  # Accepted with explicit proof-debt support
     USER_MODIFIED = "USER_MODIFIED"    # Output hash mismatch (User manual edit)
@@ -54,6 +54,14 @@ class LedgerDangerousStateError(LedgerSaveError):
 
 class LedgerTaskNotFoundError(LedgerError):
     pass
+
+
+class LedgerDependencyConflictError(LedgerError):
+    """Raised when a dependency reconciliation compare-and-swap does not match."""
+
+
+class LedgerBasisRebindConflictError(LedgerError):
+    """Raised when an applied-review basis rebind compare-and-swap does not match."""
 
 
 class LedgerManager:
@@ -647,6 +655,343 @@ class LedgerManager:
 
         self._run_transaction(mutate)
 
+    def reconcile_candidate_dependencies(
+        self,
+        task_id: str,
+        *,
+        expected_dependencies: list[str],
+        replacement_dependencies: list[str],
+        audit_event: dict[str, Any],
+    ) -> dict[str, Any]:
+        """CAS one task's hard dependencies and invalidate stale Phase 2 authority.
+
+        The transaction boundary is supplied by the concrete ledger backend.  In
+        production, ``SQLiteLedgerManager`` reloads the current campaign row in
+        that transaction before this method compares ``expected_dependencies``.
+        Historical review/result pointers remain available as evidence, while
+        current request bindings, task-level PASS fields, and apply receipts are
+        cleared so they cannot authorize the reconciled dependency graph.
+        """
+
+        canonical_task_id = canonicalize_block_id(task_id)
+        expected = canonicalize_id_list(expected_dependencies)
+        replacement = canonicalize_id_list(replacement_dependencies)
+        if not canonical_task_id:
+            raise LedgerDependencyConflictError("Dependency reconciliation task id is empty or invalid.")
+        if expected == replacement:
+            raise LedgerDependencyConflictError(
+                f"Dependency reconciliation for {canonical_task_id} is a no-op: {expected!r}."
+            )
+        if not isinstance(audit_event, dict):
+            raise LedgerDependencyConflictError("Dependency reconciliation audit_event must be an object.")
+
+        result: dict[str, Any] = {}
+
+        def mutate() -> None:
+            _, task = self._require_task(canonical_task_id)
+            snapshot = task.get("candidate_snapshot", {})
+            if not isinstance(snapshot, dict):
+                raise LedgerDependencyConflictError(
+                    f"Task {canonical_task_id} has no valid candidate_snapshot for dependency reconciliation."
+                )
+            current = canonicalize_id_list(snapshot.get("dependencies", []))
+            if current != expected:
+                raise LedgerDependencyConflictError(
+                    "Dependency reconciliation compare-and-swap failed for "
+                    f"{canonical_task_id}: expected {expected!r}, current {current!r}."
+                )
+
+            previous_status = str(task.get("status", "") or "")
+            event = copy.deepcopy(audit_event)
+            event.update(
+                {
+                    "task_id": canonical_task_id,
+                    "previous_dependencies": current,
+                    "reconciled_dependencies": replacement,
+                    "previous_status": previous_status,
+                    "resulting_status": TaskStatus.DISCOVERED.value,
+                    "review_binding_invalidated": True,
+                }
+            )
+            history = task.get("dependency_reconciliation_history", [])
+            if not isinstance(history, list):
+                history = []
+
+            snapshot["dependencies"] = replacement
+            task["candidate_snapshot"] = snapshot
+            task["status"] = TaskStatus.DISCOVERED.value
+            task["dependency_reconciliation_history"] = history + [event]
+            task["latest_dependency_reconciliation"] = event
+            task["dependency_reconciliation_revision"] = len(history) + 1
+            task["dependency_reconciliation_requires_fresh_review"] = True
+            task["dependency_reconciliation_reviewed_id"] = ""
+
+            reason = (
+                "hard dependencies reconciled from Phase 1 plan; "
+                "fresh build/review/apply authority is required"
+            )
+            task.update(
+                {
+                    "phase2_status": "",
+                    "phase2_status_reason": reason,
+                    "phase2_status_evidence_type": "dependency_reconciliation",
+                    "phase2_task_status": "",
+                    "phase2_task_status_reason": reason,
+                    "phase2_task_status_evidence_type": "dependency_reconciliation",
+                    "phase2_review_verdict": "",
+                    "review_verdict": "",
+                    "current_review_verdict": "",
+                    "phase2_proof_class": "",
+                    "proof_class": "",
+                    "phase2_completion_class": "",
+                    "completion_class": "",
+                    "current_review_input_file": "",
+                    "current_review_prompt_file": "",
+                    "current_review_template_file": "",
+                    "current_review_context_file": "",
+                    "current_review_request_file": "",
+                    "current_review_backend_id": "",
+                    "current_review_expected_result_file": "",
+                    "current_review_subject_kind": "",
+                    "current_review_subject_file": "",
+                    "current_review_subject_hash": "",
+                    "current_review_origin": "",
+                    "current_review_repair_request_file": "",
+                    "current_review_repair_summary_file": "",
+                    "current_review_repair_seed_file": "",
+                    "current_review_repair_origin_result_file": "",
+                    "current_review_repair_archive_file": "",
+                    "latest_applied_review_subject_hash": "",
+                    "latest_applied_review_origin_basis_hash": "",
+                    "latest_applied_review_post_basis_hash": "",
+                    "latest_applied_review_input_hash": "",
+                    "latest_applied_review_result_file": "",
+                    "latest_applied_review_result_hash": "",
+                    "latest_applied_review_subject_kind": "",
+                    "pack_candidate_state": "draft",
+                    "latest_build_ready_candidate_kind": "",
+                    "latest_build_ready_candidate_file": "",
+                    "latest_build_ready_candidate_hash": "",
+                    "current_auto_loop_enabled": False,
+                    "current_auto_loop_entry_subject": "",
+                    "current_auto_loop_round": 0,
+                    "current_auto_loop_max_rounds": 0,
+                    "current_auto_loop_max_build_attempts_per_round": 0,
+                    "current_auto_loop_nonprogress_limit": 0,
+                    "current_auto_loop_consecutive_nonprogress": 0,
+                    "current_auto_loop_phase": "",
+                    "current_auto_loop_status": "",
+                    "current_auto_loop_stop_reason": "",
+                    "current_auto_loop_last_candidate_hash": "",
+                    "current_auto_loop_last_review_fingerprint": "",
+                    "current_auto_loop_last_repair_request_file": "",
+                }
+            )
+            result.update(copy.deepcopy(event))
+
+        self._run_transaction(mutate)
+        return result
+
+    def rebind_applied_review_basis(
+        self,
+        task_id: str,
+        *,
+        expected_subject_hash: str,
+        expected_subject_kind: str,
+        expected_origin_basis_hash: str,
+        expected_old_basis_hash: str,
+        replacement_basis_hash: str,
+        expected_input_hash: str,
+        expected_result_file: str,
+        expected_result_hash: str,
+        expected_rebind_revision: int,
+        expected_rebind_tip_id: str,
+        expected_rebind_tip_receipt_sha256: str,
+        expected_dependencies: list[str],
+        expected_task_payload: dict[str, Any],
+        receipt_event: dict[str, Any],
+    ) -> dict[str, Any]:
+        """CAS one clean applied review onto an equivalent downstream-only basis.
+
+        This deliberately preserves the original semantic-review input/result,
+        verdict, proof classification, and completion state.  The caller must
+        first validate the allowlisted basis delta and supplies an immutable
+        receipt; this transaction rechecks every task-local semantic invariant
+        against the freshly loaded campaign row before advancing the post-basis
+        pointer.
+        """
+
+        canonical_task_id = canonicalize_block_id(task_id)
+        expected_dependencies = canonicalize_id_list(expected_dependencies)
+        expected_subject_hash = str(expected_subject_hash or "").strip()
+        expected_subject_kind = str(expected_subject_kind or "").strip()
+        expected_origin_basis_hash = str(expected_origin_basis_hash or "").strip()
+        expected_old_basis_hash = str(expected_old_basis_hash or "").strip()
+        replacement_basis_hash = str(replacement_basis_hash or "").strip()
+        expected_input_hash = str(expected_input_hash or "").strip()
+        expected_result_file = str(expected_result_file or "").strip()
+        expected_result_hash = str(expected_result_hash or "").strip()
+        expected_rebind_tip_id = str(expected_rebind_tip_id or "").strip()
+        expected_rebind_tip_receipt_sha256 = str(
+            expected_rebind_tip_receipt_sha256 or ""
+        ).strip()
+        if not canonical_task_id:
+            raise LedgerBasisRebindConflictError("Review-basis rebind task id is empty or invalid.")
+        if (
+            not expected_subject_hash
+            or not expected_subject_kind
+            or not expected_origin_basis_hash
+            or not expected_old_basis_hash
+            or not replacement_basis_hash
+            or not expected_input_hash
+            or not expected_result_file
+            or not expected_result_hash
+        ):
+            raise LedgerBasisRebindConflictError("Review-basis rebind hashes must be non-empty.")
+        if expected_rebind_revision < 0:
+            raise LedgerBasisRebindConflictError("Review-basis rebind revision must be nonnegative.")
+        if expected_rebind_revision == 0 and (
+            expected_rebind_tip_id or expected_rebind_tip_receipt_sha256
+        ):
+            raise LedgerBasisRebindConflictError(
+                "Unchained review-basis rebind cannot name a prior tip."
+            )
+        if expected_rebind_revision > 0 and (
+            not expected_rebind_tip_id or not expected_rebind_tip_receipt_sha256
+        ):
+            raise LedgerBasisRebindConflictError(
+                "Chained review-basis rebind requires an exact prior tip identity."
+            )
+        if expected_old_basis_hash == replacement_basis_hash:
+            raise LedgerBasisRebindConflictError(
+                f"Review-basis rebind for {canonical_task_id} is a no-op."
+            )
+        if not isinstance(expected_task_payload, dict):
+            raise LedgerBasisRebindConflictError("Review-basis rebind task payload must be an object.")
+        if not isinstance(receipt_event, dict):
+            raise LedgerBasisRebindConflictError("Review-basis rebind receipt_event must be an object.")
+
+        result: dict[str, Any] = {}
+
+        def mutate() -> None:
+            _, task = self._require_task(canonical_task_id)
+            snapshot = task.get("candidate_snapshot", {})
+            if not isinstance(snapshot, dict):
+                raise LedgerBasisRebindConflictError(
+                    f"Task {canonical_task_id} has no valid candidate_snapshot for review-basis rebind."
+                )
+            current_dependencies = canonicalize_id_list(snapshot.get("dependencies", []))
+            current_task_payload = {
+                "block_id": canonical_task_id,
+                "type": str(snapshot.get("type", task.get("type", "")) or ""),
+                "title": str(snapshot.get("title", task.get("title", "")) or ""),
+                "content": str(snapshot.get("content", "") or ""),
+                "source_plan": str(snapshot.get("source_plan", task.get("source_plan", "")) or ""),
+                "dependencies": current_dependencies,
+                "soft_imports": canonicalize_id_list(snapshot.get("soft_imports", [])),
+                "soft_imports_confirmed_at": str(task.get("soft_imports_confirmed_at", "") or ""),
+            }
+            history = task.get("applied_review_basis_rebind_history", [])
+            if not isinstance(history, list):
+                raise LedgerBasisRebindConflictError(
+                    f"Task {canonical_task_id} has invalid applied-review rebind history."
+                )
+            current_revision = int(task.get("applied_review_basis_rebind_revision", 0) or 0)
+            latest_tip = task.get("latest_applied_review_basis_rebind")
+            if current_revision != len(history):
+                raise LedgerBasisRebindConflictError(
+                    f"Task {canonical_task_id} applied-review rebind revision/history disagree."
+                )
+            if current_revision == 0:
+                current_tip_id = ""
+                current_tip_receipt_sha256 = ""
+                if latest_tip not in (None, {}):
+                    raise LedgerBasisRebindConflictError(
+                        f"Task {canonical_task_id} has an unversioned applied-review rebind tip."
+                    )
+            else:
+                if not isinstance(latest_tip, dict) or latest_tip != history[-1]:
+                    raise LedgerBasisRebindConflictError(
+                        f"Task {canonical_task_id} latest applied-review rebind tip is branched."
+                    )
+                current_tip_id = str(latest_tip.get("rebind_id", "") or "")
+                current_tip_receipt_sha256 = str(
+                    latest_tip.get("receipt_sha256", "") or ""
+                )
+            checks = {
+                "status": (str(task.get("status", "") or ""), TaskStatus.COMPLETED.value),
+                "phase2_status": (str(task.get("phase2_status", "") or "").strip().lower(), "pass"),
+                "subject_hash": (
+                    str(task.get("latest_applied_review_subject_hash", "") or ""),
+                    expected_subject_hash,
+                ),
+                "subject_kind": (
+                    str(task.get("latest_applied_review_subject_kind", "") or ""),
+                    expected_subject_kind,
+                ),
+                "origin_basis_hash": (
+                    str(task.get("latest_applied_review_origin_basis_hash", "") or ""),
+                    expected_origin_basis_hash,
+                ),
+                "old_basis_hash": (
+                    str(task.get("latest_applied_review_post_basis_hash", "") or ""),
+                    expected_old_basis_hash,
+                ),
+                "dependencies": (current_dependencies, expected_dependencies),
+                "task_payload": (current_task_payload, expected_task_payload),
+                "input_hash": (
+                    str(task.get("latest_applied_review_input_hash", "") or ""),
+                    expected_input_hash,
+                ),
+                "result_file": (
+                    str(task.get("latest_applied_review_result_file", "") or ""),
+                    expected_result_file,
+                ),
+                "result_hash": (
+                    str(task.get("latest_applied_review_result_hash", "") or ""),
+                    expected_result_hash,
+                ),
+                "rebind_revision": (current_revision, expected_rebind_revision),
+                "rebind_tip_id": (current_tip_id, expected_rebind_tip_id),
+                "rebind_tip_receipt_sha256": (
+                    current_tip_receipt_sha256,
+                    expected_rebind_tip_receipt_sha256,
+                ),
+            }
+            for label, (current, expected) in checks.items():
+                if current != expected:
+                    raise LedgerBasisRebindConflictError(
+                        "Review-basis rebind compare-and-swap failed for "
+                        f"{canonical_task_id} {label}: expected {expected!r}, current {current!r}."
+                    )
+            for field in (
+                "latest_applied_review_input_hash",
+                "latest_applied_review_result_file",
+                "latest_applied_review_result_hash",
+            ):
+                if not str(task.get(field, "") or "").strip():
+                    raise LedgerBasisRebindConflictError(
+                        f"Task {canonical_task_id} has no immutable applied-review provenance in {field}."
+                    )
+
+            event = copy.deepcopy(receipt_event)
+            event.update(
+                {
+                    "task_id": canonical_task_id,
+                    "previous_post_basis_hash": expected_old_basis_hash,
+                    "replacement_post_basis_hash": replacement_basis_hash,
+                    "preserved_semantic_review": True,
+                }
+            )
+            task["latest_applied_review_post_basis_hash"] = replacement_basis_hash
+            task["applied_review_basis_rebind_history"] = history + [event]
+            task["latest_applied_review_basis_rebind"] = event
+            task["applied_review_basis_rebind_revision"] = len(history) + 1
+            result.update(copy.deepcopy(event))
+
+        self._run_transaction(mutate)
+        return result
+
     def has_confirmed_soft_imports(self, task_id: str) -> bool:
         task_id = canonicalize_block_id(task_id)
         task = self.ledger["tasks"].get(task_id)
@@ -681,11 +1026,11 @@ class LedgerManager:
         return result["value"]
 
     def mark_offloaded(self, task_id: str) -> None:
-        """Compatibility helper for legacy ledgers; current Phase 3 does not call this."""
+        """Compatibility helper retained for loading legacy external-offload ledgers."""
         self.update_runtime_metadata(task_id, last_offload_at=self._now_iso())
 
     def mark_harvested(self, task_id: str, cloud_project_id: str | None = None) -> None:
-        """Compatibility helper for legacy ledgers; current Phase 3 does not call this."""
+        """Compatibility helper retained for loading legacy external-result ledgers."""
         updates = {"last_harvest_at": self._now_iso()}
         if cloud_project_id:
             updates["cloud_project_id"] = cloud_project_id

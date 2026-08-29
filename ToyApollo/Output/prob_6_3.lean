@@ -110,8 +110,9 @@ lemma stageMeasure_apply_singleton {n k : ℕ} (hk : 1 ≤ k) (hkn : k ≤ n)
     (i : Fin k) (m : ℕ) :
     stageMeasure n k hk hkn i {m} =
       ENNReal.ofReal (ProbabilityTheory.geometricPMFReal (stageSuccessProb n i) m) := by
-  simpa [stageMeasure, stagePMF, ProbabilityTheory.geometricPMF] using
-    (PMF.toMeasure_apply_singleton (stagePMF n k hk hkn i) m (measurableSet_singleton m))
+  rw [stageMeasure]
+  rw [PMF.toMeasure_apply_singleton (stagePMF n k hk hkn i) m (measurableSet_singleton m)]
+  rfl
 
 lemma stageMeasure_apply_singleton_toReal {n k : ℕ} (hk : 1 ≤ k) (hkn : k ≤ n)
     (i : Fin k) (m : ℕ) :
@@ -181,11 +182,8 @@ lemma stageWaitIntegrable {n k : ℕ} (hk : 1 ≤ k) (hkn : k ≤ n) (i : Fin k)
   apply MeasureTheory.integrable_sum_dirac
   · intro m
     haveI : IsProbabilityMeasure (stageMeasure n k hk hkn i) := by
-      simpa [stageMeasure, stagePMF] using
-        (ProbabilityTheory.isProbabilityMeasure_geometricMeasure
-          (p := stageSuccessProb n i)
-          (stageSuccessProb_pos hk hkn i)
-          (stageSuccessProb_le_one hk hkn i))
+      unfold stageMeasure
+      infer_instance
     have hle :
         stageMeasure n k hk hkn i {m} ≤ stageMeasure n k hk hkn i Set.univ := by
       exact measure_mono (by intro x hx; trivial)
@@ -235,13 +233,9 @@ lemma couponCollectionTimeReal_integrable {n k : ℕ} (hk : 1 ≤ k) (hkn : k �
   classical
   unfold couponCollectionTimeReal couponLaw
   refine integrable_finset_sum Finset.univ (fun i _ => ?_)
-  haveI : ∀ j : Fin k, IsProbabilityMeasure (stageMeasure n k hk hkn j) := fun j =>
-    by
-      simpa [stageMeasure, stagePMF] using
-        (ProbabilityTheory.isProbabilityMeasure_geometricMeasure
-          (p := stageSuccessProb n j)
-          (stageSuccessProb_pos hk hkn j)
-          (stageSuccessProb_le_one hk hkn j))
+  haveI : ∀ j : Fin k, IsProbabilityMeasure (stageMeasure n k hk hkn j) := fun j => by
+    unfold stageMeasure
+    infer_instance
   exact MeasureTheory.integrable_comp_eval (μ := stageMeasure n k hk hkn)
     (i := i) (stageWaitIntegrable hk hkn i)
 
@@ -249,13 +243,9 @@ lemma couponCollectionTimeReal_integral_eq {n k : ℕ} (hk : 1 ≤ k) (hkn : k �
     ∫ ω, couponCollectionTimeReal n k ω ∂(couponLaw n k hk hkn) =
       couponCollectorValueReal n k := by
   classical
-  haveI : ∀ j : Fin k, IsProbabilityMeasure (stageMeasure n k hk hkn j) := fun j =>
-    by
-      simpa [stageMeasure, stagePMF] using
-        (ProbabilityTheory.isProbabilityMeasure_geometricMeasure
-          (p := stageSuccessProb n j)
-          (stageSuccessProb_pos hk hkn j)
-          (stageSuccessProb_le_one hk hkn j))
+  haveI : ∀ j : Fin k, IsProbabilityMeasure (stageMeasure n k hk hkn j) := fun j => by
+    unfold stageMeasure
+    infer_instance
   unfold couponCollectionTimeReal couponCollectorValueReal couponLaw
   rw [MeasureTheory.integral_finset_sum]
   · refine Finset.sum_congr rfl ?_

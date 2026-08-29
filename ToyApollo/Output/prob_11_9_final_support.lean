@@ -17,10 +17,11 @@ theorem prob_11_9_support_result {Ω : Type*} [MeasurableSpace Ω] (P : Measure 
     (hModel : prob_11_9_finiteIndependentUniformEmptyBoxModel P boxes k X)
     (hRegime : prob_11_9_asymptoticRegime boxes k a)
     (hX :
-      ∀ n : ℕ, AEStronglyMeasurable ((prob_11_9_emptyBoxRatio boxes X) n) P) :
+      ∀ n : ℕ, Measurable ((prob_11_9_emptyBoxRatio boxes X) n)) :
     ConvergesInMeanSquare P (prob_11_9_emptyBoxRatio boxes X)
         (fun _ : Ω => Real.exp (-a)) ∧
       ConvergesInProbability P (prob_11_9_emptyBoxRatio boxes X)
         (fun _ : Ω => Real.exp (-a)) := by
-  let hMS := prob_11_9_quadratic_mean P boxes k X a hModel hRegime hX
+  let hMS := prob_11_9_quadratic_mean P boxes k X a hModel hRegime
+    (fun n => (hX n).aestronglyMeasurable)
   exact ⟨hMS, prob_11_9_probability P boxes X a hMS hX⟩

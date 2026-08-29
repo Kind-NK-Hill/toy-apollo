@@ -13,5 +13,7 @@ theorem thm_5_1 {Ω β γ : Type _} [MeasurableSpace Ω] [MeasurableSpace β] [M
     (X : Ω → β) (Y : Ω → γ) :
     def_5_2 μ X Y ↔
       def_5_4 μ {s | @MeasurableSet Ω (def_5_3 X) s} {t | @MeasurableSet Ω (def_5_3 Y) t} := by
-  simpa [def_5_2, def_5_3, def_5_4] using
-    (ProbabilityTheory.IndepFun_iff_Indep X Y μ)
+  change ProbabilityTheory.IndepFun X Y μ ↔
+    ProbabilityTheory.Indep (MeasurableSpace.comap X inferInstance)
+      (MeasurableSpace.comap Y inferInstance) μ
+  exact ProbabilityTheory.IndepFun_iff_Indep X Y μ

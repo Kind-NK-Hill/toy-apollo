@@ -26,8 +26,9 @@ def ex_12_4_2_observed (c : ℝ) (X N : Ω →₂[P] ℝ) : Ω →₂[P] ℝ :=
 def ex_12_4_2_mean (X : Ω → ℝ) : ℝ :=
   P[X]
 
-def ex_12_4_2_variance (X : Ω → ℝ) : ℝ :=
-  _root_.variance P X
+def ex_12_4_2_variance [IsProbabilityMeasure P] (X : Ω → ℝ)
+    (hX : FiniteAbsMoment P X 2) : ℝ :=
+  _root_.variance P X hX
 
 def ex_12_4_2_secondMoment (X : Ω → ℝ) (hX : L2Function P X) : ℝ :=
   l2Inner P X X hX hX

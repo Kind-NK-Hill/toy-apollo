@@ -15,8 +15,14 @@ open MeasureTheory
 
 theorem thm_7_13 {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
     {X Y : Ω → ℝ} (hXY : def_5_2 μ X Y) (hX : Integrable X μ) (hY : Integrable Y μ)
-    (_hXY_int : Integrable (fun ω => X ω * Y ω) μ) :
+    (hXY_int : Integrable (fun ω => X ω * Y ω) μ) :
     ∫ ω, X ω * Y ω ∂μ = (∫ ω, X ω ∂μ) * ∫ ω, Y ω ∂μ := by
-  simpa [def_5_2] using
-    (ProbabilityTheory.IndepFun.integral_fun_mul_eq_mul_integral
-      (μ := μ) (X := X) (Y := Y) hXY hX.1 hY.1)
+  have hIndep : ProbabilityTheory.IndepFun X Y μ := by
+    simpa [def_5_2] using hXY
+  have hXm : AEStronglyMeasurable X μ := hX.1
+  have hYm : AEStronglyMeasurable Y μ := hY.1
+  have hNoFallback : Integrable (fun ω => X ω * Y ω) μ := hXY_int
+  have hFactor :=
+    hIndep.integral_bilin' (𝕜 := ℝ) hXm hYm
+      (ContinuousLinearMap.lsmul ℝ ℝ) 1 (by simp) (by simp [norm_smul])
+  simpa using hFactor

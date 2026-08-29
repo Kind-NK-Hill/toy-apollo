@@ -100,6 +100,19 @@ theorem ex_10_3_2_totalVariation_convergence
           (1 / 2 : ℝ) * ∫ x, |fn n x - f x| ∂(volume : Measure ℝ))
         atTop (𝓝 0) := by
     simpa using hL1.const_mul (1 / 2 : ℝ)
+  have hProbFn :
+      ∀ n : ℕ, IsProbabilityMeasure (densityMeasure (fn n)) := by
+    intro n
+    let Pn : ProbabilityMeasure ℝ :=
+      ex_10_3_2_densityProbabilityMeasure (fn n) (hfn n)
+    change IsProbabilityMeasure (Pn : Measure ℝ)
+    infer_instance
+  have hProbF : IsProbabilityMeasure (densityMeasure f) := by
+    let P : ProbabilityMeasure ℝ := ex_10_3_2_densityProbabilityMeasure f hf
+    change IsProbabilityMeasure (P : Measure ℝ)
+    infer_instance
+  letI (n : ℕ) : IsProbabilityMeasure (densityMeasure (fn n)) := hProbFn n
+  letI : IsProbabilityMeasure (densityMeasure f) := hProbF
   have hTV_eq :
       ∀ n : ℕ,
         totalVariationDistance (densityMeasure (fn n)) (densityMeasure f) =
@@ -112,17 +125,6 @@ theorem ex_10_3_2_totalVariation_convergence
         (MeasureTheory.integrable_of_integral_eq_one hf.integral_eq_one)
         (hfn n).nonneg hf.nonneg
         (hfn n).integral_eq_one hf.integral_eq_one
-  have hProbFn :
-      ∀ n : ℕ, IsProbabilityMeasure (densityMeasure (fn n)) := by
-    intro n
-    let Pn : ProbabilityMeasure ℝ :=
-      ex_10_3_2_densityProbabilityMeasure (fn n) (hfn n)
-    change IsProbabilityMeasure (Pn : Measure ℝ)
-    infer_instance
-  have hProbF : IsProbabilityMeasure (densityMeasure f) := by
-    let P : ProbabilityMeasure ℝ := ex_10_3_2_densityProbabilityMeasure f hf
-    change IsProbabilityMeasure (P : Measure ℝ)
-    infer_instance
   exact ⟨hProbFn, hProbF, by simpa [hTV_eq] using hScaled⟩
 
 theorem ex_10_3_2_density_convergesInDistribution
@@ -133,7 +135,8 @@ theorem ex_10_3_2_density_convergesInDistribution
       ∀ᵐ x ∂(volume : Measure ℝ),
         Tendsto (fun n : ℕ => fn n x) atTop (𝓝 (f x))) :
     MeasuresConvergeInDistribution
-      (fun n : ℕ => densityMeasure (fn n)) (densityMeasure f) := by
+      (fun n : ℕ => ex_10_3_2_densityProbabilityMeasure (fn n) (hfn n))
+      (ex_10_3_2_densityProbabilityMeasure f hf) := by
   let Pseq : ℕ → ProbabilityMeasure ℝ :=
     fun n : ℕ => ex_10_3_2_densityProbabilityMeasure (fn n) (hfn n)
   let P : ProbabilityMeasure ℝ :=
@@ -164,16 +167,19 @@ structure ex_10_3_2_ContinuousRandomVariableSetup
     Measure.map X μ = densityMeasure f
 
 theorem ex_10_3_2_randomVariables_convergeInDistribution
-    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ)
     (fn : ℕ → ℝ → ℝ) (f : ℝ → ℝ)
     (S : ex_10_3_2_ContinuousRandomVariableSetup μ Xn X fn f) :
-    RandomVariablesConvergeInDistribution μ Xn X := by
+    RandomVariablesConvergeInDistribution (fun _ : ℕ => μ) Xn μ X := by
   have hDist :=
     ex_10_3_2_density_convergesInDistribution fn f
       S.fn_pdf S.f_pdf S.density_ae_convergence
-  simpa [RandomVariablesConvergeInDistribution, S.Xn_law_eq_density,
-    S.X_law_eq_density] using hDist
+  rw [randomVariablesConvergeInDistribution_iff_laws]
+  refine ⟨fun n => (S.Xn_measurable n).aemeasurable,
+    S.X_measurable.aemeasurable, ?_⟩
+  simpa [S.Xn_law_eq_density, S.X_law_eq_density,
+    ex_10_3_2_densityProbabilityMeasure] using hDist
 
 noncomputable def ex_10_3_2_gaussianPdf
     (mean variance x : ℝ) : ℝ :=
@@ -185,7 +191,12 @@ lemma ex_10_3_2_gaussianPdf_eq_gaussianPDFReal
     ex_10_3_2_gaussianPdf mean variance =
       gaussianPDFReal mean ⟨variance, hvariance.le⟩ := by
   ext x
-  simp [ex_10_3_2_gaussianPdf, gaussianPDFReal, one_div]
+  change
+    (1 / Real.sqrt (2 * Real.pi * variance)) *
+        Real.exp (-((x - mean) ^ 2) / (2 * variance)) =
+      (Real.sqrt (2 * Real.pi * variance))⁻¹ *
+        Real.exp (-((x - mean) ^ 2) / (2 * variance))
+  rw [one_div]
 
 theorem ex_10_3_2_gaussianPdf_isProbabilityDensity
     (mean : ℝ) {variance : ℝ} (hvariance : 0 < variance) :
@@ -266,8 +277,13 @@ theorem ex_10_3_2_gaussian_convergesInDistribution
     (S : ex_10_3_2_GaussianDensityConvergenceSetup) :
     MeasuresConvergeInDistribution
       (fun n : ℕ =>
-        densityMeasure (ex_10_3_2_gaussianPdf (S.meanSeq n) (S.varianceSeq n)))
-      (densityMeasure (ex_10_3_2_gaussianPdf S.mean S.variance)) :=
+        ex_10_3_2_densityProbabilityMeasure
+          (ex_10_3_2_gaussianPdf (S.meanSeq n) (S.varianceSeq n))
+          (ex_10_3_2_gaussianPdf_isProbabilityDensity
+            (S.meanSeq n) (S.varianceSeq_pos n)))
+      (ex_10_3_2_densityProbabilityMeasure
+        (ex_10_3_2_gaussianPdf S.mean S.variance)
+        (ex_10_3_2_gaussianPdf_isProbabilityDensity S.mean S.variance_pos)) :=
   ex_10_3_2_density_convergesInDistribution
     (fun n : ℕ => ex_10_3_2_gaussianPdf (S.meanSeq n) (S.varianceSeq n))
     (ex_10_3_2_gaussianPdf S.mean S.variance)
@@ -291,7 +307,8 @@ theorem ex_10_3_2
       MeasuresConvergeInTotalVariation
         (fun n : ℕ => densityMeasure (fn n)) (densityMeasure f) ∧
       MeasuresConvergeInDistribution
-        (fun n : ℕ => densityMeasure (fn n)) (densityMeasure f) := by
+        (fun n : ℕ => ex_10_3_2_densityProbabilityMeasure (fn n) (hfn n))
+        (ex_10_3_2_densityProbabilityMeasure f hf) := by
   exact ⟨ex_10_3_2_scheffe_l1 fn f hfn hf h_ae,
     ex_10_3_2_totalVariation_convergence fn f hfn hf h_ae,
     ex_10_3_2_density_convergesInDistribution fn f hfn hf h_ae⟩

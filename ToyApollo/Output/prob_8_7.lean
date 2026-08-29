@@ -18,6 +18,14 @@ structure IsProbabilityDensity (f : ℝ → ℝ) : Prop where
   nonneg : ∀ x, 0 ≤ f x
   integral_eq_one : ∫ x, f x = 1
 
+lemma prob_8_7_density_isProbabilityMeasure {f : ℝ → ℝ}
+    (hf : IsProbabilityDensity f) :
+    IsProbabilityMeasure (volume.withDensity fun x => ENNReal.ofReal (f x)) := by
+  change IsProbabilityMeasure (TVCore.densityMeasure f)
+  exact TVCore.densityMeasure_isProbabilityMeasure
+    (MeasureTheory.integrable_of_integral_eq_one hf.integral_eq_one)
+    hf.nonneg hf.integral_eq_one
+
 structure PiecewiseContinuous (f : ℝ → ℝ) where
   breakpoints : Finset ℝ
   continuousAt : ∀ ⦃x : ℝ⦄, x ∉ breakpoints -> ContinuousAt f x
@@ -550,10 +558,18 @@ theorem prob_8_7_maximumCoupling_spec (f_X f_Y : ℝ → ℝ)
 
 theorem prob_8_7_totalVariation_eq_p (f_X f_Y : ℝ → ℝ)
     (hfXpdf : IsProbabilityDensity f_X) (hfYpdf : IsProbabilityDensity f_Y) :
-    totalVariationDistance
+    @totalVariationDistance ℝ _
         (volume.withDensity (fun x => ENNReal.ofReal (f_X x)))
         (volume.withDensity (fun x => ENNReal.ofReal (f_Y x)))
+        (prob_8_7_density_isProbabilityMeasure hfXpdf)
+        (prob_8_7_density_isProbabilityMeasure hfYpdf)
       = prob_8_7_p f_X f_Y := by
+  letI : IsProbabilityMeasure
+      (volume.withDensity (fun x => ENNReal.ofReal (f_X x))) :=
+    prob_8_7_density_isProbabilityMeasure hfXpdf
+  letI : IsProbabilityMeasure
+      (volume.withDensity (fun x => ENNReal.ofReal (f_Y x))) :=
+    prob_8_7_density_isProbabilityMeasure hfYpdf
   simpa [prob_8_7_p, TVCore.densityMeasure, TVCore.densityDiff] using
     thm_8_6_continuous hfXpdf.measurable hfYpdf.measurable
       (MeasureTheory.integrable_of_integral_eq_one hfXpdf.integral_eq_one)
@@ -571,8 +587,16 @@ theorem prob_8_7 (f_X f_Y : ℝ → ℝ) (hfXpdf : IsProbabilityDensity f_X)
       (Measure.map Prod.fst π = μ) ∧
       (Measure.map Prod.snd π = ν) ∧
       (π {z | z.1 ≠ z.2} = ENNReal.ofReal p) ∧
-      (totalVariationDistance μ ν = p) := by
+      (@totalVariationDistance ℝ _ μ ν
+        (prob_8_7_density_isProbabilityMeasure hfXpdf)
+        (prob_8_7_density_isProbabilityMeasure hfYpdf) = p) := by
   dsimp
+  letI : IsProbabilityMeasure
+      (volume.withDensity (fun x => ENNReal.ofReal (f_X x))) :=
+    prob_8_7_density_isProbabilityMeasure hfXpdf
+  letI : IsProbabilityMeasure
+      (volume.withDensity (fun x => ENNReal.ofReal (f_Y x))) :=
+    prob_8_7_density_isProbabilityMeasure hfYpdf
   have hspec := prob_8_7_maximumCoupling_spec f_X f_Y hfXpdf hfYpdf hfX_pc hfY_pc
   have htv := prob_8_7_totalVariation_eq_p f_X f_Y hfXpdf hfYpdf
   rcases hspec with ⟨hprob, hfst, hsnd, hmismatch⟩

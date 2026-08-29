@@ -10,6 +10,7 @@ import ToyApollo.Output.def_9_3
 
 -- WRITE FINAL LEAN CODE BELOW
 
+open MeasureTheory ProbabilityTheory
 open scoped BigOperators
 
 noncomputable abbrev bernoulliValue : Bool → ℝ :=
@@ -29,9 +30,9 @@ theorem bernoulliCharacteristicFunction_finite_sum (p t : ℝ) :
   simp [bernoulliValue, bernoulliPMF, bernoulliCharacteristicFunction]
   ring
 
-theorem ex_9_2_1 (p t : ℝ) :
-    discreteCharacteristicFunction bernoulliValue (bernoulliPMF p) t =
-      bernoulliCharacteristicFunction p t := by
-  rw [discreteCharacteristicFunction]
-  rw [tsum_fintype]
-  exact bernoulliCharacteristicFunction_finite_sum p t
+theorem ex_9_2_1 (p : Set.Icc (0 : ℝ) 1) (t : ℝ) :
+    characteristicFunction (bernoulliMeasure (1 : ℝ) 0 p) t =
+      bernoulliCharacteristicFunction (p : ℝ) t := by
+  rw [characteristicFunction, charFun_apply_real, integral_bernoulliMeasure]
+  simp [bernoulliCharacteristicFunction]
+  ring

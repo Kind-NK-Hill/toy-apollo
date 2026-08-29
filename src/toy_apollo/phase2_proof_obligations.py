@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+"""Legacy proof-obligation compatibility utilities.
+
+The active Phase 2 runtime must not generate, bind, gate, plan from, or apply
+these checklist artifacts. The remaining helpers exist only to read historical
+fixtures and validate legacy v9/v10 review records.
+"""
 import re
 from copy import deepcopy
 from collections import Counter
@@ -236,12 +242,6 @@ def ensure_proof_obligations_file(
     return payload
 
 
-def _positive_count(value: Any) -> bool:
-    try:
-        return int(value or 0) > 0
-    except (TypeError, ValueError):
-        return False
-
 
 def should_track_proof_obligations(
     pack_dir: Path,
@@ -250,30 +250,13 @@ def should_track_proof_obligations(
     current_record: dict[str, Any] | None = None,
     tracking_level: int = 0,
 ) -> bool:
-    """Return true only for Level 2 obligation tracking or existing ledgers.
+    """Return false: active Phase2 no longer tracks proof-obligation ledgers.
 
-    Level 0 ordinary Phase2 work should not create an empty
-    `proof_obligations.json`. Existing ledgers stay readable so old packs and
-    active debt-repair flows are not orphaned.
+    Historical JSON files remain readable through the explicit legacy loaders
+    below, but no ordinary review, pack, or child-task path may materialize or
+    reactivate them.
     """
-    if proof_obligation_path(pack_dir).exists():
-        return True
-    if str(task.get("type", "") or "").strip() == "Phase2ObligationTask":
-        return True
-    record = current_record if isinstance(current_record, dict) else {}
-    if str(record.get("type", "") or "").strip() == "Phase2ObligationTask":
-        return True
-    summary = record.get("proof_obligation_summary", {})
-    if isinstance(summary, dict):
-        total = summary.get("total_obligations", 0)
-        status_counts = summary.get("status_counts", {})
-        if _positive_count(total):
-            return True
-        if isinstance(status_counts, dict) and any(_positive_count(status_counts.get(key, 0)) for key in PASSING_OBLIGATION_STATUSES):
-            return True
-    if tracking_level < 2:
-        return False
-    return bool(classify_task_complexity(task, record).get("requires_decomposition", False))
+    return False
 
 
 def maybe_ensure_proof_obligations_file(

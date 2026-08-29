@@ -56,13 +56,23 @@ private lemma ex_14_4_2_poissonPMF_toReal (lam : NNReal) (n : ℕ) :
   rw [← ProbabilityTheory.poissonPMFReal_ofReal_eq_poissonPMF lam n]
   exact ENNReal.toReal_ofReal ProbabilityTheory.poissonPMFReal_nonneg
 
+private lemma ex_14_4_2_poissonMeasure_eq_poissonPMF_toMeasure (lam : NNReal) :
+    ProbabilityTheory.poissonMeasure lam =
+      (ProbabilityTheory.poissonPMF lam).toMeasure := by
+  apply Measure.ext_of_singleton
+  intro n
+  rw [ProbabilityTheory.poissonMeasure_singleton,
+    PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton n),
+    ← ProbabilityTheory.poissonPMFReal_ofReal_eq_poissonPMF]
+  rfl
+
 theorem ex_14_4_2_poissonRealMeasure_charFun (lam : NNReal) (t : ℝ) :
     charFun (ex_14_4_2_poissonRealMeasure lam) t =
       ex_14_4_2_poissonCharacteristic (lam : ℝ) t := by
   unfold ex_14_4_2_poissonRealMeasure ex_14_4_2_poissonCharacteristic
   rw [charFun_apply_real]
   rw [integral_map]
-  · unfold ProbabilityTheory.poissonMeasure
+  · rw [ex_14_4_2_poissonMeasure_eq_poissonPMF_toMeasure]
     rw [PMF.integral_eq_tsum]
     · have hseries :
           HasSum
@@ -149,15 +159,12 @@ lemma ex_14_4_2_poisson_one_first_moment_terms_summable :
 lemma ex_14_4_2_poisson_one_natCast_integrable :
     Integrable (fun n : ℕ => (n : ℝ))
       (ProbabilityTheory.poissonMeasure (1 : NNReal)) := by
-  rw [← MeasureTheory.Measure.sum_smul_dirac
-    (ProbabilityTheory.poissonMeasure (1 : NNReal))]
-  refine MeasureTheory.integrable_sum_dirac (fun n => ?_) ?_
-  · rw [ProbabilityTheory.poissonMeasure,
-      PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton n)]
-    exact (ProbabilityTheory.poissonPMF (1 : NNReal)).apply_ne_top n
-  · exact ex_14_4_2_poisson_one_first_moment_terms_summable.congr fun n => by
-      rw [ProbabilityTheory.poissonMeasure,
-        PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton n)]
+  rw [ProbabilityTheory.integrable_poissonMeasure_iff]
+  exact
+    (Summable.mul_left (Real.exp (-1))
+      ex_14_4_2_summable_nat_div_factorial).congr fun n => by
+        simp [div_eq_mul_inv]
+        ring
 
 theorem ex_14_4_2_poissonCanonicalIntegrability_proved :
     ex_14_4_2_poissonCanonicalIntegrability := by
@@ -202,15 +209,12 @@ lemma ex_14_4_2_poisson_one_second_moment_terms_summable :
 lemma ex_14_4_2_poisson_one_natCast_sq_integrable :
     Integrable (fun n : ℕ => ((n : ℝ) ^ 2))
       (ProbabilityTheory.poissonMeasure (1 : NNReal)) := by
-  rw [← MeasureTheory.Measure.sum_smul_dirac
-    (ProbabilityTheory.poissonMeasure (1 : NNReal))]
-  refine MeasureTheory.integrable_sum_dirac (fun n => ?_) ?_
-  · rw [ProbabilityTheory.poissonMeasure,
-      PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton n)]
-    exact (ProbabilityTheory.poissonPMF (1 : NNReal)).apply_ne_top n
-  · exact ex_14_4_2_poisson_one_second_moment_terms_summable.congr fun n => by
-      rw [ProbabilityTheory.poissonMeasure,
-        PMF.toMeasure_apply_singleton _ _ (measurableSet_singleton n)]
+  rw [ProbabilityTheory.integrable_poissonMeasure_iff]
+  exact
+    (Summable.mul_left (Real.exp (-1))
+      ex_14_4_2_summable_nat_sq_div_factorial).congr fun n => by
+        simp [div_eq_mul_inv]
+        ring
 
 theorem ex_14_4_2_poissonCanonicalSquareIntegrability_proved :
     ex_14_4_2_poissonCanonicalSquareIntegrability := by
@@ -248,18 +252,13 @@ lemma ex_14_4_2_tsum_nat_div_factorial :
 
 lemma ex_14_4_2_poisson_one_natCast_integral :
     (∫ n : ℕ, (n : ℝ) ∂ProbabilityTheory.poissonMeasure (1 : NNReal)) = 1 := by
-  unfold ProbabilityTheory.poissonMeasure
   calc
-    (∫ n : ℕ, (n : ℝ) ∂(ProbabilityTheory.poissonPMF (1 : NNReal)).toMeasure) =
-        ∑' n : ℕ, ((ProbabilityTheory.poissonPMF (1 : NNReal)) n).toReal • (n : ℝ) := by
-      exact PMF.integral_eq_tsum (ProbabilityTheory.poissonPMF (1 : NNReal))
-        (fun n : ℕ => (n : ℝ)) ex_14_4_2_poisson_one_natCast_integrable
-    _ = ∑' n : ℕ, Real.exp (-1) * ((n : ℝ) / n.factorial) := by
+    (∫ n : ℕ, (n : ℝ) ∂ProbabilityTheory.poissonMeasure (1 : NNReal)) =
+        ∑' n : ℕ, Real.exp (-1) * ((n : ℝ) / n.factorial) := by
+      rw [ProbabilityTheory.integral_poissonMeasure]
       apply tsum_congr
       intro n
-      rw [← ProbabilityTheory.poissonPMFReal_ofReal_eq_poissonPMF (1 : NNReal) n]
-      rw [ENNReal.toReal_ofReal ProbabilityTheory.poissonPMFReal_nonneg]
-      simp [ProbabilityTheory.poissonPMFReal, smul_eq_mul, div_eq_mul_inv]
+      simp [smul_eq_mul, div_eq_mul_inv]
       ring
     _ = Real.exp (-1) * (∑' n : ℕ, (n : ℝ) / n.factorial) := by
       rw [tsum_mul_left]
@@ -343,19 +342,13 @@ lemma ex_14_4_2_tsum_nat_sq_div_factorial :
 
 lemma ex_14_4_2_poisson_one_natCast_sq_integral :
     (∫ n : ℕ, ((n : ℝ) ^ 2) ∂ProbabilityTheory.poissonMeasure (1 : NNReal)) = 2 := by
-  unfold ProbabilityTheory.poissonMeasure
   calc
-    (∫ n : ℕ, ((n : ℝ) ^ 2) ∂(ProbabilityTheory.poissonPMF (1 : NNReal)).toMeasure) =
-        ∑' n : ℕ, ((ProbabilityTheory.poissonPMF (1 : NNReal)) n).toReal •
-          ((n : ℝ) ^ 2) := by
-      exact PMF.integral_eq_tsum (ProbabilityTheory.poissonPMF (1 : NNReal))
-        (fun n : ℕ => ((n : ℝ) ^ 2)) ex_14_4_2_poisson_one_natCast_sq_integrable
-    _ = ∑' n : ℕ, Real.exp (-1) * (((n : ℝ) ^ 2) / n.factorial) := by
+    (∫ n : ℕ, ((n : ℝ) ^ 2) ∂ProbabilityTheory.poissonMeasure (1 : NNReal)) =
+        ∑' n : ℕ, Real.exp (-1) * (((n : ℝ) ^ 2) / n.factorial) := by
+      rw [ProbabilityTheory.integral_poissonMeasure]
       apply tsum_congr
       intro n
-      rw [← ProbabilityTheory.poissonPMFReal_ofReal_eq_poissonPMF (1 : NNReal) n]
-      rw [ENNReal.toReal_ofReal ProbabilityTheory.poissonPMFReal_nonneg]
-      simp [ProbabilityTheory.poissonPMFReal, smul_eq_mul, div_eq_mul_inv]
+      simp [smul_eq_mul, div_eq_mul_inv]
       ring
     _ = Real.exp (-1) * (∑' n : ℕ, ((n : ℝ) ^ 2) / n.factorial) := by
       rw [tsum_mul_left]
@@ -383,13 +376,14 @@ theorem ex_14_4_2_poissonCanonicalVarianceOne_proved :
     ex_14_4_2_poissonCanonicalVarianceOne := by
   let μ := ex_14_4_2_poissonRealMeasure (1 : NNReal)
   have hsecond : (∫ x : ℝ, x ^ 2 ∂μ) = (2 : ℝ) := by
-    simpa [μ] using ex_14_4_2_poissonCanonicalSecondMomentTwo_proved
+    change ex_14_4_2_poissonCanonicalSecondMomentTwo
+    exact ex_14_4_2_poissonCanonicalSecondMomentTwo_proved
   have hmean : (∫ x : ℝ, x ∂μ) = (1 : ℝ) := by
     simpa [μ, ex_14_4_2_poissonCanonicalMeanOne, ex_14_4_2_poissonMean] using
       ex_14_4_2_poissonCanonicalMeanOne_proved
   have hsquare_int : Integrable (fun x : ℝ => x ^ 2) μ := by
-    simpa [μ] using
-      ex_14_4_2_poissonCanonicalSquareIntegrability_proved
+    change ex_14_4_2_poissonCanonicalSquareIntegrability
+    exact ex_14_4_2_poissonCanonicalSquareIntegrability_proved
   have h_id_aestrong : AEStronglyMeasurable (fun x : ℝ => x) μ := by
     fun_prop
   have h_id_memLp : MemLp (fun x : ℝ => x) 2 μ := by
@@ -572,8 +566,9 @@ theorem ex_14_4_2_poissonMomentBridge_of_sourceLaw
     have hVarianceId :
         ProbabilityTheory.variance (fun x : ℝ => x) (Measure.map (S.X 0) S.P) =
           ProbabilityTheory.variance (S.X 0) S.P := by
-      simpa [Function.comp_def] using
-        (ProbabilityTheory.variance_id_map (X := S.X 0) (μ := S.P) (S.hX 0))
+      change ProbabilityTheory.variance id (Measure.map (S.X 0) S.P) =
+        ProbabilityTheory.variance (S.X 0) S.P
+      exact ProbabilityTheory.variance_id_map (X := S.X 0) (μ := S.P) (S.hX 0)
     rw [← hVarianceId]
     exact hVarianceMap
 

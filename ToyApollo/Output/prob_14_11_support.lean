@@ -77,7 +77,6 @@ structure prob_14_11_CouponRatioTriangularArraySetup where
       (fun n : ℕ => (targetDistinct n : ℝ) / (couponTypes n : ℝ))
       atTop
       (𝓝 r)
-  standardNormalLaw : ProbabilityMeasure ℝ
 
 lemma prob_14_11_targetDistinct_pos
     (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) :
@@ -122,15 +121,8 @@ def prob_14_11_couponProbabilitySpace
                 (prob_14_11_targetDistinct_pos S n)
                 (prob_14_11_targetDistinct_le_couponTypes S n) i) := by
         intro i
-        simpa [Prob63Support.stageMeasure, Prob63Support.stagePMF] using
-          (ProbabilityTheory.isProbabilityMeasure_geometricMeasure
-            (p := Prob63Support.stageSuccessProb (S.couponTypes n) i)
-            (Prob63Support.stageSuccessProb_pos
-              (prob_14_11_targetDistinct_pos S n)
-              (prob_14_11_targetDistinct_le_couponTypes S n) i)
-            (Prob63Support.stageSuccessProb_le_one
-              (prob_14_11_targetDistinct_pos S n)
-              (prob_14_11_targetDistinct_le_couponTypes S n) i))
+        unfold Prob63Support.stageMeasure
+        infer_instance
       simpa [Prob63Support.couponLaw] using
         (inferInstance :
           IsProbabilityMeasure
@@ -176,15 +168,8 @@ def prob_14_11_centeredCouponStageLaw
         (prob_14_11_targetDistinct_pos S n)
         (prob_14_11_targetDistinct_le_couponTypes S n) i,
       by
-        simpa [Prob63Support.stageMeasure, Prob63Support.stagePMF] using
-          (ProbabilityTheory.isProbabilityMeasure_geometricMeasure
-            (p := Prob63Support.stageSuccessProb (S.couponTypes n) i)
-            (Prob63Support.stageSuccessProb_pos
-              (prob_14_11_targetDistinct_pos S n)
-              (prob_14_11_targetDistinct_le_couponTypes S n) i)
-            (Prob63Support.stageSuccessProb_le_one
-              (prob_14_11_targetDistinct_pos S n)
-              (prob_14_11_targetDistinct_le_couponTypes S n) i))⟩
+        unfold Prob63Support.stageMeasure
+        infer_instance⟩
     ((measurable_of_countable
       (fun m : ℕ =>
         Prob63Support.scalarStageWait m -
@@ -223,15 +208,8 @@ theorem prob_14_11_source_rows_are_independent_proof
             (prob_14_11_targetDistinct_pos S n)
             (prob_14_11_targetDistinct_le_couponTypes S n) i) := by
     intro i
-    simpa [Prob63Support.stageMeasure, Prob63Support.stagePMF] using
-      (ProbabilityTheory.isProbabilityMeasure_geometricMeasure
-        (p := Prob63Support.stageSuccessProb (S.couponTypes n) i)
-        (Prob63Support.stageSuccessProb_pos
-          (prob_14_11_targetDistinct_pos S n)
-          (prob_14_11_targetDistinct_le_couponTypes S n) i)
-        (Prob63Support.stageSuccessProb_le_one
-          (prob_14_11_targetDistinct_pos S n)
-          (prob_14_11_targetDistinct_le_couponTypes S n) i))
+    unfold Prob63Support.stageMeasure
+    infer_instance
   simpa [prob_14_11_successProbability, Function.comp_def] using
     (ProbabilityTheory.iIndepFun_pi
       (μ := fun i : Fin (S.targetDistinct n) =>
@@ -285,15 +263,8 @@ theorem prob_14_11_centeredCouponStageLaw_mean_eq_zero
         (Prob63Support.stageMeasure (S.couponTypes n) (S.targetDistinct n)
           (prob_14_11_targetDistinct_pos S n)
           (prob_14_11_targetDistinct_le_couponTypes S n) i) := by
-      simpa [Prob63Support.stageMeasure, Prob63Support.stagePMF] using
-        (ProbabilityTheory.isProbabilityMeasure_geometricMeasure
-          (p := Prob63Support.stageSuccessProb (S.couponTypes n) i)
-          (Prob63Support.stageSuccessProb_pos
-            (prob_14_11_targetDistinct_pos S n)
-            (prob_14_11_targetDistinct_le_couponTypes S n) i)
-          (Prob63Support.stageSuccessProb_le_one
-            (prob_14_11_targetDistinct_pos S n)
-            (prob_14_11_targetDistinct_le_couponTypes S n) i))
+      unfold Prob63Support.stageMeasure
+      infer_instance
     rw [integral_const]
     simp
   · exact Prob63Support.stageWaitIntegrable
@@ -399,20 +370,6 @@ def prob_14_11_exactStandardizedRowSumLaws
   ProbabilityMeasure.map (prob_14_11_couponProbabilitySpace S n)
     ((measurable_of_countable
       (prob_14_11_exactStandardizedRowSumValue S n)).aemeasurable)
-
-def prob_14_11_exact_standardized_sum_law_representation
-    (S : prob_14_11_CouponRatioTriangularArraySetup) : Prop :=
-  ∀ n : ℕ,
-    prob_14_11_exactStandardizedRowSumLaws S n =
-      ProbabilityMeasure.map (prob_14_11_couponProbabilitySpace S n)
-        ((measurable_of_countable
-          (prob_14_11_exactStandardizedRowSumValue S n)).aemeasurable)
-
-theorem prob_14_11_exact_standardized_sum_law_representation_proof
-    (S : prob_14_11_CouponRatioTriangularArraySetup) :
-    prob_14_11_exact_standardized_sum_law_representation S := by
-  intro n
-  rfl
 
 def prob_14_11_source_standardized_sum_law_representation
     (S : prob_14_11_CouponRatioTriangularArraySetup) : Prop :=
@@ -714,50 +671,206 @@ def prob_14_11_theoremSetup
     thm_14_8_TriangularArraySetup where
   arrayNotation := prob_14_11_arrayNotation S
   rowLaws := prob_14_11_centeredCouponStageLaw S
-  standardizedSumLaws := prob_14_11_exactStandardizedRowSumLaws S
-  standardNormalLaw := S.standardNormalLaw
-  sn := fun n => Real.sqrt (prob_14_11_totalVariance S n)
-  sn_pos := fun n => Real.sqrt_pos.2 (prob_14_11_totalVariance_pos S n)
-  sn_sq_eq_totalVariance := by
-    intro n
-    exact Real.sq_sqrt (le_of_lt (prob_14_11_totalVariance_pos S n))
-  sn_tendsto_atTop :=
-    Real.tendsto_sqrt_atTop.comp (prob_14_11_totalVariance_tendsto_atTop S)
+  row_sq_integrable := by
+    intro n i
+    unfold prob_14_11_centeredCouponStageLaw
+    rw [ProbabilityMeasure.toMeasure_map]
+    rw [integrable_map_measure (by fun_prop)
+      ((measurable_of_countable
+        (fun m : ℕ =>
+          Prob63Support.scalarStageWait m -
+            chapter14_geometricMean
+              (prob_14_11_successProbability S n i))).aemeasurable)]
+    simpa [Function.comp_def, chapter14_geometricMean,
+      prob_14_11_successProbability] using
+      (chapter14_couponStageCenteredSecondIntegrable
+        (prob_14_11_targetDistinct_pos S n)
+        (prob_14_11_targetDistinct_le_couponTypes S n) i)
   row_mean_zero := by
     intro n i
     exact prob_14_11_centeredCouponStageLaw_mean_eq_zero S n i
-  row_variance_eq_second_moment := by
+  row_variance := by
     intro n i
     exact (prob_14_11_centeredCouponStageLaw_second_moment_eq S n i).symm
-  source_row_independence_on_common_probability_space :=
-    prob_14_11_source_rows_are_independent S
-  source_standardized_sum_law_representation :=
-    prob_14_11_exact_standardized_sum_law_representation S
+  totalVariance_pos := prob_14_11_totalVariance_pos S
 
-def prob_14_11_theoremSetupExact
+def prob_14_11_centeredCoordinateMap
+    (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) :
+    Prob63Support.CouponStageΩ (S.targetDistinct n) →
+      (Fin (S.targetDistinct n) → ℝ) :=
+  fun ω i =>
+    Prob63Support.scalarStageWait (ω i) -
+      chapter14_geometricMean (prob_14_11_successProbability S n i)
+
+theorem prob_14_11_centeredCoordinateMap_measurable
+    (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) :
+    Measurable (prob_14_11_centeredCoordinateMap S n) := by
+  exact measurable_of_countable _
+
+theorem prob_14_11_canonicalStandardizedSum_comp_centeredCoordinateMap
+    (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) :
+    (prob_14_11_theoremSetup S).standardizedSum n ∘
+        prob_14_11_centeredCoordinateMap S n =
+      prob_14_11_exactStandardizedRowSumValue S n := by
+  funext ω
+  simp only [Function.comp_apply]
+  unfold Thm148Core.Setup.standardizedSum Thm148Core.Setup.sn
+    prob_14_11_theoremSetup prob_14_11_exactStandardizedRowSumValue
+    prob_14_11_centeredRowSumValue prob_14_11_centeredCoordinateMap
+    Prob63Support.stageWaitReal
+  rfl
+
+theorem prob_14_11_map_couponProbabilitySpace_centeredCoordinateMap_eq_rowProductLaw
+    (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) :
+    ProbabilityMeasure.map (prob_14_11_couponProbabilitySpace S n)
+        (prob_14_11_centeredCoordinateMap_measurable S n).aemeasurable =
+      (prob_14_11_theoremSetup S).rowProductLaw n := by
+  haveI hstage :
+      ∀ i : Fin (S.targetDistinct n),
+        IsProbabilityMeasure
+          (Prob63Support.stageMeasure (S.couponTypes n) (S.targetDistinct n)
+            (prob_14_11_targetDistinct_pos S n)
+            (prob_14_11_targetDistinct_le_couponTypes S n) i) := by
+    intro i
+    unfold Prob63Support.stageMeasure
+    infer_instance
+  haveI hmapped :
+      ∀ i : Fin (S.targetDistinct n),
+        IsProbabilityMeasure
+          ((Prob63Support.stageMeasure (S.couponTypes n) (S.targetDistinct n)
+            (prob_14_11_targetDistinct_pos S n)
+            (prob_14_11_targetDistinct_le_couponTypes S n) i).map
+              (fun m : ℕ =>
+                Prob63Support.scalarStageWait m -
+                  chapter14_geometricMean
+                    (prob_14_11_successProbability S n i))) := by
+    intro i
+    exact Measure.isProbabilityMeasure_map
+      ((measurable_of_countable
+        (fun m : ℕ =>
+          Prob63Support.scalarStageWait m -
+            chapter14_geometricMean
+              (prob_14_11_successProbability S n i))).aemeasurable)
+  apply ProbabilityMeasure.toMeasure_injective
+  rw [ProbabilityMeasure.toMeasure_map]
+  change
+    (Measure.pi
+      (fun i : Fin (S.targetDistinct n) =>
+        Prob63Support.stageMeasure (S.couponTypes n) (S.targetDistinct n)
+          (prob_14_11_targetDistinct_pos S n)
+          (prob_14_11_targetDistinct_le_couponTypes S n) i)).map
+        (fun ω i =>
+          Prob63Support.scalarStageWait (ω i) -
+            chapter14_geometricMean
+              (prob_14_11_successProbability S n i)) =
+      Measure.pi
+        (fun i : Fin (S.targetDistinct n) =>
+          (Prob63Support.stageMeasure (S.couponTypes n) (S.targetDistinct n)
+            (prob_14_11_targetDistinct_pos S n)
+            (prob_14_11_targetDistinct_le_couponTypes S n) i).map
+              (fun m : ℕ =>
+                Prob63Support.scalarStageWait m -
+                  chapter14_geometricMean
+                    (prob_14_11_successProbability S n i)))
+  exact Measure.pi_map_pi
+    (μ := fun i : Fin (S.targetDistinct n) =>
+      Prob63Support.stageMeasure (S.couponTypes n) (S.targetDistinct n)
+        (prob_14_11_targetDistinct_pos S n)
+        (prob_14_11_targetDistinct_le_couponTypes S n) i)
+    (f := fun i : Fin (S.targetDistinct n) =>
+      fun m : ℕ =>
+        Prob63Support.scalarStageWait m -
+          chapter14_geometricMean
+            (prob_14_11_successProbability S n i))
+    (fun i => (measurable_of_countable
+      (fun m : ℕ =>
+        Prob63Support.scalarStageWait m -
+          chapter14_geometricMean
+            (prob_14_11_successProbability S n i))).aemeasurable)
+
+theorem prob_14_11_exactStandardizedRowSumLaw_eq_canonicalStandardizedSumLaw
+    (S : prob_14_11_CouponRatioTriangularArraySetup) (n : ℕ) :
+    prob_14_11_exactStandardizedRowSumLaws S n =
+      (prob_14_11_theoremSetup S).standardizedSumLaw n := by
+  apply ProbabilityMeasure.toMeasure_injective
+  change
+    (prob_14_11_couponProbabilitySpace S n : Measure _).map
+        (prob_14_11_exactStandardizedRowSumValue S n) =
+      (Measure.pi
+        (fun i : Fin (S.targetDistinct n) =>
+          ((prob_14_11_centeredCouponStageLaw S n i : ProbabilityMeasure ℝ) :
+            Measure ℝ))).map
+        (fun x : Fin (S.targetDistinct n) → ℝ =>
+          (∑ i, x i) / Real.sqrt (prob_14_11_totalVariance S n))
+  have hproduct :
+      (prob_14_11_couponProbabilitySpace S n : Measure _).map
+          (prob_14_11_centeredCoordinateMap S n) =
+        Measure.pi
+          (fun i : Fin (S.targetDistinct n) =>
+            ((prob_14_11_centeredCouponStageLaw S n i : ProbabilityMeasure ℝ) :
+              Measure ℝ)) := by
+    have hraw := congrArg
+      (fun P : ProbabilityMeasure (Fin (S.targetDistinct n) → ℝ) =>
+        P.toMeasure)
+      (prob_14_11_map_couponProbabilitySpace_centeredCoordinateMap_eq_rowProductLaw
+        S n)
+    change
+      (prob_14_11_couponProbabilitySpace S n : Measure _).map
+          (prob_14_11_centeredCoordinateMap S n) =
+        Measure.pi
+          (fun i : Fin (S.targetDistinct n) =>
+            ((prob_14_11_centeredCouponStageLaw S n i : ProbabilityMeasure ℝ) :
+              Measure ℝ)) at hraw
+    exact hraw
+  rw [← hproduct]
+  rw [Measure.map_map (by fun_prop)
+    (prob_14_11_centeredCoordinateMap_measurable S n)]
+  congr 1
+
+theorem prob_14_11_exactStandardizedRowSumLaws_eq_canonicalStandardizedSumLaws
     (S : prob_14_11_CouponRatioTriangularArraySetup) :
-    thm_14_8_TriangularArraySetup where
-  arrayNotation := prob_14_11_arrayNotation S
-  rowLaws := prob_14_11_centeredCouponStageLaw S
-  standardizedSumLaws := prob_14_11_exactStandardizedRowSumLaws S
-  standardNormalLaw := S.standardNormalLaw
-  sn := fun n => Real.sqrt (prob_14_11_totalVariance S n)
-  sn_pos := fun n => Real.sqrt_pos.2 (prob_14_11_totalVariance_pos S n)
-  sn_sq_eq_totalVariance := by
-    intro n
-    exact Real.sq_sqrt (le_of_lt (prob_14_11_totalVariance_pos S n))
-  sn_tendsto_atTop :=
-    Real.tendsto_sqrt_atTop.comp (prob_14_11_totalVariance_tendsto_atTop S)
-  row_mean_zero := by
-    intro n i
-    exact prob_14_11_centeredCouponStageLaw_mean_eq_zero S n i
-  row_variance_eq_second_moment := by
-    intro n i
-    exact (prob_14_11_centeredCouponStageLaw_second_moment_eq S n i).symm
-  source_row_independence_on_common_probability_space :=
-    prob_14_11_source_rows_are_independent S
-  source_standardized_sum_law_representation :=
-    prob_14_11_exact_standardized_sum_law_representation S
+    prob_14_11_exactStandardizedRowSumLaws S =
+      (prob_14_11_theoremSetup S).standardizedSumLaw := by
+  funext n
+  exact
+    prob_14_11_exactStandardizedRowSumLaw_eq_canonicalStandardizedSumLaw S n
+
+def prob_14_11_exact_standardized_sum_law_representation
+    (S : prob_14_11_CouponRatioTriangularArraySetup) : Prop :=
+  ∀ n : ℕ,
+    prob_14_11_exactStandardizedRowSumLaws S n =
+      (prob_14_11_theoremSetup S).standardizedSumLaw n
+
+theorem prob_14_11_exact_standardized_sum_law_representation_proof
+    (S : prob_14_11_CouponRatioTriangularArraySetup) :
+    prob_14_11_exact_standardized_sum_law_representation S := by
+  intro n
+  exact
+    prob_14_11_exactStandardizedRowSumLaw_eq_canonicalStandardizedSumLaw S n
+
+theorem prob_14_11_theoremSetup_row_fourthMoment_integrable
+    (S : prob_14_11_CouponRatioTriangularArraySetup) :
+    ∀ n : ℕ, ∀ i : Fin ((prob_14_11_theoremSetup S).arrayNotation.rowLength n),
+      Integrable (fun x : ℝ => Real.rpow |x| (2 + (2 : ℝ)))
+        ((prob_14_11_theoremSetup S).rowLaws n i : Measure ℝ) := by
+  intro n i
+  change Integrable (fun x : ℝ => Real.rpow |x| (2 + (2 : ℝ)))
+    ((prob_14_11_centeredCouponStageLaw S n i : ProbabilityMeasure ℝ) :
+      Measure ℝ)
+  unfold prob_14_11_centeredCouponStageLaw
+  rw [ProbabilityMeasure.toMeasure_map]
+  simp_rw [chapter14_rpow_abs_four_eq_pow_four]
+  rw [integrable_map_measure (by fun_prop)
+    ((measurable_of_countable
+      (fun m : ℕ =>
+        Prob63Support.scalarStageWait m -
+          chapter14_geometricMean
+            (prob_14_11_successProbability S n i))).aemeasurable)]
+  simpa [Function.comp_def, chapter14_geometricMean,
+    prob_14_11_successProbability] using
+    (chapter14_couponStageCenteredFourthIntegrable
+      (prob_14_11_targetDistinct_pos S n)
+      (prob_14_11_targetDistinct_le_couponTypes S n) i)
 
 theorem prob_14_11_row_lyapunov_sum_eq_coupon_fourth_sum
     (S : prob_14_11_CouponRatioTriangularArraySetup) :
@@ -896,7 +1009,8 @@ theorem prob_14_11_fourth_moment_row_sum_is_O_couponTypes
 theorem prob_14_11_generalized_lyapunov_condition
     (S : prob_14_11_CouponRatioTriangularArraySetup) :
     thm_14_8_LyapunovCondition (prob_14_11_theoremSetup S) := by
-  refine ⟨2, by norm_num, ?_⟩
+  refine ⟨2, by norm_num,
+    prob_14_11_theoremSetup_row_fourthMoment_integrable S, ?_⟩
   let T := prob_14_11_theoremSetup S
   let q : ℕ → ℝ := fun n =>
     (∑ i : Fin (T.arrayNotation.rowLength n),
@@ -991,32 +1105,22 @@ theorem prob_14_11_generalized_lyapunov_condition
       exact hconst.comp S.couponTypes_tendsto_atTop
     simpa [b] using hb
 
-theorem prob_14_11_generalized_lyapunov_condition_exact
-    (S : prob_14_11_CouponRatioTriangularArraySetup) :
-    thm_14_8_LyapunovCondition (prob_14_11_theoremSetupExact S) := by
-  simpa [prob_14_11_theoremSetupExact, prob_14_11_theoremSetup] using
-    prob_14_11_generalized_lyapunov_condition S
-
 theorem prob_14_11_exact_standardized_clt
-    (S : prob_14_11_CouponRatioTriangularArraySetup)
-    (H : thm_14_8_ProofBeyondBook (prob_14_11_theoremSetupExact S)) :
+    (S : prob_14_11_CouponRatioTriangularArraySetup) :
     Tendsto (prob_14_11_exactStandardizedRowSumLaws S) atTop
-      (𝓝 S.standardNormalLaw) := by
-  have hCLT :
-      thm_14_8_conclusion (prob_14_11_theoremSetupExact S) :=
-    thm_14_8 (prob_14_11_theoremSetupExact S) H
-      (Or.inr (prob_14_11_generalized_lyapunov_condition_exact S))
-  simpa [thm_14_8_conclusion, prob_14_11_theoremSetupExact] using hCLT
+      (𝓝 Thm148Core.Setup.standardNormalLaw) := by
+  rw [prob_14_11_exactStandardizedRowSumLaws_eq_canonicalStandardizedSumLaws]
+  exact thm_14_8 (prob_14_11_theoremSetup S)
+    (Or.inr (prob_14_11_generalized_lyapunov_condition S))
 
 theorem prob_14_11_asymptoticNormality
-    (S : prob_14_11_CouponRatioTriangularArraySetup)
-    (H : thm_14_8_ProofBeyondBook (prob_14_11_theoremSetupExact S)) :
+    (S : prob_14_11_CouponRatioTriangularArraySetup) :
     Tendsto (prob_14_11_exactStandardizedRowSumLaws S) atTop
-      (𝓝 S.standardNormalLaw) :=
-  prob_14_11_exact_standardized_clt S H
+      (𝓝 Thm148Core.Setup.standardNormalLaw) :=
+  prob_14_11_exact_standardized_clt S
 
 def prob_14_11_ExactStandardizedConvergence
     (S : prob_14_11_CouponRatioTriangularArraySetup) : Prop :=
   prob_14_11_exact_standardized_sum_law_representation S ∧
     Tendsto (prob_14_11_exactStandardizedRowSumLaws S) atTop
-      (𝓝 S.standardNormalLaw)
+      (𝓝 Thm148Core.Setup.standardNormalLaw)

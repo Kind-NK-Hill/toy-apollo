@@ -15,6 +15,8 @@ Use these when operating or modifying Phase 2:
 - `phase2/artifacts.md`
 - `phase2/tools.md`
 - `workspace_state.md`
+- `evidence_bridge.md`
+- `workspace_inventory.md`
 
 `phase2/textbook_complete_targets.json` is a data artifact, not a policy entry.
 
@@ -58,8 +60,6 @@ Use these when changing dependency modeling or source-plan boundaries:
 ## Runtime Boundary
 
 - Problem soft dependency selection is a Phase 2 special case with two active entries: `--phase 2 --phase2-mode soft-pack` and `--phase 2 --phase2-mode soft-apply`.
-- Phase 3 is deprecated/unavailable; its old entries exit nonzero with the Phase 2 migration commands and do not run an external provider, create execution batches, repair harvested output, or verify Lean.
-- Phase 4 is unavailable and exits nonzero; clean completion remains under Phase 2 `review-apply`.
 - Removed legacy mode names such as `plan-batches`, `offload-batch`, `repair-pack`, and `repair-verify` are not active contracts.
 
 ## Search Boundary

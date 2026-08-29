@@ -130,9 +130,12 @@ theorem scratch_inner_dirichlet_laplace_integral (T y : ℝ) :
         (((hasDerivAt_const u y).mul (Real.hasDerivAt_sin u)).add
           (Real.hasDerivAt_cos u))).div_const (1 + y ^ 2)
       using 1
-    field_simp [hden]
-    simp [Function.comp_apply, mul_comm, mul_assoc]
-    ring_nf
+    · rfl
+    · rfl
+    · rfl
+    · simp [Function.comp_apply]
+      field_simp [hden]
+      ring
   have hint :
       IntervalIntegrable (fun u : ℝ => Real.exp (-(u * y)) * Real.sin u)
         volume (0 : ℝ) T := by
@@ -527,9 +530,10 @@ end CharacteristicInversionDirichletAux
 
 theorem characteristicInversionDirichletIntegralLimit_proof :
     characteristicInversionDirichletIntegralLimit := by
-  simpa [characteristicInversionDirichletIntegralLimit,
-    characteristicInversionSinePrimitive] using
-    CharacteristicInversionDirichletAux.scratch_sinc_tendsto
+  change
+    Tendsto (fun T : ℝ => ∫ u in (0 : ℝ)..T, Real.sinc u)
+      atTop (nhds (Real.pi / 2))
+  exact CharacteristicInversionDirichletAux.scratch_sinc_tendsto
 
 theorem characteristicInversionSinePrimitive_tendsto_atBot
     (hlim : characteristicInversionDirichletIntegralLimit) :

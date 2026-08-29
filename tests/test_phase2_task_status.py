@@ -8,7 +8,13 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.phase2_task_status import classify_phase2_task_status
+from src.toy_apollo.phase2_task_status import (
+    DEFINITION_INTERFACE_PASS_PREFIXES,
+    PROOF_BEARING_PASS_PREFIXES,
+    REMARK_PASS_PREFIXES,
+    classify_phase2_task_status,
+    phase2_pass_class_contract,
+)
 from src.toy_apollo.phase2_semantic_review import (  # noqa: E402
     SEMANTIC_REVIEW_PROMPT_VERSION,
     SEMANTIC_REVIEW_RUBRIC_VERSION,
@@ -17,6 +23,24 @@ from src.toy_apollo.phase2_semantic_review import (  # noqa: E402
 
 
 class Phase2TaskStatusClassifierTest(unittest.TestCase):
+    def test_reviewer_pass_class_contract_follows_task_role_and_explicit_exceptions(self):
+        theorem = phase2_pass_class_contract("thm_7_8", "Theorem_with_Proof")
+        definition = phase2_pass_class_contract("def_6_3", "Definition")
+        remark = phase2_pass_class_contract("rem_5_1", "Remark")
+        exception = phase2_pass_class_contract("thm_11_8", "Theorem")
+        lemma = phase2_pass_class_contract("lem_18", "Lemma")
+        corollary = phase2_pass_class_contract("cor_21", "Corollary")
+
+        self.assertEqual(theorem["task_role"], "proof_bearing")
+        self.assertEqual(theorem["clean_pass_prefixes"], list(PROOF_BEARING_PASS_PREFIXES))
+        self.assertEqual(definition["task_role"], "definition_interface")
+        self.assertEqual(definition["clean_pass_prefixes"], list(DEFINITION_INTERFACE_PASS_PREFIXES))
+        self.assertEqual(remark["task_role"], "remark")
+        self.assertEqual(remark["clean_pass_prefixes"], list(REMARK_PASS_PREFIXES))
+        self.assertEqual(lemma["task_role"], "proof_bearing")
+        self.assertEqual(corollary["task_role"], "proof_bearing")
+        self.assertEqual(exception["allowed_exception_classes"], ["cited_external_proof_exception"])
+
     def test_textbook_proof_completion_passes_proof_bearing_task(self):
         result = classify_phase2_task_status(
             task_id="thm_11_7",

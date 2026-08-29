@@ -619,7 +619,7 @@ theorem rsIntegral_sqrt_id_0_2 :
   let hW : RSIntegralWitness Real.sqrt (fun x : ℝ => x) 0 2 := {
     value := ∫ x in (0 : ℝ)..2, Real.sqrt x
     source_limit :=
-      Thm14DerivativeTaggedScratch.rsUpperLowerCommonLimit_intervalIntegral_id
+      Thm_1_4.rsUpperLowerCommonLimit_intervalIntegral_id
         (g := Real.sqrt) (a := 0) (b := 2) (by norm_num) hCont
   }
   let hRS : RSIntegrable Real.sqrt (fun x : ℝ => x) 0 2 := hW.toRSIntegrable
@@ -628,7 +628,7 @@ theorem rsIntegral_sqrt_id_0_2 :
     rsIntegral Real.sqrt (fun x : ℝ => x) 0 2 hRS =
         ∫ x in (0 : ℝ)..2, Real.sqrt x := by
           exact DarbouxRS.taggedCommonLimit_unique (rsIntegral_spec hRS)
-            (Thm14DerivativeTaggedScratch.rsTaggedCommonLimit_intervalIntegral_id
+            (Thm_1_4.rsTaggedCommonLimit_intervalIntegral_id
               (g := Real.sqrt) (a := 0) (b := 2) (by norm_num) hCont)
     _ = (4 * Real.sqrt 2) / 3 := hValue
 

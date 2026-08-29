@@ -28,7 +28,7 @@ theorem complex_rate_gammaPDF_integrand_integrableOn
           Complex.exp (-(((r : ℂ) - Complex.I * (t : ℂ)) * (x : ℂ))))
       (Set.Ioi (0 : ℝ)) := by
   have hkernel := complex_rate_gamma_kernel_integrableOn halpha hr t
-  simpa [mul_assoc] using
+  simpa [IntegrableOn, mul_assoc] using
     hkernel.const_mul (((r ^ alpha : ℝ) : ℂ) / (Real.Gamma alpha : ℂ))
 
 theorem integral_exp_neg_complex_rate_Ioi

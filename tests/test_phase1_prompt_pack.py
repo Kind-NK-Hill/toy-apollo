@@ -3,6 +3,9 @@ import shutil
 import subprocess
 import sys
 import unittest
+from contextlib import redirect_stdout
+from dataclasses import replace
+from io import StringIO
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -229,6 +232,56 @@ class Phase1PromptPackTests(unittest.TestCase):
                 (settings.plans_dir / "24_chap6_problems_plan.json").read_text(encoding="utf-8")
             )
             self.assertEqual(plan_payload[0]["type"], "Problem")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_apply_phase1_pack_uses_cordis_profile_for_continuous_ids(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase1_cordis_profile"
+        try:
+            shutil.rmtree(root, ignore_errors=True)
+            pack_dir, settings = self._write_pack(
+                root,
+                "sec_3_1_3",
+                (
+                    "\\subsection*{3.1.3 Independence of effects}\n"
+                    "\\begin{lemma}\n"
+                    "Effects commute.\n"
+                    "\\end{lemma}\n"
+                    "\\begin{proof}\n"
+                    "By Definition 17.\n"
+                    "\\end{proof}\n"
+                ),
+            )
+            settings = replace(settings, profile="cordis")
+            self._write_draft(
+                pack_dir,
+                [
+                    {
+                        "block_id": "lem_18",
+                        "type": "Lemma",
+                        "title": "Commuting generators",
+                        "content": "Effects commute by Definition 17.",
+                        "dependencies": ["def_17"],
+                    }
+                ],
+            )
+            ledger = LedgerManager(ledger_path=str(settings.project_ledger_file))
+            output = StringIO()
+
+            with redirect_stdout(output):
+                success, detail, found_ids = apply_phase1_pack(
+                    root / "inputs" / "sec_3_1_3.tex",
+                    ledger,
+                    settings,
+                )
+
+            self.assertTrue(success, detail)
+            self.assertEqual(found_ids, ["lem_18"])
+            self.assertNotIn("Non-canonical block_id", output.getvalue())
+            plan_payload = json.loads(
+                (settings.plans_dir / "sec_3_1_3_plan.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(plan_payload[0]["dependencies"], ["def_17"])
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

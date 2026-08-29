@@ -52,7 +52,7 @@ noncomputable def prob_11_3_Yn {Ω : Type*} (X : ℕ → Ω → ℝ) : ℕ → �
       thm_11_5_sampleMean (prob_11_3_squareSeq X) n ω
 
 def prob_11_3_WLLNInputs {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) (X : ℕ → Ω → ℝ) : Prop :=
+    (P : Measure Ω) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ) : Prop :=
   ConvergesInProbability P (fun n => thm_11_5_sampleMean X n) (fun _ => (1 / 2 : ℝ)) ∧
     ConvergesInProbability P
       (fun n => thm_11_5_sampleMean (prob_11_3_squareSeq X) n)
@@ -94,7 +94,8 @@ theorem prob_11_3_square_integrable_of_uniform01_law {Ω : Type*}
   have hmap : Integrable (fun x : ℝ => x ^ 2) (Measure.map (X i) P) := by
     rw [(hLaw i).map_eq]
     exact prob_11_3_uniform01_integrable_sq
-  simpa [prob_11_3_squareSeq, Function.comp_def] using
+  change Integrable (fun ω => X i ω ^ 2) P
+  simpa only [Function.comp_def] using
     ((integrable_map_measure
       (by fun_prop : AEStronglyMeasurable (fun x : ℝ => x ^ 2) (Measure.map (X i) P))
       (hLaw i).aemeasurable).1 hmap)
@@ -118,8 +119,8 @@ theorem prob_11_3_squareSeq_independent {Ω : Type*} [MeasurableSpace Ω]
     def_5_10_randomVariables P (prob_11_3_squareSeq X) := by
   have h : iIndepFun X P := by
     simpa [def_5_10_randomVariables] using hInd
-  simpa [def_5_10_randomVariables, prob_11_3_squareSeq, Function.comp_def] using
-    (h.comp (fun _ => fun x : ℝ => x ^ 2) (fun _ => by fun_prop))
+  change iIndepFun (fun i ω => X i ω ^ 2) P
+  exact h.comp (fun _ => fun x : ℝ => x ^ 2) (fun _ => by fun_prop)
 
 theorem prob_11_3_squareSeq_identDistrib {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) (X : ℕ → Ω → ℝ)
@@ -127,8 +128,8 @@ theorem prob_11_3_squareSeq_identDistrib {Ω : Type*} [MeasurableSpace Ω]
     ∀ i, IdentDistrib
       ((prob_11_3_squareSeq X) i) ((prob_11_3_squareSeq X) 0) P P := by
   intro i
-  simpa [prob_11_3_squareSeq, Function.comp_def] using
-    (hIdent i).comp (by fun_prop : Measurable (fun x : ℝ => x ^ 2))
+  change IdentDistrib (fun ω => X i ω ^ 2) (fun ω => X 0 ω ^ 2) P P
+  exact (hIdent i).comp (by fun_prop : Measurable (fun x : ℝ => x ^ 2))
 
 theorem prob_11_3_sampleMean_aestronglyMeasurable {Ω : Type*}
     [MeasurableSpace Ω] (P : Measure Ω) (X : ℕ → Ω → ℝ)
@@ -145,6 +146,7 @@ theorem prob_11_3_sampleMean_aestronglyMeasurable {Ω : Type*}
 
 theorem prob_11_3_wlln_inputs_of_uniform01 {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ)
+    (hMeasX : ∀ i, Measurable (X i))
     (hIndX : def_5_10_randomVariables P X)
     (hLaw : ∀ i, HasLaw (X i) prob_11_3_uniform01Measure P) :
     prob_11_3_WLLNInputs P X := by
@@ -163,16 +165,26 @@ theorem prob_11_3_wlln_inputs_of_uniform01 {Ω : Type*} [MeasurableSpace Ω]
     prob_11_3_square_integrable_of_uniform01_law P X hLaw 0
   have hMeanSq0 : P[(prob_11_3_squareSeq X) 0] = (1 / 3 : ℝ) :=
     prob_11_3_square_mean_of_uniform01_law P X hLaw 0
+  have hMeasSq : ∀ i, Measurable ((prob_11_3_squareSeq X) i) := by
+    intro i
+    change Measurable (fun ω => X i ω ^ 2)
+    exact (hMeasX i).pow_const 2
   exact ⟨
-    thm_11_6 P X (1 / 2) hIntX0 hIndX hIdentX hMeanX0,
+    thm_11_6 P X (1 / 2) hIntX0 hMeasX hIndX hIdentX hMeanX0,
     thm_11_6 P (prob_11_3_squareSeq X) (1 / 3)
-      hIntSq0 hIndSq hIdentSq hMeanSq0⟩
+      hIntSq0 hMeasSq hIndSq hIdentSq hMeanSq0⟩
 
 theorem prob_11_3_of_wlln_inputs {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ)
     (hInputs : prob_11_3_WLLNInputs P X) :
     ConvergesInProbability P (prob_11_3_Yn X) (fun _ => (3 / 2 : ℝ)) := by
   rcases hInputs with ⟨hNum, hDen⟩
+  refine ⟨fun n => by
+    change Measurable (fun ω =>
+      thm_11_5_sampleMean X n ω /
+        thm_11_5_sampleMean (prob_11_3_squareSeq X) n ω)
+    exact (hNum.1 n).div (hDen.1 n),
+    measurable_const, ?_⟩
   intro ε hε
   let δ : ℝ := min (1 / 6) (ε / 30)
   have hδ_pos : 0 < δ := by
@@ -247,19 +259,20 @@ theorem prob_11_3_of_wlln_inputs {Ω : Type*} [MeasurableSpace Ω] (P : Measure 
   have hUpper :
       Filter.Tendsto (fun n => P (numDev n) + P (denDev n)) Filter.atTop (nhds 0) := by
     have hsum :=
-      (hNum δ hδ_pos).add (hDen δ hδ_pos)
+      (hNum.2.2 δ hδ_pos).add (hDen.2.2 δ hδ_pos)
     simpa [numDev, denDev] using hsum
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le
-    (by simpa using (tendsto_const_nhds : Filter.Tendsto (fun _ : ℕ => (0 : ℝ≥0∞)) Filter.atTop (nhds 0)))
+    tendsto_const_nhds
     hUpper
-    (fun n => zero_le _)
+    (fun _ => zero_le)
     hMeasure_le
 
 theorem prob_11_3 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ)
+    (hMeasX : ∀ i, Measurable (X i))
     (hIndX : def_5_10_randomVariables P X)
     (hLaw : ∀ i, HasLaw (X i) prob_11_3_uniform01Measure P) :
     ConvergesInProbability P (prob_11_3_Yn X) (fun _ => (3 / 2 : ℝ)) := by
   have hInputs : prob_11_3_WLLNInputs P X :=
-    prob_11_3_wlln_inputs_of_uniform01 P X hIndX hLaw
+    prob_11_3_wlln_inputs_of_uniform01 P X hMeasX hIndX hLaw
   exact prob_11_3_of_wlln_inputs P X hInputs

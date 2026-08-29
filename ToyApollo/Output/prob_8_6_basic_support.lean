@@ -142,11 +142,20 @@ lemma poi_nonneg (p : ℝ) (hp : 0 ≤ p) (k : ℕ) : 0 ≤ Poi p k := by
   exact div_nonneg ( mul_nonneg ( Real.exp_nonneg _ ) ( pow_nonneg hp _ ) ) ( Nat.cast_nonneg _ )
 
 lemma poi_sum_one (p : ℝ) (hp : 0 ≤ p) : HasSum (Poi p) 1 := by
-  convert Summable.hasSum _ using 1;
-  · unfold Poi;
-    rw [ tsum_congr fun n => by rw [ mul_div_assoc ], tsum_mul_left, show ( ∑' n : ℕ, p ^ n / ( n ! : ℝ ) ) = Real.exp p by rw [ Real.exp_eq_exp_ℝ ] ; rw [ NormedSpace.exp_eq_tsum_div ] ] ; norm_num [ Real.exp_neg, Real.exp_ne_zero ];
-  · convert Summable.mul_left ( Real.exp ( -p ) ) ( Real.summable_pow_div_factorial p ) using 1;
-    exact funext fun n => by unfold Poi; ring;
+  have hsummable : Summable (Poi p) := by
+    refine (Summable.mul_left (Real.exp (-p))
+      (Real.summable_pow_div_factorial p)).congr ?_
+    intro n
+    unfold Poi
+    ring
+  have htsum : ∑' n : ℕ, Poi p n = 1 := by
+    unfold Poi
+    rw [tsum_congr fun n => by rw [mul_div_assoc], tsum_mul_left,
+      show (∑' n : ℕ, p ^ n / (n ! : ℝ)) = Real.exp p by
+        rw [Real.exp_eq_exp_ℝ]
+        rw [NormedSpace.exp_eq_tsum_div]]
+    norm_num [Real.exp_neg, Real.exp_ne_zero]
+  simpa [htsum] using hsummable.hasSum
 
 -- ============================================================================
 -- Summability and convolution infrastructure
@@ -192,7 +201,9 @@ lemma convN_sum_one (f : ℕ → ℝ) (hf_nn : ∀ k, 0 ≤ f k) (hf : HasSum f 
     HasSum (pmfConvN f n) 1 := by
       induction' n with n ih;
       · exact hasSum_ite_eq 0 1;
-      · convert pmfConv_hasSum f ( pmfConvN f n ) hf_nn hf ( fun k => convN_nonneg f hf_nn n k ) ih using 1
+      · simpa [pmfConvN] using
+          pmfConv_hasSum f (pmfConvN f n) hf_nn hf
+            (fun k => convN_nonneg f hf_nn n k) ih
 
 -- ============================================================================
 -- d_TV properties

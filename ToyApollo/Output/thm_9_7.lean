@@ -168,7 +168,9 @@ theorem characteristicFunction_first_derivative_dct_bridge_source
 private lemma characteristicFunction_first_slope_eq_integral_source
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsFiniteMeasure P]
     {X : Ω → ℝ} (hX : AEMeasurable X P) (t h : ℝ) :
-    h⁻¹ • (characteristicFunction P X (t + h) - characteristicFunction P X t) =
+    h⁻¹ •
+        (characteristicFunction (P.map X) (t + h) -
+          characteristicFunction (P.map X) t) =
       ∫ ω : Ω,
         Complex.exp (Complex.I * (X ω : ℂ) * (t : ℂ)) *
           ((Complex.exp (Complex.I * (X ω : ℂ) * (h : ℂ)) - 1) / (h : ℂ)) ∂P := by
@@ -184,14 +186,19 @@ private lemma characteristicFunction_first_slope_eq_integral_source
     exact (integrable_const (1 : ℂ)).mono (by fun_prop)
       (by simp [Complex.norm_exp])
   have hsub :
-      characteristicFunction P X (t + h) - characteristicFunction P X t =
+      characteristicFunction (P.map X) (t + h) -
+          characteristicFunction (P.map X) t =
         ∫ ω : Ω,
           (Complex.exp (Complex.I * (X ω : ℂ) * (((t + h : ℝ) : ℂ))) -
             Complex.exp (Complex.I * (X ω : ℂ) * (t : ℂ))) ∂P := by
-    rw [characteristicFunction, characteristicFunction, ← integral_sub hint_th hint_t]
+    rw [characteristicFunction_map_apply hX, characteristicFunction_map_apply hX,
+      ← integral_sub hint_th hint_t]
   calc
-    h⁻¹ • (characteristicFunction P X (t + h) - characteristicFunction P X t)
-        = (characteristicFunction P X (t + h) - characteristicFunction P X t) /
+    h⁻¹ •
+          (characteristicFunction (P.map X) (t + h) -
+            characteristicFunction (P.map X) t)
+        = (characteristicFunction (P.map X) (t + h) -
+            characteristicFunction (P.map X) t) /
             (h : ℂ) := by
           exact real_inv_smul_eq_complex_div h _
     _ = (∫ ω : Ω,
@@ -221,7 +228,7 @@ private lemma characteristicFunction_first_slope_eq_integral_source
 theorem characteristicFunction_hasDerivAt_one_source
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
     {X : Ω → ℝ} (hX : AEMeasurable X P) (hMoment1 : Integrable X P) (t : ℝ) :
-    HasDerivAt (characteristicFunction P X)
+    HasDerivAt (characteristicFunction (P.map X))
       (∫ ω : Ω,
         Complex.I * (X ω : ℂ) *
           Complex.exp (Complex.I * (X ω : ℂ) * (t : ℂ)) ∂P) t := by
@@ -437,7 +444,7 @@ theorem characteristicFunction_hasDerivAt_two_source
 theorem characteristicFunction_iteratedDeriv_one_source
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
     {X : Ω → ℝ} (hX : AEMeasurable X P) (hMoment1 : Integrable X P) (t : ℝ) :
-    iteratedDeriv 1 (characteristicFunction P X) t =
+    iteratedDeriv 1 (characteristicFunction (P.map X)) t =
       ∫ ω : Ω, characteristicFunctionDerivativeIntegrand 1 t (X ω) ∂P := by
   rw [iteratedDeriv_one]
   rw [(characteristicFunction_hasDerivAt_one_source hX hMoment1 t).deriv]
@@ -448,11 +455,11 @@ theorem characteristicFunction_iteratedDeriv_two_source
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
     {X : Ω → ℝ} (hX : AEMeasurable X P)
     (hMoment2 : Integrable (fun ω : Ω => X ω ^ 2) P) (t : ℝ) :
-    iteratedDeriv 2 (characteristicFunction P X) t =
+    iteratedDeriv 2 (characteristicFunction (P.map X)) t =
       ∫ ω : Ω, characteristicFunctionDerivativeIntegrand 2 t (X ω) ∂P := by
   have hMoment1 := integrable_of_integrable_sq_source (P := P) hX hMoment2
   have hderiv_eq :
-      deriv (characteristicFunction P X) =
+      deriv (characteristicFunction (P.map X)) =
         fun s : ℝ =>
           ∫ ω : Ω,
             Complex.I * (X ω : ℂ) *
@@ -490,19 +497,21 @@ theorem characteristicFunction_moment_from_derivative_zero_source
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
     {X : Ω → ℝ} {n : ℕ}
     (hDeriv0 :
-      iteratedDeriv n (characteristicFunction P X) 0 =
+      iteratedDeriv n (characteristicFunction (P.map X)) 0 =
         ∫ ω : Ω, (Complex.I * (X ω : ℂ)) ^ n ∂P) :
     ((∫ ω : Ω, X ω ^ n ∂P : ℝ) : ℂ) =
-      (Complex.I ^ n)⁻¹ * iteratedDeriv n (characteristicFunction P X) 0 :=
+      (Complex.I ^ n)⁻¹ *
+        iteratedDeriv n (characteristicFunction (P.map X)) 0 :=
   moment_from_derivative_zero_source (μ := P) (X := X) hDeriv0
 
 theorem characteristicFunction_moment_from_derivative_one_source
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
     {X : Ω → ℝ} (hX : AEMeasurable X P) (hMoment1 : Integrable X P) :
     ((∫ ω : Ω, X ω ^ 1 ∂P : ℝ) : ℂ) =
-      (Complex.I ^ 1)⁻¹ * iteratedDeriv 1 (characteristicFunction P X) 0 := by
+      (Complex.I ^ 1)⁻¹ *
+        iteratedDeriv 1 (characteristicFunction (P.map X)) 0 := by
   have hDeriv0 :
-      iteratedDeriv 1 (characteristicFunction P X) 0 =
+      iteratedDeriv 1 (characteristicFunction (P.map X)) 0 =
         ∫ ω : Ω, (Complex.I * (X ω : ℂ)) ^ 1 ∂P := by
     have h := characteristicFunction_iteratedDeriv_one_source hX hMoment1 0
     simpa [characteristicFunctionDerivativeIntegrand] using h
@@ -513,9 +522,10 @@ theorem characteristicFunction_moment_from_derivative_two_source
     {X : Ω → ℝ} (hX : AEMeasurable X P)
     (hMoment2 : Integrable (fun ω : Ω => X ω ^ 2) P) :
     ((∫ ω : Ω, X ω ^ 2 ∂P : ℝ) : ℂ) =
-      (Complex.I ^ 2)⁻¹ * iteratedDeriv 2 (characteristicFunction P X) 0 := by
+      (Complex.I ^ 2)⁻¹ *
+        iteratedDeriv 2 (characteristicFunction (P.map X)) 0 := by
   have hDeriv0 :
-      iteratedDeriv 2 (characteristicFunction P X) 0 =
+      iteratedDeriv 2 (characteristicFunction (P.map X)) 0 =
         ∫ ω : Ω, (Complex.I * (X ω : ℂ)) ^ 2 ∂P := by
     have h := characteristicFunction_iteratedDeriv_two_source hX hMoment2 0
     simpa [characteristicFunctionDerivativeIntegrand] using h
@@ -733,18 +743,19 @@ theorem characteristicFunction_iteratedDeriv_source
     {X : Ω → ℝ} (hX : AEMeasurable X P)
     {n : ℕ} (hMoment : MemLp id n (P.map X)) :
     ∀ t : ℝ,
-      iteratedDeriv n (characteristicFunction P X) t =
+      iteratedDeriv n (characteristicFunction (P.map X)) t =
         ∫ ω : Ω, characteristicFunctionDerivativeIntegrand n t (X ω) ∂P := by
   induction n with
   | zero =>
       intro t
-      simp [iteratedDeriv_zero, characteristicFunction, characteristicFunctionDerivativeIntegrand]
+      rw [iteratedDeriv_zero, characteristicFunction_map_apply hX]
+      simp [characteristicFunctionDerivativeIntegrand]
   | succ k ih =>
       have hMomentK : MemLp id k (P.map X) := hMoment.mono_exponent (by simp)
       have hPowK := integrable_norm_pow_of_memLp_map_source hX hMomentK
       have hPowSucc := integrable_norm_pow_of_memLp_map_source hX hMoment
       have hEqFun :
-          iteratedDeriv k (characteristicFunction P X) =
+          iteratedDeriv k (characteristicFunction (P.map X)) =
             fun s : ℝ =>
               ∫ ω : Ω, characteristicFunctionDerivativeIntegrand k s (X ω) ∂P := by
         funext s
@@ -759,9 +770,10 @@ theorem characteristicFunction_moment_from_derivative_source
     {X : Ω → ℝ} (hX : AEMeasurable X P)
     {n : ℕ} (hMoment : MemLp id n (P.map X)) :
     ((∫ ω : Ω, X ω ^ n ∂P : ℝ) : ℂ) =
-      (Complex.I ^ n)⁻¹ * iteratedDeriv n (characteristicFunction P X) 0 := by
+      (Complex.I ^ n)⁻¹ *
+        iteratedDeriv n (characteristicFunction (P.map X)) 0 := by
   have hDeriv0 :
-      iteratedDeriv n (characteristicFunction P X) 0 =
+      iteratedDeriv n (characteristicFunction (P.map X)) 0 =
         ∫ ω : Ω, (Complex.I * (X ω : ℂ)) ^ n ∂P := by
     have h := characteristicFunction_iteratedDeriv_source hX hMoment 0
     simpa [characteristicFunctionDerivativeIntegrand] using h
@@ -770,10 +782,8 @@ theorem characteristicFunction_moment_from_derivative_source
 theorem characteristicFunction_eq_charFun_map
     {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} {X : Ω → ℝ}
     (hX : AEMeasurable X μ) (t : ℝ) :
-    characteristicFunction μ X t = charFun (μ.map X) t := by
-  rw [charFun_apply_real]
-  rw [integral_map hX.aestronglyMeasurable.aemeasurable (by fun_prop)]
-  simp [characteristicFunction, mul_comm, mul_left_comm]
+    characteristicFunction (μ.map X) t = charFun (μ.map X) t := by
+  rfl
 
 theorem characteristicFunction_iteratedDeriv_law
     (μ : Measure ℝ) [IsFiniteMeasure μ]
@@ -796,7 +806,7 @@ theorem characteristicFunction_iteratedDeriv_randomVariable
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
     {X : Ω → ℝ} (hX : AEMeasurable X P)
     {n : ℕ} (hMoment : MemLp id n (P.map X)) (t : ℝ) :
-    iteratedDeriv n (characteristicFunction P X) t =
+    iteratedDeriv n (characteristicFunction (P.map X)) t =
       ∫ ω : Ω, characteristicFunctionDerivativeIntegrand n t (X ω) ∂P :=
   characteristicFunction_iteratedDeriv_source hX hMoment t
 
@@ -818,7 +828,8 @@ theorem characteristicFunction_moment_from_derivative_randomVariable
     {X : Ω → ℝ} (hX : AEMeasurable X P)
     {n : ℕ} (hMoment : MemLp id n (P.map X)) :
     ((∫ ω : Ω, X ω ^ n ∂P : ℝ) : ℂ) =
-      (Complex.I ^ n)⁻¹ * iteratedDeriv n (characteristicFunction P X) 0 :=
+      (Complex.I ^ n)⁻¹ *
+        iteratedDeriv n (characteristicFunction (P.map X)) 0 :=
   characteristicFunction_moment_from_derivative_source hX hMoment
 
 theorem thm_9_7
@@ -826,9 +837,10 @@ theorem thm_9_7
     {X : Ω → ℝ} (hX : AEMeasurable X P)
     {n : ℕ} (hMoment : MemLp id n (P.map X)) :
     (∀ t : ℝ,
-        iteratedDeriv n (characteristicFunction P X) t =
+        iteratedDeriv n (characteristicFunction (P.map X)) t =
           ∫ ω : Ω, characteristicFunctionDerivativeIntegrand n t (X ω) ∂P) ∧
       ((∫ ω : Ω, X ω ^ n ∂P : ℝ) : ℂ) =
-        (Complex.I ^ n)⁻¹ * iteratedDeriv n (characteristicFunction P X) 0 := by
+        (Complex.I ^ n)⁻¹ *
+          iteratedDeriv n (characteristicFunction (P.map X)) 0 := by
   exact ⟨characteristicFunction_iteratedDeriv_source hX hMoment,
     characteristicFunction_moment_from_derivative_source hX hMoment⟩

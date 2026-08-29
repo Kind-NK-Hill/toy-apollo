@@ -20,7 +20,7 @@ noncomputable abbrev countingMeasure : Measure ℕ+ := Measure.count
 def rowFunction (a : ℕ+ → ℕ+ → NNReal) (i : ℕ+) : ℕ+ → ENNReal :=
   fun j => (a i j : ENNReal)
 
-def partialRowSum (a : ℕ+ → ℕ+ → NNReal) (n : ℕ) : ℕ+ → ENNReal :=
+noncomputable def partialRowSum (a : ℕ+ → ℕ+ → NNReal) (n : ℕ) : ℕ+ → ENNReal :=
   fun j => Finset.sum (Finset.range n) fun m => rowFunction a (Nat.succPNat m) j
 
 noncomputable def limitRowSum (a : ℕ+ → ℕ+ → NNReal) : ℕ+ → ENNReal :=

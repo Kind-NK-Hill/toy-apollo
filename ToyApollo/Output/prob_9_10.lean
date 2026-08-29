@@ -27,9 +27,7 @@ lemma chiSquare_base_hasDerivAt_complex (z : ℂ) :
     HasDerivAt (fun w : ℂ => (1 : ℂ) - 2 * Complex.I * w) (-2 * Complex.I) z := by
   have hterm : HasDerivAt (fun w : ℂ => (2 * Complex.I) * w) (2 * Complex.I) z := by
     simpa using (hasDerivAt_id z).const_mul (2 * Complex.I)
-  have hconst : HasDerivAt (fun _ : ℂ => (1 : ℂ)) (0 : ℂ) z := hasDerivAt_const z 1
-  convert hconst.sub hterm using 1
-  · ring
+  simpa only [neg_mul] using hterm.const_sub (1 : ℂ)
 
 lemma chiSquare_base_mem_slit_ofReal (t : ℝ) :
     ((1 : ℂ) - 2 * Complex.I * (t : ℂ)) ∈ Complex.slitPlane := by
@@ -67,6 +65,21 @@ lemma chiSquareCharacteristicFunction_iteratedDeriv_one (k : ℝ) :
   rw [iteratedDeriv_one]
   exact (chiSquareCharacteristicFunction_hasDerivAt_zero k).deriv
 
+private lemma chiSquare_secondDerivative_coefficient (k : ℝ) :
+    (-(k : ℂ) / 2) * ((-(k : ℂ) / 2 - 1) * (-2 * Complex.I)) *
+        (-2 * Complex.I) =
+      -((k * (k + 2) : ℝ) : ℂ) := by
+  calc
+    (-(k : ℂ) / 2) * ((-(k : ℂ) / 2 - 1) * (-2 * Complex.I)) *
+          (-2 * Complex.I) =
+        ((k : ℂ) * ((k : ℂ) + 2)) * (Complex.I * Complex.I) := by
+          ring
+    _ = -((k : ℂ) * ((k : ℂ) + 2)) := by
+          rw [Complex.I_mul_I]
+          ring
+    _ = -((k * (k + 2) : ℝ) : ℂ) := by
+          norm_cast
+
 lemma chiSquareCharacteristicDerivative_hasDerivAt_zero (k : ℝ) :
     HasDerivAt (chiSquareCharacteristicDerivative k) (-((k * (k + 2) : ℝ) : ℂ)) 0 := by
   unfold chiSquareCharacteristicDerivative
@@ -81,11 +94,9 @@ lemma chiSquareCharacteristicDerivative_hasDerivAt_zero (k : ℝ) :
         left
         simp)
     have h := (hpow.const_mul (-(k : ℂ) / 2)).mul_const (-2 * Complex.I)
-    convert h using 1
-    · simp [Complex.one_cpow]
-      ring_nf
-      rw [Complex.I_sq]
-      ring
+    apply h.congr_deriv
+    simpa only [mul_zero, sub_zero, Complex.one_cpow, mul_one] using
+      chiSquare_secondDerivative_coefficient k
   simpa using hcomplex.comp_ofReal
 
 lemma chiSquareCharacteristicFunction_iteratedDeriv_two (k : ℝ) :

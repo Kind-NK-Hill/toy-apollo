@@ -20,12 +20,13 @@ noncomputable def P : Omega → ℝ
   | 1 => 1 / 3
   | _ => 1 / 3
 
-noncomputable def Q : Omega → ℝ
+noncomputable def Q (x : Omega) : ℝ :=
+  match x.val with
   | 0 => 1 / 2
-  | 1 => 1 / 4
   | _ => 1 / 4
 
-def maximalCoupling : Omega → Omega → ℝ
+def maximalCoupling (x y : Omega) : ℝ :=
+  match x.val, y.val with
   | 0, 0 => 1 / 3
   | 1, 0 => 1 / 12
   | 1, 1 => 1 / 4

@@ -80,28 +80,29 @@ theorem poissonMGF_integrable (lam : NNReal) (t : ℝ) :
     intro k
     rw [poissonPMF_toReal, Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
     ring_nf
-  rw [poissonMeasure, ← Measure.sum_smul_dirac ((poissonPMF lam).toMeasure)]
-  refine MeasureTheory.integrable_sum_dirac ?_ ?_
-  · intro k
-    simpa [PMF.toMeasure_apply_singleton] using (poissonPMF lam).apply_ne_top k
-  · simpa [PMF.toMeasure_apply_singleton] using hs
+  rw [ProbabilityTheory.integrable_poissonMeasure_iff]
+  refine hs.congr ?_
+  intro k
+  rw [poissonPMF_toReal, poissonPMFReal]
 
 theorem poissonMGFIntegral_eq_series (lam : NNReal) (t : ℝ) :
     (∫ k : ℕ, Real.exp (t * (k : ℝ)) ∂poissonMeasure lam) =
       poissonMGFSeries lam t := by
   have hint : Integrable (fun k : ℕ => Real.exp (t * (k : ℝ))) (poissonMeasure lam) :=
     poissonMGF_integrable lam t
-  unfold poissonMGFSeries poissonMeasure
+  unfold poissonMGFSeries
   calc
-    (∫ k : ℕ, Real.exp (t * (k : ℝ)) ∂(poissonPMF lam).toMeasure) =
-        ∑' k : ℕ, ((poissonPMF lam) k).toReal • Real.exp (t * (k : ℝ)) := by
-      exact PMF.integral_eq_tsum (poissonPMF lam)
-        (fun k : ℕ => Real.exp (t * (k : ℝ))) hint
+    (∫ k : ℕ, Real.exp (t * (k : ℝ)) ∂poissonMeasure lam) =
+        ∑' k : ℕ,
+          (Real.exp (-(lam : ℝ)) * (lam : ℝ) ^ k / k.factorial) •
+            Real.exp (t * (k : ℝ)) := by
+      exact ProbabilityTheory.integral_poissonMeasure lam
+        (fun k : ℕ => Real.exp (t * (k : ℝ)))
     _ = ∑' k : ℕ, Real.exp ((k : ℝ) * t) * poissonPMFReal lam k := by
       apply tsum_congr
       intro k
-      rw [poissonPMF_toReal]
-      simp [smul_eq_mul]
+      rw [poissonPMFReal]
+      simp only [smul_eq_mul]
       ring_nf
 
 theorem poissonMGF_eq_series (lam : NNReal) (t : ℝ) :
@@ -114,9 +115,13 @@ theorem poissonMGF_eq_formula (lam : NNReal) (t : ℝ) :
       poissonMGFFormula (lam : ℝ) t := by
   rw [poissonMGF_eq_series, poissonMGFSeries_eq_formula]
 
+theorem poissonRandomVariable_measurable :
+    Measurable (fun k : ℕ => (k : ℝ)) :=
+  (MeasurableEmbedding.natCast (α := ℝ)).measurable
+
 theorem poissonRandomVariable_aemeasurable (lam : NNReal) :
-    AEMeasurable (fun k : ℕ => (k : ℝ)) (poissonMeasure lam) := by
-  exact (MeasurableEmbedding.natCast (α := ℝ)).measurable.aemeasurable
+    AEMeasurable (fun k : ℕ => (k : ℝ)) (poissonMeasure lam) :=
+  poissonRandomVariable_measurable.aemeasurable
 
 theorem poissonMomentGeneratingFunction_eq_formula (lam : NNReal) (t : ℝ) :
     momentGeneratingFunction (poissonMeasure lam) (fun k : ℕ => (k : ℝ))
@@ -191,8 +196,11 @@ theorem poissonMGFFormula_second_deriv_zero (lam : ℝ) :
   have h_mul0 : HasDerivAt (fun t : ℝ => lam * Real.exp t) lam 0 := by
     simpa using (Real.hasDerivAt_exp 0).const_mul lam
   have h_prod := h_exp0.mul h_mul0
-  convert h_prod.deriv using 1
-  simp [pow_two]
+  change deriv
+    ((fun t : ℝ => Real.exp (lam * Real.exp t - lam)) *
+      (fun t : ℝ => lam * Real.exp t)) 0 =
+    lam ^ 2 + lam
+  simpa [pow_two] using h_prod.deriv
 
 theorem poissonMGFFormula_variance_value (lam : ℝ) :
     (lam ^ 2 + lam) - lam ^ 2 = lam := by
@@ -207,16 +215,25 @@ theorem poissonMGFFormula_first_two_moments (lam : NNReal) :
       poissonMGFFormula_second_deriv_zero (lam : ℝ),
       poissonMGFFormula_variance_value (lam : ℝ)⟩
 
+theorem poissonFiniteAbsMoment (lam : NNReal) (n : ℕ) :
+    FiniteAbsMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) n :=
+  thm_9_2_finiteAbsMoment poissonRandomVariable_measurable
+    (poissonRandomVariable_aemeasurable lam)
+    (poissonHasMomentGeneratingFunction lam) n
+
 theorem poissonMGF_moment_recovery (lam : NNReal) (n : ℕ) :
-    rthMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) n =
+    generalMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) n
+        (poissonFiniteAbsMoment lam n) =
       iteratedDeriv n
         (finiteMomentGeneratingFunction (poissonMeasure lam) (fun k : ℕ => (k : ℝ))
           (poissonRandomVariable_aemeasurable lam)) 0 := by
-  exact (thm_9_2 (poissonRandomVariable_aemeasurable lam)
+  exact (thm_9_2 poissonRandomVariable_measurable
+    (poissonRandomVariable_aemeasurable lam)
     (poissonHasMomentGeneratingFunction lam) n).2
 
 theorem poissonMean_eq_lambda (lam : NNReal) :
-    rthMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) 1 = (lam : ℝ) := by
+    generalMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) 1
+        (poissonFiniteAbsMoment lam 1) = (lam : ℝ) := by
   rw [poissonMGF_moment_recovery (lam := lam) (n := 1)]
   have hfun :
       finiteMomentGeneratingFunction (poissonMeasure lam) (fun k : ℕ => (k : ℝ))
@@ -228,7 +245,8 @@ theorem poissonMean_eq_lambda (lam : NNReal) :
     poissonMGFFormula_deriv_zero (lam : ℝ)
 
 theorem poissonSecondMoment_eq (lam : NNReal) :
-    rthMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) 2 =
+    generalMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) 2
+        (poissonFiniteAbsMoment lam 2) =
       (lam : ℝ) ^ 2 + (lam : ℝ) := by
   rw [poissonMGF_moment_recovery (lam := lam) (n := 2)]
   have hfun :
@@ -240,8 +258,10 @@ theorem poissonSecondMoment_eq (lam : NNReal) :
   exact poissonMGFFormula_second_deriv_zero (lam : ℝ)
 
 theorem poissonVarianceFromMoments_eq_lambda (lam : NNReal) :
-    rthMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) 2 -
-        (rthMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) 1) ^ 2 =
+    generalMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) 2
+          (poissonFiniteAbsMoment lam 2) -
+        (generalMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) 1
+          (poissonFiniteAbsMoment lam 1)) ^ 2 =
       (lam : ℝ) := by
   rw [poissonSecondMoment_eq, poissonMean_eq_lambda]
   ring
@@ -249,11 +269,15 @@ theorem poissonVarianceFromMoments_eq_lambda (lam : NNReal) :
 theorem ex_9_1_1 (lam : NNReal) (t : ℝ) :
     mgf (fun k : ℕ => (k : ℝ)) (poissonMeasure lam) t =
         Real.exp ((lam : ℝ) * Real.exp t - (lam : ℝ)) ∧
-      rthMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) 1 = (lam : ℝ) ∧
-        rthMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) 2 =
+      generalMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) 1
+          (poissonFiniteAbsMoment lam 1) = (lam : ℝ) ∧
+        generalMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) 2
+            (poissonFiniteAbsMoment lam 2) =
             (lam : ℝ) ^ 2 + (lam : ℝ) ∧
-          rthMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) 2 -
-              (rthMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) 1) ^ 2 =
+          generalMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) 2
+                (poissonFiniteAbsMoment lam 2) -
+              (generalMoment (poissonMeasure lam) (fun k : ℕ => (k : ℝ)) 1
+                (poissonFiniteAbsMoment lam 1)) ^ 2 =
             (lam : ℝ) := by
   exact
     ⟨by simpa [poissonMGFFormula] using poissonMGF_eq_formula lam t,

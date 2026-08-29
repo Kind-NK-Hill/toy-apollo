@@ -180,10 +180,12 @@ theorem scratch_hasLaw_setIntegral_preimage {Ω : Type*} [MeasurableSpace Ω]
     {s : Set ℝ} (hs : MeasurableSet s) :
     (∫ ω in {ω | Z ω ∈ s}, Z ω ∂P) =
       ∫ z in s, z ∂ProbabilityTheory.gaussianReal 0 (1 : NNReal) := by
+  change (∫ ω in Z ⁻¹' s, Z ω ∂P) = _
   have hmap := MeasureTheory.setIntegral_map (μ := P) (g := Z)
     (f := fun z : ℝ => z) (s := s) hs aestronglyMeasurable_id
     hZmeas.aemeasurable
-  simpa [hZlaw.map_eq] using hmap.symm
+  rw [hZlaw.map_eq] at hmap
+  exact hmap.symm
 
 theorem scratch_hasLaw_measure_preimage {Ω : Type*} [MeasurableSpace Ω]
     {P : Measure Ω} {Z : Ω → ℝ}
@@ -192,9 +194,10 @@ theorem scratch_hasLaw_measure_preimage {Ω : Type*} [MeasurableSpace Ω]
     {s : Set ℝ} (hs : MeasurableSet s) :
     P {ω | Z ω ∈ s} =
       ProbabilityTheory.gaussianReal 0 (1 : NNReal) s := by
+  change P (Z ⁻¹' s) = _
   have hmap := Measure.map_apply (μ := P) hZmeas hs
   rw [hZlaw.map_eq] at hmap
-  simpa using hmap.symm
+  exact hmap.symm
 
 theorem scratch_scaled_setIntegral_Ioi {Ω : Type*} [MeasurableSpace Ω]
     {P : Measure Ω} {Z : Ω → ℝ} {sigma : ℝ}

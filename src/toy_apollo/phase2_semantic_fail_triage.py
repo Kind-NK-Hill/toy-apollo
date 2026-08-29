@@ -54,7 +54,6 @@ def _collect_review_text(review_result: dict[str, Any]) -> str:
         "findings",
         "spine_alignment",
         "interface_contract",
-        "obligation_review",
         "evidence_review",
         "downstream_adequacy",
         "forbidden_weakenings",
@@ -287,7 +286,6 @@ def _render_diagnoser_prompt(
     candidate_code = read_file_safely(failed_review_subject_file)
     search_notes = _safe_pack_file(pack_dir, "search_notes.md")
     dependency_context = _safe_pack_file(pack_dir, "dependency_decision_context.md")
-    proof_obligations = _safe_pack_file(pack_dir, "proof_obligations.json")
     review_basis = review_input.get("review_basis", {}) if isinstance(review_input.get("review_basis", {}), dict) else {}
     lines = [
         f"# Phase2 Semantic-Fail Diagnoser Prompt for {task.get('block_id', '')}",
@@ -364,8 +362,6 @@ def _render_diagnoser_prompt(
     ]
     if dependency_context:
         lines.extend(["", "## Dependency Decision Context", "", dependency_context])
-    if proof_obligations:
-        lines.extend(["", "## Proof Obligations", "", "```json", proof_obligations, "```"])
     if search_notes:
         lines.extend(["", "## Local Search Notes", "", search_notes])
     lines.extend(

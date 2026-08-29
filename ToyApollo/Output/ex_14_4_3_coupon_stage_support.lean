@@ -86,16 +86,8 @@ def ex_14_4_3_stageProbabilityMeasure
       (ex_14_4_3_targetDistinct_pos n)
       (ex_14_4_3_targetDistinct_le_couponTypes n) i,
     by
-      simpa [Prob63Support.stageMeasure, Prob63Support.stagePMF] using
-        (ProbabilityTheory.isProbabilityMeasure_geometricMeasure
-          (p := Prob63Support.stageSuccessProb
-            (ex_14_4_3_couponTypes n) i)
-          (Prob63Support.stageSuccessProb_pos
-            (ex_14_4_3_targetDistinct_pos n)
-            (ex_14_4_3_targetDistinct_le_couponTypes n) i)
-          (Prob63Support.stageSuccessProb_le_one
-            (ex_14_4_3_targetDistinct_pos n)
-            (ex_14_4_3_targetDistinct_le_couponTypes n) i))⟩
+      unfold Prob63Support.stageMeasure
+      infer_instance⟩
 
 def ex_14_4_3_centeredStageValue
     (n : ℕ) (i : Fin (ex_14_4_3_targetDistinct n)) (m : ℕ) : ℝ :=

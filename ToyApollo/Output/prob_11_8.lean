@@ -20,6 +20,7 @@ def prob_11_8_ar1Assumptions {Ω : Type*} [MeasurableSpace Ω]
   (∀ ω : Ω, X 0 ω = 0) ∧
     |ρ| < 1 ∧
     (∀ i : ℕ, X (i + 1) = fun ω => ρ * X i ω + N (i + 1) ω) ∧
+    (∀ i : ℕ, Measurable (N i)) ∧
     (∀ i : ℕ, HasLaw (N i) (gaussianReal 0 σ2) P) ∧
     def_5_10_randomVariables P N
 
@@ -87,37 +88,55 @@ theorem prob_11_8_ar1Past_indep_future {Ω : Type*} [MeasurableSpace Ω]
     dsimp [right]
     exact measurable_pi_apply jj
   have hcomp := hTuple.comp hLeftMeas hRightMeas
-  simpa [left, right, jj, prob_11_8_ar1Past, S, T, Function.comp_def] using hcomp
+  change ProbabilityTheory.IndepFun
+    (fun ω => ∑ k : Fin i, ρ ^ (i - 1 - k.1) * N (k.1 + 1) ω)
+    (fun ω => N j ω) P
+  convert hcomp using 1
+  · funext ω
+    simp [left, S, Function.comp_def]
+  · funext ω
+    simp [right, jj, T, Function.comp_def]
 
 private theorem prob_11_8_local_variance_eq {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) {Y : Ω → ℝ} (hY : MemLp Y 2 P) :
-    _root_.variance P Y = Var[Y; P] := by
+    (P : Measure Ω) [IsProbabilityMeasure P] {Y : Ω → ℝ}
+    (hYm : Measurable Y) (hY : MemLp Y 2 P) :
+    _root_.variance P Y (FiniteAbsMoment.of_memLp hYm hY) = Var[Y; P] := by
   rw [_root_.variance, rthCentralMoment]
   exact ProbabilityTheory.centralMoment_two_eq_variance (μ := P) (X := Y) hY.aemeasurable
 
-theorem prob_11_8_gaussian_innovation_moments {Ω : Type*} [MeasurableSpace Ω]
+theorem prob_11_8_gaussian_innovation_memLp {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) (N : ℕ → Ω → ℝ) (σ2 : ℝ≥0)
+    (hLaw : ∀ i : ℕ, HasLaw (N i) (gaussianReal 0 σ2) P) (i : ℕ) :
+    MemLp (N i) 2 P := by
+  have hMapMem : MemLp id (2 : ℝ≥0∞) (gaussianReal 0 σ2) :=
+    memLp_id_gaussianReal' (μ := 0) (v := σ2) (p := 2) (by norm_num)
+  have hMapMem' : MemLp id (2 : ℝ≥0∞) (Measure.map (N i) P) := by
+    simpa [(hLaw i).map_eq] using hMapMem
+  simpa [Function.comp_def] using
+    (memLp_map_measure_iff hMapMem'.aestronglyMeasurable (hLaw i).aemeasurable).1
+      hMapMem'
+
+theorem prob_11_8_gaussian_innovation_moments {Ω : Type*} [MeasurableSpace Ω]
+    (P : Measure Ω) [IsProbabilityMeasure P]
+    (N : ℕ → Ω → ℝ) (σ2 : ℝ≥0) (hNmeas : ∀ i, Measurable (N i))
     (hLaw : ∀ i : ℕ, HasLaw (N i) (gaussianReal 0 σ2) P) :
     (∀ i : ℕ, MemLp (N i) 2 P) ∧
       (∀ i : ℕ, P[N i] = 0) ∧
-      (∀ i : ℕ, _root_.variance P (N i) = (σ2 : ℝ)) := by
-  have hNmem : ∀ i : ℕ, MemLp (N i) 2 P := by
-    intro i
-    have hMapMem : MemLp id (2 : ℝ≥0∞) (gaussianReal 0 σ2) :=
-      memLp_id_gaussianReal' (μ := 0) (v := σ2) (p := 2) (by norm_num)
-    have hMapMem' : MemLp id (2 : ℝ≥0∞) (Measure.map (N i) P) := by
-      simpa [(hLaw i).map_eq] using hMapMem
-    simpa [Function.comp_def] using
-      (memLp_map_measure_iff hMapMem'.aestronglyMeasurable (hLaw i).aemeasurable).1
-        hMapMem'
+      (∀ i : ℕ,
+        _root_.variance P (N i)
+          (FiniteAbsMoment.of_memLp (hNmeas i)
+            (prob_11_8_gaussian_innovation_memLp P N σ2 hLaw i)) = (σ2 : ℝ)) := by
+  have hNmem : ∀ i : ℕ, MemLp (N i) 2 P :=
+    prob_11_8_gaussian_innovation_memLp P N σ2 hLaw
   refine ⟨hNmem, ?_, ?_⟩
   · intro i
     have hInt := (hLaw i).integral_eq
     simpa using hInt
   · intro i
     calc
-      _root_.variance P (N i) = Var[N i; P] := by
-        exact prob_11_8_local_variance_eq P (hNmem i)
+      _root_.variance P (N i)
+          (FiniteAbsMoment.of_memLp (hNmeas i) (hNmem i)) = Var[N i; P] := by
+        exact prob_11_8_local_variance_eq P (hNmeas i) (hNmem i)
       _ = Var[id; gaussianReal 0 σ2] := by
         exact (hLaw i).variance_eq
       _ = (σ2 : ℝ) := by
@@ -129,8 +148,8 @@ theorem prob_11_8_covarianceDecaySupport_of_ar1Assumptions {Ω : Type*}
     (hAR : prob_11_8_ar1Assumptions P X N ρ σ2) :
     ∃ K : ℝ, ∃ a : ℕ → ℝ, prob_11_7_covarianceDecayAssumptions P X 0 K a := by
   rcases hAR with
-    ⟨hX0, hρ, hRec, hLaw, hNind⟩
-  rcases prob_11_8_gaussian_innovation_moments P N σ2 hLaw with
+    ⟨hX0, hρ, hRec, hNmeas, hLaw, hNind⟩
+  rcases prob_11_8_gaussian_innovation_moments P N σ2 hNmeas hLaw with
     ⟨hNmem, hNmean, hNvar⟩
   have hUnroll := prob_11_8_ar1_unroll X N ρ hX0 hRec
   have hFutureInd : ∀ i j : ℕ, i < j → ProbabilityTheory.IndepFun (X i) (N j) P := by
@@ -147,6 +166,18 @@ theorem prob_11_8_covarianceDecaySupport_of_ar1Assumptions {Ω : Type*}
     | succ i ih =>
         rw [hRec i]
         exact (ih.const_mul ρ).add (hNmem (i + 1))
+  have hXmeas : ∀ i : ℕ, Measurable (X i) := by
+    intro i
+    induction i with
+    | zero =>
+        have hX0eq : X 0 = fun _ : Ω => 0 := funext hX0
+        simp [hX0eq]
+    | succ i ih =>
+        rw [hRec i]
+        exact (measurable_const.mul ih).add (hNmeas (i + 1))
+  have hXmoment : ∀ i : ℕ,
+      FiniteAbsMoment P (X i) positiveOrderTwo.1 :=
+    fun i => FiniteAbsMoment.of_memLp (hXmeas i) (hXmem i)
   have hXmean : ∀ i : ℕ, P[X i] = 0 := by
     intro i
     induction i with
@@ -162,9 +193,13 @@ theorem prob_11_8_covarianceDecaySupport_of_ar1Assumptions {Ω : Type*}
         · exact hXiInt.const_mul ρ
         · exact hNiInt
   have hVarRec : ∀ i : ℕ,
-      _root_.variance P (X (i + 1)) =
-        ρ ^ 2 * _root_.variance P (X i) + (σ2 : ℝ) := by
+      _root_.variance P (X (i + 1))
+          (hXmoment (i + 1)) =
+        ρ ^ 2 * _root_.variance P (X i)
+          (hXmoment i) + (σ2 : ℝ) := by
     intro i
+    change ProbabilityTheory.centralMoment (X (i + 1)) 2 P =
+      ρ ^ 2 * ProbabilityTheory.centralMoment (X i) 2 P + (σ2 : ℝ)
     have hScaledMem : MemLp (fun ω => ρ * X i ω) 2 P := (hXmem i).const_mul ρ
     have hIndScaled : ProbabilityTheory.IndepFun (fun ω => ρ * X i ω) (N (i + 1)) P := by
       change ProbabilityTheory.IndepFun ((fun x : ℝ => ρ * x) ∘ X i)
@@ -172,56 +207,75 @@ theorem prob_11_8_covarianceDecaySupport_of_ar1Assumptions {Ω : Type*}
       exact (hFutureInd i (i + 1) (Nat.lt_succ_self i)).comp (by fun_prop) (by fun_prop)
     rw [hRec i]
     calc
-      _root_.variance P (fun ω => ρ * X i ω + N (i + 1) ω)
+      ProbabilityTheory.centralMoment (fun ω => ρ * X i ω + N (i + 1) ω) 2 P
           = Var[fun ω => ρ * X i ω + N (i + 1) ω; P] := by
-            exact prob_11_8_local_variance_eq P ((hScaledMem).add (hNmem (i + 1)))
+            exact ProbabilityTheory.centralMoment_two_eq_variance
+              ((hScaledMem).add (hNmem (i + 1))).aemeasurable
       _ = Var[fun ω => ρ * X i ω; P] + Var[N (i + 1); P] := by
             exact hIndScaled.variance_fun_add hScaledMem (hNmem (i + 1))
-      _ = ρ ^ 2 * _root_.variance P (X i) + (σ2 : ℝ) := by
+      _ = ρ ^ 2 * ProbabilityTheory.centralMoment (X i) 2 P + (σ2 : ℝ) := by
+            have hNvar' :
+                ProbabilityTheory.centralMoment (N (i + 1)) 2 P = (σ2 : ℝ) := by
+              simpa [_root_.variance, rthCentralMoment] using hNvar (i + 1)
             rw [ProbabilityTheory.variance_const_mul]
-            rw [← prob_11_8_local_variance_eq P (hXmem i)]
-            rw [← prob_11_8_local_variance_eq P (hNmem (i + 1))]
-            rw [hNvar (i + 1)]
+            rw [← ProbabilityTheory.centralMoment_two_eq_variance (hXmem i).aemeasurable]
+            rw [← ProbabilityTheory.centralMoment_two_eq_variance
+              (hNmem (i + 1)).aemeasurable]
+            rw [hNvar']
   have hρsq_lt : ρ ^ 2 < 1 := by
     exact (sq_lt_one_iff_abs_lt_one ρ).2 hρ
   have hden_pos : 0 < 1 - ρ ^ 2 := sub_pos.mpr hρsq_lt
   let K : ℝ := (σ2 : ℝ) / (1 - ρ ^ 2)
   have hK_nonneg : 0 ≤ K := by
     exact div_nonneg (by exact_mod_cast σ2.2) hden_pos.le
-  have hVarBound : ∀ i : ℕ, _root_.variance P (X i) ≤ K := by
+  have hVarBound : ∀ i : ℕ,
+      _root_.variance P (X i)
+        (hXmoment i) ≤ K := by
     intro i
     induction i with
     | zero =>
         have hX0eq : X 0 = fun _ : Ω => 0 := funext hX0
+        change ProbabilityTheory.centralMoment (X 0) 2 P ≤ K
         rw [hX0eq]
-        rw [prob_11_8_local_variance_eq P (memLp_const (0 : ℝ))]
+        rw [ProbabilityTheory.centralMoment_two_eq_variance aemeasurable_const]
         change Var[(0 : Ω → ℝ); P] ≤ K
         rw [ProbabilityTheory.variance_zero]
         exact hK_nonneg
     | succ i ih =>
         rw [hVarRec i]
-        have hmul : ρ ^ 2 * _root_.variance P (X i) ≤ ρ ^ 2 * K :=
+        have hmul : ρ ^ 2 * _root_.variance P (X i)
+            (hXmoment i) ≤ ρ ^ 2 * K :=
           mul_le_mul_of_nonneg_left ih (sq_nonneg ρ)
         have hcalc : ρ ^ 2 * K + (σ2 : ℝ) = K := by
           dsimp [K]
           field_simp [K, hden_pos.ne']
           ring
         nlinarith
-  have hVarStep : ∀ i : ℕ, _root_.variance P (X i) ≤ _root_.variance P (X (i + 1)) := by
+  have hVarStep : ∀ i : ℕ,
+      _root_.variance P (X i)
+          (hXmoment i) ≤
+        _root_.variance P (X (i + 1))
+          (hXmoment (i + 1)) := by
     intro i
     rw [hVarRec i]
     have hleK := hVarBound i
-    have hnonneg : 0 ≤ _root_.variance P (X i) := by
-      rw [prob_11_8_local_variance_eq P (hXmem i)]
+    have hnonneg : 0 ≤ _root_.variance P (X i)
+        (hXmoment i) := by
+      rw [prob_11_8_local_variance_eq P (hXmeas i) (hXmem i)]
       exact ProbabilityTheory.variance_nonneg (X i) P
-    have hmain : (1 - ρ ^ 2) * _root_.variance P (X i) ≤ (σ2 : ℝ) := by
+    have hmain : (1 - ρ ^ 2) * _root_.variance P (X i)
+        (hXmoment i) ≤ (σ2 : ℝ) := by
       have hmul := mul_le_mul_of_nonneg_left hleK hden_pos.le
       have hKcalc : (1 - ρ ^ 2) * K = (σ2 : ℝ) := by
         dsimp [K]
         field_simp [K, hden_pos.ne']
       simpa [hKcalc] using hmul
     nlinarith [sq_nonneg ρ]
-  have hVarMono : ∀ i τ : ℕ, _root_.variance P (X i) ≤ _root_.variance P (X (i + τ)) := by
+  have hVarMono : ∀ i τ : ℕ,
+      _root_.variance P (X i)
+          (hXmoment i) ≤
+        _root_.variance P (X (i + τ))
+          (hXmoment (i + τ)) := by
     intro i τ
     induction τ with
     | zero => simp
@@ -229,13 +283,14 @@ theorem prob_11_8_covarianceDecaySupport_of_ar1Assumptions {Ω : Type*}
         exact ih.trans (by simpa [Nat.add_assoc] using hVarStep (i + τ))
   have hCovRec : ∀ i τ : ℕ,
       Covariance P (X i) (X (i + τ)) =
-        ρ ^ τ * _root_.variance P (X i) := by
+        ρ ^ τ * _root_.variance P (X i)
+          (hXmoment i) := by
     intro i τ
     induction τ with
     | zero =>
         rw [Nat.add_zero]
         rw [Covariance, ProbabilityTheory.covariance_self (hXmem i).aemeasurable]
-        rw [← prob_11_8_local_variance_eq P (hXmem i)]
+        rw [← prob_11_8_local_variance_eq P (hXmeas i) (hXmem i)]
         ring
     | succ τ ih =>
         have hIdx : i + Nat.succ τ = (i + τ) + 1 := by omega
@@ -259,37 +314,52 @@ theorem prob_11_8_covarianceDecaySupport_of_ar1Assumptions {Ω : Type*}
                         Covariance P (X i) (N ((i + τ) + 1)) =
                       ρ * Covariance P (X i) (X (i + τ)) + 0
                     rw [hCovNoise]
-          _ = ρ ^ Nat.succ τ * _root_.variance P (X i) := by
+          _ = ρ ^ Nat.succ τ * _root_.variance P (X i)
+              (hXmoment i) := by
                     rw [ih]
                     rw [pow_succ]
                     ring
   refine ⟨K, fun τ : ℕ => |ρ| ^ τ, ?_⟩
-  refine ⟨hK_nonneg, hXmem, ?_, ?_, hXmean, hVarBound, ?_⟩
+  refine ⟨hK_nonneg, hXmoment, ?_, ?_, ?_, hXmean, hVarBound, ?_⟩
   · intro τ
     exact ⟨pow_nonneg (abs_nonneg ρ) τ,
       pow_le_one₀ (abs_nonneg ρ) (le_of_lt hρ)⟩
+  · apply antitone_nat_of_succ_le
+    intro τ
+    rw [pow_succ]
+    exact mul_le_of_le_one_right (pow_nonneg (abs_nonneg ρ) τ) (le_of_lt hρ)
   · have hAbsAbs : |(|ρ|)| < 1 := by
       simpa [abs_of_nonneg (abs_nonneg ρ)] using hρ
     exact tendsto_pow_atTop_nhds_zero_of_abs_lt_one hAbsAbs
   · intro i τ hτ
     rw [hCovRec i τ]
-    have hvi_nonneg : 0 ≤ _root_.variance P (X i) := by
-      rw [prob_11_8_local_variance_eq P (hXmem i)]
+    have hvi_nonneg : 0 ≤ _root_.variance P (X i)
+        (hXmoment i) := by
+      rw [prob_11_8_local_variance_eq P (hXmeas i) (hXmem i)]
       exact ProbabilityTheory.variance_nonneg (X i) P
-    have hvj_nonneg : 0 ≤ _root_.variance P (X (i + τ)) := by
-      rw [prob_11_8_local_variance_eq P (hXmem (i + τ))]
+    have hvj_nonneg : 0 ≤ _root_.variance P (X (i + τ))
+        (hXmoment (i + τ)) := by
+      rw [prob_11_8_local_variance_eq P
+        (hXmeas (i + τ)) (hXmem (i + τ))]
       exact ProbabilityTheory.variance_nonneg (X (i + τ)) P
     have hpow_le_abs : ρ ^ τ ≤ |ρ| ^ τ := by
       calc
         ρ ^ τ ≤ |ρ ^ τ| := le_abs_self _
         _ = |ρ| ^ τ := by rw [abs_pow]
     have hleft :
-        ρ ^ τ * _root_.variance P (X i) ≤
-          |ρ| ^ τ * _root_.variance P (X i) :=
+        ρ ^ τ * _root_.variance P (X i)
+            (hXmoment i) ≤
+          |ρ| ^ τ * _root_.variance P (X i)
+            (hXmoment i) :=
       mul_le_mul_of_nonneg_right hpow_le_abs hvi_nonneg
     have hsqrt :
-        _root_.variance P (X i) ≤
-          Real.sqrt (_root_.variance P (X i) * _root_.variance P (X (i + τ))) := by
+        _root_.variance P (X i)
+            (hXmoment i) ≤
+          Real.sqrt
+            (_root_.variance P (X i)
+                (hXmoment i) *
+              _root_.variance P (X (i + τ))
+                (hXmoment (i + τ))) := by
       have hmono := hVarMono i τ
       rw [Real.le_sqrt hvi_nonneg (mul_nonneg hvi_nonneg hvj_nonneg)]
       nlinarith

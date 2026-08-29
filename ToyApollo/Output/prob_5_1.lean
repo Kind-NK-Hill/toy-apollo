@@ -31,8 +31,10 @@ theorem prob_5_1 {Ω : Type} [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilit
         congr with z
         exact h_factor z
       _ = μg.prod μh := by
+        rw [Measure.volume_eq_prod]
         simpa [μg, μh] using
-          (prod_withDensity₀ (μ := volume) (ν := volume) hg.aemeasurable hh.aemeasurable).symm
+          (prod_withDensity₀ (μ := volume) (ν := volume)
+            hg.aemeasurable hh.aemeasurable).symm
   have h_mapX : Measure.map X P = μh Set.univ • μg := by
     have h_map :
         Measure.map X P = Measure.map Prod.fst (Measure.map (fun ω => (X ω, Y ω)) P) := by

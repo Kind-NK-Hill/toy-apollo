@@ -83,7 +83,8 @@ theorem prob_11_9_occupancy_moment_calculation_internal
     field_simp [hbne]
   have hInv :
       Tendsto (fun n : ℕ => (1 : ℝ) / (boxes n : ℝ)) atTop (nhds 0) := by
-    simpa [one_div] using hboxes.inv_tendsto_atTop
+    refine hboxes.inv_tendsto_atTop.congr' ?_
+    exact Eventually.of_forall (fun _ => by simp [one_div])
   have hTerm1 :
       Tendsto (fun n : ℕ => p1 n / (boxes n : ℝ)) atTop (nhds 0) := by
     exact hp1.div_atTop hboxes

@@ -94,7 +94,23 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(args.phase2_mode, "review-fix")
         self.assertTrue(args.abandon_current_repair)
 
-    def test_cli_debt_fix_mode_is_accepted(self):
+    def test_cli_rejects_removed_review_support_and_debt_fix_modes(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        for mode in ("review-support", "debt-fix"):
+            with self.subTest(mode=mode), patch.object(
+                sys,
+                "argv",
+                ["toy-apollo", "--phase", "2", "--phase2-mode", mode, "--tasks", "thm_4_7"],
+            ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock, self.assertRaises(
+                SystemExit
+            ) as caught:
+                cli_app.main()
+
+            self.assertEqual(caught.exception.code, 2)
+            process_target_mock.assert_not_awaited()
+
+    def test_cli_rejects_removed_support_review_subject(self):
         from src.toy_apollo.cli import app as cli_app
 
         with patch.object(
@@ -105,17 +121,19 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 "--phase",
                 "2",
                 "--phase2-mode",
-                "debt-fix",
+                "review-now",
                 "--tasks",
-                "thm_4_cli_debt_fix",
+                "thm_4_7",
+                "--review-subject",
+                "support",
             ],
-        ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock:
-            code = cli_app.main()
+        ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock, self.assertRaises(
+            SystemExit
+        ) as caught:
+            cli_app.main()
 
-        self.assertEqual(code, 0)
-        process_target_mock.assert_awaited_once()
-        args = process_target_mock.await_args.args[0]
-        self.assertEqual(args.phase2_mode, "debt-fix")
+        self.assertEqual(caught.exception.code, 2)
+        process_target_mock.assert_not_awaited()
 
     def test_cli_promote_obligations_mode_is_rejected(self):
         from src.toy_apollo.cli import app as cli_app
@@ -374,53 +392,34 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             cli_app.main()
         self.assertEqual(caught.exception.code, 2)
 
-    def test_cli_phase3_soft_modes_are_deprecated_and_unavailable(self):
+    def test_cli_rejects_removed_phase3_and_phase4(self):
         from src.toy_apollo.cli import app as cli_app
 
-        stderr = io.StringIO()
-        with patch.object(
-            sys,
-            "argv",
-            [
-                "toy-apollo",
-                "--phase",
-                "3",
-                "--phase3-mode",
-                "soft-pack",
-                "--tasks",
-                "prob_4_2",
-            ],
-        ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock, redirect_stderr(
-            stderr
-        ), self.assertRaises(SystemExit) as caught:
-            cli_app.main()
+        for phase in ("3", "4"):
+            with self.subTest(phase=phase), patch.object(
+                sys,
+                "argv",
+                ["toy-apollo", "--phase", phase],
+            ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock, self.assertRaises(
+                SystemExit
+            ) as caught:
+                cli_app.main()
 
-        self.assertEqual(caught.exception.code, 2)
-        message = stderr.getvalue()
-        self.assertIn("deprecated", message)
-        self.assertIn("migrated", message)
-        self.assertIn("--phase 2 --phase2-mode soft-pack", message)
-        self.assertIn("--phase 2 --phase2-mode soft-apply", message)
-        process_target_mock.assert_not_awaited()
+            self.assertEqual(caught.exception.code, 2)
+            process_target_mock.assert_not_awaited()
 
-    def test_cli_phase4_is_unavailable_and_never_runs_process_target(self):
+    def test_cli_rejects_removed_audit_and_verify_modes(self):
         from src.toy_apollo.cli import app as cli_app
 
-        stderr = io.StringIO()
-        with patch.object(sys, "argv", ["toy-apollo", "--phase", "4"]), patch.object(
-            cli_app,
-            "process_target",
-            new=AsyncMock(),
-        ) as process_target_mock, redirect_stderr(stderr), self.assertRaises(SystemExit) as caught:
-            cli_app.main()
+        for mode in ("audit", "verify"):
+            with self.subTest(mode=mode), patch.object(
+                sys,
+                "argv",
+                ["toy-apollo", "--phase", "2", "--phase2-mode", mode, "--tasks", "thm_4_7"],
+            ), self.assertRaises(SystemExit) as caught:
+                cli_app.main()
 
-        self.assertEqual(caught.exception.code, 2)
-        message = stderr.getvalue()
-        self.assertIn("Phase 4 is unavailable", message)
-        self.assertIn("review-apply", message)
-        self.assertNotIn("manual", message.lower())
-        self.assertNotIn("update ledger", message.lower())
-        process_target_mock.assert_not_awaited()
+            self.assertEqual(caught.exception.code, 2)
 
     def test_status_reports_default_source_and_does_not_create_missing_roots(self):
         from src.toy_apollo.cli import app as cli_app
@@ -520,6 +519,46 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertFalse(settings.dependency_decisions_dir.exists())
             process_target_mock.assert_not_awaited()
 
+    def test_status_reports_active_sqlite_campaign_when_legacy_json_is_absent(self):
+        from src.toy_apollo.cli import app as cli_app
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "runtime"
+            settings = replace(
+                self._make_settings(root, root / "plans"),
+                state_db_file=root / "state.sqlite3",
+            )
+            fake_store = type(
+                "FakeStore",
+                (),
+                {
+                    "exists": True,
+                    "summary": lambda self: {
+                        "schema_version": 1,
+                        "subjects": 3,
+                        "reviews": 2,
+                        "task_heads": 3,
+                    },
+                },
+            )()
+            fake_ledger = type("FakeLedger", (), {"ledger": {"tasks": {"def_1": {}, "def_2": {}}}})()
+            stdout = io.StringIO()
+
+            with patch(
+                "src.toy_apollo.state_store.WorkspaceStateStore",
+                return_value=fake_store,
+            ), patch(
+                "src.toy_apollo.core.open_runtime_ledger",
+                return_value=fake_ledger,
+            ), redirect_stdout(stdout):
+                cli_app.print_read_only_status(settings)
+
+            output = stdout.getvalue()
+            self.assertIn("CAMPAIGN_LEDGER_STATUS=loaded_read_only", output)
+            self.assertIn("CAMPAIGN_LEDGER_TASKS=2", output)
+            self.assertIn("LEGACY_LEDGER_STATUS=missing_not_created", output)
+            self.assertIn("LEDGER_STATUS=active_sqlite_campaign", output)
+
     def test_status_rejects_operational_arguments_before_loading_settings(self):
         from src.toy_apollo.cli import app as cli_app
 
@@ -539,7 +578,7 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         get_settings_mock.assert_not_called()
         process_target_mock.assert_not_awaited()
 
-    def test_cli_phase3_mode_flag_is_not_valid_with_phase2(self):
+    def test_cli_rejects_removed_phase3_mode_flag(self):
         from src.toy_apollo.cli import app as cli_app
 
         with patch.object(
@@ -592,6 +631,67 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             cli_app.main()
         self.assertEqual(caught.exception.code, 2)
 
+    def test_process_target_batch_plan_opens_read_only_and_creates_no_directories(self):
+        from src.toy_apollo.cli import app as cli_app
+        from src.toy_apollo.core.settings import Settings
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            runtime = root / "runtime"
+            artifact = root / "artifacts"
+            settings = Settings(
+                runtime_root=runtime,
+                artifact_root=artifact,
+                plans_dir=artifact / "plans",
+                reports_dir=artifact / "reports",
+                formalized_chapters_dir=artifact / "formalized_chapters",
+                output_lean_files_dir=artifact / "output_lean_files",
+                phase2_prompt_packs_dir=artifact / "phase2_prompt_packs",
+                phase2_softdep_packs_dir=artifact / "phase2_softdep_packs",
+                error_logs_dir=artifact / "error_logs",
+                toyapollo_output_dir=runtime / "ToyApollo" / "Output",
+                aristotle_outbox_dir=artifact / "aristotle_outbox",
+                aristotle_archives_dir=artifact / "aristotle_archives",
+                mathlib_index_file=artifact / "mathlib_index.faiss",
+                mathlib_corpus_file=artifact / "mathlib_corpus.json",
+                project_ledger_file=artifact / "project_ledger.json",
+                lab_notebook_file=artifact / "lab_notebook.json",
+                mathlib_path=runtime / ".lake" / "packages" / "mathlib" / "Mathlib",
+                phase0_ingestion_packs_dir=artifact / "phase0_ingestion_packs",
+                phase1_prompt_packs_dir=artifact / "phase1_prompt_packs",
+                dependency_decisions_dir=artifact / "dependency_decisions",
+                workspace_root=root,
+                state_db_file=root / "state.sqlite3",
+            )
+            ledger = type("FakeLedger", (), {"ledger": {"tasks": {}}})()
+            args = argparse.Namespace(
+                phase=2,
+                input="",
+                tasks="def_5_1",
+                task_ids=["def_5_1"],
+                phase2_mode="batch-plan",
+                batch_task_kinds=[],
+                batch_limit=0,
+                batch_workers=0,
+                batch_include_legacy=False,
+            )
+
+            with patch.object(cli_app, "get_settings", return_value=settings), patch(
+                "src.toy_apollo.core.open_runtime_ledger",
+                return_value=ledger,
+            ) as open_ledger, patch(
+                "src.toy_apollo.phase2_batch_runner.plan_batch_from_ledger",
+                return_value=object(),
+            ), patch(
+                "src.toy_apollo.phase2_batch_runner.render_batch_runner_plan",
+                return_value="# plan\n",
+            ), patch("builtins.print"):
+                asyncio.run(cli_app.process_target(args))
+
+            open_ledger.assert_called_once_with(settings, read_only=True)
+            self.assertFalse(runtime.exists())
+            self.assertFalse(artifact.exists())
+
     def test_process_target_review_now_prints_request_ready_banner(self):
         from src.toy_apollo.cli import app as cli_app
 
@@ -606,7 +706,6 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 tasks=task_id,
                 task_ids=[task_id],
                 phase2_mode="review-now",
-                phase3_mode="soft-pack",
                 candidate="",
                 review_result="",
                 review_subject="current",
@@ -649,7 +748,6 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 tasks=task_id,
                 task_ids=[task_id],
                 phase2_mode="review-now",
-                phase3_mode="soft-pack",
                 candidate="",
                 review_result="",
                 review_subject="existing",
@@ -690,7 +788,6 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 tasks=task_id,
                 task_ids=[task_id],
                 phase2_mode="auto-loop",
-                phase3_mode="soft-pack",
                 candidate="",
                 review_result="",
                 review_subject="current",
@@ -732,7 +829,6 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 tasks=f"{task_id},thm_4_cli_auto_loop_other",
                 task_ids=[task_id, "thm_4_cli_auto_loop_other"],
                 phase2_mode="auto-loop",
-                phase3_mode="soft-pack",
                 candidate="",
                 review_result="",
                 review_subject="current",
@@ -757,7 +853,6 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             auto_loop_mock.assert_not_awaited()
             printed = " ".join(" ".join(str(item) for item in call.args) for call in print_mock.call_args_list)
             self.assertIn("exactly one task", printed.lower())
-            self.assertIn("auto-loop", printed.lower())
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

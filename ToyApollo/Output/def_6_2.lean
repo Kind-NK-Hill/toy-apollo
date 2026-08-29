@@ -248,11 +248,20 @@ theorem indicatorRepresentationIntegral_succ (μ : Measure Ω)
             (indicatorRepresentationSummand (Ω := Ω) (n + 1) b B 0)
             (indicatorRepresentationSimpleFunction (Ω := Ω) n (fun i => b i.succ) (fun i => B i.succ))
       | none => none := by
-  simpa [indicatorRepresentationIntegral, indicatorRepresentationSimpleFunction,
-    indicatorRepresentationSummand] using
-    (simpleFunctionIntegralFinChain_succ
-      (μ := μ) (n := n)
-      (F := indicatorRepresentationSummand (Ω := Ω) (n + 1) b B))
+  change
+    simpleFunctionIntegralFinChain μ (n + 1)
+        (indicatorRepresentationSummand (Ω := Ω) (n + 1) b B) =
+      match
+        simpleFunctionIntegralFinChain μ n
+          (fun i => indicatorRepresentationSummand (Ω := Ω) (n + 1) b B i.succ) with
+      | some _ =>
+          simpleFunctionIntegralAdd μ
+            (indicatorRepresentationSummand (Ω := Ω) (n + 1) b B 0)
+            (∑ i : Fin n, indicatorRepresentationSummand (Ω := Ω) (n + 1) b B i.succ)
+      | none => none
+  exact simpleFunctionIntegralFinChain_succ
+    (μ := μ) (n := n)
+    (F := indicatorRepresentationSummand (Ω := Ω) (n + 1) b B)
 
 theorem indicatorRepresentationIntegralChain_succ (μ : Measure Ω)
     (n : ℕ) (b : Fin (n + 1) → EReal) (B : Fin (n + 1) → Set Ω) :

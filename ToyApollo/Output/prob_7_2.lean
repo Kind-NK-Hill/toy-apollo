@@ -80,11 +80,18 @@ lemma boxMullerMap_injOn : InjOn boxMullerMap (Ioo 0 1 ×ˢ Ioo 0 1) := by
 
 lemma boxMullerMap_differentiableAt {p : ℝ × ℝ} (hp : p ∈ Ioo 0 1 ×ˢ Ioo (0:ℝ) 1) :
     DifferentiableAt ℝ boxMullerMap p := by
-      apply_rules [ DifferentiableAt.prodMk, DifferentiableAt.mul, DifferentiableAt.sqrt, DifferentiableAt.log ] <;> norm_num;
-      · linarith [ hp.1.1, hp.1.2 ];
-      · grind;
-      · linarith [ hp.1.1, hp.1.2 ];
-      · exact ⟨ ne_of_gt hp.1.1, ne_of_lt hp.1.2, by linarith [ hp.1.1, hp.1.2 ] ⟩
+  have hlog : DifferentiableAt ℝ (fun q : ℝ × ℝ => Real.log q.1) p :=
+    differentiableAt_fst.log (ne_of_gt hp.1.1)
+  have hsqrt :
+      DifferentiableAt ℝ (fun q : ℝ × ℝ => Real.sqrt (-2 * Real.log q.1)) p := by
+    apply DifferentiableAt.sqrt
+    · exact hlog.const_mul (-2)
+    · have hlogneg : Real.log p.1 < 0 := Real.log_neg hp.1.1 hp.1.2
+      nlinarith
+  have hangle : DifferentiableAt ℝ (fun q : ℝ × ℝ => 2 * π * q.2) p :=
+    differentiableAt_snd.const_mul (2 * π)
+  unfold boxMullerMap
+  exact DifferentiableAt.prodMk (hsqrt.mul hangle.cos) (hsqrt.mul hangle.sin)
 
 lemma boxMullerMap_abs_det {p : ℝ × ℝ} (hp : p ∈ Ioo 0 1 ×ˢ Ioo (0:ℝ) 1) :
     |(fderiv ℝ boxMullerMap p).det| = 2 * π / p.1 := by

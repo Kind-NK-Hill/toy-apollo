@@ -41,7 +41,9 @@ theorem prob_14_12_variable_tailExpectation_eq_law_tailExpectation
     exact (ENNReal.measurable_ofReal.comp measurable_abs).indicator hset
   have hmap := MeasureTheory.lintegral_map (μ := μ) (f := f) (g := X) hf hX
   simpa [prob_14_12_tailExpectation, prob_14_12_variableTailExpectation, f,
-    Function.comp_def, ProbabilityMeasure.map, Set.indicator] using hmap
+    prob_14_12_obligation_5_geTailExpectation,
+    prob_14_12_obligation_5_geTailIntegrand, Function.comp_def,
+    ProbabilityMeasure.map, Set.indicator] using hmap
 
 theorem prob_14_12_variable_ui_to_law_ui_of_distributions
     {Ω : Type*} [MeasurableSpace Ω]
@@ -109,8 +111,8 @@ theorem prob_14_12_tailMeasure_le_tailExpectation
   have hmeasure_eq :
       (∫⁻ x, Set.indicator s (fun _ : ℝ => (1 : ℝ≥0∞)) x ∂(P : Measure ℝ)) =
         (P : Measure ℝ) s := by
-    simpa using
-      (MeasureTheory.lintegral_indicator_one (μ := (P : Measure ℝ)) hs)
+    change (∫⁻ x, s.indicator (1 : ℝ → ℝ≥0∞) x ∂(P : Measure ℝ)) = _
+    exact MeasureTheory.lintegral_indicator_one (μ := (P : Measure ℝ)) hs
   rw [hmeasure_eq] at hmono
   simpa [prob_14_12_tailExpectation, s] using hmono
 

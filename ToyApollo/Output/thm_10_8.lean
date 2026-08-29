@@ -28,15 +28,18 @@ def SkorokhodRepresentation {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
       Measure.map Y ν = Measure.map X μ
 
 structure SkorokhodQuantileSupport {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    [IsProbabilityMeasure μ]
     (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ)
-    (_hDist : RandomVariablesConvergeInDistribution μ Xn X) where
+    (_hDist :
+      RandomVariablesConvergeInDistribution (fun _ : ℕ => μ) Xn μ X) where
   target_seq_isProbability : ∀ n : ℕ, IsProbabilityMeasure (Measure.map (Xn n) μ)
   target_isProbability : IsProbabilityMeasure (Measure.map X μ)
 
 theorem mkSkorokhodQuantileSupport {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ)
-    (hDist : RandomVariablesConvergeInDistribution μ Xn X)
+    (hDist :
+      RandomVariablesConvergeInDistribution (fun _ : ℕ => μ) Xn μ X)
     (hXn : ∀ n : ℕ, AEMeasurable (Xn n) μ)
     (hX : AEMeasurable X μ) :
     SkorokhodQuantileSupport μ Xn X hDist where
@@ -47,46 +50,55 @@ theorem mkSkorokhodQuantileSupport {Ω : Type*} [MeasurableSpace Ω]
 theorem thm_10_8 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     [IsProbabilityMeasure μ]
     (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ)
-    (hDist : RandomVariablesConvergeInDistribution μ Xn X)
+    (hDist :
+      RandomVariablesConvergeInDistribution (fun _ : ℕ => μ) Xn μ X)
     (hXn : ∀ n : ℕ, AEMeasurable (Xn n) μ)
     (hX : AEMeasurable X μ) :
     SkorokhodRepresentation μ Xn X := by
   let h_quantile_support :=
     mkSkorokhodQuantileSupport μ Xn X hDist hXn hX
   have hCdfConv :
-      CdfConvergesInDistribution
-        (fun n x =>
-          (thm_10_8_probabilityCdfOfMeasure
-            (Measure.map (Xn n) μ)).stieltjes x)
-        ((thm_10_8_probabilityCdfOfMeasure
-          (Measure.map X μ)).stieltjes : ℝ → ℝ) := by
+      ∀ x : ℝ,
+        ContinuousAt
+          ((thm_10_8_probabilityCdfOfMeasure
+            (Measure.map X μ)).stieltjes : ℝ → ℝ) x →
+        Tendsto
+          (fun n : ℕ =>
+            (thm_10_8_probabilityCdfOfMeasure
+              (Measure.map (Xn n) μ)).stieltjes x)
+          atTop
+          (𝓝
+            ((thm_10_8_probabilityCdfOfMeasure
+              (Measure.map X μ)).stieltjes x)) := by
     haveI hTarget : IsProbabilityMeasure (Measure.map X μ) :=
       h_quantile_support.target_isProbability
     haveI hSeq (n : ℕ) : IsProbabilityMeasure (Measure.map (Xn n) μ) :=
       h_quantile_support.target_seq_isProbability n
-    have hDistCdf :
-        CdfConvergesInDistribution
-          (fun n x => measureCdf (Measure.map (Xn n) μ) x)
-          (measureCdf (Measure.map X μ)) := by
-      simpa [RandomVariablesConvergeInDistribution,
-        MeasuresConvergeInDistribution] using hDist
+    let Pseq : ℕ → ProbabilityMeasure ℝ := fun n =>
+      ⟨Measure.map (Xn n) μ, h_quantile_support.target_seq_isProbability n⟩
+    let P : ProbabilityMeasure ℝ :=
+      ⟨Measure.map X μ, h_quantile_support.target_isProbability⟩
+    have hWeak : MeasuresConvergeInDistribution Pseq P := by
+      simpa [MeasuresConvergeInDistribution, Pseq, P] using hDist.tendsto
+    have hDistCdf : CdfConvergesInDistribution Pseq P :=
+      (measuresConvergeInDistribution_iff_cdf Pseq P).1 hWeak
     intro x hcont
     have hcont_measure :
-        ContinuousAt (measureCdf (Measure.map X μ)) x := by
+        ContinuousAt (measureCdf P) x := by
       have hfun :
-          (fun y : ℝ => measureCdf (Measure.map X μ) y) =
+          (fun y : ℝ => measureCdf P y) =
             (fun y : ℝ =>
               (thm_10_8_probabilityCdfOfMeasure
                 (Measure.map X μ)).stieltjes y) := by
         funext y
-        simp [measureCdf, thm_10_8_probabilityCdfOfMeasure,
+        simp [P, measureCdf, thm_10_8_probabilityCdfOfMeasure,
           ProbabilityTheory.cdf_eq_real]
       change ContinuousAt
-        (fun y : ℝ => measureCdf (Measure.map X μ) y) x
+        (fun y : ℝ => measureCdf P y) x
       rw [hfun]
       exact hcont
     have htendsto := hDistCdf x hcont_measure
-    simpa [measureCdf, thm_10_8_probabilityCdfOfMeasure,
+    simpa [Pseq, P, measureCdf, thm_10_8_probabilityCdfOfMeasure,
       ProbabilityTheory.cdf_eq_real] using htendsto
   have hAlmostSure :
       ∀ᵐ ω ∂thm_10_8_unitIntervalMeasure,

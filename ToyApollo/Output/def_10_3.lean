@@ -17,7 +17,10 @@ noncomputable def meanDeviationMoment {Ω : Type*} [MeasurableSpace Ω] (μ : Me
 
 noncomputable def ConvergesInRthMean {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ) (r : ℝ) : Prop :=
-  1 ≤ r ∧ Tendsto (fun n : ℕ => meanDeviationMoment μ Xn X r n) atTop (nhds 0)
+  (∀ n : ℕ, AEStronglyMeasurable (Xn n) μ) ∧
+    AEStronglyMeasurable X μ ∧
+      1 ≤ r ∧
+        Tendsto (fun n : ℕ => meanDeviationMoment μ Xn X r n) atTop (nhds 0)
 
 noncomputable def ConvergesInMean {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ) : Prop :=

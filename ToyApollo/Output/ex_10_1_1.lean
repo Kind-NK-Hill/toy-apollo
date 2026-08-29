@@ -30,11 +30,13 @@ theorem ex_10_1_1_harmonic_ennreal_tsum :
   simpa using htop
 
 theorem ex_10_1_1_convergesInProbability {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) (Xn : ℕ → Ω → ℝ)
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (Xn : ℕ → Ω → ℝ)
+    (hXn : ∀ n : ℕ, Measurable (Xn n))
     (h_binary : ∀ n : ℕ, ∀ ω : Ω, Xn n ω = 0 ∨ Xn n ω = 1)
     (h_prob_one :
       ∀ n : ℕ, μ {ω : Ω | Xn n ω = 1} = ((n.succ : ℝ≥0∞)⁻¹)) :
     ConvergesInProbability μ Xn (fun _ => 0) := by
+  refine ⟨hXn, measurable_const, ?_⟩
   intro ε hε
   have hmodel :
       Tendsto (fun n : ℕ => ((n.succ : ℝ≥0∞)⁻¹)) atTop (nhds 0) := by
@@ -59,7 +61,7 @@ theorem ex_10_1_1_convergesInProbability {Ω : Type*} [MeasurableSpace Ω]
     · exact hone
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le'
     tendsto_const_nhds hsuccess
-    (Eventually.of_forall fun n => zero_le _)
+    (Eventually.of_forall fun _ => zero_le)
     (Eventually.of_forall hle)
 
 theorem ex_10_1_1_limsup_one {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
@@ -98,7 +100,7 @@ theorem ex_10_1_1_not_convergesAlmostSurely_of_limsup_one {Ω : Type*}
   intro hAS
   have hbad_zero :
       μ {ω : Ω | ¬ Tendsto (fun n : ℕ => Xn n ω) atTop (nhds (0 : ℝ))} = 0 :=
-    ae_iff.1 hAS
+    ae_iff.1 hAS.2.2
   have hio_zero :
       μ (limsup (fun n : ℕ => {ω : Ω | Xn n ω = 1}) atTop) = 0 :=
     MeasureTheory.measure_mono_null
@@ -108,6 +110,7 @@ theorem ex_10_1_1_not_convergesAlmostSurely_of_limsup_one {Ω : Type*}
 
 theorem ex_10_1_1 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     [IsProbabilityMeasure μ] (Xn : ℕ → Ω → ℝ)
+    (hXn : ∀ n : ℕ, Measurable (Xn n))
     (h_binary : ∀ n : ℕ, ∀ ω : Ω, Xn n ω = 0 ∨ Xn n ω = 1)
     (h_meas_one : ∀ n : ℕ, MeasurableSet {ω : Ω | Xn n ω = 1})
     (h_indep_one : ProbabilityTheory.iIndepSet (fun n : ℕ => {ω : Ω | Xn n ω = 1}) μ)
@@ -119,7 +122,7 @@ theorem ex_10_1_1 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
       ¬ ConvergesAlmostSurely μ Xn (fun _ => 0) := by
   have _source_zero_mass := h_prob_zero
   have h_in_prob : ConvergesInProbability μ Xn (fun _ => 0) :=
-    ex_10_1_1_convergesInProbability μ Xn h_binary h_prob_one
+    ex_10_1_1_convergesInProbability μ Xn hXn h_binary h_prob_one
   have h_limsup_one :
       μ (limsup (fun n : ℕ => {ω : Ω | Xn n ω = 1}) atTop) = 1 :=
     ex_10_1_1_limsup_one μ Xn h_meas_one h_indep_one h_prob_one

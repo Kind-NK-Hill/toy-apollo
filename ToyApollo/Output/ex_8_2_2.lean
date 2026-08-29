@@ -27,15 +27,19 @@ lemma ex822_denom_ne_zero_y {x y : ℝ} (hx : x ≠ 0) : x ^ 2 + y ^ 2 ≠ 0 := 
 lemma ex822_hasDerivAt_x (y x : ℝ) (hy : y ≠ 0) :
     HasDerivAt (fun u : ℝ => -u / (u ^ 2 + y ^ 2)) (ex822Integrand x y) x := by
   have hnum : HasDerivAt (fun u : ℝ => -u) (-1) x := by
-    simpa using (hasDerivAt_id x).neg
+    exact hasDerivAt_neg x
   have hden : HasDerivAt (fun u : ℝ => u ^ 2 + y ^ 2) (2 * x) x := by
     simpa [pow_two, two_mul, add_comm, add_left_comm, add_assoc] using
       ((hasDerivAt_id x).pow 2).add_const (y ^ 2)
   have hneq : x ^ 2 + y ^ 2 ≠ 0 := ex822_denom_ne_zero_x hy
-  convert hnum.div hden hneq using 1
-  · unfold ex822Integrand
+  have hcoef :
+      ((-1 : ℝ) * (x ^ 2 + y ^ 2) - (-x) * (2 * x)) /
+          (x ^ 2 + y ^ 2) ^ 2 = ex822Integrand x y := by
+    unfold ex822Integrand
     field_simp [hneq]
-    ring_nf
+    ring
+  rw [← hcoef]
+  exact hnum.div hden hneq
 
 lemma ex822_hasDerivAt_y (x y : ℝ) (hx : x ≠ 0) :
     HasDerivAt (fun u : ℝ => u / (x ^ 2 + u ^ 2)) (ex822Integrand x y) y := by
@@ -44,10 +48,14 @@ lemma ex822_hasDerivAt_y (x y : ℝ) (hx : x ≠ 0) :
     simpa [pow_two, two_mul, add_comm, add_left_comm, add_assoc] using
       (hasDerivAt_id y).pow 2 |>.const_add (x ^ 2)
   have hneq : x ^ 2 + y ^ 2 ≠ 0 := ex822_denom_ne_zero_y hx
-  convert hnum.div hden hneq using 1
-  · unfold ex822Integrand
+  have hcoef :
+      ((1 : ℝ) * (x ^ 2 + y ^ 2) - y * (2 * y)) /
+          (x ^ 2 + y ^ 2) ^ 2 = ex822Integrand x y := by
+    unfold ex822Integrand
     field_simp [hneq]
-    ring_nf
+    ring
+  rw [← hcoef]
+  exact hnum.div hden hneq
 
 lemma ex822_continuous_x (y : ℝ) (hy : y ≠ 0) :
     Continuous fun x : ℝ => ex822Integrand x y := by

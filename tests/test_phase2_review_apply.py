@@ -592,6 +592,49 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_codex_review_apply_rejects_direct_downstream_output_drift(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_downstream_drift"
+        try:
+            self._clean_root(root)
+            task_id = "def_8_review_apply_downstream_drift"
+            consumer_id = "thm_8_review_apply_downstream_drift_consumer"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
+            self._append_direct_downstream_consumer(settings.plans_dir, task_id, consumer_id)
+            consumer_path = settings.toyapollo_output_dir / f"{consumer_id}.lean"
+            consumer_path.parent.mkdir(parents=True, exist_ok=True)
+            consumer_path.write_text(
+                "import Mathlib\n\n"
+                f"theorem {consumer_id} : True := by\n"
+                "  trivial\n",
+                encoding="utf-8",
+            )
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            result_path = self._write_codex_review_result(pack_dir, verdict="pass")
+            consumer_path.write_text(
+                "import Mathlib\n\n"
+                f"theorem {consumer_id} : True := by\n"
+                "  exact True.intro\n",
+                encoding="utf-8",
+            )
+
+            with patch(
+                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                return_value=(True, "final build ok"),
+            ) as final_build:
+                success, detail = asyncio.run(
+                    apply_codex_review_result(task_id, ledger, settings, str(result_path))
+                )
+
+            self.assertFalse(success)
+            self.assertIn("basis changed", detail.lower())
+            self.assertFalse(output_path.exists())
+            final_build.assert_not_called()
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_promoted_candidate_replay_does_not_accept_matching_legacy_shadow_without_canonical(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_replay_shadow_only"
         try:
@@ -633,7 +676,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
-    def test_promoted_candidate_replay_rejects_proof_obligation_contract_drift(self):
+    def test_promoted_candidate_replay_ignores_historical_proof_obligation_drift(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_replay_obligation_drift"
         try:
             self._clean_root(root)
@@ -694,12 +737,11 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
                 apply_codex_review_result(task_id, ledger, settings, str(result_path))
             )
 
-            self.assertFalse(replay_success)
-            self.assertIn("basis changed", replay_detail.lower())
+            self.assertTrue(replay_success, replay_detail)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
-    def test_codex_review_apply_pass_requires_proof_obligation_coverage(self):
+    def test_codex_review_apply_pass_ignores_historical_obligation_review(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_obligation_partial_pass"
         try:
             self._clean_root(root)
@@ -728,13 +770,14 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             ):
                 success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
 
-            self.assertFalse(success)
-            self.assertIn("obligation", detail.lower())
-            self.assertFalse(output_path.exists())
+            self.assertTrue(success, detail)
+            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "COMPLETED")
+            historical = json.loads((pack_dir / "proof_obligations.json").read_text(encoding="utf-8"))
+            self.assertEqual(historical["obligations"][0]["status"], "open")
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
-    def test_codex_review_apply_pass_with_proof_debt_marks_completed_with_proof_debt(self):
+    def test_codex_review_apply_does_not_infer_proof_debt_from_historical_checklist(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_pass_with_proof_debt"
         try:
             self._clean_root(root)
@@ -781,15 +824,12 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
 
             self.assertTrue(success, detail)
             self.assertTrue(output_path.exists())
-            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "COMPLETED_WITH_PROOF_DEBT")
-            self.assertEqual(
-                ledger.ledger["tasks"][task_id]["proof_obligation_summary"]["status_counts"]["accepted_as_proof_debt"],
-                1,
-            )
+            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "COMPLETED")
+            self.assertNotIn("proof_obligation_summary", ledger.ledger["tasks"][task_id])
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
-    def test_codex_review_apply_pass_rejects_placeholder_decomposition(self):
+    def test_codex_review_apply_pass_ignores_historical_placeholder_decomposition(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_placeholder_decomposition"
         try:
             self._clean_root(root)
@@ -840,13 +880,14 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             ):
                 success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
 
-            self.assertFalse(success)
-            self.assertIn("concrete proof_obligations", detail)
-            self.assertFalse(output_path.exists())
+            self.assertTrue(success, detail)
+            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "COMPLETED")
+            historical = json.loads((pack_dir / "proof_obligations.json").read_text(encoding="utf-8"))
+            self.assertEqual(historical["obligations"][0]["status"], "open")
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
-    def test_codex_review_apply_fail_carries_proof_obligation_blockers_into_repair_request(self):
+    def test_codex_review_apply_fail_uses_missing_source_steps_not_historical_obligations(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_obligation_repair"
         try:
             self._clean_root(root)
@@ -872,13 +913,17 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
 
             self.assertFalse(success)
-            self.assertIn("source_step", json.dumps(json.loads((pack_dir / "review_repair_request_v1.json").read_text(encoding="utf-8"))))
             repair_request = json.loads((pack_dir / "review_repair_request_v1.json").read_text(encoding="utf-8"))
-            self.assertEqual(repair_request["proof_obligation_blockers"][0]["obligation_id"], "source_step")
+            self.assertIn("Restore missing source-spine step: source claim", repair_request["must_fix"])
+            self.assertNotIn("proof_obligation_blockers", repair_request)
+            self.assertNotIn("proof_obligation_summary", repair_request)
+            self.assertNotIn("proof_obligations_file", repair_request)
+            historical = json.loads((pack_dir / "proof_obligations.json").read_text(encoding="utf-8"))
+            self.assertEqual(historical["obligations"][0]["status"], "open")
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
-    def test_codex_review_apply_fail_keeps_unverified_covered_obligations_partial(self):
+    def test_codex_review_apply_fail_does_not_mutate_historical_obligation_progress(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_obligation_partial_progress"
         try:
             self._clean_root(root)
@@ -909,18 +954,18 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertFalse(success, detail)
             updated = json.loads((pack_dir / "proof_obligations.json").read_text(encoding="utf-8"))
             by_id = {item["id"]: item for item in updated["obligations"]}
-            self.assertEqual(by_id["covered_step"]["status"], "partial")
-            self.assertEqual(by_id["covered_step"]["review_status"], "needs_review")
-            self.assertEqual(by_id["covered_step"]["proof_contract_status"], "unverified")
+            self.assertEqual(by_id["covered_step"]["status"], "open")
+            self.assertEqual(by_id["covered_step"]["review_status"], "unreviewed")
             self.assertEqual(by_id["covered_step"]["scaffold_hypotheses"][0]["status"], "open")
-            self.assertEqual(by_id["missing_step"]["status"], "blocked")
+            self.assertEqual(by_id["missing_step"]["status"], "open")
             repair_request = json.loads((pack_dir / "review_repair_request_v1.json").read_text(encoding="utf-8"))
-            self.assertEqual(repair_request["proof_obligation_summary"]["open_blocking_ids"], ["covered_step", "missing_step"])
-            self.assertEqual(repair_request["proof_obligation_blockers"][0]["obligation_id"], "missing_step")
+            self.assertNotIn("proof_obligation_summary", repair_request)
+            self.assertNotIn("proof_obligation_blockers", repair_request)
+            self.assertIn("Restore missing source-spine step: source claim", repair_request["must_fix"])
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
-    def test_codex_review_apply_fail_marks_verified_contract_covered_obligations_as_proved(self):
+    def test_codex_review_apply_fail_ignores_legacy_verified_obligation_claim(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_review_apply_verified_obligation_progress"
         try:
             self._clean_root(root)
@@ -963,11 +1008,10 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertFalse(success, detail)
             updated = json.loads((pack_dir / "proof_obligations.json").read_text(encoding="utf-8"))
             by_id = {item["id"]: item for item in updated["obligations"]}
-            self.assertEqual(by_id["covered_step"]["status"], "proved")
-            self.assertEqual(by_id["covered_step"]["review_status"], "accepted")
-            self.assertEqual(by_id["covered_step"]["proof_contract_status"], "verified")
-            self.assertEqual(by_id["covered_step"]["scaffold_hypotheses"][0]["status"], "discharged")
-            self.assertEqual(by_id["missing_step"]["status"], "blocked")
+            self.assertEqual(by_id["covered_step"]["status"], "open")
+            self.assertEqual(by_id["covered_step"]["review_status"], "unreviewed")
+            self.assertEqual(by_id["covered_step"]["scaffold_hypotheses"][0]["status"], "open")
+            self.assertEqual(by_id["missing_step"]["status"], "open")
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import shutil
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,7 @@ from .phase2_pack_shared.artifacts import (
     find_existing_task_file,
     select_latest_existing_task_file,
     stale_candidate_official_output_message,
+    cordis_task_declarations,
 )
 from .phase2_pack_shared.io import (
     copy_file,
@@ -37,21 +39,15 @@ from .phase2_semantic_review import (
     SEMANTIC_REVIEW_PROMPT_VERSION,
     SEMANTIC_REVIEW_RUBRIC_VERSION,
     _validate_review_input_internal_binding,
+    is_supported_semantic_review_prompt_version,
     latest_semantic_review_context_path,
     render_semantic_review_prompt,
 )
-from .phase2_output_binding import Phase2OutputBinding, resolve_phase2_output_binding
-from .phase2_proof_obligations import (
-    PROOF_OBLIGATIONS_FILE_NAME,
-    load_existing_proof_obligations_file,
-    maybe_ensure_proof_obligations_file,
-    summarize_proof_obligations,
-)
+from .phase2_output_binding import resolve_phase2_output_binding
 
 REQUIRED_REVIEW_EVIDENCE_CLASSES = [
     "source_tex",
     "lean_subject",
-    "proof_obligations",
     "audit",
     "classification",
     "dependency_status",
@@ -61,6 +57,115 @@ REQUIRED_REVIEW_EVIDENCE_CLASSES = [
 ]
 
 PLAN_ONLY_SOURCE_TASKS = {"thm_6_7__lemma_1"}
+
+_RETIRED_PROOF_OBLIGATION_BASIS_FIELDS = {
+    "focus_obligation_ids",
+    "proof_obligation_summary",
+    "proof_obligations",
+    "proof_obligations_evidence",
+    "proof_obligations_file",
+    "proof_obligations_owner_file",
+}
+_RETIRED_ROUTE_TRIGGERS = {
+    "needs_concrete_decomposition",
+    "nested_obl_obl_family",
+}
+_RETIRED_ROUTE_POLICY_LINES = {
+    "`obl` is not a task factory or public import surface.",
+    "`proof_obligations.json` is checklist/review context only.",
+    "The `obl` child-task and proof-obligation checklist mechanisms are retired.",
+    "Historical `proof_obligations.json` files are inert audit artifacts: never generate, bind, apply, or gate on them.",
+}
+_RETIRED_SPINE_WORDING = {
+    (
+        "You may not replace a source-side interface translation, proof-debt support item, construction chain, "
+        "contradiction spine, partition argument, or other intermediate obligation with an opaque shortcut that "
+        "leaves the source burden unaccounted for."
+    ): (
+        "You may not replace a source-side interface translation, construction chain, contradiction spine, "
+        "partition argument, or other essential source step with an opaque shortcut that leaves the source "
+        "burden unaccounted for."
+    ),
+    "A source-side obligation is moved into a new theorem-level assumption.": (
+        "An essential source step is moved into a new theorem-level assumption."
+    ),
+    "The reviewer cannot say where the source-side obligations land in Lean but still proposes pass.": (
+        "The reviewer cannot say where the essential source steps land in Lean but still proposes pass."
+    ),
+    "List the source-side obligations checked.": "List the essential source proof steps checked.",
+    "Name the Lean landing place for each checked obligation.": (
+        "Name the Lean landing place for each checked source step."
+    ),
+    (
+        "For any covered proof obligation, record a verified proof contract with expected theorem signature, "
+        "landing kind, signature match, body reassumption check, and public premise check."
+    ): (
+        "For every covered source step, check signature fidelity, body reassumption, and public-premise "
+        "relocation directly."
+    ),
+}
+
+
+def _normalize_retired_proof_obligation_basis(basis: dict[str, Any]) -> dict[str, Any]:
+    """Remove only the inert v9/v10 proof-obligation review vocabulary.
+
+    This projection exists solely so already-completed reviews are not invalidated
+    by retiring a checklist that did not change the source, Lean subject, runtime,
+    dependencies, downstream consumers, audit evidence, or ledger state.
+    """
+
+    normalized = deepcopy(basis)
+
+    def drop_retired_fields(value: Any) -> None:
+        if isinstance(value, dict):
+            for field in list(value):
+                if field in _RETIRED_PROOF_OBLIGATION_BASIS_FIELDS:
+                    value.pop(field, None)
+                else:
+                    drop_retired_fields(value[field])
+        elif isinstance(value, list):
+            for item in value:
+                drop_retired_fields(item)
+
+    drop_retired_fields(normalized)
+
+    evidence_classes = normalized.get("required_evidence_classes")
+    if isinstance(evidence_classes, list):
+        normalized["required_evidence_classes"] = [
+            value for value in evidence_classes if str(value or "") != "proof_obligations"
+        ]
+
+    route_gate = normalized.get("route_inspection_gate")
+    if isinstance(route_gate, dict):
+        triggers = route_gate.get("trigger_conditions")
+        if isinstance(triggers, list):
+            route_gate["trigger_conditions"] = [
+                value for value in triggers if str(value or "") not in _RETIRED_ROUTE_TRIGGERS
+            ]
+        policy = route_gate.get("policy")
+        if isinstance(policy, list):
+            route_gate["policy"] = [
+                value for value in policy if str(value or "") not in _RETIRED_ROUTE_POLICY_LINES
+            ]
+
+    spine_contract = normalized.get("spine_review_contract")
+    if isinstance(spine_contract, dict):
+        for field in ("acceptable_abstraction", "automatic_fail_patterns", "pass_evidence_requirements"):
+            values = spine_contract.get(field)
+            if isinstance(values, list):
+                spine_contract[field] = [
+                    _RETIRED_SPINE_WORDING.get(str(value or ""), value) for value in values
+                ]
+    return normalized
+
+
+def _basis_change_is_retirement_only(
+    recorded_basis: dict[str, Any],
+    current_basis: dict[str, Any],
+) -> bool:
+    return _normalize_retired_proof_obligation_basis(recorded_basis) == (
+        _normalize_retired_proof_obligation_basis(current_basis)
+    )
 
 
 def _review_request_path(pack_dir: Path, attempt: int) -> Path:
@@ -200,8 +305,7 @@ def _collect_direct_downstream_consumers(task_id: str, settings) -> list[dict[st
 def _hash_file(path: Path | None) -> str:
     if path is None or not path_exists(path):
         return ""
-    text = read_file_safely(path)
-    return sha256_text(text) if text else ""
+    return sha256_text(read_file_safely(path))
 
 
 def _subject_imports(subject_file: Path | None) -> list[str]:
@@ -321,7 +425,6 @@ def _dependency_status(task: dict[str, Any], ledger: LedgerManager, settings) ->
                 "official_output_file": str(output_path or ""),
                 "official_output_exists": output_exists,
                 "official_output_hash": _hash_file(output_path) if output_path else "",
-                "proof_obligation_summary": record.get("proof_obligation_summary", {}) if isinstance(record.get("proof_obligation_summary", {}), dict) else {},
             }
         )
     return status
@@ -338,6 +441,7 @@ def _downstream_evidence(downstream: list[dict[str, str]], settings) -> dict[str
                 **consumer,
                 "official_output_file": str(output_path or ""),
                 "official_output_exists": bool(output_path and path_exists(output_path)),
+                "official_output_hash": _hash_file(output_path),
                 "official_output_imports": _subject_imports(output_path) if output_path else [],
             }
         )
@@ -366,7 +470,6 @@ def _ledger_status_evidence(
         # request refreshes that alias, so either its path or its presence would
         # make review-now invalidate the request it just generated.  Review
         # provenance is bound separately by the request/input/result hashes.
-        "proof_obligation_summary": owner.get("proof_obligation_summary", {}) if isinstance(owner.get("proof_obligation_summary", {}), dict) else {},
     }
 
 
@@ -447,49 +550,12 @@ def build_semantic_review_basis(
     review_subject_kind: str,
     review_subject_hash: str = "",
     review_subject_file: str | Path | None = None,
-    materialize_proof_obligations: bool = True,
 ) -> dict[str, Any]:
     task_id = task["block_id"]
     pack_dir = settings.phase2_prompt_packs_dir / task_id
     output_binding = resolve_phase2_output_binding(task, ledger, settings)
-    obligations_pack_dir = output_binding.owner_pack_dir if output_binding.is_obligation_task else pack_dir
-    obligations_task = (
-        _owner_task_for_review_basis(output_binding, task, ledger)
-        if output_binding.is_obligation_task
-        else task
-    )
     current_record = ledger.ledger.get("tasks", {}).get(task_id, {})
     current_record = current_record if isinstance(current_record, dict) else {}
-    obligations_record = (
-        ledger.ledger.get("tasks", {}).get(output_binding.output_owner_task_id, {})
-        if output_binding.is_obligation_task
-        else current_record if isinstance(current_record, dict) else {}
-    )
-    if materialize_proof_obligations:
-        proof_obligations = maybe_ensure_proof_obligations_file(
-            obligations_pack_dir,
-            obligations_task,
-            current_record=obligations_record,
-            tracking_level=2,
-        )
-    else:
-        proof_obligations = load_existing_proof_obligations_file(obligations_pack_dir, obligations_task)
-    if output_binding.is_obligation_task:
-        proof_obligations_owner_file = output_binding.proof_obligations_file.as_posix()
-    elif proof_obligations is not None:
-        proof_obligations_owner_file = str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME)
-    else:
-        proof_obligations_owner_file = ""
-    proof_obligations_file = (
-        output_binding.proof_obligations_file.as_posix()
-        if output_binding.is_obligation_task
-        else str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME)
-    ) if proof_obligations is not None else ""
-    if output_binding.is_obligation_task:
-        child_proof_obligations = load_existing_proof_obligations_file(pack_dir, task)
-        if child_proof_obligations is not None:
-            proof_obligations = child_proof_obligations
-            proof_obligations_file = str(pack_dir / PROOF_OBLIGATIONS_FILE_NAME)
     downstream = sorted(
         _collect_direct_downstream_consumers(output_binding.output_owner_task_id, settings),
         key=lambda item: (
@@ -514,8 +580,13 @@ def build_semantic_review_basis(
     subject_file_path = Path(review_subject_file).expanduser() if review_subject_file else None
     if subject_file_path is not None and not subject_file_path.is_absolute():
         subject_file_path = (pack_dir / subject_file_path).resolve()
-    proof_obligation_summary = summarize_proof_obligations(proof_obligations) if proof_obligations is not None else {}
+    declaration_map = cordis_task_declarations(settings)
+    official_task_declarations = declaration_map.get(task_id, [])
+    if not official_task_declarations and output_binding.output_owner_task_id != task_id:
+        official_task_declarations = declaration_map.get(output_binding.output_owner_task_id, [])
+    review_profile = str(getattr(settings, "profile", "mat") or "mat").strip().lower() or "mat"
     return {
+        "review_profile": review_profile,
         "task": {
             "block_id": task_id,
             "type": str(task.get("type", "") or ""),
@@ -534,7 +605,8 @@ def build_semantic_review_basis(
         "review_subject_hash": str(review_subject_hash or ""),
         "output_owner_task_id": output_binding.output_owner_task_id,
         "output_module": output_binding.output_module,
-        "focus_obligation_ids": output_binding.focus_obligation_ids,
+        "official_output_targets": [str(path) for path in output_binding.official_targets],
+        "official_task_declarations": list(official_task_declarations),
         "required_evidence_classes": REQUIRED_REVIEW_EVIDENCE_CLASSES,
         "source_evidence": {
             "task_id": task_id,
@@ -551,21 +623,11 @@ def build_semantic_review_basis(
             "review_subject_kind": str(review_subject_kind or ""),
             "review_subject_hash": str(review_subject_hash or ""),
             "subject_imports": _subject_imports(subject_file_path),
+            "task_declarations": list(official_task_declarations),
         },
         "direct_downstream_consumers": downstream,
         "route_inspection_gate": review_route_inspection_gate(task),
         "spine_review_contract": review_spine_contract(task),
-        "proof_obligations_file": proof_obligations_file,
-        "proof_obligations_owner_file": proof_obligations_owner_file,
-        "proof_obligations": proof_obligations if proof_obligations is not None else {},
-        "proof_obligation_summary": proof_obligation_summary,
-        "proof_obligations_evidence": {
-            "proof_obligations_file": proof_obligations_file,
-            "proof_obligations_owner_file": proof_obligations_owner_file,
-            "proof_obligations": proof_obligations if proof_obligations is not None else {},
-            "proof_obligation_summary": proof_obligation_summary,
-            "authority": "review_evidence_only",
-        },
         "audit_evidence": _latest_audit_evidence(pack_dir),
         "classification_history": _classification_history(output_binding.output_owner_task_id, settings),
         "dependency_status": _dependency_status(task, ledger, settings),
@@ -590,17 +652,6 @@ def build_semantic_review_basis(
     }
 
 
-def _owner_task_for_review_basis(
-    output_binding: Phase2OutputBinding,
-    task: dict[str, Any],
-    ledger: LedgerManager,
-) -> dict[str, Any]:
-    owner = ledger.ledger.get("tasks", {}).get(output_binding.output_owner_task_id)
-    if isinstance(owner, dict):
-        return canonicalize_task_dict(owner)
-    fallback = dict(task)
-    fallback["block_id"] = output_binding.output_owner_task_id
-    return canonicalize_task_dict(fallback)
 
 
 def _resolve_current_review_request_path(pack_dir: Path, current_record: dict[str, Any]) -> Path | None:
@@ -657,8 +708,8 @@ def _validate_review_input_freshness(
         return "review input review_subject_kind is invalid", {}
     if canonicalize_block_id(str(task_payload.get("block_id", "") or "")) != task_id:
         return f"review input task id mismatch: expected {task_id}", {}
-    if not _review_version_matches(review_input.get("prompt_version"), SEMANTIC_REVIEW_PROMPT_VERSION):
-        return "review input prompt_version does not match current semantic review prompt version", {}
+    if not is_supported_semantic_review_prompt_version(review_input.get("prompt_version")):
+        return "review input prompt_version is not a supported semantic review prompt version", {}
     if not _review_version_matches(review_input.get("rubric_version"), SEMANTIC_REVIEW_RUBRIC_VERSION):
         return "review input rubric_version does not match current semantic review rubric version", {}
     input_binding_error = _validate_review_input_internal_binding(review_input)
@@ -676,6 +727,10 @@ def _validate_review_input_freshness(
         return "bound semantic review request task id does not match review input", {}
     if not _review_version_matches(request_payload.get("attempt"), attempt):
         return "bound semantic review request attempt does not match review input", {}
+    if not _review_version_matches(request_payload.get("prompt_version"), int(review_input.get("prompt_version") or 0)):
+        return "bound semantic review request prompt_version does not match review input", {}
+    if not _review_version_matches(request_payload.get("rubric_version"), int(review_input.get("rubric_version") or 0)):
+        return "bound semantic review request rubric_version does not match review input", {}
     request_bindings = {
         "review_subject_kind": review_subject_kind,
         "review_subject_file": str(review_input.get("review_subject_file", "") or ""),
@@ -765,11 +820,16 @@ def _validate_review_input_freshness(
         review_subject_kind=review_subject_kind,
         review_subject_hash=current_review_subject_hash,
         review_subject_file=subject_file_path,
-        materialize_proof_obligations=False,
     )
     recorded_review_basis = review_input.get("review_basis", {})
     if not isinstance(recorded_review_basis, dict) or sha256_json(recorded_review_basis) != expected_review_basis_hash:
         return "recorded semantic review basis does not match its bound hash", {}
+    legacy_prompt_version = int(review_input.get("prompt_version") or 0) in {9, 10}
+    retirement_only_change = (
+        legacy_prompt_version
+        and review_subject_kind in {"candidate", "official_output"}
+        and _basis_change_is_retirement_only(recorded_review_basis, current_review_basis)
+    )
     if allow_promoted_candidate:
         current_record = ledger.ledger.get("tasks", {}).get(task_id, {})
         current_record = current_record if isinstance(current_record, dict) else {}
@@ -782,9 +842,15 @@ def _validate_review_input_freshness(
             or not receipt_post_basis_hash
         ):
             return "promoted review replay receipt is missing or does not match this review input", {}
-        basis_matches = sha256_json(current_review_basis) == receipt_post_basis_hash
+        basis_matches = (
+            sha256_json(current_review_basis) == receipt_post_basis_hash
+            or retirement_only_change
+        )
     else:
-        basis_matches = sha256_json(current_review_basis) == expected_review_basis_hash
+        basis_matches = (
+            sha256_json(current_review_basis) == expected_review_basis_hash
+            or retirement_only_change
+        )
     if not basis_matches:
         return "semantic review basis changed since review generation", {}
     return "", {
@@ -837,8 +903,8 @@ def _load_current_codex_review_request(
         return f"Current codex review request task id mismatch: expected {task['block_id']}", {}
     if str(request_payload.get("reviewer_backend_id", "") or "") != "codex-handoff":
         return "Current codex review request is not for the codex-handoff backend.", {}
-    if not _review_version_matches(request_payload.get("prompt_version"), SEMANTIC_REVIEW_PROMPT_VERSION):
-        return "Current codex review request prompt_version does not match the current semantic review prompt version.", {}
+    if not is_supported_semantic_review_prompt_version(request_payload.get("prompt_version")):
+        return "Current codex review request prompt_version is not supported.", {}
     if not _review_version_matches(request_payload.get("rubric_version"), SEMANTIC_REVIEW_RUBRIC_VERSION):
         return "Current codex review request rubric_version does not match the current semantic review rubric version.", {}
 
@@ -863,6 +929,10 @@ def _load_current_codex_review_request(
         return "Current codex review input JSON is invalid; regenerate semantic review materials.", {}
     if str(request_payload.get("review_input_hash", "") or "") != sha256_json(review_input):
         return "Current codex review request input hash does not match the bound review input.", {}
+    if not _review_version_matches(request_payload.get("prompt_version"), int(review_input.get("prompt_version") or 0)):
+        return "Current codex review request prompt_version does not match the bound review input.", {}
+    if not _review_version_matches(request_payload.get("rubric_version"), int(review_input.get("rubric_version") or 0)):
+        return "Current codex review request rubric_version does not match the bound review input.", {}
     if str(request_payload.get("review_subject_kind", "") or "") != str(review_input.get("review_subject_kind", "") or ""):
         return "Current codex review request subject kind does not match the bound review input.", {}
     current_subject_kind = str(current_record.get("current_review_subject_kind", "") or "")

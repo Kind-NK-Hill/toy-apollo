@@ -15,9 +15,14 @@ open Filter MeasureTheory
 
 noncomputable def MeasuresConvergeInTotalVariation {Ω : Type*} [MeasurableSpace Ω]
     (Pn : ℕ → Measure Ω) (P : Measure Ω) : Prop :=
-  (∀ n : ℕ, IsProbabilityMeasure (Pn n)) ∧
-    IsProbabilityMeasure P ∧
-      Tendsto (fun n : ℕ => totalVariationDistance (Pn n) P) atTop (nhds 0)
+  ∃ hPn : ∀ n : ℕ, IsProbabilityMeasure (Pn n),
+    ∃ hP : IsProbabilityMeasure P,
+      Tendsto
+        (fun n : ℕ =>
+          letI := hPn n
+          letI := hP
+          totalVariationDistance (Pn n) P)
+        atTop (nhds 0)
 
 noncomputable def RandomVariablesConvergeInTotalVariation {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ) : Prop :=

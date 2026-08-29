@@ -26,7 +26,8 @@ section PositiveNegativeParts
 variable {Ω : Type*} [MeasurableSpace Ω] {X : Ω → ℝ}
 
 theorem measurable_positivePart (hX : Measurable X) : Measurable (positivePart X) := by
-  simpa [positivePart] using hX.max measurable_const
+  change Measurable (fun ω => max (X ω) 0)
+  exact hX.max measurable_const
 
 theorem measurable_negativePart (hX : Measurable X) : Measurable (negativePart X) := by
   show Measurable (fun ω => -(min (X ω) 0))

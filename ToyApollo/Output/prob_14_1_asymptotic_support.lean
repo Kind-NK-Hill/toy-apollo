@@ -964,27 +964,28 @@ theorem prob_14_1_cdfConvergence_to_weak
     thm_10_8_lowerQuantileVariable (Fseq n)
   let Y : ℝ → ℝ := thm_10_8_lowerQuantileVariable F
   have hCdfConv :
-      CdfConvergesInDistribution
-        (fun n x => (Fseq n).stieltjes x)
-        (F.stieltjes : ℝ → ℝ) := by
-    have hDist :
-        CdfConvergesInDistribution
-          (fun n x => measureCdf (((laws n : ProbabilityMeasure ℝ) : Measure ℝ)) x)
-          (measureCdf (((limitLaw : ProbabilityMeasure ℝ) : Measure ℝ))) := by
-      simpa [prob_14_1_cdfConvergence, CdfConvergesInDistribution,
-        measureCdf, measureReal_def] using h
+      ∀ x : ℝ, ContinuousAt (F.stieltjes : ℝ → ℝ) x →
+        Tendsto (fun n : ℕ => (Fseq n).stieltjes x) atTop
+          (𝓝 (F.stieltjes x)) := by
+    have hDist : CdfConvergesInDistribution laws limitLaw := by
+      intro x hcont
+      have hcont_raw :
+          ContinuousAt
+            (fun y : ℝ => ((limitLaw : Measure ℝ) (Set.Iic y)).toReal) x := by
+        change ContinuousAt (measureCdf limitLaw) x
+        exact hcont
+      exact h x hcont_raw
     intro x hcont
     have hcont_measure :
-        ContinuousAt (measureCdf (((limitLaw : ProbabilityMeasure ℝ) : Measure ℝ))) x := by
+        ContinuousAt (measureCdf limitLaw) x := by
       have hfun :
-          (fun y : ℝ =>
-              measureCdf (((limitLaw : ProbabilityMeasure ℝ) : Measure ℝ)) y) =
+          (fun y : ℝ => measureCdf limitLaw y) =
             (fun y : ℝ => F.stieltjes y) := by
         funext y
         simp [F, thm_10_8_probabilityCdfOfMeasure, measureCdf,
           ProbabilityTheory.cdf_eq_real]
       change ContinuousAt
-        (fun y : ℝ => measureCdf (((limitLaw : ProbabilityMeasure ℝ) : Measure ℝ)) y) x
+        (fun y : ℝ => measureCdf limitLaw y) x
       rw [hfun]
       exact hcont
     have htendsto := hDist x hcont_measure

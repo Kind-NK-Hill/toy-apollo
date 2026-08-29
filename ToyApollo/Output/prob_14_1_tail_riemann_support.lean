@@ -454,8 +454,7 @@ theorem prob_14_1_clipped_beta_kernel_continuous
           (1 - min c (max a (y PUnit.unit))) ^ (b - 1)) :=
     hsub.rpow continuous_const
       (fun y => Or.inl (ne_of_gt (sub_pos.mpr (hclip_lt_one y))))
-  simpa [mul_assoc] using
-    ((continuous_const.mul hpow_left).mul hpow_right)
+  exact (continuous_const.mul hpow_left).mul hpow_right
 
 theorem prob_14_1_clipped_beta_kernel_eq_density_on_punitInterval
     {w b a c : ℝ} (ha : 0 < a) (hc : c < 1)
@@ -708,21 +707,10 @@ theorem prob_14_1_compact_subset_Ioo_subset_Icc
     ⟨xmax, hxmax_mem, hxmax_max⟩
   refine ⟨xmin, xmax, ?_, ?_, ?_, ?_⟩
   · exact (hKsub hxmin_mem).1
-  · have hle_all : ∀ y ∈ K, xmin ≤ y := by
-      intro y hy
-      have hset : {z : ℝ | xmin ≤ z} ∈ Filter.principal K := by
-        simpa [IsMinOn, IsMinFilter] using hxmin_min
-      exact hset hy
-    exact hle_all xmax hxmax_mem
+  · exact hxmin_min hxmax_mem
   · exact (hKsub hxmax_mem).2
   · intro y hy
-    constructor
-    · have hset : {z : ℝ | xmin ≤ z} ∈ Filter.principal K := by
-        simpa [IsMinOn, IsMinFilter] using hxmin_min
-      exact hset hy
-    · have hset : {z : ℝ | z ≤ xmax} ∈ Filter.principal K := by
-        simpa [IsMaxOn, IsMaxFilter] using hxmax_max
-      exact hset hy
+    exact ⟨hxmin_min hy, hxmax_max hy⟩
 
 theorem prob_14_1_beta_law_exists_Icc_core_gt
     {w b η : ℝ} (beta : prob_14_1_BetaLawData w b) (hη : 0 < η) :
@@ -846,7 +834,7 @@ theorem prob_14_1_clipped_beta_kernel_real_continuous
       (1 - min c (max a x)) ^ (b - 1)) :=
     hsub.rpow continuous_const
       (fun x => Or.inl (ne_of_gt (sub_pos.mpr (hclip_lt_one x))))
-  simpa [mul_assoc] using ((continuous_const.mul hpow_left).mul hpow_right)
+  exact (continuous_const.mul hpow_left).mul hpow_right
 
 theorem prob_14_1_clipped_beta_kernel_real_eq_density_on_Icc
     {w b C a c x : ℝ} (ha : 0 < a) (hc : c < 1)

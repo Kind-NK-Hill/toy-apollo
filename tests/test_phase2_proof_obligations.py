@@ -31,7 +31,7 @@ class Phase2ProofObligationsTests(unittest.TestCase):
             pack_dir = Path(tmp)
             self.assertFalse(should_track_proof_obligations(pack_dir, task, tracking_level=0))
 
-    def test_level2_tracks_only_complex_or_existing_obligation_ledgers(self):
+    def test_tracking_is_retired_for_normal_complex_and_historical_packs(self):
         normal_task = {
             "block_id": "prob_11_4",
             "type": "Problem",
@@ -55,28 +55,22 @@ class Phase2ProofObligationsTests(unittest.TestCase):
             (legacy_pack / "proof_obligations.json").write_text("{}", encoding="utf-8")
 
             self.assertFalse(should_track_proof_obligations(normal_pack, normal_task, tracking_level=2))
-            self.assertTrue(should_track_proof_obligations(complex_pack, complex_task, tracking_level=2))
-            self.assertTrue(should_track_proof_obligations(legacy_pack, normal_task, tracking_level=0))
+            self.assertFalse(should_track_proof_obligations(complex_pack, complex_task, tracking_level=2))
+            self.assertFalse(should_track_proof_obligations(legacy_pack, normal_task, tracking_level=0))
 
-    def test_thm_10_8_quantile_law_debt_uses_local_bridge(self):
+    def test_thm_10_8_quantile_law_uses_local_bridge_without_checklist_authority(self):
         lean_path = REPO_ROOT / "ToyApollo" / "Output" / "thm_10_8.lean"
         bridge_path = REPO_ROOT / "ToyApollo" / "Output" / "thm_10_8_quantile_law.lean"
-        obligations_path = REPO_ROOT / "phase2_prompt_packs" / "thm_10_8" / "proof_obligations.json"
 
         lean = lean_path.read_text(encoding="utf-8")
         bridge = bridge_path.read_text(encoding="utf-8")
-        obligations = json.loads(obligations_path.read_text(encoding="utf-8"))
-        by_id = {item["id"]: item for item in obligations["obligations"]}
 
         self.assertNotIn("quantile_law_preservation :", lean)
         self.assertIn("import ToyApollo.Output.thm_10_8_quantile_law", lean)
         self.assertIn("thm_10_8_quantile_law_preservation_of_probabilityCdfOfMeasure", lean)
         self.assertIn("thm_10_8_quantile_law_preservation_seq_of_Iic", bridge)
         self.assertIn("thm_10_8_quantile_law_preservation_of_Iic", bridge)
-        self.assertEqual(by_id["quantile_law_preservation"]["status"], "proved")
-        self.assertEqual(by_id["quantile_law_preservation"]["kind"], "source_step")
-        self.assertEqual(by_id["quantile_event_measurability"]["status"], "proved")
-        self.assertIn("event calculation", by_id["quantile_event_measurability"]["notes"])
+
 
     def test_placeholder_spine_requires_concrete_decomposition(self):
         task = {

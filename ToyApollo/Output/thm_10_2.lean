@@ -14,21 +14,22 @@ import ToyApollo.Output.def_10_2
 open Filter MeasureTheory Set
 
 private theorem convergesInProbability_of_tail_null {Ω : Type*}
-    [MeasurableSpace Ω] (μ : Measure Ω) [IsFiniteMeasure μ]
+    [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ)
-    (hXn : ∀ n : ℕ, AEStronglyMeasurable (Xn n) μ)
+    (hXn : ∀ n : ℕ, Measurable (Xn n)) (hX : Measurable X)
     (hAS : ConvergesAlmostSurely μ Xn X) :
     ConvergesInProbability μ Xn X := by
+  refine ⟨hXn, hX, ?_⟩
   intro ε hε
   let A : ℕ → Set Ω := fun n => deviationEvent Xn X n ε
   let B : ℕ → Set Ω := fun n => {ω : Ω | ∃ m : ℕ, n ≤ m ∧ ω ∈ A m}
   have htail_null : μ (deviationInfinitelyOften Xn X ε) = 0 :=
-    (thm_10_1 μ Xn X).1 hAS ε hε
-  have hX : AEStronglyMeasurable X μ :=
-    aestronglyMeasurable_of_tendsto_ae atTop hXn hAS
+    ((thm_10_1 μ Xn X).1 hAS).2.2 ε hε
+  have hX_ae : AEStronglyMeasurable X μ := hX.aestronglyMeasurable
   have hA_null : ∀ n, NullMeasurableSet (A n) μ := by
     intro n
-    have hdiff : AEStronglyMeasurable (fun ω => Xn n ω - X ω) μ := (hXn n).sub hX
+    have hdiff : AEStronglyMeasurable (fun ω => Xn n ω - X ω) μ :=
+      (hXn n).aestronglyMeasurable.sub hX_ae
     have habs : AEStronglyMeasurable (fun ω => |Xn n ω - X ω|) μ := by
       simpa [Real.norm_eq_abs] using hdiff.norm
     simpa [A, deviationEvent] using
@@ -59,13 +60,15 @@ private theorem convergesInProbability_of_tail_null {Ω : Type*}
       intro n
       have hn : ω ∈ B n := by exact h n
       rcases hn with ⟨m, hnm, hAm⟩
-      exact ⟨m, hnm, by simpa [A] using hAm⟩
+      exact ⟨m, hnm, by
+        simpa [A, deviationEvent, almostSureDeviationEvent] using hAm⟩
     · intro h
       rw [deviationInfinitelyOften, mem_limsup_iff_frequently_mem] at h
       rw [frequently_atTop] at h
       intro n
       rcases h n with ⟨m, hnm, hAm⟩
-      exact ⟨m, hnm, by simpa [A] using hAm⟩
+      exact ⟨m, hnm, by
+        simpa [A, deviationEvent, almostSureDeviationEvent] using hAm⟩
   have hB_tendsto :
       Tendsto (fun n : ℕ => μ (B n)) atTop (nhds 0) := by
     have hcont :=
@@ -75,17 +78,20 @@ private theorem convergesInProbability_of_tail_null {Ω : Type*}
       rw [← hInter_eq]
       ext ω
       simp only [mem_iInter, mem_setOf_eq]
-    simpa [hSetEq, htail_null] using hcont
+    rw [hSetEq, htail_null] at hcont
+    change Tendsto (μ ∘ B) atTop (nhds 0)
+    exact hcont
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hB_tendsto
-    (fun n => zero_le _) ?_
+    (fun _ => zero_le) ?_
   intro n
   exact measure_mono (by
     intro ω hω
     exact ⟨n, le_rfl, hω⟩)
 
-theorem thm_10_2 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsFiniteMeasure μ]
+theorem thm_10_2 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    [IsProbabilityMeasure μ]
     (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ)
-    (hXn : ∀ n : ℕ, AEStronglyMeasurable (Xn n) μ)
+    (hXn : ∀ n : ℕ, Measurable (Xn n)) (hX : Measurable X)
     (hAS : ConvergesAlmostSurely μ Xn X) :
     ConvergesInProbability μ Xn X := by
-  exact convergesInProbability_of_tail_null μ Xn X hXn hAS
+  exact convergesInProbability_of_tail_null μ Xn X hXn hX hAS

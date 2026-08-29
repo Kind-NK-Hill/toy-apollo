@@ -62,12 +62,14 @@ lemma gaussianRadiusSq_nonneg (p : ℝ × ℝ) :
 
 lemma gaussianRadiusSq_measurable :
     Measurable gaussianRadiusSq := by
-  simpa [gaussianRadiusSq] using
-    (measurable_fst.pow_const (2 : ℕ)).add (measurable_snd.pow_const (2 : ℕ))
+  change Measurable (fun p : ℝ × ℝ => p.1 ^ 2 + p.2 ^ 2)
+  exact (measurable_fst.pow_const (2 : ℕ)).add
+    (measurable_snd.pow_const (2 : ℕ))
 
 lemma gaussianRadius_measurable :
     Measurable gaussianRadius := by
-  simpa [gaussianRadius] using gaussianRadiusSq_measurable.sqrt
+  change Measurable (fun p : ℝ × ℝ => Real.sqrt (gaussianRadiusSq p))
+  exact gaussianRadiusSq_measurable.sqrt
 
 lemma measurableSet_gaussianDisk (z : ℝ) :
     MeasurableSet (gaussianDisk z) := by
@@ -106,14 +108,23 @@ lemma gaussianPlaneMeasure_eq_density (σ : ℝ) (hσ : 0 < σ) :
   have hv : gaussianVariance σ ≠ 0 := gaussianVariance_ne_zero hσ
   unfold gaussianPlaneMeasure gaussian1DMeasure
   rw [ProbabilityTheory.gaussianReal_of_var_ne_zero 0 hv]
-  simpa [gaussianPlaneDensity, Measure.volume_eq_prod] using
-    (prod_withDensity
-      (μ := (volume : Measure ℝ))
-      (ν := (volume : Measure ℝ))
-      (f := ProbabilityTheory.gaussianPDF 0 (gaussianVariance σ))
-      (g := ProbabilityTheory.gaussianPDF 0 (gaussianVariance σ))
-      (ProbabilityTheory.measurable_gaussianPDF 0 (gaussianVariance σ))
-      (ProbabilityTheory.measurable_gaussianPDF 0 (gaussianVariance σ)))
+  rw [Measure.volume_eq_prod]
+  change
+    ((volume : Measure ℝ).withDensity
+      (ProbabilityTheory.gaussianPDF 0 (gaussianVariance σ))).prod
+      ((volume : Measure ℝ).withDensity
+        (ProbabilityTheory.gaussianPDF 0 (gaussianVariance σ))) =
+    ((volume : Measure ℝ).prod (volume : Measure ℝ)).withDensity
+      (fun z : ℝ × ℝ =>
+        ProbabilityTheory.gaussianPDF 0 (gaussianVariance σ) z.1 *
+        ProbabilityTheory.gaussianPDF 0 (gaussianVariance σ) z.2)
+  exact prod_withDensity
+    (μ := (volume : Measure ℝ))
+    (ν := (volume : Measure ℝ))
+    (f := ProbabilityTheory.gaussianPDF 0 (gaussianVariance σ))
+    (g := ProbabilityTheory.gaussianPDF 0 (gaussianVariance σ))
+    (ProbabilityTheory.measurable_gaussianPDF 0 (gaussianVariance σ))
+    (ProbabilityTheory.measurable_gaussianPDF 0 (gaussianVariance σ))
 
 lemma gaussianPlaneMeasure_rectangle (σ x y : ℝ) (hσ : 0 < σ) :
     gaussianPlaneMeasure σ (Iic x ×ˢ Iic y) =
@@ -138,7 +149,14 @@ lemma gaussianRadiusSq_distribution (σ : ℝ) (hσ : 0 < σ) :
       ProbabilityTheory.expMeasure ((2 * σ ^ 2)⁻¹) := by
   have hv : ((gaussianVariance σ : ℝ)) > 0 := by
     exact_mod_cast sq_pos_of_pos hσ
-  simpa [gaussianPlaneMeasure, gaussian1DMeasure, gaussianVariance, gaussianRadiusSq] using
+  have hvar : (gaussianVariance σ : ℝ) = σ ^ 2 := by
+    change σ ^ 2 = σ ^ 2
+    rfl
+  change Measure.map (fun p : ℝ × ℝ => p.1 ^ 2 + p.2 ^ 2)
+      ((ProbabilityTheory.gaussianReal 0 (gaussianVariance σ)).prod
+       (ProbabilityTheory.gaussianReal 0 (gaussianVariance σ))) =
+    ProbabilityTheory.expMeasure ((2 * σ ^ 2)⁻¹)
+  simpa only [hvar] using
     gaussianReal_sq_sum_eq_expMeasure (gaussianVariance σ) hv
 
 lemma gaussianRadius_distribution (σ : ℝ) (hσ : 0 < σ) :

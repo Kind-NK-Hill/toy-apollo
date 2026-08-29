@@ -15,15 +15,15 @@ open Filter MeasureTheory
 open scoped Topology
 
 theorem tendstoInMeasure_of_convergesInProbability {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ)
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ)
     (hProb : ConvergesInProbability μ Xn X) :
     TendstoInMeasure μ Xn atTop X := by
   rw [tendstoInMeasure_iff_norm]
   intro ε hε
   have hhalf : 0 < ε / 2 := by linarith
-  have hprob_half := hProb (ε / 2) hhalf
+  have hprob_half := hProb.2.2 (ε / 2) hhalf
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hprob_half
-    (fun _ => zero_le _) ?_
+    (fun _ => zero_le) ?_
   intro n
   apply measure_mono
   intro ω hω

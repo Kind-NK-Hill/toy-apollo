@@ -102,7 +102,7 @@ list of objects.  Each object MUST have:
   `def_<ch>_<num>`, `def_<ch>_<sec>_<slug>`, `thm_<ch>_<num>`,
   `ex_<ch>_<sec>_<num>`, `ex_<ch>_<sec>_<slug>`, `prob_<ch>_<num>`.
 - `"type"`: One of: `Definition`, `Theorem_Statement`, `Theorem_with_Proof`,
-  `Example_Proof`, `Problem`, `Remark`.
+  `Lemma`, `Corollary`, `Example_Proof`, `Problem`, `Remark`.
 - `"title"`: A short human-readable title.
 - `"content"`: The EXACT LaTeX text corresponding to this block.
 - `"dependencies"`: A list of `block_id` strings that this block
@@ -115,10 +115,12 @@ list of objects.  Each object MUST have:
    text, OR a theorem statement whose proof appears much later.
 3. **Theorem_with_Proof** — A theorem or lemma immediately followed by its
    proof.  Combine them into a SINGLE block.
-4. **Example_Proof** — Specific examples, calculations, or a "Delayed Proof"
+4. **Lemma** — A numbered lemma, including its immediately following proof.
+5. **Corollary** — A numbered corollary, including its immediately following proof.
+6. **Example_Proof** — Specific examples, calculations, or a "Delayed Proof"
    (e.g., "Proof of Theorem 3.3") that appears long after its statement.
-5. **Problem** — Exercises.
-6. **Remark** — Conversational text.
+7. **Problem** — Exercises.
+8. **Remark** — Conversational text.
 
 ## Critical Dependency Rules for Delayed Proofs
 
@@ -188,7 +190,15 @@ def _inject_cross_references(blocks: list[dict[str, Any]]) -> dict[str, dict[str
     
     for block in blocks:
         task_type = str(block.get("type", "")).strip()
-        if task_type not in ("Problem", "Theorem_Statement", "Theorem_with_Proof", "Definition", "Example_Proof"):
+        if task_type not in (
+            "Problem",
+            "Theorem_Statement",
+            "Theorem_with_Proof",
+            "Lemma",
+            "Corollary",
+            "Definition",
+            "Example_Proof",
+        ):
             continue
             
         content = block.get("content", "")
@@ -222,13 +232,14 @@ def _record_phase1_dependency_decisions(
     plan_file: Path,
     source_plan: str,
 ) -> None:
+    profile = str(getattr(settings, "profile", "mat") or "mat")
     for block in blocks:
-        task_id = canonicalize_block_id(str(block.get("block_id", "")))
+        task_id = canonicalize_block_id(str(block.get("block_id", "")), profile)
         if not task_id:
             continue
         injected_for_task = injected_evidence.get(task_id, {})
         for dep_id in block.get("dependencies") or []:
-            canonical_dep = canonicalize_block_id(str(dep_id))
+            canonical_dep = canonicalize_block_id(str(dep_id), profile)
             if not canonical_dep:
                 continue
             if canonical_dep in injected_for_task:
@@ -402,6 +413,7 @@ def apply_phase1_pack(
         return False, str(exc), []
 
     # ---- Normalise ----
+    profile = str(getattr(settings, "profile", "mat") or "mat")
     normalized_blocks: list[dict[str, Any]] = []
     normalization_notes: list[str] = []
     for index, b in enumerate(blocks, start=1):
@@ -414,8 +426,8 @@ def apply_phase1_pack(
                 ),
                 [],
             )
-        b = canonicalize_task_dict(b)
-        normalized_type, note = normalize_phase1_task_type(b.get("type", ""))
+        b = canonicalize_task_dict(b, profile)
+        normalized_type, note = normalize_phase1_task_type(b.get("type", ""), profile)
         bid = b.get("block_id", "")
         if normalized_type is None:
             return (
@@ -431,7 +443,7 @@ def apply_phase1_pack(
         if note:
             normalization_notes.append(note)
         b["type"] = normalized_type
-        if not is_canonical_block_id(bid):
+        if not is_canonical_block_id(bid, profile):
             print(f"   ⚠️ [Phase 1 Apply] Non-canonical block_id preserved: {bid}")
         _tag_renowned(b)
         b["source_plan"] = base

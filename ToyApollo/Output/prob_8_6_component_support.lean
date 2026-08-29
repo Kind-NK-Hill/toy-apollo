@@ -190,14 +190,25 @@ theorem prob_8_6_part_c_coupling_bound (lam : List (Set.Icc (0 : ℝ) 1)) :
               + discretePmfCouplingMismatchMass
                   (prob_8_6_part_b_coupling (unitIntervalPointToNNReal p) (unitIntervalPointToNNReal_le_one p)) := by
         exact h_triangle.trans <| add_le_add (le_trans h_left h_tail) (le_trans h_right h_head)
-      simpa [fs, gs, f, g, add_comm, add_left_comm, add_assoc] using h_bound
+      change
+        d_TV (pmfConv f (pmfConvList fs)) (pmfConv g (pmfConvList gs))
+          ≤ discretePmfCouplingMismatchMass
+                (prob_8_6_part_b_coupling
+                  (unitIntervalPointToNNReal p) (unitIntervalPointToNNReal_le_one p))
+              + List.sum
+                  (ps.map fun q =>
+                    discretePmfCouplingMismatchMass
+                      (prob_8_6_part_b_coupling
+                        (unitIntervalPointToNNReal q) (unitIntervalPointToNNReal_le_one q)))
+      simpa only [add_comm] using h_bound
 
 lemma prob_8_6_part_c_componentMismatchMass_le_sq (p : Set.Icc (0 : ℝ) 1) :
     discretePmfCouplingMismatchMass
         (prob_8_6_part_b_coupling (unitIntervalPointToNNReal p) (unitIntervalPointToNNReal_le_one p))
       ≤ p.1 ^ 2 := by
-  simpa [unitIntervalPointToNNReal] using
-    prob_8_6_part_b_mismatchMass_le_sq (unitIntervalPointToNNReal p) (unitIntervalPointToNNReal_le_one p)
+  exact
+    prob_8_6_part_b_mismatchMass_le_sq
+      (unitIntervalPointToNNReal p) (unitIntervalPointToNNReal_le_one p)
 
 theorem prob_8_6_part_c_componentMismatchMasses_le_sq (lam : List (Set.Icc (0 : ℝ) 1)) :
     List.sum (prob_8_6_part_c_componentMismatchMasses lam)

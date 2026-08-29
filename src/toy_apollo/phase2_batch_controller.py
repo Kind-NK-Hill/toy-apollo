@@ -13,7 +13,6 @@ from src.toy_apollo.phase2_failure_budget import (
     Phase2FailureCounters,
     phase2_failure_counters_from_task,
 )
-from src.toy_apollo.phase2_proof_obligations import needs_concrete_decomposition as proof_obligations_need_concrete
 from src.toy_apollo.phase2_task_status import classify_phase2_task_status
 
 
@@ -200,10 +199,8 @@ def analyze_batch_state(
         )
         counters = phase2_failure_counters_from_task(raw_task)
 
-        status = COMPLETED_WITH_PROOF_DEBT if declared_status == COMPLETED and _task_has_accepted_proof_debt(raw_task) else declared_status
-        if _task_needs_concrete_decomposition(raw_task) and declared_status not in {COMPLETED, COMPLETED_WITH_PROOF_DEBT}:
-            status = NEEDS_DECOMPOSITION
-        elif _early_hard_failure_before_budget(declared_status, stop_reason, counters):
+        status = declared_status
+        if _early_hard_failure_before_budget(declared_status, stop_reason, counters):
             status = NONTERMINAL
         if failed_dependency and declared_status not in {
             COMPLETED,
@@ -241,7 +238,24 @@ def analyze_batch_state(
             report_status = "needs_class_normalization"
         elif not report_status:
             report_status = task_status
-        if not task_status and status == COMPLETED and not allowed_exception:
+        dependency_gate_root = failed_dependency or blocked_dependency or proof_debt_dependency
+        if dependency_gate_root and not allowed_exception:
+            had_current_pass = task_status == "pass" or report_status == "pass"
+            needs_fresh_authority = had_current_pass or report_status == "needs_fresh_review"
+            task_status = "blocked"
+            report_status = "needs_fresh_review" if needs_fresh_authority else "blocked"
+            if failed_dependency:
+                task_status_reason = f"depends on failed hard dependency {failed_dependency}"
+                task_status_evidence_type = "failed_dependency"
+            elif proof_debt_dependency:
+                task_status_reason = f"depends on non-consumable proof-debt dependency {proof_debt_dependency}"
+                task_status_evidence_type = "proof_debt_dependency"
+            else:
+                task_status_reason = f"depends on non-current hard dependency {blocked_dependency}"
+                task_status_evidence_type = (
+                    "dependency_authority_invalidated" if needs_fresh_authority else "blocked_dependency"
+                )
+        elif not task_status and status == COMPLETED and not allowed_exception:
             report_status = "needs_fresh_review"
             if not task_status_reason:
                 task_status_reason = "completed runtime status has no phase2_status/proof_class evidence"
@@ -282,7 +296,14 @@ def analyze_batch_state(
             else:
                 next_action = "repair task-level proof status"
         elif task_status == "blocked":
-            next_action = f"skip; blocked by {blocked_dependency}" if blocked_dependency else "repair dependency gate blocker"
+            if failed_dependency:
+                next_action = f"skip; blocked by failed dependency {failed_dependency}"
+            elif blocked_dependency:
+                next_action = f"skip; blocked by {blocked_dependency}"
+            elif proof_debt_dependency:
+                next_action = f"repair proof-debt root {proof_debt_dependency} before downstream"
+            else:
+                next_action = "repair dependency gate blocker"
         elif report_status == "needs_fresh_review":
             next_action = "run fresh semantic review"
         report_terminal = status in REPORTING_TERMINAL_STATUSES
@@ -577,7 +598,6 @@ def _hard_failed_roots(task_map: dict[str, dict[str, Any]]) -> set[str]:
         if (
             status == FAILED_LOCAL
             and stop_reason in ROOT_DEPENDENCY_FAILURE_REASONS
-            and not _task_needs_concrete_decomposition(raw_task)
             and phase2_failure_counters_from_task(raw_task).exhausted
         ):
             roots.add(task_id)
@@ -596,26 +616,34 @@ def _phase2_blocking_roots(
         report_status = _normalize_report_status(
             raw_task.get("phase2_status", raw_task.get("phase2_task_status"))
         )
-        if task_status == "fail" and _task_has_family_consumable_support(raw_task):
-            continue
-        if task_status in {"fail", "blocked"}:
-            roots.add(task_id)
-        elif report_status in {"needs_fresh_review", "needs_class_normalization"}:
-            roots.add(task_id)
-        elif task_status_evidence_type == "needs_class_normalization":
-            roots.add(task_id)
-        elif (
-            status == COMPLETED
-            and not task_status
-            and not _task_has_accepted_proof_debt(raw_task)
-            and not _is_allowed_beyond_book_exception(
-                task_id,
-                raw_task,
-                status=status,
-                allowed_beyond_book_tasks=allowed_beyond_book_tasks,
-            )
+        if _is_allowed_beyond_book_exception(
+            task_id,
+            raw_task,
+            status=status,
+            allowed_beyond_book_tasks=allowed_beyond_book_tasks,
         ):
-            roots.add(task_id)
+            continue
+        if (
+            status in {COMPLETED, COMPLETED_WITH_PROOF_DEBT}
+            and status == COMPLETED_WITH_PROOF_DEBT
+            and task_status not in {"fail", "blocked"}
+            and report_status not in {"needs_fresh_review", "needs_class_normalization"}
+            and task_status_evidence_type != "needs_class_normalization"
+        ):
+            # Proof debt has its own transitive gate and report classification.
+            continue
+        if (
+            status == COMPLETED
+            and task_status == "pass"
+            and report_status not in {"needs_fresh_review", "needs_class_normalization"}
+            and task_status_evidence_type != "needs_class_normalization"
+        ):
+            continue
+        # Fail closed: a hard dependency is consumable only with current
+        # COMPLETED+pass authority (or the explicit exception handled above).
+        # This includes absent/blank status, NONTERMINAL, stale review, fail,
+        # blocked, and unknown/unregistered dependency placeholders.
+        roots.add(task_id)
     return roots
 
 
@@ -633,10 +661,7 @@ def _task_has_family_consumable_support(raw_task: dict[str, Any]) -> bool:
         return False
     if completion_class not in FAMILY_CONSUMABLE_COMPLETION_CLASSES:
         return False
-    summary = raw_task.get("proof_obligation_summary")
-    if not isinstance(summary, dict):
-        return False
-    return not summary.get("open_blocking_ids") and not summary.get("needs_concrete_decomposition")
+    return True
 
 
 def _proof_debt_roots(
@@ -648,7 +673,7 @@ def _proof_debt_roots(
     roots: set[str] = set()
     for task_id, raw_task in task_map.items():
         status = _normalize_status(raw_task.get("status"))
-        if status == COMPLETED_WITH_PROOF_DEBT or (status == COMPLETED and _task_has_accepted_proof_debt(raw_task)):
+        if status == COMPLETED_WITH_PROOF_DEBT:
             if (
                 objective == TEXTBOOK_COMPLETE_OBJECTIVE
                 and _is_allowed_beyond_book_exception(
@@ -698,8 +723,9 @@ def _first_blocked_transitive_dependency(
         if dep_id in phase2_blocking_roots:
             return dep_id
         dep_task = task_map.get(dep_id)
-        if isinstance(dep_task, dict):
-            stack.extend(reversed(canonicalize_id_list(dep_task.get("dependencies", []))))
+        if not isinstance(dep_task, dict):
+            return dep_id
+        stack.extend(reversed(canonicalize_id_list(dep_task.get("dependencies", []))))
     return ""
 
 
@@ -745,7 +771,7 @@ def _row_issue(
     if status == DEPENDENCY_PROOF_DEBT and not proof_debt_dependency:
         return "dependency-proof-debt without an upstream accepted proof debt in this batch"
     if status == COMPLETED_WITH_PROOF_DEBT and not allowed_beyond_book_exception:
-        return "accepted proof debt remains; run debt-fix before downstream use"
+        return "legacy non-clean proof-debt status remains; re-review and repair the source spine before downstream use"
     if status == COMPLETED_WITH_PROOF_DEBT and allowed_beyond_book_exception:
         return ""
     if status == NEEDS_DECOMPOSITION:
@@ -775,7 +801,7 @@ def _next_action(
     if status == COMPLETED_WITH_PROOF_DEBT:
         if allowed_beyond_book_exception:
             return "none; allowed beyond-book exception"
-        return "run debt-fix"
+        return "run review-now --review-subject existing"
     if status == DEPENDENCY_FAILED:
         return f"skip; blocked by {failed_dependency}" if failed_dependency else "skip; dependency failed"
     if blocked_dependency:
@@ -799,7 +825,7 @@ def _next_action(
     if status == USER_INTERRUPTED:
         return "resume only on explicit user direction"
     if status == NEEDS_DECOMPOSITION:
-        return "split proof_obligations into concrete source nodes"
+        return "legacy decomposition status; repair named source steps through the ordinary review loop"
     if issue:
         return "continue or repair before final summary"
     return "continue independent task"
@@ -843,56 +869,6 @@ def _is_allowed_beyond_book_exception(
     current_class = str(raw_task.get("current_class", "") or raw_task.get("primary_class", "") or "").strip()
     if current_class == "beyond_book_exception":
         return True
-    summary = raw_task.get("proof_obligation_summary")
-    if isinstance(summary, dict):
-        status_counts = summary.get("status_counts", {})
-        if _status_counts_include_proof_debt(status_counts):
-            return True
-    return _task_has_accepted_proof_debt(raw_task)
-
-
-def _task_has_accepted_proof_debt(raw_task: dict[str, Any]) -> bool:
-    summary = raw_task.get("proof_obligation_summary")
-    if isinstance(summary, dict):
-        status_counts = summary.get("status_counts", {})
-        if _status_counts_include_proof_debt(status_counts):
-            return True
-
-    obligations = raw_task.get("proof_obligations")
-    if isinstance(obligations, dict):
-        if _status_counts_include_proof_debt(obligations.get("status_counts", {})):
-            return True
-        for item in obligations.get("obligations", []) if isinstance(obligations.get("obligations", []), list) else []:
-            if isinstance(item, dict) and str(item.get("status", "") or "").strip().lower() == "accepted_as_proof_debt":
-                return True
-
-    obligation_review = raw_task.get("obligation_review")
-    if isinstance(obligation_review, dict):
-        for item in obligation_review.get("items", []) if isinstance(obligation_review.get("items", []), list) else []:
-            if isinstance(item, dict) and str(item.get("status", "") or "").strip().lower() == "accepted_as_proof_debt":
-                return True
-
-    return False
-
-
-def _status_counts_include_proof_debt(status_counts: Any) -> bool:
-    if not isinstance(status_counts, dict):
-        return False
-    try:
-        return int(status_counts.get("accepted_as_proof_debt", 0) or 0) > 0
-    except (TypeError, ValueError):
-        return False
-
-
-def _task_needs_concrete_decomposition(raw_task: dict[str, Any]) -> bool:
-    if bool(raw_task.get("needs_concrete_decomposition")) or bool(raw_task.get("needs_decomposition")):
-        return True
-    summary = raw_task.get("proof_obligation_summary")
-    if isinstance(summary, dict) and bool(summary.get("needs_concrete_decomposition")):
-        return True
-    obligations = raw_task.get("proof_obligations")
-    if isinstance(obligations, dict):
-        return proof_obligations_need_concrete(obligations)
     return False
 
 

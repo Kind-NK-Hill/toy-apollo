@@ -38,25 +38,27 @@ theorem prob_7_3_cell_oscillation_le_of_pairwise_small_on_subinterval
     (hAbove : BddAbove (f '' Icc a b))
     (hBelow : BddBelow (f '' Icc a b))
     (hsmall :
-      ∀ y : ℝ, y ∈ DarbouxRS.subinterval P i →
-        ∀ z : ℝ, z ∈ DarbouxRS.subinterval P i → |f y - f z| < eta) :
-    DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i ≤ eta := by
+      ∀ y : ℝ, y ∈ Prob73NatPartition.subinterval P i →
+        ∀ z : ℝ, z ∈ Prob73NatPartition.subinterval P i → |f y - f z| < eta) :
+    Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i ≤ eta := by
+  rw [Prob73NatPartition.upperStep_eq P f hi,
+    Prob73NatPartition.lowerStep_eq P f hi]
   exact
     Thm11SourceRoute.upperStep_sub_lowerStep_le_of_subinterval_oscillation_bound
-      (P := P) (i := i) hi hAbove hBelow
-      (fun y hy z hz => le_of_lt (hsmall y hy z hz))
-
+      (P := P) (i := (⟨i, hi⟩ : Fin P.n)) hAbove hBelow
+      (fun y hy z hz => le_of_lt (hsmall y (by
+        rwa [Prob73NatPartition.subinterval_eq P hi]) z (by
+        rwa [Prob73NatPartition.subinterval_eq P hi])))
 theorem prob_7_3_same_subinterval_abs_sub_le_mesh
     {a b : ℝ} (P : DarbouxRS.Partition a b) {i : ℕ} (hi : i < P.n)
     {y z : ℝ}
-    (hy : y ∈ DarbouxRS.subinterval P i)
-    (hz : z ∈ DarbouxRS.subinterval P i) :
+    (hy : y ∈ Prob73NatPartition.subinterval P i)
+    (hz : z ∈ Prob73NatPartition.subinterval P i) :
     |y - z| ≤ P.mesh := by
-  have hlen : P.pts (i + 1) - P.pts i ≤ P.mesh := by
-    unfold DarbouxRS.Partition.mesh
-    exact Finset.le_sup' (s := Finset.range P.n)
-      (f := fun j => P.pts (j + 1) - P.pts j) (Finset.mem_range.mpr hi)
-  have habs : |y - z| ≤ P.pts (i + 1) - P.pts i := by
+  have hlen : Prob73NatPartition.point P (i + 1) -
+      Prob73NatPartition.point P i ≤ P.mesh :=
+    Prob73NatPartition.partition_length_le_mesh P hi
+  have habs : |y - z| ≤ Prob73NatPartition.point P (i + 1) - Prob73NatPartition.point P i := by
     refine abs_le.mpr ⟨?_, ?_⟩
     · nlinarith [hy.1, hz.2]
     · nlinarith [hy.2, hz.1]
@@ -71,9 +73,9 @@ theorem prob_7_3_compact_complement_uniform_small_oscillation
     ∃ lambda : ℝ, 0 < lambda ∧
       ∀ P : DarbouxRS.Partition a b, ∀ i : ℕ, i < P.n →
         P.mesh < lambda →
-        (DarbouxRS.subinterval P i ∩ (Icc a b \ G)).Nonempty →
-        ∀ y : ℝ, y ∈ DarbouxRS.subinterval P i →
-          ∀ z : ℝ, z ∈ DarbouxRS.subinterval P i → |f y - f z| < eta := by
+        (Prob73NatPartition.subinterval P i ∩ (Icc a b \ G)).Nonempty →
+        ∀ y : ℝ, y ∈ Prob73NatPartition.subinterval P i →
+          ∀ z : ℝ, z ∈ Prob73NatPartition.subinterval P i → |f y - f z| < eta := by
   classical
   let K : Set ℝ := Icc a b \ G
   have hKcompact : IsCompact K := isCompact_Icc.diff hGopen
@@ -174,8 +176,8 @@ theorem prob_7_3_compact_complement_uniform_small_oscillation
       have hsum : |z - u| + |u - c| < delta / 4 + delta / 4 :=
         add_lt_add_of_le_of_lt (le_of_lt (lt_of_le_of_lt hzu hmesh_delta)) huc_delta
       exact lt_of_le_of_lt htri (lt_trans hsum (by linarith))
-    have hyI : y ∈ Icc a b := DarbouxRS.subinterval_subset_Icc_core P hi hy
-    have hzI : z ∈ Icc a b := DarbouxRS.subinterval_subset_Icc_core P hi hz
+    have hyI : y ∈ Icc a b := Prob73NatPartition.subinterval_subset_Icc P hi hy
+    have hzI : z ∈ Icc a b := Prob73NatPartition.subinterval_subset_Icc P hi hz
     exact hosc y hyI hyc z hzI hzc
   · refine ⟨1, zero_lt_one, ?_⟩
     intro P i hi hmesh hmeet y hy z hz
@@ -192,8 +194,8 @@ theorem prob_7_3_partitionOscillation_bound_of_good_bad_cells
     (hCnonneg : 0 ≤ C)
     (heta_nonneg : 0 ≤ eta)
     (hGood : ∀ i : ℕ, i < P.n →
-      (DarbouxRS.subinterval P i ∩ (Icc a b \ G)).Nonempty →
-      DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i ≤ eta) :
+      (Prob73NatPartition.subinterval P i ∩ (Icc a b \ G)).Nonempty →
+      Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i ≤ eta) :
     Thm11SourceRoute.partitionOscillation P f F ≤
       eta * (F b - F a) +
         (2 * C) * (((F.measure.restrict (Icc a b)) G).toReal) := by
@@ -201,57 +203,103 @@ theorem prob_7_3_partitionOscillation_bound_of_good_bad_cells
   let K : Set ℝ := Icc a b \ G
   let B : Finset ℕ :=
     (Finset.range P.n).filter
-      (fun i : ℕ => ¬ (DarbouxRS.subinterval P i ∩ K).Nonempty)
+      (fun i : ℕ => ¬ (Prob73NatPartition.subinterval P i ∩ K).Nonempty)
   have hs : DarbouxRS.SourceHypotheses a b f F :=
     ⟨hab, hAbove, hBelow, F.mono.monotoneOn (Icc a b)⟩
   have hgood_split :
       ∀ i : ℕ, i < P.n → i ∉ B →
-        DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i ≤ eta := by
+        Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i ≤ eta := by
     intro i hi hiNotB
-    have hmeet : (DarbouxRS.subinterval P i ∩ K).Nonempty := by
+    have hmeet : (Prob73NatPartition.subinterval P i ∩ K).Nonempty := by
       by_contra hnot
       exact hiNotB (by simp [B, hi, hnot])
     exact hGood i hi hmeet
   have hbad_split :
       ∀ i : ℕ, i < P.n → i ∈ B →
-        DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i ≤ 2 * C := by
+        Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i ≤ 2 * C := by
     intro i hi _hiB
+    rw [Prob73NatPartition.upperStep_eq P f hi,
+      Prob73NatPartition.lowerStep_eq P f hi]
     exact Thm11SourceRoute.upperStep_sub_lowerStep_le_two_mul_abs_bound
-      P hi hAbove hBelow hCbound
+      P ⟨i, hi⟩ hAbove hBelow hCbound
   have hsplit := Thm11SourceRoute.partitionOscillation_le_good_bad_split
     (f := f) (α := F) (a := a) (b := b) (C := C) (eta := eta)
-    hs P B heta_nonneg hgood_split hbad_split
+    hs P B heta_nonneg
+      (fun i hiNotB => by
+        rw [← Prob73NatPartition.upperStep_eq P f i.isLt,
+          ← Prob73NatPartition.lowerStep_eq P f i.isLt]
+        exact hgood_split i.val i.isLt hiNotB)
+      (fun i hiB => by
+        rw [← Prob73NatPartition.upperStep_eq P f i.isLt,
+          ← Prob73NatPartition.lowerStep_eq P f i.isLt]
+        exact hbad_split i.val i.isLt hiB)
   have hfilter_eq :
       (Finset.range P.n).filter (fun i : ℕ => i ∈ B) = B := by
     ext i
     simp [B]
+  have hfin_to_nat :
+      (∑ i ∈ (Finset.univ : Finset (Fin P.n)).filter (fun i => i.val ∈ B),
+          (F (P.pts i.succ) - F (P.pts i.castSucc))) =
+        ∑ i ∈ B,
+          (F (Prob73NatPartition.point P (i + 1)) -
+            F (Prob73NatPartition.point P i)) := by
+    rw [Finset.sum_filter]
+    calc
+      (∑ i : Fin P.n, if i.val ∈ B then
+          F (P.pts i.succ) - F (P.pts i.castSucc) else 0) =
+        ∑ i : Fin P.n, if i.val ∈ B then
+          F (Prob73NatPartition.point P (i.val + 1)) -
+            F (Prob73NatPartition.point P i.val) else 0 := by
+          refine Finset.sum_congr rfl ?_
+          intro i _
+          by_cases hiB : i.val ∈ B
+          · simp only [hiB, if_true]
+            rw [Prob73NatPartition.point_eq P (Nat.succ_le_of_lt i.isLt),
+              Prob73NatPartition.point_eq P (Nat.le_of_lt i.isLt)]
+            congr <;> apply Fin.ext <;> simp
+          · simp [hiB]
+      _ = ∑ i ∈ Finset.range P.n, if i ∈ B then
+          F (Prob73NatPartition.point P (i + 1)) -
+            F (Prob73NatPartition.point P i) else 0 := by
+          exact Fin.sum_univ_eq_sum_range (fun i : ℕ => if i ∈ B then
+            F (Prob73NatPartition.point P (i + 1)) -
+              F (Prob73NatPartition.point P i) else 0) P.n
+      _ = ∑ i ∈ (Finset.range P.n).filter (fun i : ℕ => i ∈ B),
+          (F (Prob73NatPartition.point P (i + 1)) -
+            F (Prob73NatPartition.point P i)) := by
+          rw [Finset.sum_filter]
+      _ = ∑ i ∈ B,
+          (F (Prob73NatPartition.point P (i + 1)) -
+            F (Prob73NatPartition.point P i)) := by rw [hfilter_eq]
   have hsplit' :
       Thm11SourceRoute.partitionOscillation P f F ≤
         eta * (F b - F a) +
           2 * C *
-            (∑ i ∈ B, (F (P.pts (i + 1)) - F (P.pts i))) := by
-    simpa [hfilter_eq] using hsplit
+            (∑ i ∈ B, (F (Prob73NatPartition.point P (i + 1)) -
+              F (Prob73NatPartition.point P i))) := by
+    rw [hfin_to_nat] at hsplit
+    exact hsplit
   have hBsub : ∀ i ∈ B, i < P.n := by
     intro i hiB
     exact Finset.mem_range.mp ((Finset.mem_filter.mp hiB).1)
-  have hBcellSub : ∀ i ∈ B, Ioc (P.pts i) (P.pts (i + 1)) ⊆ G := by
+  have hBcellSub : ∀ i ∈ B, Ioc (Prob73NatPartition.point P i) (Prob73NatPartition.point P (i + 1)) ⊆ G := by
     intro i hiB x hxcell
     have hi : i < P.n := hBsub i hiB
-    have hbad : ¬ (DarbouxRS.subinterval P i ∩ K).Nonempty :=
+    have hbad : ¬ (Prob73NatPartition.subinterval P i ∩ K).Nonempty :=
       (Finset.mem_filter.mp hiB).2
-    have hxClosed : x ∈ DarbouxRS.subinterval P i :=
+    have hxClosed : x ∈ Prob73NatPartition.subinterval P i :=
       ⟨le_of_lt hxcell.1, hxcell.2⟩
-    have hxI : x ∈ Icc a b := DarbouxRS.subinterval_subset_Icc_core P hi hxClosed
+    have hxI : x ∈ Icc a b := Prob73NatPartition.subinterval_subset_Icc P hi hxClosed
     by_contra hxG
     exact hbad ⟨x, hxClosed, hxI, hxG⟩
   have hbadSumLe :
-      (∑ i ∈ B, (F (P.pts (i + 1)) - F (P.pts i))) ≤
+      (∑ i ∈ B, (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i))) ≤
         (((F.measure.restrict (Icc a b)) G).toReal) := by
     exact prob_7_3_partition_cell_increment_sum_le_open_measure_toReal
       (F := F) (P := P) (S := B) hBsub hBcellSub
   have hcoef_nonneg : 0 ≤ 2 * C := by nlinarith
   have hbadTermLe :
-      2 * C * (∑ i ∈ B, (F (P.pts (i + 1)) - F (P.pts i))) ≤
+      2 * C * (∑ i ∈ B, (F (Prob73NatPartition.point P (i + 1)) - F (Prob73NatPartition.point P i))) ≤
         2 * C * (((F.measure.restrict (Icc a b)) G).toReal) :=
     mul_le_mul_of_nonneg_left hbadSumLe hcoef_nonneg
   linarith
@@ -340,8 +388,8 @@ theorem prob_7_3_largeOscillationSet_nulls_imply_darbouxGapSmall
   refine ⟨delta, hdelta_pos, ?_⟩
   intro P hmesh
   have hGood : ∀ i : ℕ, i < P.n →
-      (DarbouxRS.subinterval P i ∩ (Icc a b \ G)).Nonempty →
-      DarbouxRS.upperStep P f i - DarbouxRS.lowerStep P f i ≤ eta := by
+      (Prob73NatPartition.subinterval P i ∩ (Icc a b \ G)).Nonempty →
+      Prob73NatPartition.upperStep P f i - Prob73NatPartition.lowerStep P f i ≤ eta := by
     intro i hi hmeet
     exact prob_7_3_cell_oscillation_le_of_pairwise_small_on_subinterval
       (P := P) (i := i) hi hAbove hBelow
@@ -465,47 +513,54 @@ theorem prob_7_3_setIntegral_completion_eq
     ∫ x in s, (fun x : NullMeasurableSpace ℝ μ => f x) x ∂μ.completion =
       ∫ x in s, f x ∂μ := by
   rw [IntegrableOn] at h
-  have hm : (inferInstance : MeasurableSpace ℝ) ≤
+  have hm : Real.measurableSpace ≤
       (inferInstance : MeasurableSpace (NullMeasurableSpace ℝ μ)) := by
     intro t ht
     exact ht.nullMeasurableSet
   have hμtrim : μ.completion.trim hm = μ := by
     refine @Measure.ext (NullMeasurableSpace ℝ μ)
-      (inferInstance : MeasurableSpace ℝ) _ _ ?_
+      Real.measurableSpace _ _ ?_
     intro t ht
     rw [@trim_measurableSet_eq (NullMeasurableSpace ℝ μ)
-      (inferInstance : MeasurableSpace ℝ)
+      Real.measurableSpace
       (inferInstance : MeasurableSpace (NullMeasurableSpace ℝ μ))
       μ.completion t hm ht]
     rw [Measure.completion_apply]
     rfl
   have hrestrict_trim :
       @Measure.restrict (NullMeasurableSpace ℝ μ)
-          (inferInstance : MeasurableSpace ℝ) (μ.completion.trim hm) s =
+          Real.measurableSpace (μ.completion.trim hm) s =
         (μ.completion.restrict s).trim hm := by
     exact @restrict_trim (NullMeasurableSpace ℝ μ)
-      (inferInstance : MeasurableSpace ℝ)
+      Real.measurableSpace
       (inferInstance : MeasurableSpace (NullMeasurableSpace ℝ μ))
       s hm μ.completion hs
   have htrim : (μ.completion.restrict s).trim hm = μ.restrict s := by
     rw [← hrestrict_trim, hμtrim]
     rfl
   have hf_aes : @AEStronglyMeasurable (NullMeasurableSpace ℝ μ) ℝ
-      _ (inferInstance : MeasurableSpace ℝ)
-      (inferInstance : MeasurableSpace ℝ)
+      _ Real.measurableSpace Real.measurableSpace
       (fun x : NullMeasurableSpace ℝ μ => f x)
       ((μ.completion.restrict s).trim hm) := by
-    simpa [htrim] using h.aestronglyMeasurable
+    rw [htrim]
+    change @AEStronglyMeasurable ℝ ℝ _
+      Real.measurableSpace Real.measurableSpace f (μ.restrict s)
+    exact h.aestronglyMeasurable
   have hEqWhole :
       ∫ x, (fun x : NullMeasurableSpace ℝ μ => f x) x ∂(μ.completion.restrict s) =
         ∫ x, (fun x : NullMeasurableSpace ℝ μ => f x) x
           ∂((μ.completion.restrict s).trim hm) := by
     exact @integral_trim_ae ℝ _ _ (NullMeasurableSpace ℝ μ)
-      (inferInstance : MeasurableSpace ℝ)
+      Real.measurableSpace
       (inferInstance : MeasurableSpace (NullMeasurableSpace ℝ μ))
       (μ.completion.restrict s) hm
       (f := fun x : NullMeasurableSpace ℝ μ => f x) hf_aes
-  simpa [htrim] using hEqWhole
+  rw [htrim] at hEqWhole
+  have hbase :
+      (∫ x : NullMeasurableSpace ℝ μ, f x ∂(μ.restrict s)) =
+        ∫ x : ℝ, f x ∂(μ.restrict s) := by
+    rfl
+  exact hEqWhole.trans hbase
 
 theorem prob_7_3_partB_completion_integrable_integral_eq
     (F : StieltjesFunction ℝ) {a b : ℝ} {f : ℝ → ℝ}

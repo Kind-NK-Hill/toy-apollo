@@ -8,12 +8,14 @@ SOURCE MATERIAL: omitted from the public source snapshot; see docs/repository_sc
 import ToyApollo.Support.IIDWord
 
 -- WRITE FINAL LEAN CODE BELOW
+
 open Filter MeasureTheory ProbabilityTheory Set
 open scoped ENNReal Topology
 
 section MonkeyTyping
 
-variable {α : Type*} [Fintype α] [Nonempty α] [MeasurableSpace α] [MeasurableSingletonClass α]
+variable {α : Type*} [Fintype α] [Nonempty α] [MeasurableSpace α]
+  [MeasurableSingletonClass α]
 variable {n : ℕ} [NeZero n]
 
 theorem ex_5_4_2 (w : Fin n → α) :

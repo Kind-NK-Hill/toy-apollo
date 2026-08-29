@@ -342,7 +342,6 @@ def prepare_external_pr_review(
         review_basis_subject_file=checkout / Path(observation.subject.primary_path.replace("/", "\\")),
         review_basis_extra=external_basis,
         review_context_suffix=context_suffix,
-        materialize_proof_obligations=False,
     )
     review_input_path = Path(str(artifacts["review_input_file"]))
     review_input = _json_object(review_input_path)

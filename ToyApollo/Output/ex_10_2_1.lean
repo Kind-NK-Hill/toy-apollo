@@ -54,6 +54,23 @@ theorem ex_10_2_1_almost_sure :
     ConvergesAlmostSurely ex_10_2_1_unitIntervalMeasure
       ex_10_2_1_sequence (fun _ => 0) := by
   unfold ConvergesAlmostSurely
+  refine ⟨?_, aestronglyMeasurable_const, ?_⟩
+  · intro n
+    have hconst :
+        AEStronglyMeasurable (fun _ : ℝ => (n : ℝ) + 1)
+          ex_10_2_1_unitIntervalMeasure :=
+      aestronglyMeasurable_const
+    have hindicator :
+        AEStronglyMeasurable
+          ((Icc (0 : ℝ) (((n : ℝ) + 1)⁻¹)).indicator (fun _ => (1 : ℝ)))
+          ex_10_2_1_unitIntervalMeasure :=
+      (measurable_const.indicator measurableSet_Icc).aestronglyMeasurable
+    change AEStronglyMeasurable
+      (fun ω : ℝ =>
+        ((n : ℝ) + 1) *
+          (Icc (0 : ℝ) (((n : ℝ) + 1)⁻¹)).indicator (fun _ => (1 : ℝ)) ω)
+      ex_10_2_1_unitIntervalMeasure
+    exact hconst.mul hindicator
   have hAeNe : ∀ᵐ ω ∂ex_10_2_1_unitIntervalMeasure, ω ≠ 0 := by
     rw [ae_iff]
     change ex_10_2_1_unitIntervalMeasure {ω : ℝ | ¬ ω ≠ 0} = 0
@@ -128,7 +145,7 @@ theorem ex_10_2_1_not_mean :
       ex_10_2_1_sequence (fun _ => 0) := by
   intro hmean
   rw [ConvergesInMean, ConvergesInRthMean] at hmean
-  rcases hmean with ⟨_, hlim⟩
+  rcases hmean with ⟨_, _, _, hlim⟩
   have hconst :
       Tendsto
         (fun n : ℕ => meanDeviationMoment ex_10_2_1_unitIntervalMeasure

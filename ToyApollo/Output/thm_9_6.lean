@@ -27,10 +27,8 @@ noncomputable def measureCdf (μ : Measure ℝ) (x : ℝ) : ℝ :=
 theorem characteristicFunction_eq_charFun_map
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} {X : Ω → ℝ}
     (hX : AEMeasurable X P) (t : ℝ) :
-    characteristicFunction P X t = charFun (P.map X) t := by
-  rw [charFun_apply_real]
-  rw [integral_map hX.aestronglyMeasurable.aemeasurable (by fun_prop)]
-  simp [characteristicFunction, mul_comm, mul_left_comm]
+    characteristicFunction (P.map X) t = charFun (P.map X) t := by
+  rfl
 
 theorem characteristicInversionTruncation_eq_of_charFun_eq
     (μ ν : Measure ℝ) (hchar : charFun μ = charFun ν) (a b T : ℝ) :
@@ -255,8 +253,8 @@ theorem sameDistribution_of_characteristicFunction_eq
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
     [IsProbabilityMeasure P] {X Y : Ω → ℝ}
     (hX : AEMeasurable X P) (hY : AEMeasurable Y P)
-    (hφ : ∀ t : ℝ, characteristicFunction P X t =
-      characteristicFunction P Y t) :
+    (hφ : ∀ t : ℝ, characteristicFunction (P.map X) t =
+      characteristicFunction (P.map Y) t) :
     SameDistribution P X Y := by
   haveI : IsProbabilityMeasure (P.map X) :=
     Measure.isProbabilityMeasure_map hX
@@ -273,7 +271,7 @@ theorem thm_9_6
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
     [IsProbabilityMeasure P] {X Y : Ω → ℝ}
     (hX : AEMeasurable X P) (hY : AEMeasurable Y P)
-    (hφ : ∀ t : ℝ, characteristicFunction P X t =
-      characteristicFunction P Y t) :
+    (hφ : ∀ t : ℝ, characteristicFunction (P.map X) t =
+      characteristicFunction (P.map Y) t) :
     SameDistribution P X Y :=
   sameDistribution_of_characteristicFunction_eq hX hY hφ

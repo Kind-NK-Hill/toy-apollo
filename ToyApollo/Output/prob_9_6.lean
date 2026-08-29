@@ -24,7 +24,7 @@ def HasCauchyDistribution {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) (X : Ω → ℝ) (a γ : ℝ) : Prop :=
   AEMeasurable X P ∧
     0 < γ ∧
-    ∀ t : ℝ, characteristicFunction P X t = cauchyCharFun a γ t
+    ∀ t : ℝ, characteristicFunction (P.map X) t = cauchyCharFun a γ t
 
 noncomputable def cauchySampleAverage {Ω : Type*} {n : ℕ}
     (X : Fin n → Ω → ℝ) : Ω → ℝ :=
@@ -59,7 +59,7 @@ theorem cauchySampleAverage_characteristicFunction
     (hX : ∀ i : Fin n, HasCauchyDistribution P (X i) a γ)
     (hindep : iIndepFun X P) :
     ∀ t : ℝ,
-      characteristicFunction P (cauchySampleAverage X) t =
+      characteristicFunction (P.map (cauchySampleAverage X)) t =
         cauchyCharFun a γ t := by
   intro t
   have hAEM : ∀ i : Fin n, AEMeasurable (X i) P := fun i => (hX i).1
@@ -69,15 +69,17 @@ theorem cauchySampleAverage_characteristicFunction
   have havgAEM : AEMeasurable (cauchySampleAverage X) P :=
     cauchySampleAverage_aemeasurable hAEM
   calc
-    characteristicFunction P (cauchySampleAverage X) t =
+    characteristicFunction (P.map (cauchySampleAverage X)) t =
         charFun (P.map (cauchySampleAverage X)) t := by
           exact characteristicFunction_eq_charFun_map havgAEM t
     _ = charFun (P.map (fun ω => ∑ i : Fin n, X i ω)) (((n : ℝ)⁻¹) * t) := by
-          simpa [cauchySampleAverage] using
-            (charFun_map_mul_comp
-              (μ := P)
-              (f := fun ω => ∑ i : Fin n, X i ω)
-              hsumAEM ((n : ℝ)⁻¹) t)
+          change
+            charFun (P.map (fun ω => ((n : ℝ)⁻¹) * ∑ i : Fin n, X i ω)) t =
+              charFun (P.map (fun ω => ∑ i : Fin n, X i ω)) (((n : ℝ)⁻¹) * t)
+          exact charFun_map_mul_comp
+            (μ := P)
+            (f := fun ω => ∑ i : Fin n, X i ω)
+            hsumAEM ((n : ℝ)⁻¹) t
     _ = (∏ i : Fin n, charFun (P.map (X i)) (((n : ℝ)⁻¹) * t)) := by
           have hprod :=
             hindep.charFun_map_fun_sum_eq_prod hAEM

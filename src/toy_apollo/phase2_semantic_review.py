@@ -13,14 +13,31 @@ from typing import Any
 
 from src.block_id_naming import canonicalize_block_id
 
-from .phase2_proof_obligations import (
-    validate_obligation_review_for_pass,
-    validate_obligation_review_shape,
+from .phase2_proof_obligations import validate_obligation_review_for_pass, validate_obligation_review_shape
+from .phase2_task_status import phase2_pass_class_contract
+
+
+def _resolve_profile_review_versions() -> tuple[int, int, frozenset[int]]:
+    """Per-profile review-version constants.
+
+    MAT (default, no TOY_APOLLO_PROFILE): current prompt 11, supported
+    {9, 10, 11}, rubric 9 — byte-identical to the historical constants.
+    Cordis: prompt 1 / rubric 1 from the profile table in core.settings.
+    """
+
+    import os
+
+    from .core.settings import profile_spec
+
+    profile = str(os.getenv("TOY_APOLLO_PROFILE", "") or "").strip().lower()
+    spec = profile_spec(profile if profile else "mat")
+    current = int(max(spec.prompt_versions))
+    return current, int(spec.rubric_version), frozenset(int(v) for v in spec.prompt_versions)
+
+
+SEMANTIC_REVIEW_PROMPT_VERSION, SEMANTIC_REVIEW_RUBRIC_VERSION, SEMANTIC_REVIEW_SUPPORTED_PROMPT_VERSIONS = (
+    _resolve_profile_review_versions()
 )
-
-
-SEMANTIC_REVIEW_PROMPT_VERSION = 9
-SEMANTIC_REVIEW_RUBRIC_VERSION = 9
 SEMANTIC_REVIEW_INPUT_SCHEMA_VERSION = "phase2.semantic_review.input.v3"
 SEMANTIC_REVIEW_REQUIRED_FIELDS = {
     "verdict",
@@ -33,7 +50,6 @@ SEMANTIC_REVIEW_REQUIRED_FIELDS = {
     "claim_mapping",
     "route_inspection",
     "spine_alignment",
-    "obligation_review",
     "evidence_review",
     "interface_contract",
     "downstream_adequacy",
@@ -101,6 +117,91 @@ def _matches_version(value: Any, expected: int) -> bool:
         return False
 
 
+def is_supported_semantic_review_prompt_version(value: Any) -> bool:
+    if isinstance(value, bool):
+        return False
+    try:
+        return int(value) in SEMANTIC_REVIEW_SUPPORTED_PROMPT_VERSIONS
+    except (TypeError, ValueError):
+        return False
+
+
+
+def _uses_legacy_obligation_review_schema(payload: dict[str, Any]) -> bool:
+    value = payload.get("prompt_version", SEMANTIC_REVIEW_PROMPT_VERSION)
+    if isinstance(value, bool):
+        return False
+    try:
+        from .core.settings import profile_spec
+
+        profile = str(os.getenv("TOY_APOLLO_PROFILE", "") or "").strip().lower()
+        legacy_versions = profile_spec(profile if profile else "mat").legacy_obligation_review_prompt_versions
+        return int(value) in legacy_versions
+    except (TypeError, ValueError):
+        return False
+
+
+def _required_semantic_review_fields(review_input: dict[str, Any]) -> set[str]:
+    fields = set(SEMANTIC_REVIEW_REQUIRED_FIELDS)
+    if _uses_legacy_obligation_review_schema(review_input):
+        fields.add("obligation_review")
+    if _review_profile(review_input) == "cordis":
+        fields.add("source_statement_divergence")
+    return fields
+
+
+def _review_profile(review_input: dict[str, Any]) -> str:
+    review_basis = review_input.get("review_basis", {}) if isinstance(review_input, dict) else {}
+    if isinstance(review_basis, dict):
+        bound_profile = str(review_basis.get("review_profile", "") or "").strip().lower()
+        if bound_profile:
+            return bound_profile
+    return str(os.getenv("TOY_APOLLO_PROFILE", "") or "mat").strip().lower() or "mat"
+
+
+def _validate_source_statement_divergence(
+    result: dict[str, Any],
+    *,
+    review_input: dict[str, Any],
+    verdict: str,
+) -> str:
+    if _review_profile(review_input) != "cordis":
+        return ""
+    divergences = result.get("source_statement_divergence")
+    if divergences is None:
+        return ""
+    if not isinstance(divergences, list):
+        return "reviewer field source_statement_divergence must be null or a list"
+    allowed_verdicts = {"documented_divergence", "resolve_to_intended", "weakening_risk"}
+    required_keys = {"paper_literal", "paper_intended", "lean_implements", "evidence", "verdict"}
+    for index, item in enumerate(divergences, start=1):
+        if not isinstance(item, dict):
+            return f"source_statement_divergence item {index} must be an object"
+        missing = sorted(required_keys - set(item))
+        if missing:
+            return (
+                f"source_statement_divergence item {index} is missing required fields: "
+                + ", ".join(missing)
+            )
+        for field in ("paper_literal", "lean_implements", "evidence"):
+            if not isinstance(item.get(field), str) or not str(item.get(field, "")).strip():
+                return f"source_statement_divergence item {index}.{field} must be a non-empty string"
+        if not isinstance(item.get("paper_intended"), str):
+            return f"source_statement_divergence item {index}.paper_intended must be a string"
+        divergence_verdict = str(item.get("verdict", "") or "").strip().lower()
+        if divergence_verdict not in allowed_verdicts:
+            return (
+                f"source_statement_divergence item {index}.verdict must be one of "
+                "documented_divergence/resolve_to_intended/weakening_risk"
+            )
+        item["verdict"] = divergence_verdict
+    if verdict == "pass" and any(
+        str(item.get("verdict", "") or "").strip().lower() == "weakening_risk"
+        for item in divergences
+        if isinstance(item, dict)
+    ):
+        return "invalid reviewer output: pass verdict cannot include source_statement_divergence weakening_risk"
+    return ""
 def _object_field(payload: Any, field: str) -> dict[str, Any]:
     if not isinstance(payload, dict):
         return {}
@@ -111,8 +212,8 @@ def _object_field(payload: Any, field: str) -> dict[str, Any]:
 def _validate_review_input_internal_binding(review_input: dict[str, Any]) -> str:
     if str(review_input.get("schema_version", "") or "") != SEMANTIC_REVIEW_INPUT_SCHEMA_VERSION:
         return f"review input schema_version must be {SEMANTIC_REVIEW_INPUT_SCHEMA_VERSION}"
-    if not _matches_version(review_input.get("prompt_version"), SEMANTIC_REVIEW_PROMPT_VERSION):
-        return "review input prompt_version does not match current semantic review prompt version"
+    if not is_supported_semantic_review_prompt_version(review_input.get("prompt_version")):
+        return "review input prompt_version is not a supported semantic review prompt version"
     if not _matches_version(review_input.get("rubric_version"), SEMANTIC_REVIEW_RUBRIC_VERSION):
         return "review input rubric_version does not match current semantic review rubric version"
 
@@ -275,6 +376,7 @@ def build_semantic_review_input(
     task_source_hash = _hash_json(task_payload)
     candidate_hash = _hash_text(candidate_code)
     task_id = str(task_payload.get("block_id", "") or "")
+    task_status_contract = phase2_pass_class_contract(task_id, str(task_payload.get("type", "") or ""))
     if subject_bundle_override is not None:
         subject_bundle = json.loads(json.dumps(subject_bundle_override))
         files = subject_bundle.get("files")
@@ -345,6 +447,7 @@ def build_semantic_review_input(
         "build_summary_hash": _hash_json(build_summary),
         "build_precondition_hash": _hash_json(build_precondition),
         "reviewer_role_contract_hash": _hash_json(reviewer_role_contract),
+        "task_status_contract_hash": _hash_json(task_status_contract),
         "review_basis_hash": resolved_review_basis_hash,
         "review_context_hash": review_context_hash,
         "review_subject_kind": review_subject_kind,
@@ -382,6 +485,7 @@ def build_semantic_review_input(
         "build_summary": build_summary,
         "build_precondition": build_precondition,
         "reviewer_role_contract": reviewer_role_contract,
+        "task_status_contract": task_status_contract,
         "reviewer_backend_id": backend_id,
         "reviewer_argv_hash": reviewer_argv_hash,
         "cache_basis": cache_basis,
@@ -393,10 +497,8 @@ def build_semantic_review_input(
             "When the source TeX contains an essential proof, construction, partition argument, or contradiction argument, preserve that proof spine at an appropriate abstraction level instead of replacing it with a theorem-specific wrapper.",
             "Use the textbook-first, bridge-then-Mathlib policy for shared mathematical interfaces: first identify the textbook object, then accept Mathlib use only through a reviewed source-step landing or reusable equivalence bridge.",
             "A reviewed equivalence bridge may use Mathlib infrastructure, but an adapter-only shortcut that skips the source proof spine cannot cleanly complete a proof-bearing task.",
-            "When proof_obligations are present in the review basis, judge each blocking obligation explicitly in obligation_review.items.",
-            "For a covered proof obligation, verify that the Lean landing is a theorem/lemma with the expected theorem signature, does not simply re-assume the same source step in its body, and does not move the obligation into a public theorem premise.",
             "Read the full semantic review context markdown before judging the candidate.",
-            "Do not accept a pass verdict without non-empty source_claims, claim_mapping, obligation_review, interface_contract, downstream_adequacy, and forbidden_weakenings.",
+            "Do not accept a pass verdict without non-empty source_claims, claim_mapping, source-spine step coverage, interface_contract, downstream_adequacy, and forbidden_weakenings.",
             "A theorem that cannot honestly support its direct downstream consumers does not pass semantic review.",
             "Fail any theorem whose direct downstream textbook consumer would need a fresh theorem-level hypothesis that is absent from the source downstream task.",
             "For definitions, fail if divergence or undefinedness is hidden behind an arbitrary fallback value such as `0`, `default`, or an unconditional witness.",
@@ -411,6 +513,50 @@ def render_semantic_review_prompt(review_input: dict[str, Any]) -> str:
     task = review_input["task"]
     candidate = review_input["candidate"]
     context_markdown = str(review_input.get("review_context_markdown", "")).strip()
+    legacy_obligation_schema = _uses_legacy_obligation_review_schema(review_input)
+    cordis_review = _review_profile(review_input) == "cordis"
+    cordis_divergence_lines = (
+        [
+            "For Cordis, `source_statement_divergence` is required. Use [] or null only after explicitly checking that no literal/intended/Lean divergence exists.",
+            "Each divergence entry must contain paper_literal, paper_intended, lean_implements, evidence, and verdict; verdict must be documented_divergence, resolve_to_intended, or weakening_risk.",
+            "A pass cannot contain a weakening_risk divergence.",
+        ]
+        if cordis_review
+        else []
+    )
+    required_evidence_classes = review_input.get("review_basis", {}).get("required_evidence_classes", [])
+    if not isinstance(required_evidence_classes, list):
+        required_evidence_classes = []
+    required_evidence_names = ", ".join(str(item) for item in required_evidence_classes)
+    task_status_contract = review_input.get("task_status_contract", {})
+    has_task_status_contract = (
+        is_supported_semantic_review_prompt_version(review_input.get("prompt_version"))
+        and int(review_input.get("prompt_version") or 0) >= 10
+        and isinstance(task_status_contract, dict)
+    )
+    if not has_task_status_contract:
+        task_status_contract = {}
+    clean_pass_prefixes = task_status_contract.get("clean_pass_prefixes", [])
+    if not isinstance(clean_pass_prefixes, list):
+        clean_pass_prefixes = []
+    allowed_exception_classes = task_status_contract.get("allowed_exception_classes", [])
+    if not isinstance(allowed_exception_classes, list):
+        allowed_exception_classes = []
+    task_status_contract_lines = (
+        [
+            "## Task-Level Pass Class Contract",
+            "",
+            f"- Projected task role: `{task_status_contract.get('task_role', 'unknown')}`",
+            f"- Clean pass prefixes allowed for this role: `{', '.join(str(item) for item in clean_pass_prefixes) or '(none)'}`",
+            f"- Explicit allowed-exception classes for this task: `{', '.join(str(item) for item in allowed_exception_classes) or '(none)'}`",
+            "For a clean pass, both `proof_class` and `completion_class` must be non-empty and each must use a clean pass prefix allowed for this task role.",
+            "An explicit allowed-exception class may be used only when it is listed for this exact task; it does not project to clean pass.",
+            "Do not invent a completion class: an otherwise semantic `pass` with a class outside this contract will be rejected by `review-apply`.",
+            "",
+        ]
+        if has_task_status_contract
+        else []
+    )
     return "\n".join(
         [
             f"# Semantic Review for {task.get('block_id', '')}",
@@ -425,7 +571,11 @@ def render_semantic_review_prompt(review_input: dict[str, Any]) -> str:
             "",
             "This prompt is for an independent read-only reviewer subagent or a configured external reviewer runner.",
             "If you authored or edited this candidate in the current repair attempt, do not fill the result; hand it to an independent reviewer.",
-            "Do not edit Lean files, prompt-pack files, obligations, classification, or ledger state while reviewing.",
+            (
+                "Do not edit Lean files, prompt-pack files, obligations, classification, or ledger state while reviewing."
+                if legacy_obligation_schema
+                else "Do not edit Lean files, prompt-pack files, historical checklist artifacts, classification, or ledger state while reviewing."
+            ),
             "The result must include a `reviewer_independence` object attesting that the review was read-only and independent.",
             "",
             "## Textbook / Mathlib Bridge Policy",
@@ -435,6 +585,7 @@ def render_semantic_review_prompt(review_input: dict[str, Any]) -> str:
             "Reject adapter-only shortcut routes: if the candidate merely applies a stronger Mathlib theorem or task-shaped bridge without landing the source proof spine, the verdict must be fail or inconclusive for proof-bearing tasks.",
             "For theorem/problem/exercise tasks, `interface_bridge_completed` by itself is not a clean proof class; the review must classify the final task route as source-route proof completion if the bridge genuinely discharges source steps.",
             "",
+            *task_status_contract_lines,
             "## Task Source",
             "",
             f"Type: `{task.get('type', '')}`",
@@ -463,22 +614,59 @@ def render_semantic_review_prompt(review_input: dict[str, Any]) -> str:
             "Return JSON only, written to the result path supplied by the runner.",
             "Use the generated result template as the starting JSON payload.",
             "Keep these binding fields unchanged: task_id, mode, attempt, prompt_version, rubric_version, review_input_file, review_prompt_file, expected_result_file, candidate_hash.",
-            "Fill these semantic review fields: verdict, confidence, summary, proof_class, completion_class, reviewer_independence, source_claims, claim_mapping, route_inspection, spine_alignment, obligation_review, evidence_review, interface_contract, downstream_adequacy, forbidden_weakenings, findings, recommended_disposition.",
+            (
+                "Fill these semantic review fields: verdict, confidence, summary, proof_class, completion_class, reviewer_independence, source_claims, claim_mapping, route_inspection, spine_alignment, obligation_review, evidence_review, interface_contract, downstream_adequacy, forbidden_weakenings, findings, recommended_disposition."
+                if legacy_obligation_schema
+                else "Fill these semantic review fields: verdict, confidence, summary, proof_class, completion_class, reviewer_independence, source_claims, claim_mapping, route_inspection, spine_alignment, evidence_review, interface_contract, downstream_adequacy, forbidden_weakenings, findings, recommended_disposition."
+            ),
+            *cordis_divergence_lines,
             "The `reviewer_independence` object must be shaped as {\"role\": \"independent_read_only_reviewer\", \"read_only\": true, \"did_edit_candidate\": false, \"used_current_review_request\": true, \"attestation\": \"<short statement>\"}.",
             "Allowed verdict values: pass, fail, inconclusive.",
-            "Status enum fields `spine_alignment.status`, `obligation_review.status`, `evidence_review.status`, `interface_contract.status`, and `downstream_adequacy.status` must use covered/partial/missing/violated/unclear; evidence_review may also use not_applicable for individual items.",
+            (
+                "Status enum fields `spine_alignment.status`, `obligation_review.status`, `evidence_review.status`, `interface_contract.status`, and `downstream_adequacy.status` must use covered/partial/missing/violated/unclear; evidence_review may also use not_applicable for individual items."
+                if legacy_obligation_schema
+                else "Status enum fields `spine_alignment.status`, `evidence_review.status`, `interface_contract.status`, and `downstream_adequacy.status` must use covered/partial/missing/violated/unclear; evidence_review may also use not_applicable for individual items."
+            ),
             "The route_inspection object is review context only, not completion authority. Fill source_route, expected_answer_or_statement, local_mathlib_search, public_interface_check, support_or_reassembly_decision, and stop_go_verdict.",
             "A pass requires route_inspection.status covered or not_applicable, stop_go_verdict go, and a public_interface_check that rules out public-premise relocation.",
-            "The review basis lists required_evidence_classes. evidence_review.items must include one object per required class: source_tex, lean_subject, proof_obligations, audit, classification, dependency_status, downstream, ledger_status, hashes.",
+            f"The review basis lists required_evidence_classes. evidence_review.items must include one object per required class: {required_evidence_names}.",
             "For audit, classification, dependency_status, downstream, ledger_status, and hashes, explain conflicts or stale evidence instead of letting any single artifact decide completion.",
-            "For obligation_review.items, each status must use covered/partial/missing/violated/unclear/not_applicable/accepted_as_proof_debt.",
-            "For each covered obligation_review.items entry, include expected_theorem_signature, lean_landing, landing_kind, proof_contract_status, body_reassumption_check, signature_match, public_premise_check, and proof_contract_notes.",
+            (
+                "For obligation_review.items, each status must use covered/partial/missing/violated/unclear/not_applicable/accepted_as_proof_debt."
+                if legacy_obligation_schema
+                else "In spine_alignment.source_steps_checked, record each essential source proof step, its Lean landing, and whether that landing genuinely discharges the step."
+            ),
+            (
+                "For each covered obligation_review.items entry, include expected_theorem_signature, lean_landing, landing_kind, proof_contract_status, body_reassumption_check, signature_match, public_premise_check, and proof_contract_notes."
+                if legacy_obligation_schema
+                else "A source-step landing must not merely re-assume the same step, relocate it to a public premise, or hide it behind an unverified adapter."
+            ),
             "A pass requires non-empty source_claims and claim_mapping that explicitly connect source claims to Lean declarations, assumptions, and conclusions.",
-            "A pass also requires spine_alignment.status = covered with non-empty obligations_checked, obligation_review.status = covered with every blocking proof obligation covered, not_applicable, or explicitly accepted_as_proof_debt, evidence_review.status = covered with every required evidence class covered/not_applicable and no blocking_issues, plus interface_contract.status = covered and downstream_adequacy.status = covered.",
-            "A covered proof obligation is eligible for pass only when proof_contract_status = verified and signature_match, body_reassumption_check, and public_premise_check are all passed.",
-            "If the source text relies on a proof, construction, reduction, interface translation, proof-debt support, case split, contradiction, partition argument, or other intermediate obligation, a pass must explain in spine_alignment.obligations_checked where that source spine lands in Lean.",
-            "If the review context lists proof_obligations, obligation_review.items must cite each obligation_id, status, and Lean evidence; use accepted_as_proof_debt only for explicit proof_debt_support assumptions that the project is intentionally carrying forward. Open blockers, scaffold hypotheses without a discharge plan, public-premise relocation, adapter-only landings for textbook targets, or unverified proof contracts rule out pass.",
-            "Classify each obligation route as source-route theorem/lemma, Mathlib-backed adapter, interface bridge, open math debt, or beyond-book exception; do not report an adapter-only shortcut as textbook proof completion.",
+            (
+                "A pass also requires spine_alignment.status = covered with non-empty obligations_checked, obligation_review.status = covered with every blocking proof obligation covered, not_applicable, or explicitly accepted_as_proof_debt, evidence_review.status = covered with every required evidence class covered/not_applicable and no blocking_issues, plus interface_contract.status = covered and downstream_adequacy.status = covered."
+                if legacy_obligation_schema
+                else "A pass also requires spine_alignment.status = covered with non-empty source_steps_checked and no missing_source_steps, evidence_review.status = covered with every required evidence class covered/not_applicable and no blocking_issues, plus interface_contract.status = covered and downstream_adequacy.status = covered."
+            ),
+            (
+                "A covered proof obligation is eligible for pass only when proof_contract_status = verified and signature_match, body_reassumption_check, and public_premise_check are all passed."
+                if legacy_obligation_schema
+                else "Each covered source step must identify a theorem/lemma or transparent derivation with a source-faithful signature and no body-level reassumption or public-premise relocation."
+            ),
+            (
+                "If the source text relies on a proof, construction, reduction, interface translation, proof-debt support, case split, contradiction, partition argument, or other intermediate obligation, a pass must explain in spine_alignment.obligations_checked where that source spine lands in Lean."
+                if legacy_obligation_schema
+                else "If the source text relies on a proof, construction, reduction, interface translation, case split, contradiction, or partition argument, a pass must explain in spine_alignment.source_steps_checked where every essential source step lands in Lean."
+            ),
+            (
+                "If the review context lists proof_obligations, obligation_review.items must cite each obligation_id, status, and Lean evidence; use accepted_as_proof_debt only for explicit proof_debt_support assumptions that the project is intentionally carrying forward. Open blockers, scaffold hypotheses without a discharge plan, public-premise relocation, adapter-only landings for textbook targets, or unverified proof contracts rule out pass."
+                if legacy_obligation_schema
+                else "Historical proof-obligation checklist files are not review evidence or completion authority. Ignore them and judge the bound source, Lean subject, dependencies, interfaces, and source proof spine directly."
+            ),
+            (
+                "Classify each obligation route as source-route theorem/lemma, Mathlib-backed adapter, interface bridge, open math debt, or beyond-book exception; do not report an adapter-only shortcut as textbook proof completion."
+                if legacy_obligation_schema
+                else "Classify each source-step route as source-route theorem/lemma, Mathlib-backed adapter, or reusable interface bridge; do not report an adapter-only shortcut as textbook proof completion."
+            ),
             "A reusable bridge may support a proof-bearing task only when the review maps it to source proof steps and the final proof_class is a source-route completion class rather than `interface_bridge_completed` alone.",
             "If the reviewer cannot point to the Lean landing place of the source spine and can only describe a shortcut or black-box replacement, the verdict must be fail or inconclusive rather than pass.",
             "When the review basis lists direct downstream consumers, a pass must include one consumers_checked entry per consumer with status covered/not_applicable and no blocking_issues.",
@@ -578,17 +766,20 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
     review_input_payload = review_input if isinstance(review_input, dict) else {}
     task_payload = _object_field(review_input_payload, "task")
     candidate_payload = _object_field(review_input_payload, "candidate")
+    input_prompt_version = review_input_payload.get("prompt_version", SEMANTIC_REVIEW_PROMPT_VERSION)
+    input_rubric_version = review_input_payload.get("rubric_version", SEMANTIC_REVIEW_RUBRIC_VERSION)
     base = {
-        "schema_version": "phase2.semantic_review.result.v7",
+        "schema_version": "phase2.semantic_review.result.v8",
         "task_id": task_payload.get("block_id", ""),
         "mode": review_input_payload.get("mode", ""),
         "attempt": review_input_payload.get("attempt"),
-        "prompt_version": SEMANTIC_REVIEW_PROMPT_VERSION,
-        "rubric_version": SEMANTIC_REVIEW_RUBRIC_VERSION,
+        "prompt_version": input_prompt_version,
+        "rubric_version": input_rubric_version,
         "review_input_hash": _hash_json(review_input),
         "cache_key": review_input_payload.get("cache_key", ""),
         "reviewer_backend_id": review_input_payload.get("reviewer_backend_id", ""),
         "runner": runner_metadata,
+        "review_profile": _review_profile(review_input_payload),
     }
     if not isinstance(review_input, dict):
         return _inconclusive_result(
@@ -634,7 +825,7 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
         )
     if not isinstance(raw, dict):
         return _inconclusive_result(base, "reviewer result is not a JSON object", cache_class="operational_failure")
-    missing = sorted(SEMANTIC_REVIEW_REQUIRED_FIELDS - set(raw.keys()))
+    missing = sorted(_required_semantic_review_fields(review_input) - set(raw.keys()))
     if missing:
         return _inconclusive_result(
             base,
@@ -667,17 +858,17 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
             raw=raw,
             cache_class="operational_failure",
         )
-    if not _matches_version(raw.get("prompt_version"), SEMANTIC_REVIEW_PROMPT_VERSION):
+    if not _matches_version(raw.get("prompt_version"), int(input_prompt_version)):
         return _inconclusive_result(
             base,
-            "reviewer result prompt_version does not match current semantic review prompt version",
+            "reviewer result prompt_version does not match its bound semantic review input",
             raw=raw,
             cache_class="operational_failure",
         )
-    if not _matches_version(raw.get("rubric_version"), SEMANTIC_REVIEW_RUBRIC_VERSION):
+    if not _matches_version(raw.get("rubric_version"), int(input_rubric_version)):
         return _inconclusive_result(
             base,
-            "reviewer result rubric_version does not match current semantic review rubric version",
+            "reviewer result rubric_version does not match its bound semantic review input",
             raw=raw,
             cache_class="operational_failure",
         )
@@ -733,6 +924,13 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
     evidence_error = _validate_evidence_review(result, review_input=review_input, verdict=verdict)
     if evidence_error:
         return _inconclusive_result(base, evidence_error, raw=raw, cache_class="operational_failure")
+    divergence_error = _validate_source_statement_divergence(
+        result,
+        review_input=review_input,
+        verdict=verdict,
+    )
+    if divergence_error:
+        return _inconclusive_result(base, divergence_error, raw=raw, cache_class="operational_failure")
     if verdict == "pass" and str(source_evidence.get("source_kind", "") or "") == "source_tex":
         evidence_items = result.get("evidence_review", {}).get("items", [])
         source_items = [
@@ -760,25 +958,29 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
             raw=raw,
             cache_class="operational_failure",
         )
-    obligations_checked = result["spine_alignment"].get("obligations_checked", [])
-    if not isinstance(obligations_checked, list):
+    legacy_obligation_schema = _uses_legacy_obligation_review_schema(review_input)
+    checked_field = "obligations_checked" if legacy_obligation_schema else "source_steps_checked"
+    missing_field = "missing_obligations" if legacy_obligation_schema else "missing_source_steps"
+    source_steps_checked = result["spine_alignment"].get(checked_field, [])
+    if not isinstance(source_steps_checked, list):
         return _inconclusive_result(
             base,
-            "reviewer field spine_alignment.obligations_checked must be a list",
+            f"reviewer field spine_alignment.{checked_field} must be a list",
             raw=raw,
             cache_class="operational_failure",
         )
-    missing_obligations = result["spine_alignment"].get("missing_obligations", [])
-    if not isinstance(missing_obligations, list):
+    missing_source_steps = result["spine_alignment"].get(missing_field, [])
+    if not isinstance(missing_source_steps, list):
         return _inconclusive_result(
             base,
-            "reviewer field spine_alignment.missing_obligations must be a list",
+            f"reviewer field spine_alignment.{missing_field} must be a list",
             raw=raw,
             cache_class="operational_failure",
         )
-    obligation_shape_error = validate_obligation_review_shape(result)
-    if obligation_shape_error:
-        return _inconclusive_result(base, obligation_shape_error, raw=raw, cache_class="operational_failure")
+    if legacy_obligation_schema:
+        obligation_shape_error = validate_obligation_review_shape(result)
+        if obligation_shape_error:
+            return _inconclusive_result(base, obligation_shape_error, raw=raw, cache_class="operational_failure")
     for field in ("interface_contract", "downstream_adequacy"):
         if not isinstance(result.get(field), dict):
             return _inconclusive_result(base, f"reviewer field {field} must be an object", raw=raw, cache_class="operational_failure")
@@ -803,7 +1005,8 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
         not result["source_claims"]
         or not result["claim_mapping"]
         or spine_status != "covered"
-        or not obligations_checked
+        or not source_steps_checked
+        or (not legacy_obligation_schema and bool(missing_source_steps))
         or str(result["interface_contract"].get("status", "")).strip().lower() != "covered"
         or str(result["downstream_adequacy"].get("status", "")).strip().lower() != "covered"
         or not result["forbidden_weakenings"]
@@ -811,12 +1014,16 @@ def normalize_reviewer_result(raw: Any, *, review_input: dict[str, Any], runner_
         return _inconclusive_result(
             base,
             "invalid reviewer output: pass verdict requires non-empty source_claims/claim_mapping/"
-            "spine_alignment.obligations_checked/forbidden_weakenings and covered spine_alignment/"
+            f"spine_alignment.{checked_field}/forbidden_weakenings and covered spine_alignment/"
             "interface_contract/downstream_adequacy",
             raw=raw,
             cache_class="operational_failure",
         )
-    obligation_pass_error = validate_obligation_review_for_pass(review_input, result) if verdict == "pass" else ""
+    obligation_pass_error = (
+        validate_obligation_review_for_pass(review_input, result)
+        if verdict == "pass" and legacy_obligation_schema
+        else ""
+    )
     if obligation_pass_error:
         return _inconclusive_result(base, obligation_pass_error, raw=raw, cache_class="operational_failure")
     if verdict == "pass":
@@ -930,6 +1137,7 @@ def _inconclusive_result(
     raw: Any | None = None,
     cache_class: str = "semantic_verdict",
 ) -> dict[str, Any]:
+    legacy_obligation_schema = _uses_legacy_obligation_review_schema(base)
     result = {
         **base,
         "verdict": "inconclusive",
@@ -957,16 +1165,12 @@ def _inconclusive_result(
         "spine_alignment": {
             "status": "unclear",
             "summary": reason,
-            "obligations_checked": [],
-            "missing_obligations": [],
+            **(
+                {"obligations_checked": [], "missing_obligations": []}
+                if legacy_obligation_schema
+                else {"source_steps_checked": [], "missing_source_steps": []}
+            ),
             "shortcut_assessment": "unclear",
-        },
-        "obligation_review": {
-            "status": "unclear",
-            "summary": reason,
-            "items": [],
-            "open_blockers": [],
-            "scaffold_assessment": [],
         },
         "evidence_review": {
             "status": "unclear",
@@ -1000,6 +1204,16 @@ def _inconclusive_result(
         "completion_class": "",
         "needs_class_normalization": False,
     }
+    if legacy_obligation_schema:
+        result["obligation_review"] = {
+            "status": "unclear",
+            "summary": reason,
+            "items": [],
+            "open_blockers": [],
+            "scaffold_assessment": [],
+        }
+    if str(base.get("review_profile", "") or "").strip().lower() == "cordis":
+        result["source_statement_divergence"] = None
     if raw is not None:
         result["raw_result"] = raw
     return result
@@ -1029,7 +1243,7 @@ def run_semantic_review(
     if cached is not None:
         cached_raw = {
             key: cached[key]
-            for key in SEMANTIC_REVIEW_REQUIRED_FIELDS
+            for key in _required_semantic_review_fields(review_input)
             if key in cached
         }
         cached_raw.update(
@@ -1093,7 +1307,7 @@ def _run_or_inconclusive(
         )
         if not allow_missing_config:
             reason = (
-                "semantic reviewer is required for verify but TOY_APOLLO_PHASE2_REVIEWER_ARGV_JSON is not configured. "
+                "semantic reviewer is required for automated semantic review but TOY_APOLLO_PHASE2_REVIEWER_ARGV_JSON is not configured. "
                 "Use review-pack/review-apply for Codex or manual review."
             )
         return _inconclusive_result(
@@ -1170,7 +1384,7 @@ def _base_for_runner_failure(review_input: dict[str, Any], metadata: dict[str, A
     review_input_payload = review_input if isinstance(review_input, dict) else {}
     task_payload = _object_field(review_input_payload, "task")
     return {
-        "schema_version": "phase2.semantic_review.result.v7",
+        "schema_version": "phase2.semantic_review.result.v8",
         "task_id": task_payload.get("block_id", ""),
         "mode": review_input_payload.get("mode", ""),
         "attempt": review_input_payload.get("attempt"),
@@ -1225,9 +1439,38 @@ def render_semantic_review_report(result: dict[str, Any]) -> str:
     findings = result.get("findings", [])
     interface_contract = result.get("interface_contract", {})
     downstream_adequacy = result.get("downstream_adequacy", {})
-    obligation_review = result.get("obligation_review", {})
     forbidden_weakenings = result.get("forbidden_weakenings", [])
     reviewer_independence = result.get("reviewer_independence", {})
+    divergence_lines: list[str] = []
+    if (
+        str(result.get("review_profile", "") or "").strip().lower() == "cordis"
+        or "source_statement_divergence" in result
+    ):
+        divergence_lines.extend(["## Source Statement Divergence", ""])
+        divergences = result.get("source_statement_divergence")
+        if isinstance(divergences, list) and divergences:
+            for index, item in enumerate(divergences, start=1):
+                if isinstance(item, dict):
+                    divergence_lines.extend(
+                        [
+                            f"### Divergence {index}: `{item.get('verdict', 'unclear')}`",
+                            "",
+                            f"- Paper literal: {str(item.get('paper_literal', '')).strip() or '(missing)'}",
+                            f"- Paper intended: {str(item.get('paper_intended', '')).strip() or '(not stated)'}",
+                            f"- Lean implements: {str(item.get('lean_implements', '')).strip() or '(missing)'}",
+                            f"- Evidence: {str(item.get('evidence', '')).strip() or '(missing)'}",
+                            "",
+                        ]
+                    )
+                else:
+                    divergence_lines.append(f"- Malformed divergence entry {index}: {item}")
+        else:
+            divergence_lines.extend(
+                [
+                    "- Reviewer reported no source-statement divergence after explicit checking.",
+                    "",
+                ]
+            )
     lines = [
         f"# Semantic Review Report for {result.get('task_id', '')}",
         "",
@@ -1244,6 +1487,7 @@ def render_semantic_review_report(result: dict[str, Any]) -> str:
         "",
         str(result.get("summary", "")).strip() or "(no summary)",
         "",
+        *divergence_lines,
         "## Reviewer Independence",
         "",
         f"- Role: `{reviewer_independence.get('role', 'unknown') if isinstance(reviewer_independence, dict) else 'unknown'}`",
@@ -1255,11 +1499,6 @@ def render_semantic_review_report(result: dict[str, Any]) -> str:
         "",
         f"- Status: `{interface_contract.get('status', 'unclear')}`",
         f"- Summary: {str(interface_contract.get('summary', '')).strip() or '(no summary)'}",
-        "",
-        "## Proof Obligations",
-        "",
-        f"- Status: `{obligation_review.get('status', 'unclear') if isinstance(obligation_review, dict) else 'unclear'}`",
-        f"- Summary: {str(obligation_review.get('summary', '') if isinstance(obligation_review, dict) else '').strip() or '(no summary)'}",
         "",
         "## Downstream Adequacy",
         "",

@@ -31,11 +31,11 @@ theorem thm_8_1
   refine ⟨h, ?_, ?_⟩
   · refine ⟨hh, rfl, rfl, ?_, ?_⟩
     · rw [Measure.map_map measurable_fst hh]
-      simpa [h, Function.comp]
-        using hPX
+      change Measure.map X μ = P
+      exact hPX
     · rw [Measure.map_map measurable_snd hh]
-      simpa [h, Function.comp]
-        using hQY
+      change Measure.map Y μ = Q
+      exact hQY
   · intro h' hh'
     rcases hh' with ⟨hh'm, hh'fst, hh'snd, _, _⟩
     funext ω

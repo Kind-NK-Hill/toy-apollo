@@ -7,17 +7,14 @@ SOURCE MATERIAL: omitted from the public source snapshot; see docs/repository_sc
 
 import Mathlib
 import ToyApollo.Output.ex_3_3_4
+import ToyApollo.Output.def_8_5
 
 -- WRITE FINAL LEAN CODE BELOW
 
 open MeasureTheory Set
 
-noncomputable def ex841TotalVariationDistance
-    {Ω : Type*} [MeasurableSpace Ω] (P Q : Measure Ω) : ℝ :=
-  sSup {d : ℝ | ∃ A : Set Ω, MeasurableSet A ∧ d = |P.real A - Q.real A|}
-
 theorem ex_8_4_1 {x y : ℝ} (hxy : x ≠ y) :
-    ex841TotalVariationDistance (Measure.dirac x) (Measure.dirac y) = 1 := by
+    totalVariationDistance (Measure.dirac x) (Measure.dirac y) = 1 := by
   let S : Set ℝ :=
     {d : ℝ |
       ∃ A : Set ℝ,
@@ -59,7 +56,7 @@ theorem ex_8_4_1 {x y : ℝ} (hxy : x ≠ y) :
     rw [Measure.real_def, Measure.real_def, Measure.dirac_apply_of_mem hx_mem, hy0]
     norm_num
   have hnonempty : S.Nonempty := ⟨1, hone_mem⟩
-  unfold ex841TotalVariationDistance
+  unfold totalVariationDistance
   change sSup S = 1
   apply le_antisymm
   · exact csSup_le hnonempty hupper

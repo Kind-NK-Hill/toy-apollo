@@ -35,7 +35,10 @@ theorem etemadi_pairwise_iid_strong_law_ae
       intro i
       exact (hident i).symm.ae_snd (p := fun x ↦ x = 0) measurableSet_eq h
     filter_upwards [I] with ω hω
-    simpa [hω] using (integral_eq_zero_of_ae h).symm
+    have hmean_zero : P[X 0] = 0 := integral_eq_zero_of_ae h
+    simpa [hω, hmean_zero] using
+      (tendsto_const_nhds :
+        Tendsto (fun _ : ℕ => (0 : ℝ)) atTop (nhds 0))
   · haveI : IsProbabilityMeasure P :=
       hInt.isProbabilityMeasure_of_indepFun (X 0) (X 1) h (hpairwise Nat.zero_ne_one)
     let pos : ℝ → ℝ := fun x => max x 0
@@ -60,8 +63,18 @@ theorem etemadi_pairwise_iid_strong_law_ae
       simpa [sub_eq_add_neg, pos, neg] using (max_zero_sub_max_neg_zero_eq_self (X i ω))
     have hsub : Tendsto (fun n : ℕ => (↑n)⁻¹ * ∑ x ∈ Finset.range n, (pos (X x ω) + -neg (X x ω)))
         atTop (nhds ((∫ x, (pos ∘ X 0) x ∂P) - ∫ x, (neg ∘ X 0) x ∂P)) := by
-      simpa [div_eq_mul_inv, sub_eq_add_neg, Finset.sum_add_distrib, Finset.sum_neg_distrib, add_comm,
-        add_left_comm, add_assoc, mul_add, add_mul, mul_comm, mul_left_comm, mul_assoc] using hωpos.sub hωneg
+      have hfun :
+          (fun n : ℕ =>
+            (↑n)⁻¹ * ∑ x ∈ Finset.range n, (pos (X x ω) + -neg (X x ω))) =
+            (fun n : ℕ =>
+              (∑ i ∈ Finset.range n, (pos ∘ X i) ω) / n -
+                (∑ i ∈ Finset.range n, (neg ∘ X i) ω) / n) := by
+        funext n
+        simp only [Function.comp_apply, Finset.sum_add_distrib,
+          Finset.sum_neg_distrib, div_eq_mul_inv]
+        ring
+      rw [hfun]
+      exact hωpos.sub hωneg
     have hsumEq : ∀ n, ∑ i ∈ Finset.range n, X i ω = ∑ x ∈ Finset.range n, (pos (X x ω) + -neg (X x ω)) := by
       intro n
       refine Finset.sum_congr rfl ?_
@@ -88,6 +101,17 @@ theorem thm_11_8 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     (hident : ∀ i, IdentDistrib (X i) (X 0) P P)
     (hmean : P[X 0] = m) :
     ConvergesAlmostSurely P (fun n => thm_11_5_sampleMean X n) (fun _ => m) := by
+  have hInt_all : ∀ i, Integrable (X i) P := fun i =>
+    (hident i).integrable_iff.2 hInt
+  have hAvg_meas : ∀ n, AEStronglyMeasurable (thm_11_5_sampleMean X n) P := by
+    intro n
+    change AEStronglyMeasurable
+      (fun ω => (1 / ((n : ℝ) + 1)) * (∑ i : Fin (n + 1), X i.1 ω)) P
+    simpa using
+      (MeasureTheory.AEStronglyMeasurable.const_mul
+        (Finset.aestronglyMeasurable_sum (Finset.univ : Finset (Fin (n + 1)))
+          (fun i _hi => (hInt_all i.1).aestronglyMeasurable))
+        (1 / ((n : ℝ) + 1)))
   have hStrong :
       ∀ᵐ ω ∂P,
         Tendsto (fun n : ℕ => (n : ℝ)⁻¹ • (∑ i ∈ Finset.range n, X i ω))
@@ -95,6 +119,7 @@ theorem thm_11_8 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     etemadi_pairwise_iid_strong_law_ae P X hInt hpairwise hident
   have hAS_mean :
       ConvergesAlmostSurely P (fun n => thm_11_5_sampleMean X n) (fun _ => P[X 0]) := by
+    refine ⟨hAvg_meas, aestronglyMeasurable_const, ?_⟩
     filter_upwards [hStrong] with ω hω
     have hcomp :=
       hω.comp (Filter.tendsto_add_atTop_nat 1)
@@ -106,5 +131,6 @@ theorem thm_11_8 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
       simpa using (Fin.sum_univ_eq_sum_range (fun i => X i ω) (n + 1))
     simp [Function.comp_apply, thm_11_5_sampleMean, one_div, smul_eq_mul, hsum,
       Nat.cast_add, Nat.cast_one]
-  filter_upwards [hAS_mean] with ω hω
+  refine ⟨hAS_mean.1, aestronglyMeasurable_const, ?_⟩
+  filter_upwards [hAS_mean.2.2] with ω hω
   simpa [hmean] using hω

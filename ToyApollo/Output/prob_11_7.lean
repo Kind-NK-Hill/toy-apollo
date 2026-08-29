@@ -15,36 +15,57 @@ import ToyApollo.Output.thm_11_5
 open Filter MeasureTheory ProbabilityTheory
 open scoped BigOperators
 
-def prob_11_7_covarianceDecayAssumptions {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) (X : ℕ → Ω → ℝ) (μ K : ℝ) (a : ℕ → ℝ) : Prop :=
-  0 ≤ K ∧
-    (∀ i : ℕ, MemLp (X i) 2 P) ∧
-    (∀ τ : ℕ, 0 ≤ a τ ∧ a τ ≤ 1) ∧
-    Tendsto a atTop (nhds 0) ∧
-    (∀ i : ℕ, P[X i] = μ) ∧
-    (∀ i : ℕ, _root_.variance P (X i) ≤ K) ∧
-    (∀ i τ : ℕ, 0 < τ →
+structure prob_11_7_covarianceDecayAssumptions {Ω : Type*} [MeasurableSpace Ω]
+    (P : Measure Ω) [IsProbabilityMeasure P]
+    (X : ℕ → Ω → ℝ) (μ K : ℝ) (a : ℕ → ℝ) : Prop where
+  hK : 0 ≤ K
+  hMoment : ∀ i : ℕ, FiniteAbsMoment P (X i) positiveOrderTwo.1
+  ha_bound : ∀ τ : ℕ, 0 ≤ a τ ∧ a τ ≤ 1
+  ha_antitone : Antitone a
+  ha_lim : Tendsto a atTop (nhds 0)
+  hMean : ∀ i : ℕ, P[X i] = μ
+  hVar : ∀ i : ℕ,
+    _root_.variance P (X i) (hMoment i) ≤ K
+  hCov : ∀ i τ : ℕ, 0 < τ →
       Covariance P (X i) (X (i + τ)) ≤
-        a τ * Real.sqrt (_root_.variance P (X i) * _root_.variance P (X (i + τ)))
-    )
+        a τ * Real.sqrt
+          (_root_.variance P (X i) (hMoment i) *
+            _root_.variance P (X (i + τ)) (hMoment (i + τ)))
 
-def prob_11_7_sampleMeanVarianceSupport {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) (X : ℕ → Ω → ℝ) (μ : ℝ) : Prop :=
-  (∀ n : ℕ, MemLp (thm_11_5_sampleMean X n) 2 P) ∧
-    (∀ n : ℕ, P[thm_11_5_sampleMean X n] = μ) ∧
-    Tendsto (fun n : ℕ => _root_.variance P (thm_11_5_sampleMean X n))
-      atTop (nhds 0)
+structure prob_11_7_sampleMeanVarianceSupport {Ω : Type*} [MeasurableSpace Ω]
+    (P : Measure Ω) [IsProbabilityMeasure P]
+    (X : ℕ → Ω → ℝ) (μ : ℝ) : Prop where
+  hMeas : ∀ n : ℕ, Measurable (thm_11_5_sampleMean X n)
+  hMem : ∀ n : ℕ, MemLp (thm_11_5_sampleMean X n) 2 P
+  hMean : ∀ n : ℕ, P[thm_11_5_sampleMean X n] = μ
+  hVarTendsto : Tendsto (fun n : ℕ =>
+    _root_.variance P (thm_11_5_sampleMean X n)
+      (FiniteAbsMoment.of_memLp (hMeas n) (hMem n))) atTop (nhds 0)
+
+theorem prob_11_7_sampleMean_measurable_of_covarianceDecay {Ω : Type*}
+    [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
+    (X : ℕ → Ω → ℝ) (μ K : ℝ) (a : ℕ → ℝ)
+    (hCovDecay : prob_11_7_covarianceDecayAssumptions P X μ K a) :
+    ∀ n : ℕ, Measurable (thm_11_5_sampleMean X n) := by
+  rcases hCovDecay with
+    ⟨_hK, hMoment, _ha_bound, _ha_antitone, _ha_lim, _hMean, _hVar, _hCov⟩
+  intro n
+  unfold thm_11_5_sampleMean
+  exact measurable_const.mul
+    (Finset.measurable_sum Finset.univ (fun i _hi => (hMoment i.1).measurable))
 
 theorem prob_11_7_sampleMean_memLp_of_covarianceDecay {Ω : Type*}
-    [MeasurableSpace Ω] (P : Measure Ω) (X : ℕ → Ω → ℝ) (μ K : ℝ) (a : ℕ → ℝ)
+    [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
+    (X : ℕ → Ω → ℝ) (μ K : ℝ) (a : ℕ → ℝ)
     (hCovDecay : prob_11_7_covarianceDecayAssumptions P X μ K a) :
     ∀ n : ℕ, MemLp (thm_11_5_sampleMean X n) 2 P := by
-  rcases hCovDecay with ⟨_hK, hMem, _ha_bound, _ha_lim, _hMean, _hVar, _hCov⟩
+  rcases hCovDecay with
+    ⟨_hK, hMoment, _ha_bound, _ha_antitone, _ha_lim, _hMean, _hVar, _hCov⟩
   intro n
   have hsum : MemLp (fun ω => ∑ i : Fin (n + 1), X i.1 ω) 2 P := by
     simpa using
       (memLp_finset_sum (Finset.univ : Finset (Fin (n + 1)))
-        (fun i _hi => hMem i.1))
+        (fun i _hi => (hMoment i.1).memLp (by norm_num)))
   change MemLp
     (fun ω => (1 / ((n : ℝ) + 1)) * ∑ i : Fin (n + 1), X i.1 ω) 2 P
   simpa [one_div] using hsum.const_mul (1 / ((n : ℝ) + 1))
@@ -54,7 +75,8 @@ theorem prob_11_7_sampleMean_integral_of_covarianceDecay {Ω : Type*}
     (X : ℕ → Ω → ℝ) (μ K : ℝ) (a : ℕ → ℝ)
     (hCovDecay : prob_11_7_covarianceDecayAssumptions P X μ K a) :
     ∀ n : ℕ, P[thm_11_5_sampleMean X n] = μ := by
-  rcases hCovDecay with ⟨_hK, hMem, _ha_bound, _ha_lim, hMean, _hVar, _hCov⟩
+  rcases hCovDecay with
+    ⟨_hK, hMoment, _ha_bound, _ha_antitone, _ha_lim, hMean, _hVar, _hCov⟩
   intro n
   have hNpos : (0 : ℝ) < (n : ℝ) + 1 := by
     exact add_pos_of_nonneg_of_pos (Nat.cast_nonneg n) zero_lt_one
@@ -66,7 +88,7 @@ theorem prob_11_7_sampleMean_integral_of_covarianceDecay {Ω : Type*}
     _ = (1 / ((n : ℝ) + 1)) *
           (∑ i : Fin (n + 1), P[X i.1]) := by
           rw [integral_finset_sum]
-          exact fun i _hi => (hMem i.1).integrable (by simp)
+          exact fun i _hi => ((hMoment i.1).memLp (by norm_num)).integrable (by simp)
     _ = (1 / ((n : ℝ) + 1)) *
           (∑ _i : Fin (n + 1), μ) := by
           simp [hMean]
@@ -75,10 +97,12 @@ theorem prob_11_7_sampleMean_integral_of_covarianceDecay {Ω : Type*}
           field_simp [hNpos.ne']
 
 private theorem prob_11_7_local_variance_eq {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) {Y : Ω → ℝ} (hY : MemLp Y 2 P) :
-    _root_.variance P Y = Var[Y; P] := by
+    (P : Measure Ω) [IsProbabilityMeasure P] {Y : Ω → ℝ}
+    (hY : FiniteAbsMoment P Y positiveOrderTwo.1) :
+    _root_.variance P Y hY = Var[Y; P] := by
   rw [_root_.variance, rthCentralMoment]
-  exact ProbabilityTheory.centralMoment_two_eq_variance (μ := P) (X := Y) hY.aemeasurable
+  exact ProbabilityTheory.centralMoment_two_eq_variance (μ := P) (X := Y)
+    ((hY.memLp (by norm_num)).aemeasurable)
 
 private lemma prob_11_7_row_natDist_sum_le_two_range
     (N : ℕ) (i : Fin N) (a : ℕ → ℝ) (ha : ∀ n, 0 ≤ a n) :
@@ -190,42 +214,53 @@ private lemma prob_11_7_range_succ_cesaro_tendsto_zero
   simp [Nat.cast_add, Nat.cast_one]
 
 theorem prob_11_7_forward_covariance_le {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) (X : ℕ → Ω → ℝ) (μ K : ℝ) (a : ℕ → ℝ)
+    (P : Measure Ω) [IsProbabilityMeasure P]
+    (X : ℕ → Ω → ℝ) (μ K : ℝ) (a : ℕ → ℝ)
     (hCovDecay : prob_11_7_covarianceDecayAssumptions P X μ K a)
     (i τ : ℕ) (hτ : 0 < τ) :
     Covariance P (X i) (X (i + τ)) ≤ a τ * K := by
-  rcases hCovDecay with ⟨hK, hMem, ha_bound, _ha_lim, _hMean, hVar, hCov⟩
-  have hvar_i_nonneg : 0 ≤ _root_.variance P (X i) := by
-    rw [prob_11_7_local_variance_eq P (hMem i)]
+  rcases hCovDecay with
+    ⟨hK, hMoment, ha_bound, _ha_antitone, _ha_lim, _hMean, hVar, hCov⟩
+  have hvar_i_nonneg :
+      0 ≤ _root_.variance P (X i) (hMoment i) := by
+    rw [prob_11_7_local_variance_eq P (hMoment i)]
     exact ProbabilityTheory.variance_nonneg (X i) P
-  have hvar_j_nonneg : 0 ≤ _root_.variance P (X (i + τ)) := by
-    rw [prob_11_7_local_variance_eq P (hMem (i + τ))]
+  have hvar_j_nonneg :
+      0 ≤ _root_.variance P (X (i + τ)) (hMoment (i + τ)) := by
+    rw [prob_11_7_local_variance_eq P (hMoment (i + τ))]
     exact ProbabilityTheory.variance_nonneg (X (i + τ)) P
   have hprod_le :
-      _root_.variance P (X i) * _root_.variance P (X (i + τ)) ≤ K ^ 2 := by
+      _root_.variance P (X i) (hMoment i) *
+        _root_.variance P (X (i + τ)) (hMoment (i + τ)) ≤ K ^ 2 := by
     calc
-      _root_.variance P (X i) * _root_.variance P (X (i + τ))
+      _root_.variance P (X i) (hMoment i) *
+          _root_.variance P (X (i + τ)) (hMoment (i + τ))
           ≤ K * K :=
             mul_le_mul (hVar i) (hVar (i + τ)) hvar_j_nonneg hK
       _ = K ^ 2 := by ring
   have hsqrt_le :
       Real.sqrt
-          (_root_.variance P (X i) * _root_.variance P (X (i + τ))) ≤ K := by
+          (_root_.variance P (X i) (hMoment i) *
+            _root_.variance P (X (i + τ)) (hMoment (i + τ))) ≤ K := by
     rw [Real.sqrt_le_iff]
     exact ⟨hK, hprod_le⟩
   exact (hCov i τ hτ).trans (mul_le_mul_of_nonneg_left hsqrt_le (ha_bound τ).1)
 
 theorem prob_11_7_diagonal_covariance_le {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) (X : ℕ → Ω → ℝ) (μ K : ℝ) (a : ℕ → ℝ)
+    (P : Measure Ω) [IsProbabilityMeasure P]
+    (X : ℕ → Ω → ℝ) (μ K : ℝ) (a : ℕ → ℝ)
     (hCovDecay : prob_11_7_covarianceDecayAssumptions P X μ K a) (i : ℕ) :
     Covariance P (X i) (X i) ≤ K := by
-  rcases hCovDecay with ⟨_hK, hMem, _ha_bound, _ha_lim, _hMean, hVar, _hCov⟩
-  rw [Covariance, ProbabilityTheory.covariance_self (hMem i).aemeasurable]
-  rw [← prob_11_7_local_variance_eq P (hMem i)]
+  rcases hCovDecay with
+    ⟨_hK, hMoment, _ha_bound, _ha_antitone, _ha_lim, _hMean, hVar, _hCov⟩
+  rw [Covariance, ProbabilityTheory.covariance_self
+    ((hMoment i).memLp (by norm_num)).aemeasurable]
+  rw [← prob_11_7_local_variance_eq P (hMoment i)]
   exact hVar i
 
 theorem prob_11_7_covariance_le_dist {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) (X : ℕ → Ω → ℝ) (μ K : ℝ) (a : ℕ → ℝ)
+    (P : Measure Ω) [IsProbabilityMeasure P]
+    (X : ℕ → Ω → ℝ) (μ K : ℝ) (a : ℕ → ℝ)
     (hCovDecay : prob_11_7_covarianceDecayAssumptions P X μ K a)
     (i j : ℕ) (hij : i ≠ j) :
     Covariance P (X i) (X j) ≤ a (Nat.dist i j) * K := by
@@ -252,28 +287,44 @@ theorem prob_11_7_sampleMean_variance_eq_covariance_sum {Ω : Type*}
     [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (μ K : ℝ) (a : ℕ → ℝ)
     (hCovDecay : prob_11_7_covarianceDecayAssumptions P X μ K a) (n : ℕ) :
-    _root_.variance P (thm_11_5_sampleMean X n) =
+    _root_.variance P (thm_11_5_sampleMean X n)
+        (FiniteAbsMoment.of_memLp
+          (prob_11_7_sampleMean_measurable_of_covarianceDecay
+            P X μ K a hCovDecay n)
+          (prob_11_7_sampleMean_memLp_of_covarianceDecay
+            P X μ K a hCovDecay n)) =
       (1 / ((n : ℝ) + 1)) ^ 2 *
         (∑ i : Fin (n + 1), ∑ j : Fin (n + 1),
           Covariance P (X i.1) (X j.1)) := by
-  rcases hCovDecay with ⟨_hK, hMem, _ha_bound, _ha_lim, _hMean, _hVar, _hCov⟩
+  rcases hCovDecay with
+    ⟨_hK, hMoment, _ha_bound, ha_antitone, _ha_lim, _hMean, _hVar, _hCov⟩
+  have hMeas : ∀ i : ℕ, Measurable (X i) := fun i => (hMoment i).measurable
+  have hMem : ∀ i : ℕ, MemLp (X i) 2 P :=
+    fun i => (hMoment i).memLp (by norm_num)
   let S : Ω → ℝ := fun ω => ∑ i : Fin (n + 1), X i.1 ω
   let c : ℝ := 1 / ((n : ℝ) + 1)
   have hS_mem : MemLp S 2 P := by
     simpa [S] using
       (memLp_finset_sum (Finset.univ : Finset (Fin (n + 1)))
         (fun i _hi => hMem i.1))
+  have hS_meas : Measurable S := by
+    dsimp [S]
+    exact Finset.measurable_sum Finset.univ (fun i _hi => hMeas i.1)
   have hA_mem : MemLp (thm_11_5_sampleMean X n) 2 P := by
     exact
       prob_11_7_sampleMean_memLp_of_covarianceDecay P X μ K a
-        ⟨_hK, hMem, _ha_bound, _ha_lim, _hMean, _hVar, _hCov⟩ n
+        ⟨_hK, hMoment, _ha_bound, ha_antitone, _ha_lim, _hMean, _hVar, _hCov⟩ n
+  have hA_meas : Measurable (thm_11_5_sampleMean X n) :=
+    prob_11_7_sampleMean_measurable_of_covarianceDecay P X μ K a
+      ⟨_hK, hMoment, _ha_bound, ha_antitone, _ha_lim, _hMean, _hVar, _hCov⟩ n
   have hsmul : thm_11_5_sampleMean X n = c • S := by
     ext ω
     simp [thm_11_5_sampleMean, S, c, smul_eq_mul]
   calc
     _root_.variance P (thm_11_5_sampleMean X n)
+        (FiniteAbsMoment.of_memLp hA_meas hA_mem)
         = Var[thm_11_5_sampleMean X n; P] :=
-          prob_11_7_local_variance_eq P hA_mem
+          prob_11_7_local_variance_eq P (FiniteAbsMoment.of_memLp hA_meas hA_mem)
     _ = Var[c • S; P] := by rw [hsmul]
     _ = c ^ 2 * Var[S; P] := by
           exact ProbabilityTheory.variance_smul c S P
@@ -289,7 +340,8 @@ theorem prob_11_7_sampleMean_variance_eq_covariance_sum {Ω : Type*}
           rfl
 
 theorem prob_11_7_covariance_double_sum_le_cesaro_bound {Ω : Type*}
-    [MeasurableSpace Ω] (P : Measure Ω) (X : ℕ → Ω → ℝ) (μ K : ℝ) (a : ℕ → ℝ)
+    [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
+    (X : ℕ → Ω → ℝ) (μ K : ℝ) (a : ℕ → ℝ)
     (hCovDecay : prob_11_7_covarianceDecayAssumptions P X μ K a) (n : ℕ) :
     (∑ i : Fin (n + 1), ∑ j : Fin (n + 1),
         Covariance P (X i.1) (X j.1)) ≤
@@ -298,7 +350,8 @@ theorem prob_11_7_covariance_double_sum_le_cesaro_bound {Ω : Type*}
           (2 * (∑ τ ∈ Finset.range (n + 1), a τ))) := by
   classical
   have hCovDecay' := hCovDecay
-  rcases hCovDecay with ⟨hK, _hMem, ha_bound, _ha_lim, _hMean, _hVar, _hCov⟩
+  rcases hCovDecay with
+    ⟨hK, _hMoment, ha_bound, _ha_antitone, _ha_lim, _hMean, _hVar, _hCov⟩
   have ha_nonneg : ∀ τ : ℕ, 0 ≤ a τ := fun τ => (ha_bound τ).1
   have hrow (i : Fin (n + 1)) :
       (∑ j : Fin (n + 1), Covariance P (X i.1) (X j.1)) ≤
@@ -381,12 +434,19 @@ theorem prob_11_7_sampleMean_variance_tendsto_zero_of_covarianceDecay {Ω : Type
     [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (μ K : ℝ) (a : ℕ → ℝ)
     (hCovDecay : prob_11_7_covarianceDecayAssumptions P X μ K a) :
-    Tendsto (fun n : ℕ => _root_.variance P (thm_11_5_sampleMean X n))
+    Tendsto (fun n : ℕ =>
+      _root_.variance P (thm_11_5_sampleMean X n)
+        (FiniteAbsMoment.of_memLp
+          (prob_11_7_sampleMean_measurable_of_covarianceDecay
+            P X μ K a hCovDecay n)
+          (prob_11_7_sampleMean_memLp_of_covarianceDecay
+            P X μ K a hCovDecay n)))
       atTop (nhds 0) := by
-  rcases hCovDecay with ⟨hK, hMem, ha_bound, ha_lim, hMean, hVar, hCov⟩
+  rcases hCovDecay with
+    ⟨hK, hMoment, ha_bound, ha_antitone, ha_lim, hMean, hVar, hCov⟩
   let hCovDecay' :
       prob_11_7_covarianceDecayAssumptions P X μ K a :=
-    ⟨hK, hMem, ha_bound, ha_lim, hMean, hVar, hCov⟩
+    ⟨hK, hMoment, ha_bound, ha_antitone, ha_lim, hMean, hVar, hCov⟩
   let upper : ℕ → ℝ := fun n =>
     (1 / ((n : ℝ) + 1)) ^ 2 *
       (((n : ℝ) + 1) * K +
@@ -394,19 +454,32 @@ theorem prob_11_7_sampleMean_variance_tendsto_zero_of_covarianceDecay {Ω : Type
           (2 * (∑ τ ∈ Finset.range (n + 1), a τ))))
   have hUpperBound :
       ∀ n : ℕ,
-        _root_.variance P (thm_11_5_sampleMean X n) ≤ upper n := by
+        _root_.variance P (thm_11_5_sampleMean X n)
+          (FiniteAbsMoment.of_memLp
+            (prob_11_7_sampleMean_measurable_of_covarianceDecay
+              P X μ K a hCovDecay' n)
+            (prob_11_7_sampleMean_memLp_of_covarianceDecay
+              P X μ K a hCovDecay' n)) ≤ upper n := by
     intro n
     rw [prob_11_7_sampleMean_variance_eq_covariance_sum P X μ K a hCovDecay' n]
     exact mul_le_mul_of_nonneg_left
       (prob_11_7_covariance_double_sum_le_cesaro_bound P X μ K a hCovDecay' n)
       (sq_nonneg (1 / ((n : ℝ) + 1)))
   have hLowerBound :
-      ∀ n : ℕ, 0 ≤ _root_.variance P (thm_11_5_sampleMean X n) := by
+      ∀ n : ℕ, 0 ≤ _root_.variance P (thm_11_5_sampleMean X n)
+        (FiniteAbsMoment.of_memLp
+          (prob_11_7_sampleMean_measurable_of_covarianceDecay
+            P X μ K a hCovDecay' n)
+          (prob_11_7_sampleMean_memLp_of_covarianceDecay
+            P X μ K a hCovDecay' n)) := by
     intro n
     have hAvgMem :
         MemLp (thm_11_5_sampleMean X n) 2 P :=
       prob_11_7_sampleMean_memLp_of_covarianceDecay P X μ K a hCovDecay' n
-    rw [prob_11_7_local_variance_eq P hAvgMem]
+    rw [prob_11_7_local_variance_eq P
+      (FiniteAbsMoment.of_memLp
+        (prob_11_7_sampleMean_measurable_of_covarianceDecay
+          P X μ K a hCovDecay' n) hAvgMem)]
     exact ProbabilityTheory.variance_nonneg (thm_11_5_sampleMean X n) P
   have hInv :
       Tendsto (fun n : ℕ => (((n : ℝ) + 1)⁻¹ : ℝ)) atTop (nhds 0) := by
@@ -451,7 +524,8 @@ theorem prob_11_7_sampleMeanVarianceSupport_of_covarianceDecay {Ω : Type*}
     (X : ℕ → Ω → ℝ) (μ K : ℝ) (a : ℕ → ℝ)
     (hCovDecay : prob_11_7_covarianceDecayAssumptions P X μ K a) :
     prob_11_7_sampleMeanVarianceSupport P X μ :=
-  ⟨prob_11_7_sampleMean_memLp_of_covarianceDecay P X μ K a hCovDecay,
+  ⟨prob_11_7_sampleMean_measurable_of_covarianceDecay P X μ K a hCovDecay,
+    prob_11_7_sampleMean_memLp_of_covarianceDecay P X μ K a hCovDecay,
     prob_11_7_sampleMean_integral_of_covarianceDecay P X μ K a hCovDecay,
     prob_11_7_sampleMean_variance_tendsto_zero_of_covarianceDecay P X μ K a hCovDecay⟩
 
@@ -459,11 +533,14 @@ private theorem prob_11_7_of_variance_support {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ) (μ : ℝ)
     (hSupport : prob_11_7_sampleMeanVarianceSupport P X μ) :
     ConvergesInProbability P (fun n => thm_11_5_sampleMean X n) (fun _ => μ) := by
-  rcases hSupport with ⟨hMem, hMean, hVarTendsto⟩
+  rcases hSupport with ⟨hMeas, hMem, hMean, hVarTendsto⟩
+  refine ⟨hMeas, measurable_const, ?_⟩
   intro ε hε
   have hvarDivTendsto :
       Tendsto
-        (fun n : ℕ => _root_.variance P (thm_11_5_sampleMean X n) / ε ^ 2)
+        (fun n : ℕ =>
+          _root_.variance P (thm_11_5_sampleMean X n)
+            (FiniteAbsMoment.of_memLp (hMeas n) (hMem n)) / ε ^ 2)
         atTop (nhds 0) := by
     have hconst : Tendsto (fun _ : ℕ => (ε ^ 2)⁻¹) atTop (nhds ((ε ^ 2)⁻¹)) :=
       tendsto_const_nhds
@@ -471,17 +548,21 @@ private theorem prob_11_7_of_variance_support {Ω : Type*} [MeasurableSpace Ω]
   have hbound_tendsto :
       Tendsto
         (fun n : ℕ =>
-          ENNReal.ofReal (_root_.variance P (thm_11_5_sampleMean X n) / ε ^ 2))
+          ENNReal.ofReal
+            (_root_.variance P (thm_11_5_sampleMean X n)
+              (FiniteAbsMoment.of_memLp (hMeas n) (hMem n)) / ε ^ 2))
         atTop (nhds 0) := by
     simpa using ENNReal.tendsto_ofReal hvarDivTendsto
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds
-    hbound_tendsto (fun n => zero_le _) ?_
+    hbound_tendsto (fun _ => zero_le) ?_
   intro n
   let A : Ω → ℝ := thm_11_5_sampleMean X n
+  have hAmeas : Measurable A := hMeas n
+  have hAmem : MemLp A 2 P := hMem n
   have hChebReal :
       P.real {ω : Ω | ε ≤ |A ω - P[A]|} ≤
-        _root_.variance P A / ε ^ 2 := by
-    simpa [A] using thm_11_2 P A (hMem n) hε
+        _root_.variance P A (FiniteAbsMoment.of_memLp hAmeas hAmem) / ε ^ 2 := by
+    simpa [A] using thm_11_2 P A hAmeas hAmem hε
   have hsubset :
       deviationEvent (fun n => thm_11_5_sampleMean X n) (fun _ : Ω => μ) n ε ⊆
         {ω : Ω | ε ≤ |A ω - P[A]|} := by
@@ -497,7 +578,8 @@ private theorem prob_11_7_of_variance_support {Ω : Type*} [MeasurableSpace Ω]
     measure_mono hsubset
   have hCheb :
       P {ω : Ω | ε ≤ |A ω - P[A]|} ≤
-        ENNReal.ofReal (_root_.variance P A / ε ^ 2) := by
+        ENNReal.ofReal
+          (_root_.variance P A (FiniteAbsMoment.of_memLp hAmeas hAmem) / ε ^ 2) := by
     have hE :
         P {ω : Ω | ε ≤ |A ω - P[A]|} =
           ENNReal.ofReal (P.real {ω : Ω | ε ≤ |A ω - P[A]|}) := by

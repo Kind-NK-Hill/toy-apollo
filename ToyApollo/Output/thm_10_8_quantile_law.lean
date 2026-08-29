@@ -105,7 +105,11 @@ theorem thm_10_8_quantile_law_preservation_of_Iic
       thm_10_8_unitIntervalMeasure) μ ?_
   intro y
   rw [Measure.map_apply hY measurableSet_Iic]
-  simpa using hIic y
+  change
+    thm_10_8_unitIntervalMeasure
+        {ω : ℝ | thm_10_8_lowerQuantileVariable F ω ≤ y} =
+      μ (Iic y)
+  exact hIic y
 
 theorem thm_10_8_quantile_law_preservation_of_probabilityCdfOfMeasure
     (μ : Measure ℝ) [IsProbabilityMeasure μ] :

@@ -31,10 +31,6 @@ Read the task-local artifacts next:
 ## CLI Boundary
 
 - Active execution phases are Phase 0, Phase 1, and Phase 2.
-- CLI modes [deprecated phase=3]: `soft-pack`, `soft-apply`. The old Phase 3
-  entry exits nonzero and points to the corresponding Phase 2 commands.
-- Phase 4 is unavailable and exits nonzero. Never route completion through a
-  successful no-op or manual ledger edit.
 - `--status` is strictly read-only. Its roots are resolved for the current
   process and are not global campaign authority; it does not decide or sync
   plans.
@@ -93,9 +89,8 @@ worker must not review its own candidate. Use a separate reviewer subagent or a
 configured reviewer runner, and ensure the result contains
 `reviewer_independence`.
 
-Use `audit` or `verify` only as diagnostics. They do not land completion. If the
-runner is missing, treat that as a mechanism problem, not a substantive
-mathematical failure.
+Historical audit/verify artifacts are read-only context. Use the active
+build/review/apply path for new work.
 
 ## Red Flags
 

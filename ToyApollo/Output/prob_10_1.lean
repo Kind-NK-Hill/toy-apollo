@@ -105,9 +105,11 @@ theorem prob_10_1 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
             (nhds (1 : ENNReal)) := by
   rw [thm_10_1 μ Xn X]
   constructor
-  · intro hio ε hε
+  · rintro ⟨_, _, hio⟩ ε hε
     exact (deviationInfinitelyOften_zero_iff_tendsto_tailClose μ Xn X hXn hX ε).1
       (hio ε hε)
-  · intro htail ε hε
+  · intro htail
+    refine ⟨fun n => (hXn n).aestronglyMeasurable, hX.aestronglyMeasurable, ?_⟩
+    intro ε hε
     exact (deviationInfinitelyOften_zero_iff_tendsto_tailClose μ Xn X hXn hX ε).2
       (htail ε hε)

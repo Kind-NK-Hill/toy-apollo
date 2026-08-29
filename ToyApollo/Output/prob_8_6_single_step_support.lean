@@ -345,7 +345,7 @@ lemma prob_8_6_part_b_joint_map_fst_one (lam : NNReal) (hlam : lam ≤ 1) :
     have hleft_ne_top : (p0 - b) + (1 - p0) ≠ ⊤ := by
       exact ENNReal.add_ne_top.2 ⟨ENNReal.sub_ne_top hp0_ne_top, ENNReal.sub_ne_top (by simp)⟩
     have hright_ne_top : 1 - b ≠ ⊤ := ENNReal.sub_ne_top (by simp)
-    apply (ENNReal.toReal_eq_toReal hleft_ne_top hright_ne_top).mp
+    refine (ENNReal.toReal_eq_toReal_iff' hleft_ne_top hright_ne_top).mp ?_
     rw [ENNReal.toReal_add (ENNReal.sub_ne_top hp0_ne_top) (ENNReal.sub_ne_top (by simp))]
     rw [ENNReal.toReal_sub_of_le hb_le_p0 hp0_ne_top]
     rw [ENNReal.toReal_sub_of_le hp0_le_one (by simp)]
@@ -513,8 +513,18 @@ lemma prob_8_6_part_b_tv_le_mismatchMass (lam : NNReal) (hlam : lam ≤ 1) :
       ≤ discretePmfCouplingMismatchMass (prob_8_6_part_b_coupling lam hlam) := by
   let piC : Coupling (bernoulliNatPMF lam hlam).toMeasure (ProbabilityTheory.poissonPMF lam).toMeasure :=
     discretePmfCouplingToCoupling (prob_8_6_part_b_coupling lam hlam)
-  simpa [piC, discretePmfCouplingToCoupling, discretePmfCouplingMismatchMass]
-    using thm_8_7 piC
+  let mismatch : Set piC.Ω := {ω | piC.X ω ≠ piC.Y ω}
+  have htv :
+      totalVariationDistance (bernoulliNatPMF lam hlam).toMeasure
+          (ProbabilityTheory.poissonPMF lam).toMeasure ≤ piC.μ.real mismatch := by
+    simpa [mismatch] using thm_8_7 piC
+  refine htv.trans_eq ?_
+  change
+    ((prob_8_6_part_b_coupling lam hlam).jointPMF.toMeasure
+      {ω : ℕ × ℕ | ω.1 ≠ ω.2}).toReal =
+      ((prob_8_6_part_b_coupling lam hlam).jointPMF.toMeasure
+        {xy : ℕ × ℕ | xy.1 ≠ xy.2}).toReal
+  rfl
 
 lemma prob_8_6_part_b_tv_ge_singleton_one (lam : NNReal) (hlam : lam ≤ 1) :
     (lam : ℝ) - ProbabilityTheory.poissonPMFReal lam 1

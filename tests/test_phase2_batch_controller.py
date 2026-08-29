@@ -14,7 +14,6 @@ from src.toy_apollo.phase2_batch_controller import (  # noqa: E402
     DEPENDENCY_FAILED,
     DEPENDENCY_PROOF_DEBT,
     FAILED_LOCAL,
-    NEEDS_DECOMPOSITION,
     NONTERMINAL,
     analyze_batch_state,
     count_substantive_failures,
@@ -93,7 +92,7 @@ class Phase2BatchControllerTests(unittest.TestCase):
         self.assertIn("blocked_dependency", markdown)
         self.assertIn("| prob_14_8 | NONTERMINAL | blocked | blocked |", markdown)
 
-    def test_family_consumable_support_does_not_block_downstream_repair(self):
+    def test_family_support_without_current_pass_blocks_downstream_repair(self):
         cases = [
             (
                 "source_route_finite_interval_covered",
@@ -133,8 +132,11 @@ class Phase2BatchControllerTests(unittest.TestCase):
                 rows = {row.task_id: row for row in report.rows}
                 self.assertEqual(rows["thm_7_8"].task_status, "fail")
                 self.assertEqual(rows["thm_7_8"].proof_class, proof_class)
-                self.assertEqual(rows["obl_thm_7_9_t7_9_finite_bridge_abs"].blocked_dependency, "")
-                self.assertEqual(rows["obl_thm_7_9_t7_9_finite_bridge_abs"].task_status, "")
+                self.assertEqual(
+                    rows["obl_thm_7_9_t7_9_finite_bridge_abs"].blocked_dependency,
+                    "thm_7_8",
+                )
+                self.assertEqual(rows["obl_thm_7_9_t7_9_finite_bridge_abs"].task_status, "blocked")
 
     def test_substantive_failure_count_is_conservative(self):
         budget = count_substantive_failures(
@@ -182,7 +184,7 @@ class Phase2BatchControllerTests(unittest.TestCase):
         self.assertEqual(budget.counted, 3)
         self.assertFalse(budget.exhausted)
 
-    def test_completed_with_proof_debt_blocks_dependents_until_debt_fix(self):
+    def test_explicit_completed_with_proof_debt_blocks_dependents_until_re_review(self):
         report = analyze_batch_state(
             {
                 "batch_id": "with-debt",
@@ -190,10 +192,6 @@ class Phase2BatchControllerTests(unittest.TestCase):
                     {
                         "task_id": "thm_11_7",
                         "status": COMPLETED_WITH_PROOF_DEBT,
-                        "proof_obligation_summary": {
-                            "status_counts": {"proved": 5, "accepted_as_proof_debt": 1},
-                            "needs_concrete_decomposition": False,
-                        },
                     },
                     {
                         "task_id": "prob_11_6",
@@ -208,7 +206,7 @@ class Phase2BatchControllerTests(unittest.TestCase):
         self.assertEqual(rows["thm_11_7"].status, COMPLETED_WITH_PROOF_DEBT)
         self.assertFalse(rows["thm_11_7"].terminal)
         self.assertTrue(rows["thm_11_7"].report_terminal)
-        self.assertEqual(rows["thm_11_7"].next_action, "run debt-fix")
+        self.assertEqual(rows["thm_11_7"].next_action, "run review-now --review-subject existing")
         self.assertEqual(rows["prob_11_6"].status, DEPENDENCY_PROOF_DEBT)
         self.assertEqual(rows["prob_11_6"].proof_debt_dependency, "thm_11_7")
         self.assertFalse(rows["prob_11_6"].terminal)
@@ -317,10 +315,6 @@ class Phase2BatchControllerTests(unittest.TestCase):
                     {
                         "task_id": "thm_11_7",
                         "status": COMPLETED_WITH_PROOF_DEBT,
-                        "proof_obligation_summary": {
-                            "status_counts": {"proved": 5, "accepted_as_proof_debt": 1},
-                            "needs_concrete_decomposition": False,
-                        },
                     },
                     {
                         "task_id": "prob_11_6",
@@ -350,10 +344,6 @@ class Phase2BatchControllerTests(unittest.TestCase):
                         "task_id": "thm_14_8",
                         "status": COMPLETED_WITH_PROOF_DEBT,
                         "current_class": "beyond_book_exception",
-                        "proof_obligation_summary": {
-                            "status_counts": {"accepted_as_proof_debt": 1},
-                            "needs_concrete_decomposition": False,
-                        },
                     }
                 ],
             }
@@ -389,7 +379,7 @@ class Phase2BatchControllerTests(unittest.TestCase):
         self.assertTrue(row.terminal)
         self.assertTrue(report.all_clean_or_allowed_exception)
 
-    def test_legacy_completed_task_with_accepted_proof_debt_blocks_dependents(self):
+    def test_legacy_proof_obligation_summary_does_not_infer_or_block_on_proof_debt(self):
         report = analyze_batch_state(
             {
                 "batch_id": "legacy-debt",
@@ -397,6 +387,9 @@ class Phase2BatchControllerTests(unittest.TestCase):
                     {
                         "task_id": "thm_10_8",
                         "status": "COMPLETED",
+                        "phase2_status": "pass",
+                        "phase2_review_verdict": "pass",
+                        "phase2_proof_class": "source_route_proof_completed",
                         "proof_obligation_summary": {
                             "status_counts": {"proved": 4, "accepted_as_proof_debt": 3},
                             "needs_concrete_decomposition": False,
@@ -412,11 +405,13 @@ class Phase2BatchControllerTests(unittest.TestCase):
         )
 
         rows = {row.task_id: row for row in report.rows}
-        self.assertEqual(rows["thm_10_8"].status, COMPLETED_WITH_PROOF_DEBT)
-        self.assertFalse(rows["thm_10_8"].terminal)
-        self.assertEqual(rows["prob_10_10"].status, DEPENDENCY_PROOF_DEBT)
+        self.assertEqual(rows["thm_10_8"].status, "COMPLETED")
+        self.assertTrue(rows["thm_10_8"].terminal)
+        self.assertTrue(rows["thm_10_8"].clean_or_allowed_exception)
+        self.assertEqual(rows["prob_10_10"].status, NONTERMINAL)
         self.assertFalse(rows["prob_10_10"].terminal)
-        self.assertEqual(rows["prob_10_10"].proof_debt_dependency, "thm_10_8")
+        self.assertEqual(rows["prob_10_10"].proof_debt_dependency, "")
+        self.assertEqual(rows["prob_10_10"].blocked_dependency, "")
 
     def test_complex_hard_failure_before_retry_budget_is_flagged(self):
         report = analyze_batch_state(
@@ -477,7 +472,7 @@ class Phase2BatchControllerTests(unittest.TestCase):
         self.assertEqual(rows["thm_10_9"].status, NONTERMINAL)
         self.assertEqual(rows["thm_10_9"].failed_dependency, "")
 
-    def test_placeholder_decomposition_is_nonterminal_and_does_not_skip_downstream(self):
+    def test_placeholder_summary_is_ignored_and_ordinary_failure_routing_applies(self):
         report = analyze_batch_state(
             {
                 "batch_id": "placeholder-decomposition",
@@ -502,11 +497,13 @@ class Phase2BatchControllerTests(unittest.TestCase):
         )
 
         rows = {row.task_id: row for row in report.rows}
-        self.assertEqual(rows["thm_10_8"].status, NEEDS_DECOMPOSITION)
+        self.assertEqual(rows["thm_10_8"].status, NONTERMINAL)
         self.assertFalse(rows["thm_10_8"].terminal)
-        self.assertIn("concrete proof-obligation decomposition", rows["thm_10_8"].issue)
+        self.assertIn("failure streak reaches 15", rows["thm_10_8"].issue)
         self.assertEqual(rows["thm_10_9"].status, NONTERMINAL)
         self.assertEqual(rows["thm_10_9"].failed_dependency, "")
+        self.assertEqual(rows["thm_10_9"].blocked_dependency, "thm_10_8")
+        self.assertEqual(rows["thm_10_9"].proof_debt_dependency, "")
 
     def test_dependency_failed_without_failed_root_is_flagged(self):
         report = analyze_batch_state(

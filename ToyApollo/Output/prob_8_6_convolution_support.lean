@@ -27,32 +27,39 @@ lemma tsum_conv_eq_tsum_mul_tsum (a b : ℕ → ℝ)
 lemma abs_pmfConv_sub_le (f₁ f₂ g : ℕ → ℝ) (hg_nn : ∀ k, 0 ≤ g k) (k : ℕ) :
     |pmfConv f₁ g k - pmfConv f₂ g k| ≤
       ∑ j ∈ range (k + 1), |f₁ j - f₂ j| * g (k - j) := by
-        rw [ pmfConv_sub, ← Finset.sum_congr rfl fun _ _ => by rw [ ← abs_of_nonneg ( hg_nn _ ) ] ];
-        convert Finset.abs_sum_le_sum_abs _ _ using 2;
-        · rw [ abs_mul, abs_of_nonneg ( hg_nn _ ) ];
-          rw [ abs_of_nonneg ( hg_nn _ ) ];
-        · infer_instance
+  rw [pmfConv_sub]
+  calc
+    |∑ j ∈ range (k + 1), (f₁ j - f₂ j) * g (k - j)| ≤
+        ∑ j ∈ range (k + 1), |(f₁ j - f₂ j) * g (k - j)| :=
+      Finset.abs_sum_le_sum_abs _ _
+    _ = ∑ j ∈ range (k + 1), |f₁ j - f₂ j| * g (k - j) := by
+      apply Finset.sum_congr rfl
+      intro j _hj
+      rw [abs_mul, abs_of_nonneg (hg_nn _)]
 
 lemma tsum_abs_pmfConv_sub_le (f₁ f₂ g : ℕ → ℝ)
     (hg_nn : ∀ k, 0 ≤ g k) (hg_sum : HasSum g 1)
     (hf_summable : Summable (fun k => |f₁ k - f₂ k|)) :
     ∑' k, |pmfConv f₁ g k - pmfConv f₂ g k| ≤ ∑' j, |f₁ j - f₂ j| := by
-      refine' le_trans ( Summable.tsum_le_tsum ( fun k => _ ) _ _ ) _;
-      use fun k => ∑ j ∈ Finset.range ( k + 1 ), |f₁ j - f₂ j| * g ( k - j );
-      · exact abs_pmfConv_sub_le f₁ f₂ g hg_nn k;
-      · refine' .of_nonneg_of_le ( fun k => abs_nonneg _ ) ( fun k => _ ) ( pmfConv_summable ( fun k => |f₁ k - f₂ k| ) g hf_summable hg_sum.summable );
-        convert abs_pmfConv_sub_le f₁ f₂ g hg_nn k using 1;
-      · have h_conv_sum : Summable (fun k => ∑ j ∈ Finset.range (k + 1), |f₁ j - f₂ j| * g (k - j)) := by
-          have h_conv_sum : ∀ {a b : ℕ → ℝ}, Summable a → Summable b → Summable (fun k => ∑ j ∈ Finset.range (k + 1), a j * b (k - j)) := by
-            intros a b ha hb;
-            refine' .of_norm _;
-            exact summable_norm_sum_mul_range_of_summable_norm ha.norm hb.norm
-          exact h_conv_sum hf_summable hg_sum.summable;
-        convert h_conv_sum using 1;
-      · have := tsum_conv_eq_tsum_mul_tsum ( fun k => |f₁ k - f₂ k| ) g ?_ ?_ hf_summable hg_sum.summable;
-        · rw [ this, hg_sum.tsum_eq, mul_one ];
-        · exact fun k => abs_nonneg _;
-        · assumption
+  let a : ℕ → ℝ := fun k => |f₁ k - f₂ k|
+  have hright : Summable (pmfConv a g) :=
+    pmfConv_summable a g hf_summable hg_sum.summable
+  have hle : ∀ k, |pmfConv f₁ g k - pmfConv f₂ g k| ≤ pmfConv a g k := by
+    intro k
+    simpa [a, pmfConv] using abs_pmfConv_sub_le f₁ f₂ g hg_nn k
+  have hleft : Summable (fun k => |pmfConv f₁ g k - pmfConv f₂ g k|) :=
+    Summable.of_nonneg_of_le (fun k => abs_nonneg _) hle hright
+  have hconv :
+      ∑' k, pmfConv a g k = (∑' j, a j) * (∑' m, g m) := by
+    simpa [pmfConv] using
+      tsum_conv_eq_tsum_mul_tsum a g (fun k => abs_nonneg _) hg_nn
+        hf_summable hg_sum.summable
+  calc
+    (∑' k, |pmfConv f₁ g k - pmfConv f₂ g k|) ≤ ∑' k, pmfConv a g k :=
+      Summable.tsum_le_tsum hle hleft hright
+    _ = (∑' j, a j) * (∑' m, g m) := hconv
+    _ = ∑' j, |f₁ j - f₂ j| := by
+      rw [hg_sum.tsum_eq, mul_one]
 
 lemma d_TV_conv_contract_right (f₁ f₂ g : ℕ → ℝ)
     (hg_nn : ∀ k, 0 ≤ g k) (hg_sum : HasSum g 1)
@@ -83,7 +90,13 @@ lemma d_TV_triangle (f g h : ℕ → ℝ)
         · exact Summable.add ( Summable.abs ( hf.sub hg ) ) ( Summable.abs ( hg.sub hh ) );
         · exact Summable.abs ( hf.sub hg );
         · exact Summable.abs ( hg.sub hh );
-      unfold d_TV; convert mul_le_mul_of_nonneg_left ( h_triangle f g h hf hg hh ) ( by norm_num : ( 0 : ℝ ) ≤ 1 / 2 ) using 1 ; ring;
+      unfold d_TV
+      calc
+        (1 / 2 : ℝ) * ∑' k, |f k - h k| ≤
+            (1 / 2 : ℝ) * ((∑' k, |f k - g k|) + ∑' k, |g k - h k|) :=
+          mul_le_mul_of_nonneg_left (h_triangle f g h hf hg hh) (by norm_num)
+        _ = (1 / 2 : ℝ) * ∑' k, |f k - g k| +
+            (1 / 2 : ℝ) * ∑' k, |g k - h k| := by ring
 
 lemma d_TV_convN_bound (f g : ℕ → ℝ)
     (hf_nn : ∀ k, 0 ≤ f k) (hf_sum : HasSum f 1)

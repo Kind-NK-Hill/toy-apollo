@@ -79,7 +79,6 @@ lemma complex_unit_integral_eq_one_ae
             have hone : ∫ _ω : Ω, (1 : ℝ) ∂P = 1 := by
               simp
             rw [hone, integral_re hYint]
-            rfl
       _ = 0 := by
             rw [hYintegral]
             simp
@@ -109,7 +108,7 @@ lemma characteristic_integrand_two_pi_norm
 theorem characteristicFunction_two_pi_eq_one_iff_integerValuedAE
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
     {X : Ω → ℝ} (hX : AEMeasurable X P) :
-    characteristicFunction P X (2 * Real.pi) = 1 ↔ IntegerValuedAE P X := by
+    characteristicFunction (P.map X) (2 * Real.pi) = 1 ↔ IntegerValuedAE P X := by
   let Y : Ω → ℂ :=
     fun ω => Complex.exp (Complex.I * (X ω : ℂ) * ((2 * Real.pi : ℝ) : ℂ))
   have hYnorm_all : ∀ ω, ‖Y ω‖ = 1 := by
@@ -122,7 +121,11 @@ theorem characteristicFunction_two_pi_eq_one_iff_integerValuedAE
   constructor
   · intro hφ
     have hYintegral : ∫ ω, Y ω ∂P = 1 := by
-      simpa [Y, characteristicFunction] using hφ
+      simpa [Y] using
+        (show
+          characteristicFunction (P.map X) (2 * Real.pi) =
+            ∫ ω, Y ω ∂P from
+          characteristicFunction_map_apply hX (2 * Real.pi)).symm.trans hφ
     have hYae : Y =ᵐ[P] fun _ => (1 : ℂ) :=
       complex_unit_integral_eq_one_ae hYint
         (Filter.Eventually.of_forall hYnorm_all) hYintegral
@@ -134,8 +137,8 @@ theorem characteristicFunction_two_pi_eq_one_iff_integerValuedAE
       filter_upwards [hInt] with ω hω
       exact (exp_two_pi_I_eq_one_iff_integerRange (X ω)).mpr hω
     calc
-      characteristicFunction P X (2 * Real.pi) = ∫ ω, Y ω ∂P := by
-        rfl
+      characteristicFunction (P.map X) (2 * Real.pi) = ∫ ω, Y ω ∂P := by
+        simpa [Y] using characteristicFunction_map_apply hX (2 * Real.pi)
       _ = ∫ _ω : Ω, (1 : ℂ) ∂P := integral_congr_ae hYae
       _ = 1 := by
         simp
@@ -143,7 +146,7 @@ theorem characteristicFunction_two_pi_eq_one_iff_integerValuedAE
 theorem prob_9_8
     {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasure P]
     {X : Ω → ℝ} (hX : AEMeasurable X P) :
-    characteristicFunction P X (2 * Real.pi) = 1 ↔
+    characteristicFunction (P.map X) (2 * Real.pi) = 1 ↔
       P {ω | X ω ∈ integerRange} = 1 := by
   have hnull :
       NullMeasurableSet {ω | X ω ∈ integerRange} P :=

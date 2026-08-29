@@ -130,7 +130,8 @@ theorem thm_14_1_tight_to_weak
         exact ⟨n, rfl⟩
       · rintro ⟨n, rfl⟩
         exact ⟨P n, ⟨n, rfl⟩, rfl⟩
-    simpa [thm_14_1_tight, hset] using hTight
+    rw [hset]
+    simpa [thm_14_1_tight] using hTight
   rcases hcompact.tendsto_subseq
       (x := P)
       (fun n : ℕ => subset_closure (Set.mem_range_self n)) with

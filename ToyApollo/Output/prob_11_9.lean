@@ -21,7 +21,7 @@ theorem prob_11_9 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     (hModel : prob_11_9_finiteIndependentUniformEmptyBoxModel P boxes k X)
     (hRegime : prob_11_9_asymptoticRegime boxes k a)
     (hX :
-      ∀ n : ℕ, AEStronglyMeasurable ((prob_11_9_emptyBoxRatio boxes X) n) P) :
+      ∀ n : ℕ, Measurable ((prob_11_9_emptyBoxRatio boxes X) n)) :
     ConvergesInMeanSquare P (prob_11_9_emptyBoxRatio boxes X)
         (fun _ : Ω => Real.exp (-a)) ∧
       ConvergesInProbability P (prob_11_9_emptyBoxRatio boxes X)

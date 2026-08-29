@@ -82,9 +82,13 @@ theorem thm_5_5 {Ω : Type _} [MeasurableSpace Ω]
       rcases ht with ⟨B, hB, rfl⟩
       exact hY (hC_meas B hB)
     have hπX_pi : IsPiSystem πX := by
-      simpa [πX] using hpi.comap X
+      rintro _ ⟨A, hA, rfl⟩ _ ⟨B, hB, rfl⟩ hne
+      rcases hne with ⟨ω, hωA, hωB⟩
+      exact ⟨A ∩ B, hpi A hA B hB ⟨X ω, hωA, hωB⟩, rfl⟩
     have hπY_pi : IsPiSystem πY := by
-      simpa [πY] using hpi.comap Y
+      rintro _ ⟨A, hA, rfl⟩ _ ⟨B, hB, rfl⟩ hne
+      rcases hne with ⟨ω, hωA, hωB⟩
+      exact ⟨A ∩ B, hpi A hA B hB ⟨Y ω, hωA, hωB⟩, rfl⟩
     have hπX_gen : MeasurableSpace.comap X (borel ℝ) = MeasurableSpace.generateFrom πX := by
       rw [hgen, MeasurableSpace.comap_generateFrom]
     have hπY_gen : MeasurableSpace.comap Y (borel ℝ) = MeasurableSpace.generateFrom πY := by

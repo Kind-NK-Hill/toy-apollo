@@ -24,8 +24,6 @@ python tools/validate_phase2_obligation_contracts.py --write-report
 python tools/audit_phase2_clean_debt_surface.py --write-report --fail-on-errors
 python .\run_chapter.py status <task_id>
 python .\run_chapter.py worklist
-python .\run_chapter.py --phase 2 --phase2-mode verify --tasks <task_id>
-python .\run_chapter.py --phase 2 --phase2-mode audit --tasks <task_id>
 ```
 
 `batch-plan` is the thin scheduling view over the current ledger and Phase2
@@ -81,7 +79,7 @@ completion outside `review-apply`.
 ## Maintenance
 
 ```powershell
-python .\run_chapter.py --phase 2 --phase2-mode debt-fix --tasks <task_id>
+python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject existing
 python .\run_chapter.py --phase 2 --phase2-mode auto-loop --tasks <task_id> --review-subject current
 ```
 
@@ -89,7 +87,8 @@ python .\run_chapter.py --phase 2 --phase2-mode auto-loop --tasks <task_id> --re
 normal budget and CLI floor are 15 review rounds and 15 build-check attempts
 before each review round. After a semantic failure, unchanged candidates are
 sent back to authoring instead of semantic review; change `draft.lean` or the
-proof artifact before continuing. `debt-fix` prepares repair for accepted proof debt.
+proof artifact before continuing. Legacy accepted proof debt is re-evaluated
+through the same existing-output review and ordinary repair loop.
 Proof obligations are no longer promoted into `obl_*` child tasks. If a proof
 obligation is real, absorb it into the parent file or a stable non-`obl_*`
 support file, then return to the auto-loop/build/review/apply workflow.

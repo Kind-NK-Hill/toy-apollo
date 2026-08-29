@@ -317,7 +317,7 @@ theorem prob_14_12_obligation_5_strictTail_le_liminf_geTail
         prob_14_12_obligation_5_strictTailIntegrand X R ω = 0 := by
       simp [prob_14_12_obligation_5_strictTailIntegrand, Set.indicator, htail]
     rw [hLeft]
-    exact zero_le _
+    exact zero_le
 
 theorem prob_14_12_obligation_5_lintegral_liminf_geTail_le
     {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)

@@ -36,7 +36,7 @@ theorem prob_11_9_eLpNorm_tendsto_of_convergesInMeanSquare
             fun _ : Ω => Real.exp (-a))
           (2 : ENNReal) P)
       atTop (nhds 0) := by
-  rcases hMS with ⟨_hTwo, hTendsto⟩
+  rcases hMS with ⟨_hX, _hLimit, _hTwo, hTendsto⟩
   have hroot :
       Tendsto (fun y : ENNReal => y ^ (1 / (2 : ℝ))) (nhds 0) (nhds 0) := by
     simpa using
@@ -70,30 +70,30 @@ theorem prob_11_9_quadratic_mean {Ω : Type*} [MeasurableSpace Ω]
       ∀ n : ℕ, AEStronglyMeasurable ((prob_11_9_emptyBoxRatio boxes X) n) P) :
     ConvergesInMeanSquare P (prob_11_9_emptyBoxRatio boxes X)
       (fun _ : Ω => Real.exp (-a)) := by
-  refine ⟨by norm_num, ?_⟩
-  exact
+  let momentTendsto :=
     prob_11_9_occupancy_moment_calculation_internal P boxes k X a hModel
       hRegime hX
+  exact ⟨hX, aestronglyMeasurable_const, by norm_num, momentTendsto⟩
 
 theorem prob_11_9_probability {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) (boxes : ℕ → ℕ) (X : ℕ → Ω → ℝ) (a : ℝ)
+    (P : Measure Ω) [IsProbabilityMeasure P]
+    (boxes : ℕ → ℕ) (X : ℕ → Ω → ℝ) (a : ℝ)
     (hMS : ConvergesInMeanSquare P (prob_11_9_emptyBoxRatio boxes X)
       (fun _ : Ω => Real.exp (-a)))
     (hX :
-      ∀ n : ℕ, AEStronglyMeasurable ((prob_11_9_emptyBoxRatio boxes X) n) P) :
+      ∀ n : ℕ, Measurable ((prob_11_9_emptyBoxRatio boxes X) n)) :
     ConvergesInProbability P (prob_11_9_emptyBoxRatio boxes X)
       (fun _ : Ω => Real.exp (-a)) := by
-  let hELp := prob_11_9_meanSquareELpNormSupport_of_measurable P boxes X a hX
-  rcases hELp hMS with ⟨hX, hLimit, hLp⟩
   exact thm_10_5 P (prob_11_9_emptyBoxRatio boxes X)
-    (fun _ : Ω => Real.exp (-a)) hX hLimit hMS
+    (fun _ : Ω => Real.exp (-a)) (r := 2) hX measurable_const hMS
 
 theorem prob_11_9_hence_in_probability {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) (boxes : ℕ → ℕ) (X : ℕ → Ω → ℝ) (a : ℝ)
+    (P : Measure Ω) [IsProbabilityMeasure P]
+    (boxes : ℕ → ℕ) (X : ℕ → Ω → ℝ) (a : ℝ)
     (hMS : ConvergesInMeanSquare P (prob_11_9_emptyBoxRatio boxes X)
       (fun _ : Ω => Real.exp (-a)))
     (hX :
-      ∀ n : ℕ, AEStronglyMeasurable ((prob_11_9_emptyBoxRatio boxes X) n) P) :
+      ∀ n : ℕ, Measurable ((prob_11_9_emptyBoxRatio boxes X) n)) :
     ConvergesInProbability P (prob_11_9_emptyBoxRatio boxes X)
       (fun _ : Ω => Real.exp (-a)) :=
   prob_11_9_probability P boxes X a hMS hX

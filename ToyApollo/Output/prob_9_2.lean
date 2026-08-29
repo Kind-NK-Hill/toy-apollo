@@ -27,64 +27,11 @@ instance (lam : NNReal) : IsProbabilityMeasure (poissonRealMeasure lam) := by
   exact Measure.isProbabilityMeasure_map
     (AEStronglyMeasurable.of_discrete.aemeasurable)
 
-private lemma poissonPMF_toReal (lam : NNReal) (n : ℕ) :
-    ((ProbabilityTheory.poissonPMF lam) n).toReal =
-      ProbabilityTheory.poissonPMFReal lam n := by
-  rw [← ProbabilityTheory.poissonPMFReal_ofReal_eq_poissonPMF lam n]
-  exact ENNReal.toReal_ofReal ProbabilityTheory.poissonPMFReal_nonneg
-
 theorem poissonRealMeasure_charFun (lam : NNReal) (t : ℝ) :
     charFun (poissonRealMeasure lam) t =
       poissonCharacteristicFunctionFormula (lam : ℝ) t := by
   unfold poissonRealMeasure poissonCharacteristicFunctionFormula
-  rw [charFun_apply_real]
-  rw [integral_map]
-  · unfold ProbabilityTheory.poissonMeasure
-    rw [PMF.integral_eq_tsum]
-    · have hseries :
-          HasSum
-            (fun n : ℕ =>
-              (((lam : ℂ) * Complex.exp (Complex.I * (t : ℂ))) ^ n) /
-                (n.factorial : ℂ))
-            (Complex.exp ((lam : ℂ) * Complex.exp (Complex.I * (t : ℂ)))) := by
-        simpa [← Complex.exp_eq_exp_ℂ] using
-          (NormedSpace.expSeries_div_hasSum_exp
-            ((lam : ℂ) * Complex.exp (Complex.I * (t : ℂ))) : HasSum
-              (fun n : ℕ =>
-                (((lam : ℂ) * Complex.exp (Complex.I * (t : ℂ))) ^ n) /
-                  (n.factorial : ℂ))
-              (NormedSpace.exp ((lam : ℂ) * Complex.exp (Complex.I * (t : ℂ)))))
-      have hscaled := hseries.mul_left (Complex.exp (-(lam : ℂ)))
-      have hsum := hscaled.tsum_eq
-      calc
-        (∑' (a : ℕ), ((ProbabilityTheory.poissonPMF lam) a).toReal •
-            Complex.exp ((t : ℂ) * (a : ℂ) * Complex.I))
-            = ∑' n : ℕ,
-                Complex.exp (-(lam : ℂ)) *
-                  ((((lam : ℂ) * Complex.exp (Complex.I * (t : ℂ))) ^ n) /
-                    (n.factorial : ℂ)) := by
-              refine tsum_congr fun n => ?_
-              have hexp_pow :
-                  Complex.exp ((t : ℂ) * (n : ℂ) * Complex.I) =
-                    Complex.exp (Complex.I * (t : ℂ)) ^ n := by
-                rw [← Complex.exp_nat_mul (Complex.I * (t : ℂ)) n]
-                congr 1
-                ring
-              rw [poissonPMF_toReal, ProbabilityTheory.poissonPMFReal, hexp_pow]
-              simp only [Complex.real_smul, Complex.ofReal_mul, Complex.ofReal_div,
-                Complex.ofReal_pow, Complex.ofReal_natCast, Complex.ofReal_exp,
-                Complex.ofReal_neg]
-              ring_nf
-        _ = Complex.exp (-(lam : ℂ)) *
-              Complex.exp ((lam : ℂ) * Complex.exp (Complex.I * (t : ℂ))) := hsum
-        _ = Complex.exp ((lam : ℂ) *
-              (Complex.exp (Complex.I * (t : ℂ)) - 1)) := by
-            rw [← Complex.exp_add]
-            congr 1
-            ring
-    · exact (integrable_const (1 : ℂ)).mono (by fun_prop) (by simp [Complex.norm_exp])
-  · exact AEStronglyMeasurable.of_discrete.aemeasurable
-  · exact (by fun_prop)
+  simpa [mul_comm] using charFun_map_cast_poissonMeasure lam t
 
 def HasPoissonLaw
     {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) (X : Ω → ℝ)
@@ -94,7 +41,7 @@ def HasPoissonLaw
 def HasPoissonCharacteristicFunction
     {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) (X : Ω → ℝ)
     (lam : ℝ) : Prop :=
-  ∀ t : ℝ, characteristicFunction P X t =
+  ∀ t : ℝ, characteristicFunction (P.map X) t =
     poissonCharacteristicFunctionFormula lam t
 
 theorem poissonCharacteristicFunctionFormula_mul

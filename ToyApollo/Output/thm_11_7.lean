@@ -18,9 +18,11 @@ noncomputable section
 
 private theorem thm_11_7_from_tailSummability {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ) (μ : ℝ)
+    (hAvg : ∀ n : ℕ, AEStronglyMeasurable (thm_11_5_sampleMean X n) P)
     (hTail : thm_11_7_tailSummabilitySupport P X μ) :
     ConvergesAlmostSurely P (fun n => thm_11_5_sampleMean X n) (fun _ => μ) := by
   refine (thm_10_1 P (fun n => thm_11_5_sampleMean X n) (fun _ : Ω => μ)).2 ?_
+  refine ⟨hAvg, aestronglyMeasurable_const, ?_⟩
   intro ε hε
   have hsum := hTail ε hε
   simpa [deviationInfinitelyOften] using
@@ -35,6 +37,17 @@ theorem thm_11_7 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     (hInd : def_5_10_randomVariables P X)
     (hMean : ∀ i : ℕ, P[X i] = μ)
     (hFourth : ∃ c : ℝ, thm_11_7_fourthMomentUniformBound P X μ c) :
-    ConvergesAlmostSurely P (fun n => thm_11_5_sampleMean X n) (fun _ => μ) :=
-  thm_11_7_from_tailSummability P X μ
-    (thm_11_7_tail_summability_from_fourth_moment P X μ hInd hMean hFourth)
+    ConvergesAlmostSurely P (fun n => thm_11_5_sampleMean X n) (fun _ => μ) := by
+  rcases hFourth with ⟨c, hFourth⟩
+  have hAvg : ∀ n, AEStronglyMeasurable (thm_11_5_sampleMean X n) P := by
+    intro n
+    change AEStronglyMeasurable
+      (fun ω => (1 / ((n : ℝ) + 1)) * (∑ i : Fin (n + 1), X i.1 ω)) P
+    simpa using
+      (MeasureTheory.AEStronglyMeasurable.const_mul
+        (Finset.aestronglyMeasurable_sum (Finset.univ : Finset (Fin (n + 1)))
+          (fun i _hi => (hFourth.2 i.1).1.1))
+        (1 / ((n : ℝ) + 1)))
+  exact thm_11_7_from_tailSummability P X μ hAvg
+    (thm_11_7_tail_summability_from_fourth_moment P X μ hInd hMean
+      ⟨c, hFourth⟩)

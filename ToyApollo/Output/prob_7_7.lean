@@ -27,10 +27,11 @@ theorem prob_7_7 {Ω : Type} [MeasurableSpace Ω] (μ : Measure Ω) (f : ℕ →
         convert ae_lt_top' _ _
         · fun_prop
         · rw [MeasureTheory.lintegral_tsum]
-          · convert h using 1
+          · simpa only [enorm_eq_nnnorm] using h
           · exact fun k => (hf k |> Measurable.aemeasurable).enorm
       filter_upwards [h_summable] with ω hω
-      convert ENNReal.summable_toNNReal_of_tsum_ne_top hω.ne using 1
+      simpa only [Function.comp_def, enorm_eq_nnnorm, ENNReal.toNNReal_coe] using
+        ENNReal.summable_toNNReal_of_tsum_ne_top hω.ne
     filter_upwards [h_summable] with ω hω
     exact
       ⟨_,
@@ -40,4 +41,4 @@ theorem prob_7_7 {Ω : Type} [MeasurableSpace Ω] (μ : Measure Ω) (f : ℕ →
         |> HasSum.tendsto_sum_nat⟩
   · rw [MeasureTheory.integral_tsum]
     · exact fun k => (hf k |> Measurable.aestronglyMeasurable)
-    · convert h using 1
+    · simpa only [enorm_eq_nnnorm] using h

@@ -146,8 +146,9 @@ private lemma prob_10_2_tsum_ofReal_eq_top_of_not_summable {p : ℕ → ℝ}
   exact hnot ((prob_10_2_summable_iff_tsum_ofReal_ne_top hp_nonneg).2 hne)
 
 private lemma prob_10_2_convergesInProbability_iff_tendsto_p
-    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (Xn : ℕ → Ω → ℝ) (p : ℕ → ℝ)
+    (hXn : ∀ n : ℕ, Measurable (Xn n))
     (hp_nonneg : ∀ n : ℕ, 0 ≤ p n)
     (hBinary : ∀ n : ℕ, ∀ ω : Ω, Xn n ω = 0 ∨ Xn n ω = 1)
     (hBernoulli : BernoulliZeroOneMasses μ Xn p) :
@@ -160,7 +161,7 @@ private lemma prob_10_2_convergesInProbability_iff_tendsto_p
     have hdev :
         Tendsto (fun n : ℕ =>
           μ (deviationEvent Xn (fun _ => 0) n (1 / 2 : ℝ))) atTop (nhds 0) :=
-      hconv (1 / 2 : ℝ) (by norm_num)
+      hconv.2.2 (1 / 2 : ℝ) (by norm_num)
     have hsuccess :
         Tendsto (fun n : ℕ => μ (A n)) atTop (nhds 0) := by
       refine hdev.congr' ?_
@@ -174,7 +175,9 @@ private lemma prob_10_2_convergesInProbability_iff_tendsto_p
         change μ (A n) = ENNReal.ofReal (p n)
         exact hprob_one n
     exact (prob_10_2_tendsto_ofReal_zero_iff hp_nonneg).1 hofReal
-  · intro hp_tend ε hε
+  · intro hp_tend
+    refine ⟨hXn, measurable_const, ?_⟩
+    intro ε hε
     have hofReal :
         Tendsto (fun n : ℕ => ENNReal.ofReal (p n)) atTop (nhds 0) :=
       (prob_10_2_tendsto_ofReal_zero_iff hp_nonneg).2 hp_tend
@@ -192,7 +195,7 @@ private lemma prob_10_2_convergesInProbability_iff_tendsto_p
         (prob_10_2_deviationEvent_subset_success (Xn := Xn) hBinary hε)
     exact tendsto_of_tendsto_of_tendsto_of_le_of_le'
       tendsto_const_nhds hsuccess
-      (Eventually.of_forall fun n => zero_le _)
+      (Eventually.of_forall fun _ => zero_le)
       (Eventually.of_forall hle)
 
 private lemma prob_10_2_success_measure_tsum_ne_top_iff
@@ -219,6 +222,7 @@ private lemma prob_10_2_success_measure_tsum_ne_top_iff
 private lemma prob_10_2_convergesAlmostSurely_iff_summable_p
     {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     [IsProbabilityMeasure μ] (Xn : ℕ → Ω → ℝ) (p : ℕ → ℝ)
+    (hXn : ∀ n : ℕ, AEStronglyMeasurable (Xn n) μ)
     (hp_nonneg : ∀ n : ℕ, 0 ≤ p n)
     (hBinary : ∀ n : ℕ, ∀ ω : Ω, Xn n ω = 0 ∨ Xn n ω = 1)
     (hMeasOne : ∀ n : ℕ, MeasurableSet {ω : Ω | Xn n ω = 1})
@@ -232,7 +236,7 @@ private lemma prob_10_2_convergesAlmostSurely_iff_summable_p
   · intro hAS
     have hdev_zero :
         μ (deviationInfinitelyOften Xn (fun _ => 0) (1 / 2 : ℝ)) = 0 :=
-      (thm_10_1 μ Xn (fun _ => 0)).1 hAS (1 / 2 : ℝ) (by norm_num)
+      ((thm_10_1 μ Xn (fun _ => 0)).1 hAS).2.2 (1 / 2 : ℝ) (by norm_num)
     have hsuccess_zero :
         μ (limsup A atTop) = 0 :=
       MeasureTheory.measure_mono_null
@@ -259,6 +263,7 @@ private lemma prob_10_2_convergesAlmostSurely_iff_summable_p
     have hsuccess_limsup_zero : μ (limsup A atTop) = 0 :=
       thm_5_8 (P := μ) (A := A) hseries_ne_top
     refine (thm_10_1 μ Xn (fun _ => 0)).2 ?_
+    refine ⟨hXn, aestronglyMeasurable_const, ?_⟩
     intro ε hε
     exact MeasureTheory.measure_mono_null
       (prob_10_2_limsup_deviation_subset_success (Xn := Xn) hBinary hε)
@@ -266,6 +271,7 @@ private lemma prob_10_2_convergesAlmostSurely_iff_summable_p
 
 theorem prob_10_2 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     [IsProbabilityMeasure μ] (Xn : ℕ → Ω → ℝ) (p : ℕ → ℝ)
+    (hXn : ∀ n : ℕ, Measurable (Xn n))
     (hp : ∀ n : ℕ, p n ∈ Set.Icc (0 : ℝ) 1)
     (hBinary : ∀ n : ℕ, ∀ ω : Ω, Xn n ω = 0 ∨ Xn n ω = 1)
     (hMeasOne : ∀ n : ℕ, MeasurableSet {ω : Ω | Xn n ω = 1})
@@ -277,6 +283,7 @@ theorem prob_10_2 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
   have hp_nonneg : ∀ n : ℕ, 0 ≤ p n := fun n => (hp n).1
   exact
     ⟨prob_10_2_convergesInProbability_iff_tendsto_p
-        μ Xn p hp_nonneg hBinary hBernoulli,
+        μ Xn p hXn hp_nonneg hBinary hBernoulli,
       prob_10_2_convergesAlmostSurely_iff_summable_p
-        μ Xn p hp_nonneg hBinary hMeasOne hBernoulli hIndependent⟩
+        μ Xn p (fun n => (hXn n).aestronglyMeasurable) hp_nonneg hBinary
+          hMeasOne hBernoulli hIndependent⟩

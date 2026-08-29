@@ -47,7 +47,7 @@ def prob_14_1_finWhiteCount {i : ℕ} (path : Fin i → Bool) : ℕ :=
 theorem prob_14_1_finWhiteCount_le_length {i : ℕ}
     (path : Fin i → Bool) :
     prob_14_1_finWhiteCount path ≤ i := by
-  rw [prob_14_1_finWhiteCount, prob_14_1_finWhiteSet]
+  rw [prob_14_1_finWhiteCount]
   simpa [Fintype.card_fin] using
     (Finset.card_le_univ (prob_14_1_finWhiteSet path))
 
@@ -667,7 +667,7 @@ theorem prob_14_1_polyaWhiteMassFormula_sum_range_eq_one
           apply Finset.sum_congr rfl
           intro path _hpath
           have hcount_le : prob_14_1_finWhiteCount path ≤ i := by
-            rw [prob_14_1_finWhiteCount, prob_14_1_finWhiteSet]
+            rw [prob_14_1_finWhiteCount]
             simpa [Fintype.card_fin] using
               (Finset.card_le_univ (prob_14_1_finWhiteSet path))
           have hcount_mem :

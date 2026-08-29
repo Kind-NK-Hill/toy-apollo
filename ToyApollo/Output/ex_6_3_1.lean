@@ -220,6 +220,8 @@ lemma ex631PositivePointwise (z : ℤ) :
     rw [← ENNReal.ofReal_mul hzreal.le]
     simp [ex631WeightR, ex631BaseMass, habs, pow_two]
     field_simp [hzreal.ne', ex631NormConst_pos.ne']
+    exact ENNReal.ofReal_eq_coe_nnreal
+      (div_nonneg ex631NormConst_pos.le hzreal.le)
   · rw [ex631PositiveHarmonic, dif_neg hz, ENNReal.coe_nnreal_eq]
     rw [ex631Measure_apply_singleton]
     by_cases hz0 : z = 0
@@ -246,6 +248,9 @@ lemma ex631NegativePointwise (z : ℤ) :
     rw [← ENNReal.ofReal_mul hnegNonneg]
     simp [ex631WeightR, ex631BaseMass, habs, pow_two]
     field_simp [hzreal.ne, ex631NormConst_pos.ne']
+    exact ENNReal.ofReal_eq_coe_nnreal
+      (neg_nonneg.mpr
+        (div_nonpos_of_nonneg_of_nonpos ex631NormConst_pos.le hzreal.le))
   · rw [ex631NegativeHarmonic, dif_neg hz, ENNReal.coe_nnreal_eq]
     rw [ex631Measure_apply_singleton]
     by_cases hz0 : z = 0

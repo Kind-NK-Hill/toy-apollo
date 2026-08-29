@@ -62,9 +62,11 @@ theorem thm_5_3 {Ω : Type _} [MeasurableSpace Ω] (μ : MeasureTheory.Measure �
       rcases hA with ⟨n, rfl⟩
       exact hY (measurableSet_singleton n)
     have hπX_pi : IsPiSystem πX := by
-      simpa [πX] using hpi.comap X
+      change IsPiSystem {s : Set Ω | ∃ t ∈ C, X ⁻¹' t = s}
+      exact hpi.comap X
     have hπY_pi : IsPiSystem πY := by
-      simpa [πY] using hpi.comap Y
+      change IsPiSystem {s : Set Ω | ∃ t ∈ C, Y ⁻¹' t = s}
+      exact hpi.comap Y
     have hπ_indep : ProbabilityTheory.IndepSets πX πY μ := by
       rw [ProbabilityTheory.IndepSets_iff]
       intro s t hs ht

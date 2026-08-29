@@ -31,9 +31,9 @@ theorem prob_7_5 {Ω : Type} [MeasurableSpace Ω] (μ : MeasureTheory.Measure Ω
     refine' le_trans h_fatou_liminf _
     refine' Filter.liminf_le_of_frequently_le _ _
     · exact (Filter.Eventually.of_forall fun n => (h_lintegral_bound n).le).frequently
-    · exact ⟨0, Filter.Eventually.of_forall fun n => zero_le _⟩
+    · exact ⟨0, Filter.Eventually.of_forall fun _ => zero_le⟩
   have hK_pos : 0 < K := by
-    exact ENNReal.ofReal_pos.mp <| lt_of_le_of_lt (zero_le _) (h_lintegral_bound 0)
+    exact ENNReal.ofReal_pos.mp <| lt_of_le_of_lt zero_le (h_lintegral_bound 0)
   have h_nonneg_lim : ∀ᵐ ω ∂μ, 0 ≤ X_lim ω := by
     filter_upwards [h_ae_lim] with ω hω using
       le_of_tendsto_of_tendsto' tendsto_const_nhds hω fun n => h_nonneg n ω

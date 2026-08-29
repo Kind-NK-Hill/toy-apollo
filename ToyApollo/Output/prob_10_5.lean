@@ -18,16 +18,16 @@ open Filter MeasureTheory
 open scoped ENNReal
 
 private theorem prob_10_5_tendstoInMeasure_of_convergesInProbability
-    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ)
     (hProb : ConvergesInProbability μ Xn X) :
     TendstoInMeasure μ Xn atTop X := by
   rw [tendstoInMeasure_iff_norm]
   intro ε hε
   have hhalf : 0 < ε / 2 := by linarith
-  have hprob_half := hProb (ε / 2) hhalf
+  have hprob_half := hProb.2.2 (ε / 2) hhalf
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hprob_half
-    (fun _ => zero_le _) ?_
+    (fun _ => zero_le) ?_
   intro n
   apply measure_mono
   intro ω hω
@@ -90,6 +90,6 @@ by
     tendsto_Lp_finite_of_tendstoInMeasure (μ := μ) (p := (1 : ENNReal))
       le_rfl ENNReal.one_ne_top hXn MemLp.zero hUI hInMeasure
   rw [ConvergesInMean, ConvergesInRthMean]
-  refine ⟨by norm_num, ?_⟩
+  refine ⟨hXn, aestronglyMeasurable_const, by norm_num, ?_⟩
   simpa [meanDeviationMoment, eLpNorm_one_eq_lintegral_enorm, Pi.sub_apply,
     Real.enorm_eq_ofReal_abs, pow_one] using hLp

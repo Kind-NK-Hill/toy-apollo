@@ -32,11 +32,25 @@ def ex751Z (ω : Ex751Ω) : ℝ :=
 def ex751U (ω : Ex751Ω) : Bool :=
   ω.2
 
+def ex751USign (ω : Ex751Ω) : ℝ :=
+  if ex751U ω then -1 else 1
+
 def ex751X (ω : Ex751Ω) : ℝ :=
   ex751Z ω
 
 def ex751Y (ω : Ex751Ω) : ℝ :=
   if ex751U ω then -ex751Z ω else ex751Z ω
+
+theorem ex751USign_mem (ω : Ex751Ω) :
+    ex751USign ω = -1 ∨ ex751USign ω = 1 := by
+  rcases ω with ⟨i, u⟩
+  cases u <;> simp [ex751USign, ex751U]
+
+theorem ex751Y_eq_USign_mul_Z :
+    ex751Y = fun ω => ex751USign ω * ex751Z ω := by
+  funext ω
+  rcases ω with ⟨i, u⟩
+  cases u <;> simp [ex751Y, ex751USign, ex751U]
 
 def ex751AbsEvent : Set Ex751Ω :=
   {ω | ω.1 = 0 ∨ ω.1 = 3}
@@ -125,6 +139,50 @@ theorem ex751_measure_absEvent :
       apply (ENNReal.toReal_eq_toReal_iff' hhalf_ne_top hinv_ne_top).1
       norm_num
 
+private theorem ex751_four_mul_eight_inv :
+    (4 : ENNReal) * 8⁻¹ = (2 : ENNReal)⁻¹ := by
+  apply (ENNReal.toReal_eq_toReal_iff' (by finiteness) (by finiteness)).1
+  norm_num [ENNReal.toReal_add]
+
+theorem ex751_measure_USign_eq_neg_one :
+    ex751Measure (ex751USign ⁻¹' ({-1} : Set ℝ)) = (1 / 2 : ENNReal) := by
+  have hOneNeNegOne : (1 : ℝ) ≠ -1 := by norm_num
+  rw [ex751Measure, PMF.toMeasure_apply_fintype]
+  simp [Fintype.sum_prod_type, Fintype.sum_bool, Fin.sum_univ_four,
+    Set.indicator, ex751USign, ex751U, PMF.uniformOfFintype_apply, hOneNeNegOne]
+  exact ex751_four_mul_eight_inv
+
+theorem ex751_measure_USign_eq_one :
+    ex751Measure (ex751USign ⁻¹' ({1} : Set ℝ)) = (1 / 2 : ENNReal) := by
+  have hNegOneNeOne : (-1 : ℝ) ≠ 1 := by norm_num
+  rw [ex751Measure, PMF.toMeasure_apply_fintype]
+  simp [Fintype.sum_prod_type, Fintype.sum_bool, Fin.sum_univ_four,
+    Set.indicator, ex751USign, ex751U, PMF.uniformOfFintype_apply, hNegOneNeOne]
+  exact ex751_four_mul_eight_inv
+
+theorem ex751_USign_independent_Z :
+    ProbabilityTheory.IndepFun ex751USign ex751Z ex751Measure := by
+  rw [ProbabilityTheory.indepFun_iff_measure_inter_preimage_eq_mul]
+  intro s t hs ht
+  rw [ex751Measure, PMF.toMeasure_apply_fintype, PMF.toMeasure_apply_fintype,
+    PMF.toMeasure_apply_fintype]
+  by_cases hUn : (-1 : ℝ) ∈ s
+  all_goals by_cases hUp : (1 : ℝ) ∈ s
+  all_goals by_cases hZn : (-1 : ℝ) ∈ t
+  all_goals by_cases hZ0 : (0 : ℝ) ∈ t
+  all_goals by_cases hZp : (1 : ℝ) ∈ t
+  all_goals simp [Fintype.sum_prod_type, Fintype.sum_bool, Fin.sum_univ_four,
+    Set.indicator, ex751USign, ex751U, ex751Z, ex751ZVal,
+    PMF.uniformOfFintype_apply, hUn, hUp, hZn, hZ0, hZp]
+  all_goals rw [ex751_four_mul_eight_inv]
+  all_goals apply (ENNReal.toReal_eq_toReal_iff' (by finiteness) (by finiteness)).1
+  all_goals norm_num [ENNReal.toReal_add]
+
+theorem ex751_measure_abs_one_Z :
+    ex751Measure (ex751Z ⁻¹' {z : ℝ | |z| = 1}) = (1 / 2 : ENNReal) := by
+  rw [← ex751X_eq_Z, ex751_preimage_abs_one_X]
+  exact ex751_measure_absEvent
+
 theorem ex751_not_independent :
     ¬ Ex751Independent ex751Measure ex751X ex751Y := by
   intro hXY
@@ -143,10 +201,16 @@ theorem ex751_not_independent :
   exact hfalse.elim
 
 theorem ex_7_5_1 :
-    ex751X = ex751Z ∧
-      ∫ ω, ex751X ω ∂ex751Measure = 0 ∧
-      ∫ ω, ex751X ω * ex751Y ω ∂ex751Measure = 0 ∧
+    (∀ ω, ex751USign ω = -1 ∨ ex751USign ω = 1) ∧
+      ex751Measure (ex751USign ⁻¹' ({-1} : Set ℝ)) = (1 / 2 : ENNReal) ∧
+      ex751Measure (ex751USign ⁻¹' ({1} : Set ℝ)) = (1 / 2 : ENNReal) ∧
+      ProbabilityTheory.IndepFun ex751USign ex751Z ex751Measure ∧
+      ex751Measure (ex751Z ⁻¹' {z : ℝ | |z| = 1}) = (1 / 2 : ENNReal) ∧
+      ∫ ω, ex751Z ω ∂ex751Measure = 0 ∧
+      ex751X = ex751Z ∧
+      ex751Y = (fun ω => ex751USign ω * ex751Z ω) ∧
       Ex751Uncorrelated ex751Measure ex751X ex751Y ∧
       ¬ Ex751Independent ex751Measure ex751X ex751Y := by
-  refine ⟨ex751X_eq_Z, ex751_mean_zero_X, ex751_product_mean_zero, ex751_uncorrelated,
-    ex751_not_independent⟩
+  refine ⟨ex751USign_mem, ex751_measure_USign_eq_neg_one, ex751_measure_USign_eq_one,
+    ex751_USign_independent_Z, ex751_measure_abs_one_Z, ex751_mean_zero_Z, ex751X_eq_Z,
+    ex751Y_eq_USign_mul_Z, ex751_uncorrelated, ex751_not_independent⟩

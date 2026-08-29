@@ -77,7 +77,8 @@ lemma counterU_measurable : Measurable counterU := by
   simpa [counterU] using hsign.comp measurable_snd
 
 lemma counterY_measurable : Measurable counterY := by
-  simpa [counterY] using counterU_measurable.mul measurable_fst
+  change Measurable (fun ω : ℝ × Bool => counterU ω * ω.1)
+  exact counterU_measurable.mul measurable_fst
 
 lemma signMeasure_true : signMeasure {true} = (1 / 2 : ℝ≥0∞) := by
   simp [signMeasure, PMF.bernoulli_apply]
@@ -213,7 +214,10 @@ lemma counterY_integral : ∫ ω, counterY ω ∂counterMeasure = 0 := by
 lemma counterU_indep_counterXsq :
     ProbabilityTheory.IndepFun counterU (fun ω => counterX ω ^ 2) counterMeasure := by
   have hpow : Measurable (fun x : ℝ => x ^ 2) := by fun_prop
-  simpa [counterU] using counterX_indep_counterU.symm.comp measurable_id hpow
+  change ProbabilityTheory.IndepFun counterU
+    ((fun x : ℝ => x ^ 2) ∘ counterX) counterMeasure
+  simpa only [Function.id_comp] using
+    counterX_indep_counterU.symm.comp measurable_id hpow
 
 lemma counterXsq_integrable : Integrable (fun ω => counterX ω ^ 2) counterMeasure := by
   simpa using counterX_hasGaussianLaw.memLp_two.integrable_sq
@@ -254,7 +258,8 @@ lemma counterSum_zero_preimage :
 lemma counterSum_zero_mass :
     counterMeasure.map counterSum ({0} : Set ℝ) = (1 / 2 : ℝ≥0∞) := by
   rw [Measure.map_apply (by
-      simpa [counterSum] using measurable_fst.add counterY_measurable)
+      change Measurable (fun ω : ℝ × Bool => ω.1 + counterY ω)
+      exact measurable_fst.add counterY_measurable)
     (measurableSet_singleton 0), counterSum_zero_preimage]
   have hmeas₂ : MeasurableSet (((Set.univ : Set ℝ)) ×ˢ ({false} : Set Bool)) := by measurability
   have hdisj :
@@ -284,7 +289,8 @@ lemma counter_not_jointlyGaussian :
     simpa [Z] using hJoint.fun_add
   have hAtom :
       ν ({0} : Set ℝ) = (1 / 2 : ℝ≥0∞) := by
-    simpa [ν, Z] using counterSum_zero_mass
+    change counterMeasure.map counterSum ({0} : Set ℝ) = (1 / 2 : ℝ≥0∞)
+    exact counterSum_zero_mass
   have hGaussAt0 :
       ν ({0} : Set ℝ) = ProbabilityTheory.gaussianReal m v ({0} : Set ℝ) := by
     simpa [ν, m, v] using congrArg (fun ρ : Measure ℝ => ρ ({0} : Set ℝ))

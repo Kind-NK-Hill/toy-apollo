@@ -15,14 +15,60 @@ open scoped ProbabilityTheory
 
 noncomputable section
 
+def prob_13_11_initialBlackBalls (b w : ℕ) : Finset (Fin (b + w)) :=
+  Finset.univ.filter fun j => j.val < b
+
+@[simp]
+theorem prob_13_11_initialBlackBalls_card (b w : ℕ) :
+    (prob_13_11_initialBlackBalls b w).card = b := by
+  rw [prob_13_11_initialBlackBalls, Fin.card_filter_val_lt]
+  omega
+
+@[simp]
+theorem prob_13_11_initialWhiteBalls_card (b w : ℕ) :
+    (prob_13_11_initialBlackBalls b w)ᶜ.card = w := by
+  rw [Finset.card_compl, prob_13_11_initialBlackBalls_card,
+    Fintype.card_fin]
+  omega
+
+noncomputable def prob_13_11_firstDrawPMF
+    (b w : ℕ) (hTotal : 0 < b + w) : PMF (Fin (b + w)) := by
+  letI : Nonempty (Fin (b + w)) := Fin.pos_iff_nonempty.mp hTotal
+  exact PMF.uniformOfFintype (Fin (b + w))
+
+def prob_13_11_firstBlackCount (b w : ℕ) (j : Fin (b + w)) : ℕ :=
+  if j ∈ prob_13_11_initialBlackBalls b w then b + 1 else b
+
+theorem prob_13_11_firstBlackCount_stay_event (b w : ℕ) :
+    {j | prob_13_11_firstBlackCount b w j = b} =
+      (↑((prob_13_11_initialBlackBalls b w)ᶜ) : Set (Fin (b + w))) := by
+  ext j
+  simp [prob_13_11_firstBlackCount]
+
+theorem prob_13_11_firstBlackCount_increase_event (b w : ℕ) :
+    {j | prob_13_11_firstBlackCount b w j = b + 1} =
+      (↑(prob_13_11_initialBlackBalls b w) : Set (Fin (b + w))) := by
+  ext j
+  simp [prob_13_11_firstBlackCount]
+
 theorem prob_13_11_first_step_probabilities
-    {b w total pStay pIncrease : ℝ}
-    (htotal : total = b + w)
-    (hStay : pStay = w / total)
-    (hIncrease : pIncrease = b / total) :
-    pStay = w / (b + w) ∧ pIncrease = b / (b + w) := by
-  subst total
-  exact ⟨hStay, hIncrease⟩
+    (b w : ℕ) (hTotal : 0 < b + w) :
+    (prob_13_11_firstDrawPMF b w hTotal).toMeasure
+          {j | prob_13_11_firstBlackCount b w j = b} =
+        (w : ENNReal) / ((b + w : ℕ) : ENNReal) ∧
+      (prob_13_11_firstDrawPMF b w hTotal).toMeasure
+          {j | prob_13_11_firstBlackCount b w j = b + 1} =
+        (b : ENNReal) / ((b + w : ℕ) : ENNReal) := by
+  letI : Nonempty (Fin (b + w)) := Fin.pos_iff_nonempty.mp hTotal
+  rw [prob_13_11_firstBlackCount_stay_event,
+    prob_13_11_firstBlackCount_increase_event]
+  constructor
+  · rw [PMF.toMeasure_apply_finset]
+    simp [prob_13_11_firstDrawPMF, PMF.uniformOfFintype_apply,
+      Fintype.card_fin, div_eq_mul_inv]
+  · rw [PMF.toMeasure_apply_finset]
+    simp [prob_13_11_firstDrawPMF, PMF.uniformOfFintype_apply,
+      Fintype.card_fin, div_eq_mul_inv]
 
 theorem prob_13_11_polya_step_martingale
     {B N : ℝ} (hN : N ≠ 0) (hN1 : N + 1 ≠ 0) :
@@ -156,7 +202,8 @@ theorem prob_13_11_fraction_adapted {Ω : Type*} [𝓕 : MeasurableSpace Ω]
           Measurable[prob_13_11_historyFiltration B (n + 1)]
             (g ∘ def_13_7_history B (n + 1)) :=
         hg.comp hhist
-      simpa [prob_13_11_blackFractionProcess, def_13_7_history, g, k]
+      simpa [Function.comp_def, prob_13_11_blackFractionProcess,
+        def_13_7_history, g, k]
         using hcomp
 
 theorem prob_13_11_black_count_history_measurable {Ω : Type*}
@@ -178,7 +225,8 @@ theorem prob_13_11_black_count_history_measurable {Ω : Type*}
             ((fun z : Fin (n + 2) → ℝ => z k) ∘
               def_13_7_history B (n + 1)) :=
         (measurable_pi_apply k).comp hhist
-      simpa [prob_13_11_historyFiltration, def_13_7_history, k] using hcoord
+      simpa [Function.comp_def, prob_13_11_historyFiltration,
+        def_13_7_history, k] using hcoord
 
 theorem prob_13_11_fraction_integrable {Ω : Type*} [𝓕 : MeasurableSpace Ω]
     {P : Measure Ω} [IsFiniteMeasure P] {b w : ℝ}
@@ -304,21 +352,19 @@ theorem prob_13_11_expected_fraction {Ω : Type*} [𝓕 : MeasurableSpace Ω]
     {P : Measure Ω} [IsProbabilityMeasure P] {b w : ℝ}
     {B D : ℕ → Ω → ℝ}
     (M : Prob1311PolyaUrnModel P b w B D)
-    (hSigmaFinite :
-      ∀ n : ℕ,
-        SigmaFinite (P.trim
-          ((def_13_7_isFiltration (prob_13_11_fraction_martingale M)).1 n)))
     (i : ℕ) (hi : 1 ≤ i) :
     ∫ ω, prob_13_11_blackFractionProcess b w B i ω ∂P = b / (b + w) := by
-  rw [thm_13_16 (prob_13_11_fraction_martingale M) hSigmaFinite i hi,
+  rw [thm_13_16 (prob_13_11_fraction_martingale M) i hi,
     prob_13_11_initial_expectation]
 
 theorem prob_13_11 :
-    (∀ {b w total pStay pIncrease : ℝ},
-      total = b + w →
-      pStay = w / total →
-      pIncrease = b / total →
-      pStay = w / (b + w) ∧ pIncrease = b / (b + w)) ∧
+    (∀ (b w : ℕ) (hTotal : 0 < b + w),
+      (prob_13_11_firstDrawPMF b w hTotal).toMeasure
+            {j | prob_13_11_firstBlackCount b w j = b} =
+          (w : ENNReal) / ((b + w : ℕ) : ENNReal) ∧
+        (prob_13_11_firstDrawPMF b w hTotal).toMeasure
+            {j | prob_13_11_firstBlackCount b w j = b + 1} =
+          (b : ENNReal) / ((b + w : ℕ) : ENNReal)) ∧
     (∀ {B N : ℝ}, N ≠ 0 → N + 1 ≠ 0 →
       (B / N) * ((B + 1) / (N + 1)) +
           (1 - B / N) * (B / (N + 1)) =
@@ -332,17 +378,15 @@ theorem prob_13_11 :
       {P : Measure Ω} [IsProbabilityMeasure P] {b w : ℝ}
       {B D : ℕ → Ω → ℝ}
       (M : Prob1311PolyaUrnModel P b w B D),
-      (∀ n : ℕ, SigmaFinite (P.trim
-        ((def_13_7_isFiltration (prob_13_11_fraction_martingale M)).1 n))) →
       ∀ i : ℕ, 1 ≤ i →
         ∫ ω, prob_13_11_blackFractionProcess b w B i ω ∂P =
           b / (b + w)) := by
   refine ⟨?_, ?_, ?_, ?_⟩
-  · intro b w total pStay pIncrease htotal hStay hIncrease
-    exact prob_13_11_first_step_probabilities htotal hStay hIncrease
+  · intro b w hTotal
+    exact prob_13_11_first_step_probabilities b w hTotal
   · intro B N hN hN1
     exact prob_13_11_polya_step_martingale hN hN1
   · intro Ω 𝓕 P _ b w B D M
     exact prob_13_11_fraction_martingale M
-  · intro Ω 𝓕 P _ b w B D M hSigmaFinite i hi
-    exact prob_13_11_expected_fraction M hSigmaFinite i hi
+  · intro Ω 𝓕 P _ b w B D M i hi
+    exact prob_13_11_expected_fraction M i hi

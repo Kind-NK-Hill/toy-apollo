@@ -38,6 +38,19 @@ theorem textbookConvergentSequence_of_tendsto {E : Type*} [NormedAddCommGroup E]
   intro n hn
   simpa [dist_eq_norm] using le_of_lt (hN n hn)
 
+theorem tendsto_of_textbookConvergentSequence {E : Type*} [NormedAddCommGroup E]
+    {u : ℕ → E} (hu : TextbookConvergentSequence u) :
+    ∃ u0 : E, Tendsto u atTop (𝓝 u0) := by
+  rcases hu with ⟨u0, hu⟩
+  refine ⟨u0, Metric.tendsto_atTop.2 ?_⟩
+  intro ε hε
+  have hε2 : 0 < ε / 2 := by linarith
+  rcases hu (ε / 2) hε2 with ⟨N, hN⟩
+  refine ⟨N, ?_⟩
+  intro n hn
+  have hle : ‖u n - u0‖ ≤ ε / 2 := hN n hn
+  simpa [dist_eq_norm] using (lt_of_le_of_lt hle (by linarith))
+
 theorem cauchySeq_of_textbookCauchySequence {E : Type*} [NormedAddCommGroup E]
     {u : ℕ → E} (hu : TextbookCauchySequence u) : CauchySeq u := by
   rw [Metric.cauchySeq_iff]
@@ -58,26 +71,23 @@ theorem every_textbookCauchySequence_converges_of_complete {E : Type*}
   rcases cauchySeq_tendsto_of_complete hCauchy with ⟨u0, hlim⟩
   exact textbookConvergentSequence_of_tendsto hlim
 
-class TextbookCompleteSpace (E : Type*) [NormedAddCommGroup E] : Prop where
-  completeSpace : CompleteSpace E
-  textbook_convergent :
-    ∀ u : ℕ → E, TextbookCauchySequence u → TextbookConvergentSequence u
+def TextbookCompleteSpace (E : Type*) [NormedAddCommGroup E] : Prop :=
+  ∀ u : ℕ → E, TextbookCauchySequence u → TextbookConvergentSequence u
 
-instance textbookCompleteSpace_of_complete {E : Type*} [NormedAddCommGroup E]
-    [hComplete : CompleteSpace E] : TextbookCompleteSpace E where
-  completeSpace := hComplete
-  textbook_convergent :=
-    every_textbookCauchySequence_converges_of_complete hComplete
+theorem textbookCompleteSpace_of_complete {E : Type*} [NormedAddCommGroup E]
+    (hComplete : CompleteSpace E) : TextbookCompleteSpace E :=
+  every_textbookCauchySequence_converges_of_complete hComplete
 
 theorem textbookCompleteSpace_iff_complete (E : Type*) [NormedAddCommGroup E] :
     TextbookCompleteSpace E ↔ CompleteSpace E := by
   constructor
   · intro h
-    exact h.completeSpace
+    refine Metric.complete_of_cauchySeq_tendsto ?_
+    intro u hu
+    exact tendsto_of_textbookConvergentSequence
+      (h u (textbookCauchySequence_of_cauchySeq hu))
   · intro h
-    exact
-      { completeSpace := h
-        textbook_convergent := every_textbookCauchySequence_converges_of_complete h }
+    exact textbookCompleteSpace_of_complete h
 
 def TextbookHilbertSpace (𝕜 E : Type*) [RCLike 𝕜] [NormedAddCommGroup E]
     [InnerProductSpace 𝕜 E] : Prop :=

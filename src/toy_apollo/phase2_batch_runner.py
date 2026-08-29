@@ -10,23 +10,40 @@ from typing import Any
 
 from src.block_id_naming import canonicalize_block_id
 
-from .phase2_batch_controller import BatchReport, analyze_batch_state, _task_has_family_consumable_support
+from .phase2_batch_controller import (
+    COMPLETED,
+    DEFAULT_ALLOWED_BEYOND_BOOK_TASKS,
+    BatchReport,
+    _first_blocked_transitive_dependency,
+    _is_allowed_beyond_book_exception,
+    _phase2_blocking_roots,
+    _task_has_family_consumable_support,
+    analyze_batch_state,
+)
+from .phase2_dependency_gate import frozen_dependency_projection
 from .phase2_math_review_gate import math_review_gate_blocker, math_review_gate_state
 from .phase2_pack_shared.io import read_json_safely, sha256_json
 from .phase2_pack_generation import resolve_phase2_task
-from .phase2_proof_obligations import summarize_proof_obligations
 from .phase2_review_decision import evaluate_semantic_review_result
 from .phase2_review_request import (
     _load_current_codex_review_request,
     _resolve_review_binding_path,
     _validate_review_input_freshness,
 )
+from .state_reconcile import discover_formal_plan_task_ids
 
 
 DIAGNOSER_RESULT_PREFIX = "diagnoser_result"
+SEMANTIC_FAIL_DIAGNOSIS_RESULT_PREFIX = "semantic_fail_diagnosis_result"
+DIAGNOSER_RESULT_PREFIXES = (
+    DIAGNOSER_RESULT_PREFIX,
+    SEMANTIC_FAIL_DIAGNOSIS_RESULT_PREFIX,
+)
 DIAGNOSER_RESULT_ALIAS = "diagnoser_result.json"
 SOURCE_DECISION_RESOLUTION_FILE = "source_decision_resolution.json"
 SOURCE_STATEMENT_RISK_SKIP_TASK_IDS = frozenset({"thm_1_2", "ex_1_3_2"})
+TOYAPOLLO_OUTPUT_IMPORT_PREFIX = "ToyApollo.Output."
+LEAN_MODULE_TOKEN_RE = re.compile(r"^[A-Za-z0-9_.']+$")
 DIAGNOSER_RESULT_REQUIRED_FIELDS = frozenset(
     {
         "route_wrong",
@@ -68,27 +85,210 @@ def build_live_batch_state(task_ids: list[str], ledger, settings=None, *, batch_
     """Project current ledger rows into the batch-controller input shape.
 
     This is intentionally read-only. Completion authority remains build/review/apply;
-    this helper only makes the existing state schedulable.
+    this helper only makes the existing state schedulable.  The projection is
+    dependency-closed so a selected task can never be analyzed without every
+    hard dependency that authorizes its consumption.
     """
-    records = getattr(ledger, "ledger", {}).get("tasks", {})
+    raw_records = getattr(ledger, "ledger", {}).get("tasks", {})
+    records = raw_records if isinstance(raw_records, dict) else {}
+    formal_task_ids = _formal_plan_task_ids(settings)
     tasks: list[dict[str, Any]] = []
+    pending: list[str] = []
+    queued: set[str] = set()
     for raw_task_id in task_ids:
         task_id = canonicalize_block_id(str(raw_task_id or ""))
-        if not task_id:
+        if not task_id or task_id in queued:
             continue
+        queued.add(task_id)
+        pending.append(task_id)
+
+    cursor = 0
+    while cursor < len(pending):
+        task_id = pending[cursor]
+        cursor += 1
         record = records.get(task_id, {})
         if not isinstance(record, dict):
             record = {}
-        tasks.append(
-            _batch_task_from_ledger_record(
-                task_id,
-                record,
-                ledger=ledger,
-                settings=settings,
-                all_records=records,
+        effective_record = _resolve_batch_record(
+            task_id,
+            record,
+            ledger=ledger,
+            settings=settings,
+            formal_task_ids=formal_task_ids,
+        )
+        task = _batch_task_from_ledger_record(
+            task_id,
+            effective_record,
+            ledger=ledger,
+            settings=settings,
+            all_records=records,
+        )
+        tasks.append(task)
+        for dependency_id in _dependency_closure_successors(task):
+            if dependency_id in queued:
+                continue
+            queued.add(dependency_id)
+            pending.append(dependency_id)
+    return {"batch_id": batch_id, "tasks": tasks}
+
+
+def _resolve_batch_record(
+    task_id: str,
+    record: dict[str, Any],
+    *,
+    ledger,
+    settings,
+    formal_task_ids: set[str] | None = None,
+) -> dict[str, Any]:
+    """Read the effective task definition without registering or mutating it.
+
+    Batch planning must also work for plan-backed tasks that have not yet been
+    registered and for imported ledger rows that predate dependency capture.
+    ``resolve_phase2_task`` already merges current pack/import evidence; on a
+    fixture or incomplete workspace where resolution is unavailable, retain
+    the original ledger projection.
+    """
+    effective = dict(record)
+    if ledger is not None and settings is not None:
+        try:
+            resolved = resolve_phase2_task(task_id, ledger, settings)
+        except (AttributeError, FileNotFoundError, KeyError, OSError, TypeError, ValueError):
+            resolved = None
+        if isinstance(resolved, dict):
+            resolved_dependencies = _canonical_dependency_list(
+                resolved.get("dependencies", [])
+            )
+            # Resolution supplies the plan/pack-backed task definition and effective
+            # imports.  Preserve every runtime/review field from the ledger row; rows
+            # imported from older campaigns often keep content only in a candidate
+            # snapshot while status and review pointers live at the top level.
+            effective.update(resolved)
+            current_dependencies = _canonical_dependency_list(
+                record.get("dependencies", [])
+            )
+            pack_task = read_json_safely(
+                _task_pack_dir(task_id, settings) / "task.json",
+                {},
+            )
+            pack_dependencies = _canonical_dependency_list(
+                pack_task.get("dependencies", [])
+                if isinstance(pack_task, dict)
+                else []
+            )
+            if (
+                record.get("latest_applied_review_result_file")
+                and current_dependencies
+                and current_dependencies == pack_dependencies
+                and current_dependencies != resolved_dependencies
+            ):
+                # An older applied candidate snapshot must not erase a hard edge
+                # now agreed by the current ledger and canonical pack.  Retaining
+                # the edge lets the controller invalidate PASS through its ordinary
+                # dependency-currentness projection.
+                effective["dependencies"] = current_dependencies
+
+    actual_imports = _formal_task_import_dependencies(
+        task_id,
+        settings,
+        formal_task_ids=formal_task_ids,
+    )
+    if actual_imports:
+        # Keep this evidence separate from resolver/source metadata.  The hard
+        # dependency projector takes their union and therefore never deletes a
+        # resolver edge merely because the current Lean file does not import it.
+        effective["actual_output_task_imports"] = actual_imports
+    return effective
+
+
+def _formal_plan_task_ids(settings) -> set[str]:
+    if settings is None:
+        return set()
+    plans_dir = Path(getattr(settings, "plans_dir", "plans"))
+    return discover_formal_plan_task_ids(plans_dir)
+
+
+def _formal_task_import_dependencies(
+    task_id: str,
+    settings,
+    *,
+    formal_task_ids: set[str] | None = None,
+) -> list[str]:
+    """Project current Lean imports to formal task dependencies, read-only.
+
+    A formal output may import another formal task directly or reach formal
+    tasks through one or more task-owned support modules.  Support modules are
+    traversed recursively, while a formal task import is recorded as the edge
+    boundary and its own dependencies are expanded by ``build_live_batch_state``.
+    """
+    if settings is None:
+        return []
+    output_dir = Path(getattr(settings, "lean_module_dir", None) or getattr(settings, "toyapollo_output_dir", "ToyApollo/Output"))
+    known_formal_ids = set(formal_task_ids) if formal_task_ids is not None else _formal_plan_task_ids(settings)
+    canonical_task_id = canonicalize_block_id(task_id)
+    if not canonical_task_id or not known_formal_ids:
+        return []
+
+    selected: list[str] = []
+    selected_set: set[str] = set()
+    visited_modules: set[str] = set()
+
+    def visit(module_name: str) -> None:
+        if module_name in visited_modules:
+            return
+        visited_modules.add(module_name)
+        # Exact plan module identity distinguishes a formal task from support
+        # filenames such as ``prob_7_3_proof_support``; generic block-id
+        # canonicalization intentionally collapses those names to their parent.
+        if module_name in known_formal_ids:
+            if module_name != canonical_task_id and module_name not in selected_set:
+                selected_set.add(module_name)
+                selected.append(module_name)
+            return
+        module_path = output_dir.joinpath(*module_name.split(".")).with_suffix(".lean")
+        for imported_module in _toyapollo_output_import_modules(module_path, import_prefix=f"{getattr(settings, "lean_module_root", "ToyApollo.Output")}."):
+            visit(imported_module)
+
+    task_path = output_dir / f"{canonical_task_id}.lean"
+    for imported_module in _toyapollo_output_import_modules(task_path, import_prefix=f"{getattr(settings, "lean_module_root", "ToyApollo.Output")}."):
+        visit(imported_module)
+    return selected
+
+
+def _toyapollo_output_import_modules(path: Path, import_prefix: str = TOYAPOLLO_OUTPUT_IMPORT_PREFIX) -> list[str]:
+    try:
+        source = path.read_text(encoding="utf-8")
+    except OSError:
+        return []
+    modules: list[str] = []
+    seen: set[str] = set()
+    for raw_line in source.splitlines():
+        line = raw_line.partition("--")[0].strip()
+        if not line.startswith("import "):
+            continue
+        for token in line.removeprefix("import ").split():
+            if not token.startswith(import_prefix):
+                continue
+            raw_module = token.removeprefix(import_prefix)
+            if not raw_module or not LEAN_MODULE_TOKEN_RE.fullmatch(raw_module) or raw_module in seen:
+                continue
+            seen.add(raw_module)
+            modules.append(raw_module)
+    return modules
+
+
+def _dependency_closure_successors(task: dict[str, Any]) -> list[str]:
+    successors = _canonical_dependency_list(task.get("dependencies", []))
+    if str(task.get("type", "") or "") == "Phase2ObligationTask":
+        successors.extend(
+            _canonical_dependency_list(
+                [
+                    task.get("parent_task_id", ""),
+                    task.get("target_task_id", ""),
+                    task.get("parent_block_id", ""),
+                ]
             )
         )
-    return {"batch_id": batch_id, "tasks": tasks}
+    return _dedupe_dependencies(successors, task_id=str(task.get("task_id", "") or ""))
 
 
 def plan_batch_from_ledger(
@@ -102,10 +302,15 @@ def plan_batch_from_ledger(
     worker_slots: int = 0,
     include_legacy: bool = False,
 ) -> BatchRunnerPlan:
+    selected_task_ids = {
+        canonical_task_id
+        for raw_task_id in task_ids
+        for canonical_task_id in [canonicalize_block_id(str(raw_task_id or ""))]
+        if canonical_task_id
+    }
     state = build_live_batch_state(task_ids, ledger, settings)
     report = analyze_batch_state(state, objective=objective)
     raw_tasks = {str(task.get("task_id", "")): task for task in state.get("tasks", []) if isinstance(task, dict)}
-    _augment_raw_tasks_with_dependency_records(raw_tasks, ledger, settings)
     fanout = _transitive_fanout(raw_tasks)
     all_actions = tuple(
         _action_for_row(
@@ -117,6 +322,7 @@ def plan_batch_from_ledger(
             ledger=ledger,
         )
         for row in report.rows
+        if row.task_id in selected_task_ids
     )
     visible_actions, hidden_actions = _partition_default_visible_actions(
         all_actions,
@@ -145,6 +351,7 @@ def render_batch_runner_plan(plan: BatchRunnerPlan) -> str:
         f"- all_clean_or_allowed_exception: `{str(plan.report.all_clean_or_allowed_exception).lower()}`",
         _hidden_actions_summary_line(plan.hidden_actions),
         f"- ordinary_action_queue_clear: `{str(not plan.actions).lower()}`",
+        _unselected_visible_actions_summary_line(plan),
         _source_statement_risk_exceptions_summary_line(plan.hidden_actions),
         "",
         "| worker | task_id | kind | fanout | conflict_group | phase2_status | report_status | action | command | reason |",
@@ -168,6 +375,23 @@ def render_batch_runner_plan(plan: BatchRunnerPlan) -> str:
             )
         )
     if not plan.actions:
+        unselected_visible = _unselected_visible_actions(plan)
+        if unselected_visible and not plan.report.all_clean_or_allowed_exception:
+            inspection_ids = sorted(
+                action.task_id for action in unselected_visible if action.action == "inspect"
+            )
+            inspection_note = (
+                f" Inspection is still required for: {', '.join(inspection_ids)}."
+                if inspection_ids
+                else ""
+            )
+            lines.extend(
+                [
+                    "",
+                    "> selected-worker-queue-empty-is-not-completion: visible non-dispatch actions were omitted by worker selection."
+                    + inspection_note,
+                ]
+            )
         hidden_actions = set(plan.hidden_actions)
         dispatch_required = [
             action
@@ -295,11 +519,12 @@ def _batch_task_from_ledger_record(
         review_result=current_review_result,
         review_result_path=current_review_result_path,
     )
-    proof_obligations = _proof_obligations_from_pack(task_id, settings)
-    proof_obligation_summary = (
-        summarize_proof_obligations(proof_obligations)
-        if proof_obligations is not None
-        else record.get("proof_obligation_summary", {})
+    dependency_reconciliation_pending = bool(
+        record.get("dependency_reconciliation_requires_fresh_review", False)
+    )
+    dependency_reconciliation_reason = str(
+        record.get("phase2_status_reason", "")
+        or "hard dependencies were reconciled; fresh semantic review is required"
     )
     review_verdict = review_authority.get("phase2_review_verdict", "") if review_authority else (
         record.get("phase2_review_verdict", "")
@@ -319,38 +544,64 @@ def _batch_task_from_ledger_record(
         or record.get("completion_class", "")
         or current_review_result.get("completion_class", "")
     )
+    frozen_authority = frozen_dependency_projection(
+        task_id,
+        record,
+        ledger,
+        settings,
+    )
+    dependency_authority = frozen_authority
     return {
         "task_id": task_id,
-        "status": record.get("status", ""),
+        "status": dependency_authority.get("status", record.get("status", "")),
         "type": record.get("type", record.get("task_type", "")),
         "dependencies": _dependencies_from_record(record, task_id=task_id, settings=settings),
         "pack_dir": str(_task_pack_dir(task_id, settings)),
         "phase2_status": review_authority.get(
             "phase2_status",
-            record.get("phase2_status", record.get("phase2_task_status", "")),
-        ),
-        "phase2_status_reason": review_authority.get("phase2_status_reason") or record.get(
-            "phase2_status_reason",
-            record.get("phase2_task_status_reason", ""),
-        ),
-        "phase2_status_evidence_type": review_authority.get("phase2_status_evidence_type") or record.get(
-            "phase2_status_evidence_type",
-            record.get("phase2_task_status_evidence_type", ""),
-        ),
+            "needs_fresh_review"
+            if dependency_reconciliation_pending
+            else record.get("phase2_status", record.get("phase2_task_status", "")),
+        ) if not dependency_authority else dependency_authority["phase2_status"],
+        "phase2_status_reason": dependency_authority.get("phase2_status_reason")
+        or review_authority.get("phase2_status_reason")
+        or (dependency_reconciliation_reason if dependency_reconciliation_pending else "")
+        or record.get("phase2_status_reason", record.get("phase2_task_status_reason", "")),
+        "phase2_status_evidence_type": dependency_authority.get(
+            "phase2_status_evidence_type"
+        )
+        or review_authority.get("phase2_status_evidence_type")
+        or ("dependency_reconciliation" if dependency_reconciliation_pending else "")
+        or record.get("phase2_status_evidence_type", record.get("phase2_task_status_evidence_type", "")),
         "phase2_review_verdict": review_verdict,
         "review_verdict": review_verdict,
         "phase2_proof_class": proof_class,
         "proof_class": proof_class,
         "phase2_completion_class": completion_class,
         "completion_class": completion_class,
+        "frozen_dependency_receipt_file": frozen_authority.get(
+            "frozen_dependency_receipt_file", ""
+        ),
+        "frozen_dependency_receipt_sha256": frozen_authority.get(
+            "frozen_dependency_receipt_sha256", ""
+        ),
+        "current_authority_consumable": _projected_current_authority_is_consumable(
+            task_id,
+            record,
+            review_authority=review_authority,
+            frozen_authority=frozen_authority,
+        ),
+        "latest_clean_applied_review_is_current": _latest_clean_applied_review_is_current(
+            record,
+            pack_dir=pack_dir,
+            current_review_result_path=current_review_result_path,
+        ),
         "current_class": record.get("current_class", ""),
         "stop_reason": record.get("stop_reason", record.get("current_auto_loop_stop_reason", "")),
         "current_auto_loop_phase": record.get("current_auto_loop_phase", ""),
         "current_auto_loop_status": record.get("current_auto_loop_status", ""),
         "current_review_request_file": record.get("current_review_request_file", ""),
         "current_review_expected_result_file": record.get("current_review_expected_result_file", ""),
-        "proof_obligation_summary": proof_obligation_summary,
-        "proof_obligations": proof_obligations if proof_obligations is not None else record.get("proof_obligations", {}),
         "failure_events": record.get("failure_events", []),
         "build_fail_counter": record.get("build_fail_counter", 0),
         "review_fail_counter": record.get("review_fail_counter", 0),
@@ -380,9 +631,6 @@ def _batch_task_from_ledger_record(
         "parent_task_id": record.get("parent_task_id", ""),
         "target_task_id": record.get("target_task_id", ""),
         "parent_block_id": record.get("parent_block_id", ""),
-        "obligation_id": record.get("obligation_id", ""),
-        "obligation_child_task_ids": _obligation_child_task_ids(task_id, all_records),
-        "obligation_child_fingerprints": _obligation_child_fingerprints(task_id, all_records),
     }
 
 
@@ -539,15 +787,107 @@ def _current_review_authority_projection(
     return authority
 
 
-def _proof_obligations_from_pack(task_id: str, settings=None) -> dict[str, Any] | None:
-    path = _task_pack_dir(task_id, settings) / "proof_obligations.json"
-    if not path.is_file():
-        return None
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
-    return payload if isinstance(payload, dict) else None
+def _projected_current_authority_is_consumable(
+    task_id: str,
+    record: dict[str, Any],
+    *,
+    review_authority: dict[str, Any],
+    frozen_authority: dict[str, Any],
+) -> bool:
+    dependency_authority = frozen_authority
+    authority = dependency_authority or review_authority
+    status = str(
+        dependency_authority.get("status", record.get("status", "")) or ""
+    ).strip().upper()
+    phase2_status = str(authority.get("phase2_status", "") or "").strip().lower()
+    if status == COMPLETED and phase2_status == "pass":
+        return True
+    exception_projection = {
+        **record,
+        **authority,
+        "task_id": task_id,
+        "phase2_status": phase2_status,
+    }
+    return _is_allowed_beyond_book_exception(
+        task_id,
+        exception_projection,
+        status=status,
+        allowed_beyond_book_tasks=DEFAULT_ALLOWED_BEYOND_BOOK_TASKS,
+    )
+
+
+def _latest_clean_applied_review_is_current(
+    record: dict[str, Any],
+    *,
+    pack_dir: Path,
+    current_review_result_path: Path | None,
+) -> bool:
+    receipt_result_raw = str(record.get("latest_applied_review_result_file", "") or "").strip()
+    if not receipt_result_raw:
+        return False
+    receipt_result_path = _resolve_review_binding_path(
+        receipt_result_raw,
+        pack_dir=pack_dir,
+    ).resolve()
+    review_result = read_json_safely(receipt_result_path, {})
+    if not isinstance(review_result, dict) or not review_result:
+        return False
+    receipt_result_hash = str(record.get("latest_applied_review_result_hash", "") or "")
+    if receipt_result_hash != sha256_json(review_result):
+        return False
+    if current_review_result_path is None:
+        return False
+    result_identity_paths = [current_review_result_path.resolve()]
+    for key in (
+        "current_review_expected_result_file",
+        "latest_semantic_review_result_file",
+        "latest_official_review_result_file",
+    ):
+        raw_path = str(record.get(key, "") or "").strip()
+        if not raw_path:
+            continue
+        candidate = _resolve_review_binding_path(raw_path, pack_dir=pack_dir)
+        if candidate.is_file():
+            result_identity_paths.append(candidate.resolve())
+    for candidate_path in result_identity_paths:
+        if candidate_path == receipt_result_path:
+            continue
+        candidate_result = read_json_safely(candidate_path, {})
+        if (
+            not isinstance(candidate_result, dict)
+            or candidate_result != review_result
+            or sha256_json(candidate_result) != receipt_result_hash
+        ):
+            return False
+
+    raw_input_path = str(review_result.get("review_input_file", "") or "").strip()
+    if not raw_input_path:
+        return False
+    review_input_path = _resolve_review_binding_path(raw_input_path, pack_dir=pack_dir)
+    review_input = read_json_safely(review_input_path, {}) if review_input_path.is_file() else {}
+    if not isinstance(review_input, dict) or not review_input:
+        return False
+    decision = evaluate_semantic_review_result(
+        review_result,
+        review_input=review_input,
+        runner_metadata={
+            "status": "batch_read_only_applied_authority_identity",
+            "result_file": str(receipt_result_path),
+        },
+    )
+    projection = decision.task_status_projection
+    if projection is None or projection.task_status != "pass":
+        return False
+    normalized = decision.result
+    return (
+        str(record.get("latest_applied_review_input_hash", "") or "")
+        == str(normalized.get("review_input_hash", "") or "")
+        and str(record.get("latest_applied_review_subject_kind", "") or "")
+        == str(review_input.get("review_subject_kind", "") or "")
+        and not bool(record.get("latest_official_review_requires_repair", False))
+        and not bool(record.get("latest_official_apply_build_failed", False))
+    )
+
 
 
 def _augment_raw_tasks_with_dependency_records(raw_tasks: dict[str, dict[str, Any]], ledger, settings) -> None:
@@ -574,10 +914,18 @@ def _augment_raw_tasks_with_dependency_records(raw_tasks: dict[str, dict[str, An
             continue
         record = records.get(dep_id, {})
         if not isinstance(record, dict):
+            record = {}
+        effective_record = _resolve_batch_record(
+            dep_id,
+            record,
+            ledger=ledger,
+            settings=settings,
+        )
+        if not effective_record:
             continue
         dep_task = _batch_task_from_ledger_record(
             dep_id,
-            record,
+            effective_record,
             ledger=ledger,
             settings=settings,
             all_records=records,
@@ -618,9 +966,19 @@ def _obligation_child_fingerprints(task_id: str, all_records: dict[str, Any]) ->
 
 
 def _dependencies_from_record(record: dict[str, Any], *, task_id: str = "", settings=None) -> list[str]:
+    actual_output_imports = record.get("actual_output_task_imports", [])
+    actual_dependencies = (
+        [
+            canonicalize_block_id(str(item))
+            for item in actual_output_imports
+            if canonicalize_block_id(str(item))
+        ]
+        if isinstance(actual_output_imports, list)
+        else []
+    )
     pack_dependencies = _pack_manifest_hard_dependencies(task_id, settings)
     if pack_dependencies is not None:
-        return _dedupe_dependencies(pack_dependencies, task_id=task_id)
+        return _dedupe_dependencies(pack_dependencies + actual_dependencies, task_id=task_id)
 
     dependencies: list[str] = []
     for key in (
@@ -630,6 +988,7 @@ def _dependencies_from_record(record: dict[str, Any], *, task_id: str = "", sett
         "soft_imports",
         "candidate_soft_imports",
         "final_import_union",
+        "actual_output_task_imports",
     ):
         raw = record.get(key)
         if isinstance(raw, list):
@@ -672,58 +1031,8 @@ def _promoted_child_obligations_reason(task_id: str, raw_task: dict[str, Any], s
     return ""
 
 
-def _child_obligations_match_current_parent_fingerprints(task_id: str, raw_task: dict[str, Any], settings=None) -> bool:
-    obligations = _current_promotable_obligations(task_id, settings)
-    if not obligations:
-        return False
-    child_fingerprints = raw_task.get("obligation_child_fingerprints", {})
-    if not isinstance(child_fingerprints, dict):
-        return False
-    parent = canonicalize_block_id(task_id)
-    for obligation in obligations:
-        obligation_id = str(obligation.get("id", "") or "").strip()
-        if not obligation_id:
-            return False
-        child_id = _obligation_task_id(parent, obligation_id)
-        current_fingerprint = _obligation_fingerprint(parent, obligation)
-        if child_fingerprints.get(child_id) != current_fingerprint:
-            return False
-    return True
-
-
-def _current_promotable_obligations(task_id: str, settings=None) -> list[dict[str, Any]]:
-    path = _task_pack_dir(task_id, settings) / "proof_obligations.json"
-    if not path.is_file():
-        return []
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return []
-    if not isinstance(payload, dict):
-        return []
-    raw_obligations = payload.get("obligations", [])
-    if not isinstance(raw_obligations, list):
-        return []
-    return [
-        obligation
-        for obligation in raw_obligations
-        if isinstance(obligation, dict) and _is_promotable_obligation(obligation)
-    ]
-
-
-def _is_promotable_obligation(obligation: dict[str, Any]) -> bool:
-    status = str(obligation.get("status", "") or "").strip().lower()
-    return status in {"accepted_as_proof_debt", "open", "partial", "blocked", "in_progress"}
-
-
-def _obligation_task_id(parent_task_id: str, obligation_id: str) -> str:
-    parent = canonicalize_block_id(parent_task_id)
-    raw_obligation = re.sub(r"[^A-Za-z0-9_]+", "_", str(obligation_id or "")).strip("_").lower()
-    raw_obligation = re.sub(r"_+", "_", raw_obligation) or "obligation"
-    return canonicalize_block_id(f"obl_{parent}_{raw_obligation}")
-
-
 def _obligation_fingerprint(parent_task_id: str, obligation: dict[str, Any]) -> str:
+    """Stable fingerprint for reading historical obligation audit fixtures."""
     payload = {
         "parent_task_id": parent_task_id,
         "id": obligation.get("id", ""),
@@ -764,6 +1073,20 @@ def _action_for_row(
 
     if row.clean_or_allowed_exception:
         return action("none", "", "task is already clean or an explicit allowed exception")
+    if row.status == "COMPLETED_WITH_PROOF_DEBT":
+        if _official_output_exists(settings, row.task_id):
+            return action(
+                "review_existing",
+                _phase2_command("review-now", row.task_id, "--review-subject existing"),
+                "legacy non-clean proof-debt status must be re-evaluated against the source spine directly",
+            )
+        return action(
+            "diagnostic_restore_or_rebuild_output"
+            if _review_or_build_candidate_exists(raw_task)
+            else "restore_or_rebuild_output",
+            "",
+            "legacy non-clean proof-debt status has no official output; restore or rebuild it before direct source-spine review",
+        )
     if row.task_status_evidence_type == "obl_absorption_manual_fail":
         return action(
             "foundation_absorb_required",
@@ -776,6 +1099,19 @@ def _action_for_row(
             "inspect",
             "",
             "family support is covered, but direct downstream obligations remain open",
+        )
+    diagnoser_dependency = _first_diagnoser_required_dependency(row.task_id, raw_tasks)
+    if diagnoser_dependency:
+        return action(
+            "skip_blocked",
+            "",
+            f"blocked by upstream diagnoser-required semantic failure {diagnoser_dependency}",
+        )
+    if row.failed_dependency:
+        return action(
+            "skip_blocked",
+            "",
+            f"blocked by failed upstream task {row.failed_dependency}",
         )
     if row.blocked_dependency:
         return action(
@@ -795,13 +1131,6 @@ def _action_for_row(
             "skip_blocked",
             "",
             f"blocked by upstream accepted proof debt {nonconsumable_debt_dependency}",
-        )
-    diagnoser_dependency = _first_diagnoser_required_dependency(row.task_id, raw_tasks)
-    if diagnoser_dependency:
-        return action(
-            "skip_blocked",
-            "",
-            f"blocked by upstream diagnoser-required semantic failure {diagnoser_dependency}",
         )
     parent_statement_decision = _parent_source_statement_decision_required(raw_task, raw_tasks, settings)
     if parent_statement_decision:
@@ -873,20 +1202,11 @@ def _action_for_row(
                 "",
                 f"{diagnoser_author_reason}; source decision resolved; {child_reason}",
             )
-        if _current_promotable_obligations(row.task_id, settings):
-            return action(
-                "foundation_absorb_required",
-                "",
-                f"{diagnoser_author_reason}; source decision resolved; absorb remaining concrete obligations into parent/support files",
-            )
     if diagnoser_author_reason and _diagnoser_result_requires_obligation_promotion(diagnoser_result):
-        child_reason = _promoted_child_obligations_reason(row.task_id, raw_task, settings)
-        if child_reason:
-            return action("foundation_absorb_required", "", f"{diagnoser_author_reason}; {child_reason}")
         return action(
             "foundation_absorb_required",
             "",
-            f"{diagnoser_author_reason}; obligation child promotion is disabled; absorb proof obligations into parent/support files",
+            f"{diagnoser_author_reason}; the requested child-obligation mechanism is retired; repair the named source steps in the parent/support files",
         )
     math_gate_state = math_review_gate_state(
         row.task_id,
@@ -1055,6 +1375,25 @@ def _hidden_actions_summary_line(hidden_actions: tuple[BatchRunnerAction, ...]) 
     return f"- hidden legacy/audit items: `{len(hidden_actions)}` ({detail})"
 
 
+def _unselected_visible_actions(plan: BatchRunnerPlan) -> tuple[BatchRunnerAction, ...]:
+    selected = set(plan.actions)
+    hidden = set(plan.hidden_actions)
+    return tuple(
+        action
+        for action in plan.all_actions
+        if action not in selected and action not in hidden
+    )
+
+
+def _unselected_visible_actions_summary_line(plan: BatchRunnerPlan) -> str:
+    unselected = _unselected_visible_actions(plan)
+    if not unselected:
+        return "- visible actions omitted by worker selection: `0`"
+    counts = Counter(action.action or "<none>" for action in unselected)
+    detail = ", ".join(f"{name}={count}" for name, count in sorted(counts.items()))
+    return f"- visible actions omitted by worker selection: `{len(unselected)}` ({detail})"
+
+
 def _source_statement_risk_exceptions_summary_line(hidden_actions: tuple[BatchRunnerAction, ...]) -> str:
     task_ids = sorted(
         action.task_id
@@ -1103,6 +1442,8 @@ def _task_kind(task_id: str, raw_task: dict[str, Any]) -> str:
         return kind
     if task_id.startswith("thm_"):
         return "theorem"
+    if task_id.startswith(("lem_", "cor_")):
+        return "theorem"
     if task_id.startswith("def_"):
         return "definition"
     if task_id.startswith("prob_"):
@@ -1141,6 +1482,12 @@ def _normalize_kind(raw: str) -> str:
     aliases = {
         "theorem": "theorem",
         "thm": "theorem",
+        "theorem with proof": "theorem",
+        "theorem statement": "theorem",
+        "lemma": "theorem",
+        "lem": "theorem",
+        "corollary": "theorem",
+        "cor": "theorem",
         "definition": "definition",
         "def": "definition",
         "problem": "problem",
@@ -1181,7 +1528,7 @@ def _transitive_fanout(raw_tasks: dict[str, dict[str, Any]]) -> dict[str, int]:
 
 
 def _official_output_exists(settings, task_id: str) -> bool:
-    output_dir = Path(getattr(settings, "toyapollo_output_dir", "ToyApollo/Output"))
+    output_dir = Path(getattr(settings, "lean_module_dir", None) or getattr(settings, "toyapollo_output_dir", "ToyApollo/Output"))
     return (output_dir / f"{task_id}.lean").exists()
 
 
@@ -1231,6 +1578,10 @@ def _first_diagnoser_required_dependency(task_id: str, raw_tasks: dict[str, dict
     task = raw_tasks.get(task_id, {})
     if not isinstance(task, dict):
         return ""
+    phase2_blocking_roots = _phase2_blocking_roots(
+        raw_tasks,
+        allowed_beyond_book_tasks=DEFAULT_ALLOWED_BEYOND_BOOK_TASKS,
+    )
     seen: set[str] = set()
     stack = list(reversed(_canonical_dependency_list(task.get("dependencies", []))))
     while stack:
@@ -1240,13 +1591,45 @@ def _first_diagnoser_required_dependency(task_id: str, raw_tasks: dict[str, dict
         seen.add(dep_id)
         dep_task = raw_tasks.get(dep_id, {})
         if isinstance(dep_task, dict):
-            if _record_requires_diagnoser(dep_task):
+            if _record_requires_diagnoser(
+                dep_task,
+                raw_tasks=raw_tasks,
+                phase2_blocking_roots=phase2_blocking_roots,
+            ):
                 return dep_id
             stack.extend(reversed(_canonical_dependency_list(dep_task.get("dependencies", []))))
     return ""
 
 
-def _record_requires_diagnoser(record: dict[str, Any]) -> bool:
+def _record_has_current_consumable_authority(record: dict[str, Any]) -> bool:
+    return bool(record.get("current_authority_consumable", False))
+
+
+def _record_requires_diagnoser(
+    record: dict[str, Any],
+    *,
+    raw_tasks: dict[str, dict[str, Any]],
+    phase2_blocking_roots: set[str],
+) -> bool:
+    if _record_has_current_consumable_authority(record):
+        return False
+    task_id = canonicalize_block_id(str(record.get("task_id", "") or ""))
+    applied_pass_blocked_only_by_basis = (
+        bool(record.get("latest_clean_applied_review_is_current", False))
+        and str(record.get("phase2_status", "") or "").strip().lower() == "needs_fresh_review"
+        and str(record.get("phase2_status_evidence_type", "") or "").strip() == "freshness_error"
+        and "basis changed" in str(record.get("phase2_status_reason", "") or "").lower()
+        and task_id in raw_tasks
+        and bool(
+            _first_blocked_transitive_dependency(
+                task_id,
+                raw_tasks,
+                phase2_blocking_roots,
+            )
+        )
+    )
+    if applied_pass_blocked_only_by_basis:
+        return False
     if _load_diagnoser_result(record):
         return False
     if str(record.get("stop_reason", "") or "").strip().lower() == "diagnoser_required":
@@ -1294,29 +1677,7 @@ def _canonical_dependency_list(raw_dependencies: Any) -> list[str]:
 
 def _record_has_nonconsumable_proof_debt(record: dict[str, Any]) -> bool:
     status = str(record.get("status", "") or "").strip().upper().replace("-", "_")
-    if status == "COMPLETED_WITH_PROOF_DEBT":
-        return True
-    summary = record.get("proof_obligation_summary", {})
-    if isinstance(summary, dict) and _status_counts_include_accepted_proof_debt(summary.get("status_counts", {})):
-        return True
-    obligations = record.get("proof_obligations", {})
-    if isinstance(obligations, dict):
-        if _status_counts_include_accepted_proof_debt(obligations.get("status_counts", {})):
-            return True
-        raw_items = obligations.get("obligations", [])
-        for item in raw_items if isinstance(raw_items, list) else []:
-            if isinstance(item, dict) and str(item.get("status", "") or "").strip().lower() == "accepted_as_proof_debt":
-                return True
-    return False
-
-
-def _status_counts_include_accepted_proof_debt(status_counts: Any) -> bool:
-    if not isinstance(status_counts, dict):
-        return False
-    try:
-        return int(status_counts.get("accepted_as_proof_debt", 0) or 0) > 0
-    except (TypeError, ValueError):
-        return False
+    return status == "COMPLETED_WITH_PROOF_DEBT"
 
 
 def _semantic_fail_triage_blocker(raw_task: dict[str, Any]) -> str:
@@ -1467,7 +1828,12 @@ def _diagnoser_result_candidates(pack_dir: Path) -> list[Path]:
     if not pack_dir.exists():
         return []
     versioned = sorted(
-        [path for path in pack_dir.glob(f"{DIAGNOSER_RESULT_PREFIX}_v*.json") if path.is_file()],
+        [
+            path
+            for prefix in DIAGNOSER_RESULT_PREFIXES
+            for path in pack_dir.glob(f"{prefix}_v*.json")
+            if path.is_file()
+        ],
         key=_diagnoser_result_sort_key,
         reverse=True,
     )
@@ -1486,7 +1852,8 @@ def _diagnoser_result_candidates(pack_dir: Path) -> list[Path]:
 
 
 def _diagnoser_result_sort_key(path: Path) -> tuple[int, str]:
-    match = re.fullmatch(rf"{re.escape(DIAGNOSER_RESULT_PREFIX)}_v(\d+)\.json", path.name)
+    prefixes = "|".join(re.escape(prefix) for prefix in DIAGNOSER_RESULT_PREFIXES)
+    match = re.fullmatch(rf"(?:{prefixes})_v(\d+)\.json", path.name)
     return (int(match.group(1)) if match else -1, path.name)
 
 
@@ -1548,11 +1915,13 @@ def _diagnoser_result_requires_source_statement_decision(diagnoser_result: dict[
     payload = diagnoser_result.get("payload", {})
     if not isinstance(payload, dict):
         return False
-    if _truthy(payload.get("route_wrong", False)):
-        return False
     if not _truthy(payload.get("statement_mismatch", False)):
         return False
     if _truthy(payload.get("local_repair_allowed", False)):
+        return False
+    if _truthy(payload.get("source_decision_needed", False)):
+        return True
+    if _truthy(payload.get("route_wrong", False)):
         return False
     recommended_next_action = str(payload.get("recommended_next_action", "") or "").strip().lower()
     diagnosis_verdict = str(payload.get("diagnosis_verdict", "") or "").strip().lower()

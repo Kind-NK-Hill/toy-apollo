@@ -32,14 +32,6 @@ from .phase2_pack_shared.review_basis_parts import dedupe_strings
 from .phase2_pack_shared.runtime_state import auto_loop_attempt_payload, auto_loop_field_defaults
 from .phase2_pack_views import _render_review_repair_summary, refresh_pack_runtime_view, render_semantic_review_report
 from .phase2_failure_budget import phase2_failure_counters_from_history
-from .phase2_proof_obligations import (
-    apply_obligation_review,
-    apply_obligation_review_to_file,
-    extract_obligation_review_blockers,
-    proof_obligation_path,
-    seed_focused_child_obligations_from_review,
-    summarize_proof_obligations,
-)
 from .phase2_obligation_tasks import reconcile_obligation_tasks_for_task
 from .phase2_output_binding import resolve_phase2_output_binding
 from .phase2_review_decision import evaluate_semantic_review_result, project_normalized_semantic_review_result
@@ -52,6 +44,7 @@ from .phase2_review_request import (
 from .phase2_semantic_review import (
     SEMANTIC_REVIEW_PROMPT_VERSION,
     SEMANTIC_REVIEW_RUBRIC_VERSION,
+    is_supported_semantic_review_prompt_version,
     latest_semantic_review_artifact_paths,
     next_semantic_review_artifact_paths,
     normalize_reviewer_result,
@@ -148,29 +141,9 @@ def _sync_current_review_repair_aliases(
         copy_file(source, alias)
 
 
-def _has_accepted_proof_debt(review_result: dict[str, Any], task_record: dict[str, Any]) -> bool:
-    obligation_review = review_result.get("obligation_review", {}) if isinstance(review_result, dict) else {}
-    if isinstance(obligation_review, dict):
-        items = obligation_review.get("items", [])
-        if isinstance(items, list) and any(
-            isinstance(item, dict) and str(item.get("status", "") or "").strip().lower() == "accepted_as_proof_debt"
-            for item in items
-        ):
-            return True
-    proof_summary = task_record.get("proof_obligation_summary", {}) if isinstance(task_record, dict) else {}
-    status_counts = proof_summary.get("status_counts", {}) if isinstance(proof_summary, dict) else {}
-    if isinstance(status_counts, dict):
-        try:
-            return int(status_counts.get("accepted_as_proof_debt", 0) or 0) > 0
-        except (TypeError, ValueError):
-            return False
-    return False
-
 
 def _review_completion_status(review_result: dict[str, Any], task_record: dict[str, Any], task_status_projection=None) -> TaskStatus:
     if task_status_projection is not None and str(task_status_projection.task_status) != "pass":
-        return TaskStatus.COMPLETED_WITH_PROOF_DEBT
-    if _has_accepted_proof_debt(review_result, task_record):
         return TaskStatus.COMPLETED_WITH_PROOF_DEBT
     return TaskStatus.COMPLETED
 
@@ -294,21 +267,10 @@ def _build_review_repair_contract(
     downstream = review_result.get("downstream_adequacy", {}) if isinstance(review_result.get("downstream_adequacy", {}), dict) else {}
     blocking_issues = downstream.get("blocking_issues", []) if isinstance(downstream.get("blocking_issues", []), list) else []
     forbidden_shortcuts = review_basis.get("forbidden_weakenings", []) if isinstance(review_basis.get("forbidden_weakenings", []), list) else []
-    proof_obligations = review_basis.get("proof_obligations", {}) if isinstance(review_basis.get("proof_obligations", {}), dict) else {}
-    proof_obligations_file = str(review_basis.get("proof_obligations_file", "") or "").strip()
-    if proof_obligations_file:
-        current_proof_obligations = read_json_safely(Path(proof_obligations_file), {})
-        if isinstance(current_proof_obligations, dict):
-            proof_obligations = current_proof_obligations
-    proof_obligation_summary = (
-        review_basis.get("proof_obligation_summary", {})
-        if isinstance(review_basis.get("proof_obligation_summary", {}), dict)
-        else summarize_proof_obligations(proof_obligations) if proof_obligations else {}
-    )
-    if proof_obligations:
-        proof_obligation_summary = summarize_proof_obligations(proof_obligations)
-    proof_obligation_blockers = extract_obligation_review_blockers(review_result)
-    obligation_review = review_result.get("obligation_review", {}) if isinstance(review_result.get("obligation_review", {}), dict) else {}
+    spine_alignment = review_result.get("spine_alignment", {})
+    spine_alignment = spine_alignment if isinstance(spine_alignment, dict) else {}
+    missing_source_steps = spine_alignment.get("missing_source_steps", spine_alignment.get("missing_obligations", []))
+    missing_source_steps = missing_source_steps if isinstance(missing_source_steps, list) else []
 
     must_fix: list[str] = []
     summary = str(review_result.get("summary", "") or "").strip()
@@ -322,10 +284,11 @@ def _build_review_repair_contract(
             message = str(finding.get("message", "") or finding.get("summary", "") or "").strip()
             if message and message not in must_fix:
                 must_fix.append(message)
-    for blocker in proof_obligation_blockers:
-        obligation_id = str(blocker.get("obligation_id", "") or "(unassigned)").strip()
-        issue = str(blocker.get("issue", "") or "").strip()
-        message = f"Proof obligation `{obligation_id}`: {issue or 'unresolved blocker'}"
+    for missing_step in missing_source_steps:
+        if isinstance(missing_step, dict):
+            missing_step = missing_step.get("source_step", missing_step.get("summary", missing_step))
+        step_text = str(missing_step or "").strip()
+        message = f"Restore missing source-spine step: {step_text or '(unspecified step)'}"
         if message not in must_fix:
             must_fix.append(message)
     if not must_fix:
@@ -374,11 +337,6 @@ def _build_review_repair_contract(
         "must_fix": must_fix,
         "must_preserve": must_preserve,
         "forbidden_shortcuts": [item for item in forbidden_shortcuts if isinstance(item, str) and item.strip()],
-        "proof_obligations_file": proof_obligations_file,
-        "proof_obligation_summary": proof_obligation_summary,
-        "proof_obligation_blockers": proof_obligation_blockers,
-        "obligation_review": obligation_review,
-        "scaffold_hypotheses": proof_obligations.get("scaffold_hypotheses", []) if isinstance(proof_obligations, dict) else [],
         "downstream_blockers": downstream_blockers,
         "next_draft_seed_file": str(next_draft_seed_file),
     }
@@ -519,8 +477,6 @@ async def apply_codex_review_result_once(
             ).result
     review_task_payload = review_input.get("task", {}) if isinstance(review_input.get("task", {}), dict) else {}
     review_candidate_payload = review_input.get("candidate", {}) if isinstance(review_input.get("candidate", {}), dict) else {}
-    review_basis = review_input.get("review_basis", {}) if isinstance(review_input.get("review_basis", {}), dict) else {}
-    proof_obligations_file = str(review_basis.get("proof_obligations_file", "") or "").strip()
     source_plan = str(task.get("source_plan", "unknown") or "unknown")
     existing_official_output = select_latest_existing_task_file(task_id, source_plan, settings)
     completed_status_values = {TaskStatus.COMPLETED.value, TaskStatus.COMPLETED_WITH_PROOF_DEBT.value}
@@ -623,77 +579,94 @@ async def apply_codex_review_result_once(
             auto_loop_metadata=auto_loop_attempt_payload(ledger.ledger.get("tasks", {}).get(task_id, {})),
         )
         failure_counters = phase2_failure_counters_from_history(history)
-        ledger.update_runtime_metadata(
-            task_id,
-            phase2_build_fail_counter=failure_counters.build_fail_counter,
-            phase2_review_fail_counter=failure_counters.review_fail_counter,
-        )
-        if task_status_projection is not None:
+        def mutate_ledger_projection() -> None:
             ledger.update_runtime_metadata(
                 task_id,
-                phase2_review_verdict=task_status_projection.review_verdict,
-                phase2_completion_class=str(semantic_review.get("completion_class", "") or ""),
-                latest_semantic_review_result_file=str(semantic_review.get("review_result_file", "") or ""),
-                **task_status_projection.as_metadata(),
+                phase2_build_fail_counter=failure_counters.build_fail_counter,
+                phase2_review_fail_counter=failure_counters.review_fail_counter,
             )
-            if review_subject_kind == "official_output":
+            if task_status_projection is not None:
                 ledger.update_runtime_metadata(
                     task_id,
-                    latest_official_review_verdict=task_status_projection.review_verdict,
-                    latest_official_review_result_file=str(semantic_review.get("review_result_file", "") or ""),
-                    latest_official_review_requires_repair=task_status_projection.task_status == "fail",
-                    latest_official_review_detail=detail_text,
-                    official_output_quarantine_policy="not_quarantined_by_default",
+                    phase2_review_verdict=task_status_projection.review_verdict,
+                    phase2_completion_class=str(semantic_review.get("completion_class", "") or ""),
+                    latest_semantic_review_result_file=str(semantic_review.get("review_result_file", "") or ""),
+                    **task_status_projection.as_metadata(),
                 )
-        if success:
-            _clear_current_review_metadata(task_id, ledger)
-            _clear_current_review_repair_metadata(task_id, ledger)
-            ledger.update_runtime_metadata(task_id, **auto_loop_field_defaults())
-        elif disposition.endswith("_invalid_no_promotion"):
-            if review_subject_kind != "official_output":
+                if review_subject_kind == "official_output":
+                    ledger.update_runtime_metadata(
+                        task_id,
+                        latest_official_review_verdict=task_status_projection.review_verdict,
+                        latest_official_review_result_file=str(semantic_review.get("review_result_file", "") or ""),
+                        latest_official_review_requires_repair=task_status_projection.task_status == "fail",
+                        latest_official_review_detail=detail_text,
+                        official_output_quarantine_policy="not_quarantined_by_default",
+                    )
+            if success:
+                _clear_current_review_metadata(task_id, ledger)
+                _clear_current_review_repair_metadata(task_id, ledger)
                 ledger.update_runtime_metadata(task_id, **auto_loop_field_defaults())
-        elif task_status_projection is not None and task_status_projection.task_status == "allowed_exception":
-            _clear_current_review_metadata(task_id, ledger)
-            _clear_current_review_repair_metadata(task_id, ledger)
-            ledger.update_runtime_metadata(task_id, **auto_loop_field_defaults())
-        elif repair_ready is not None:
-            _clear_current_review_metadata(task_id, ledger)
-            _set_current_review_repair_metadata(
-                task_id,
-                ledger,
-                request_file=str(repair_ready.get("request_path", "")),
-                summary_file=str(repair_ready.get("summary_path", "")),
-                seed_file=str(repair_ready.get("request_payload", {}).get("next_draft_seed_file", "") or ""),
-                origin_result_file=str(repair_ready.get("request_payload", {}).get("failed_review_result_file", "") or ""),
-            )
-        else:
-            _clear_current_review_metadata(task_id, ledger)
-        if review_subject_kind == "candidate":
-            if success:
-                ledger.update_runtime_metadata(
-                    task_id,
-                    pack_candidate_state="draft",
-                    latest_build_ready_candidate_kind="",
-                    latest_build_ready_candidate_file="",
-                    latest_build_ready_candidate_hash="",
+                reconciliation_record = ledger.ledger.get("tasks", {}).get(task_id, {})
+                reconciliation_record = (
+                    reconciliation_record if isinstance(reconciliation_record, dict) else {}
                 )
-            elif disposition.endswith("_no_promotion"):
-                ledger.update_runtime_metadata(task_id, pack_candidate_state="review_rejected")
-            completion_status = _review_completion_status(
-                semantic_review,
-                ledger.ledger.get("tasks", {}).get(task_id, {}),
-                task_status_projection,
-            )
-            if success:
-                ledger.update_status(task_id, completion_status)
-            elif existing_completed_output:
-                ledger.update_status(task_id, TaskStatus(apply_original_status))
-            elif failure_counters.review_fail_counter >= failure_counters.limit:
-                ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=detail_text)
+                if bool(reconciliation_record.get("dependency_reconciliation_requires_fresh_review", False)):
+                    reconciliation = reconciliation_record.get("latest_dependency_reconciliation", {})
+                    reconciliation = reconciliation if isinstance(reconciliation, dict) else {}
+                    ledger.update_runtime_metadata(
+                        task_id,
+                        dependency_reconciliation_requires_fresh_review=False,
+                        dependency_reconciliation_reviewed_id=str(
+                            reconciliation.get("reconciliation_id", "") or ""
+                        ),
+                        dependency_reconciliation_review_result_file=str(
+                            semantic_review.get("review_result_file", "") or ""
+                        ),
+                    )
+            elif disposition.endswith("_invalid_no_promotion"):
+                if review_subject_kind != "official_output":
+                    ledger.update_runtime_metadata(task_id, **auto_loop_field_defaults())
+            elif task_status_projection is not None and task_status_projection.task_status == "allowed_exception":
+                _clear_current_review_metadata(task_id, ledger)
+                _clear_current_review_repair_metadata(task_id, ledger)
+                ledger.update_runtime_metadata(task_id, **auto_loop_field_defaults())
+            elif repair_ready is not None:
+                _clear_current_review_metadata(task_id, ledger)
+                _set_current_review_repair_metadata(
+                    task_id,
+                    ledger,
+                    request_file=str(repair_ready.get("request_path", "")),
+                    summary_file=str(repair_ready.get("summary_path", "")),
+                    seed_file=str(repair_ready.get("request_payload", {}).get("next_draft_seed_file", "") or ""),
+                    origin_result_file=str(repair_ready.get("request_payload", {}).get("failed_review_result_file", "") or ""),
+                )
             else:
-                ledger.update_status(task_id, TaskStatus.PACKED)
-        else:
-            if success:
+                _clear_current_review_metadata(task_id, ledger)
+            if review_subject_kind == "candidate":
+                if success:
+                    ledger.update_runtime_metadata(
+                        task_id,
+                        pack_candidate_state="draft",
+                        latest_build_ready_candidate_kind="",
+                        latest_build_ready_candidate_file="",
+                        latest_build_ready_candidate_hash="",
+                    )
+                elif disposition.endswith("_no_promotion"):
+                    ledger.update_runtime_metadata(task_id, pack_candidate_state="review_rejected")
+                completion_status = _review_completion_status(
+                    semantic_review,
+                    ledger.ledger.get("tasks", {}).get(task_id, {}),
+                    task_status_projection,
+                )
+                if success:
+                    ledger.update_status(task_id, completion_status)
+                elif existing_completed_output:
+                    ledger.update_status(task_id, TaskStatus(apply_original_status))
+                elif failure_counters.review_fail_counter >= failure_counters.limit:
+                    ledger.update_status(task_id, TaskStatus.FAILED_LOCAL, error=detail_text)
+                else:
+                    ledger.update_status(task_id, TaskStatus.PACKED)
+            elif success:
                 ledger.update_status(
                     task_id,
                     _review_completion_status(
@@ -715,44 +688,53 @@ async def apply_codex_review_result_once(
                     ledger.update_status(task_id, TaskStatus(apply_original_status))
                 except ValueError:
                     pass
-        refresh_pack_runtime_view(task, ledger, settings, pack_dir)
-        if success and review_subject_kind in {"candidate", "official_output", "existing_support"}:
-            post_apply_basis = build_semantic_review_basis(
-                task,
-                ledger,
-                settings,
-                review_subject_kind=review_subject_kind,
-                review_subject_hash=review_subject_hash,
-                review_subject_file=candidate_path,
-                materialize_proof_obligations=False,
-            )
-            ledger.update_runtime_metadata(
-                task_id,
-                latest_applied_review_subject_hash=review_subject_hash,
-                latest_applied_review_origin_basis_hash=str(review_input.get("review_basis_hash", "") or ""),
-                latest_applied_review_post_basis_hash=sha256_json(post_apply_basis),
-                latest_applied_review_input_hash=str(normalized_review.get("review_input_hash", "") or ""),
-                latest_applied_review_result_file=str(normalized_review.get("review_result_file", "") or ""),
-                latest_applied_review_result_hash=sha256_json(normalized_review),
-                latest_applied_review_subject_kind=review_subject_kind,
-            )
+            refresh_pack_runtime_view(task, ledger, settings, pack_dir)
+            if success and review_subject_kind in {"candidate", "official_output", "existing_support"}:
+                post_apply_basis = build_semantic_review_basis(
+                    task,
+                    ledger,
+                    settings,
+                    review_subject_kind=review_subject_kind,
+                    review_subject_hash=review_subject_hash,
+                    review_subject_file=candidate_path,
+                )
+                ledger.update_runtime_metadata(
+                    task_id,
+                    latest_applied_review_subject_hash=review_subject_hash,
+                    latest_applied_review_origin_basis_hash=str(review_input.get("review_basis_hash", "") or ""),
+                    latest_applied_review_post_basis_hash=sha256_json(post_apply_basis),
+                    latest_applied_review_input_hash=str(normalized_review.get("review_input_hash", "") or ""),
+                    latest_applied_review_result_file=str(normalized_review.get("review_result_file", "") or ""),
+                    latest_applied_review_result_hash=sha256_json(normalized_review),
+                    latest_applied_review_subject_kind=review_subject_kind,
+                )
         from .state_review import record_review_apply_state
 
         reviewed_output = None
         if success and review_subject_kind in {"candidate", "official_output"}:
             reviewed_output = select_latest_existing_task_file(task_id, source_plan, settings)
-        record_review_apply_state(
-            settings=settings,
-            task_id=task_id,
-            review_input=review_input,
-            semantic_review=semantic_review,
-            candidate_path=candidate_path,
-            candidate_code=candidate_code,
-            success=success,
-            final_build_success=final_build_success,
-            disposition=disposition,
-            output_path=reviewed_output,
-        )
+
+        def mutate_normalized_state(state_store, _result=None) -> None:
+            record_review_apply_state(
+                settings=settings,
+                task_id=task_id,
+                review_input=review_input,
+                semantic_review=semantic_review,
+                candidate_path=candidate_path,
+                candidate_code=candidate_code,
+                success=success,
+                final_build_success=final_build_success,
+                disposition=disposition,
+                output_path=reviewed_output,
+                store=state_store,
+            )
+
+        atomic_runner = getattr(ledger, "mutate_with_normalized_state", None)
+        if callable(atomic_runner):
+            atomic_runner(mutate_ledger_projection, mutate_normalized_state)
+        else:
+            mutate_ledger_projection()
+            mutate_normalized_state(None)
         return ApplyOutcome(success=success, detail=detail_text, disposition=disposition, next_action=next_action, repair_ready=repair_ready)
 
     validation_error = ""
@@ -766,15 +748,19 @@ async def apply_codex_review_result_once(
     result_task_id = canonicalize_block_id(str(raw_result.get("task_id", "") if isinstance(raw_result, dict) else ""))
     if not validation_error and result_task_id and result_task_id != task_id:
         validation_error = f"review result task id mismatch: expected {task_id}, got {result_task_id}"
-    if not validation_error and not _review_version_matches(review_input.get("prompt_version"), SEMANTIC_REVIEW_PROMPT_VERSION):
-        validation_error = "review input prompt_version does not match current semantic review prompt version"
+    if not validation_error and not is_supported_semantic_review_prompt_version(review_input.get("prompt_version")):
+        validation_error = "review input prompt_version is not a supported semantic review prompt version"
     if not validation_error and not _review_version_matches(review_input.get("rubric_version"), SEMANTIC_REVIEW_RUBRIC_VERSION):
         validation_error = "review input rubric_version does not match current semantic review rubric version"
     if isinstance(raw_result, dict):
-        if not validation_error and not _review_version_matches(raw_result.get("prompt_version"), SEMANTIC_REVIEW_PROMPT_VERSION):
-            validation_error = "review result prompt_version does not match current semantic review prompt version"
-        if not validation_error and not _review_version_matches(raw_result.get("rubric_version"), SEMANTIC_REVIEW_RUBRIC_VERSION):
-            validation_error = "review result rubric_version does not match current semantic review rubric version"
+        if not validation_error and not _review_version_matches(
+            raw_result.get("prompt_version"), int(review_input.get("prompt_version") or 0)
+        ):
+            validation_error = "review result prompt_version does not match its bound semantic review input"
+        if not validation_error and not _review_version_matches(
+            raw_result.get("rubric_version"), int(review_input.get("rubric_version") or 0)
+        ):
+            validation_error = "review result rubric_version does not match its bound semantic review input"
         expected_candidate_hash = str(review_candidate_payload.get("hash", "") or "")
         result_candidate_hash = str(raw_result.get("candidate_hash", "") or "")
         if not validation_error and result_candidate_hash != expected_candidate_hash:
@@ -822,22 +808,6 @@ async def apply_codex_review_result_once(
         )
     normalized_review, task_status_projection = _review_with_task_status(task_id, task, normalized_review)
     normalized_review = _write_normalized_codex_review_artifacts(pack_dir, review_input, normalized_review)
-    obligation_update_path = Path(proof_obligations_file) if proof_obligations_file else proof_obligation_path(pack_dir)
-    if output_binding.is_obligation_task:
-        seed_focused_child_obligations_from_review(
-            obligation_update_path,
-            normalized_review,
-            focus_obligation_ids=output_binding.focus_obligation_ids,
-            owner_obligations_path=output_binding.proof_obligations_file,
-        )
-    updated_obligations = apply_obligation_review_to_file(obligation_update_path, normalized_review)
-    if updated_obligations:
-        obligation_owner_task_id = canonicalize_block_id(str(updated_obligations.get("task_id", "") or task_id))
-        ledger.update_runtime_metadata(
-            obligation_owner_task_id,
-            proof_obligations_file=str(obligation_update_path),
-            proof_obligation_summary=summarize_proof_obligations(updated_obligations),
-        )
     if verdict != "pass":
         diagnostics = review_diagnostics(normalized_review)
         if review_subject_kind == "official_output":
@@ -937,7 +907,7 @@ async def apply_codex_review_result_once(
                 diagnostics = parse_diagnostics(apply_build_output, "final_build_failed", "apply_official_output_build")
                 fail_detail = (
                     apply_build_output
-                    or f"lake build ToyApollo.Output.{task_id} failed at review-apply."
+                    or f"lake build {getattr(settings, "lean_module_root", "ToyApollo.Output")}.{task_id} failed at review-apply."
                 )
                 outcome = finish(
                     success=False,
@@ -1006,8 +976,8 @@ async def apply_codex_review_result_once(
                 return finish(
                     success=False,
                     detail_text=(
-                        "Existing support landing module could not be resolved from "
-                        "proof_obligations.json at review-apply; support landing not completed."
+                        "Existing support review binding belongs to the retired proof-obligation mechanism; "
+                        "review the parent/official output directly instead."
                     ),
                     diagnostics=hard_check_diagnostic("support_module_unresolved", "missing landing_module"),
                     semantic_review=normalized_review,
@@ -1061,7 +1031,7 @@ async def apply_codex_review_result_once(
         diagnostics = parse_diagnostics(final_output, "final_build_failed", "final_build")
         return finish(
             success=False,
-            detail_text=final_output or f"lake build ToyApollo.Output.{task_id} failed after Codex review pass.",
+            detail_text=final_output or f"lake build {getattr(settings, "lean_module_root", "ToyApollo.Output")}.{task_id} failed after Codex review pass.",
             diagnostics=diagnostics,
             semantic_review=normalized_review,
             disposition="codex_review_apply_final_build_failed",

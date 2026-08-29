@@ -59,7 +59,6 @@ unchanged; it is not a substitute for a fresh review after any drift.
 These must be read when relevant, but they do not complete tasks:
 
 - source TeX and source plans;
-- `proof_obligations.json`;
 - Math Review Gate skeleton/review artifacts;
 - dependency decision context;
 - downstream/import scans;
@@ -93,9 +92,10 @@ These are not authorities:
 Use them for review context, diagnostics, repair planning, and reproducibility.
 Do not hand-edit them to declare completion.
 
-`phase2_prompt_packs/*/proof_obligations.json` is task content/context. Keep
-mechanism refactors separate from proof-obligation content repairs unless a
-mechanism regression test explicitly needs a fixture update.
+Historical `phase2_prompt_packs/*/proof_obligations.json` files are inert
+audit fixtures. Active runtime paths must not generate, bind, review, apply,
+gate, or plan from them; deleting those historical files is a separate archival
+decision.
 
 Legacy `obl_*` and nested `obl_obl_*` packs are historical audit evidence, not
 default author/review queue items. Current ledgers should not retain those child

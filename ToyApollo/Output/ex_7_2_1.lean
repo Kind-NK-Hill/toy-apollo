@@ -28,6 +28,13 @@ structure FatouLemmaIllustration where
   limitProfile_def : limitProfile = fatouIllustrationLimit
   limitProfile_eq_if : ∀ x, limitProfile x = if x = 0 then (∞ : ℝ≥0∞) else 0
   limitProfile_integral_zero : ∫⁻ x, limitProfile x ∂volume = 0
+  pointwise_tendsto : ∀ x, Tendsto (fun n => seq n x) atTop (nhds (limitProfile x))
+  pointwise_liminf_eq : ∀ x, liminf (fun n => seq n x) atTop = limitProfile x
+  pointwise_limsup_eq : ∀ x, limsup (fun n => seq n x) atTop = limitProfile x
+  integral_liminf_eq_one : liminf (fun n => ∫⁻ x, seq n x ∂volume) atTop = 1
+  strict_fatou_gap :
+    (∫⁻ x, liminf (fun n => seq n x) atTop ∂volume) <
+      liminf (fun n => ∫⁻ x, seq n x ∂volume) atTop
 
 theorem fatouIllustrationSeq_integral_eq_one (n : ℕ) :
     ∫⁻ x, fatouIllustrationSeq n x ∂volume = 1 := by
@@ -84,6 +91,42 @@ theorem fatouIllustrationLimit_integral_zero :
   rw [MeasureTheory.setLIntegral_const]
   simp
 
+theorem fatouIllustrationSeq_tendsto_limit (x : ℝ) :
+    Tendsto (fun n => fatouIllustrationSeq n x) atTop
+      (nhds (fatouIllustrationLimit x)) := by
+  by_cases hx : x = 0
+  · subst x
+    have h : Tendsto (fun n : ℕ => (((n + 1 : ℕ) : ℝ≥0∞))) atTop (nhds ∞) :=
+      ENNReal.tendsto_nat_nhds_top.comp (Filter.tendsto_add_atTop_nat 1)
+    simpa [fatouIllustrationSeq_at_zero, fatouIllustrationLimit_eq_if] using h
+  · have hzero : Tendsto (fun _ : ℕ => (0 : ℝ≥0∞)) atTop (nhds 0) :=
+      tendsto_const_nhds
+    have heq :
+        (fun n => fatouIllustrationSeq n x) =ᶠ[atTop] (fun _ => (0 : ℝ≥0∞)) :=
+      fatouIllustrationSeq_eventually_zero_off_zero hx
+    have hseq : Tendsto (fun n => fatouIllustrationSeq n x) atTop (nhds 0) :=
+      Filter.Tendsto.congr' heq.symm hzero
+    simpa [fatouIllustrationLimit_eq_if, hx] using hseq
+
+theorem fatouIllustrationSeq_liminf_eq (x : ℝ) :
+    liminf (fun n => fatouIllustrationSeq n x) atTop = fatouIllustrationLimit x :=
+  (fatouIllustrationSeq_tendsto_limit x).liminf_eq
+
+theorem fatouIllustrationSeq_limsup_eq (x : ℝ) :
+    limsup (fun n => fatouIllustrationSeq n x) atTop = fatouIllustrationLimit x :=
+  (fatouIllustrationSeq_tendsto_limit x).limsup_eq
+
+theorem fatouIllustrationSeq_integral_liminf_eq_one :
+    liminf (fun n => ∫⁻ x, fatouIllustrationSeq n x ∂volume) atTop = 1 := by
+  simp only [fatouIllustrationSeq_integral_eq_one, Filter.liminf_const]
+
+theorem fatouIllustration_strict_fatou_gap :
+    (∫⁻ x, liminf (fun n => fatouIllustrationSeq n x) atTop ∂volume) <
+      liminf (fun n => ∫⁻ x, fatouIllustrationSeq n x ∂volume) atTop := by
+  simp_rw [fatouIllustrationSeq_liminf_eq]
+  rw [fatouIllustrationLimit_integral_zero, fatouIllustrationSeq_integral_liminf_eq_one]
+  exact zero_lt_one
+
 noncomputable def ex_7_2_1 : FatouLemmaIllustration where
   seq := fatouIllustrationSeq
   seq_def := rfl
@@ -95,3 +138,8 @@ noncomputable def ex_7_2_1 : FatouLemmaIllustration where
   limitProfile_def := rfl
   limitProfile_eq_if := fatouIllustrationLimit_eq_if
   limitProfile_integral_zero := fatouIllustrationLimit_integral_zero
+  pointwise_tendsto := fatouIllustrationSeq_tendsto_limit
+  pointwise_liminf_eq := fatouIllustrationSeq_liminf_eq
+  pointwise_limsup_eq := fatouIllustrationSeq_limsup_eq
+  integral_liminf_eq_one := fatouIllustrationSeq_integral_liminf_eq_one
+  strict_fatou_gap := fatouIllustration_strict_fatou_gap

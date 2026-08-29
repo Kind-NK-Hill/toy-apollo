@@ -183,8 +183,9 @@ theorem thm_10_8_lower_upper_quantile_ae_eq
 theorem thm_10_8_lowerQuantile_tendsto_at_good_level
     (Fs : ℕ → thm_10_8_ProbabilityCdf) (F : thm_10_8_ProbabilityCdf)
     (hconv :
-      CdfConvergesInDistribution
-        (fun n x => (Fs n).stieltjes x) (F.stieltjes : ℝ → ℝ))
+      ∀ x : ℝ, ContinuousAt (F.stieltjes : ℝ → ℝ) x →
+        Tendsto (fun n : ℕ => (Fs n).stieltjes x) atTop
+          (𝓝 (F.stieltjes x)))
     {omega : ℝ} (homega0 : 0 < omega) (homega1 : omega < 1)
     (heq :
       thm_10_8_lowerQuantile F omega =
@@ -219,8 +220,9 @@ theorem thm_10_8_lowerQuantile_tendsto_at_good_level
 theorem thm_10_8_almost_sure_lowerQuantile_tendsto
     (Fs : ℕ → thm_10_8_ProbabilityCdf) (F : thm_10_8_ProbabilityCdf)
     (hconv :
-      CdfConvergesInDistribution
-        (fun n x => (Fs n).stieltjes x) (F.stieltjes : ℝ → ℝ)) :
+      ∀ x : ℝ, ContinuousAt (F.stieltjes : ℝ → ℝ) x →
+        Tendsto (fun n : ℕ => (Fs n).stieltjes x) atTop
+          (𝓝 (F.stieltjes x))) :
     ∀ᵐ omega ∂thm_10_8_unitIntervalMeasure,
       Tendsto
         (fun n : ℕ => thm_10_8_lowerQuantileVariable (Fs n) omega)

@@ -81,7 +81,10 @@ lemma typingMeasure_block_family_map :
             (MeasurableEquiv.piCongrLeft (fun _ : ℕ × Fin n => α) e)) =
             fun x k i => blockMap (α := α) n k x i := by
         ext x k i
-        simpa [blockMap, e] using
+        change
+          ((Equiv.piCongrLeft (fun _ : ℕ × Fin n => α) e) x) (k, i) =
+            x (k * n + i)
+        simpa [e] using
           (Equiv.piCongrLeft_apply_eq_cast
             (P := fun _ : ℕ × Fin n => α) (e := e) x (k, i))
       rw [← h_comp]
@@ -120,8 +123,12 @@ lemma typingMeasure_blockMap_distribution (k : ℕ) :
       simpa using measurable_pi_apply (i * n + j)
     have h_eval_meas : Measurable (fun f : ℕ → (Fin n → α) => f k) := by
       exact measurable_pi_apply k
-    simpa using
-      (Measure.map_map h_eval_meas h_family_meas (μ := typingMeasure (α := α)))
+    have h_comp :
+        ((fun f : ℕ → (Fin n → α) => f k) ∘
+            (fun x i j => blockMap (α := α) n i x j)) =
+          blockMap (α := α) n k := by
+      rfl
+    rw [Measure.map_map h_eval_meas h_family_meas, h_comp]
   rw [h_left, Measure.infinitePi_map_eval] at h_eval
   simpa [blockMap] using h_eval
 

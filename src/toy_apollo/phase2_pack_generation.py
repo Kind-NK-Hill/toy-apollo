@@ -37,7 +37,7 @@ def _prepare_existing_output_review_materials(*, task: dict[str, Any], ledger, s
     )
 
 
-def _write_codex_handoff_review_artifacts(*, task: dict[str, Any], ledger, settings, pack_dir: Path, attempt: int, candidate_path: Path, candidate_code: str, build_summary: dict[str, Any], mode: str = "review-pack", review_subject_kind: str = "candidate", build_result_file: str = "", build_candidate_file: str = "", build_candidate_hash: str = "", subject_bundle_override: dict[str, Any] | None = None, review_basis_subject_file: Path | None = None, review_basis_extra: dict[str, Any] | None = None, review_context_suffix: str = "", materialize_proof_obligations: bool = True) -> dict[str, Any]:
+def _write_codex_handoff_review_artifacts(*, task: dict[str, Any], ledger, settings, pack_dir: Path, attempt: int, candidate_path: Path, candidate_code: str, build_summary: dict[str, Any], mode: str = "review-pack", review_subject_kind: str = "candidate", build_result_file: str = "", build_candidate_file: str = "", build_candidate_hash: str = "", subject_bundle_override: dict[str, Any] | None = None, review_basis_subject_file: Path | None = None, review_basis_extra: dict[str, Any] | None = None, review_context_suffix: str = "") -> dict[str, Any]:
     from .phase2_prompt_pack import _write_codex_handoff_review_artifacts as _impl
 
     return _impl(
@@ -58,7 +58,6 @@ def _write_codex_handoff_review_artifacts(*, task: dict[str, Any], ledger, setti
         review_basis_subject_file=review_basis_subject_file,
         review_basis_extra=review_basis_extra,
         review_context_suffix=review_context_suffix,
-        materialize_proof_obligations=materialize_proof_obligations,
     )
 
 
@@ -70,12 +69,6 @@ async def write_codex_review_pack(task_id: str, ledger, settings, candidate_arg:
 
 async def write_existing_output_review_pack(task_id: str, ledger, settings, *, force_new_attempt: bool = False) -> tuple[bool, str]:
     from .phase2_prompt_pack import write_existing_output_review_pack as _impl
-
-    return await _impl(task_id, ledger, settings, force_new_attempt=force_new_attempt)
-
-
-async def write_existing_support_review_pack(task_id: str, ledger, settings, *, force_new_attempt: bool = False) -> tuple[bool, str]:
-    from .phase2_prompt_pack import write_existing_support_review_pack as _impl
 
     return await _impl(task_id, ledger, settings, force_new_attempt=force_new_attempt)
 
@@ -153,9 +146,8 @@ def run_lean_module_build(*args: Any, **kwargs: Any):
 
 
 def support_review_target_from_obligations(*args: Any, **kwargs: Any):
-    from .phase2_prompt_pack import _support_review_target_from_obligations as _impl
-
-    return _impl(*args, **kwargs)
+    del args, kwargs
+    return {}
 
 
 def write_review_compat_summary(*args: Any, **kwargs: Any):

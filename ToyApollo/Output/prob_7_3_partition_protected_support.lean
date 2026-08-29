@@ -228,11 +228,11 @@ theorem prob_7_3_partitionOfEndpointFinset_mesh_lt
   unfold prob_7_3_partitionOfEndpointFinset
   unfold DarbouxRS.Partition.mesh
   rw [Finset.sup'_lt_iff]
-  intro i hi
-  exact hgap i (by
+  intro i _hi
+  exact hgap i.val (by
     have hi' :
-        i < (E.sort (fun x y : ℝ => x ≤ y)).length - 1 := by
-      exact Finset.mem_range.mp hi
+        i.val < (E.sort (fun x y : ℝ => x ≤ y)).length - 1 := by
+      exact i.isLt
     omega)
 
 theorem prob_7_3_sorted_nodup_adjacent_of_no_mem_between
@@ -564,10 +564,10 @@ theorem prob_7_3_protectedEndpointSet_partition_with_cell_margins_of_sorted_gaps
       P.mesh < δ ∧
       ∃ idx : ℝ → ℕ,
         (∀ x ∈ T, idx x < P.n) ∧
-        (∀ x ∈ T, ρ ≤ x - P.pts (idx x)) ∧
+        (∀ x ∈ T, ρ ≤ x - Prob73NatPartition.point P (idx x)) ∧
         (∀ x ∈ T,
-          ρ ≤ P.pts (idx x + 1) - x ∨
-            (x = b ∧ P.pts (idx x + 1) = b)) := by
+          ρ ≤ Prob73NatPartition.point P (idx x + 1) - x ∨
+            (x = b ∧ Prob73NatPartition.point P (idx x + 1) = b)) := by
   let E : Finset ℝ := prob_7_3_protectedEndpointSet a b ρ T
   have haE : a ∈ E :=
     prob_7_3_left_mem_protectedEndpointSet (b := b) (ρ := ρ) T
@@ -617,7 +617,13 @@ theorem prob_7_3_protectedEndpointSet_partition_with_cell_margins_of_sorted_gaps
     dsimp [idx]
     rw [dif_pos hxT]
     have hleftEq :
-        P.pts (Classical.choose (hadj x hxT)) = x - ρ := by
+        Prob73NatPartition.point P (Classical.choose (hadj x hxT)) = x - ρ := by
+      have hidxLt : Classical.choose (hadj x hxT) < P.n := by
+        dsimp [P, prob_7_3_partitionOfEndpointFinset]
+        change Classical.choose (hadj x hxT) <
+          (E.sort (fun u v : ℝ => u ≤ v)).length - 1
+        omega
+      rw [Prob73NatPartition.point_eq P (Nat.le_of_lt hidxLt)]
       dsimp [P, prob_7_3_partitionOfEndpointFinset]
       exact hspec.2.1
     rw [hleftEq]
@@ -627,8 +633,14 @@ theorem prob_7_3_protectedEndpointSet_partition_with_cell_margins_of_sorted_gaps
     dsimp [idx]
     rw [dif_pos hxT]
     have hrightEq :
-        P.pts (Classical.choose (hadj x hxT) + 1) =
+        Prob73NatPartition.point P (Classical.choose (hadj x hxT) + 1) =
           (if x = b then b else x + ρ) := by
+      have hidxLt : Classical.choose (hadj x hxT) < P.n := by
+        dsimp [P, prob_7_3_partitionOfEndpointFinset]
+        change Classical.choose (hadj x hxT) <
+          (E.sort (fun u v : ℝ => u ≤ v)).length - 1
+        omega
+      rw [Prob73NatPartition.point_eq P (Nat.succ_le_of_lt hidxLt)]
       dsimp [P, prob_7_3_partitionOfEndpointFinset]
       exact hspec.2.2
     by_cases hxb : x = b
@@ -681,10 +693,10 @@ theorem prob_7_3_endpointFinset_clean_cells_to_partition_with_cell_margins
       P.mesh < δ ∧
       ∃ idx : ℝ → ℕ,
         (∀ x ∈ T, idx x < P.n) ∧
-        (∀ x ∈ T, ρ ≤ x - P.pts (idx x)) ∧
+        (∀ x ∈ T, ρ ≤ x - Prob73NatPartition.point P (idx x)) ∧
         (∀ x ∈ T,
-          ρ ≤ P.pts (idx x + 1) - x ∨
-            (x = b ∧ P.pts (idx x + 1) = b)) := by
+          ρ ≤ Prob73NatPartition.point P (idx x + 1) - x ∨
+            (x = b ∧ Prob73NatPartition.point P (idx x + 1) = b)) := by
   let P : DarbouxRS.Partition a b :=
     prob_7_3_partitionOfEndpointFinset E haE hbE hEsub hab
   have hmesh : P.mesh < δ := by
@@ -753,7 +765,13 @@ theorem prob_7_3_endpointFinset_clean_cells_to_partition_with_cell_margins
     dsimp [idx]
     rw [dif_pos hxT]
     have hleftEq :
-        P.pts (Classical.choose (hadj x hxT)) = x - ρ := by
+        Prob73NatPartition.point P (Classical.choose (hadj x hxT)) = x - ρ := by
+      have hidxLt : Classical.choose (hadj x hxT) < P.n := by
+        dsimp [P, prob_7_3_partitionOfEndpointFinset]
+        change Classical.choose (hadj x hxT) <
+          (E.sort (fun u v : ℝ => u ≤ v)).length - 1
+        omega
+      rw [Prob73NatPartition.point_eq P (Nat.le_of_lt hidxLt)]
       dsimp [P, prob_7_3_partitionOfEndpointFinset]
       exact hspec.2.1
     rw [hleftEq]
@@ -763,8 +781,14 @@ theorem prob_7_3_endpointFinset_clean_cells_to_partition_with_cell_margins
     dsimp [idx]
     rw [dif_pos hxT]
     have hrightEq :
-        P.pts (Classical.choose (hadj x hxT) + 1) =
+        Prob73NatPartition.point P (Classical.choose (hadj x hxT) + 1) =
           (if x = b then b else x + ρ) := by
+      have hidxLt : Classical.choose (hadj x hxT) < P.n := by
+        dsimp [P, prob_7_3_partitionOfEndpointFinset]
+        change Classical.choose (hadj x hxT) <
+          (E.sort (fun u v : ℝ => u ≤ v)).length - 1
+        omega
+      rw [Prob73NatPartition.point_eq P (Nat.succ_le_of_lt hidxLt)]
       dsimp [P, prob_7_3_partitionOfEndpointFinset]
       exact hspec.2.2
     by_cases hxb : x = b
@@ -925,7 +949,6 @@ theorem prob_7_3_exists_endpointFinset_refining_protectedEndpointSet_with_mesh_a
         ∀ x ∈ T, ¬ (x - ρ < m ∧ m < (if x = b then b else x + ρ))
     · have hmK : m ∈ K := by
         refine ⟨hmI, ?_⟩
-        dsimp [K]
         rw [mem_iInter]
         intro x
         rw [mem_iInter]

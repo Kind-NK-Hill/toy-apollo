@@ -7,6 +7,7 @@ import os
 import sys
 from pathlib import Path
 
+from src.ledger_manager import LedgerDangerousStateError
 from src.block_id_naming import (
     canonicalize_block_id,
 )
@@ -24,17 +25,18 @@ PHASE1_MODES = ("pack", "apply")
 PHASE2_MODES = (
     "pack",
     "build-check",
-    "verify",
-    "audit",
     "review-pack",
     "review-existing",
-    "review-support",
     "review-now",
     "review-fix",
-    "debt-fix",
     "auto-loop",
     "review-existing-queue",
     "review-apply",
+    "dependency-reconcile",
+    "basis-rebind",
+    "frozen-dependency-build-check",
+    "frozen-dependency-accept",
+    "frozen-dependency-revoke",
     "soft-pack",
     "soft-apply",
     "batch-plan",
@@ -43,28 +45,19 @@ PHASE2_MODES = (
 PHASE2_SINGLE_TASK_MODES = (
     "pack",
     "build-check",
-    "verify",
     "review-pack",
     "review-existing",
-    "review-support",
     "review-now",
     "review-fix",
-    "debt-fix",
     "auto-loop",
     "review-apply",
+    "dependency-reconcile",
+    "basis-rebind",
+    "frozen-dependency-build-check",
+    "frozen-dependency-accept",
+    "frozen-dependency-revoke",
 )
 PHASE2_SOFT_MODES = ("soft-pack", "soft-apply")
-DEPRECATED_PHASE3_MODES = ("soft-pack", "soft-apply")
-
-PHASE3_DEPRECATED_MESSAGE = (
-    "Phase 3 is deprecated and unavailable. Its former soft-dependency commands "
-    "migrated to Phase 2; use '--phase 2 --phase2-mode soft-pack' or "
-    "'--phase 2 --phase2-mode soft-apply'."
-)
-PHASE4_UNAVAILABLE_MESSAGE = (
-    "Phase 4 is unavailable. Clean completion remains under "
-    "'--phase 2 --phase2-mode review-apply'."
-)
 
 RUNTIME_ROOT_ENV_VAR = "TOY_APOLLO_RUNTIME_ROOT"
 ARTIFACT_ROOT_ENV_VAR = "TOY_APOLLO_ARTIFACT_ROOT"
@@ -109,6 +102,22 @@ def parse_batch_task_kinds(raw: str) -> list[str]:
     return kinds
 
 
+def parse_expected_old_dependencies(raw: str) -> list[str]:
+    if not str(raw or "").strip():
+        return []
+    dependencies: list[str] = []
+    seen: set[str] = set()
+    for part in raw.split(","):
+        dependency = canonicalize_block_id(part.strip())
+        if not dependency:
+            raise ValueError(f"invalid dependency id: {part!r}")
+        if dependency in seen:
+            raise ValueError(f"duplicate dependency id: {dependency}")
+        seen.add(dependency)
+        dependencies.append(dependency)
+    return dependencies
+
+
 def print_read_only_status(settings) -> None:
     runtime_env_present = RUNTIME_ROOT_ENV_VAR in os.environ
     artifact_env_present = ARTIFACT_ROOT_ENV_VAR in os.environ
@@ -143,8 +152,10 @@ def print_read_only_status(settings) -> None:
     from ..state_store import StateIntegrityError, WorkspaceStateStore
 
     state_store = WorkspaceStateStore(settings.state_db_file or canonical_state_path(settings.runtime_root))
+    campaign_loaded = False
     if not state_store.exists:
         print("STATE_DB_STATUS=missing_not_created")
+        print("CAMPAIGN_LEDGER_STATUS=unavailable_state_db_missing")
     else:
         try:
             summary = state_store.summary()
@@ -155,19 +166,39 @@ def print_read_only_status(settings) -> None:
             print(f"STATE_DB_TASK_HEADS={summary['task_heads']}")
         except StateIntegrityError as exc:
             print(f"STATE_DB_STATUS=integrity_error:{exc}")
+            print("CAMPAIGN_LEDGER_STATUS=unavailable_state_integrity_error")
+        else:
+            try:
+                from ..core import open_runtime_ledger
 
-    if not settings.project_ledger_file.is_file():
+                campaign_ledger = open_runtime_ledger(settings, read_only=True)
+                campaign_tasks = campaign_ledger.ledger.get("tasks", {})
+                campaign_task_count = len(campaign_tasks) if isinstance(campaign_tasks, dict) else 0
+                print("CAMPAIGN_LEDGER_STATUS=loaded_read_only")
+                print(f"CAMPAIGN_LEDGER_TASKS={campaign_task_count}")
+                campaign_loaded = True
+            except (OSError, ValueError, LedgerDangerousStateError) as exc:
+                print(f"CAMPAIGN_LEDGER_STATUS=unavailable:{type(exc).__name__}")
+
+    legacy_present = settings.project_ledger_file.is_file()
+    print(
+        "LEGACY_LEDGER_STATUS="
+        + ("present_frozen" if legacy_present else "missing_not_created")
+    )
+    if campaign_loaded:
+        print("LEDGER_STATUS=active_sqlite_campaign")
+    elif not legacy_present:
         print("LEDGER_STATUS=missing_not_created")
-        return
-
-    print("LEDGER_STATUS=legacy_present_frozen")
+    else:
+        print("LEDGER_STATUS=legacy_present_frozen")
 
 
 async def process_target(args):
     settings = get_settings()
-    if getattr(settings, "dependency_decisions_dir", None) is not None:
-        settings.dependency_decisions_dir.mkdir(parents=True, exist_ok=True)
     phase = args.phase
+    read_only_batch_plan = phase == 2 and getattr(args, "phase2_mode", "") == "batch-plan"
+    if not read_only_batch_plan and getattr(settings, "dependency_decisions_dir", None) is not None:
+        settings.dependency_decisions_dir.mkdir(parents=True, exist_ok=True)
     target_path = args.input
 
     if phase == 0:
@@ -194,7 +225,11 @@ async def process_target(args):
 
     from ..core import open_runtime_ledger
 
-    ledger = open_runtime_ledger(settings)
+    ledger = (
+        open_runtime_ledger(settings, read_only=True)
+        if read_only_batch_plan
+        else open_runtime_ledger(settings)
+    )
     selected_task_ids: set[str] | None = None
     if args.tasks:
         selected_task_ids = set(args.task_ids)
@@ -237,42 +272,53 @@ async def process_target(args):
                     print(f"❌ {detail}")
     elif phase == 2:
         from ..phase2_prompt_pack import (
-            audit_completed_task_output,
             build_check_prompt_pack_candidate,
             ensure_task_registered,
             is_remark_task,
             mark_remark_completed_without_pack,
             repair_packed_remark_tasks,
             resolve_phase2_task,
-            verify_prompt_pack_candidate,
             write_codex_review_pack,
             write_existing_output_review_queue,
             write_existing_output_review_pack,
-            write_existing_support_review_pack,
             write_prompt_pack,
         )
         from ..phase2_batch_runner import plan_batch_from_ledger, render_batch_runner_plan, run_batch_actions
+        from ..phase2_dependency_reconcile import (
+            DependencyReconciliationError,
+            reconcile_phase2_task_dependencies,
+        )
+        from ..phase2_basis_rebind import (
+            AppliedReviewBasisRebindError,
+            rebind_phase2_applied_review_basis,
+        )
+        from ..phase2_dependency_gate import (
+            FrozenDependencyAuthorityError,
+            accept_frozen_dependency_authority,
+            build_frozen_dependency_evidence,
+            revoke_frozen_dependency_authority,
+        )
         from ..phase2_review_apply import apply_codex_review_result
         from ..phase2_review_loop import (
             run_codex_auto_loop,
-            run_codex_debt_fix,
             run_codex_review_fix,
             run_codex_review_now,
         )
 
-        settings.reports_dir.mkdir(parents=True, exist_ok=True)
-        settings.output_lean_files_dir.mkdir(parents=True, exist_ok=True)
-        settings.phase2_prompt_packs_dir.mkdir(parents=True, exist_ok=True)
-        settings.error_logs_dir.mkdir(parents=True, exist_ok=True)
-        settings.formalized_chapters_dir.mkdir(parents=True, exist_ok=True)
-        settings.toyapollo_output_dir.mkdir(parents=True, exist_ok=True)
-        if args.phase2_mode in {"soft-pack", "soft-apply"}:
-            settings.phase2_softdep_packs_dir.mkdir(parents=True, exist_ok=True)
+        if not read_only_batch_plan:
+            settings.reports_dir.mkdir(parents=True, exist_ok=True)
+            settings.output_lean_files_dir.mkdir(parents=True, exist_ok=True)
+            settings.phase2_prompt_packs_dir.mkdir(parents=True, exist_ok=True)
+            settings.error_logs_dir.mkdir(parents=True, exist_ok=True)
+            settings.formalized_chapters_dir.mkdir(parents=True, exist_ok=True)
+            settings.toyapollo_output_dir.mkdir(parents=True, exist_ok=True)
+            if args.phase2_mode in {"soft-pack", "soft-apply"}:
+                settings.phase2_softdep_packs_dir.mkdir(parents=True, exist_ok=True)
         if not selected_task_ids and args.phase2_mode not in {"batch-plan", "batch-run", "review-existing-queue"}:
             print("❌ Phase 2 modes require task ids via --tasks.")
             return
-        if args.phase2_mode in {"pack", "build-check", "verify", "review-pack", "review-existing", "review-now", "review-fix", "debt-fix", "auto-loop", "review-apply"} and len(selected_task_ids) != 1:
-            print("❌ Phase 2 pack/build-check/verify/review-pack/review-existing/review-now/review-fix/debt-fix/auto-loop/review-apply modes currently support exactly one task at a time.")
+        if args.phase2_mode in {"pack", "build-check", "review-pack", "review-existing", "review-now", "review-fix", "auto-loop", "review-apply", "dependency-reconcile", "basis-rebind", "frozen-dependency-build-check", "frozen-dependency-accept", "frozen-dependency-revoke"} and len(selected_task_ids) != 1:
+            print("❌ This Phase 2 mode currently supports exactly one task at a time.")
             return
         try:
             if args.phase2_mode == "pack":
@@ -307,14 +353,6 @@ async def process_target(args):
                 else:
                     print(f"❌ Build check failed for {task_id}.")
                 print(detail)
-            elif args.phase2_mode == "verify":
-                task_id = next(iter(selected_task_ids))
-                success, detail = await verify_prompt_pack_candidate(task_id, ledger, settings, args.candidate)
-                if success:
-                    print(f"✅ Candidate verify report passed for {task_id}; use review-apply to land completion.")
-                else:
-                    print(f"❌ Candidate verify report did not establish task-level completion for {task_id}.")
-                    print(detail)
             elif args.phase2_mode == "review-pack":
                 task_id = next(iter(selected_task_ids))
                 success, detail = await write_codex_review_pack(task_id, ledger, settings, args.candidate)
@@ -330,14 +368,6 @@ async def process_target(args):
                     print(f"📦 Existing output semantic review pack generated for {task_id}.")
                 else:
                     print(f"❌ Existing output semantic review pack generation failed for {task_id}.")
-                print(detail)
-            elif args.phase2_mode == "review-support":
-                task_id = next(iter(selected_task_ids))
-                success, detail = await write_existing_support_review_pack(task_id, ledger, settings)
-                if success:
-                    print(f"📦 Existing support semantic review pack generated for {task_id}.")
-                else:
-                    print(f"❌ Existing support semantic review pack generation failed for {task_id}.")
                 print(detail)
             elif args.phase2_mode == "review-now":
                 task_id = next(iter(selected_task_ids))
@@ -367,14 +397,6 @@ async def process_target(args):
                     print(f"🩹 Review repair loop prepared for {task_id}.")
                 else:
                     print(f"❌ Review repair loop could not be prepared for {task_id}.")
-                print(detail)
-            elif args.phase2_mode == "debt-fix":
-                task_id = next(iter(selected_task_ids))
-                success, detail = await run_codex_debt_fix(task_id, ledger, settings)
-                if success:
-                    print(f"🧾 Proof-debt repair loop prepared for {task_id}.")
-                else:
-                    print(f"❌ Proof-debt repair loop could not be prepared for {task_id}.")
                 print(detail)
             elif args.phase2_mode == "auto-loop":
                 task_id = next(iter(selected_task_ids))
@@ -444,6 +466,106 @@ async def process_target(args):
                 else:
                     print(f"❌ Codex semantic review apply did not promote {task_id}.")
                 print(detail)
+            elif args.phase2_mode == "dependency-reconcile":
+                task_id = next(iter(selected_task_ids))
+                try:
+                    event = reconcile_phase2_task_dependencies(
+                        task_id,
+                        ledger,
+                        settings,
+                        expected_old_dependencies=args.expected_old_dependencies,
+                    )
+                except DependencyReconciliationError as exc:
+                    print(f"❌ Dependency reconciliation refused for {task_id}: {exc}")
+                    raise SystemExit(1) from exc
+                print(
+                    f"✅ Dependencies reconciled for {task_id}: "
+                    f"{event['previous_dependencies']} -> {event['reconciled_dependencies']}."
+                )
+                print(f"AUDIT_RECONCILIATION_ID={event['reconciliation_id']}")
+                print(f"AUDIT_SOURCE_FILE={event['source_file']}")
+            elif args.phase2_mode == "basis-rebind":
+                task_id = next(iter(selected_task_ids))
+                try:
+                    event = rebind_phase2_applied_review_basis(
+                        task_id,
+                        ledger,
+                        settings,
+                        expected_old_basis_hash=args.expected_old_basis,
+                        expected_new_basis_hash=args.expected_new_basis,
+                        expected_subject_hash=args.expected_subject_hash,
+                        expected_dependencies=args.expected_dependencies,
+                    )
+                except AppliedReviewBasisRebindError as exc:
+                    print(f"❌ Applied-review basis rebind refused for {task_id}: {exc}")
+                    raise SystemExit(1) from exc
+                print(
+                    f"✅ Applied-review basis rebound for {task_id}: "
+                    f"{event['previous_post_basis_hash']} -> {event['replacement_post_basis_hash']}."
+                )
+                print(f"AUDIT_REBIND_ID={event['rebind_id']}")
+                print(f"AUDIT_RECEIPT_FILE={event['receipt_file']}")
+                print(f"AUDIT_RECEIPT_SHA256={event['receipt_sha256']}")
+            elif args.phase2_mode == "frozen-dependency-build-check":
+                task_id = next(iter(selected_task_ids))
+                try:
+                    event = build_frozen_dependency_evidence(
+                        task_id,
+                        ledger,
+                        settings,
+                    )
+                except FrozenDependencyAuthorityError as exc:
+                    print(f"❌ Frozen dependency build check failed for {task_id}: {exc}")
+                    raise SystemExit(1) from exc
+                print(f"✅ Exact frozen dependency build check passed for {task_id}.")
+                print(f"BUILD_EVIDENCE_FILE={event['evidence_file']}")
+                print(f"BUILD_EVIDENCE_SHA256={event['evidence_sha256']}")
+            elif args.phase2_mode == "frozen-dependency-accept":
+                task_id = next(iter(selected_task_ids))
+                try:
+                    event = accept_frozen_dependency_authority(
+                        task_id,
+                        ledger,
+                        settings,
+                        owner_scope=args.frozen_owner_scope,
+                        owner_decision_token=args.frozen_owner_decision_token,
+                        owner_reason=args.frozen_owner_reason,
+                        owner_decision_path=args.frozen_owner_decision,
+                        expected_primary_hash=args.expected_primary_hash,
+                        expected_subject_hash=args.expected_subject_hash,
+                        expected_dependencies=args.expected_dependencies,
+                        expected_frozen_tip=args.expected_frozen_tip,
+                        build_evidence_path=args.frozen_build_evidence,
+                    )
+                except FrozenDependencyAuthorityError as exc:
+                    print(f"❌ Frozen dependency acceptance refused for {task_id}: {exc}")
+                    raise SystemExit(1) from exc
+                print(
+                    f"✅ Frozen owner dependency authority recorded for {task_id}; "
+                    "no semantic PASS was claimed."
+                )
+                print(f"AUDIT_RECEIPT_FILE={event['receipt_file']}")
+                print(f"AUDIT_RECEIPT_SHA256={event['receipt_sha256']}")
+                print(f"AUDIT_BUILD_EVIDENCE_SHA256={event['build_evidence_sha256']}")
+            elif args.phase2_mode == "frozen-dependency-revoke":
+                task_id = next(iter(selected_task_ids))
+                try:
+                    event = revoke_frozen_dependency_authority(
+                        task_id,
+                        ledger,
+                        settings,
+                        expected_current_receipt=args.expected_current_frozen_receipt,
+                        owner_scope=args.frozen_owner_scope,
+                        owner_decision_token=args.frozen_owner_decision_token,
+                        owner_reason=args.frozen_owner_reason,
+                        owner_decision_path=args.frozen_owner_decision,
+                    )
+                except FrozenDependencyAuthorityError as exc:
+                    print(f"❌ Frozen dependency revoke refused for {task_id}: {exc}")
+                    raise SystemExit(1) from exc
+                print(f"✅ Frozen dependency authority revoked for {task_id}.")
+                print(f"AUDIT_REVOCATION_FILE={event['revocation_file']}")
+                print(f"AUDIT_REVOCATION_SHA256={event['revocation_sha256']}")
             elif args.phase2_mode == "soft-pack":
                 from ..phase2_softdep_pack import write_softdep_pack
 
@@ -458,14 +580,6 @@ async def process_target(args):
                 else:
                     print(f"❌ Soft imports apply failed for batch: {pack_dir.name}")
                 print(detail)
-            elif args.phase2_mode == "audit":
-                for task_id in sorted(selected_task_ids):
-                    success, detail = audit_completed_task_output(task_id, ledger, settings)
-                    if success:
-                        print(f"✅ Semantic audit report passed for {task_id}; audit is diagnostic only.")
-                    else:
-                        print(f"❌ Semantic audit report found non-clean or failing evidence for {task_id}; official output was not quarantined by default.")
-                        print(detail)
         except FileNotFoundError as exc:
             print(f"❌ {exc}")
             return
@@ -475,18 +589,30 @@ def main() -> int:
 
         return state_main(sys.argv[1:], get_settings())
     parser = argparse.ArgumentParser(description="Toy Apollo Ledger-Driven Pipeline")
-    parser.add_argument("--phase", type=int, choices=[0, 1, 2, 3, 4], required=False, help="0: Ingest, 1: Plan, 2: Local including Problem soft dependency selection, 3: deprecated/migrated, 4: unavailable")
+    parser.add_argument("--phase", type=int, choices=[0, 1, 2], required=False, help="0: Ingest, 1: Plan, 2: Local formalization and Problem soft dependency selection")
     parser.add_argument("--input", type=str, required=False, default="", help="Path for Phase 0 pack and Phase 1 inputs")
     parser.add_argument("--phase0-mode", type=str, choices=PHASE0_MODES, default="pack", dest="phase0_mode", help="Phase 0 mode: pack extracts source materials, validate checks draft_input.tex, apply writes inputs/<stem>.tex")
     parser.add_argument("--page-range", type=str, required=False, default="", dest="page_range", help="Physical PDF page range for --phase 0 --phase0-mode pack, 1-based inclusive, for example 157-160")
     parser.add_argument("--phase0-output", type=str, required=False, default="", dest="phase0_output", help="Output stem for Phase 0 packs and inputs/<stem>.tex, for example chapter9-moments-mgf")
     parser.add_argument("--phase1-mode", type=str, choices=PHASE1_MODES, default="pack", dest="phase1_mode", help="Phase 1 mode: pack generates operator prompt packs, apply validates and registers a filled draft_plan.json")
     parser.add_argument("--tasks", type=str, required=False, default="", help="Comma-separated block_id filter for Phase 2 modes")
-    parser.add_argument("--phase2-mode", type=str, choices=PHASE2_MODES, default="pack", help="Phase 2 mode: default workflow is pack -> build-check -> review-now --review-subject candidate -> review-apply. review-apply is the only completion landing gate. batch-plan reports next actions from ledger state; batch-run executes a small number of selected review/auto-loop actions; review-pack/review-existing/review-support/review-existing-queue are prepare-only compatibility modes; review-fix repairs failed semantic review; debt-fix is a non-default maintenance path; soft-pack and soft-apply handle Problem soft dependency selection; auto-loop advances same-session repair/review state; verify and audit are diagnostics and do not land completion.")
-    parser.add_argument("--phase3-mode", type=str, choices=DEPRECATED_PHASE3_MODES, default=None, help=argparse.SUPPRESS)
-    parser.add_argument("--candidate", type=str, required=False, default="", help="Optional external Lean file for --phase 2 --phase2-mode build-check/verify; review-pack only accepts ToyApollo/Output/<task>.lean as a compatibility alias for review-existing")
+    parser.add_argument("--phase2-mode", type=str, choices=PHASE2_MODES, default="pack", help="Phase 2 mode: default workflow is pack -> build-check -> review-now --review-subject candidate -> review-apply. review-apply is the only completion landing gate. batch-plan reports next actions from ledger state; batch-run executes a small number of selected review/auto-loop actions; review-pack/review-existing/review-existing-queue are prepare-only compatibility modes; review-fix repairs failed semantic review; soft-pack and soft-apply handle Problem soft dependency selection; auto-loop advances same-session repair/review state.")
+    parser.add_argument("--candidate", type=str, required=False, default="", help="Optional external Lean file for --phase 2 --phase2-mode build-check; review-pack only accepts ToyApollo/Output/<task>.lean as a compatibility alias for review-existing")
     parser.add_argument("--review-result", type=str, required=False, default="", dest="review_result", help="Filled semantic review result JSON for --phase 2 --phase2-mode review-apply")
-    parser.add_argument("--review-subject", type=str, choices=["current", "existing", "candidate", "support"], default="current", dest="review_subject", help="Review subject selector for --phase 2 --phase2-mode review-now/auto-loop")
+    parser.add_argument("--expected-old-dependencies", type=str, required=False, default=None, dest="expected_old_dependencies_raw", help="Comma-separated current hard dependencies required as a compare-and-swap precondition for --phase 2 --phase2-mode dependency-reconcile; pass an explicit empty string for an empty list")
+    parser.add_argument("--expected-old-basis", type=str, required=False, default=None, dest="expected_old_basis", help="Exact current applied post-basis SHA-256 required by --phase 2 --phase2-mode basis-rebind")
+    parser.add_argument("--expected-new-basis", type=str, required=False, default=None, dest="expected_new_basis", help="Exact freshly computed post-basis SHA-256 required by --phase 2 --phase2-mode basis-rebind")
+    parser.add_argument("--expected-subject-hash", type=str, required=False, default=None, dest="expected_subject_hash", help="Exact unchanged official review-subject SHA-256 required by --phase 2 --phase2-mode basis-rebind")
+    parser.add_argument("--expected-dependencies", type=str, required=False, default=None, dest="expected_dependencies_raw", help="Comma-separated unchanged hard dependencies required by --phase 2 --phase2-mode basis-rebind; pass an explicit empty string for an empty list")
+    parser.add_argument("--expected-primary-hash", type=str, required=False, default=None, dest="expected_primary_hash", help="Exact current canonical Toy output SHA-256 required by frozen-dependency-accept")
+    parser.add_argument("--frozen-owner-scope", type=str, required=False, default="", dest="frozen_owner_scope", help="Explicit owner scope token required by frozen-dependency-accept")
+    parser.add_argument("--frozen-owner-decision-token", type=str, required=False, default="", dest="frozen_owner_decision_token", help="Explicit owner decision token required by frozen-dependency-accept")
+    parser.add_argument("--frozen-owner-reason", type=str, required=False, default="", dest="frozen_owner_reason", help="Auditable owner reason required by frozen-dependency-accept")
+    parser.add_argument("--frozen-owner-decision", type=str, required=False, default="", dest="frozen_owner_decision", help="Hash-bound owner decision JSON for frozen dependency grant/revoke")
+    parser.add_argument("--frozen-build-evidence", type=str, required=False, default="", dest="frozen_build_evidence", help="Mechanical build PASS JSON bound by frozen-dependency-accept; the command never runs Lake")
+    parser.add_argument("--expected-frozen-tip", type=str, required=False, default=None, dest="expected_frozen_tip", help="Current frozen receipt CAS for frozen-dependency-accept; pass an explicit empty string for an initial grant")
+    parser.add_argument("--expected-current-frozen-receipt", type=str, required=False, default=None, dest="expected_current_frozen_receipt", help="Current frozen receipt CAS required by frozen-dependency-revoke")
+    parser.add_argument("--review-subject", type=str, choices=["current", "existing", "candidate"], default="current", dest="review_subject", help="Review subject selector for --phase 2 --phase2-mode review-now/auto-loop")
     parser.add_argument("--auto-apply-pass", action="store_true", dest="auto_apply_pass", help="Agent-side hint for --phase 2 --phase2-mode review-now: after the Codex reviewer writes a pass result, continue with review-apply")
     parser.add_argument("--abandon-current-repair", action="store_true", dest="abandon_current_repair", help="With --phase 2 --phase2-mode review-fix, abandon the active repair cycle without changing draft.lean")
     parser.add_argument("--max-auto-rounds", type=int, default=PHASE2_AUTO_LOOP_REVIEW_ROUNDS, dest="max_auto_rounds", help="Maximum rounds for --phase 2 --phase2-mode auto-loop; default 15")
@@ -509,6 +635,8 @@ def main() -> int:
 
     args.task_ids = parse_task_ids(args.tasks)
     args.batch_task_kinds = parse_batch_task_kinds(args.batch_task_kinds_raw)
+    args.expected_old_dependencies = []
+    args.expected_dependencies = []
     if args.tasks and not args.task_ids:
         parser.error("--tasks was provided but no valid task id was parsed.")
     if args.phase == 0:
@@ -527,17 +655,107 @@ def main() -> int:
             parser.error("--page-range is only used with --phase 0 --phase0-mode pack.")
     if args.task_ids and args.phase == 1:
         parser.error("--tasks is not supported for Phase 1.")
-    if args.phase3_mode is not None and args.phase != 3:
-        parser.error(PHASE3_DEPRECATED_MESSAGE)
-    if args.phase == 3:
-        parser.error(PHASE3_DEPRECATED_MESSAGE)
-    if args.phase == 4:
-        parser.error(PHASE4_UNAVAILABLE_MESSAGE)
     if args.phase == 2 and args.phase2_mode in PHASE2_MODES and not args.task_ids:
         if args.phase2_mode not in {"batch-plan", "batch-run", "review-existing-queue"}:
             parser.error("--phase 2 modes require task ids via --tasks.")
     if args.phase == 2 and args.phase2_mode in PHASE2_SINGLE_TASK_MODES and len(args.task_ids) > 1:
-        parser.error("--phase 2 pack/build-check/verify/review-pack/review-existing/review-now/review-fix/debt-fix/auto-loop/review-apply modes support exactly one task at a time.")
+        parser.error("This --phase 2 mode supports exactly one task at a time.")
+    if args.phase == 2 and args.phase2_mode == "dependency-reconcile":
+        if args.expected_old_dependencies_raw is None:
+            parser.error("--expected-old-dependencies is required with --phase 2 --phase2-mode dependency-reconcile.")
+        try:
+            args.expected_old_dependencies = parse_expected_old_dependencies(args.expected_old_dependencies_raw)
+        except ValueError as exc:
+            parser.error(f"--expected-old-dependencies {exc}")
+    elif args.expected_old_dependencies_raw is not None:
+        parser.error("--expected-old-dependencies is only supported with --phase 2 --phase2-mode dependency-reconcile.")
+    basis_rebind_values = (
+        args.expected_old_basis,
+        args.expected_new_basis,
+    )
+    frozen_owner_values = (
+        args.frozen_owner_scope,
+        args.frozen_owner_decision_token,
+        args.frozen_owner_reason,
+        args.frozen_owner_decision,
+    )
+    if args.phase == 2 and args.phase2_mode == "basis-rebind":
+        if (
+            args.expected_primary_hash is not None
+            or any(frozen_owner_values)
+            or args.frozen_build_evidence
+            or args.expected_frozen_tip is not None
+            or args.expected_current_frozen_receipt is not None
+        ):
+            parser.error("Dependency-authority arguments are not supported with basis-rebind.")
+        if any(value is None for value in basis_rebind_values) or args.expected_subject_hash is None or args.expected_dependencies_raw is None:
+            parser.error(
+                "--expected-old-basis, --expected-new-basis, --expected-subject-hash, and "
+                "--expected-dependencies are required with --phase 2 --phase2-mode basis-rebind."
+            )
+        try:
+            args.expected_dependencies = parse_expected_old_dependencies(args.expected_dependencies_raw)
+        except ValueError as exc:
+            parser.error(f"--expected-dependencies {exc}")
+    elif args.phase == 2 and args.phase2_mode == "frozen-dependency-accept":
+        if any(value is not None for value in basis_rebind_values):
+            parser.error("Basis-rebind arguments are not supported with frozen-dependency-accept.")
+        required_nonempty = (
+            args.expected_primary_hash,
+            args.expected_subject_hash,
+            *frozen_owner_values,
+            args.frozen_build_evidence,
+        )
+        if any(value is None or not str(value).strip() for value in required_nonempty):
+            parser.error(
+                "--expected-primary-hash, --expected-subject-hash, --expected-dependencies, "
+                "--expected-frozen-tip, --frozen-owner-scope, --frozen-owner-decision-token, "
+                "--frozen-owner-reason, --frozen-owner-decision, and --frozen-build-evidence "
+                "are required with frozen-dependency-accept."
+            )
+        if args.expected_dependencies_raw is None or args.expected_frozen_tip is None:
+            parser.error(
+                "--expected-dependencies and --expected-frozen-tip are required with "
+                "frozen-dependency-accept; either may be passed as an explicit empty string."
+            )
+        if args.expected_current_frozen_receipt is not None:
+            parser.error("--expected-current-frozen-receipt is only used by frozen-dependency-revoke.")
+        try:
+            args.expected_dependencies = parse_expected_old_dependencies(args.expected_dependencies_raw)
+        except ValueError as exc:
+            parser.error(f"--expected-dependencies {exc}")
+    elif args.phase == 2 and args.phase2_mode == "frozen-dependency-revoke":
+        if (
+            any(value is not None for value in basis_rebind_values)
+            or args.expected_primary_hash is not None
+            or args.expected_subject_hash is not None
+            or args.expected_dependencies_raw is not None
+            or args.frozen_build_evidence
+            or args.expected_frozen_tip is not None
+        ):
+            parser.error("Grant/build/basis arguments are not supported with frozen-dependency-revoke.")
+        if (
+            any(not str(value or "").strip() for value in frozen_owner_values)
+            or not str(args.expected_current_frozen_receipt or "").strip()
+        ):
+            parser.error(
+                "--expected-current-frozen-receipt and all frozen owner decision fields "
+                "are required with frozen-dependency-revoke."
+            )
+    elif (
+        any(value is not None for value in basis_rebind_values)
+        or args.expected_subject_hash is not None
+        or args.expected_dependencies_raw is not None
+        or args.expected_primary_hash is not None
+        or any(frozen_owner_values)
+        or args.frozen_build_evidence
+        or args.expected_frozen_tip is not None
+        or args.expected_current_frozen_receipt is not None
+    ):
+        parser.error(
+            "Dependency-authority/basis compare-and-swap arguments are only "
+            "supported with their matching Phase 2 mode."
+        )
     if args.phase == 2 and args.phase2_mode in PHASE2_SOFT_MODES:
         invalid = [task_id for task_id in args.task_ids if not task_id.startswith("prob_")]
         if invalid:
@@ -551,8 +769,8 @@ def main() -> int:
             parser.error("--max-build-attempts-per-round cannot be below the hard-coded Phase 2 repair budget of 15.")
     if args.phase == 2 and args.input:
         parser.error("--input is not used with --phase 2.")
-    if args.candidate and not (args.phase == 2 and args.phase2_mode in ("build-check", "verify", "review-pack")):
-        parser.error("--candidate is only supported with --phase 2 --phase2-mode build-check/verify/review-pack.")
+    if args.candidate and not (args.phase == 2 and args.phase2_mode in ("build-check", "review-pack")):
+        parser.error("--candidate is only supported with --phase 2 --phase2-mode build-check/review-pack.")
     if args.phase == 2 and args.phase2_mode == "review-apply" and not args.review_result:
         parser.error("--review-result is required with --phase 2 --phase2-mode review-apply.")
     if args.review_result and not (args.phase == 2 and args.phase2_mode == "review-apply"):

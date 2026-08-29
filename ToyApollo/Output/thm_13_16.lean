@@ -25,20 +25,25 @@ theorem thm_13_16_integral_eq_of_condExp {Ω : Type*} [𝓕 : MeasurableSpace Ω
     _ = ∫ ω, Y ω ∂P := integral_congr_ae hCE
 
 theorem thm_13_16_condExp_zero {Ω : Type*} [𝓕 : MeasurableSpace Ω]
-    {P : Measure Ω} {𝓕n : ℕ → MeasurableSpace Ω} {X : ℕ → Ω → ℝ}
-    (hM : def_13_7 P 𝓕n X)
-    (hSigmaFinite : ∀ n : ℕ, SigmaFinite (P.trim ((def_13_7_isFiltration hM).1 n)))
-    (n : ℕ) :
+    {P : Measure Ω} [IsProbabilityMeasure P]
+    {𝓕n : ℕ → MeasurableSpace Ω} {X : ℕ → Ω → ℝ}
+    (hM : def_13_7 P 𝓕n X) (n : ℕ) :
     P[X n | 𝓕n 0] =ᵐ[P] X 0 := by
-  exact thm_13_15_multiStep_of_martingale hM hSigmaFinite 0 n (Nat.zero_le n)
+  have hSigmaFinite :
+      ∀ k : ℕ,
+        SigmaFinite (P.trim ((def_13_7_isFiltration hM).1 k)) := by
+    intro k
+    infer_instance
+  exact thm_13_15_multiStep_of_martingale hM hSigmaFinite
+    0 n (Nat.zero_le n)
 
 theorem thm_13_16 {Ω : Type*} [𝓕 : MeasurableSpace Ω]
-    {P : Measure Ω} {𝓕n : ℕ → MeasurableSpace Ω} {X : ℕ → Ω → ℝ}
-    (hM : def_13_7 P 𝓕n X)
-    (hSigmaFinite : ∀ n : ℕ, SigmaFinite (P.trim ((def_13_7_isFiltration hM).1 n))) :
+    {P : Measure Ω} [IsProbabilityMeasure P]
+    {𝓕n : ℕ → MeasurableSpace Ω} {X : ℕ → Ω → ℝ}
+    (hM : def_13_7 P 𝓕n X) :
     ∀ n : ℕ, 1 ≤ n → ∫ ω, X n ω ∂P = ∫ ω, X 0 ω ∂P := by
   intro n _hn
   have hfiltration := def_13_7_isFiltration hM
-  haveI : SigmaFinite (P.trim (hfiltration.1 0)) := hSigmaFinite 0
+  haveI : SigmaFinite (P.trim (hfiltration.1 0)) := inferInstance
   exact thm_13_16_integral_eq_of_condExp (hfiltration.1 0)
-    (thm_13_16_condExp_zero hM hSigmaFinite n)
+    (thm_13_16_condExp_zero hM n)

@@ -70,7 +70,7 @@ theorem thm_12_3_hasFiniteAbsIntegralSeries_of_eLpNorm_two_tsum_ne_top
       ∑' k, eLpNorm (f k) (2 : ℝ≥0∞) P := by
     refine ENNReal.tsum_le_tsum ?_
     intro k
-    simpa [eLpNorm_one_eq_lintegral_enorm] using
+    simpa [eLpNorm_one_eq_lintegral_enorm, enorm_eq_nnnorm] using
       (eLpNorm_le_eLpNorm_of_exponent_le (μ := P) (f := f k)
         (p := (1 : ℝ≥0∞)) (q := (2 : ℝ≥0∞)) (by norm_num)
         (hf k).aestronglyMeasurable)
@@ -86,7 +86,7 @@ theorem thm_12_3_hasFiniteAbsIntegralSeries_of_eLpNorm_two_bound
   have hle_one_two : ∀ k, (∫⁻ ω, ‖f k ω‖₊ ∂P) ≤
       eLpNorm (f k) (2 : ℝ≥0∞) P := by
     intro k
-    simpa [eLpNorm_one_eq_lintegral_enorm] using
+    simpa [eLpNorm_one_eq_lintegral_enorm, enorm_eq_nnnorm] using
       (eLpNorm_le_eLpNorm_of_exponent_le (μ := P) (f := f k)
         (p := (1 : ℝ≥0∞)) (q := (2 : ℝ≥0∞)) (by norm_num)
         (hf k).aestronglyMeasurable)

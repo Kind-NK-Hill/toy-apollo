@@ -44,6 +44,7 @@ theorem prob_10_10_mul_distribution_stability {Ω : Type*} [MeasurableSpace Ω]
 theorem prob_10_10_of_tendstoInDistribution {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω)
     [IsProbabilityMeasure μ] (Xn Yn : ℕ → Ω → ℝ) (X : Ω → ℝ) (c : ℝ)
+    (hYn_meas : ∀ n : ℕ, Measurable (Yn n))
     (hX_dist : TendstoInDistribution Xn atTop X (fun _ : ℕ => μ) μ)
     (hY_dist :
       TendstoInDistribution Yn atTop (fun _ : Ω => c) (fun _ : ℕ => μ) μ) :
@@ -55,7 +56,7 @@ theorem prob_10_10_of_tendstoInDistribution {Ω : Type*} [MeasurableSpace Ω]
     simp [IsProbabilityMeasure.measure_univ (μ := μ)]
   have hY_prob_local : ConvergesInProbability μ Yn (fun _ : Ω => c) :=
     prob_10_3_of_tendstoInDistribution μ Yn (fun _ : Ω => c) c
-      (by fun_prop) hY_dist h_const
+      hYn_meas (by fun_prop) hY_dist h_const
   have hY_prob : TendstoInMeasure μ Yn atTop (fun _ : Ω => c) :=
     tendstoInMeasure_of_convergesInProbability μ Yn (fun _ : Ω => c) hY_prob_local
   exact ⟨
@@ -66,6 +67,7 @@ theorem prob_10_10_of_tendstoInDistribution {Ω : Type*} [MeasurableSpace Ω]
 
 theorem prob_10_10 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     [IsProbabilityMeasure μ] (Xn Yn : ℕ → Ω → ℝ) (X : Ω → ℝ) (c : ℝ)
+    (hYn_meas : ∀ n : ℕ, Measurable (Yn n))
     (hX_dist : TendstoInDistribution Xn atTop X (fun _ : ℕ => μ) μ)
     (hY_dist :
       TendstoInDistribution Yn atTop (fun _ : Ω => c) (fun _ : ℕ => μ) μ) :
@@ -73,4 +75,4 @@ theorem prob_10_10 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
         (fun ω => X ω + c) (fun _ : ℕ => μ) μ ∧
       TendstoInDistribution (fun n ω => Xn n ω * Yn n ω) atTop
         (fun ω => c * X ω) (fun _ : ℕ => μ) μ :=
-  prob_10_10_of_tendstoInDistribution μ Xn Yn X c hX_dist hY_dist
+  prob_10_10_of_tendstoInDistribution μ Xn Yn X c hYn_meas hX_dist hY_dist

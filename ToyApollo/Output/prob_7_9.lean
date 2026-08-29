@@ -86,7 +86,7 @@ theorem prob_7_9 {Ω : Type} [MeasurableSpace Ω] {μ : Measure Ω}
         simp_all +decide [Filter.liminf_eq]
         refine' lt_of_le_of_lt (csSup_le _ _) _
         · exact ∫⁻ ω, ENNReal.ofReal (g_lim ω - f_lim ω) ∂μ - ENNReal.ofReal (ε / 2)
-        · exact ⟨0, ⟨0, fun _ _ => zero_le _⟩⟩
+        · exact ⟨0, ⟨0, fun _ _ => zero_le⟩⟩
         ·
           rintro _ ⟨N, hN⟩
           obtain ⟨n, hn₁, hn₂⟩ := h_fatou N
@@ -205,7 +205,7 @@ theorem prob_7_9 {Ω : Type} [MeasurableSpace Ω] {μ : Measure Ω}
                     [h_limsup.eventually (gt_mem_nhds <| ENNReal.lt_add_right (by aesop) one_ne_zero)]
                     with n hn
                   exact le_trans (by aesop) hn.le
-          · exact ⟨0, Filter.Eventually.of_forall fun n => zero_le _⟩
+          · exact ⟨0, Filter.Eventually.of_forall fun n => zero_le⟩
           · exact ENNReal.add_lt_top.mpr ⟨ENNReal.ofReal_lt_top, ENNReal.one_lt_top⟩
         ·
           rw [Filter.liminf_congr (Filter.eventuallyEq_of_mem (Filter.Ici_mem_atTop 0) fun n hn => ?_)]
@@ -215,7 +215,7 @@ theorem prob_7_9 {Ω : Type} [MeasurableSpace Ω] {μ : Measure Ω}
             rw [ENNReal.toReal_sSup]
             ·
               refine' csSup_le _ _ <;> norm_num
-              · exact ⟨0, ⟨0, fun n hn => zero_le _⟩⟩
+              · exact ⟨0, ⟨0, fun n hn => zero_le⟩⟩
               ·
                 rintro b x n hx rfl
                 refine' le_csSup _ _

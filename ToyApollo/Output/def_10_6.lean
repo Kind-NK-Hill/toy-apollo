@@ -19,9 +19,12 @@ def VectorConvergesAlmostSurely {Ω : Type*} [MeasurableSpace Ω] {d : ℕ} (μ 
   ∃ E : Set Ω, MeasurableSet E ∧ μ E = 1 ∧
     ∀ ω ∈ E, Tendsto (fun n : ℕ => Vn n ω) atTop (nhds (V ω))
 
+noncomputable def vectorEuclideanNorm {d : ℕ} (v : Fin d → ℝ) : ℝ :=
+  Real.sqrt (∑ i : Fin d, (v i) ^ 2)
+
 def vectorDeviationEvent {Ω : Type*} {d : ℕ} (Vn : ℕ → Ω → Fin d → ℝ)
     (V : Ω → Fin d → ℝ) (n : ℕ) (ε : ℝ) : Set Ω :=
-  {ω : Ω | ‖Vn n ω - V ω‖ > ε}
+  {ω : Ω | vectorEuclideanNorm (Vn n ω - V ω) > ε}
 
 def VectorConvergesInProbability {Ω : Type*} [MeasurableSpace Ω] {d : ℕ} (μ : Measure Ω)
     (Vn : ℕ → Ω → Fin d → ℝ) (V : Ω → Fin d → ℝ) : Prop :=

@@ -38,7 +38,8 @@ theorem prob_5_9 {Ω : Type*} [mΩ : MeasurableSpace Ω] (P : Measure Ω)
     rcases h_zero_one U hU with h0 | h1
     · right
       have h_compl : (X ⁻¹' U)ᶜ ∈ ae P := compl_mem_ae_iff.mpr h0
-      simpa [Set.preimage_compl] using h_compl
+      change {ω | X ω ∉ U} ∈ ae P
+      exact h_compl
     · left
       exact (mem_ae_iff_prob_eq_one (μ := P) h_preimage_mΩ).mpr h1
   obtain ⟨c, hc⟩ :=

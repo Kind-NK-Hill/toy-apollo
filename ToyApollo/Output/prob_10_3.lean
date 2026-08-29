@@ -21,22 +21,10 @@ theorem prob_10_3_of_randomVariablesConvergeInDistribution
     (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ)
     (hXn_meas : ∀ n : ℕ, Measurable (Xn n))
     (hX_meas : Measurable X)
-    (hDist : RandomVariablesConvergeInDistribution μ Xn X) :
+    (hDist :
+      RandomVariablesConvergeInDistribution (fun _ : ℕ => μ) Xn μ X) :
     TendstoInDistribution Xn atTop X (fun _ : ℕ => μ) μ := by
-  let Pseq : ℕ → ProbabilityMeasure ℝ := def_14_1_laws μ Xn hXn_meas
-  let P : ProbabilityMeasure ℝ := def_14_1_law μ X hX_meas
-  have hDist' : thm_14_2_cdfConvergence μ Xn X := by
-    simpa [RandomVariablesConvergeInDistribution, thm_14_2_cdfConvergence,
-      thm_14_2_randomVariableCdf, measureCdf] using hDist
-  have hWeak : thm_14_2_weakConvergence μ Xn X hXn_meas hX_meas :=
-    thm_14_2_distribution_to_weak μ hXn_meas hX_meas hDist'
-  have hLawWeak : def_14_1 Pseq P := by
-    simpa [Pseq, P, thm_14_2_weakConvergence, def_14_2, def_14_1,
-      def_14_1_randomVariableWeakConvergence, def_14_1_laws, def_14_1_law] using hWeak
-  have hTend : Tendsto Pseq atTop (𝓝 P) :=
-    (def_14_1_iff_tendsto).1 hLawWeak
-  refine ⟨fun n => (hXn_meas n).aemeasurable, hX_meas.aemeasurable, ?_⟩
-  simpa [Pseq, P, def_14_1_laws, def_14_1_law] using hTend
+  exact hDist
 
 theorem prob_10_3_tendstoInMeasure {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (Xn : ℕ → Ω → ℝ)
@@ -83,7 +71,7 @@ theorem prob_10_3_tendstoInMeasure {Ω : Type*} [MeasurableSpace Ω]
       exact hn.le
     simpa [F] using hn'
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le
-    tendsto_const_nhds htail (fun _ => zero_le _) ?_
+    tendsto_const_nhds htail (fun _ => bot_le) ?_
   intro n
   calc
     μ {ω : Ω | ε ≤ ‖Xn n ω - X ω‖}
@@ -101,13 +89,16 @@ theorem prob_10_3_tendstoInMeasure {Ω : Type*} [MeasurableSpace Ω]
         simp [hX_ne_zero]
 
 theorem prob_10_3_convergesInProbability_of_tendstoInMeasure {Ω : Type*}
-    [MeasurableSpace Ω] (μ : Measure Ω) (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ)
+    [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ)
+    (hXn_meas : ∀ n : ℕ, Measurable (Xn n)) (hX_meas : Measurable X)
     (h : TendstoInMeasure μ Xn atTop X) :
     ConvergesInProbability μ Xn X := by
+  refine ⟨hXn_meas, hX_meas, ?_⟩
   intro ε hε
   have hnorm := (tendstoInMeasure_iff_norm.mp h) ε hε
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le
-    tendsto_const_nhds hnorm (fun _ => zero_le _) ?_
+    tendsto_const_nhds hnorm (fun _ => bot_le) ?_
   intro n
   apply measure_mono
   intro ω hω
@@ -117,20 +108,22 @@ theorem prob_10_3_convergesInProbability_of_tendstoInMeasure {Ω : Type*}
 theorem prob_10_3_of_tendstoInDistribution {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (Xn : ℕ → Ω → ℝ)
     (X : Ω → ℝ) (c : ℝ)
+    (hXn_meas : ∀ n : ℕ, Measurable (Xn n))
     (hX_meas : Measurable X)
     (hDist : TendstoInDistribution Xn atTop X (fun _ : ℕ => μ) μ)
     (hConst : μ {ω : Ω | X ω = c} = 1) :
     ConvergesInProbability μ Xn X :=
-  prob_10_3_convergesInProbability_of_tendstoInMeasure μ Xn X
+  prob_10_3_convergesInProbability_of_tendstoInMeasure μ Xn X hXn_meas hX_meas
     (prob_10_3_tendstoInMeasure μ Xn X c hX_meas hDist hConst)
 
 theorem prob_10_3 {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     [IsProbabilityMeasure μ] (Xn : ℕ → Ω → ℝ) (X : Ω → ℝ) (c : ℝ)
     (hX_meas : Measurable X)
     (hXn_meas : ∀ n : ℕ, Measurable (Xn n))
-    (hDist : RandomVariablesConvergeInDistribution μ Xn X)
+    (hDist :
+      RandomVariablesConvergeInDistribution (fun _ : ℕ => μ) Xn μ X)
     (hConst : μ {ω : Ω | X ω = c} = 1) :
     ConvergesInProbability μ Xn X :=
-  prob_10_3_of_tendstoInDistribution μ Xn X c hX_meas
+  prob_10_3_of_tendstoInDistribution μ Xn X c hXn_meas hX_meas
     (prob_10_3_of_randomVariablesConvergeInDistribution μ Xn X hXn_meas hX_meas hDist)
     hConst

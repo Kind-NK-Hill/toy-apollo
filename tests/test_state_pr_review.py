@@ -195,14 +195,14 @@ class ExternalPrReviewTests(unittest.TestCase):
                 "spine_alignment": {
                     "status": "covered",
                     "summary": "direct proof covered",
-                    "obligations_checked": [
+                    "source_steps_checked": [
                         {
-                            "source_obligation": "The fixture claim is true.",
+                            "source_step": "The fixture claim is true.",
                             "lean_landing": "exact_pr_fixture",
                             "status": "covered",
                         }
                     ],
-                    "missing_obligations": [],
+                    "missing_source_steps": [],
                     "shortcut_assessment": "faithful",
                 },
                 "obligation_review": {

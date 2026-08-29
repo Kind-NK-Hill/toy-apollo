@@ -67,19 +67,43 @@ theorem thm_7_7_interval {Ω : Type*} [MeasurableSpace Ω]
           (nhds (∫ ω, X ω ∂μ)) :=
     thm_7_7_sequential_complex_DCT μ (fun _ : ℕ => Xh h0) X Y
       (fun _ => hXm h0 hh0) hYint (fun _ => h_bound h0 hh0) hseq_lim
-  have hXm_eventually :
-      ∀ᶠ h in nhdsWithin h0 I, AEStronglyMeasurable (Xh h) μ := by
-    filter_upwards [self_mem_nhdsWithin] with h hh
-    exact hXm h hh
-  have hbound_eventually :
-      ∀ᶠ h in nhdsWithin h0 I, ∀ᵐ ω ∂μ, ‖Xh h ω‖ ≤ Y ω := by
-    filter_upwards [self_mem_nhdsWithin] with h hh
-    exact h_bound h hh
   have h_tendsto :
       Tendsto (fun h : ℝ => ∫ ω, Xh h ω ∂μ) (nhdsWithin h0 I)
-        (nhds (∫ ω, X ω ∂μ)) :=
-    thm_7_DCT_filter μ Xh X Y (nhdsWithin h0 I)
-      hXm_eventually hYint hbound_eventually h_lim
+        (nhds (∫ ω, X ω ∂μ)) := by
+    classical
+    refine Filter.tendsto_iff_seq_tendsto.2 ?_
+    intro u hu
+    let v : ℕ → ℝ := fun n => if u n ∈ I then u n else h0
+    have hu_mem : ∀ᶠ n in atTop, u n ∈ I :=
+      hu.eventually self_mem_nhdsWithin
+    have hv_mem : ∀ n : ℕ, v n ∈ I := by
+      intro n
+      by_cases hn : u n ∈ I
+      · simpa [v, hn] using hn
+      · simpa [v, hn] using hh0
+    have huv : u =ᶠ[atTop] v := by
+      filter_upwards [hu_mem] with n hn
+      simp [v, hn]
+    have hv_lim : Tendsto v atTop (nhdsWithin h0 I) :=
+      Filter.Tendsto.congr' huv hu
+    have hv_seq_lim :
+        ∀ᵐ ω ∂μ, Tendsto (fun n : ℕ => Xh (v n) ω) atTop (nhds (X ω)) := by
+      filter_upwards [h_lim] with ω hω
+      exact hω.comp hv_lim
+    have hv_dct :=
+      thm_7_7_sequential_complex_DCT μ (fun n : ℕ => Xh (v n)) X Y
+        (fun n => hXm (v n) (hv_mem n)) hYint
+        (fun n => h_bound (v n) (hv_mem n)) hv_seq_lim
+    have hint_eq :
+        (fun n : ℕ => ∫ ω, Xh (u n) ω ∂μ) =ᶠ[atTop]
+          (fun n : ℕ => ∫ ω, Xh (v n) ω ∂μ) := by
+      filter_upwards [huv] with n hn
+      rw [hn]
+    have hu_integral :
+        Tendsto (fun n : ℕ => ∫ ω, Xh (u n) ω ∂μ) atTop
+          (nhds (∫ ω, X ω ∂μ)) :=
+      Filter.Tendsto.congr' hint_eq.symm hv_dct.2
+    simpa [Function.comp_def] using hu_integral
   exact ⟨hseq.1, h_tendsto⟩
 
 theorem thm_7_7 {Ω : Type*} [MeasurableSpace Ω]

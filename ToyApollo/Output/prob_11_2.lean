@@ -15,13 +15,14 @@ open scoped ENNReal
 
 theorem prob_11_2_shifted_square_integral {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] {X : Ω → ℝ}
-    (hX : MemLp X 2 P) (t : ℝ) :
-    (∫ ω, (X ω - P[X] + t) ^ 2 ∂P) = _root_.variance P X + t ^ 2 := by
+    (hXm : Measurable X) (hX : MemLp X 2 P) (t : ℝ) :
+    (∫ ω, (X ω - P[X] + t) ^ 2 ∂P) =
+      _root_.variance P X (FiniteAbsMoment.of_memLp hXm hX) + t ^ 2 := by
   let Y : Ω → ℝ := fun ω => X ω - P[X]
   have hXint : Integrable X P := hX.integrable (by norm_num)
   have hY_mem : MemLp Y 2 P := by
-    simpa [Y, Pi.sub_apply] using
-      hX.sub (memLp_const (P[X]) : MemLp (fun _ : Ω => P[X]) 2 P)
+    change MemLp (X - fun _ : Ω => P[X]) 2 P
+    exact hX.sub (memLp_const (P[X]) : MemLp (fun _ : Ω => P[X]) 2 P)
   have hY_int : Integrable Y P := hY_mem.integrable (by norm_num)
   have hY2_int : Integrable (fun ω => Y ω ^ 2) P := hY_mem.integrable_sq
   have hLin_int : Integrable (fun ω => (2 * t) * Y ω) P :=
@@ -31,7 +32,9 @@ theorem prob_11_2_shifted_square_integral {Ω : Type*} [MeasurableSpace Ω]
     rw [show (∫ ω, Y ω ∂P) = ∫ ω, X ω - P[X] ∂P by rfl]
     rw [integral_sub hXint (integrable_const (P[X])), integral_const]
     simp
-  have hvar : _root_.variance P X = ∫ ω, Y ω ^ 2 ∂P := by
+  have hvar :
+      _root_.variance P X (FiniteAbsMoment.of_memLp hXm hX) =
+        ∫ ω, Y ω ^ 2 ∂P := by
     rw [_root_.variance, rthCentralMoment]
     rw [ProbabilityTheory.centralMoment_two_eq_variance (μ := P) (X := X)
       hX.aemeasurable]
@@ -53,16 +56,17 @@ theorem prob_11_2_shifted_square_integral {Ω : Type*} [MeasurableSpace Ω]
     _ = ∫ ω, Y ω ^ 2 ∂P + (2 * t) * ∫ ω, Y ω ∂P + t ^ 2 := by
       rw [integral_const_mul, integral_const]
       simp
-    _ = _root_.variance P X + t ^ 2 := by
+    _ = _root_.variance P X (FiniteAbsMoment.of_memLp hXm hX) + t ^ 2 := by
       rw [hY_integral, ← hvar]
       ring
 
 theorem prob_11_2_positive {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
-    [IsProbabilityMeasure P] (X : Ω → ℝ) (hX : MemLp X 2 P)
+    [IsProbabilityMeasure P] (X : Ω → ℝ) (hXm : Measurable X) (hX : MemLp X 2 P)
     {a : ℝ} (ha : 0 < a) :
     P.real {ω | a ≤ X ω - P[X]} ≤
-      _root_.variance P X / (_root_.variance P X + a ^ 2) := by
-  let v : ℝ := _root_.variance P X
+      _root_.variance P X (FiniteAbsMoment.of_memLp hXm hX) /
+        (_root_.variance P X (FiniteAbsMoment.of_memLp hXm hX) + a ^ 2) := by
+  let v : ℝ := _root_.variance P X (FiniteAbsMoment.of_memLp hXm hX)
   let t : ℝ := v / a
   have hv_nonneg : 0 ≤ v := by
     dsimp [v]
@@ -75,11 +79,11 @@ theorem prob_11_2_positive {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
   have hZ_nonneg : 0 ≤ᵐ[P] Z :=
     Filter.Eventually.of_forall fun ω => sq_nonneg _
   have hCentered : MemLp (fun ω => X ω - P[X]) 2 P := by
-    simpa [Pi.sub_apply] using
-      hX.sub (memLp_const (P[X]) : MemLp (fun _ : Ω => P[X]) 2 P)
+    change MemLp (X - fun _ : Ω => P[X]) 2 P
+    exact hX.sub (memLp_const (P[X]) : MemLp (fun _ : Ω => P[X]) 2 P)
   have hShift : MemLp (fun ω => X ω - P[X] + t) 2 P := by
-    simpa [Pi.add_apply] using
-      hCentered.add (memLp_const t : MemLp (fun _ : Ω => t) 2 P)
+    change MemLp ((fun ω => X ω - P[X]) + fun _ : Ω => t) 2 P
+    exact hCentered.add (memLp_const t : MemLp (fun _ : Ω => t) 2 P)
   have hZ_int : Integrable Z P := by
     simpa [Z] using hShift.integrable_sq
   have hbase_pos : 0 < a + t := add_pos_of_pos_of_nonneg ha ht_nonneg
@@ -102,7 +106,7 @@ theorem prob_11_2_positive {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     measureReal_mono (μ := P) hsubset
   have hZint : (∫ ω, Z ω ∂P) = v + t ^ 2 := by
     dsimp [Z, v]
-    exact prob_11_2_shifted_square_integral P hX t
+    exact prob_11_2_shifted_square_integral P hXm hX t
   have halg : (v + t ^ 2) / (a + t) ^ 2 = v / (v + a ^ 2) := by
     dsimp [t]
     have ha_ne : a ≠ 0 := ne_of_gt ha
@@ -117,20 +121,25 @@ theorem prob_11_2_positive {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     _ = v / (v + a ^ 2) := halg
 
 theorem prob_11_2 {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
-    [IsProbabilityMeasure P] (X : Ω → ℝ) (hX : MemLp X 2 P)
-    {a : ℝ} (ha : 0 ≤ a) (hden : 0 < _root_.variance P X + a ^ 2) :
+    [IsProbabilityMeasure P] (X : Ω → ℝ) (hXm : Measurable X) (hX : MemLp X 2 P)
+    {a : ℝ} (ha : 0 ≤ a)
+    (hden : 0 < _root_.variance P X (FiniteAbsMoment.of_memLp hXm hX) + a ^ 2) :
     P.real {ω | a ≤ X ω - P[X]} ≤
-      _root_.variance P X / (_root_.variance P X + a ^ 2) := by
+      _root_.variance P X (FiniteAbsMoment.of_memLp hXm hX) /
+        (_root_.variance P X (FiniteAbsMoment.of_memLp hXm hX) + a ^ 2) := by
   by_cases hapos : 0 < a
-  · exact prob_11_2_positive P X hX hapos
+  · exact prob_11_2_positive P X hXm hX hapos
   · have ha0 : a = 0 := le_antisymm (le_of_not_gt hapos) ha
-    have hvpos : 0 < _root_.variance P X := by
+    have hvpos :
+        0 < _root_.variance P X (FiniteAbsMoment.of_memLp hXm hX) := by
       simpa [ha0] using hden
     have hprob : P.real {ω | a ≤ X ω - P[X]} ≤ 1 := by
       have hsub : {ω | a ≤ X ω - P[X]} ⊆ (Set.univ : Set Ω) := Set.subset_univ _
       have hm := measureReal_mono (μ := P) hsub
       simpa using hm
-    have hfrac : _root_.variance P X / (_root_.variance P X + a ^ 2) = 1 := by
+    have hfrac :
+        _root_.variance P X (FiniteAbsMoment.of_memLp hXm hX) /
+            (_root_.variance P X (FiniteAbsMoment.of_memLp hXm hX) + a ^ 2) = 1 := by
       rw [ha0]
       simpa using div_self (ne_of_gt hvpos)
     simpa [hfrac] using hprob

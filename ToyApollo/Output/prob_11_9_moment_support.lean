@@ -24,8 +24,8 @@ theorem prob_11_9_tendsto_one_sub_const_div_pow
         (fun n : ℕ => (boxes n : ℝ) *
           Real.log (1 + (-c) / (boxes n : ℝ)))
         atTop (nhds (-c)) := by
-    simpa [sub_eq_add_neg] using
-      (Real.tendsto_mul_log_one_add_div_atTop (-c)).comp hboxes
+    refine ((Real.tendsto_mul_log_one_add_div_atTop (-c)).comp hboxes).congr' ?_
+    exact Eventually.of_forall (fun _ => rfl)
   have hmul0 := hratio.mul hlog0
   have hmul1 :
       Tendsto
@@ -109,7 +109,10 @@ theorem prob_11_9_oneBoxIndicator_integral {Ω : Type*}
         (prob_11_9_oneBoxEmptyEvent boxes k locations n i).indicator
           (fun _ : Ω => (1 : ℝ)) ω ∂P =
       P.real (prob_11_9_oneBoxEmptyEvent boxes k locations n i) := by
-  simpa using
+  rw [show (fun _ : Ω => (1 : ℝ)) = (1 : Ω → ℝ) by
+    funext ω
+    simp]
+  exact
     (MeasureTheory.integral_indicator_one (μ := P)
       (s := prob_11_9_oneBoxEmptyEvent boxes k locations n i) hMeas)
 
@@ -123,7 +126,10 @@ theorem prob_11_9_twoBoxIndicator_integral {Ω : Type*}
         (prob_11_9_twoBoxEmptyEvent boxes k locations n i j).indicator
           (fun _ : Ω => (1 : ℝ)) ω ∂P =
       P.real (prob_11_9_twoBoxEmptyEvent boxes k locations n i j) := by
-  simpa using
+  rw [show (fun _ : Ω => (1 : ℝ)) = (1 : Ω → ℝ) by
+    funext ω
+    simp]
+  exact
     (MeasureTheory.integral_indicator_one (μ := P)
       (s := prob_11_9_twoBoxEmptyEvent boxes k locations n i j) hMeas)
 
@@ -500,7 +506,9 @@ theorem prob_11_9_centered_square_integral_eq {Ω : Type*}
     rw [abs_of_nonneg hnonneg]
     exact hle
   have hY2Meas : AEStronglyMeasurable (fun ω : Ω => Y ω ^ 2) P := by
-    simpa [Y] using hYMeas.pow 2
+    refine (hYMeas.pow 2).congr ?_
+    filter_upwards with ω
+    rfl
   have hY2Int : Integrable (fun ω : Ω => Y ω ^ 2) P := by
     refine Integrable.of_bound hY2Meas 1 ?_
     filter_upwards with ω

@@ -26,17 +26,17 @@ def review_spine_contract(task: dict[str, Any]) -> dict[str, Any]:
         ),
         "acceptable_abstraction": [
             "You may compress local proof detail or reuse Mathlib lemmas.",
-            "You may not replace a source-side interface translation, proof-debt support item, construction chain, contradiction spine, partition argument, or other intermediate obligation with an opaque shortcut that leaves the source burden unaccounted for.",
+            "You may not replace a source-side interface translation, construction chain, contradiction spine, partition argument, or other essential source step with an opaque shortcut that leaves the source burden unaccounted for.",
         ],
         "automatic_fail_patterns": [
-            "A source-side obligation is moved into a new theorem-level assumption.",
+            "An essential source step is moved into a new theorem-level assumption.",
             "A source proof/construction spine is replaced by a theorem-specific wrapper or black-box substitution.",
-            "The reviewer cannot say where the source-side obligations land in Lean but still proposes pass.",
+            "The reviewer cannot say where the essential source steps land in Lean but still proposes pass.",
         ],
         "pass_evidence_requirements": [
-            "List the source-side obligations checked.",
-            "Name the Lean landing place for each checked obligation.",
-            "For any covered proof obligation, record a verified proof contract with expected theorem signature, landing kind, signature match, body reassumption check, and public premise check.",
+            "List the essential source proof steps checked.",
+            "Name the Lean landing place for each checked source step.",
+            "For every covered source step, check signature fidelity, body reassumption, and public-premise relocation directly.",
             "Explain why any abstraction used is faithful rather than a substitution.",
         ],
     }
@@ -56,14 +56,12 @@ def review_route_inspection_gate(task: dict[str, Any]) -> dict[str, Any]:
         ],
         "trigger_conditions": [
             "semantic_fail_public_premise",
-            "needs_concrete_decomposition",
-            "nested_obl_obl_family",
             "dirty_or_blocked_family",
             "parent_route_source_mismatch",
         ],
         "policy": [
-            "`obl` is not a task factory or public import surface.",
-            "`proof_obligations.json` is checklist/review context only.",
+            "The `obl` child-task and proof-obligation checklist mechanisms are retired.",
+            "Historical `proof_obligations.json` files are inert audit artifacts: never generate, bind, apply, or gate on them.",
             "Family closure reports reassembly/audit state only; they do not complete a parent.",
             "A parent/support route is clean only after build-check -> review-now -> review-apply.",
         ],

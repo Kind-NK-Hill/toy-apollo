@@ -22,9 +22,8 @@ from src.toy_apollo.phase2_pack_generation import (  # noqa: E402
 from src.toy_apollo.phase2_prompt_pack import (  # noqa: E402
     _build_build_result_payload,
     _run_staged_official_build,
-    audit_completed_task_output,
+    resolve_phase2_task,
     validate_candidate_hard_checks,
-    verify_prompt_pack_candidate,
 )
 from src.toy_apollo.phase2_pack_shared.io import (  # noqa: E402
     fs_path,
@@ -38,10 +37,61 @@ from src.toy_apollo.phase2_semantic_review import (  # noqa: E402
     SEMANTIC_REVIEW_PROMPT_VERSION,
     SEMANTIC_REVIEW_RUBRIC_VERSION,
 )
+from src.toy_apollo.phase2_task_status import PROOF_BEARING_PASS_PREFIXES  # noqa: E402
 from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E402
 
 
 class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
+    def test_resolve_phase2_task_fills_only_missing_plan_dependencies(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            plans_dir = root / "plans"
+            plans_dir.mkdir(parents=True)
+            settings = self._make_settings(root, plans_dir)
+            (plans_dir / "chapter5_plan.json").write_text(
+                json.dumps(
+                    [
+                        {
+                            "block_id": "thm_5_missing_deps",
+                            "type": "Theorem_Statement",
+                            "title": "Missing dependencies",
+                            "content": "Plan content A.",
+                            "source_plan": "chapter5",
+                            "dependencies": ["def_5_1"],
+                        },
+                        {
+                            "block_id": "thm_5_explicit_empty",
+                            "type": "Theorem_Statement",
+                            "title": "Explicit empty dependencies",
+                            "content": "Plan content B.",
+                            "source_plan": "chapter5",
+                            "dependencies": ["def_5_1"],
+                        },
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            ledger = LedgerManager(str(root / "project_ledger.json"))
+            ledger.ledger["tasks"] = {
+                "thm_5_missing_deps": {
+                    "block_id": "thm_5_missing_deps",
+                    "type": "Theorem_Statement",
+                    "content": "Imported content A.",
+                },
+                "thm_5_explicit_empty": {
+                    "block_id": "thm_5_explicit_empty",
+                    "type": "Theorem_Statement",
+                    "content": "Imported content B.",
+                    "dependencies": [],
+                },
+            }
+
+            missing = resolve_phase2_task("thm_5_missing_deps", ledger, settings)
+            explicit_empty = resolve_phase2_task("thm_5_explicit_empty", ledger, settings)
+
+        self.assertEqual(missing["dependencies"], ["def_5_1"])
+        self.assertEqual(explicit_empty["dependencies"], [])
+
     def test_staged_official_build_uses_short_backup_names_for_long_child_obligation_paths(self):
         root = Path(tempfile.gettempdir()) / "toy_apollo_staged_long_backup"
         try:
@@ -323,9 +373,13 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertEqual(review_input["mode"], "review-pack")
             self.assertEqual(review_input["prompt_version"], SEMANTIC_REVIEW_PROMPT_VERSION)
             self.assertEqual(review_input["rubric_version"], SEMANTIC_REVIEW_RUBRIC_VERSION)
-            self.assertEqual(review_input["review_basis"]["proof_obligations"], {})
-            self.assertEqual(review_input["review_basis"]["proof_obligations_file"], "")
-            self.assertEqual(review_input["review_basis"]["proof_obligation_summary"], {})
+            for retired_field in (
+                "proof_obligations",
+                "proof_obligations_file",
+                "proof_obligation_summary",
+                "proof_obligations_evidence",
+            ):
+                self.assertNotIn(retired_field, review_input["review_basis"])
             route_gate = review_input["review_basis"]["route_inspection_gate"]
             self.assertEqual(route_gate["authority"], "review_context_only")
             self.assertEqual(
@@ -364,6 +418,13 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
                     "required_fields": ["proof_class", "completion_class"],
                     "must_be_non_empty": True,
                     "authority": "reviewer_classification_then_official_task_status_projection",
+                    "task_role": "proof_bearing",
+                    "clean_pass_prefixes": list(PROOF_BEARING_PASS_PREFIXES),
+                    "allowed_exception_classes": [],
+                    "projection_rule": (
+                        "For clean pass, both class fields must use a clean pass prefix allowed for the projected task role; "
+                        "task-specific allowed exceptions are non-clean."
+                    ),
                 },
             )
             self.assertEqual(schema_hints["section_status_values"], ["covered", "partial", "missing", "violated", "unclear"])
@@ -378,11 +439,13 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
                     "stop_go_verdict",
                 ],
             )
-            self.assertIn("obligation_item_contract_fields", schema_hints)
-            self.assertEqual(
-                schema_hints["obligation_item_contract_fields"]["proof_contract_status"],
-                "unverified | verified | failed | not_applicable | accepted_adapter | open_math_debt | beyond_book_exception",
-            )
+            self.assertNotIn("obligation_item_contract_fields", schema_hints)
+            self.assertIn("source_step_entry_shape", schema_hints)
+            self.assertIn("source_step", schema_hints["source_step_entry_shape"])
+            self.assertIn("lean_landing", schema_hints["source_step_entry_shape"])
+            self.assertNotIn("obligation_review", review_template)
+            self.assertEqual(review_template["spine_alignment"]["source_steps_checked"], [])
+            self.assertEqual(review_template["spine_alignment"]["missing_source_steps"], [])
             self.assertEqual(
                 schema_hints["downstream_consumer_entry_shape"],
                 {
@@ -398,7 +461,11 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertIn("textbook-first, bridge-then-Mathlib", review_prompt)
             self.assertIn("A reviewed equivalence bridge may use Mathlib", review_prompt)
             self.assertIn("adapter-only shortcut", review_prompt)
-            self.assertIn("proof_contract_status = verified", review_prompt)
+            self.assertIn("## Task-Level Pass Class Contract", review_prompt)
+            self.assertIn("Projected task role: `proof_bearing`", review_prompt)
+            self.assertIn("source_route_proof_completed", review_prompt)
+            self.assertIn("both `proof_class` and `completion_class`", review_prompt)
+            self.assertIn("spine_alignment.source_steps_checked", review_prompt)
             self.assertIn("route_inspection", review_prompt)
             self.assertIn("source_route", review_prompt)
             self.assertIn("public_interface_check", review_prompt)
@@ -406,8 +473,11 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertIn("forbidden_weakenings entries use status not_present/present/not_applicable", review_prompt)
 
             review_context = (pack_dir / "semantic_review_context_v1.md").read_text(encoding="utf-8")
-            self.assertIn("Proof obligation tracking: `Level 0", review_context)
+            self.assertNotIn("obligation_review", review_prompt)
+            self.assertNotIn("proof_obligations", review_prompt)
+            self.assertNotIn("Proof obligation tracking", review_context)
             self.assertNotIn("## Proof Obligation Ledger", review_context)
+            self.assertNotIn("proof_obligations.json", review_context)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -495,7 +565,6 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
                 [
                     "source_tex",
                     "lean_subject",
-                    "proof_obligations",
                     "audit",
                     "classification",
                     "dependency_status",
@@ -504,7 +573,10 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
                     "hashes",
                 ],
             )
-            self.assertIn("proof_obligations", basis["proof_obligations_evidence"])
+            self.assertNotIn("proof_obligations_evidence", basis)
+            self.assertNotIn("proof_obligations", basis)
+            self.assertNotIn("proof_obligations_file", basis)
+            self.assertNotIn("proof_obligation_summary", basis)
             self.assertEqual(basis["audit_evidence"]["latest_audit_result_file"], str(audit_path))
             self.assertEqual(basis["classification_history"]["entries"][0]["primary_class"], "open_math_debt")
             self.assertEqual(basis["ledger_status"]["task_status"], "PACKED")
@@ -513,113 +585,6 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertIn("dependency_status", basis)
             self.assertIn("downstream_evidence", basis)
             self.assertIn("subject_imports", basis)
-        finally:
-            shutil.rmtree(root, ignore_errors=True)
-
-    def test_audit_semantic_fail_preserves_official_output_by_default(self):
-        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_audit_fail_preserves_output"
-        try:
-            self._clean_root(root)
-            task_id = "thm_4_pack_generation_audit_fail_preserves_output"
-            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
-            original_output = output_path.read_text(encoding="utf-8")
-
-            with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
-                return_value=(True, "build ok"),
-            ), patch(
-                "src.toy_apollo.phase2_prompt_pack._run_semantic_review_for_candidate",
-                return_value={"verdict": "fail", "cache_class": "semantic_verdict", "summary": "fixture audit fail"},
-            ):
-                success, detail = audit_completed_task_output(task_id, ledger, settings)
-
-            self.assertFalse(success)
-            self.assertIn("fixture audit fail", detail)
-            self.assertTrue(output_path.exists())
-            self.assertEqual(output_path.read_text(encoding="utf-8"), original_output)
-            self.assertFalse(list(pack_dir.glob("rejected_official_v*")))
-            task_record = ledger.ledger["tasks"][task_id]
-            self.assertEqual(task_record["status"], "COMPLETED")
-            self.assertEqual(task_record["latest_official_audit_disposition"], "audit_semantic_fail")
-            self.assertEqual(task_record["official_output_quarantine_policy"], "not_quarantined_by_default")
-            verify_result = json.loads((pack_dir / "verify_result_v1.json").read_text(encoding="utf-8"))
-            self.assertEqual(verify_result["state_transition"], "audit_failed_no_quarantine")
-        finally:
-            shutil.rmtree(root, ignore_errors=True)
-
-    def test_audit_adapter_review_pass_is_non_clean(self):
-        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_audit_adapter_non_clean"
-        try:
-            self._clean_root(root)
-            task_id = "thm_14_6"
-            ledger, settings, pack_dir, _output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
-
-            with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
-                return_value=(True, "build ok"),
-            ), patch(
-                "src.toy_apollo.phase2_prompt_pack._run_semantic_review_for_candidate",
-                return_value={
-                    "verdict": "pass",
-                    "cache_class": "semantic_verdict",
-                    "summary": "fixture adapter pass",
-                    "proof_class": "mathlib_backed_adapter_completed",
-                    "completion_class": "mathlib_backed_adapter_completed",
-                },
-            ):
-                success, detail = audit_completed_task_output(task_id, ledger, settings)
-
-            self.assertFalse(success, detail)
-            self.assertIn("Non-clean audit", detail)
-            task_record = ledger.ledger["tasks"][task_id]
-            self.assertEqual(task_record["status"], "COMPLETED")
-            self.assertEqual(task_record["phase2_status"], "fail")
-            self.assertEqual(task_record["phase2_task_status"], "fail")
-            verify_result = json.loads((pack_dir / "verify_result_v1.json").read_text(encoding="utf-8"))
-            self.assertEqual(verify_result["disposition"], "audit_pass_non_clean_report")
-            self.assertEqual(verify_result["state_transition"], "none")
-        finally:
-            shutil.rmtree(root, ignore_errors=True)
-
-    def test_verify_reports_build_and_review_without_landing_completion(self):
-        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_verify_report_only"
-        try:
-            self._clean_root(root)
-            task_id = "thm_4_pack_generation_verify_report_only"
-            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
-
-            with patch("src.toy_apollo.phase2_prompt_pack.LeanCompiler") as compiler_cls, patch(
-                "src.toy_apollo.phase2_prompt_pack._reviewer_config_or_detail",
-                return_value=({"backend": "test"}, ""),
-            ), patch(
-                "src.toy_apollo.phase2_prompt_pack._run_semantic_review_for_candidate",
-                return_value={
-                    "verdict": "pass",
-                    "cache_class": "semantic_verdict",
-                    "summary": "fixture verify pass",
-                    "proof_class": "textbook_proof_completed",
-                    "completion_class": "textbook_proof_completed",
-                },
-            ), patch(
-                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
-                return_value=(True, "final build ok"),
-            ) as staged_build:
-                compiler = compiler_cls.return_value
-                compiler.validate_with_repl_async = AsyncMock(return_value=(True, "repl ok"))
-                compiler.build_module_async = AsyncMock(return_value=(True, "temp build ok"))
-
-                success, detail = asyncio.run(verify_prompt_pack_candidate(task_id, ledger, settings))
-
-            self.assertTrue(success, detail)
-            self.assertIn("review-apply", detail)
-            self.assertFalse(output_path.exists())
-            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "PACKED")
-            self.assertEqual(ledger.ledger["tasks"][task_id]["phase2_status"], "pass")
-            staged_kwargs = staged_build.call_args.kwargs
-            self.assertTrue(staged_kwargs["restore_on_success"])
-            verify_result = json.loads((pack_dir / "verify_result_v1.json").read_text(encoding="utf-8"))
-            self.assertEqual(verify_result["disposition"], "verify_pass_report")
-            self.assertEqual(verify_result["state_transition"], "none")
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -723,7 +688,7 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
-    def test_complex_pack_still_creates_proof_obligations_file(self):
+    def test_complex_pack_does_not_create_or_reference_proof_obligations_file(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_complex_obligations"
         try:
             self._clean_root(root)
@@ -762,11 +727,10 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             pack_dir = write_prompt_pack(task_id, ledger, settings)
 
             obligations_path = pack_dir / "proof_obligations.json"
-            self.assertTrue(obligations_path.exists())
-            obligation_ledger = json.loads(obligations_path.read_text(encoding="utf-8"))
-            self.assertEqual(obligation_ledger["task_id"], task_id)
-            self.assertTrue(obligation_ledger["classification"]["requires_decomposition"])
-            self.assertEqual(obligation_ledger["obligations"][0]["id"], "source_proof_spine")
+            self.assertFalse(obligations_path.exists())
+            metadata = json.loads((pack_dir / "metadata.json").read_text(encoding="utf-8"))
+            self.assertNotIn("proof_obligations_file", metadata)
+            self.assertNotIn("proof_obligation_summary", metadata)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -799,22 +763,19 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
-    def test_build_check_rejects_existing_pack_when_hard_dependency_has_legacy_proof_debt(self):
+    def test_write_prompt_pack_ignores_legacy_proof_debt_summary_on_completed_dependency(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_legacy_proof_debt_dep"
         try:
             ledger, settings, task_id, dep_id = self._setup_proof_debt_dependency_task(
                 root,
                 legacy_completed_debt=True,
+                downstream_type="Theorem",
             )
-            pack_dir = settings.phase2_prompt_packs_dir / task_id
-            pack_dir.mkdir(parents=True, exist_ok=True)
-            (pack_dir / "draft.lean").write_text("import Mathlib\n\ntheorem prob_10_10 : True := by\n  trivial\n", encoding="utf-8")
+            pack_dir = write_prompt_pack(task_id, ledger, settings)
 
-            success, detail = asyncio.run(build_check_prompt_pack_candidate(task_id, ledger, settings))
-
-            self.assertFalse(success)
-            self.assertIn(dep_id, detail)
-            self.assertIn("proof debt", detail.lower())
+            self.assertTrue(pack_dir.exists())
+            self.assertEqual(ledger.ledger["tasks"][dep_id]["status"], TaskStatus.COMPLETED.value)
+            self.assertTrue(ledger.ledger["tasks"][dep_id]["proof_obligation_summary"])
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -962,6 +923,34 @@ theorem thm_10_8 : True := by
         self.assertTrue(success, detail)
         self.assertEqual(diagnostics, [])
 
+    def test_hard_check_accepts_cordis_mapped_structure_and_abbrev_declarations(self):
+        candidate = """
+namespace Cordis.Foundations
+
+abbrev EffectContext (State : Type) := State × (State → State)
+
+structure TwistedPair (State : Type) where
+  forward : State → State
+  inverse : State → State
+
+end Cordis.Foundations
+""".strip()
+        cases = (
+            ("def_1", "TwistedPair"),
+            ("def_2", "EffectContext"),
+        )
+
+        for task_id, declaration in cases:
+            with self.subTest(task_id=task_id):
+                success, diagnostics, detail = validate_candidate_hard_checks(
+                    {"block_id": task_id, "type": "Definition", "dependencies": []},
+                    candidate,
+                    target_declaration_names={task_id: [declaration]},
+                )
+
+                self.assertTrue(success, detail)
+                self.assertEqual(diagnostics, [])
+
     def test_hard_check_still_rejects_exact_self_import(self):
         task = {"block_id": "thm_10_8", "type": "Theorem_with_Proof", "dependencies": []}
         candidate = """
@@ -1096,6 +1085,37 @@ theorem thm_10_8 : True := by
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_review_existing_hard_check_failure_blocks_review_materials(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_review_existing_hard_check"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_pack_generation_review_existing_hard_check"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack.validate_candidate_hard_checks",
+                return_value=(
+                    False,
+                    [{"severity": "error", "code": "contains_sorry", "message": "fixture hard-check failure"}],
+                    "fixture hard-check failure",
+                ),
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+            ) as build_mock:
+                success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
+
+            self.assertFalse(success)
+            self.assertEqual(detail, "fixture hard-check failure")
+            build_mock.assert_not_called()
+            self.assertTrue(output_path.exists())
+            self.assertFalse((pack_dir / "official_snapshot_v1.lean").exists())
+            self.assertFalse((pack_dir / "semantic_review_input_v1.json").exists())
+            compat_result = json.loads((pack_dir / "verify_result_v1.json").read_text(encoding="utf-8"))
+            self.assertEqual(compat_result["mode"], "review-existing")
+            self.assertEqual(compat_result["disposition"], "review_existing_hard_check_failed")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_review_existing_problem_preserves_soft_import_confirmation_in_review_artifacts(self):
         root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_problem_soft_confirmed"
         try:
@@ -1220,6 +1240,37 @@ theorem thm_10_8 : True := by
             report = json.loads(report_path.read_text(encoding="utf-8"))
             self.assertEqual(report["tasks"][0]["official_output_file"], str(output_path))
             self.assertEqual((pack_dir / "official_snapshot_v1.lean").read_text(encoding="utf-8"), old_output)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_review_existing_queue_reports_hard_check_blocker(self):
+        root = REPO_ROOT / "tests" / "_tmp_phase2_pack_generation_queue_hard_check"
+        try:
+            self._clean_root(root)
+            task_id = "thm_4_pack_generation_queue_hard_check"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
+
+            with patch(
+                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                return_value=(True, "build ok"),
+            ), patch(
+                "src.toy_apollo.phase2_prompt_pack.validate_candidate_hard_checks",
+                return_value=(
+                    False,
+                    [{"severity": "error", "code": "contains_sorry", "message": "fixture queue hard-check failure"}],
+                    "fixture queue hard-check failure",
+                ),
+            ):
+                success, detail = asyncio.run(write_existing_output_review_queue([task_id], ledger, settings))
+
+            self.assertTrue(success, detail)
+            self.assertTrue(output_path.exists())
+            self.assertFalse((pack_dir / "official_snapshot_v1.lean").exists())
+            report_path = next((settings.phase2_prompt_packs_dir / "_reports").glob("review_existing_queue_*.json"))
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertEqual(report["counts"]["blocked_hard_check"], 1)
+            self.assertEqual(report["tasks"][0]["queue_status"], "blocked_hard_check")
+            self.assertEqual(report["tasks"][0]["next_action"], "fix_output")
         finally:
             shutil.rmtree(root, ignore_errors=True)
 

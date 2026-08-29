@@ -25,6 +25,12 @@ field, not under canonical `phase2_status`:
 These are report-only repair hints. They are not canonical `phase2_status`
 values and must not be written or interpreted as clean completion.
 
+A single-task dependency reconciliation therefore clears canonical PASS fields
+and records `dependency_reconciliation_requires_fresh_review=true`; the batch
+projection derives `needs_fresh_review` from that marker. A later fresh,
+successful `review-apply` clears the marker and records the reconciliation id
+that the new review superseded.
+
 ## Projection Inputs
 
 The apply gate projects:
@@ -33,9 +39,10 @@ The apply gate projects:
 - reviewer `proof_class` / `completion_class`;
 - source task role.
 
-`proof_obligations.json` is a checklist and review context. It is not a status.
-Ledger state, audit reports, classification files, batch state, validation
-tools, and verify reports are not status authorities.
+Historical `proof_obligations.json` files are inert audit artifacts. They are
+not projection inputs, review evidence, status authorities, planning inputs, or
+apply targets. Ledger state, audit reports, classification files, batch state,
+validation tools, and verify reports are likewise not status authorities.
 
 ## Proof Dependency Audits
 
@@ -62,11 +69,12 @@ pass only with source-route proof classes such as:
 - `source_faithful_proof_completed`
 - `source_route_theorem`
 
-Proof-obligation material is now reassembled into the parent file or stable
-support files before review. Historical `Phase2ObligationTask` child completions
-are not completion authority for the parent theorem/problem/exercise. A parent
-is clean only after the reassembled parent/support route passes its own semantic
-review.
+Reusable proof material belongs in the parent file or stable support files
+before review. Historical `Phase2ObligationTask` child completions and
+checklist entries are not completion authority for the parent
+theorem/problem/exercise. A parent is clean only after direct review maps every
+essential source step to its parent/support Lean landing and the parent review
+passes.
 
 Definition/interface tasks may pass with:
 

@@ -169,7 +169,7 @@ lemma card_singleBinEvent (n k : ℕ) (hn : 0 < n) (i : Fin n) :
       have hcard :
           Fintype.card {ω : BallΩ n (m + 1) | occupancy n (m + 1) ω i = 1} =
             Fintype.card (Σ b : Fin (m + 1), BallsExcept (m + 1) b → BinsExcept n i) := by
-        simpa using (Fintype.card_of_bijective (f := encodeSingleBin n m i) hbij).symm
+        exact (Fintype.card_of_bijective (f := encodeSingleBin n m i) hbij).symm
       rw [hcard, Fintype.card_sigma]
       simp [card_binsExcept, card_ballsExcept_succ, Fintype.card_fun, Finset.sum_const,
         Fintype.card_fin, nsmul_eq_mul]

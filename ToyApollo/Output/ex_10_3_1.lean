@@ -196,7 +196,11 @@ theorem ex_10_3_1_floorRatio_tendsto (x : ℝ) (hx : 0 ≤ x) :
           (fun n : ℕ => (⌊x * ((n + 1 : ℕ) : ℝ)⌋₊ : ℝ) /
             (x * ((n + 1 : ℕ) : ℝ)))
           atTop (nhds (1 : ℝ)) := by
-      simpa using (tendsto_nat_floor_div_atTop (R := ℝ)).comp hArg
+      change Tendsto
+        ((fun y : ℝ => (⌊y⌋₊ : ℝ) / y) ∘
+          fun n : ℕ => x * ((n + 1 : ℕ) : ℝ))
+        atTop (nhds (1 : ℝ))
+      exact (tendsto_nat_floor_div_atTop (R := ℝ)).comp hArg
     have hScaled :
         Tendsto
           (fun n : ℕ => x * ((⌊x * ((n + 1 : ℕ) : ℝ)⌋₊ : ℝ) /
@@ -262,6 +266,13 @@ theorem ex_10_3_1_uniformMeasure_isProbabilityMeasure :
     IsProbabilityMeasure ex_10_3_1_uniformMeasure := by
   exact ⟨ex_10_3_1_uniformMeasure_univ⟩
 
+def ex_10_3_1_empiricalLaw (n : ℕ) : ProbabilityMeasure ℝ :=
+  ⟨ex_10_3_1_empiricalMeasure n,
+    ex_10_3_1_empiricalMeasure_isProbabilityMeasure n⟩
+
+def ex_10_3_1_uniformLaw : ProbabilityMeasure ℝ :=
+  ⟨ex_10_3_1_uniformMeasure, ex_10_3_1_uniformMeasure_isProbabilityMeasure⟩
+
 theorem ex_10_3_1_uniformMeasure_atomSet_zero (n : ℕ) :
     ex_10_3_1_uniformMeasure (ex_10_3_1_atomSet n) = 0 := by
   rw [ex_10_3_1_uniformMeasure,
@@ -309,8 +320,10 @@ lemma ex_10_3_1_totalVariationDistance_event_bound
   exact le_csSup hbounded hmem
 
 theorem ex_10_3_1_totalVariationDistance_ge_one (n : ℕ) :
-    1 ≤ totalVariationDistance
-      (ex_10_3_1_empiricalMeasure n) ex_10_3_1_uniformMeasure := by
+    1 ≤ @totalVariationDistance ℝ _
+      (ex_10_3_1_empiricalMeasure n) ex_10_3_1_uniformMeasure
+      (ex_10_3_1_empiricalMeasure_isProbabilityMeasure n)
+      ex_10_3_1_uniformMeasure_isProbabilityMeasure := by
   haveI : IsProbabilityMeasure (ex_10_3_1_empiricalMeasure n) :=
     ex_10_3_1_empiricalMeasure_isProbabilityMeasure n
   haveI : IsProbabilityMeasure ex_10_3_1_uniformMeasure :=
@@ -326,7 +339,9 @@ theorem ex_10_3_1_not_totalVariation :
       ex_10_3_1_uniformMeasure := by
   intro hTV
   rw [MeasuresConvergeInTotalVariation] at hTV
-  have hlim := hTV.2.2
+  rcases hTV with ⟨hPn, hP, hlim⟩
+  letI (n : ℕ) : IsProbabilityMeasure (ex_10_3_1_empiricalMeasure n) := hPn n
+  letI : IsProbabilityMeasure ex_10_3_1_uniformMeasure := hP
   have hlt :
       ∀ᶠ n : ℕ in atTop,
         totalVariationDistance
@@ -341,10 +356,11 @@ theorem ex_10_3_1_not_totalVariation :
   linarith
 
 theorem ex_10_3_1_measureCdf_empiricalMeasure (n : ℕ) (x : ℝ) :
-    measureCdf (ex_10_3_1_empiricalMeasure n) x =
+    measureCdf (ex_10_3_1_empiricalLaw n) x =
       ex_10_3_1_empiricalCDF n x := by
-  rw [measureCdf, ex_10_3_1_empiricalCDF, Measure.real_def,
-    ex_10_3_1_empiricalMeasure]
+  change (ex_10_3_1_empiricalMeasure n).real (Iic x) =
+    ex_10_3_1_empiricalCDF n x
+  rw [ex_10_3_1_empiricalCDF, Measure.real_def, ex_10_3_1_empiricalMeasure]
   rw [Measure.coe_finset_sum]
   simp only [Finset.sum_apply, Measure.smul_apply, smul_eq_mul]
   rw [ENNReal.toReal_sum]
@@ -364,7 +380,9 @@ theorem ex_10_3_1_measureCdf_empiricalMeasure (n : ℕ) (x : ℝ) :
     exact ENNReal.mul_ne_top ENNReal.ofReal_ne_top (measure_ne_top _ _)
 
 theorem ex_10_3_1_measureCdf_uniformMeasure (x : ℝ) :
-    measureCdf ex_10_3_1_uniformMeasure x = ex_10_3_1_uniformCDF x := by
+    measureCdf ex_10_3_1_uniformLaw x = ex_10_3_1_uniformCDF x := by
+  change ex_10_3_1_uniformMeasure.real (Iic x) =
+    ex_10_3_1_uniformCDF x
   by_cases hxneg : x < 0
   · have hinter : Iic x ∩ Icc (0 : ℝ) 1 = ∅ := by
       ext y
@@ -375,7 +393,7 @@ theorem ex_10_3_1_measureCdf_uniformMeasure (x : ℝ) :
         linarith
       · intro hy
         simp at hy
-    rw [measureCdf, ex_10_3_1_uniformMeasure, Measure.real_def,
+    rw [ex_10_3_1_uniformMeasure, Measure.real_def,
       Measure.restrict_apply measurableSet_Iic, hinter, measure_empty]
     simp [ex_10_3_1_uniformCDF, hxneg]
   · have hx0 : 0 ≤ x := le_of_not_gt hxneg
@@ -390,7 +408,7 @@ theorem ex_10_3_1_measureCdf_uniformMeasure (x : ℝ) :
         · intro hy
           rcases hy with ⟨hy0, hyx⟩
           exact ⟨hyx, hy0, hyx.trans hx1⟩
-      rw [measureCdf, ex_10_3_1_uniformMeasure, Measure.real_def,
+      rw [ex_10_3_1_uniformMeasure, Measure.real_def,
         Measure.restrict_apply measurableSet_Iic, hinter, Real.volume_Icc]
       have hnonneg : 0 ≤ x - 0 := by linarith
       rw [ENNReal.toReal_ofReal hnonneg]
@@ -403,19 +421,18 @@ theorem ex_10_3_1_measureCdf_uniformMeasure (x : ℝ) :
           exact hy.2
         · intro hy
           exact ⟨hy.2.trans hxgt.le, hy⟩
-      rw [measureCdf, ex_10_3_1_uniformMeasure, Measure.real_def,
+      rw [ex_10_3_1_uniformMeasure, Measure.real_def,
         Measure.restrict_apply measurableSet_Iic, hinter, Real.volume_Icc]
       norm_num [ex_10_3_1_uniformCDF, hxneg, hx1]
 
 theorem ex_10_3_1_distribution_convergence :
     MeasuresConvergeInDistribution
-      (fun n : ℕ => ex_10_3_1_empiricalMeasure n)
-      ex_10_3_1_uniformMeasure := by
-  rw [MeasuresConvergeInDistribution, CdfConvergesInDistribution]
+      ex_10_3_1_empiricalLaw ex_10_3_1_uniformLaw := by
+  rw [measuresConvergeInDistribution_iff_cdf]
   intro x _hcont
   have hUniform := ex_10_3_1_measureCdf_uniformMeasure x
   by_cases hxneg : x < 0
-  · have htarget : measureCdf ex_10_3_1_uniformMeasure x = 0 := by
+  · have htarget : measureCdf ex_10_3_1_uniformLaw x = 0 := by
       simpa [ex_10_3_1_uniformCDF, hxneg] using hUniform
     rw [htarget]
     refine Filter.Tendsto.congr' ?_ tendsto_const_nhds
@@ -424,7 +441,7 @@ theorem ex_10_3_1_distribution_convergence :
       ex_10_3_1_empiricalCDF_of_neg n hxneg]
   · have hx0 : 0 ≤ x := le_of_not_gt hxneg
     by_cases hx1 : x ≤ 1
-    · have htarget : measureCdf ex_10_3_1_uniformMeasure x = x := by
+    · have htarget : measureCdf ex_10_3_1_uniformLaw x = x := by
         simpa [ex_10_3_1_uniformCDF, hxneg, hx1] using hUniform
       rw [htarget]
       refine Filter.Tendsto.congr' ?_ (ex_10_3_1_floorRatio_tendsto x hx0)
@@ -432,7 +449,7 @@ theorem ex_10_3_1_distribution_convergence :
       rw [ex_10_3_1_measureCdf_empiricalMeasure n x,
         ex_10_3_1_empiricalCDF_eq_floorRatio_on_unit_interval n hx0 hx1]
     · have hxgt : 1 < x := lt_of_not_ge hx1
-      have htarget : measureCdf ex_10_3_1_uniformMeasure x = 1 := by
+      have htarget : measureCdf ex_10_3_1_uniformLaw x = 1 := by
         simpa [ex_10_3_1_uniformCDF, hxneg, hx1] using hUniform
       rw [htarget]
       refine Filter.Tendsto.congr' ?_ tendsto_const_nhds
@@ -442,8 +459,7 @@ theorem ex_10_3_1_distribution_convergence :
 
 theorem ex_10_3_1_distribution_not_totalVariation :
     MeasuresConvergeInDistribution
-        (fun n : ℕ => ex_10_3_1_empiricalMeasure n)
-        ex_10_3_1_uniformMeasure ∧
+        ex_10_3_1_empiricalLaw ex_10_3_1_uniformLaw ∧
       ¬ MeasuresConvergeInTotalVariation
         (fun n : ℕ => ex_10_3_1_empiricalMeasure n)
         ex_10_3_1_uniformMeasure := by
@@ -451,8 +467,7 @@ theorem ex_10_3_1_distribution_not_totalVariation :
 
 theorem ex_10_3_1 :
     MeasuresConvergeInDistribution
-        (fun n : ℕ => ex_10_3_1_empiricalMeasure n)
-        ex_10_3_1_uniformMeasure ∧
+        ex_10_3_1_empiricalLaw ex_10_3_1_uniformLaw ∧
     ¬ MeasuresConvergeInTotalVariation
       (fun n : ℕ => ex_10_3_1_empiricalMeasure n)
       ex_10_3_1_uniformMeasure := by
