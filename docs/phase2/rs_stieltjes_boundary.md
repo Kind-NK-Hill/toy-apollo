@@ -138,4 +138,3 @@ definition.
 Do not treat Theorem 1.2(4) as useless, and do not treat it as a global blocker.
 Record it as a source/definition convention issue and continue with tasks that
 do not depend on the unsafe unconditional local-to-global implication.
-
