@@ -65,6 +65,9 @@ If this file conflicts with older notes, trust current runtime code and the rule
 - `soft-apply` does not call an external provider, does not generate execution batches, and does not perform a Lean verification gate.
 - Retired provider and post-processing artifacts remain protected local/historical state, not active workflow inputs.
 - Do not describe AI-generated Lean, docs, review files, prompt-pack contents, or audit artifacts as handwritten by the user unless local authorship evidence explicitly proves it.
+- Keep the full `inputs/`, `plans/`, prompt-pack, batch, and operational-state
+  corpora in the private evidence plane. Public examples belong only under
+  `examples/case-studies/` after source-rights review and path sanitization.
 
 ## Recommended Routing
 
@@ -132,6 +135,8 @@ The non-negotiable entry rules are:
 - Root-level `src/*.py` modules are retained only where active package code imports them; old direct-generation/orchestrator modules are not a supported runtime layer.
 - Lean output module root: `ToyApollo/Output`
 - Runtime state and generated outputs: artifact-rooted paths from `src/toy_apollo/core/settings.py`
+- Public mechanism examples: `examples/case-studies/`
+- Public repository/evidence policy: `docs/repository_scope.md`
 
 ## Minimum Verification
 

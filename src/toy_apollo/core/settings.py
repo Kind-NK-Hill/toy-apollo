@@ -107,11 +107,7 @@ def get_settings() -> Settings:
     ).resolve()
     artifact_root = _to_path(os.getenv("TOY_APOLLO_ARTIFACT_ROOT", ""), runtime_root)
     workspace_root = runtime_root.parent
-    state_artifact_name = (
-        "toy-apollo-artifacts"
-        if runtime_root.name.lower() == "toy-apollo"
-        else f"{runtime_root.name}-artifacts"
-    )
+    state_artifact_name = "toy-apollo-artifacts"
     state_db_file = workspace_root / state_artifact_name / "state.sqlite3"
     active_profile = resolve_profile(runtime_root)
     spec = profile_spec(active_profile)

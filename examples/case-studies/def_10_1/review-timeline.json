@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "case_id": "def_10_1",
+  "curation": {
+    "source": "private phase2 prompt pack",
+    "full_pack_tracked_publicly": false,
+    "purpose": "inspectable mechanism example, not benchmark evidence"
+  },
+  "counts": {
+    "official_output_snapshots": 8,
+    "semantic_review_results": 8,
+    "review_failures": 3,
+    "review_passes": 5,
+    "largest_recorded_campaign_targets": 40
+  },
+  "private_evidence_sha256": {
+    "attempt_history.json": "7ff8d5ff767c339282ddcc0a9c96eb8e3a50a0272bb60d418316e30bea2e8289",
+    "official_snapshot_v1.lean": "077d59f070a42e74fc59e65dda3f88f4f6617243827c1a87354004d123791a14",
+    "official_snapshot_v8.lean": "a3711b80ff2236c6507e209197a51c6e4757e2e251137c56e3f9c7171bb7bd76"
+  },
+  "reviews": [
+    {
+      "round": 1,
+      "mode": "review-existing",
+      "verdict": "fail",
+      "proof_class": "definition_interface_incomplete",
+      "completion_class": "source_definition_revision_required",
+      "phase2_status": null,
+      "candidate_hash": "8dc911d822f5426572bae3fe6b6d338a38bce3c70aa329c51205062f586ab2ee",
+      "finding": "For an arbitrary measure, an event of measure one need not be a full-measure event; no reusable theorem connects the event and almost-everywhere Interfaces.",
+      "private_review_sha256": "84386501685f55f27989c3d59f77f493bcacb71ed46184df8106d81633938c98"
+    },
+    {
+      "round": 2,
+      "mode": "review-existing",
+      "verdict": "fail",
+      "proof_class": "source_faithful_definition_bridge_completed",
+      "completion_class": "source_faithful_definition_bridge_completed_but_downstream_interface_broken",
+      "phase2_status": null,
+      "candidate_hash": "3ad9f1611e5bf02be120542160267816146544fcfea320810d2250179ea65fb5",
+      "finding": "The owner bridge is repaired, but a direct importer still assumes the old measure-one field and cannot reassemble the new Interface.",
+      "private_review_sha256": "470a60b183b95dbc8bc265cace6ac7f4917bbafd50cc2d762ef920321305ab48"
+    },
+    {
+      "round": 3,
+      "mode": "review-existing",
+      "verdict": "pass",
+      "proof_class": "source_faithful_definition_bridge_completed",
+      "completion_class": "source_faithful_definition_bridge_completed",
+      "phase2_status": "pass",
+      "candidate_hash": "3ad9f1611e5bf02be120542160267816146544fcfea320810d2250179ea65fb5",
+      "finding": "The generic full-event bridge, probability-space bridge, and 14 direct importer Interfaces are compatible under the then-current review basis.",
+      "private_review_sha256": "a67c228ffe3d8b8a5d5a6991e8fac1c5d83b841df330f6a17ff92c1b2e95dff3"
+    },
+    {
+      "round": 4,
+      "mode": "review-existing",
+      "verdict": "fail",
+      "proof_class": "textbook_definition_incomplete_random_variable_carrier",
+      "completion_class": "textbook_definition_incomplete_high_fanout_interface",
+      "phase2_status": null,
+      "candidate_hash": "3ad9f1611e5bf02be120542160267816146544fcfea320810d2250179ea65fb5",
+      "finding": "A stricter source-domain review shows that all three predicates accept nonmeasurable functions; the missing random-variable carrier affects a 40-target campaign fanout.",
+      "private_review_sha256": "a3a7ada986e8fcc6d1cae77f813c0430e161cf9000292f19095d8a72abbfec75"
+    },
+    {
+      "round": 5,
+      "mode": "review-existing",
+      "verdict": "pass",
+      "proof_class": "source_faithful_definition_bridge_completed",
+      "completion_class": "source_faithful_definition_bridge_completed_high_fanout",
+      "phase2_status": "pass",
+      "candidate_hash": "d98553649be1dce5c33243f71fc0fc6eff72405c82c005e6e9c1ccc59fe53067",
+      "finding": "The carrier is part of every public predicate and is preserved by both bridges; the owner and 39 real consumers in the 40-target scope are inspected.",
+      "private_review_sha256": "b42a02d0cea24d857a38244322578d86c95bd29e95eb91af3b50540cb3e656e4"
+    },
+    {
+      "round": 6,
+      "mode": "review-existing",
+      "verdict": "pass",
+      "proof_class": "source_faithful_definition_bridge_completed",
+      "completion_class": "source_faithful_definition_bridge_completed_high_fanout",
+      "phase2_status": "pass",
+      "candidate_hash": "d98553649be1dce5c33243f71fc0fc6eff72405c82c005e6e9c1ccc59fe53067",
+      "finding": "A fresh evidence basis covers the unchanged owner, 39 registered consumers, and 15 auxiliary Modules in the actual import closure.",
+      "private_review_sha256": "6070985ea3c8bb83acf77b6609aa3bac9659e4df1394d33dccd6a12034d9bfd7"
+    },
+    {
+      "round": 7,
+      "mode": "review-existing",
+      "verdict": "pass",
+      "proof_class": "source_faithful_definition_bridge_completed",
+      "completion_class": "source_faithful_definition_bridge_completed",
+      "phase2_status": "pass",
+      "candidate_hash": "d98553649be1dce5c33243f71fc0fc6eff72405c82c005e6e9c1ccc59fe53067",
+      "finding": "The current owner and all 14 direct importers remain compatible at their bound hashes, including an advancing downstream theorem.",
+      "private_review_sha256": "b00b152a547e982eacc22496ecdaf5a0704d0066c7082b64ae61c409c7991d90"
+    },
+    {
+      "round": 8,
+      "mode": "review-existing",
+      "verdict": "pass",
+      "proof_class": "source_faithful_definition_bridge_completed",
+      "completion_class": "source_faithful_definition_bridge_completed",
+      "phase2_status": "pass",
+      "candidate_hash": "d98553649be1dce5c33243f71fc0fc6eff72405c82c005e6e9c1ccc59fe53067",
+      "finding": "The owner is content-identical to the bound snapshot and every current direct downstream file is inspected at its bound hash.",
+      "private_review_sha256": "df9d0660beb5efa2df05ccb8d113cc48201756eea8f058d7dad3707931d17c80"
+    }
+  ]
+}

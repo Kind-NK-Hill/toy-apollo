@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "case_id": "def_8_5",
+  "curation": {
+    "source": "private phase2 prompt pack",
+    "full_pack_tracked_publicly": false,
+    "purpose": "inspectable mechanism example, not benchmark evidence"
+  },
+  "counts": {
+    "build_candidate_files": 4,
+    "semantic_review_results": 5,
+    "review_failures": 2,
+    "review_passes": 3
+  },
+  "private_evidence_sha256": {
+    "attempt_history.json": "c31595186f298f63ab1d37bdb44df03198479e627f23ce5291493d9b7f221e5c",
+    "official_snapshot_v1.lean": "5d93247d8fffb5dec9f84e78daeeee07c7e1ccc898b7a6281fca5ce17277ed68",
+    "candidate_v4.lean": "ab61b78f9e11f38e354207d43975dee7ce85c5df088cc2ffdafce87a9c9fc028"
+  },
+  "reviews": [
+    {
+      "round": 1,
+      "mode": "review-existing",
+      "verdict": "fail",
+      "proof_class": "definition_interface_semantic_mismatch",
+      "completion_class": "definition_interface_semantic_mismatch",
+      "phase2_status": "fail",
+      "candidate_hash": "1b2f3182a58287e66a14d9155c2a87fda68b107abff41f22c0dfcb4ed6a57c46",
+      "finding": "The compiling Interface accepts arbitrary measures, so real coercion and supremum fallback behavior can change the mathematical meaning outside the source probability domain.",
+      "private_review_sha256": "bf88b0afbf8daf00ae7936d0becccc01c5680c64fc493414568e397a66faf798"
+    },
+    {
+      "round": 2,
+      "mode": "review-pack",
+      "verdict": "fail",
+      "proof_class": "definition_interface_downstream_migration_incomplete",
+      "completion_class": "definition_interface_downstream_migration_incomplete",
+      "phase2_status": "fail",
+      "candidate_hash": "a75185af712fcb33530f0b65e68235ec39de9951c591d93f7d0e57f9ec79ecbb",
+      "finding": "The owner Interface is repaired, but direct consumers cannot yet provide probability evidence at the new guarded calls.",
+      "private_review_sha256": "c0779c8d6f8a217a2c9b867ef0eec2990d8ca5084e3c1ed863869ebb6d1f75e0"
+    },
+    {
+      "round": 3,
+      "mode": "review-pack",
+      "verdict": "pass",
+      "proof_class": "textbook_definition_completed",
+      "completion_class": "textbook_definition_completed",
+      "phase2_status": null,
+      "candidate_hash": "a75185af712fcb33530f0b65e68235ec39de9951c591d93f7d0e57f9ec79ecbb",
+      "finding": "The candidate and consumer migration satisfy the semantic review, but this historical result did not yet carry the canonical landed status field.",
+      "private_review_sha256": "2afa779934c888f679cc9b538586152c645739892bdcfb024609eaed09e2f523"
+    },
+    {
+      "round": 4,
+      "mode": "review-pack",
+      "verdict": "pass",
+      "proof_class": "textbook_definition_completed",
+      "completion_class": "textbook_definition_completed",
+      "phase2_status": "pass",
+      "candidate_hash": "a75185af712fcb33530f0b65e68235ec39de9951c591d93f7d0e57f9ec79ecbb",
+      "finding": "Fresh content hashes bind the repaired owner and both direct consumers; focused compositions pass without adding source-level premises.",
+      "private_review_sha256": "da00ce1a4c56a63a359cc96a3c882b39aaa868446fbb8d020299b5ff20668cd7"
+    },
+    {
+      "round": 5,
+      "mode": "review-existing",
+      "verdict": "pass",
+      "proof_class": "textbook_definition_completed",
+      "completion_class": "textbook_definition_completed",
+      "phase2_status": "pass",
+      "candidate_hash": "a75185af712fcb33530f0b65e68235ec39de9951c591d93f7d0e57f9ec79ecbb",
+      "finding": "The landed official output remains source-faithful and all three direct consumers are current and content-bound.",
+      "private_review_sha256": "c82166d940491e38f9f030e4a0c6cf98837723bf542724f9f3430adf678923bc"
+    }
+  ]
+}

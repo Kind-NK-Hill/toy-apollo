@@ -72,11 +72,10 @@ is repair evidence, not a completion state, unless it is recorded through
 
 ## Non-Default Material
 
-The `archive/` directory contains historical runbooks, status snapshots,
-classification policy notes, debt cleanup notes, and old review-loop docs. They
-are useful evidence, not default Phase2 entry points.
-May 2026 step/rescue records under the root archive are historical material, not
-an operator path.
+Historical runbooks, status snapshots, classification policy notes, debt
+cleanup notes, and old review-loop docs are retained in the private evidence
+plane and Git history. They are useful evidence, not public Phase 2 entry
+points. Old step/rescue records are historical material, not an operator path.
 
 ## Core Rule
 

@@ -1,77 +1,61 @@
-# Docs Boundary
+# Documentation
 
-This directory is for current operator runbooks and stable policy notes.
-Historical migration, reorg, provider-offload, and one-off handoff notes should
-not sit beside current policy.
+Start with the stable public model, then enter operator detail only when the
+task requires it.
 
-## Current Runtime Docs
+## Public project model
+
+- [`architecture.md`](architecture.md): Module ownership, runtime flow, trust
+  model, and source/evidence planes.
+- [`repository_scope.md`](repository_scope.md): what is public, what remains
+  private, and how case studies are curated.
+- [`development.md`](development.md): fresh-checkout setup and focused checks.
+- [`../examples/case-studies/`](../examples/case-studies/): two inspectable
+  review-and-repair histories.
+
+## Current operator contracts
 
 Use these when operating or modifying Phase 2:
 
-- `phase2/README.md`
-- `phase2/workflow.md`
-- `phase2/status_contract.md`
-- `phase2/review_criteria.md`
-- `phase2/artifacts.md`
-- `phase2/tools.md`
-- `workspace_state.md`
-- `evidence_bridge.md`
-- `workspace_inventory.md`
+- [`phase2/README.md`](phase2/README.md)
+- [`phase2/workflow.md`](phase2/workflow.md)
+- [`phase2/status_contract.md`](phase2/status_contract.md)
+- [`phase2/review_criteria.md`](phase2/review_criteria.md)
+- [`phase2/artifacts.md`](phase2/artifacts.md)
+- [`phase2/tools.md`](phase2/tools.md)
+- [`workspace_state.md`](workspace_state.md)
+- [`evidence_bridge.md`](evidence_bridge.md)
 
-`phase2/textbook_complete_targets.json` is a data artifact, not a policy entry.
+`phase2/textbook_complete_targets.json` is a data artifact, not a policy
+entry.
 
-## Current Generated Artifacts
+## Policy notes
 
-These are generated or maintained artifacts that current tools may read or
-refresh. Keep them in root `docs/` unless the tools are updated at the same time:
+Use these when changing dependency modeling or source-plan Interfaces:
 
-- `phase2_completion_classification.md`
-- `phase2_completion_classification.json`
-- `phase2_ch10_14_clean_debt_surface_audit.md`
-- `phase2_ch10_14_clean_debt_surface_audit.json`
-- `phase2_unfinished_tasks_audit.md`
-- `phase2_unfinished_tasks_audit.json`
-- `phase2_source_output_alignment_audit.md`
+- [`chapter1_2_cross_chapter_dependency.md`](chapter1_2_cross_chapter_dependency.md)
+- [`dependency_decision_trail.md`](dependency_decision_trail.md)
+- [`interface_dependency_policy.md`](interface_dependency_policy.md)
 
-These are reports/cache. They do not decide Phase2 completion. Current state is
-queried from the local workspace database; it is not checked in as a snapshot.
+## Generated reports
 
-Short-lived manifest files produced by cleanup tools should not be kept in this
-root directory unless a current tool reads them as input. Tools that need those
-manifests can regenerate them.
+Classification, alignment, completion, and unfinished-task reports are cache or
+diagnostic artifacts. They may provide review context, but they do not decide
+Phase 2 completion. The operational state is queried from the private workspace
+database and is not published as a current snapshot.
 
-## Step And Temporary Docs
+## Historical material
 
-Historical step plans, queues, decision records, postmortems, and one-off
-diagnostic reports are audit trail only. They are not stable runtime policy and
-should not appear in the default docs surface.
+Historical migration notes, one-off handoffs, old provider plans, rescue logs,
+and superseded Phase 2 policies remain preserved in the private evidence plane
+and Git history. They are intentionally absent from the default public
+documentation surface.
 
-Current handoff notes for an active run should live with generated run reports,
-for example under `phase2_prompt_packs/_reports/`, not in `docs/phase2/`.
+Archive material is never runtime truth merely because it exists. Current CLI
+behavior and the current contracts above take precedence.
 
-## Policy Notes
+## Search behavior
 
-Use these when changing dependency modeling or source-plan boundaries:
-
-- `chapter1_2_cross_chapter_dependency.md`
-- `dependency_decision_trail.md`
-- `interface_dependency_policy.md`
-
-## Runtime Boundary
-
-- Problem soft dependency selection is a Phase 2 special case with two active entries: `--phase 2 --phase2-mode soft-pack` and `--phase 2 --phase2-mode soft-apply`.
-- Removed legacy mode names such as `plan-batches`, `offload-batch`, `repair-pack`, and `repair-verify` are not active contracts.
-
-## Search Boundary
-
-Default active searches should use normal `rg`; `.rgignore` excludes backup, archive, generated pack, and artifact directories. Use `rg --no-ignore` only when intentionally auditing historical or generated content.
-
-## Archive Boundary
-
-Archived material is audit trail only. Do not use archived handoff files or old
-Phase2 policy drafts as current proof-debt policy. Current generated reports
-remain cache/report artifacts and do not decide completion.
-
-## Legacy Metadata
-
-Names such as `legacy_ids`, `legacy_ids_for`, and `legacy_inferred` are compatibility and audit metadata. They are not the old Gemini/DeepSeek direct-generation pipeline.
+Normal `rg` searches exclude generated packs, artifact paths, and private
+archives through `.rgignore`. Use `rg --no-ignore` only for a deliberate
+evidence audit.

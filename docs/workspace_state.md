@@ -3,7 +3,7 @@
 The workspace has one operational state database:
 
 ```text
-D:\Grad_Study\Practimum\Formalization\toy-apollo-artifacts\state.sqlite3
+<artifact-root>/state.sqlite3
 ```
 
 It is local runtime state, not a Git-tracked report. Git commits and GitHub PRs
