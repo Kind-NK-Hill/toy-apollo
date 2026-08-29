@@ -108,6 +108,19 @@ benchmark claim.
 
 The existing private repository history has tracked source-derived material and
 runtime evidence. Removing those files in a later commit does not remove them
-from Git history. The first public release must therefore be produced as a
-clean-history source snapshot after license, secret, path, and source-rights
-checks. Do not make the research remote public in place.
+from Git history, so the research remote must never be made public in place.
+
+The public history is instead a deterministic sanitized projection of the real
+development history. At every revision it keeps only paths present in the
+audited public source plane and applies the same fail-closed Task Parent source
+sanitizer used by the release tree. A projected commit is retained only when it
+changes that public tree. Retained commits preserve their original order,
+author and committer identities, timestamps, subject, and message body; dates
+must never be synthesized or backfilled. Rewriting necessarily changes commit
+hashes.
+
+Publication is allowed only when all historical revisions pass the forbidden
+path and source-prose checks, retained metadata is an exact subsequence of the
+private history, and the projected tip is byte-identical to the audited release
+tree. The private research remote remains private as the authoritative evidence
+archive.

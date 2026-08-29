@@ -99,6 +99,15 @@ lake env lean .\examples\case-studies\def_8_5\final.lean
 根目录 `src/*.py` 是 package 迁移期间的临时 legacy Adapter；新
 Implementation 应进入 `src/toy_apollo/`。
 
+## 开发历史
+
+公开提交历史是私有研究仓库经过确定性净化得到的投影，不是人工补写或
+回填的历史。凡仍包含公开源码变化的提交，都会保留原始顺序、作者与
+committer 身份、时间戳和提交说明。每一个历史版本都会移除私有证据路径
+和 Task Parent 中来自原始材料的文字；净化后变成空提交的版本不予保留。
+release 顶端文件树必须与通过审计的公开源码逐字节一致。具体规则见
+[`docs/repository_scope.md`](docs/repository_scope.md#publication-history-rule)。
+
 ## 当前限制
 
 - ToyApollo 是研究原型，不证明 agent 能自主保证数学正确性。

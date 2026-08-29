@@ -112,6 +112,17 @@ More setup and focused test commands are in
 The root-level `src/*.py` files are a temporary legacy Adapter during package
 migration. New implementation belongs under `src/toy_apollo/`.
 
+## Development history
+
+The public commit history is a deterministic, sanitized projection of the
+private research repository, not a synthetic backfill. For commits that retain
+public-source changes, it preserves the original order, author and committer
+identities, timestamps, and commit messages. Every historical revision removes
+private evidence paths and source-derived Task Parent prose; commits that become
+empty after that projection are omitted. The release tip must remain
+byte-identical to the audited public source tree. See
+[`docs/repository_scope.md`](docs/repository_scope.md#publication-history-rule).
+
 ## Project status and limits
 
 ToyApollo is a research prototype, not a proof of autonomous mathematical
