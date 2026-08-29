@@ -16,7 +16,7 @@ theorem initialThm82
         MeasurableSet s → MeasurableSet t → R (s ×ˢ t) = P s * Q t := by
   refine ⟨P.prod Q, ?_, ?_⟩
   · intro s t hs ht
-    simpa using Measure.prod_prod (μ := P) (ν := Q) s t
+    exact Measure.prod_prod (μ := P) (ν := Q) s t
   · intro R hR
     exact (Measure.prod_eq (μ := P) (ν := Q) (μν := R)
       (by intro s t hs ht; exact hR s t hs ht)).symm
