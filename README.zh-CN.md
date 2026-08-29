@@ -33,13 +33,13 @@ flowchart LR
 
 完整 prompt pack、构建收据、review 请求、修复历史、批量队列和运行态
 SQLite 数据库位于私有 evidence plane。公开 source plane 只保留运行代码、
-测试、Lean Modules、稳定文档和七份固定的案例导出。详见
+测试、Lean Modules、稳定文档和八份固定的案例导出。详见
 [`docs/repository_scope.md`](docs/repository_scope.md)。
 
 ## 先看失败案例
 
-七个案例的初始 Lean 文件都能够编译，但仍被语义复审拒绝，或使先前的
-pass 在更强 review basis 下失效。
+八个案例的初始 Lean 文件都能够编译，但仍被语义复审拒绝、使先前的
+pass 在更强 review basis 下失效，或被明确记录为非干净例外。
 
 | 案例 | Build gate 没有发现什么 | Review loop 增加了什么 |
 | --- | --- | --- |
@@ -50,10 +50,11 @@ pass 在更强 review basis 下失效。
 | [`ex_8_2_1`](examples/case-studies/ex_8_2_1/) | carrier 从 `ℝ × ℝ` 漂移成 `ℕ × ℝ` | owner 级契约决策和实数 carrier 上的 pushforward |
 | [`ex_8_3_4`](examples/case-studies/ex_8_3_4/) | 把一个可行运输计划写成了解优化问题 | 最优解量化和缺失的 Wasserstein Interface |
 | [`thm_8_2`](examples/case-studies/thm_8_2/) | 直接调用成品 Mathlib 乘积测度定理，绕过要求的构造路线 | 显式 fibre 集函数、测度构造与唯一性证明 |
+| [`thm_14_8`](examples/case-studies/thm_14_8/) | 通过把缺失证明作为公开前提，使定理能够编译 | 完整三角阵列证明、具体随机变量桥接与下游迁移 |
 
 这些是机制展示，不是 benchmark 分数。公开 timeline 保留 verdict 分类和私有
-证据哈希，但不公开完整教材语料与可变运行目录。集合至少覆盖六种主要失效
-模式；六个案例展示陈述或 Interface 漂移，`thm_8_2` 单独展示证明路线漂移。
+证据哈希，但不公开完整教材语料与可变运行目录。集合至少覆盖八种主要失效
+模式；七个案例展示陈述或 Interface 漂移，`thm_8_2` 单独展示证明路线漂移。
 
 ## 五分钟检查
 
@@ -80,7 +81,7 @@ lake env lean .\examples\case-studies\def_8_5\final.lean
 
 最后两个文件都应编译。真正的差异要结合
 `review-timeline.json` 阅读：build gate 无法单独判断两个 Interface 的语义。
-案例索引提供了一次编译全部 14 个公开快照的命令。
+案例索引提供了一次编译全部 16 个公开快照的命令。
 
 ## 仓库地图
 
@@ -104,7 +105,7 @@ Implementation 应进入 `src/toy_apollo/`。
 - 语义复审是模型辅助证据，不能替代 Lean kernel 或专家判断。
 - Lean 构建只证明技术有效性，不证明教材忠实度。
 - 完整教材输入与可变 prompt packs 不在公开 source plane 中分发。
-- 七个公开案例经过选择，不能用来推断无偏准确率、成本或生产率。
+- 八个公开案例经过选择，不能用来推断无偏准确率、成本或生产率。
 - 当前 CLI 以本地运行为主，完整跨平台支持矩阵尚未建立。
 
 ## 文档

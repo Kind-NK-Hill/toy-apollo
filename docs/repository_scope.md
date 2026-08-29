@@ -94,6 +94,9 @@ The current selections are:
   second repair for the omitted Wasserstein Interface;
 - `thm_8_2`: a true statement rejected because a finished library theorem
   bypassed the requested construction route.
+- `thm_14_8`: a historical `ProofBeyondBook` public premise retired by a
+  complete proof, concrete-row Interface bridge, downstream migration, and a
+  fresh passing apply decision.
 
 [`../examples/case-studies/cases.json`](../examples/case-studies/cases.json)
 is the machine-checked catalog. The public set must contain 7–10 cases, at
