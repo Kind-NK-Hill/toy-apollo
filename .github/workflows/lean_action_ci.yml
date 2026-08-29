@@ -5,11 +5,8 @@ on:
   pull_request:
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
-  contents: read # Read access to repository contents
-  pages: write # Write access to GitHub Pages
-  id-token: write # Write access to ID tokens
+  contents: read
 
 jobs:
   build:
@@ -37,6 +34,3 @@ jobs:
           while IFS= read -r snapshot; do
             lake env lean "$snapshot"
           done < <(find examples/case-studies -type f -name '*.lean' | sort)
-      - name: Generate docs
-        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
-        uses: leanprover-community/docgen-action@v1
