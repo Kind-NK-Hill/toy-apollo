@@ -49,6 +49,12 @@
       "primary_failure_mode": "adapter_only_proof",
       "statement_drift": false,
       "interview_hook": "A true proposition still omitted the requested construction route"
+    },
+    {
+      "case_id": "thm_14_8",
+      "primary_failure_mode": "public_premise_relocation",
+      "statement_drift": true,
+      "interview_hook": "An allowed proof exception was retired by a complete proof and downstream migration"
     }
   ]
 }

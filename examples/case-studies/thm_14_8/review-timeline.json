@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "case_id": "thm_14_8",
+  "failure_modes": [
+    "public_premise_relocation",
+    "exception_debt_retirement",
+    "downstream_interface_migration"
+  ],
+  "statement_drift": true,
+  "curation": {
+    "source": "private phase2 prompt pack and retained repository history",
+    "snapshot_kind": "sanitized_exception_retirement_interface",
+    "full_pack_tracked_publicly": false,
+    "purpose": "inspectable mechanism example, not benchmark evidence"
+  },
+  "counts": {
+    "build_candidate_files": 3,
+    "semantic_review_results": 3,
+    "review_failures": 1,
+    "review_passes": 2
+  },
+  "private_evidence_sha256": {
+    "attempt_history.json": "9e884843a81936526345e90eff6ac7a1b535aff895bb67146218e6538f1829e7",
+    "semantic_review_result_v5.json": "e31e69a45818b7369893b3cb2076be644a3a4152bc7f376926dc9bf587b32b1f",
+    "semantic_review_result_v1.json": "e41706b30cfd2eef3dad5d8c22c79daf9951745bd263767332a83bb5c2c60226",
+    "semantic_review_result_v2.json": "685315a0f298ba7dc7abfae969b6dcac104e57b9f8493fc0ee5d46fd4c12edc9",
+    "verify_result_v5.json": "58f935907e5217a919d79ed5bdafe52e131bb25898cfbe183afc8098b0185c9a"
+  },
+  "reviews": [
+    {
+      "round": 1,
+      "private_file": "semantic_review_result_v5.json",
+      "mode": "review-existing",
+      "prompt_version": 9,
+      "rubric_version": 9,
+      "verdict": "pass",
+      "proof_class": "beyond_book_exception",
+      "completion_class": "beyond_book_exception",
+      "phase2_status": "allowed_exception",
+      "candidate_hash": "e62eb9e1a119efb3c79be4e4315041d38e7ce779b3e307e487cb23420feeb64f",
+      "finding": "The public proof package kept the unformalized triangular-array CLT explicit, so the result was an honest exception rather than clean completion.",
+      "private_review_sha256": "e31e69a45818b7369893b3cb2076be644a3a4152bc7f376926dc9bf587b32b1f"
+    },
+    {
+      "round": 2,
+      "private_file": "semantic_review_result_v1.json",
+      "mode": "review-pack",
+      "prompt_version": 11,
+      "rubric_version": 9,
+      "verdict": "fail",
+      "proof_class": "source_route_interface_incomplete",
+      "completion_class": "source_route_proof_incomplete",
+      "phase2_status": "fail",
+      "candidate_hash": "f3b14a4cd9606b4c19df27db15863dd347fa63a01844e87827791b0bdc6367d9",
+      "finding": "The proof core was substantive, but no public theorem connected an arbitrary independent concrete row to the canonical law, and the direct consumer still required the old proof package.",
+      "private_review_sha256": "e41706b30cfd2eef3dad5d8c22c79daf9951745bd263767332a83bb5c2c60226"
+    },
+    {
+      "round": 3,
+      "private_file": "semantic_review_result_v2.json",
+      "mode": "review-pack",
+      "prompt_version": 11,
+      "rubric_version": 9,
+      "verdict": "pass",
+      "proof_class": "source_faithful_proof_completed",
+      "completion_class": "source_faithful_proof_completed",
+      "phase2_status": "pass",
+      "candidate_hash": "0272712676200e5c2eb9cd10bcbe5521c3184042ba8780fa96558cb9bf6d7b29",
+      "finding": "The concrete-row bridge, canonical Lindeberg proof, Lyapunov implication, premise-free public theorem, and migrated direct consumer were all present and current.",
+      "private_review_sha256": "685315a0f298ba7dc7abfae969b6dcac104e57b9f8493fc0ee5d46fd4c12edc9"
+    }
+  ]
+}

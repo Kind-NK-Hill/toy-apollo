@@ -223,8 +223,7 @@ If reviewer verdict is `pass` but `phase2_status` is `fail`, `blocked`, or
 `allowed_exception`, `review-apply` records the result and does not promote a
 candidate as clean completion. `allowed_exception` is only for explicit
 task/class pairs documented in [status_contract.md](status_contract.md), such as
-`thm_11_8`'s cited external Etemadi proof boundary and the `thm_14_8`
-beyond-book case.
+`thm_11_8`'s cited external Etemadi proof boundary.
 
 Failed or inconclusive existing-output review preserves official output by
 default and records repair-required evidence. Quarantine is explicit

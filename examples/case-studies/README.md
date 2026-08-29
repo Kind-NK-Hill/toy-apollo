@@ -1,6 +1,6 @@
 # Case studies
 
-These seven case studies are small, immutable exports from ToyApollo's private
+These eight case studies are small, immutable exports from ToyApollo's private
 runtime evidence. They show why the project separates Lean compilation,
 semantic review, diagnosis, downstream revalidation, and the final apply
 decision.
@@ -28,16 +28,18 @@ the complete set.
 | [`ex_8_2_1`](ex_8_2_1/) | Is changing `ℝ × ℝ` to `ℕ × ℝ` a harmless encoding? | fail → owner contract decision → pass |
 | [`ex_8_3_4`](ex_8_3_4/) | Does proving one feasible plan solve an optimization problem? | 2 different semantic failures before pass |
 | [`thm_8_2`](thm_8_2/) | Does invoking the finished library theorem preserve a proof-bearing source route? | adapter-only fail followed by construction passes |
+| [`thm_14_8`](thm_14_8/) | Can an explicit allowed exception later become a clean premise-free proof? | allowed exception → Interface fail → applied pass |
 
 The set deliberately covers domain, carrier, quantifier, undefinedness,
-adapter, proof-route, review-basis, and downstream-fanout failures. Six of seven
+adapter, proof-route, review-basis, public-premise, and downstream-fanout
+failures. Seven of eight
 cases involve mathematical statement or Interface drift; `thm_8_2` isolates
 proof-route drift while keeping the theorem statement fixed.
 
 ## One-minute explanation
 
 > ToyApollo treats Lean compilation as one gate, not as a semantic certificate.
-> I preserved seven real repair histories in which compilable code used the
+> I preserved eight real repair histories in which compilable code used the
 > wrong domain, carrier, quantifier structure, undefinedness convention, or
 > proof route. Every public timeline binds its verdicts to candidate and review
 > hashes, while CI compiles both the semantically rejected initial slice and the

@@ -33,7 +33,6 @@ DEFAULT_ALLOWED_BEYOND_BOOK_TASKS = {
     "thm_1_2",
     "ex_1_3_2",
     "thm_11_8",
-    "thm_14_8",
 }
 FAMILY_CONSUMABLE_PROOF_CLASSES = {
     "source_route_finite_interval_covered",

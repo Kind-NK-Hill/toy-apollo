@@ -335,7 +335,7 @@ class Phase2BatchControllerTests(unittest.TestCase):
         self.assertTrue(report.all_reporting_terminal)
         self.assertFalse(report.all_clean_or_allowed_exception)
 
-    def test_allowed_beyond_book_exception_is_clean_for_textbook_objective(self):
+    def test_retired_thm_14_8_exception_is_not_clean_for_textbook_objective(self):
         report = analyze_batch_state(
             {
                 "batch_id": "allowed-beyond-book",
@@ -350,11 +350,11 @@ class Phase2BatchControllerTests(unittest.TestCase):
         )
 
         row = report.rows[0]
-        self.assertTrue(row.allowed_beyond_book_exception)
-        self.assertTrue(row.clean_or_allowed_exception)
-        self.assertTrue(row.terminal)
-        self.assertEqual(row.next_action, "none; allowed beyond-book exception")
-        self.assertTrue(report.all_clean_or_allowed_exception)
+        self.assertFalse(row.allowed_beyond_book_exception)
+        self.assertFalse(row.clean_or_allowed_exception)
+        self.assertFalse(row.terminal)
+        self.assertEqual(row.next_action, "run review-now --review-subject existing")
+        self.assertFalse(report.all_clean_or_allowed_exception)
 
     def test_cited_external_proof_exception_is_clean_or_allowed_for_textbook_objective(self):
         report = analyze_batch_state(

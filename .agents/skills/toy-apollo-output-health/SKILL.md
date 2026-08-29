@@ -141,10 +141,12 @@ Do not push unless the user explicitly asks.
 
 These are not ordinary output-health targets unless the user explicitly scopes exception/status work:
 
-- `thm_14_8`: documented beyond-book exception.
 - `thm_11_8`: documented cited-external-proof exception.
 - `thm_1_2`: Chapter 1 source-statement risk around interval concatenation.
 - `ex_1_3_2`: source typo/statement-decision risk.
+
+`thm_14_8` is deliberately absent: its former beyond-book boundary was retired
+after a complete proof and fresh passing review/apply on 2026-08-05.
 
 Always re-check current docs, source, prompt packs, and review artifacts before relying on this list.
 

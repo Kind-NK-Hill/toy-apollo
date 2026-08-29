@@ -39,14 +39,14 @@ class Phase2CompletionClassificationTests(unittest.TestCase):
         self.assertEqual(default_errors, [])
         self.assertTrue(any("definitely-not-at-this-line" in error for error in freshness_errors))
 
-    def test_beyond_book_exception_is_unique(self) -> None:
+    def test_no_beyond_book_exception_remains(self) -> None:
         payload = json.loads(Path(DEFAULT_CLASSIFICATION).read_text(encoding="utf-8"))
         beyond_book_tasks = [
             task["task_id"]
             for task in payload["tasks"]
             if task["primary_class"] == "beyond_book_exception"
         ]
-        self.assertEqual(beyond_book_tasks, ["thm_14_8"])
+        self.assertEqual(beyond_book_tasks, [])
 
     def test_open_debt_entries_have_reasons(self) -> None:
         payload = json.loads(Path(DEFAULT_CLASSIFICATION).read_text(encoding="utf-8"))

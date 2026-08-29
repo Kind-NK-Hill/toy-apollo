@@ -21,8 +21,7 @@ REPORT_MD = "docs/phase2_unfinished_tasks_audit.md"
 CLEAN_DEBT_JSON = "docs/phase2_ch10_14_clean_debt_surface_audit.json"
 METADATA_FIX_MANIFEST = "docs/phase2_unfinished_metadata_status_fix_manifest.json"
 LEDGER_SUMMARY_SYNC_MANIFEST = "docs/phase2_unfinished_ledger_summary_sync_manifest.json"
-ALLOWED_PROOF_BEYOND_BOOK = "thm_14_8_ProofBeyondBook"
-ALLOWED_EXCEPTION_TASKS = {"thm_1_2", "ex_1_3_2", "thm_11_8", "thm_14_8"}
+ALLOWED_EXCEPTION_TASKS = {"thm_1_2", "ex_1_3_2", "thm_11_8"}
 SOURCE_STATEMENT_EXCEPTION_TASKS = {"thm_1_2", "ex_1_3_2"}
 PASSING_OBLIGATION_STATUSES = {"proved", "obsolete", "accepted_as_proof_debt"}
 PLACEHOLDER_OBLIGATION_ID = "source_proof_spine"
@@ -237,8 +236,6 @@ def obligation_is_allowed_exception(task_id: str, obligation: dict[str, Any]) ->
     landing = obligation_landing(obligation)
     proof_contract_status = str(obligation.get("proof_contract_status") or "").strip()
     notes = str(obligation.get("proof_contract_notes") or "").lower()
-    if task_id == "thm_14_8":
-        return ALLOWED_PROOF_BEYOND_BOOK in landing or proof_contract_status == "beyond_book_exception"
     if task_id == "thm_11_8":
         return (
             proof_contract_status == "beyond_book_exception"
@@ -629,8 +626,8 @@ NEXT_ACTIONS = {
     "public_surface_and_obligations": "First remove public Support/Spine parameters, then close the named proof obligations with theorem-level landings.",
     "public_surface_cleanup": "Remove public Support/Spine parameters or make support-consuming helpers private; no open obligation is recorded.",
     "obligation_resolution": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields.",
-    "allowed_beyond_book_hygiene": "Keep only the documented thm_14_8 beyond-book exception and make inherited uses explicit.",
-    "proof_debt_review": "Review accepted proof debt and either retire it or document it as the allowed beyond-book exception.",
+    "allowed_beyond_book_hygiene": "Retire stale accepted proof debt; no Chapter 14 beyond-book exception remains.",
+    "proof_debt_review": "Review accepted proof debt and either retire it or map it to a current explicit exception contract.",
     "allowed_exception_boundary": "Keep the explicit allowed exception visible, but do not count it as unfinished proof debt.",
     "build_repair": "Fix Lean build failures before semantic cleanup.",
     "missing_output": "Regenerate or recover the missing output file before any proof-debt decision.",

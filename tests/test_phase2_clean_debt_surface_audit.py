@@ -17,7 +17,7 @@ from tools.audit_phase2_clean_debt_surface import (  # noqa: E402
 
 
 class Phase2CleanDebtSurfaceAuditTests(unittest.TestCase):
-    def test_support_parameter_is_error_but_proof_beyond_book_is_allowed(self):
+    def test_support_and_retired_proof_beyond_book_parameters_are_errors(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             output = root / "ToyApollo" / "Output"
@@ -46,8 +46,8 @@ theorem thm_14_8 (H : thm_14_8_ProofBeyondBook) : True := by
 
             payload = findings_payload(scan_public_surface(root, 10, 14))
 
-            self.assertEqual(payload["severity_counts"]["error"], 1)
-            self.assertEqual(payload["severity_counts"]["allowed"], 1)
+            self.assertEqual(payload["severity_counts"]["error"], 2)
+            self.assertNotIn("allowed", payload["severity_counts"])
             self.assertEqual(payload["findings"][0]["category"], "public_proof_package_parameter")
 
     def test_support_return_is_review_but_implicit_support_parameter_is_error(self):
@@ -198,7 +198,7 @@ structure prob_14_11_ProofBeyondBook where
             self.assertNotIn("allowed", payload["severity_counts"])
             self.assertEqual(payload["findings"][0]["category"], "non_exception_accepted_debt")
 
-    def test_thm_14_8_beyond_book_parameter_is_allowed_for_direct_downstream(self):
+    def test_retired_thm_14_8_beyond_book_parameter_is_error_downstream(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             output = root / "ToyApollo" / "Output"
@@ -217,9 +217,9 @@ theorem prob_14_11 (H : thm_14_8_ProofBeyondBook) : True := by
 
             payload = findings_payload(scan_public_surface(root, 10, 14))
 
-            self.assertNotIn("error", payload["severity_counts"])
-            self.assertEqual(payload["severity_counts"]["allowed"], 1)
-            self.assertEqual(payload["findings"][0]["category"], "inherited_beyond_book_surface")
+            self.assertEqual(payload["severity_counts"]["error"], 1)
+            self.assertNotIn("allowed", payload["severity_counts"])
+            self.assertEqual(payload["findings"][0]["category"], "public_proof_package_parameter")
 
     def test_verification_parameter_is_treated_as_public_proof_package(self):
         with tempfile.TemporaryDirectory() as tmp:

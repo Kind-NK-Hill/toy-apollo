@@ -306,7 +306,7 @@ class Phase2ReviewDecisionTests(unittest.TestCase):
         self.assertIsNone(decision.task_status_projection)
         self.assertNotIn("phase2_status", decision.result)
 
-    def test_allowed_exception_is_not_counted_as_clean_pass(self):
+    def test_retired_thm_14_8_exception_is_rejected(self):
         review_input = self._review_input("thm_14_8", "Theorem")
         raw = self._raw_result(
             review_input,
@@ -317,7 +317,7 @@ class Phase2ReviewDecisionTests(unittest.TestCase):
         decision = evaluate_semantic_review_result(raw, review_input=review_input, runner_metadata={"status": "test"})
 
         self.assertTrue(decision.is_semantic_verdict)
-        self.assertEqual(decision.task_status_projection.task_status, "allowed_exception")
+        self.assertEqual(decision.task_status_projection.task_status, "fail")
         self.assertFalse(decision.is_clean_pass)
 
     def test_reviewer_cannot_override_authoritative_binding_metadata(self):

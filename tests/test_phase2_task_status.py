@@ -231,15 +231,28 @@ class Phase2TaskStatusClassifierTest(unittest.TestCase):
         self.assertEqual(result.task_status, "blocked")
 
     def test_allowed_exception_is_only_for_explicit_tasks_and_classes(self):
-        thm_14_8 = classify_phase2_task_status(
+        retired_thm_14_8_exception = classify_phase2_task_status(
             task_id="thm_14_8",
             task_type="Theorem",
             review_verdict="pass",
             proof_class="beyond_book_exception",
         )
 
-        self.assertEqual(thm_14_8.task_status, "allowed_exception")
-        self.assertEqual(thm_14_8.as_metadata()["phase2_status"], "allowed_exception")
+        self.assertEqual(retired_thm_14_8_exception.task_status, "fail")
+        self.assertEqual(
+            retired_thm_14_8_exception.as_metadata()["phase2_status"],
+            "fail",
+        )
+
+        completed_thm_14_8 = classify_phase2_task_status(
+            task_id="thm_14_8",
+            task_type="Theorem",
+            review_verdict="pass",
+            proof_class="source_faithful_proof_completed",
+            completion_class="source_faithful_proof_completed",
+        )
+
+        self.assertEqual(completed_thm_14_8.task_status, "pass")
 
         thm_11_8 = classify_phase2_task_status(
             task_id="thm_11_8",

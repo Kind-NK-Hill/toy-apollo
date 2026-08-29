@@ -90,7 +90,6 @@ ALLOWED_EXCEPTION_TASK_CLASSES = {
     "thm_1_2": {"source_statement_exception"},
     "ex_1_3_2": {"source_typo_statement_exception"},
     "thm_11_8": {"cited_external_proof_exception"},
-    "thm_14_8": {"beyond_book_exception"},
 }
 
 

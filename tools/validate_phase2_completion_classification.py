@@ -245,9 +245,9 @@ def validate_classification(
                 "validate_phase2_obligation_contracts.py validation, or an explicit Level 0 direct proof reason"
             )
 
-    if beyond_book_tasks != ["thm_14_8"]:
+    if beyond_book_tasks:
         errors.append(
-            "thm_14_8 must be the only task with primary_class = beyond_book_exception; "
+            "no current task may retain primary_class = beyond_book_exception; "
             f"found {beyond_book_tasks}"
         )
 

@@ -158,6 +158,42 @@ structure SomeSourceSpine where
 
             self.assertEqual(findings, [])
 
+    def test_retired_thm_14_8_beyond_book_contract_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write_task(
+                root,
+                task_id="thm_14_8",
+                obligation=_base_obligation(
+                    status="accepted_as_proof_debt",
+                    lean_landing="thm_14_8_ProofBeyondBook",
+                    proof_contract_status="beyond_book_exception",
+                    proof_contract_notes="Historical beyond-book boundary.",
+                ),
+            )
+
+            findings = validate_obligation_contracts(root)
+
+            self.assertIn("non_exception_beyond_book", _categories(findings))
+
+    def test_thm_11_8_cited_external_contract_remains_explicitly_allowed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write_task(
+                root,
+                task_id="thm_11_8",
+                obligation=_base_obligation(
+                    status="accepted_as_proof_debt",
+                    lean_landing="ProbabilityTheory.strong_law_ae",
+                    proof_contract_status="beyond_book_exception",
+                    proof_contract_notes="Explicit cited Etemadi external proof.",
+                ),
+            )
+
+            findings = validate_obligation_contracts(root)
+
+            self.assertNotIn("non_exception_beyond_book", _categories(findings))
+
     def test_proved_obligation_missing_local_landing_is_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
