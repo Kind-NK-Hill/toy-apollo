@@ -108,6 +108,7 @@ theorem public_code : True := by trivial
         self.assertNotIn("Unmarked source prose", result.text)
         self.assertNotIn("textbook statement", result.text)
         self.assertIn('"/- this is string data, not a comment -/"', result.text)
+        self.assertTrue(result.text.startswith("/-\n"))
         self.assertEqual(len(block_comments(result.text)), 1)
         self.assertNotIn("\n\n\n", result.text)
         self.assertTrue(task_parent_is_public(result.text))

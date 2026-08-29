@@ -196,7 +196,7 @@ def sanitize_task_parent(text: str, *, task_id: str) -> SanitizeResult:
 
     metadata = _metadata_lines(text, task_id)
     body = normalize_code_spacing(strip_block_comments(text))
-    notice = "\n".join(["/-!", *metadata, PUBLIC_SOURCE_NOTICE, "-/", ""])
+    notice = "\n".join(["/-", *metadata, PUBLIC_SOURCE_NOTICE, "-/", ""])
     sanitized = f"{notice}\n{body}"
     return SanitizeResult(text=sanitized, changed=sanitized != text)
 
