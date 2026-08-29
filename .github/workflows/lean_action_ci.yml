@@ -17,6 +17,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
       - name: Enforce Main Repo Hygiene
         run: python tools/check_repo_hygiene.py
       - name: Check Public Snapshot Scope
