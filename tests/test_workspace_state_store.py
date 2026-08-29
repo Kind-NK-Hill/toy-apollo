@@ -144,6 +144,8 @@ class WorkspaceStateStoreTests(unittest.TestCase):
 
     def test_chapters_two_to_four_formal_plan_catalog_is_exact(self):
         plans_dir = Path(__file__).resolve().parents[1] / "plans"
+        if not plans_dir.is_dir():
+            self.skipTest("private formal-plan corpus is not included in the public source snapshot")
         task_ids = discover_formal_plan_task_ids(plans_dir, chapters=(2, 3, 4))
         counts = {
             chapter: sum(1 for task_id in task_ids if task_id.split("_", 2)[1] == str(chapter))
