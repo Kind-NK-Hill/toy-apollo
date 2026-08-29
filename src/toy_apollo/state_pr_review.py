@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Mapping
 
 from src.block_id_naming import canonicalize_block_id
@@ -28,6 +28,15 @@ from .state_store import (
 
 class ExternalPrReviewError(RuntimeError):
     pass
+
+
+def _checkout_subject_path(checkout: Path, repository_path: str) -> Path:
+    """Resolve a Git repository path beneath a platform-native checkout."""
+
+    relative = PurePosixPath(repository_path)
+    if relative.is_absolute() or not relative.parts or ".." in relative.parts:
+        raise ExternalPrReviewError(f"Invalid repository-relative subject path: {repository_path!r}")
+    return checkout.joinpath(*relative.parts)
 
 
 @dataclass(frozen=True)
@@ -324,6 +333,10 @@ def prepare_external_pr_review(
             "- This review covers the PR head bundle only. It does not cover Toy Output or MAT by similarity.",
         ]
     )
+    review_subject_path = _checkout_subject_path(
+        checkout,
+        observation.subject.primary_path,
+    )
     artifacts = _write_codex_handoff_review_artifacts(
         task=task,
         ledger=ledger,
@@ -331,7 +344,7 @@ def prepare_external_pr_review(
         pack_dir=pack_dir,
         attempt=1,
         candidate_path=Path(observation.subject.primary_path),
-        candidate_code=(checkout / Path(observation.subject.primary_path.replace("/", "\\"))).read_text(encoding="utf-8"),
+        candidate_code=review_subject_path.read_text(encoding="utf-8"),
         build_summary=build_receipt,
         mode="external-pr-review",
         review_subject_kind="external_pr",
@@ -339,7 +352,7 @@ def prepare_external_pr_review(
         build_candidate_file=observation.subject.primary_path,
         build_candidate_hash=observation.subject.primary_hash,
         subject_bundle_override=subject_bundle,
-        review_basis_subject_file=checkout / Path(observation.subject.primary_path.replace("/", "\\")),
+        review_basis_subject_file=review_subject_path,
         review_basis_extra=external_basis,
         review_context_suffix=context_suffix,
     )

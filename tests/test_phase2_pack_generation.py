@@ -137,7 +137,9 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             shutil.rmtree(root, ignore_errors=True)
 
     def test_staged_official_build_handles_long_owner_pack_staging_path(self):
-        root = Path(tempfile.gettempdir()) / "toy_apollo_staged_long_owner_pack"
+        root = Path(tempfile.gettempdir()) / (
+            "toy_apollo_staged_long_owner_pack_" + "x" * 48
+        )
         try:
             self._clean_root(root)
             plans_dir = root / "plans"

@@ -12,10 +12,12 @@ case-study inspection.
 - [Elan](https://github.com/leanprover/elan) for the Lean version pinned by
   `lean-toolchain`.
 - Git.
+- [ripgrep](https://github.com/BurntSushi/ripgrep) for the repository-surface
+  checks in the full Python test suite.
 
-Windows PowerShell is the currently documented shell. The Python and Lean code
-are not intentionally Windows-only, but a complete cross-platform CI matrix is
-not yet present.
+Windows PowerShell is the primary documented shell. Public CI also runs the
+Python suite and Lean case snapshots on Ubuntu; a broader operating-system
+matrix is not yet present.
 
 ## Set up
 
