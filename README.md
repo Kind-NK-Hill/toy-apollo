@@ -1,155 +1,106 @@
-# ToyApollo
+# ProbabilityTheoryFormalization
 
-[简体中文](README.zh-CN.md) · [Architecture](docs/architecture.md) ·
-[Development](docs/development.md) · [Case studies](examples/case-studies/)
+**AI Agent Workflows & Verification**
 
-ToyApollo is an evidence-bound agent pipeline for source-faithful Lean 4
-formalization. It turns textbook-scoped tasks into Lean candidates while
-keeping three claims separate:
+A research project that uses a probability textbook to develop AI-assisted code
+generation, checking, review, and repair. The goal is to make generated Lean
+code match the intended mathematics and remain usable by the modules that depend
+on it.
 
-1. **Build:** the candidate elaborates in Lean.
-2. **Semantic review:** an independent reviewer checks the source claim,
-   proof route, public Interface, and direct consumers.
-3. **Apply:** completion lands only from a valid, current review with
-   `phase2_status=pass`.
+**中文概述**：以概率论教材为场景，研究和开发 AI 辅助代码生成、自动检查、独立审查与迭代修复流程，保留可追溯的失败和修复记录。[阅读中文版](README.zh-CN.md)
 
-The project exists because compiling code can still formalize the wrong
-statement, omit a source-domain assumption, hide a proof step behind a new
-premise, or replace the source route with a library shortcut.
+**Shuo Deng:** workflow engineering and formalization, with AI assistance; first
+author of the linked preprint. **Stack:** Python · Lean 4 · SQLite · automated verification.
 
-## How it works
+[Paper](https://arxiv.org/abs/2607.27298) ·
+[Two representative cases](#two-representative-cases) ·
+[Merged collaboration](https://github.com/wkshum/ProbabilityTheory/pull/8) ·
+[Contact](mailto:kdsdengshuo2823@gmail.com)
 
-```mermaid
-flowchart LR
-  S[Source unit] --> P[Task plan]
-  P --> K[Task-scoped prompt pack]
-  K --> C[Lean candidate]
-  C --> B{Build gate}
-  B -- fail --> C
-  B -- pass --> R{Independent semantic review}
-  R -- fail / inconclusive --> F[Structured repair request]
-  F --> C
-  R -- pass --> A{Apply gate}
-  A --> O[Official Task Parent]
-```
+## My role and contributions
 
-Prompt packs, build receipts, review requests, repair histories, batch queues,
-and the operational SQLite database live in a private evidence plane. The
-public source plane keeps the runtime, tests, Lean Modules, documentation, and
-eight small immutable case-study exports. See
-[`docs/repository_scope.md`](docs/repository_scope.md).
+I am **Shuo Deng**, the developer of this workflow and a contributor to the
+textbook formalization. My work covers:
 
-## Start with the failures
+- **Workflow design and implementation:** organize textbook passages into tasks,
+  coordinate code generation and checks, and support iterative repair and
+  recovery from interrupted work. [Workflow and architecture](docs/architecture.md)
+- **Verification and state management:** bind reviews to the code and
+  dependencies actually checked; retain build and repair records; use SQLite
+  to track state and prevent outdated reviews from approving changed code.
+  [State and evidence model](docs/workspace_state.md)
+- **Failure analysis and research:** investigate missing assumptions, changed
+  theorem interfaces, and broken downstream use; contribute reviewed fixes
+  and coauthor the probability-formalization preprint.
+  [Cases](examples/case-studies/) · [Merged fixes](https://github.com/wkshum/ProbabilityTheory/pull/7)
 
-All eight public examples contain an initial Lean subject that compiles.
-Semantic review still rejects it, invalidates an earlier pass, or records it as
-an explicit non-clean exception.
+**Collaboration and AI assistance.** Kenneth W. Shum is the textbook author and
+paper coauthor, and maintains the [collaborating textbook repository](https://github.com/wkshum/ProbabilityTheory).
+My role centers on the workflow and formalization development; source corrections
+are discussed with the textbook author. AI tools assist with code generation,
+proof search, repairs, review, and documentation. These artifacts are not a claim
+of wholly handwritten work; mathematical interpretation still requires human judgment.
 
-| Case | What the build gate missed | What the review loop added |
-| --- | --- | --- |
-| [`def_8_5`](examples/case-studies/def_8_5/) | Total variation accepted arbitrary measures even though the source domain was probability measures | Probability guards, then a second repair for downstream evidence plumbing |
-| [`def_10_1`](examples/case-studies/def_10_1/) | Almost-sure convergence mixed incompatible measure assumptions and later omitted the random-variable carrier | Reusable event/a.e. bridges, carrier preservation, and high-fanout consumer review |
-| [`def_5_5`](examples/case-studies/def_5_5/) | A Mathlib alias replaced the source-facing finite-subfamily definition | An explicit equation plus a bridge to the library predicate |
-| [`def_6_6`](examples/case-studies/def_6_6/) | Missing measurability and `EReal.toReal` made an undefined integral look total | A componentwise integrability gate and an explicit `Option` result |
-| [`ex_8_2_1`](examples/case-studies/ex_8_2_1/) | The carrier drifted from `ℝ × ℝ` to `ℕ × ℝ` | An owner-level contract decision and a real-carrier pushforward |
-| [`ex_8_3_4`](examples/case-studies/ex_8_3_4/) | One feasible transport plan was presented as solving an optimization problem | Optimizer quantification and the missing Wasserstein Interface |
-| [`thm_8_2`](examples/case-studies/thm_8_2/) | A finished Mathlib product theorem bypassed the requested construction | An explicit fibre set function, measure construction, and uniqueness route |
-| [`thm_14_8`](examples/case-studies/thm_14_8/) | The theorem compiled only by accepting its missing proof as a public premise | A complete triangular-array proof, a concrete-row bridge, and downstream migration |
+## Outputs you can inspect
 
-These cases are mechanism demonstrations, not benchmark scores. Their public
-timelines retain verdict classes and private-evidence hashes without publishing
-the complete source corpus or mutable runtime packs. The collection covers at
-least eight distinct primary failure modes; seven cases expose statement or
-Interface drift, while `thm_8_2` isolates proof-route drift.
-
-## Five-minute inspection
-
-Prerequisites:
-
-- Python 3.12 is the currently verified contributor environment. A minimum
-  supported Python version has not yet been declared.
-- [Elan](https://github.com/leanprover/elan); the repository pins Lean through
-  [`lean-toolchain`](lean-toolchain).
-
-From a PowerShell checkout:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-
-python .\run_chapter.py -h
-python .\tools\check_repo_hygiene.py
-python .\tools\prepare_public_snapshot.py
-python .\tools\check_case_studies.py
-lake build ToyApollo.Output.def_8_5
-
-lake env lean .\examples\case-studies\def_8_5\initial.lean
-lake env lean .\examples\case-studies\def_8_5\final.lean
-```
-
-The last two commands should both compile. Compare the code and then read the
-case's `review-timeline.json`: compilation alone cannot distinguish the two
-Interfaces. The case-study index contains the command for compiling all 16
-public snapshots.
-
-More setup and focused test commands are in
-[`docs/development.md`](docs/development.md).
-
-## Repository map
-
-| Path | Purpose |
+| Output | Evidence |
 | --- | --- |
-| `run_chapter.py` | Stable CLI entry |
-| `src/toy_apollo/` | Active Python package home |
-| `ToyApollo/Output/` | Lean Task Parents and task-owned support Modules |
-| `tests/` | Python workflow and state tests |
-| `tools/` | Explicit hygiene, migration, and reconciliation commands |
-| `examples/case-studies/` | Curated, path-relative review histories |
-| `docs/architecture.md` | Stable Module and evidence model |
-| `docs/phase2/` | Detailed operator contracts for Phase 2 |
+| **First-author preprint** | [*From Lecture Notes to Lean: Formalizing a Textbook on Probability Theory*](https://arxiv.org/abs/2607.27298) — **Shuo Deng**, Kenneth W. Shum. **arXiv preprint**, July 2026. |
+| **Public system and cases** | [Workflow implementation](src/toy_apollo/) and [eight selected cases](examples/case-studies/), with code comparisons and review timelines. |
+| **Merged collaboration** | [Chapter 2: align assumptions and interfaces](https://github.com/wkshum/ProbabilityTheory/pull/7) and [Chapter 3: refactor measure extension](https://github.com/wkshum/ProbabilityTheory/pull/8), both merged into Kenneth's repository. |
 
-The root-level `src/*.py` files are a temporary legacy Adapter during package
-migration. New implementation belongs under `src/toy_apollo/`.
+Review-history evaluation is ongoing: current analysis examines review consistency
+and repair trajectories; final evaluation results are not yet reported here.
 
-## Development history
+## Two representative cases
 
-The public commit history is a deterministic, sanitized projection of the
-private research repository, not a synthetic backfill. For commits that retain
-public-source changes, it preserves the original order, author and committer
-identities, timestamps, and commit messages. Every historical revision removes
-private evidence paths and source-derived Task Parent prose; commits that become
-empty after that projection are omitted. The release tip must remain
-byte-identical to the audited public source tree. See
-[`docs/repository_scope.md`](docs/repository_scope.md#publication-history-rule).
+### Catch code that compiles but omits a required condition
 
-## Project status and limits
+**Problem:** a definition intended for probability measures accepted arbitrary
+measures, allowing misleading values outside the intended domain.
+**Action:** review identified the missing conditions; repair added explicit
+probability-measure requirements and updated affected callers.
+**Result:** the corrected definition and its downstream use received a fresh
+passing review. Both the initial and final code compile.
 
-ToyApollo is a research prototype, not a proof of autonomous mathematical
-correctness.
+[Code and review history](examples/case-studies/def_8_5/) ·
+[Before](examples/case-studies/def_8_5/initial.lean) ·
+[After](examples/case-studies/def_8_5/final.lean)
 
-- A semantic review is model-assisted evidence, not a substitute for Lean's
-  kernel or expert mathematical judgment.
-- A Lean build establishes technical validity only; it does not establish
-  source fidelity.
-- The complete textbook-derived input corpus and mutable review packs are not
-  distributed in the public source plane.
-- Published case studies are selected mechanism examples and must not be read
-  as an unbiased accuracy, cost, or productivity evaluation.
-- The current CLI is local-first and the complete cross-platform support matrix
-  has not yet been established.
+### Repair a module, then check and repair its downstream callers
 
-## Documentation
+**Problem:** a theorem compiled by taking its missing proof as an input.
+Replacing that input with an internal proof still left a caller using the old interface.
+**Action:** implement the proof, add the interface needed by the caller, and
+migrate the caller through another review cycle.
+**Result:** a fresh review accepted the repaired theorem and downstream migration.
 
-- [Architecture](docs/architecture.md)
-- [Repository and evidence scope](docs/repository_scope.md)
-- [Development setup](docs/development.md)
-- [Phase 2 overview](docs/phase2/README.md)
-- [Semantic review criteria](docs/phase2/review_criteria.md)
-- [Status contract](docs/phase2/status_contract.md)
-- [Contributing](CONTRIBUTING.md)
-- [Security](SECURITY.md)
+[Case and timeline](examples/case-studies/thm_14_8/) ·
+[Full proof](ToyApollo/Output/thm_14_8.lean)
 
-## License
+The second case's short before/after files are **reduced interface demonstrations**;
+the full mathematical proof is linked separately. All eight cases are selected
+examples, **not an accuracy, cost, or productivity benchmark**.
 
-ToyApollo is released under the [MIT License](LICENSE).
+![A real review sequence: compiling code, missing conditions, caller migration, and a fresh passing review](docs/images/def85-review.svg)
+
+*Based on the [first case's retained review timeline](examples/case-studies/def_8_5/review-timeline.json);
+the code lines are excerpts from its public snapshots.*
+
+## Technical reading
+
+The system checks compilation, reviews the intended meaning independently, then
+accepts changes only while the reviewed code and dependencies remain current.
+Model-assisted review is evidence, not a guarantee of mathematical correctness.
+
+- [Architecture and workflow](docs/architecture.md)
+- [Installation and verification commands](docs/development.md)
+- [All eight cases and reproduction commands](examples/case-studies/)
+- [Review criteria](docs/phase2/review_criteria.md) and [status contract](docs/phase2/status_contract.md)
+- [Research context, related work, and limits](docs/project_notes.md)
+- [Repository scope and publication history](docs/repository_scope.md)
+- [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [MIT License](LICENSE)
+
+The project was formerly called **ToyApollo**; existing code identifiers retain
+that name for compatibility. Use **ProbabilityTheoryFormalization** when citing
+the project.
