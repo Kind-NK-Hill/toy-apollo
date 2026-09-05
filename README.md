@@ -7,7 +7,7 @@ generation, checking, review, and repair. The goal is to make generated Lean
 code match the intended mathematics and remain usable by the modules that depend
 on it.
 
-**中文概述：**以概率论教材为场景，研究和开发 AI 辅助代码生成、自动检查、独立审查与迭代修复流程，保留可追溯的失败和修复记录。[阅读中文版](README.zh-CN.md)
+**中文概述**：以概率论教材为场景，研究和开发 AI 辅助代码生成、自动检查、独立审查与迭代修复流程，保留可追溯的失败和修复记录。[阅读中文版](README.zh-CN.md)
 
 **Shuo Deng:** workflow engineering and formalization, with AI assistance; first
 author of the linked preprint. **Stack:** Python · Lean 4 · SQLite · automated verification.
