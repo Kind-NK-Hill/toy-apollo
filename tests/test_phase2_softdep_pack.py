@@ -11,23 +11,23 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.ledger_manager import LedgerManager, TaskStatus  # noqa: E402
-from src.toy_apollo.cli import app as cli_app  # noqa: E402
-from src.toy_apollo.core.settings import Settings  # noqa: E402
-from src.toy_apollo.dependency_decisions import load_dependency_decisions  # noqa: E402
-from src.toy_apollo.phase2_softdep_pack import apply_softdep_selection, write_softdep_pack  # noqa: E402
+from formalization_engine.ledger_manager import LedgerManager, TaskStatus  # noqa: E402
+from formalization_engine.cli import app as cli_app  # noqa: E402
+from formalization_engine.core.settings import Settings  # noqa: E402
+from formalization_engine.dependency_decisions import load_dependency_decisions  # noqa: E402
+from formalization_engine.phase2_softdep_pack import apply_softdep_selection, write_softdep_pack  # noqa: E402
 
 
 def removed_provider_module_names() -> tuple[str, str]:
     return (
-        "src.toy_apollo.phase3_" + "execution_batches",
-        "src.toy_apollo.integrations." + "offload" + "_" + "queue",
+        "formalization_engine.phase3_" + "execution_batches",
+        "formalization_engine.integrations." + "offload" + "_" + "queue",
     )
 
 
 def make_settings(root: Path) -> Settings:
     return Settings(
-        runtime_root=root,
+        runtime_root=root / "runtime",
         artifact_root=root,
         plans_dir=root / "plans",
         reports_dir=root / "reports",
@@ -36,7 +36,8 @@ def make_settings(root: Path) -> Settings:
         phase2_prompt_packs_dir=root / "phase2_prompt_packs",
         phase2_softdep_packs_dir=root / "phase2_softdep_packs",
         error_logs_dir=root / "error_logs",
-        toyapollo_output_dir=root / "ToyApollo" / "Output",
+        canonical_lean_dir=root / "ProbabilityTheory",
+        canonical_manifest_required=False,
         aristotle_outbox_dir=root / "aristotle_outbox",
         aristotle_archives_dir=root / "aristotle_archives",
         mathlib_index_file=root / "mathlib_index.faiss",
@@ -55,6 +56,7 @@ class Phase2SoftdepPackTests(unittest.TestCase):
             if root.exists():
                 shutil.rmtree(root, ignore_errors=True)
             settings = make_settings(root)
+            settings.canonical_lean_dir.mkdir(parents=True, exist_ok=True)
             settings.plans_dir.mkdir(parents=True, exist_ok=True)
             plan_payload = [
                 {

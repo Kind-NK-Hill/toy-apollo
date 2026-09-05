@@ -6,7 +6,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.block_id_naming import (  # noqa: E402
+from formalization_engine.block_id_naming import (  # noqa: E402
     canonicalize_block_id,
     canonicalize_task_dict,
     extract_chapter,

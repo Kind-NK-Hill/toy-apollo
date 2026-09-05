@@ -1,4 +1,4 @@
-import ToyApollo.Output.def_1_3
+import ProbabilityTheory.chapter_01.def_1_3
 
 open MeasureTheory ProbabilityTheory
 

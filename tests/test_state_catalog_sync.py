@@ -6,10 +6,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.toy_apollo.state_catalog_sync import sync_active_catalog
-from src.toy_apollo.state_reconcile import discover_catalog_worktree_subjects
-from src.toy_apollo.state_store import WorkspaceStateStore
-from src.toy_apollo.task_catalog import build_cordis_catalog
+from formalization_engine.state_catalog_sync import sync_active_catalog
+from formalization_engine.state_reconcile import discover_catalog_worktree_subjects
+from formalization_engine.state_store import WorkspaceStateStore
+from formalization_engine.task_catalog import build_cordis_catalog
 
 
 class StateCatalogSyncTests(unittest.TestCase):

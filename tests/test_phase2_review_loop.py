@@ -3,6 +3,7 @@ import json
 import os
 import shutil
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
@@ -11,18 +12,48 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.phase2_review_loop import (  # noqa: E402
+from formalization_engine.phase2_review_loop import (  # noqa: E402
     run_codex_auto_loop,
     run_codex_review_fix,
     run_codex_review_now,
 )
-from src.toy_apollo.phase2_prompt_pack import (  # noqa: E402
+from formalization_engine.phase2_prompt_pack import (  # noqa: E402
     build_check_prompt_pack_candidate,
 )
 from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E402
 
 
 class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
+    def test_auto_loop_pass_is_terminal_only_after_apply(self):
+        from formalization_engine.phase2_prompt_pack import write_codex_review_pack
+
+        with tempfile.TemporaryDirectory() as tmp:
+            task_id = "thm_4_handoff_completion"
+            ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(Path(tmp), task_id)
+            build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
+            self.assertTrue(build_success, build_detail)
+            review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
+            self.assertTrue(review_success, review_detail)
+            self._write_codex_review_result(pack_dir, verdict="pass")
+
+            def promote(*args, **kwargs):
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                output_path.write_text((pack_dir / "candidate_v1.lean").read_text(encoding="utf-8"), encoding="utf-8")
+                return True, "final build ok"
+
+            with patch("formalization_engine.phase2_review_apply.run_staged_official_build", side_effect=promote):
+                outcome = asyncio.run(run_codex_auto_loop(task_id, ledger, settings))
+
+            self.assertTrue(outcome.success, outcome.detail)
+            self.assertIsInstance(outcome, tuple)
+            self.assertEqual(tuple(outcome), (outcome.success, outcome.detail))
+            self.assertTrue(outcome.is_terminal)
+            self.assertEqual(outcome.next_action, "completed")
+            self.assertEqual(outcome.stop_reason, "completed")
+            self.assertEqual(ledger.ledger["tasks"][task_id]["status"], "COMPLETED")
+            self.assertEqual(ledger.ledger["tasks"][task_id]["current_auto_loop_stop_reason"], "passed")
+            self.assertTrue(output_path.is_file())
+
     def _setup_downstream_of_proof_debt_task(self, root: Path):
         self._clean_root(root)
         plans_dir = root / "plans"
@@ -51,7 +82,7 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        from src.ledger_manager import LedgerManager, TaskStatus
+        from formalization_engine.ledger_manager import LedgerManager, TaskStatus
 
         ledger = LedgerManager(ledger_path=str(root / "project_ledger.json"))
         for block_id, dependencies in ((dep_id, []), (task_id, [dep_id])):
@@ -142,11 +173,17 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             (pack_dir / "draft.lean").write_text("import Missing.Module\n#check impossible_name\n", encoding="utf-8")
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
-                success, detail = asyncio.run(run_codex_review_now(task_id, ledger, settings, review_subject="existing"))
+                outcome = asyncio.run(run_codex_review_now(task_id, ledger, settings, review_subject="existing"))
 
+            success, detail = outcome
+            self.assertEqual(outcome.next_action, "reviewer_write_result")
+            self.assertEqual(outcome.is_terminal, False)
+            self.assertEqual(outcome.stop_reason, "")
+            self.assertTrue(Path(outcome.request_path).is_file())
+            self.assertFalse(Path(outcome.expected_result_path).exists())
             self.assertTrue(success, detail)
             self.assertEqual(ledger.ledger["tasks"][task_id]["current_review_subject_kind"], "official_output")
         finally:
@@ -185,16 +222,16 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             )
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
                 new=AsyncMock(return_value=(True, "repl ok")),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.build_async",
                 new=AsyncMock(return_value=(True, "temp build ok")),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                "formalization_engine.phase2_prompt_pack._run_staged_official_build",
                 return_value=(True, "final build ok"),
             ):
-                success, detail = asyncio.run(
+                outcome = asyncio.run(
                     run_codex_auto_loop(
                         task_id,
                         ledger,
@@ -206,6 +243,12 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
                     )
                 )
 
+            success, detail = outcome
+            self.assertEqual(outcome.next_action, "reviewer_write_result")
+            self.assertEqual(outcome.is_terminal, False)
+            self.assertEqual(outcome.stop_reason, "")
+            self.assertTrue(Path(outcome.request_path).is_file())
+            self.assertFalse(Path(outcome.expected_result_path).exists())
             self.assertTrue(success, detail)
             self.assertIn("independent read-only reviewer", detail)
             self.assertIn("continue this same-session auto-loop now", detail)
@@ -224,13 +267,13 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             task_id = "thm_4_review_loop_author_detail"
             ledger, settings, _, _ = self._setup_trivial_phase2_task(root, task_id)
             with patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
                 new=AsyncMock(return_value=(False, "REPL System Error: synthetic failure")),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.build_async",
                 new=AsyncMock(return_value=(True, "temp build ok")),
             ):
-                success, detail = asyncio.run(
+                outcome = asyncio.run(
                     run_codex_auto_loop(
                         task_id,
                         ledger,
@@ -242,6 +285,10 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
                     )
                 )
 
+            success, detail = outcome
+            self.assertEqual(outcome.next_action, "author_repair")
+            self.assertEqual(outcome.is_terminal, False)
+            self.assertEqual(outcome.stop_reason, "")
             self.assertTrue(success)
             self.assertIn("must now repair `draft.lean`", detail)
             self.assertIn("continue this same-session auto-loop now", detail)
@@ -257,10 +304,10 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             task_id = "thm_4_review_loop_default_budget"
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
             with patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
                 new=AsyncMock(return_value=(False, "REPL System Error: synthetic failure")),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.build_async",
                 new=AsyncMock(return_value=(True, "temp build ok")),
             ):
                 success, detail = asyncio.run(run_codex_auto_loop(task_id, ledger, settings))
@@ -285,14 +332,14 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             task_id = "thm_4_review_loop_existing_reprepare"
             ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
             self.assertTrue(output_path.exists())
-            with patch("src.toy_apollo.phase2_prompt_pack._run_official_module_build", return_value=(True, "build ok")):
+            with patch("formalization_engine.phase2_prompt_pack._run_official_module_build", return_value=(True, "build ok")):
                 success, detail = asyncio.run(
                     run_codex_review_now(task_id, ledger, settings, review_subject="existing")
                 )
             self.assertTrue(success, detail)
             self._write_codex_review_result(pack_dir, verdict="fail")
 
-            with patch("src.toy_apollo.phase2_prompt_pack._run_official_module_build", return_value=(True, "build ok")):
+            with patch("formalization_engine.phase2_prompt_pack._run_official_module_build", return_value=(True, "build ok")):
                 success, detail = asyncio.run(
                     run_codex_review_now(task_id, ledger, settings, review_subject="current")
                 )
@@ -320,7 +367,7 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
         try:
             self._clean_root(root)
             task_id = "thm_4_review_loop_fix_backfill"
-            from src.toy_apollo.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
+            from formalization_engine.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
 
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
             build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
@@ -363,7 +410,7 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
         try:
             self._clean_root(root)
             task_id = "thm_4_review_loop_fix_stale_hash"
-            from src.toy_apollo.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
+            from formalization_engine.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
 
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
             build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
@@ -385,7 +432,7 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
         try:
             self._clean_root(root)
             task_id = "thm_4_review_loop_fix_abandon"
-            from src.toy_apollo.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
+            from formalization_engine.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
 
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
             build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
@@ -476,13 +523,13 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             os.utime(output_path, (1000, 1000))
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
                 new=AsyncMock(return_value=(True, "repl ok")),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.build_async",
                 new=AsyncMock(return_value=(True, "temp build ok")),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_staged_official_build",
                 return_value=(True, "official build ok"),
             ):
                 build_success, build_detail = asyncio.run(build_check_prompt_pack_candidate(task_id, ledger, settings))
@@ -561,7 +608,7 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             task_id = "thm_4_review_loop_stale_repair_seed"
             stale_candidate = f"import Mathlib\n\ntheorem {task_id} : True := by\n  trivial\n"
             repaired_output = f"import Mathlib\n\n-- repaired official output\ntheorem {task_id} : True := by\n  trivial\n"
-            from src.toy_apollo.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
+            from formalization_engine.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
 
             ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(
                 root,
@@ -607,7 +654,7 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             task_id = "thm_4_review_loop_stale_backfill_seed"
             stale_candidate = f"import Mathlib\n\ntheorem {task_id} : True := by\n  trivial\n"
             repaired_output = f"import Mathlib\n\n-- repaired official output\ntheorem {task_id} : True := by\n  trivial\n"
-            from src.toy_apollo.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
+            from formalization_engine.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
 
             ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(
                 root,
@@ -659,7 +706,7 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             task_id = "thm_4_review_loop_build_budget"
             bad_candidate = f"import Mathlib\n\ntheorem {task_id} : True := by\n  sorry\n"
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id, candidate_code=bad_candidate)
-            success, detail = asyncio.run(
+            outcome = asyncio.run(
                 run_codex_auto_loop(
                     task_id,
                     ledger,
@@ -670,6 +717,10 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
                     max_build_attempts_per_round=1,
                 )
             )
+            success, detail = outcome
+            self.assertEqual(outcome.next_action, "stopped")
+            self.assertEqual(outcome.is_terminal, True)
+            self.assertEqual(outcome.stop_reason, "build_budget_exhausted")
             self.assertFalse(success)
             self.assertIn("build budget", detail.lower())
             context_text = (pack_dir / "context.md").read_text(encoding="utf-8")
@@ -682,7 +733,7 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
         try:
             self._clean_root(root)
             task_id = "thm_4_review_loop_same_candidate_guard"
-            from src.toy_apollo.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
+            from formalization_engine.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
 
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
             build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
@@ -706,13 +757,13 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertFalse((pack_dir / "semantic_review_request_v2.json").exists())
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
                 new=AsyncMock(return_value=(True, "repl ok")),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.build_async",
                 new=AsyncMock(return_value=(True, "temp build ok")),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                "formalization_engine.phase2_prompt_pack._run_staged_official_build",
                 return_value=(True, "final build ok"),
             ):
                 success, detail = asyncio.run(
@@ -752,7 +803,7 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
         try:
             self._clean_root(root)
             task_id = "thm_4_review_loop_restart_seeded_repair"
-            from src.toy_apollo.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
+            from formalization_engine.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
 
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
             build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
@@ -798,7 +849,7 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             )
 
             with patch(
-                "src.toy_apollo.phase2_review_loop.run_build_check_cycle",
+                "formalization_engine.phase2_review_loop.run_build_check_cycle",
                 new=AsyncMock(return_value=(False, "intentional build stop after repair seed decision")),
             ) as build_check_mock:
                 success, detail = asyncio.run(
@@ -857,7 +908,7 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
         try:
             self._clean_root(root)
             task_id = "thm_4_review_loop_same_candidate_legacy_open_debt"
-            from src.toy_apollo.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
+            from formalization_engine.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack
 
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
             build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
@@ -894,13 +945,13 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             )
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
                 new=AsyncMock(return_value=(True, "repl ok")),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.build_async",
                 new=AsyncMock(return_value=(True, "temp build ok")),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                "formalization_engine.phase2_prompt_pack._run_staged_official_build",
                 return_value=(True, "final build ok"),
             ):
                 success, detail = asyncio.run(
@@ -973,13 +1024,13 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             )
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
                 new=AsyncMock(return_value=(True, "repl ok")),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.build_async",
                 new=AsyncMock(return_value=(True, "temp build ok")),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                "formalization_engine.phase2_prompt_pack._run_staged_official_build",
                 return_value=(True, "final build ok"),
             ):
                 success, detail = asyncio.run(
@@ -1008,7 +1059,7 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
         try:
             self._clean_root(root)
             task_id = "thm_4_review_loop_nonprogress"
-            from src.toy_apollo.phase2_prompt_pack import write_codex_review_pack
+            from formalization_engine.phase2_prompt_pack import write_codex_review_pack
 
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
             build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
@@ -1028,13 +1079,13 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             result_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
                 new=AsyncMock(return_value=(True, "repl ok")),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.build_async",
                 new=AsyncMock(return_value=(True, "temp build ok")),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                "formalization_engine.phase2_prompt_pack._run_staged_official_build",
                 return_value=(True, "final build ok"),
             ):
                 success, detail = asyncio.run(
@@ -1055,13 +1106,13 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             draft_path.write_text(draft_path.read_text(encoding="utf-8") + "\n-- substantive repair attempt\n", encoding="utf-8")
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
                 new=AsyncMock(return_value=(True, "repl ok")),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.build_async",
                 new=AsyncMock(return_value=(True, "temp build ok")),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                "formalization_engine.phase2_prompt_pack._run_staged_official_build",
                 return_value=(True, "final build ok"),
             ):
                 success, detail = asyncio.run(
@@ -1114,7 +1165,7 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
         try:
             self._clean_root(root)
             task_id = "thm_4_review_loop_diagnoser_required"
-            from src.toy_apollo.phase2_prompt_pack import write_codex_review_pack
+            from formalization_engine.phase2_prompt_pack import write_codex_review_pack
 
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
             build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
@@ -1133,7 +1184,7 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
             payload["findings"] = [{"severity": "error", "category": "proof", "message": payload["summary"]}]
             result_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
-            success, detail = asyncio.run(
+            outcome = asyncio.run(
                 run_codex_auto_loop(
                     task_id,
                     ledger,
@@ -1145,6 +1196,10 @@ class Phase2ReviewLoopTests(Phase2ReviewTestSupport, unittest.TestCase):
                 )
             )
 
+            success, detail = outcome
+            self.assertEqual(outcome.next_action, "diagnoser_read_only")
+            self.assertEqual(outcome.is_terminal, False)
+            self.assertEqual(outcome.stop_reason, "diagnoser_required")
             self.assertFalse(success)
             self.assertIn("diagnoser", detail.lower())
             task_record = ledger.ledger["tasks"][task_id]

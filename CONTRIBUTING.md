@@ -1,75 +1,53 @@
-# Contributing to ToyApollo
+# Contributing to ProbabilityTheoryFormalization
 
-ToyApollo welcomes focused improvements to its Lean formalization Modules,
-local agent workflow, evidence handling, tests, and documentation.
+Focused improvements to the Lean corpus, Python workflow, verification, tests
+and documentation are welcome. Follow [the development guide](docs/development.md)
+for setup and public-checkout validation.
 
-## Before starting
+## Scope the change
 
-Open an issue before changing a stable CLI flag, status name, plan schema,
-review schema, repository layout, or source/evidence classification. These are
-Interfaces used by runtime state and historical evidence; seemingly local
-changes may invalidate existing receipts.
+Small fixes and documentation corrections can go directly to a pull request.
+Discuss changes to stable CLI flags, status names, plan/review schemas, repository
+layout or evidence classification in an issue first. These interfaces can affect
+retained state and review receipts.
 
-Small fixes, tests, and documentation corrections can go directly to a pull
-request.
+New Python code belongs under `src/formalization_engine/`. Canonical Lean lives
+under `ProbabilityTheory/chapter_XX/`; use the manifest's module names. Keep
+caller behavior and evidence boundaries explicit, preserve unrelated changes,
+and document implemented behavior rather than future plans.
 
-## Set up and verify
+## Verify
 
-Follow [`docs/development.md`](docs/development.md). Start with the narrowest
-check that exercises the changed Interface, then add broader checks when the
-risk justifies them.
+Start with checks that exercise the change:
 
-At minimum, source-facing changes should normally run:
-
-```powershell
-python .\run_chapter.py -h
-python .\tools\check_repo_hygiene.py
-python .\tools\prepare_public_snapshot.py
-python -m unittest <relevant-test-module>
+```console
+formalize -h
+python tools/check_repo_hygiene.py
+python -m unittest tests.test_settings
+lake build ProbabilityTheory.chapter_08.def_8_5
 ```
 
-Lean-facing changes should additionally build each touched Task Parent:
+Replace the example test/module with the affected ones. For broad changes, run
+the Python discovery suite and `lake build ProbabilityTheory`; supported chapter
+joint imports are a separate check. The [workflow demonstration](docs/workflow_demo.md)
+exercises production build/review/apply behavior in an isolated workspace.
 
-```powershell
-lake build ToyApollo.Output.<task_id>
-```
+Lean compilation is not evidence of source fidelity. Changes to an official
+mathematical task still require the project's independent Phase 2 review/apply
+contract. The public build manifest cannot stand in for the private task catalog.
 
-A Lean build is not evidence of source fidelity. Changes to an official task
-still require the Phase 2 review/apply contract used by the project owner.
+## Publication and provenance
 
-## Keep the public source plane small
+- Keep source corpora, plans, private catalog policies, upstream snapshots,
+  live prompt packs, databases, logs and operational receipts out of public commits.
+- New public cases need source-publication rights, relative paths, exact evidence
+  bindings, and an explicit distinction between selected examples and benchmarks.
+- Preserve fixed case Lean/JSON evidence when updating links to current code.
+- Describe material AI assistance and what was actually checked. Git authorship
+  does not establish that all code or reviews were handwritten.
+- Never fabricate evaluation results, costs, independent adjudication or completion.
 
-Do not commit complete source corpora, plans, prompt packs, operational
-databases, logs, batch state, receipts, or generated reports. Preserve those in
-the private evidence plane.
-
-A new public case study must satisfy
-[`docs/repository_scope.md`](docs/repository_scope.md): minimal scope,
-path-relative files, source-rights review, evidence hashes, and an explicit
-statement that a selected case is not benchmark evidence.
-
-## Code and documentation
-
-- Put new Python Implementation under `src/toy_apollo/`.
-- Treat root-level `src/*.py` as active legacy compatibility code until its
-  callers have migrated.
-- Keep CLI, tests, and callers on the same Seam.
-- Prefer a deep Module with a narrow Interface over pass-through Modules.
-- Use the domain terms in [`CONTEXT.md`](CONTEXT.md).
-- Match documentation to current runtime behavior, not intended future work.
-- Preserve unrelated working-tree changes.
-
-## Provenance and authorship
-
-- Do not submit source material unless you have the right to publish it.
-- Do not describe AI-generated Lean, prose, or review evidence as handwritten.
-- In the pull request, state material model-assisted generation or review and
-  explain what a human verified.
-- Never fabricate benchmark results, task counts, costs, review outcomes, or
-  completion status.
-
-## Security and privacy
-
-Never commit API keys, tokens, `.env` files, local absolute paths, personal
-information, or private source text. Follow [`SECURITY.md`](SECURITY.md) for
-responsible vulnerability reporting.
+Release fingerprints detect changed content and are regenerated by the maintainer
+from committed source, not adjusted merely to silence a failing integrity check.
+See [repository scope](docs/repository_scope.md) for export behavior and
+[SECURITY.md](SECURITY.md) for private vulnerability reporting.

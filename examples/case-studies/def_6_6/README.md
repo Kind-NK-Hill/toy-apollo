@@ -34,3 +34,6 @@ It is not an immutable label attached to a file.
   hash-bound subjects.
 
 The files are sanitized Interface slices, not the complete private candidates.
+
+Current maintained corpus implementation: [ProbabilityTheory/chapter_06/def_6_6.lean](../../../ProbabilityTheory/chapter_06/def_6_6.lean).
+The fixed snapshots above retain their historical scope and hashes.

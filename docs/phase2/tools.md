@@ -6,7 +6,7 @@ default workflow.
 ## Build Gate
 
 ```powershell
-python .\run_chapter.py --phase 2 --phase2-mode build-check --tasks <task_id>
+formalize --phase 2 --phase2-mode build-check --tasks <task_id>
 ```
 
 This is the technical build gate. It does not prove textbook fidelity.
@@ -16,14 +16,14 @@ For Math Review Gate tasks, it refuses to write a candidate until the latest
 ## Diagnostics
 
 ```powershell
-python .\run_chapter.py --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id>
-python .\run_chapter.py --phase 2 --phase2-mode batch-run --tasks <task_id>,<task_id> --batch-max-actions 1
-python .\run_chapter.py --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id> --batch-task-kinds theorem,definition --batch-limit 15 --batch-workers 5
+formalize --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id>
+formalize --phase 2 --phase2-mode batch-run --tasks <task_id>,<task_id> --batch-max-actions 1
+formalize --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id> --batch-task-kinds theorem,definition --batch-limit 15 --batch-workers 5
 python tools/validate_phase2_completion_classification.py --require-proof-contract
 python tools/validate_phase2_obligation_contracts.py --write-report
 python tools/audit_phase2_clean_debt_surface.py --write-report --fail-on-errors
-python .\run_chapter.py status <task_id>
-python .\run_chapter.py worklist
+formalize status <task_id>
+formalize worklist
 ```
 
 `batch-plan` is the thin scheduling view over the current ledger and Phase2
@@ -79,8 +79,8 @@ completion outside `review-apply`.
 ## Maintenance
 
 ```powershell
-python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject existing
-python .\run_chapter.py --phase 2 --phase2-mode auto-loop --tasks <task_id> --review-subject current
+formalize --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject existing
+formalize --phase 2 --phase2-mode auto-loop --tasks <task_id> --review-subject current
 ```
 
 `auto-loop` is the default repair runner after a failed semantic review. Its

@@ -1,49 +1,43 @@
 # Security policy
 
-ToyApollo is a local-first research prototype. It does not currently publish a
-stable release line or provide a hosted service.
+ProbabilityTheoryFormalization is a local research system. The v0.2 release
+packages the public runtime and corpus; it is not a hosted service or a guarantee
+of production security support.
 
-## Reporting a vulnerability
+## Report privately
 
-Do not open a public issue for a suspected vulnerability, exposed credential,
-private source disclosure, or path that could reveal personal information.
+For vulnerabilities, exposed credentials or private-source disclosure, use this
+repository's GitHub private vulnerability reporting when available. Otherwise
+contact the maintainer at [kdsdengshuo2823@gmail.com](mailto:kdsdengshuo2823@gmail.com)
+before sending sensitive details. Do not include secrets in a public issue.
 
-Use GitHub's private vulnerability reporting or a private security advisory for
-this repository when available. If that channel is unavailable, contact the
-repository owner privately through the GitHub account before sharing technical
-details.
+Include the affected revision, file/command, a sanitized reproducer, expected
+and observed behavior, and impact.
 
-Include:
+## Data and execution boundaries
 
-- the affected revision and file or command;
-- reproduction steps with secrets removed;
-- expected and observed behavior;
-- impact and any known workaround.
+Public releases exclude credentials, private textbook inputs, full plans/catalog
+policies, upstream snapshots, operational databases, live prompt packs and private
+review transcripts. The publication checker verifies the selected file inventory,
+normalized content fingerprints and source-prose boundary. It is not a general
+secret or personal-information scanner.
 
-## Sensitive material
+Model output is untrusted until schema, binding, freshness and apply checks pass.
+Those checks establish protocol consistency; they do not establish mathematical
+truth or prove that a reviewer operated independently.
 
-The public source plane must not contain:
+The workflow demonstration's external reviewer is a user-supplied command.
+Configure its permissions and isolation before running it. Before/after file
+hash checks detect persisted changes; they are not an operating-system sandbox.
+Default replay calls no external model and uses a separately generated workspace.
 
-- API keys, access tokens, cookies, or `.env` files;
-- private textbook/source corpora or unreviewed excerpts;
-- machine-local absolute paths in published examples;
-- operational SQLite databases, ledger snapshots, prompt packs, logs, or batch
-  receipts;
-- personal data from local workspaces or review transcripts.
+## Current limits
 
-The full private evidence plane may contain local paths and source-derived
-material. Treat it as sensitive even when individual files do not contain
-credentials.
+- `.gitignore` is an accidental-addition guard, not a secret scanner.
+- Python dependencies are not fully locked.
+- The tested platform/version set is limited.
+- SHA-256 bindings are consistency checks, not signatures or protection against
+  an adversary who can rewrite both data and its claimed digest.
 
-## Current limitations
-
-- `.gitignore` reduces accidental additions but is not a secret scanner.
-- The repository does not yet have an automated PII or credential-redaction
-  gate.
-- Python dependencies are not yet locked.
-- A complete cross-platform security/test matrix is not yet present.
-- Model-generated review output is untrusted input until schema, freshness,
-  hashes, and apply rules validate it.
-
-These limitations are documented so that users do not infer protections that
-the project has not implemented.
+Complete local evidence can include source-derived text and machine paths even
+when it contains no credentials. Preserve it under the workspace's access policy.

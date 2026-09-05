@@ -3,7 +3,7 @@ param(
     [ValidateSet("push", "pull")]
     [string]$Mode,
 
-    [string]$ArtifactsRepoPath = "..\toy-apollo-artifacts",
+    [string]$ArtifactsRepoPath = "..\ProbabilityTheoryFormalization-artifacts",
     [string]$MainRepoPath = "."
 )
 

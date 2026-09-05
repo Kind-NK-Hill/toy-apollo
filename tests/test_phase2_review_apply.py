@@ -10,10 +10,10 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack, write_existing_output_review_pack  # noqa: E402
-from src.toy_apollo.phase2_proof_obligations import apply_obligation_review_to_file  # noqa: E402
-from src.toy_apollo.phase2_review_apply import apply_codex_review_result_once  # noqa: E402
-from src.toy_apollo.phase2_review_apply import _resolve_codex_review_input_path  # noqa: E402
+from formalization_engine.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack, write_existing_output_review_pack  # noqa: E402
+from formalization_engine.phase2_proof_obligations import apply_obligation_review_to_file  # noqa: E402
+from formalization_engine.phase2_review_apply import apply_codex_review_result_once  # noqa: E402
+from formalization_engine.phase2_review_apply import _resolve_codex_review_input_path  # noqa: E402
 from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E402
 
 
@@ -207,10 +207,10 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
                 return True, "final build ok"
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                "formalization_engine.phase2_prompt_pack._run_staged_official_build",
                 side_effect=promote_side_effect,
             ), patch(
-                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                "formalization_engine.phase2_review_apply.run_staged_official_build",
                 side_effect=promote_side_effect,
             ):
                 success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
@@ -248,10 +248,10 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
                 return True, "final build ok"
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                "formalization_engine.phase2_prompt_pack._run_staged_official_build",
                 side_effect=promote_side_effect,
             ), patch(
-                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                "formalization_engine.phase2_review_apply.run_staged_official_build",
                 side_effect=promote_side_effect,
             ):
                 success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
@@ -292,10 +292,10 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
                 return True, "final build ok"
 
             with patch.object(Path, "exists", exists_side_effect), patch(
-                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                "formalization_engine.phase2_prompt_pack._run_staged_official_build",
                 side_effect=promote_side_effect,
             ), patch(
-                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                "formalization_engine.phase2_review_apply.run_staged_official_build",
                 side_effect=promote_side_effect,
             ):
                 success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
@@ -393,10 +393,10 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
                 return True, "final build ok"
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                "formalization_engine.phase2_prompt_pack._run_staged_official_build",
                 side_effect=promote_side_effect,
             ), patch(
-                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                "formalization_engine.phase2_review_apply.run_staged_official_build",
                 side_effect=promote_side_effect,
             ):
                 success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
@@ -470,10 +470,10 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
                 return True, "final build ok"
 
             with patch.object(ledger, "add_or_update_task", wraps=ledger.add_or_update_task) as register_task, patch(
-                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                "formalization_engine.phase2_prompt_pack._run_staged_official_build",
                 side_effect=promote_side_effect,
             ), patch(
-                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                "formalization_engine.phase2_review_apply.run_staged_official_build",
                 side_effect=promote_side_effect,
             ):
                 success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
@@ -497,10 +497,10 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             result_path.write_text(json.dumps(corrected, indent=2, ensure_ascii=False), encoding="utf-8")
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                "formalization_engine.phase2_prompt_pack._run_staged_official_build",
                 side_effect=promote_side_effect,
             ), patch(
-                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                "formalization_engine.phase2_review_apply.run_staged_official_build",
                 side_effect=promote_side_effect,
             ):
                 retry_success, retry_detail = asyncio.run(
@@ -530,10 +530,10 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
                 return True, "final build ok"
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                "formalization_engine.phase2_prompt_pack._run_staged_official_build",
                 side_effect=promote_side_effect,
             ), patch(
-                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                "formalization_engine.phase2_review_apply.run_staged_official_build",
                 side_effect=promote_side_effect,
             ):
                 success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
@@ -572,10 +572,10 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
                 return True, "final build ok"
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                "formalization_engine.phase2_prompt_pack._run_staged_official_build",
                 side_effect=promote_side_effect,
             ), patch(
-                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                "formalization_engine.phase2_review_apply.run_staged_official_build",
                 side_effect=promote_side_effect,
             ):
                 success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
@@ -600,7 +600,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             consumer_id = "thm_8_review_apply_downstream_drift_consumer"
             ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id)
             self._append_direct_downstream_consumer(settings.plans_dir, task_id, consumer_id)
-            consumer_path = settings.toyapollo_output_dir / f"{consumer_id}.lean"
+            consumer_path = settings.canonical_lean_dir / f"{consumer_id}.lean"
             consumer_path.parent.mkdir(parents=True, exist_ok=True)
             consumer_path.write_text(
                 "import Mathlib\n\n"
@@ -621,7 +621,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             )
 
             with patch(
-                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                "formalization_engine.phase2_review_apply.run_staged_official_build",
                 return_value=(True, "final build ok"),
             ) as final_build:
                 success, detail = asyncio.run(
@@ -653,10 +653,10 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
                 return True, "final build ok"
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                "formalization_engine.phase2_prompt_pack._run_staged_official_build",
                 side_effect=promote_side_effect,
             ), patch(
-                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                "formalization_engine.phase2_review_apply.run_staged_official_build",
                 side_effect=promote_side_effect,
             ):
                 success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
@@ -719,10 +719,10 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
                 return True, "final build ok"
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                "formalization_engine.phase2_prompt_pack._run_staged_official_build",
                 side_effect=promote_side_effect,
             ), patch(
-                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                "formalization_engine.phase2_review_apply.run_staged_official_build",
                 side_effect=promote_side_effect,
             ):
                 success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
@@ -765,7 +765,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             )
 
             with patch(
-                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                "formalization_engine.phase2_review_apply.run_staged_official_build",
                 return_value=(True, "final build ok"),
             ):
                 success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
@@ -817,7 +817,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
                 return True, "final build ok"
 
             with patch(
-                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                "formalization_engine.phase2_review_apply.run_staged_official_build",
                 side_effect=promote_side_effect,
             ):
                 success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
@@ -875,7 +875,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             result_path = self._write_codex_review_result(pack_dir, verdict="pass")
 
             with patch(
-                "src.toy_apollo.phase2_review_apply.run_staged_official_build",
+                "formalization_engine.phase2_review_apply.run_staged_official_build",
                 return_value=(True, "final build ok"),
             ):
                 success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
@@ -1196,7 +1196,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             self._clean_root(root)
             task_id = "thm_4_existing_review_apply_pass_clears_auto_loop"
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id, completed=True)
-            with patch("src.toy_apollo.phase2_prompt_pack._run_official_module_build", return_value=(True, "sanity ok")):
+            with patch("formalization_engine.phase2_prompt_pack._run_official_module_build", return_value=(True, "sanity ok")):
                 review_success, review_detail = asyncio.run(
                     write_existing_output_review_pack(task_id, ledger, settings, force_new_attempt=True)
                 )
@@ -1220,7 +1220,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
 
             result_path = self._write_codex_review_result(pack_dir, verdict="pass")
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "apply build ok"),
             ):
                 success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
@@ -1240,7 +1240,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             task_id = "thm_4_existing_review_apply_fail_preserves_output"
             ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
             original_output = output_path.read_text(encoding="utf-8")
-            with patch("src.toy_apollo.phase2_prompt_pack._run_official_module_build", return_value=(True, "sanity ok")):
+            with patch("formalization_engine.phase2_prompt_pack._run_official_module_build", return_value=(True, "sanity ok")):
                 review_success, review_detail = asyncio.run(
                     write_existing_output_review_pack(task_id, ledger, settings, force_new_attempt=True)
                 )
@@ -1266,7 +1266,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             self._clean_root(root)
             task_id = "thm_4_existing_review_apply_pass_build_ok"
             ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
-            with patch("src.toy_apollo.phase2_prompt_pack._run_official_module_build", return_value=(True, "sanity ok")):
+            with patch("formalization_engine.phase2_prompt_pack._run_official_module_build", return_value=(True, "sanity ok")):
                 review_success, review_detail = asyncio.run(
                     write_existing_output_review_pack(task_id, ledger, settings, force_new_attempt=True)
                 )
@@ -1274,7 +1274,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
 
             result_path = self._write_codex_review_result(pack_dir, verdict="pass")
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "apply build ok"),
             ):
                 success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
@@ -1295,7 +1295,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             task_id = "thm_4_existing_review_apply_build_fail_blocks"
             ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
             original_output = output_path.read_text(encoding="utf-8")
-            with patch("src.toy_apollo.phase2_prompt_pack._run_official_module_build", return_value=(True, "sanity ok")):
+            with patch("formalization_engine.phase2_prompt_pack._run_official_module_build", return_value=(True, "sanity ok")):
                 review_success, review_detail = asyncio.run(
                     write_existing_output_review_pack(task_id, ledger, settings, force_new_attempt=True)
                 )
@@ -1306,7 +1306,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             # dependency drifted since review-prep). The clean completion must be
             # refused, yet the existing official output must NOT be demoted.
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(False, "apply build broke: unknown identifier 'drifted_dep'"),
             ):
                 success, detail = asyncio.run(apply_codex_review_result(task_id, ledger, settings, str(result_path)))
@@ -1333,7 +1333,7 @@ class Phase2ReviewApplyTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertTrue(output_path.exists())
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))

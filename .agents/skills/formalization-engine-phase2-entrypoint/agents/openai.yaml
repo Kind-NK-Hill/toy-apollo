@@ -1,0 +1,4 @@
+interface:
+  display_name: "Formalization Engine Phase 2"
+  short_description: "Start Phase 2 proof tasks safely"
+  default_prompt: "Use $formalization-engine-phase2-entrypoint to start or resume a Formalization Engine Phase 2 proof task."

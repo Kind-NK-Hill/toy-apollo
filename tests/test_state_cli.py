@@ -9,19 +9,20 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from src.toy_apollo.state_cli import main, render_worklist
-from src.toy_apollo.state_store import SubjectBundle, WorkspaceStateStore
+from formalization_engine.state_cli import main, render_worklist
+from formalization_engine.state_store import SubjectBundle, WorkspaceStateStore
 
 
 class StateCliTests(unittest.TestCase):
     def _settings(self, root: Path) -> SimpleNamespace:
         runtime = root / "runtime"
+        artifacts = root / "runtime-artifacts"
         return SimpleNamespace(
             runtime_root=runtime,
-            artifact_root=runtime,
+            artifact_root=artifacts,
             workspace_root=root,
-            state_db_file=root / "toy-apollo-artifacts" / "state.sqlite3",
-            phase2_prompt_packs_dir=runtime / "phase2_prompt_packs",
+            state_db_file=artifacts / "state.sqlite3",
+            phase2_prompt_packs_dir=artifacts / "phase2_prompt_packs",
         )
 
     def test_missing_status_is_fail_closed_and_does_not_create_database(self):
@@ -50,7 +51,7 @@ class StateCliTests(unittest.TestCase):
             refresh_payload = {"local": {"errors": []}, "remote": {"errors": []}}
             output = io.StringIO()
             with patch(
-                "src.toy_apollo.state_cli.refresh_workspace_state",
+                "formalization_engine.state_cli.refresh_workspace_state",
                 return_value=refresh_payload,
             ) as refresh, redirect_stdout(output):
                 code = main(["status", "thm_1_1"], settings)
@@ -76,9 +77,9 @@ class StateCliTests(unittest.TestCase):
             }
             output = io.StringIO()
             with (
-                patch("src.toy_apollo.state_cli.load_catalog", return_value=catalog),
+                patch("formalization_engine.state_cli.load_catalog", return_value=catalog),
                 patch(
-                    "src.toy_apollo.state_cli.refresh_workspace_state",
+                    "formalization_engine.state_cli.refresh_workspace_state",
                     return_value=refresh_payload,
                 ) as refresh,
                 redirect_stdout(output),
@@ -97,7 +98,7 @@ class StateCliTests(unittest.TestCase):
             settings = self._settings(Path(tmp))
             WorkspaceStateStore(settings.state_db_file).initialize()
             output = io.StringIO()
-            with patch("src.toy_apollo.state_cli.refresh_workspace_state") as refresh, redirect_stdout(output):
+            with patch("formalization_engine.state_cli.refresh_workspace_state") as refresh, redirect_stdout(output):
                 code = main(["worklist", "--no-refresh"], settings)
             self.assertEqual(code, 0)
             refresh.assert_not_called()
@@ -135,9 +136,9 @@ class StateCliTests(unittest.TestCase):
             before = settings.state_db_file.read_bytes()
             output = io.StringIO()
             with (
-                patch("src.toy_apollo.state_cli.load_catalog", return_value=object()),
+                patch("formalization_engine.state_cli.load_catalog", return_value=object()),
                 patch(
-                    "src.toy_apollo.state_cli.rebuild_invariants",
+                    "formalization_engine.state_cli.rebuild_invariants",
                     side_effect=sqlite3.OperationalError("no such table: catalog_tasks"),
                 ),
                 redirect_stdout(output),

@@ -10,10 +10,10 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.core.sqlite_ledger import SQLiteLedgerManager  # noqa: E402
-from src.toy_apollo.cli import app as cli_app  # noqa: E402
-from src.toy_apollo.phase2_batch_runner import plan_batch_from_ledger  # noqa: E402
-from src.toy_apollo.phase2_dependency_gate import (  # noqa: E402
+from formalization_engine.core.sqlite_ledger import SQLiteLedgerManager  # noqa: E402
+from formalization_engine.cli import app as cli_app  # noqa: E402
+from formalization_engine.phase2_batch_runner import plan_batch_from_ledger  # noqa: E402
+from formalization_engine.phase2_dependency_gate import (  # noqa: E402
     FROZEN_DECISION_SCHEMA,
     FROZEN_OWNER_SCOPE,
     FrozenDependencyAuthorityError,
@@ -23,8 +23,8 @@ from src.toy_apollo.phase2_dependency_gate import (  # noqa: E402
     frozen_dependency_projection,
     revoke_frozen_dependency_authority,
 )
-from src.toy_apollo.state_reconcile import CommandResult, discover_formal_plan_task_ids  # noqa: E402
-from src.toy_apollo.state_store import WorkspaceStateStore, sha256_bytes, sha256_file  # noqa: E402
+from formalization_engine.state_reconcile import CommandResult, discover_formal_plan_task_ids  # noqa: E402
+from formalization_engine.state_store import WorkspaceStateStore, sha256_bytes, sha256_file  # noqa: E402
 
 
 class FrozenDependencyAuthorityTests(unittest.TestCase):
@@ -57,7 +57,7 @@ class FrozenDependencyAuthorityTests(unittest.TestCase):
         semantic_fail: bool = True,
     ):
         dependencies = list(dependencies or [])
-        output_dir = root / "ToyApollo" / "Output"
+        output_dir = root / "ProbabilityTheory"
         output_dir.mkdir(parents=True)
         plans_dir = root / "plans"
         plans_dir.mkdir()
@@ -138,7 +138,8 @@ class FrozenDependencyAuthorityTests(unittest.TestCase):
             runtime_root=root,
             artifact_root=artifact_root,
             plans_dir=plans_dir,
-            toyapollo_output_dir=output_dir,
+            canonical_lean_dir=output_dir,
+            canonical_manifest_required=False,
             phase2_prompt_packs_dir=phase2_packs,
             state_db_file=state_path,
             frozen_owner_token_sha256=sha256_bytes(owner_token.encode("utf-8")),
@@ -176,7 +177,7 @@ class FrozenDependencyAuthorityTests(unittest.TestCase):
             command_runner=runner,
         )
         runner.assert_called_once_with(
-            ["lake", "build", f"ToyApollo.Output.{task_id}"],
+            ["lake", "build", f"ProbabilityTheory.{task_id}"],
             cwd=Path(settings.runtime_root),
             timeout=600,
         )
@@ -285,7 +286,7 @@ class FrozenDependencyAuthorityTests(unittest.TestCase):
                     {
                         "schema_version": "toy-apollo.frozen-mechanical-build.v1",
                         "task_id": "thm_1_1",
-                        "module": "ToyApollo.Output.thm_1_1",
+                        "module": "ProbabilityTheory.thm_1_1",
                         "exit_code": 0,
                         "primary_path": basis.subject.primary_path,
                         "primary_sha256": basis.subject.primary_hash,
@@ -508,12 +509,12 @@ class FrozenDependencyAuthorityTests(unittest.TestCase):
                         encoding="utf-8",
                     )
                 elif drift == "lean":
-                    (settings.toyapollo_output_dir / "thm_1_1.lean").write_text(
+                    (settings.canonical_lean_dir / "thm_1_1.lean").write_text(
                         "theorem thm_1_1 : False := by sorry\n",
                         encoding="utf-8",
                     )
                 elif drift == "dependency":
-                    (settings.toyapollo_output_dir / "def_1_0.lean").write_text(
+                    (settings.canonical_lean_dir / "def_1_0.lean").write_text(
                         "theorem def_1_0 : False := by sorry\n",
                         encoding="utf-8",
                     )

@@ -8,7 +8,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.phase2_proof_obligations import (  # noqa: E402
+from formalization_engine.phase2_proof_obligations import (  # noqa: E402
     default_proof_obligations,
     needs_concrete_decomposition,
     normalize_proof_obligations,
@@ -59,14 +59,22 @@ class Phase2ProofObligationsTests(unittest.TestCase):
             self.assertFalse(should_track_proof_obligations(legacy_pack, normal_task, tracking_level=0))
 
     def test_thm_10_8_quantile_law_uses_local_bridge_without_checklist_authority(self):
-        lean_path = REPO_ROOT / "ToyApollo" / "Output" / "thm_10_8.lean"
-        bridge_path = REPO_ROOT / "ToyApollo" / "Output" / "thm_10_8_quantile_law.lean"
+        lean_path = REPO_ROOT / "ProbabilityTheory" / "chapter_10" / "thm_10_8.lean"
+        bridge_path = (
+            REPO_ROOT
+            / "ProbabilityTheory"
+            / "chapter_10"
+            / "thm_10_8_quantile_law.lean"
+        )
 
         lean = lean_path.read_text(encoding="utf-8")
         bridge = bridge_path.read_text(encoding="utf-8")
 
         self.assertNotIn("quantile_law_preservation :", lean)
-        self.assertIn("import ToyApollo.Output.thm_10_8_quantile_law", lean)
+        self.assertIn(
+            "import ProbabilityTheory.chapter_10.thm_10_8_quantile_law",
+            lean,
+        )
         self.assertIn("thm_10_8_quantile_law_preservation_of_probabilityCdfOfMeasure", lean)
         self.assertIn("thm_10_8_quantile_law_preservation_seq_of_Iic", bridge)
         self.assertIn("thm_10_8_quantile_law_preservation_of_Iic", bridge)

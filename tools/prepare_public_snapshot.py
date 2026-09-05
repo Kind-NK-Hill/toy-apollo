@@ -195,7 +195,9 @@ def sanitize_task_parent(text: str, *, task_id: str) -> SanitizeResult:
     """
 
     metadata = _metadata_lines(text, task_id)
-    body = normalize_code_spacing(strip_block_comments(text))
+    # Whitespace inside a multiline Lean string is executable content. Do not
+    # collapse blank lines or trim individual lines while removing prose.
+    body = strip_block_comments(text).strip() + "\n"
     notice = "\n".join(["/-", *metadata, PUBLIC_SOURCE_NOTICE, "-/", ""])
     sanitized = f"{notice}\n{body}"
     return SanitizeResult(text=sanitized, changed=sanitized != text)
@@ -277,8 +279,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-root",
         type=Path,
-        default=repo_root / "ToyApollo" / "Output",
-        help="Lean output root to inspect (default: repository ToyApollo/Output)",
+        default=repo_root / "ProbabilityTheory",
+        help="Lean output root to inspect (default: repository ProbabilityTheory)",
     )
     parser.add_argument(
         "--apply",

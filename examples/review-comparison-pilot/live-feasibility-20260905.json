@@ -1,0 +1,202 @@
+{
+  "schema_version": "review_comparison.live_feasibility.v1",
+  "date_utc": "2026-09-05",
+  "scope": "Two public author-designed tasks; workflow feasibility only, not a representative benchmark or quality estimate.",
+  "model": "gpt-6-astra",
+  "model_config": {
+    "reasoning_effort": "ultra"
+  },
+  "per_arm_budget": {
+    "input_tokens": 100000,
+    "output_tokens": 8000,
+    "elapsed_seconds": 300
+  },
+  "manifest_sha256": "9591ee16ca903aeb4d3d4babd4d74d4377ec7d36ecb2daa287e735b8ccb4d892",
+  "input_hashes": [
+    {
+      "task_id": "case01",
+      "source": "91cb436d6fed32fcc57ff69991ecf53b39980cd8ee3780a4c7f9d3a504e73213",
+      "lean": "1a34744bd24738cc9a6a6936cd7d55f4e14ad05d50efc5465b41fe0f62fdb13a"
+    },
+    {
+      "task_id": "case02",
+      "source": "ef8ff8b0e8cd0b293618e485b7f65809c190cf5e9be41c9a0d0817e9240ae641",
+      "lean": "ee4362242d6d424ee7931f20c4fd0e9e43de5acf9749548050693c3cf398ab64"
+    }
+  ],
+  "calls_completed": 6,
+  "observed_tool_calls": 0,
+  "stages": [
+    {
+      "task_id": "case01",
+      "stage": "ordinary",
+      "exit_code": 0,
+      "elapsed_seconds": 22.87134780001361,
+      "provider_usage": {
+        "input_tokens": 12534,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 351,
+        "reasoning_output_tokens": 270
+      },
+      "cost_usd": null,
+      "events_sha256": "21fb3ceee5b36d21aec398e3feb47d80d36cafea66a7cdf14174916ed1a2070f",
+      "startup_diagnostic_count": 2
+    },
+    {
+      "task_id": "case01",
+      "stage": "translate",
+      "exit_code": 0,
+      "elapsed_seconds": 28.55704159999732,
+      "provider_usage": {
+        "input_tokens": 12390,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 642,
+        "reasoning_output_tokens": 516
+      },
+      "cost_usd": null,
+      "events_sha256": "75ca1ab32930dae02707850c29492a7ce0cbef1b05e91a7cde04d0984b576986",
+      "startup_diagnostic_count": 2
+    },
+    {
+      "task_id": "case02",
+      "stage": "ordinary",
+      "exit_code": 0,
+      "elapsed_seconds": 17.819370999990497,
+      "provider_usage": {
+        "input_tokens": 12540,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 239,
+        "reasoning_output_tokens": 158
+      },
+      "cost_usd": null,
+      "events_sha256": "6b993fbc645ed54590be6133f3a3570f3f1368fc288e1b254ebab18e96a7f14e",
+      "startup_diagnostic_count": 2
+    },
+    {
+      "task_id": "case02",
+      "stage": "translate",
+      "exit_code": 0,
+      "elapsed_seconds": 43.783300500013866,
+      "provider_usage": {
+        "input_tokens": 12399,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 709,
+        "reasoning_output_tokens": 593
+      },
+      "cost_usd": null,
+      "events_sha256": "57ba9fef0ea0d0906a6dc9c34c40277c897c3431fe23e309cb918d59b60d65d0",
+      "startup_diagnostic_count": 2
+    },
+    {
+      "task_id": "case01",
+      "stage": "reverse_translation",
+      "exit_code": 0,
+      "elapsed_seconds": 26.11282839998603,
+      "provider_usage": {
+        "input_tokens": 12704,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 316,
+        "reasoning_output_tokens": 240
+      },
+      "cost_usd": null,
+      "events_sha256": "76974768b47f7fa240e3fa470cc166a918d10b3db8a25d9ac97d58c6c7978f3b",
+      "startup_diagnostic_count": 2
+    },
+    {
+      "task_id": "case02",
+      "stage": "reverse_translation",
+      "exit_code": 0,
+      "elapsed_seconds": 20.02392939996207,
+      "provider_usage": {
+        "input_tokens": 12695,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 290,
+        "reasoning_output_tokens": 194
+      },
+      "cost_usd": null,
+      "events_sha256": "52f249faf0d4583a147c6f637f3a8a9cfb8204acb373640920add7ae61d8f5bb",
+      "startup_diagnostic_count": 2
+    }
+  ],
+  "reviews": [
+    {
+      "task_id": "case01",
+      "arm": "ordinary",
+      "verdict": "pass",
+      "rationale": "定理对任意自然数 n 断言 n + 0 = n，定义域、量词和结论均与原文一致，无额外假设。自然数加法按定义将 n + 0 化简为 n，因此 rfl 证明有效。",
+      "request_sha256": "8f96e98e9924d06b412eb69d60f141ff82018e521c71b0456f2df66fb70d64e4"
+    },
+    {
+      "task_id": "case02",
+      "arm": "ordinary",
+      "verdict": "fail",
+      "rationale": "原文要求对每个自然数 n 无条件证明 n < n + 1。Lean 却将该结论作为额外假设 h，并直接返回 h，仅证明命题蕴含自身，未忠实表达和证明原文的无条件断言。",
+      "request_sha256": "3a9a24eb6d854208f16e6500d8d3217364aa5756d7b3cbf4a0340875bcd72770"
+    },
+    {
+      "task_id": "case01",
+      "arm": "reverse_translation",
+      "verdict": "pass",
+      "rationale": "自然数定义域、全称量化、无额外假设及右加零不变的结论均与原文一致。n + 0 按定义化简为 n，因此 rfl 证明成立；逆向翻译准确。",
+      "request_sha256": "615ba2b49802d09b99f8f24c4dd680cc6a7a34580fc94911cc4845390c25c8ea"
+    },
+    {
+      "task_id": "case02",
+      "arm": "reverse_translation",
+      "verdict": "fail",
+      "rationale": "原文要求无条件证明每个自然数 n 都满足 n < n + 1。Lean 却把该结论作为假设 h，并直接使用 h，只证明了“若 n < n + 1，则 n < n + 1”。这一额外假设弱化了命题，未忠实表达并证明原文。",
+      "request_sha256": "06c7e56f0fe8878947d5048b6e190163dd08a495ac6fc457f32b1be3a020841c"
+    }
+  ],
+  "paired_process": {
+    "tasks": [
+      "case01",
+      "case02"
+    ],
+    "same_verdict": 2,
+    "verdict_pairs": {
+      "pass->pass": 1,
+      "fail->fail": 1
+    },
+    "arms": {
+      "ordinary": {
+        "abstain": 0,
+        "usage": {
+          "input_tokens": 25074,
+          "output_tokens": 590,
+          "elapsed_seconds": 40.690718800004106,
+          "cost_usd": null
+        }
+      },
+      "reverse_translation": {
+        "abstain": 0,
+        "usage": {
+          "input_tokens": 50188,
+          "output_tokens": 1957,
+          "elapsed_seconds": 118.47709989995928,
+          "cost_usd": null
+        }
+      }
+    }
+  },
+  "qa_status": "valid",
+  "human_adjudication": "pending",
+  "quality_metrics": null,
+  "protocol_deviations": [
+    "Two known pre-turn CLI configuration diagnostics were initially misclassified as tool events by the runner.",
+    "Four original provider receipts were reprocessed after a parser fix without repeating model calls; only the two previously unrun assisted stages were then executed.",
+    "case02 ordinary preceded assisted, so the intended counterbalanced order was not achieved."
+  ],
+  "limits": [
+    "Agreement is not correctness. No independent human reference verdict exists.",
+    "The assisted arm used more measured input/output tokens and time on these two tasks; this does not establish general benefit or harm.",
+    "Dollar charges were not reported by the CLI and remain unknown.",
+    "Raw invocations, provider sessions, events and initial/recovered audits are retained privately; this public projection omits local paths and session identifiers."
+  ]
+}

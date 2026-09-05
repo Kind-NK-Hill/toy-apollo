@@ -1,0 +1,1 @@
+For every natural number n, its successor is strictly larger than n.

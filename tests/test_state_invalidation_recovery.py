@@ -5,16 +5,16 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.toy_apollo.state_invalidation_recovery import (
+from formalization_engine.state_invalidation_recovery import (
     ResolvedInvalidationRecoveryError,
     build_resolved_invalidation_recovery,
     validate_resolved_invalidation_recovery,
 )
-from src.toy_apollo.state_migration import (
+from formalization_engine.state_migration import (
     MigrationReport,
     import_resolved_invalidation_recovery_receipt,
 )
-from src.toy_apollo.state_store import SubjectBundle, WorkspaceStateStore
+from formalization_engine.state_store import SubjectBundle, WorkspaceStateStore
 from tests.test_state_review_apply_recovery import HistoricalReviewApplyRecoveryTests
 
 
@@ -42,7 +42,7 @@ class ResolvedInvalidationRecoveryTests(unittest.TestCase):
             "schema": "mat.rubric78.review-apply-receipt.v1", "task_id": "thm_5_1",
             "review_id": "a" * 64, "review_result_file": str(paths["result"]),
             "review_result_hash": __import__("hashlib").sha256(paths["result"].read_bytes()).hexdigest(),
-            "review_input_hash": review_input and __import__("src.toy_apollo.state_store", fromlist=["sha256_json"]).sha256_json(review_input),
+            "review_input_hash": review_input and __import__("formalization_engine.state_store", fromlist=["sha256_json"]).sha256_json(review_input),
             "bundle_hash": old["bundle_hash"], "primary_hash": old["primary_hash"],
             "clean_pass": True, "exact_bundle_covered": True, "verdict": "pass",
             "phase2_status": "pass", "invalidated_by": "thm_5_2",

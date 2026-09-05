@@ -11,7 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.state_invalidation_recovery import (  # noqa: E402
+from formalization_engine.state_invalidation_recovery import (  # noqa: E402
     ResolvedInvalidationRecoveryError,
     build_resolved_invalidation_recovery,
 )

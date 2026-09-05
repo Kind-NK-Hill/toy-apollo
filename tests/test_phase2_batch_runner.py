@@ -11,8 +11,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.phase2_batch_controller import COMPLETED, NONTERMINAL  # noqa: E402
-from src.toy_apollo.phase2_batch_runner import (  # noqa: E402
+from formalization_engine.phase2_batch_controller import COMPLETED, NONTERMINAL  # noqa: E402
+from formalization_engine.phase2_batch_runner import (  # noqa: E402
     _dependencies_from_record,
     _normalize_kind,
     _obligation_fingerprint,
@@ -22,7 +22,7 @@ from src.toy_apollo.phase2_batch_runner import (  # noqa: E402
     render_batch_runner_plan,
     run_batch_actions,
 )
-from src.toy_apollo.phase2_prompt_pack import (  # noqa: E402
+from formalization_engine.phase2_prompt_pack import (  # noqa: E402
     apply_codex_review_result,
     write_existing_output_review_pack,
 )
@@ -42,12 +42,13 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(_task_kind("cor_21", {}), "theorem")
 
     def _settings(self, root: Path):
-        output_dir = root / "ToyApollo" / "Output"
+        output_dir = root / "ProbabilityTheory"
         output_dir.mkdir(parents=True)
         plans_dir = root / "plans"
         plans_dir.mkdir(parents=True)
         return SimpleNamespace(
-            toyapollo_output_dir=output_dir,
+            canonical_lean_dir=output_dir,
+            canonical_manifest_required=False,
             phase2_prompt_packs_dir=root / "phase2_prompt_packs",
             plans_dir=plans_dir,
         )
@@ -133,7 +134,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
             phase2_status_reason="ordinary downstream repair remains",
         )
         with patch(
-            "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+            "formalization_engine.phase2_prompt_pack._run_official_module_build",
             return_value=(True, "build ok"),
         ):
             success, detail = asyncio.run(
@@ -152,7 +153,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
             completion_class="textbook_proof_completed",
         )
         with patch(
-            "src.toy_apollo.phase2_review_apply.run_official_module_build",
+            "formalization_engine.phase2_review_apply.run_official_module_build",
             return_value=(True, "build ok"),
         ):
             success, detail = asyncio.run(
@@ -403,7 +404,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             settings = self._settings(root)
-            (settings.toyapollo_output_dir / "thm_1_1.lean").write_text("-- ok\n", encoding="utf-8")
+            (settings.canonical_lean_dir / "thm_1_1.lean").write_text("-- ok\n", encoding="utf-8")
             ledger = FakeLedger(
                 {
                     "thm_1_1": {
@@ -426,7 +427,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
             root = Path(tmp)
             settings = self._settings(root)
             task_id = "thm_1_legacy_review"
-            output_path = settings.toyapollo_output_dir / f"{task_id}.lean"
+            output_path = settings.canonical_lean_dir / f"{task_id}.lean"
             output_path.write_text("import Mathlib\n\ntheorem thm_1_legacy_review : True := by trivial\n", encoding="utf-8")
             result_path = root / "phase2_prompt_packs" / task_id / "semantic_review_result_v1.json"
             result_path.parent.mkdir(parents=True)
@@ -464,7 +465,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
             root = Path(tmp)
             settings = self._settings(root)
             task_id = "def_3_stale_triage"
-            output_path = settings.toyapollo_output_dir / f"{task_id}.lean"
+            output_path = settings.canonical_lean_dir / f"{task_id}.lean"
             output_path.write_text("import Mathlib\n\ndef def_3_stale_triage : Prop := True\n", encoding="utf-8")
             pack_dir = settings.phase2_prompt_packs_dir / task_id
             pack_dir.mkdir(parents=True)
@@ -524,7 +525,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
                 completed=True,
             )
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -556,7 +557,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
                 completed=True,
             )
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -568,7 +569,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
                 completion_class="textbook_proof_completed",
             )
             with patch(
-                "src.toy_apollo.phase2_review_apply.run_official_module_build",
+                "formalization_engine.phase2_review_apply.run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(
@@ -687,7 +688,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
                     )
                 else:
                     with patch(
-                        "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                        "formalization_engine.phase2_prompt_pack._run_official_module_build",
                         return_value=(True, "build ok"),
                     ):
                         success, detail = asyncio.run(
@@ -735,7 +736,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
                 completed=True,
             )
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -1121,7 +1122,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
                             "left_tail_eventually_small",
                             "scaled_mass_uniform_on_compact",
                         ],
-                        "forbidden_work": ["ToyApollo/Output promotion", "semantic review"],
+                        "forbidden_work": ["canonical-corpus promotion", "semantic review"],
                     }
                 ),
                 encoding="utf-8",
@@ -1569,17 +1570,18 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
             )
             result_path = pack_dir / "semantic_fail_diagnosis_result_v1.json"
             result_path.write_text(
-                json.dumps(
-                    {
-                        "diagnosis_verdict": "source_decision_required",
-                        "route_wrong": True,
-                        "statement_mismatch": True,
-                        "local_repair_allowed": False,
-                        "source_decision_needed": True,
-                        "public_api_change": True,
-                        "recommended_next_action": "obtain an explicit owner decision",
-                    }
-                ),
+                json.dumps({
+                    "diagnosis_verdict": "source_decision_required",
+                    "route_wrong": True,
+                    "statement_mismatch": True,
+                    "local_repair_allowed": False,
+                    "source_decision_needed": True,
+                    "public_api_change": True,
+                    "recommended_next_action": "Obtain a source/statement decision before changing the public interface.",
+                    "forbidden_shortcuts": ["Do not silently weaken the fixed source contract."],
+                    "required_local_checks": ["Check the candidate's input-domain conditions."],
+                    "rationale": "The synthetic source requires an input-domain condition absent from the candidate.",
+                }),
                 encoding="utf-8",
             )
             (pack_dir / "diagnoser_result_v2.json").write_text(
@@ -2087,7 +2089,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
             )
 
             with patch(
-                "src.toy_apollo.phase2_review_loop.run_codex_auto_loop",
+                "formalization_engine.phase2_review_loop.run_codex_auto_loop",
                 new=AsyncMock(return_value=(True, "advanced")),
             ) as auto_loop_mock:
                 result = asyncio.run(run_batch_actions(["def_1_2", "def_1_3"], ledger, settings, max_actions=1))
@@ -2105,7 +2107,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
                 completed=True,
             )
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack("prob_14_2", ledger, settings))
@@ -2120,7 +2122,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
 
             plan = plan_batch_from_ledger(["prob_14_2", "def_1_3"], ledger, settings)
             with patch(
-                "src.toy_apollo.phase2_review_loop.run_codex_auto_loop",
+                "formalization_engine.phase2_review_loop.run_codex_auto_loop",
                 new=AsyncMock(return_value=(True, "advanced")),
             ) as auto_loop_mock:
                 result = asyncio.run(run_batch_actions(["prob_14_2", "def_1_3"], ledger, settings, max_actions=1))
@@ -2179,7 +2181,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
             )
 
             with patch(
-                "src.toy_apollo.phase2_obligation_tasks.promote_all_obligation_tasks",
+                "formalization_engine.phase2_obligation_tasks.promote_all_obligation_tasks",
                 return_value={
                     "parents_scanned": ["ex_14_4_1"],
                     "created": ["obl_ex_14_4_1_bridge"],
@@ -2202,7 +2204,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
             settings = self._settings(root)
             pack_dir = settings.phase2_prompt_packs_dir / "thm_11_6"
             pack_dir.mkdir(parents=True)
-            (settings.toyapollo_output_dir / "thm_11_6.lean").write_text(
+            (settings.canonical_lean_dir / "thm_11_6.lean").write_text(
                 "import Mathlib\n\ntheorem thm_11_6 : True := by trivial\n",
                 encoding="utf-8",
             )
@@ -2231,7 +2233,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
             root = Path(tmp)
             settings = self._settings(root)
             task_id = "thm_3_stale_pending_after_fail"
-            (settings.toyapollo_output_dir / f"{task_id}.lean").write_text(
+            (settings.canonical_lean_dir / f"{task_id}.lean").write_text(
                 "import Mathlib\n\ntheorem thm_3_stale_pending_after_fail : True := by trivial\n",
                 encoding="utf-8",
             )
@@ -2284,7 +2286,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
                 completed=True,
             )
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -2456,7 +2458,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
             )
 
             with patch(
-                "src.toy_apollo.phase2_review_loop.run_codex_auto_loop",
+                "formalization_engine.phase2_review_loop.run_codex_auto_loop",
                 new=AsyncMock(return_value=(True, "advanced")),
             ) as auto_loop_mock:
                 result = asyncio.run(run_batch_actions(["def_1_2", "thm_1_1"], ledger, settings, max_actions=1))
@@ -2508,7 +2510,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             settings = self._settings(root)
-            (settings.toyapollo_output_dir / "thm_13_3.lean").write_text("-- stale official output\n", encoding="utf-8")
+            (settings.canonical_lean_dir / "thm_13_3.lean").write_text("-- stale official output\n", encoding="utf-8")
             verify_path = root / "phase2_prompt_packs" / "thm_13_3" / "verify_result_v1.json"
             verify_path.parent.mkdir(parents=True)
             verify_path.write_text(
@@ -2550,7 +2552,7 @@ class Phase2BatchRunnerTests(Phase2ReviewTestSupport, unittest.TestCase):
             root = Path(tmp)
             settings = self._settings(root)
             task_id = "def_2_1"
-            (settings.toyapollo_output_dir / f"{task_id}.lean").write_text(
+            (settings.canonical_lean_dir / f"{task_id}.lean").write_text(
                 "import Mathlib\n\ndef def_2_1 : Prop := True\n",
                 encoding="utf-8",
             )

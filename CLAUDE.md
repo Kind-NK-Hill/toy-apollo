@@ -2,14 +2,14 @@
 
 Read in this order:
 
-1. Before ToyApollo coding, Phase 2, review, proof-status, or packaging-claim work, explicitly read [AGENTS.md](AGENTS.md) first unless it is already loaded in this session. Do not `@import` it here because it contains nested rule imports and should be used with progressive disclosure.
+1. Before ProbabilityTheoryFormalization coding, Phase 2, review, proof-status, or packaging-claim work, explicitly read [AGENTS.md](AGENTS.md) first unless it is already loaded in this session. Do not `@import` it here because it contains nested rule imports and should be used with progressive disclosure.
 2. For any phase behavior or routing question, read [.claude/rules/10-phase-runtime.md](.claude/rules/10-phase-runtime.md).
 3. For proof-status, evidence hierarchy, review verdicts, ledger meaning, and completion claims, follow [AGENTS.md](AGENTS.md) plus the relevant `docs/phase2/*` contract. Do not restate those rules here.
 4. Before editing inside a subtree, read the nearest folder-level `AGENTS.md`.
 
 Do:
 
-- Keep `run_chapter.py` and current CLI mode names stable.
+- Keep the `formalize` entry point and current CLI mode names stable.
 - Treat active code and `.claude/rules/*` as truth over archive notes.
 - Use phase2 modes for prompt-pack formalization, build gating, and operator review.
 - Use `--phase 2 --phase2-mode soft-pack/soft-apply` for Problem soft-import selection.

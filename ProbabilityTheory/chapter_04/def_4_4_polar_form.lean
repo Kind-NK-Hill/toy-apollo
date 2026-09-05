@@ -1,0 +1,69 @@
+/-
+TASK ID: def_4_4_polar_form
+SOURCE MATERIAL: omitted from the public source snapshot; see docs/repository_scope.md.
+-/
+
+import Mathlib.Analysis.SpecialFunctions.Complex.Arg
+import Mathlib.Tactic.Ring
+import ProbabilityTheory.chapter_04.def_4_4_complex_number
+import ProbabilityTheory.chapter_04.def_4_4_complex_operations
+import ProbabilityTheory.chapter_04.def_4_4_complex_random_variable
+
+
+
+
+ 
+noncomputable def complexRadius (z : ℂ) : ℝ :=
+  complex_abs z
+
+ 
+noncomputable def complexArgument (z : ℂ) : ℝ :=
+  Complex.arg z
+
+ 
+noncomputable def complexPolarData (z : ℂ) : ℝ × ℝ :=
+  (complexRadius z, complexArgument z)
+
+ 
+noncomputable def complexOfPolar (r θ : ℝ) : ℂ :=
+  Complex.mk (r * Real.cos θ) (r * Real.sin θ)
+
+ 
+def complexArgumentDefined (z : ℂ) : Prop :=
+  z ≠ 0
+
+ 
+noncomputable def complexPhase (z : ℂ) : Real.Angle :=
+  (complexArgument z : Real.Angle)
+
+ 
+noncomputable def complexPolarRV {Ω : Type*} (Z : Ω → ℂ) : Ω → (ℝ × ℝ) :=
+  fun ω => complexPolarData (Z ω)
+
+ 
+noncomputable def complexPhaseRV {Ω : Type*} (Z : Ω → ℂ) : Ω → Real.Angle :=
+  fun ω => complexPhase (Z ω)
+
+theorem complexArgument_undefined_at_zero : ¬ complexArgumentDefined 0 := by
+  simp [complexArgumentDefined]
+
+theorem complexOfPolar_eq_mul_exp (r θ : ℝ) :
+    complexOfPolar r θ = (r : ℂ) * Complex.exp (θ * Complex.I) := by
+  apply Complex.ext <;>
+    simp [complexOfPolar, Complex.exp_mul_I, Complex.cos_ofReal_re, Complex.sin_ofReal_re,
+      mul_add]
+
+theorem complexOfPolar_periodic_two_pi (r θ : ℝ) :
+    complexOfPolar r (θ + 2 * Real.pi) = complexOfPolar r θ := by
+  apply Complex.ext <;> simp [complexOfPolar, Real.sin_add, Real.cos_add]
+
+theorem complexOfPolar_mul (r₁ θ₁ r₂ θ₂ : ℝ) :
+    complexOfPolar r₁ θ₁ * complexOfPolar r₂ θ₂ =
+      complexOfPolar (r₁ * r₂) (θ₁ + θ₂) := by
+  apply Complex.ext
+  · simp [complexOfPolar, Real.cos_add, Real.sin_add, sub_eq_add_neg, mul_add,
+      mul_left_comm, mul_comm]
+    ring
+  · simp [complexOfPolar, Real.cos_add, Real.sin_add, sub_eq_add_neg, mul_add,
+      mul_left_comm, mul_comm]
+    ring

@@ -9,8 +9,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack  # noqa: E402
-from src.toy_apollo.phase2_semantic_fail_triage import classify_semantic_failure  # noqa: E402
+from formalization_engine.phase2_prompt_pack import apply_codex_review_result, write_codex_review_pack  # noqa: E402
+from formalization_engine.phase2_semantic_fail_triage import classify_semantic_failure  # noqa: E402
 from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E402
 
 

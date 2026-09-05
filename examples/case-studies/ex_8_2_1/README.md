@@ -38,3 +38,6 @@ mathematical statement drift.
 
 The full final proof contains additional uniqueness, singleton-mass, support,
 and dependency-route details; they remain in the private evidence plane.
+
+Current maintained corpus implementation: [ProbabilityTheory/chapter_08/ex_8_2_1.lean](../../../ProbabilityTheory/chapter_08/ex_8_2_1.lean).
+The fixed snapshots above retain their historical scope and hashes.

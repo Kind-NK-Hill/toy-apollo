@@ -3,8 +3,16 @@ from __future__ import annotations
 import json
 import unittest
 from dataclasses import replace
+from pathlib import Path
 
-from src.toy_apollo.task_catalog import CatalogError, build_catalog, validate_catalog
+from formalization_engine.task_catalog import (
+    CATALOG_SCHEMA_VERSION_V2,
+    LEGACY_CATALOG_SCHEMA_VERSION,
+    CatalogError,
+    build_catalog,
+    load_catalog,
+    validate_catalog,
+)
 
 
 class TaskCatalogTests(unittest.TestCase):
@@ -126,6 +134,62 @@ class TaskCatalogTests(unittest.TestCase):
                 restored_task_ids=[],
                 legacy_cohort_id="legacy",
             )
+
+    def test_real_v2_catalog_is_bound_to_unified_repository_commit(self):
+        runtime_root = Path(__file__).resolve().parents[1]
+        if not (runtime_root / "data/task_catalog/catalog_policy_v2.json").is_file():
+            self.skipTest("requires private unified catalog policy and pinned source fixture")
+        catalog = load_catalog(
+            workspace_root=runtime_root.parent,
+            runtime_root=runtime_root,
+        )
+        self.assertEqual(catalog.schema_version, CATALOG_SCHEMA_VERSION_V2)
+        self.assertEqual(
+            catalog.repository_commit,
+            "b47b350e72122c1afc9fc2381e4dd1e1873bf1b8",
+        )
+        self.assertEqual(
+            catalog.counts(),
+            {
+                "tasks": 452,
+                "families": 445,
+                "modules": 584,
+                "primary_modules": 452,
+                "owned_support_modules": 108,
+                "shared_modules": 24,
+                "legacy_review_roots": 344,
+                "role_migrations": 108,
+                "family_overrides": 5,
+                "family_override_members": 12,
+            },
+        )
+        payload = catalog.as_dict()
+        self.assertNotIn("toy_commit", payload)
+        self.assertNotIn("mat_commit", payload)
+        self.assertTrue(validate_catalog(catalog)["valid"])
+
+    def test_real_v1_policy_retains_immutable_catalog_identity(self):
+        runtime_root = Path(__file__).resolve().parents[1]
+        mat_root = runtime_root.parent / "MAT3280-formalization-output"
+        if not (mat_root / ".git").exists() or not (
+            runtime_root / "data/task_catalog/catalog_policy_v1.json"
+        ).is_file():
+            self.skipTest("requires private legacy catalog policy and MAT repository fixture")
+        catalog = load_catalog(
+            workspace_root=runtime_root.parent,
+            runtime_root=runtime_root,
+            mat_root=mat_root,
+            policy_path=runtime_root
+            / "data"
+            / "task_catalog"
+            / "catalog_policy_v1.json",
+        )
+        self.assertEqual(catalog.schema_version, LEGACY_CATALOG_SCHEMA_VERSION)
+        self.assertEqual(
+            catalog.catalog_id,
+            "8bb93fd29236bcc05df0abbdf9635b130b2b8e01f1137c8df22ae6f86ae548aa",
+        )
+        self.assertTrue(validate_catalog(catalog)["valid"])
 
 
 if __name__ == "__main__":

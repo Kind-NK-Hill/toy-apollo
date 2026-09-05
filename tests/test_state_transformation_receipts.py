@@ -8,13 +8,13 @@ from contextlib import closing
 from pathlib import Path
 from unittest.mock import patch
 
-from src.toy_apollo.state_bundle_delta import analyze_current_mat_bundles
-from src.toy_apollo.state_migration import (
+from formalization_engine.state_bundle_delta import analyze_current_mat_bundles
+from formalization_engine.state_migration import (
     MigrationReport,
     import_validated_transformation_receipt,
     rebuild_workspace_database,
 )
-from src.toy_apollo.state_store import (
+from formalization_engine.state_store import (
     SubjectBundle,
     WorkspaceStateStore,
     sha256_file,
@@ -275,7 +275,7 @@ class ValidatedTransformationReceiptTests(unittest.TestCase):
                     "remote": {"subjects": 0, "errors": []},
                 }
 
-            with patch("src.toy_apollo.state_migration.refresh_workspace_state", side_effect=refresh):
+            with patch("formalization_engine.state_migration.refresh_workspace_state", side_effect=refresh):
                 report = rebuild_workspace_database(
                     state_path=state_path,
                     workspace_root=root,
@@ -319,7 +319,7 @@ class ValidatedTransformationReceiptTests(unittest.TestCase):
                     "remote": {"subjects": 0, "errors": []},
                 }
 
-            with patch("src.toy_apollo.state_migration.refresh_workspace_state", side_effect=refresh):
+            with patch("formalization_engine.state_migration.refresh_workspace_state", side_effect=refresh):
                 report = rebuild_workspace_database(
                     state_path=state_path,
                     workspace_root=root,

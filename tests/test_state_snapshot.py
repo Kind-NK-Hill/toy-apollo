@@ -5,9 +5,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.toy_apollo.state_snapshot import create_dataset_snapshot
-from src.toy_apollo.state_store import SubjectBundle, WorkspaceStateStore
-from src.toy_apollo.task_catalog import (
+from formalization_engine.state_snapshot import create_dataset_snapshot
+from formalization_engine.state_store import SubjectBundle, WorkspaceStateStore
+from formalization_engine.task_catalog import (
     CatalogFamily,
     CatalogModule,
     CatalogTask,

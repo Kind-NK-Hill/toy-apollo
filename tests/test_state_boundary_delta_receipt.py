@@ -10,8 +10,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from src.toy_apollo import state_boundary_delta_receipt as boundary_module
-from src.toy_apollo.state_boundary_delta_receipt import (
+from formalization_engine import state_boundary_delta_receipt as boundary_module
+from formalization_engine.state_boundary_delta_receipt import (
     BOUNDARY_DELTA_SCHEMA,
     BoundaryDeltaReceiptError,
     _author_provenance,
@@ -26,15 +26,15 @@ from src.toy_apollo.state_boundary_delta_receipt import (
     load_boundary_batch_authority_manifest,
     validate_verified_boundary_delta,
 )
-from src.toy_apollo.state_transformation_receipt import FORBIDDEN_PATTERNS
-from src.toy_apollo.state_review_apply_recovery import build_historical_review_apply_recovery
-from src.toy_apollo.state_migration import (
+from formalization_engine.state_transformation_receipt import FORBIDDEN_PATTERNS
+from formalization_engine.state_review_apply_recovery import build_historical_review_apply_recovery
+from formalization_engine.state_migration import (
     MigrationReport,
     discover_evidence_inventory,
     import_verified_boundary_delta_receipt,
 )
-from src.toy_apollo.state_store import SubjectBundle, WorkspaceStateStore, sha256_file
-from src.toy_apollo.task_catalog import build_catalog
+from formalization_engine.state_store import SubjectBundle, WorkspaceStateStore, sha256_file
+from formalization_engine.task_catalog import build_catalog
 from tests import test_state_review_apply_recovery as _recovery_test_module
 from tests.git_fixture_cleanup import remove_git_fixture_tree
 
@@ -67,7 +67,7 @@ class BoundaryDeltaReceiptTests(unittest.TestCase):
         primary = sorted(files)[0]
         subject = SubjectBundle.from_files(
             task_id="thm_5_1", files=files, primary_path=primary,
-            source_repo="mat" if name == "target" else "toy_apollo",
+            source_repo="mat" if name == "target" else "formalization_engine",
             source_commit=commit, layout="mat" if name == "target" else "toy",
             subject_kind="catalog_git_bundle" if name == "target" else "workspace_review_binding",
         )
@@ -368,7 +368,7 @@ class BoundaryDeltaReceiptTests(unittest.TestCase):
         workspace = Path(__file__).resolve().parents[2]
         authority = workspace / "_analysis_tmp" / "boundary97_policy_preflight_manifest_mat11a7948f_final_20260808.json"
         if not authority.is_file():
-            self.skipTest("private boundary-97 evidence is not included in the public source snapshot")
+            self.skipTest("requires private boundary-97 authority fixture")
         payload, entries = load_boundary_batch_authority_manifest(
             authority, workspace_root=workspace,
             expected_sha256="bef49d50c374679062c2ddfd42812da85f6f7a3f3428d462809583842830e2a1",
@@ -587,6 +587,35 @@ class BoundaryDeltaReceiptTests(unittest.TestCase):
                     )
             self.assertEqual(output.read_bytes(), b"peer receipt\n")
             self.assertEqual(list(root.glob(".*.tmp")), [])
+
+    def test_atomic_publish_content_hash_receipt_near_windows_path_limit(self):
+        with self._temporary_root() as root:
+            filename = f"{'a' * 64}.json"
+            # Keep the final file below MAX_PATH while the previous temporary
+            # name (final filename plus UUID) would exceed it on Windows.
+            padding = 245 - len(str(root)) - len(filename) - 2
+            self.assertGreater(padding, 0)
+            output = root / ("d" * padding) / filename
+            output.parent.mkdir()
+            self.assertEqual(len(str(output)), 245)
+            output.write_bytes(b"path is writable")
+            output.unlink()
+            link = boundary_module.os.link
+
+            def publish(temporary, final):
+                self.assertEqual(temporary.parent, final.parent)
+                self.assertLessEqual(len(str(temporary)), len(str(final)))
+                link(temporary, final)
+
+            with patch.object(boundary_module.os, "link", side_effect=publish):
+                result = boundary_module._atomic_publish_no_replace(
+                    output, b'{"verified": true}\n', label="long-path fixture",
+                )
+            self.assertTrue(result["published"])
+            self.assertEqual(output.read_bytes(), b'{"verified": true}\n')
+            self.assertEqual(result["final_sha256"], hashlib.sha256(output.read_bytes()).hexdigest())
+            self.assertEqual(result["temporary_cleanup"], "complete")
+            self.assertEqual(list(output.parent.glob(".*.tmp")), [])
 
     def test_atomic_no_replace_publish_write_failure_leaves_no_output_or_temp(self):
         with self._temporary_root() as root:
@@ -844,7 +873,7 @@ class BoundaryDeltaReceiptTests(unittest.TestCase):
             / "11a7948f" / "def_5_2" / "boundary_input_manifest_reanchored_v1.json"
         )
         if not manifest_path.is_file():
-            self.skipTest("private boundary-97 evidence is not included in the public source snapshot")
+            self.skipTest("requires private boundary-97 recovery fixture")
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         authority_ref = manifest["source_authority"]
         authority_path = workspace / authority_ref["path"]
@@ -869,7 +898,12 @@ class BoundaryDeltaReceiptTests(unittest.TestCase):
 
     def test_real_boundary97_source_scope_routes_cover_all_four_registered_shapes(self):
         workspace = Path(__file__).resolve().parents[2]
-        root = workspace / "toy-apollo-artifacts" / "validated_boundary_deltas" / "11a7948f"
+        root = (
+            workspace
+            / "toy-apollo-artifacts"
+            / "validated_boundary_deltas"
+            / "11a7948f"
+        )
         cases = {
             "def_5_2": "embedded_recovery_exact_bundle",
             "def_3_3": "workspace_review_binding",
@@ -880,7 +914,7 @@ class BoundaryDeltaReceiptTests(unittest.TestCase):
             (root / task_id / "boundary_input_manifest_reanchored_v1.json").is_file()
             for task_id in cases
         ):
-            self.skipTest("private boundary-97 evidence is not included in the public source snapshot")
+            self.skipTest("requires private boundary-97 source-scope fixtures")
         for task_id, shape in cases.items():
             with self.subTest(task_id=task_id, shape=shape):
                 manifest_path = root / task_id / "boundary_input_manifest_reanchored_v1.json"
@@ -916,7 +950,7 @@ class BoundaryDeltaReceiptTests(unittest.TestCase):
             )
             source = SubjectBundle.from_files(
                 task_id="thm_5_1", files={"review/thm_5_1.lean": "theorem fixture : True := by trivial\n"},
-                primary_path="review/thm_5_1.lean", source_repo="toy_apollo",
+                primary_path="review/thm_5_1.lean", source_repo="formalization_engine",
                 layout="historical_review", subject_kind="review_input_bundle",
             )
             target = SubjectBundle.from_files(
@@ -953,7 +987,7 @@ class BoundaryDeltaReceiptTests(unittest.TestCase):
             }
             receipt_path = root / "validated_boundary_delta_receipt_thm_5_1.json"; receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
             report = MigrationReport(database=str(store.path))
-            with patch("src.toy_apollo.state_migration.validate_verified_boundary_delta", return_value=(receipt, source, target)):
+            with patch("formalization_engine.state_migration.validate_verified_boundary_delta", return_value=(receipt, source, target)):
                 import_verified_boundary_delta_receipt(
                     store, receipt_path, report,
                     source_repos=[root], target_repo=root, kenneth_repo=root,
@@ -969,7 +1003,7 @@ class BoundaryDeltaReceiptTests(unittest.TestCase):
             lean = "theorem fixture : True := by trivial\n"
             subject = SubjectBundle.from_files(
                 task_id="thm_5_1", files={logical: lean}, primary_path=logical,
-                source_repo="toy_apollo", subject_kind="review_input_bundle",
+                source_repo="formalization_engine", subject_kind="review_input_bundle",
             )
             missing = root / "missing"; missing.mkdir()
             artifact = root / "snapshot" / logical; artifact.parent.mkdir(parents=True)
@@ -1007,7 +1041,7 @@ class BoundaryDeltaReceiptTests(unittest.TestCase):
             digest = hashlib.sha256(lean.encode()).hexdigest()
             reviewed = SubjectBundle.from_legacy_hash(
                 task_id="thm_5_1", candidate_hash=digest, evidence_hash="e" * 64,
-                source_repo="toy_apollo",
+                source_repo="formalization_engine",
             )
             input_payload = {"review_subject_hash": digest, "candidate": {"hash": digest, "lean": lean}}
             input_path = root / "semantic_review_input_v1.json"; input_path.write_text(json.dumps(input_payload), encoding="utf-8")
@@ -1030,7 +1064,7 @@ class BoundaryDeltaReceiptTests(unittest.TestCase):
                 _legacy_embedded_single_file_scope(receipt_path, authority, task_id="thm_5_1", authority=authority, reviewed_subject=reviewed)
             multi = SubjectBundle.from_manifest(
                 task_id="thm_5_1", files=[*reviewed.manifest(), {"path": "legacy/support.lean", "content_sha256": digest, "git_blob_sha": "", "size": 0}],
-                primary_path=reviewed.primary_path, source_repo="toy_apollo", subject_kind="legacy_bound",
+                primary_path=reviewed.primary_path, source_repo="formalization_engine", subject_kind="legacy_bound",
             )
             with self.assertRaises(BoundaryDeltaReceiptError):
                 _legacy_embedded_single_file_scope(receipt_path, authority, task_id="thm_5_1", authority=authority, reviewed_subject=multi)

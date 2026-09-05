@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from src.toy_apollo.state_store import refuse_legacy_ledger_write
+from formalization_engine.state_store import refuse_legacy_ledger_write
 
 
 TASK_RE = re.compile(r"^(?:def|thm|prob|ex)_(?P<chapter>\d+)(?:_|$)")
@@ -21,7 +21,8 @@ REPORT_MD = "docs/phase2_unfinished_tasks_audit.md"
 CLEAN_DEBT_JSON = "docs/phase2_ch10_14_clean_debt_surface_audit.json"
 METADATA_FIX_MANIFEST = "docs/phase2_unfinished_metadata_status_fix_manifest.json"
 LEDGER_SUMMARY_SYNC_MANIFEST = "docs/phase2_unfinished_ledger_summary_sync_manifest.json"
-ALLOWED_EXCEPTION_TASKS = {"thm_1_2", "ex_1_3_2", "thm_11_8"}
+ALLOWED_PROOF_BEYOND_BOOK = "thm_14_8_ProofBeyondBook"
+ALLOWED_EXCEPTION_TASKS = {"thm_1_2", "ex_1_3_2", "thm_11_8", "thm_14_8"}
 SOURCE_STATEMENT_EXCEPTION_TASKS = {"thm_1_2", "ex_1_3_2"}
 PASSING_OBLIGATION_STATUSES = {"proved", "obsolete", "accepted_as_proof_debt"}
 PLACEHOLDER_OBLIGATION_ID = "source_proof_spine"
@@ -60,7 +61,17 @@ def task_id_in_scope(task_id: str, start_chapter: int, end_chapter: int) -> bool
 
 
 def output_path(root: Path, task_id: str) -> Path:
-    return root / "ToyApollo" / "Output" / f"{task_id}.lean"
+    canonical_root = root / "ProbabilityTheory"
+    matches = sorted(
+        path
+        for path in canonical_root.rglob("*.lean")
+        if path.stem.lower() == task_id.lower()
+    )
+    if len(matches) > 1:
+        raise RuntimeError(f"ambiguous canonical Lean basename: {task_id}")
+    if matches:
+        return matches[0]
+    return canonical_root / f"{task_id}.lean"
 
 
 def rel(path: Path, root: Path) -> str:
@@ -89,10 +100,10 @@ DECL_KIND_RE = re.compile(
 
 def declaration_kinds(root: Path) -> dict[str, str]:
     declarations: dict[str, str] = {}
-    output_dir = root / "ToyApollo" / "Output"
+    output_dir = root / "ProbabilityTheory"
     if not output_dir.exists():
         return declarations
-    for path in sorted(output_dir.glob("*.lean")):
+    for path in sorted(output_dir.rglob("*.lean")):
         try:
             text = path.read_text(encoding="utf-8", errors="replace")
         except OSError:
@@ -106,10 +117,10 @@ def declaration_kinds(root: Path) -> dict[str, str]:
 
 def theorem_projection_wrappers(root: Path) -> dict[str, str]:
     wrappers: dict[str, str] = {}
-    output_dir = root / "ToyApollo" / "Output"
+    output_dir = root / "ProbabilityTheory"
     if not output_dir.exists():
         return wrappers
-    for path in sorted(output_dir.glob("*.lean")):
+    for path in sorted(output_dir.rglob("*.lean")):
         try:
             text = path.read_text(encoding="utf-8", errors="replace")
         except OSError:
@@ -236,6 +247,8 @@ def obligation_is_allowed_exception(task_id: str, obligation: dict[str, Any]) ->
     landing = obligation_landing(obligation)
     proof_contract_status = str(obligation.get("proof_contract_status") or "").strip()
     notes = str(obligation.get("proof_contract_notes") or "").lower()
+    if task_id == "thm_14_8":
+        return ALLOWED_PROOF_BEYOND_BOOK in landing or proof_contract_status == "beyond_book_exception"
     if task_id == "thm_11_8":
         return (
             proof_contract_status == "beyond_book_exception"
@@ -540,11 +553,11 @@ def clean_debt_error_tasks(root: Path) -> set[str]:
 
 
 def output_task_ids(root: Path, start_chapter: int, end_chapter: int) -> set[str]:
-    output_dir = root / "ToyApollo" / "Output"
+    output_dir = root / "ProbabilityTheory"
     ids: set[str] = set()
     if not output_dir.exists():
         return ids
-    for path in output_dir.glob("*.lean"):
+    for path in output_dir.rglob("*.lean"):
         task_id = path.stem
         if task_id.startswith("PackBuildCheck_") or task_id.startswith("PackVerify_"):
             continue
@@ -554,12 +567,15 @@ def output_task_ids(root: Path, start_chapter: int, end_chapter: int) -> set[str
 
 
 def output_importers(root: Path, task_id: str) -> list[str]:
-    output_dir = root / "ToyApollo" / "Output"
+    output_dir = root / "ProbabilityTheory"
     if not output_dir.exists():
         return []
-    needle = f"import ToyApollo.Output.{task_id}"
+    target = output_path(root, task_id)
+    if not target.exists():
+        return []
+    needle = "import " + ".".join(target.relative_to(root).with_suffix("").parts)
     importers: list[str] = []
-    for path in sorted(output_dir.glob("*.lean")):
+    for path in sorted(output_dir.rglob("*.lean")):
         if path.stem == task_id:
             continue
         try:
@@ -626,8 +642,8 @@ NEXT_ACTIONS = {
     "public_surface_and_obligations": "First remove public Support/Spine parameters, then close the named proof obligations with theorem-level landings.",
     "public_surface_cleanup": "Remove public Support/Spine parameters or make support-consuming helpers private; no open obligation is recorded.",
     "obligation_resolution": "Resolve the open proof obligations and land them on theorem/lemma declarations rather than structure fields.",
-    "allowed_beyond_book_hygiene": "Retire stale accepted proof debt; no Chapter 14 beyond-book exception remains.",
-    "proof_debt_review": "Review accepted proof debt and either retire it or map it to a current explicit exception contract.",
+    "allowed_beyond_book_hygiene": "Keep only the documented thm_14_8 beyond-book exception and make inherited uses explicit.",
+    "proof_debt_review": "Review accepted proof debt and either retire it or document it as the allowed beyond-book exception.",
     "allowed_exception_boundary": "Keep the explicit allowed exception visible, but do not count it as unfinished proof debt.",
     "build_repair": "Fix Lean build failures before semantic cleanup.",
     "missing_output": "Regenerate or recover the missing output file before any proof-debt decision.",

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "pilot_id": "prospective-protocol-demo-v1",
+  "model": "fixture-only-model-replace-before-prospective-run",
+  "budget": {
+    "input_tokens": 12000,
+    "output_tokens": 4000,
+    "elapsed_seconds": 240
+  },
+  "tasks": [
+    {
+      "task_id": "case01",
+      "source": {
+        "path": "inputs/case01.txt",
+        "sha256": "91cb436d6fed32fcc57ff69991ecf53b39980cd8ee3780a4c7f9d3a504e73213"
+      },
+      "lean": {
+        "path": "inputs/case01.lean",
+        "sha256": "1a34744bd24738cc9a6a6936cd7d55f4e14ad05d50efc5465b41fe0f62fdb13a"
+      }
+    },
+    {
+      "task_id": "case02",
+      "source": {
+        "path": "inputs/case02.txt",
+        "sha256": "ef8ff8b0e8cd0b293618e485b7f65809c190cf5e9be41c9a0d0817e9240ae641"
+      },
+      "lean": {
+        "path": "inputs/case02.lean",
+        "sha256": "ee4362242d6d424ee7931f20c4fd0e9e43de5acf9749548050693c3cf398ab64"
+      }
+    }
+  ]
+}

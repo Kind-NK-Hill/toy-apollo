@@ -10,11 +10,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.ledger_manager import LedgerManager, TaskStatus  # noqa: E402
-from src.toy_apollo.core.settings import Settings  # noqa: E402
-from src.toy_apollo.phase2_pack_shared.io import write_text  # noqa: E402
-from src.toy_apollo.phase2_prompt_pack import build_check_prompt_pack_candidate, write_prompt_pack  # noqa: E402
-from src.toy_apollo.phase2_semantic_review import (  # noqa: E402
+from formalization_engine.ledger_manager import LedgerManager, TaskStatus  # noqa: E402
+from formalization_engine.core.settings import Settings  # noqa: E402
+from formalization_engine.phase2_pack_shared.io import write_text  # noqa: E402
+from formalization_engine.phase2_prompt_pack import build_check_prompt_pack_candidate, write_prompt_pack  # noqa: E402
+from formalization_engine.phase2_semantic_review import (  # noqa: E402
     SEMANTIC_REVIEW_PROMPT_VERSION,
     SEMANTIC_REVIEW_RUBRIC_VERSION,
 )
@@ -32,7 +32,8 @@ class Phase2ReviewTestSupport:
             phase2_prompt_packs_dir=root / "phase2_prompt_packs",
             phase2_softdep_packs_dir=root / "phase2_softdep_packs",
             error_logs_dir=root / "error_logs",
-            toyapollo_output_dir=root / "ToyApollo" / "Output",
+            canonical_lean_dir=root / "ProbabilityTheory",
+            canonical_manifest_required=False,
             aristotle_outbox_dir=root / "aristotle_outbox",
             aristotle_archives_dir=root / "aristotle_archives",
             mathlib_index_file=root / "mathlib_index.faiss",
@@ -140,11 +141,11 @@ class Phase2ReviewTestSupport:
             encoding="utf-8",
         )
         return {
-            "TOY_APOLLO_PHASE2_REVIEWER_ARGV_JSON": json.dumps(
+            "FORMALIZATION_ENGINE_PHASE2_REVIEWER_ARGV_JSON": json.dumps(
                 [sys.executable, str(script), "--input", "{input}", "--result", "{result}"],
                 ensure_ascii=False,
             ),
-            "TOY_APOLLO_PHASE2_REVIEWER_BACKEND_ID": f"fake/{verdict}",
+            "FORMALIZATION_ENGINE_PHASE2_REVIEWER_BACKEND_ID": f"fake/{verdict}",
         }
 
     def _setup_trivial_phase2_task(
@@ -187,7 +188,8 @@ class Phase2ReviewTestSupport:
         source_tex.parent.mkdir(parents=True, exist_ok=True)
         source_tex.write_text("Show a trivial theorem.\n", encoding="utf-8")
         official_code = f"import Mathlib\n\ntheorem {task_id} : True := by\n  trivial\n"
-        output_path = settings.toyapollo_output_dir / f"{task_id}.lean"
+        settings.canonical_lean_dir.mkdir(parents=True, exist_ok=True)
+        output_path = settings.canonical_lean_dir / f"{task_id}.lean"
         if completed:
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(official_code, encoding="utf-8")
@@ -399,13 +401,13 @@ class Phase2ReviewTestSupport:
 
     def _run_successful_build_check(self, task_id: str, ledger: LedgerManager, settings):
         with patch(
-            "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+            "formalization_engine.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
             new=AsyncMock(return_value=(True, "repl ok")),
         ), patch(
-            "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+            "formalization_engine.phase2_prompt_pack.LeanCompiler.build_async",
             new=AsyncMock(return_value=(True, "temp build ok")),
         ), patch(
-            "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+            "formalization_engine.phase2_prompt_pack._run_staged_official_build",
             return_value=(True, "final build ok"),
         ):
             return asyncio.run(build_check_prompt_pack_candidate(task_id, ledger, settings))

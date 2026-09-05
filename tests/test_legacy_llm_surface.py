@@ -17,11 +17,11 @@ class LegacyLLMSurfaceTests(unittest.TestCase):
         "src/textbook_parser.py",
         "src/orchestrator.py",
         "src/pipeline.py",
-        "src/toy_apollo/pipeline/__init__.py",
-        "src/toy_apollo/pipeline/architect.py",
-        "src/toy_apollo/pipeline/auto_formalization.py",
-        "src/toy_apollo/pipeline/orchestrator.py",
-        "src/toy_apollo/pipeline/textbook_parser.py",
+        "src/formalization_engine/pipeline/__init__.py",
+        "src/formalization_engine/pipeline/architect.py",
+        "src/formalization_engine/pipeline/auto_formalization.py",
+        "src/formalization_engine/pipeline/orchestrator.py",
+        "src/formalization_engine/pipeline/textbook_parser.py",
     ]
 
     ACTIVE_RUNTIME_ROOTS = [

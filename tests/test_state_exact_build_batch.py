@@ -9,13 +9,13 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from src.toy_apollo.state_exact_build_batch import (
+from formalization_engine.state_exact_build_batch import (
     EXACT_BUILD_SCHEMA,
     ExactBuildBatchError,
     collect_exact_build_selection,
     emit_current_exact_builds_batch,
 )
-from src.toy_apollo.state_store import SubjectBundle
+from formalization_engine.state_store import SubjectBundle
 
 
 class ExactBuildBatchTests(unittest.TestCase):
@@ -34,7 +34,7 @@ class ExactBuildBatchTests(unittest.TestCase):
 
     def _fixture(self, root: Path):
         workspace = root / "workspace"
-        runtime = workspace / "toy-apollo"
+        runtime = workspace / "ProbabilityTheoryFormalization"
         mat_repo = workspace / "MAT3280-formalization-output"
         checkout = root / "checkout"
         (mat_repo / ".git").mkdir(parents=True)
@@ -213,22 +213,22 @@ class ExactBuildBatchTests(unittest.TestCase):
         }
         with (
             patch(
-                "src.toy_apollo.state_exact_build_batch.load_catalog",
+                "formalization_engine.state_exact_build_batch.load_catalog",
                 return_value=catalog,
             ) as load_mock,
             patch(
-                "src.toy_apollo.state_exact_build_batch.discover_catalog_git_subjects",
+                "formalization_engine.state_exact_build_batch.discover_catalog_git_subjects",
                 return_value=subjects,
             ) as discover_mock,
             patch(
-                "src.toy_apollo.state_exact_build_batch._command_text",
+                "formalization_engine.state_exact_build_batch._command_text",
                 side_effect=self._command_text,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch._run", return_value=completed
+                "formalization_engine.state_exact_build_batch._run", return_value=completed
             ) as run_mock,
             patch(
-                "src.toy_apollo.state_exact_build_batch._forbidden_findings",
+                "formalization_engine.state_exact_build_batch._forbidden_findings",
                 return_value=[],
             ),
         ):
@@ -275,18 +275,18 @@ class ExactBuildBatchTests(unittest.TestCase):
 
         with (
             patch(
-                "src.toy_apollo.state_exact_build_batch.load_catalog",
+                "formalization_engine.state_exact_build_batch.load_catalog",
                 return_value=catalog,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch.discover_catalog_git_subjects",
+                "formalization_engine.state_exact_build_batch.discover_catalog_git_subjects",
                 return_value=subjects,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch._command_text",
+                "formalization_engine.state_exact_build_batch._command_text",
                 side_effect=self._command_text,
             ),
-            patch("src.toy_apollo.state_exact_build_batch._run") as second_run,
+            patch("formalization_engine.state_exact_build_batch._run") as second_run,
         ):
             skipped = emit_current_exact_builds_batch(
                 workspace_root=workspace,
@@ -307,18 +307,18 @@ class ExactBuildBatchTests(unittest.TestCase):
         (output / self.task_ids[0]).mkdir(parents=True)
         with (
             patch(
-                "src.toy_apollo.state_exact_build_batch.load_catalog",
+                "formalization_engine.state_exact_build_batch.load_catalog",
                 return_value=catalog,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch.discover_catalog_git_subjects",
+                "formalization_engine.state_exact_build_batch.discover_catalog_git_subjects",
                 return_value=subjects,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch._command_text",
+                "formalization_engine.state_exact_build_batch._command_text",
                 side_effect=self._command_text,
             ),
-            patch("src.toy_apollo.state_exact_build_batch._run") as run_mock,
+            patch("formalization_engine.state_exact_build_batch._run") as run_mock,
             self.assertRaisesRegex(ExactBuildBatchError, "partial"),
         ):
             emit_current_exact_builds_batch(
@@ -334,18 +334,18 @@ class ExactBuildBatchTests(unittest.TestCase):
         receipt.write_text("{}\n", encoding="utf-8")
         with (
             patch(
-                "src.toy_apollo.state_exact_build_batch.load_catalog",
+                "formalization_engine.state_exact_build_batch.load_catalog",
                 return_value=catalog,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch.discover_catalog_git_subjects",
+                "formalization_engine.state_exact_build_batch.discover_catalog_git_subjects",
                 return_value=subjects,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch._command_text",
+                "formalization_engine.state_exact_build_batch._command_text",
                 side_effect=self._command_text,
             ),
-            patch("src.toy_apollo.state_exact_build_batch._run") as mismatch_run,
+            patch("formalization_engine.state_exact_build_batch._run") as mismatch_run,
             self.assertRaisesRegex(ExactBuildBatchError, "mismatches current MAT"),
         ):
             emit_current_exact_builds_batch(
@@ -366,22 +366,22 @@ class ExactBuildBatchTests(unittest.TestCase):
         )
         with (
             patch(
-                "src.toy_apollo.state_exact_build_batch.load_catalog",
+                "formalization_engine.state_exact_build_batch.load_catalog",
                 return_value=catalog,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch.discover_catalog_git_subjects",
+                "formalization_engine.state_exact_build_batch.discover_catalog_git_subjects",
                 return_value=subjects,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch._command_text",
+                "formalization_engine.state_exact_build_batch._command_text",
                 side_effect=self._command_text,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch._run", return_value=completed
+                "formalization_engine.state_exact_build_batch._run", return_value=completed
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch._forbidden_findings",
+                "formalization_engine.state_exact_build_batch._forbidden_findings",
                 return_value=[],
             ),
         ):
@@ -397,18 +397,18 @@ class ExactBuildBatchTests(unittest.TestCase):
         )
         with (
             patch(
-                "src.toy_apollo.state_exact_build_batch.load_catalog",
+                "formalization_engine.state_exact_build_batch.load_catalog",
                 return_value=catalog,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch.discover_catalog_git_subjects",
+                "formalization_engine.state_exact_build_batch.discover_catalog_git_subjects",
                 return_value=subjects,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch._command_text",
+                "formalization_engine.state_exact_build_batch._command_text",
                 side_effect=self._command_text,
             ),
-            patch("src.toy_apollo.state_exact_build_batch._run") as run_mock,
+            patch("formalization_engine.state_exact_build_batch._run") as run_mock,
             self.assertRaisesRegex(ExactBuildBatchError, "unexpected files"),
         ):
             emit_current_exact_builds_batch(
@@ -442,22 +442,22 @@ class ExactBuildBatchTests(unittest.TestCase):
         output = root / "evidence"
         with (
             patch(
-                "src.toy_apollo.state_exact_build_batch.load_catalog",
+                "formalization_engine.state_exact_build_batch.load_catalog",
                 return_value=catalog,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch.discover_catalog_git_subjects",
+                "formalization_engine.state_exact_build_batch.discover_catalog_git_subjects",
                 return_value=subjects,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch._command_text",
+                "formalization_engine.state_exact_build_batch._command_text",
                 side_effect=drifting_command_text,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch._run", return_value=completed
+                "formalization_engine.state_exact_build_batch._run", return_value=completed
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch._forbidden_findings",
+                "formalization_engine.state_exact_build_batch._forbidden_findings",
                 return_value=[],
             ),
             self.assertRaisesRegex(ExactBuildBatchError, "origin/main changed"),
@@ -493,22 +493,22 @@ class ExactBuildBatchTests(unittest.TestCase):
         output = root / "evidence"
         with (
             patch(
-                "src.toy_apollo.state_exact_build_batch.load_catalog",
+                "formalization_engine.state_exact_build_batch.load_catalog",
                 return_value=catalog,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch.discover_catalog_git_subjects",
+                "formalization_engine.state_exact_build_batch.discover_catalog_git_subjects",
                 return_value=subjects,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch._command_text",
+                "formalization_engine.state_exact_build_batch._command_text",
                 side_effect=drifting_command_text,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch._run", return_value=completed
+                "formalization_engine.state_exact_build_batch._run", return_value=completed
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch._forbidden_findings",
+                "formalization_engine.state_exact_build_batch._forbidden_findings",
                 return_value=[],
             ),
             self.assertRaisesRegex(ExactBuildBatchError, "checkout HEAD changed"),
@@ -553,10 +553,10 @@ class ExactBuildBatchTests(unittest.TestCase):
         selection = collect_exact_build_selection(action_manifests=[manifest])
         with (
             patch(
-                "src.toy_apollo.state_exact_build_batch.load_catalog",
+                "formalization_engine.state_exact_build_batch.load_catalog",
                 return_value=catalog,
             ),
-            patch("src.toy_apollo.state_exact_build_batch._run") as run_mock,
+            patch("formalization_engine.state_exact_build_batch._run") as run_mock,
             self.assertRaisesRegex(ExactBuildBatchError, "manifest commit"),
         ):
             emit_current_exact_builds_batch(
@@ -574,18 +574,18 @@ class ExactBuildBatchTests(unittest.TestCase):
         workspace, runtime, checkout, subjects, catalog = self._fixture(root)
         with (
             patch(
-                "src.toy_apollo.state_exact_build_batch.load_catalog",
+                "formalization_engine.state_exact_build_batch.load_catalog",
                 return_value=catalog,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch.discover_catalog_git_subjects",
+                "formalization_engine.state_exact_build_batch.discover_catalog_git_subjects",
                 return_value=subjects,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch._command_text",
+                "formalization_engine.state_exact_build_batch._command_text",
                 side_effect=self._command_text,
             ),
-            patch("src.toy_apollo.state_exact_build_batch._run") as run_mock,
+            patch("formalization_engine.state_exact_build_batch._run") as run_mock,
             self.assertRaisesRegex(ExactBuildBatchError, "owned modules"),
         ):
             emit_current_exact_builds_batch(
@@ -630,19 +630,19 @@ class ExactBuildBatchTests(unittest.TestCase):
         )
         with (
             patch(
-                "src.toy_apollo.state_exact_build_batch.load_catalog",
+                "formalization_engine.state_exact_build_batch.load_catalog",
                 return_value=catalog,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch.discover_catalog_git_subjects",
+                "formalization_engine.state_exact_build_batch.discover_catalog_git_subjects",
                 return_value=subjects,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch._command_text",
+                "formalization_engine.state_exact_build_batch._command_text",
                 side_effect=self._command_text,
             ),
             patch(
-                "src.toy_apollo.state_exact_build_batch._run", return_value=failed
+                "formalization_engine.state_exact_build_batch._run", return_value=failed
             ),
             self.assertRaisesRegex(ExactBuildBatchError, "Combined exact build batch"),
         ):

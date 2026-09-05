@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.toy_apollo.state_migration import (
+from formalization_engine.state_migration import (
     MigrationReport,
     _active_exact_content_target,
     _required_rebuild_invariants,
@@ -15,9 +15,9 @@ from src.toy_apollo.state_migration import (
     import_review_file,
     rebuild_invariants,
 )
-from src.toy_apollo.state_reconcile import refresh_local_repositories
-from src.toy_apollo.state_store import SubjectBundle, WorkspaceStateStore
-from src.toy_apollo.task_catalog import (
+from formalization_engine.state_reconcile import refresh_local_repositories
+from formalization_engine.state_store import SubjectBundle, WorkspaceStateStore
+from formalization_engine.task_catalog import (
     build_catalog,
     build_cordis_catalog,
     validate_catalog_compatible_mat_commit,
@@ -147,6 +147,20 @@ class StateMigrationInvariantTests(unittest.TestCase):
         self.assertFalse(required["all_catalog_modern_compatible_pass"])
         self.assertFalse(all(required.values()))
 
+    def test_exact_unified_coverage_is_a_required_rebuild_invariant(self):
+        required = _required_rebuild_invariants(
+            profile="mat",
+            catalog_valid=True,
+            catalog_counts={"tasks": 452, "families": 445, "modules": 584},
+            current_head_count=452,
+            compatible_pass_count=452,
+            exact_current_count=0,
+            unified_catalog=True,
+        )
+
+        self.assertFalse(required["all_catalog_exact_current_bundle_coverage"])
+        self.assertFalse(all(required.values()))
+
     @staticmethod
     def _catalog():
         plan = json.dumps(
@@ -268,6 +282,42 @@ class StateMigrationInvariantTests(unittest.TestCase):
             self.assertIn(math_review.resolve(), inventory.process_events)
             self.assertNotIn(math_review.resolve(), inventory.reviews)
             self.assertNotIn(template.resolve(), inventory.reviews)
+
+    def test_inventory_discovers_authority_relocation_batch_by_schema(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            batch = root / "authority-relocation-batch-v2.json"
+            batch.write_text(
+                json.dumps(
+                    {"schema": "formalization-engine.authority-relocation-batch.v2"}
+                ),
+                encoding="utf-8",
+            )
+            decoy = root / "phase5-result.json"
+            decoy.write_text(batch.read_text(encoding="utf-8"), encoding="utf-8")
+
+            inventory = discover_evidence_inventory([root])
+
+            self.assertEqual(
+                inventory.authority_relocation_batch_receipts, (batch.resolve(),)
+            )
+
+    def test_inventory_excludes_release_audit_clean_clones(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            audited_clone = root / "release_audit" / "clean-clone"
+            audited_clone.mkdir(parents=True)
+            leaked = audited_clone / "authority-relocation-batch-v2.json"
+            leaked.write_text(
+                json.dumps(
+                    {"schema": "formalization-engine.authority-relocation-batch.v2"}
+                ),
+                encoding="utf-8",
+            )
+
+            inventory = discover_evidence_inventory([root])
+
+            self.assertEqual(inventory.authority_relocation_batch_receipts, ())
 
     def test_cordis_catalog_refresh_uses_profile_current_head(self):
         with tempfile.TemporaryDirectory() as tmp:

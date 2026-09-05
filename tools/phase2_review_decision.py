@@ -20,7 +20,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 
-from src.toy_apollo.phase2_review_decision import evaluate_semantic_review_result  # noqa: E402
+from formalization_engine.phase2_review_decision import evaluate_semantic_review_result  # noqa: E402
 
 
 def _read_json(path: Path) -> Any:

@@ -37,7 +37,7 @@ This case shows three separate claims:
   Interface.
 - [`review-timeline.json`](review-timeline.json): curated structured verdicts
   plus private-evidence hashes.
-- [`ToyApollo/Output/def_8_5.lean`](../../../ToyApollo/Output/def_8_5.lean):
+- [`ProbabilityTheory/chapter_08/def_8_5.lean`](../../../ProbabilityTheory/chapter_08/def_8_5.lean):
   current repository owner.
 
 ## Scope

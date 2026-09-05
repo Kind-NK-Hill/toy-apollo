@@ -23,9 +23,8 @@ keeps only the entry rules and routes specialized work here.
 - Use `/goal` for requests that require continuing across many
   build/review/repair iterations, such as completing all
   non-remark/non-problem tasks in a chapter.
-- The durable goal must include explicit stop conditions: `completed`,
-  `hard_failure`, `nonprogress`, `max_rounds`, `build_budget_exhausted`, or
-  explicit user interruption.
+- The durable goal must include the terminal conditions documented under
+  **Structured handoffs** below. A diagnostic handoff is not goal completion.
 - If `/goal` is unavailable, create an explicit local batch state/checklist and
   run a pre-final guard before ending the turn.
 - `review-now`, `review-fix`, and `auto-loop` are agent-assisted composite
@@ -44,9 +43,11 @@ keeps only the entry rules and routes specialized work here.
 - Pre-final guard: if `current_auto_loop_status = active`, do not end the turn
   with a completion-style summary unless the ledger also shows a documented
   stop reason.
-- The documented stop reasons are only `completed`, `freshness_error`,
-  `hard_failure`, `nonprogress`, `max_rounds`, `build_budget_exhausted`, or
-  explicit user interruption.
+- Terminal reasons are `completed`, `freshness_error`, `hard_failure`,
+  `nonprogress`, `max_rounds`, `build_budget_exhausted`, or explicit user
+  interruption. Legacy runtime reason `passed` means `completed`;
+  `diagnoser_required` pauses ordinary repair for a diagnostic handoff and
+  does not end the enclosing task goal.
 - Needing a substantial semantic rewrite, wanting to summarize current
   blockers, or waiting for the current Codex agent to perform reviewer/repair
   work are not stop reasons.
@@ -56,7 +57,7 @@ keeps only the entry rules and routes specialized work here.
   `status_contract.md` and `review_criteria.md`; prompt-pack mirrors, clean
   ledgers, and successful builds are not substitutes for that contract.
 - Before inventing a new proof obligation, bridge, or foundation interface,
-  search existing `ToyApollo/Output`, bridge/foundation files, ledger state,
+  search existing `ProbabilityTheory`, bridge/foundation files, ledger state,
   dependency decisions, plans, and Mathlib; reuse or repair metadata before
   adding new scaffold.
 - Timed-out or manually aborted build/review runs without a canonical result
@@ -99,3 +100,42 @@ keeps only the entry rules and routes specialized work here.
 - The single-task prepare-only rule does not override the existing-output batch
   rule; chapter/section/task-set review defaults to landing/apply behavior
   unless the user asks otherwise.
+
+## Structured handoffs
+
+`review-now`, `review-fix`, and `auto-loop` append one
+`PHASE2_HANDOFF_JSON=<JSON>` line after their human-readable CLI output.
+The record has `schema_version=1`, `task_id`, `success`, `detail`, `status`,
+`next_action`, `is_terminal`, `stop_reason`, `request_path`, and
+`expected_result_path`. Paths are populated for a prepared reviewer handoff;
+other actions may leave them empty.
+
+Python callers receive `ReviewLoopOutcome`, which still unpacks and compares
+as the original `(success, detail)` tuple. Read its named fields or call
+`to_dict()` for orchestration. `success` retains the old operation-level
+meaning: a successful handoff is not a completed proof, and a build failure
+within budget still returns a successful handoff to the author.
+
+| `next_action` | `status` | `is_terminal` | Required orchestration |
+|---|---|---|---|
+| `author_repair` | `handoff` | `false` | Edit the active draft, then continue the same auto-loop. |
+| `reviewer_write_result` | `handoff` | `false` | Dispatch an independent read-only reviewer using the request/result paths; continue with apply or the active auto-loop. |
+| `diagnoser_read_only` | `handoff` | `false` | Perform the requested route/source diagnosis before resuming repair; do not self-review or blindly retry the same candidate. |
+| `resolve_blocker` | `blocked` | `false` | Correct the invalid request, missing evidence, freshness problem, or dependency blocker in `detail`; do not retry unchanged input. |
+| `completed` | `completed` | `true` | Auto-loop has applied a valid passing review. |
+| `stopped` | `stopped` | `true` | Record the stop reason; continue independent tasks in a batch. |
+
+`is_terminal` describes the selected repair workflow, not completion of the
+whole catalog or a chapter goal. Invalid inputs and missing prerequisites do
+not create a proof verdict. Explicit `review-fix --abandon-current-repair`
+returns `stopped` with `stop_reason=user_interruption`; this abandons that
+repair cycle only.
+
+The existing ledger schema and CLI flags remain unchanged. In particular,
+successful auto-loop completion still stores
+`current_auto_loop_status=completed` and `current_auto_loop_stop_reason=passed`;
+the structured result reports `stop_reason=completed`. Diagnostic escalation
+still stores `stopped / diagnoser_required`, while the structured result
+reports a nonterminal diagnostic handoff. Read ledger metadata for live
+runtime state and these fields for the next agent action. Neither is semantic
+review authority.

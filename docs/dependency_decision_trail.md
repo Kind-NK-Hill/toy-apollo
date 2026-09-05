@@ -78,5 +78,5 @@ Each line is independent and idempotent by `decision_id`.
 ## History Policy
 
 Archives and old prompt packs are read-only.  They may be inspected by
-`tools/audit_dependency_history.py`, but the tool prints a report only.  It does
+`docs/archive/legacy_tools/audit_dependency_history.py`, but the archived tool prints a report only.  It does
 not write decision records and does not rewrite historical files.

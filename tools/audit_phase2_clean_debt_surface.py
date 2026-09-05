@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Iterable
 
-from src.toy_apollo.state_store import refuse_legacy_ledger_write
+from formalization_engine.state_store import refuse_legacy_ledger_write
 
 
 TASK_RE = re.compile(r"^(?:def|thm|prob|ex)_(?P<chapter>\d+)(?:_|$)")
@@ -50,6 +50,8 @@ BRIDGE_RE = re.compile(r"\b" + LEAN_AUDIT_NAME_PREFIX + r"Bridge\b")
 BRIDGE_PARAM_RE = re.compile(
     r"\([^)]*:\s*[^)]*\b" + LEAN_AUDIT_NAME_PREFIX + r"Bridge\b[^)]*\)"
 )
+ALLOWED_PROOF_BEYOND_BOOK_TASK = "thm_14_8"
+ALLOWED_PROOF_BEYOND_BOOK = "thm_14_8_ProofBeyondBook"
 OPEN_STATUSES = {"open", "in_progress", "partial", "blocked"}
 PASSING_STATUSES = {"proved", "obsolete", "accepted_as_proof_debt"}
 
@@ -163,9 +165,9 @@ def iter_output_files(
     include_mirrors: bool = False,
 ) -> Iterable[Path]:
     paths: list[Path] = []
-    output_dir = root / "ToyApollo" / "Output"
+    output_dir = root / "ProbabilityTheory"
     if output_dir.exists():
-        paths.extend(output_dir.glob("*.lean"))
+        paths.extend(output_dir.rglob("*.lean"))
     if include_mirrors:
         mirror_dir = root / "output_lean_files"
         if mirror_dir.exists():
@@ -208,7 +210,7 @@ def strip_lean_comments(source: str) -> str:
 
 def scan_declarations(root: Path) -> dict[str, Declaration]:
     declarations: dict[str, Declaration] = {}
-    for path in sorted((root / "ToyApollo" / "Output").glob("*.lean")):
+    for path in sorted((root / "ProbabilityTheory").rglob("*.lean")):
         clean = strip_lean_comments(read_text(path))
         for line_no, line in enumerate(clean.splitlines(), start=1):
             match = DECL_RE.match(line)
@@ -225,10 +227,10 @@ def scan_declarations(root: Path) -> dict[str, Declaration]:
 
 def theorem_projection_wrappers(root: Path) -> dict[str, str]:
     wrappers: dict[str, str] = {}
-    output_dir = root / "ToyApollo" / "Output"
+    output_dir = root / "ProbabilityTheory"
     if not output_dir.exists():
         return wrappers
-    for path in sorted(output_dir.glob("*.lean")):
+    for path in sorted(output_dir.rglob("*.lean")):
         try:
             text = read_text(path)
         except OSError:
@@ -281,6 +283,10 @@ def declaration_headers(source: str) -> Iterable[tuple[int, str]]:
         index = max(cursor + 1, index + 1)
 
 
+def is_allowed_beyond_book(header_or_landing: str, task_id: str = "") -> bool:
+    return ALLOWED_PROOF_BEYOND_BOOK in header_or_landing
+
+
 def proof_package_names(source: str) -> list[str]:
     return sorted(
         {
@@ -310,7 +316,25 @@ def scan_public_surface(
                 header_without_params = header_without_params.replace(fragment, " ")
             return_packages = proof_package_names(header_without_params)
             if packages:
-                if return_packages:
+                if all(package == ALLOWED_PROOF_BEYOND_BOOK for package in packages):
+                    category = (
+                        "allowed_beyond_book_surface"
+                        if task_id == ALLOWED_PROOF_BEYOND_BOOK_TASK
+                        else "inherited_beyond_book_surface"
+                    )
+                    findings.append(
+                        Finding(
+                            task_id=task_id,
+                            file=rel(path, root),
+                            line=line,
+                            category=category,
+                            severity="allowed",
+                            detail=", ".join(packages),
+                            evidence=header[:500],
+                            action="Keep as the exact thm_14_8 proof-beyond-book exception; downstream use must remain marked as inherited exception, not ordinary proved debt.",
+                        )
+                    )
+                elif return_packages:
                     findings.append(
                         Finding(
                             task_id=task_id,
@@ -324,6 +348,7 @@ def scan_public_surface(
                         )
                     )
                 else:
+                    illegal = [package for package in packages if package != ALLOWED_PROOF_BEYOND_BOOK]
                     findings.append(
                         Finding(
                             task_id=task_id,
@@ -331,7 +356,7 @@ def scan_public_surface(
                             line=line,
                             category="public_proof_package_parameter",
                             severity="error",
-                            detail=", ".join(packages),
+                            detail=", ".join(illegal),
                             evidence=header[:500],
                             action="Replace the public parameter with internally constructed theorem-level evidence.",
                         )
@@ -461,7 +486,20 @@ def scan_obligations(root: Path, start_chapter: int, end_chapter: int) -> list[F
                     )
                 continue
             if status == "proved":
-                if not landing.strip():
+                if is_allowed_beyond_book(landing, task_id):
+                    findings.append(
+                        Finding(
+                            task_id=task_id,
+                            file=rel(path, root),
+                            line=0,
+                            category="allowed_beyond_book_obligation",
+                            severity="allowed",
+                            detail=obligation_id,
+                            evidence=evidence,
+                            action="Keep visible as the only permitted beyond-book exception; do not generalize this pattern.",
+                        )
+                    )
+                elif not landing.strip():
                     findings.append(
                         Finding(
                             task_id=task_id,
@@ -513,7 +551,7 @@ def scan_obligations(root: Path, start_chapter: int, end_chapter: int) -> list[F
                             action="Replace the nonproof landing with theorem-level evidence before marking the obligation proved.",
                         )
                     )
-            elif status == "accepted_as_proof_debt":
+            elif status == "accepted_as_proof_debt" and not is_allowed_beyond_book(landing, task_id):
                 findings.append(
                     Finding(
                         task_id=task_id,
@@ -523,7 +561,20 @@ def scan_obligations(root: Path, start_chapter: int, end_chapter: int) -> list[F
                         severity="error",
                         detail=obligation_id,
                         evidence=evidence,
-                        action="Promote this to an explicit task to clear; no ProofBeyondBook exception remains accepted.",
+                        action="Promote this to an explicit task to clear; only ProofBeyondBook may remain accepted.",
+                    )
+                )
+            elif status == "accepted_as_proof_debt" and is_allowed_beyond_book(landing, task_id):
+                findings.append(
+                    Finding(
+                        task_id=task_id,
+                        file=rel(path, root),
+                        line=0,
+                        category="allowed_beyond_book_obligation",
+                        severity="allowed",
+                        detail=obligation_id,
+                        evidence=evidence,
+                        action="Keep visible as the only permitted beyond-book exception; do not generalize this pattern.",
                     )
                 )
     return findings
@@ -612,11 +663,22 @@ def apply_status_fixes(root: Path, start_chapter: int, end_chapter: int) -> dict
             obligation_id = str(obligation.get("id", "") or "")
             status = str(obligation.get("status", "") or "")
             landing = str(obligation.get("lean_landing", "") or obligation.get("landing", "") or "")
+            is_beyond = is_allowed_beyond_book(landing, task_id)
             old = {
                 "status": status,
                 "review_status": str(obligation.get("review_status", "") or ""),
                 "lean_landing": landing,
             }
+            if is_beyond and status == "proved":
+                obligation["status"] = "accepted_as_proof_debt"
+                obligation["review_status"] = "accepted"
+                obligation["blocking"] = True
+                _append_audit_note(
+                    obligation,
+                    "[clean-debt-audit] Reclassified as the sole allowed beyond-book proof debt exception.",
+                )
+                task_changes.append({"obligation_id": obligation_id, "action": "proved_to_accepted_beyond_book", "old": old})
+                continue
             if status == "proved":
                 reopen, reason = _should_reopen_proved_debt(obligation, declarations, projection_wrappers)
                 if reopen:
@@ -625,13 +687,13 @@ def apply_status_fixes(root: Path, start_chapter: int, end_chapter: int) -> dict
                     obligation["blocking"] = True
                     _append_audit_note(obligation, f"[clean-debt-audit] Reopened on {stamp}: {reason}.")
                     task_changes.append({"obligation_id": obligation_id, "action": "proved_to_open", "reason": reason, "old": old})
-            elif status == "accepted_as_proof_debt":
+            elif status == "accepted_as_proof_debt" and not is_beyond:
                 obligation["status"] = "open"
                 obligation["review_status"] = "needs_review"
                 obligation["blocking"] = True
                 _append_audit_note(
                     obligation,
-                    f"[clean-debt-audit] Reopened on {stamp}: no ProofBeyondBook exception remains accepted proof debt.",
+                    f"[clean-debt-audit] Reopened on {stamp}: only thm_14_8_ProofBeyondBook may remain accepted proof debt.",
                 )
                 task_changes.append({"obligation_id": obligation_id, "action": "accepted_to_open_non_exception", "old": old})
         if task_changes:
@@ -714,7 +776,7 @@ def render_markdown(
         f"# Chapter {start_chapter}-{end_chapter} Clean Proof-Debt Surface Audit",
         "",
         "This report checks every official output task in scope, not only theorem tasks.",
-        "No `ProofBeyondBook` proof-debt exception remains accepted.",
+        "The only allowed proof-debt exception is `thm_14_8_ProofBeyondBook`.",
         "",
         "## Summary",
         "",

@@ -9,7 +9,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.phase2_pack_views import build_failure_summary_markdown, build_operator_prompt  # noqa: E402
+from formalization_engine.phase2_pack_views import build_failure_summary_markdown, build_operator_prompt  # noqa: E402
 from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E402
 
 
@@ -197,7 +197,7 @@ class Phase2PackViewsTests(Phase2ReviewTestSupport, unittest.TestCase):
                             "left_tail_eventually_small",
                             "scaled_mass_uniform_on_compact",
                         ],
-                        "forbidden_work": ["ToyApollo/Output promotion", "semantic review"],
+                        "forbidden_work": ["canonical-corpus promotion", "semantic review"],
                     }
                 ),
                 encoding="utf-8",

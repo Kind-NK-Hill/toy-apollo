@@ -17,10 +17,10 @@ from tools.audit_phase2_clean_debt_surface import (  # noqa: E402
 
 
 class Phase2CleanDebtSurfaceAuditTests(unittest.TestCase):
-    def test_support_and_retired_proof_beyond_book_parameters_are_errors(self):
+    def test_support_parameter_is_error_but_proof_beyond_book_is_allowed(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             output.mkdir(parents=True)
             (root / "phase2_prompt_packs").mkdir()
             (output / "thm_10_8.lean").write_text(
@@ -46,14 +46,14 @@ theorem thm_14_8 (H : thm_14_8_ProofBeyondBook) : True := by
 
             payload = findings_payload(scan_public_surface(root, 10, 14))
 
-            self.assertEqual(payload["severity_counts"]["error"], 2)
-            self.assertNotIn("allowed", payload["severity_counts"])
+            self.assertEqual(payload["severity_counts"]["error"], 1)
+            self.assertEqual(payload["severity_counts"]["allowed"], 1)
             self.assertEqual(payload["findings"][0]["category"], "public_proof_package_parameter")
 
     def test_support_return_is_review_but_implicit_support_parameter_is_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             output.mkdir(parents=True)
             (root / "phase2_prompt_packs").mkdir()
             (output / "thm_10_9.lean").write_text(
@@ -86,7 +86,7 @@ theorem thm_10_9 {h : SomeSupport} : True := by
     def test_prob63support_namespace_is_not_a_proof_package_parameter(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             output.mkdir(parents=True)
             (root / "phase2_prompt_packs").mkdir()
             (output / "ex_14_4_3.lean").write_text(
@@ -106,7 +106,7 @@ theorem ex_14_4_3_geometric_mgf_hasSum :
     def test_support_proof_from_support_parameter_is_review(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             output.mkdir(parents=True)
             (root / "phase2_prompt_packs").mkdir()
             (output / "prob_11_6.lean").write_text(
@@ -135,7 +135,7 @@ theorem tail_from_sixth (h : SixthMomentSupport) : TailSummabilitySupport := by
     def test_bridge_parameter_is_interface_review_not_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             output.mkdir(parents=True)
             (root / "phase2_prompt_packs").mkdir()
             (output / "thm_14_6.lean").write_text(
@@ -162,7 +162,7 @@ theorem thm_14_6 (B : SomeMathlibBridge) : True := by
     def test_non_thm_14_8_beyond_book_obligation_is_not_allowed(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             packs = root / "phase2_prompt_packs" / "prob_14_11"
             output.mkdir(parents=True)
             packs.mkdir(parents=True)
@@ -198,10 +198,10 @@ structure prob_14_11_ProofBeyondBook where
             self.assertNotIn("allowed", payload["severity_counts"])
             self.assertEqual(payload["findings"][0]["category"], "non_exception_accepted_debt")
 
-    def test_retired_thm_14_8_beyond_book_parameter_is_error_downstream(self):
+    def test_thm_14_8_beyond_book_parameter_is_allowed_for_direct_downstream(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             output.mkdir(parents=True)
             (root / "phase2_prompt_packs").mkdir()
             (output / "prob_14_11.lean").write_text(
@@ -217,14 +217,14 @@ theorem prob_14_11 (H : thm_14_8_ProofBeyondBook) : True := by
 
             payload = findings_payload(scan_public_surface(root, 10, 14))
 
-            self.assertEqual(payload["severity_counts"]["error"], 1)
-            self.assertNotIn("allowed", payload["severity_counts"])
-            self.assertEqual(payload["findings"][0]["category"], "public_proof_package_parameter")
+            self.assertNotIn("error", payload["severity_counts"])
+            self.assertEqual(payload["severity_counts"]["allowed"], 1)
+            self.assertEqual(payload["findings"][0]["category"], "inherited_beyond_book_surface")
 
     def test_verification_parameter_is_treated_as_public_proof_package(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             output.mkdir(parents=True)
             (root / "phase2_prompt_packs").mkdir()
             (output / "ex_14_4_3.lean").write_text(
@@ -246,7 +246,7 @@ theorem ex_14_4_3 (V : LocalLyapunovVerification) : True := by
     def test_interface_parameter_is_treated_as_public_proof_package(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             output.mkdir(parents=True)
             (root / "phase2_prompt_packs").mkdir()
             (output / "thm_10_8.lean").write_text(
@@ -269,7 +269,7 @@ theorem thm_10_8 (I : QuantileInterface) : True := by
     def test_setup_parameter_is_reviewed_without_becoming_proof_package_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             output.mkdir(parents=True)
             (root / "phase2_prompt_packs").mkdir()
             (output / "prob_14_1.lean").write_text(
@@ -292,7 +292,7 @@ theorem prob_14_1 (S : prob_14_1_PolyaUrnBetaSetup) : True := by
     def test_mirror_scan_is_opt_in(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             mirror = root / "output_lean_files" / "general"
             output.mkdir(parents=True)
             mirror.mkdir(parents=True)
@@ -328,7 +328,7 @@ theorem thm_10_8 (h : QuantileSupport) : True := by
     def test_proved_proof_debt_landing_on_structure_field_is_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             pack = root / "phase2_prompt_packs" / "thm_14_5"
             output.mkdir(parents=True)
             pack.mkdir(parents=True)
@@ -364,7 +364,7 @@ structure thm_14_5_SourceProofSpine where
     def test_proved_proof_debt_landing_on_projection_wrapper_is_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             pack = root / "phase2_prompt_packs" / "prob_14_8"
             output.mkdir(parents=True)
             pack.mkdir(parents=True)
@@ -407,7 +407,7 @@ theorem prob_14_8_characteristic_convergence
     def test_proved_source_obligation_landing_on_setup_field_is_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             pack = root / "phase2_prompt_packs" / "prob_14_2"
             output.mkdir(parents=True)
             pack.mkdir(parents=True)
@@ -443,7 +443,7 @@ structure prob_14_2_GammaCLTSetup where
     def test_verified_source_setup_field_landing_is_not_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             pack = root / "phase2_prompt_packs" / "prob_14_11"
             output.mkdir(parents=True)
             pack.mkdir(parents=True)
@@ -485,7 +485,7 @@ structure prob_14_11_CouponRatioTriangularArraySetup where
     def test_child_obligation_pack_is_in_scope_through_parent_task(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             pack = root / "phase2_prompt_packs" / "obl_prob_14_8_obligation_4"
             output.mkdir(parents=True)
             pack.mkdir(parents=True)

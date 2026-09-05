@@ -1,6 +1,6 @@
-# ToyApollo Formalization Context
+# ProbabilityTheoryFormalization Formalization Context
 
-ToyApollo formalizes a local probability textbook through source-ingestion,
+ProbabilityTheoryFormalization formalizes a local probability textbook through source-ingestion,
 task planning, Lean output, and independent semantic review. This glossary
 names the project-specific boundaries used when organizing Phase 2 output.
 
@@ -25,7 +25,7 @@ _Avoid_: shared support, foundational support
 
 **Interface Support**:
 A Lean module or theorem family that translates between textbook-facing
-definitions, ToyApollo local conventions, and Mathlib APIs. It is not a local
+definitions, ProbabilityTheoryFormalization local conventions, and Mathlib APIs. It is not a local
 workaround for a single proof.
 _Avoid_: bridge debt, temporary adapter
 
@@ -36,7 +36,7 @@ shared support merely because extracting it makes one file shorter.
 _Avoid_: generic support, utility bucket
 
 **Source-Statement Risk**:
-A mismatch where the textbook statement, ToyApollo's current definitions, and
+A mismatch where the textbook statement, ProbabilityTheoryFormalization's current definitions, and
 the Lean theorem shape cannot all be accepted without additional hypotheses or
 a convention decision. This is a source/interface issue, not ordinary proof
 debt.

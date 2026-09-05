@@ -17,6 +17,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from formalization_engine.phase2_handoff import ReviewLoopOutcome
 from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E402
 
 
@@ -24,17 +25,17 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
     def test_module_entrypoint_invokes_main(self):
         with patch.object(sys, "argv", ["app.py", "--help"]):
             with self.assertRaises(SystemExit) as exc:
-                runpy.run_module("src.toy_apollo.cli.app", run_name="__main__")
+                runpy.run_module("formalization_engine.cli.app", run_name="__main__")
         self.assertEqual(exc.exception.code, 0)
 
     def test_phase2_default_mode_is_pack(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--tasks",
@@ -49,13 +50,13 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(args.phase2_mode, "pack")
 
     def test_cli_rejects_legacy_phase2_mode(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--phase2-mode",
@@ -70,13 +71,13 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(exc.exception.code, 2)
 
     def test_cli_review_fix_accepts_abandon_flag(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--phase2-mode",
@@ -95,13 +96,13 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertTrue(args.abandon_current_repair)
 
     def test_cli_rejects_removed_review_support_and_debt_fix_modes(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         for mode in ("review-support", "debt-fix"):
             with self.subTest(mode=mode), patch.object(
                 sys,
                 "argv",
-                ["toy-apollo", "--phase", "2", "--phase2-mode", mode, "--tasks", "thm_4_7"],
+                ["formalize", "--phase", "2", "--phase2-mode", mode, "--tasks", "thm_4_7"],
             ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock, self.assertRaises(
                 SystemExit
             ) as caught:
@@ -111,13 +112,13 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             process_target_mock.assert_not_awaited()
 
     def test_cli_rejects_removed_support_review_subject(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--phase2-mode",
@@ -136,13 +137,13 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         process_target_mock.assert_not_awaited()
 
     def test_cli_promote_obligations_mode_is_rejected(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--phase2-mode",
@@ -156,13 +157,13 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         process_target_mock.assert_not_awaited()
 
     def test_cli_batch_plan_accepts_multiple_tasks(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--phase2-mode",
@@ -180,13 +181,13 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(args.task_ids, ["thm_1_1", "def_1_2"])
 
     def test_cli_batch_run_accepts_multiple_tasks_and_action_limit(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--phase2-mode",
@@ -207,13 +208,13 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(args.batch_max_actions, 2)
 
     def test_cli_batch_plan_accepts_worker_queue_options(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--phase2-mode",
@@ -239,13 +240,13 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(args.batch_workers, 5)
 
     def test_cli_batch_plan_accepts_explicit_legacy_audit_mode(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--phase2-mode",
@@ -264,13 +265,13 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertTrue(args.batch_include_legacy)
 
     def test_cli_auto_loop_accepts_limits_above_15_and_review_subject(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--phase2-mode",
@@ -299,13 +300,13 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(args.max_build_attempts_per_round, 18)
 
     def test_cli_auto_loop_rejects_limits_below_hardcoded_15_budget(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--phase2-mode",
@@ -321,13 +322,13 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(caught.exception.code, 2)
 
     def test_cli_auto_loop_defaults_to_hardcoded_15_by_15_budget(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--phase2-mode",
@@ -346,13 +347,13 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(args.nonprogress_limit, 15)
 
     def test_cli_phase2_soft_pack_accepts_problem_batch(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--phase2-mode",
@@ -371,35 +372,35 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(args.task_ids, ["prob_4_2", "prob_4_4"])
 
     def test_cli_phase2_soft_apply_requires_selection(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
-            ["toy-apollo", "--phase", "2", "--phase2-mode", "soft-apply", "--tasks", "prob_4_2"],
+            ["formalize", "--phase", "2", "--phase2-mode", "soft-apply", "--tasks", "prob_4_2"],
         ), self.assertRaises(SystemExit) as caught:
             cli_app.main()
         self.assertEqual(caught.exception.code, 2)
 
     def test_cli_phase2_soft_modes_reject_non_problem_tasks(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
-            ["toy-apollo", "--phase", "2", "--phase2-mode", "soft-pack", "--tasks", "thm_4_7"],
+            ["formalize", "--phase", "2", "--phase2-mode", "soft-pack", "--tasks", "thm_4_7"],
         ), self.assertRaises(SystemExit) as caught:
             cli_app.main()
         self.assertEqual(caught.exception.code, 2)
 
     def test_cli_rejects_removed_phase3_and_phase4(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         for phase in ("3", "4"):
             with self.subTest(phase=phase), patch.object(
                 sys,
                 "argv",
-                ["toy-apollo", "--phase", phase],
+                ["formalize", "--phase", phase],
             ), patch.object(cli_app, "process_target", new=AsyncMock()) as process_target_mock, self.assertRaises(
                 SystemExit
             ) as caught:
@@ -409,20 +410,20 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             process_target_mock.assert_not_awaited()
 
     def test_cli_rejects_removed_audit_and_verify_modes(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         for mode in ("audit", "verify"):
             with self.subTest(mode=mode), patch.object(
                 sys,
                 "argv",
-                ["toy-apollo", "--phase", "2", "--phase2-mode", mode, "--tasks", "thm_4_7"],
+                ["formalize", "--phase", "2", "--phase2-mode", mode, "--tasks", "thm_4_7"],
             ), self.assertRaises(SystemExit) as caught:
                 cli_app.main()
 
             self.assertEqual(caught.exception.code, 2)
 
     def test_status_reports_default_source_and_does_not_create_missing_roots(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "missing-runtime"
@@ -432,7 +433,7 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 dependency_decisions_dir=root / "dependency_decisions",
             )
             stdout = io.StringIO()
-            with patch.object(sys, "argv", ["toy-apollo", "--status"]), patch.object(
+            with patch.object(sys, "argv", ["formalize", "--status"]), patch.object(
                 cli_app,
                 "get_settings",
                 return_value=settings,
@@ -448,7 +449,7 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertIn("STATUS_SCOPE=resolved_for_this_process_not_global_authority", output)
             self.assertIn(f"ARTIFACT_ROOT={root}", output)
             self.assertIn("ARTIFACT_ROOT_SOURCE=default", output)
-            self.assertIn("ARTIFACT_ROOT_ENV_VAR=TOY_APOLLO_ARTIFACT_ROOT", output)
+            self.assertIn("ARTIFACT_ROOT_ENV_VAR=FORMALIZATION_ENGINE_ARTIFACT_ROOT", output)
             self.assertIn("ARTIFACT_ROOT_ENV_PRESENT=false", output)
             self.assertIn("ARTIFACT_ROOT_ENV_VALUE=<unset>", output)
             self.assertIn(f"PLAN_ROOT={root / 'plans'}", output)
@@ -456,13 +457,13 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertIn(f"PHASE1_PROMPT_PACK_ROOT={root / 'phase1_prompt_packs'}", output)
             self.assertIn(f"PHASE2_PROMPT_PACK_ROOT={root / 'phase2_prompt_packs'}", output)
             self.assertIn(f"DEPENDENCY_DECISION_ROOT={root / 'dependency_decisions'}", output)
-            self.assertIn(f"OUTPUT_ROOT={root / 'ToyApollo' / 'Output'}", output)
+            self.assertIn(f"OUTPUT_ROOT={root / 'ProbabilityTheory'}", output)
             self.assertIn("LEDGER_STATUS=missing_not_created", output)
             self.assertFalse(root.exists())
             process_target_mock.assert_not_awaited()
 
     def test_status_reports_environment_values_and_preserves_existing_tree(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "runtime"
@@ -475,7 +476,7 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             settings.plans_dir.mkdir()
             settings.phase1_prompt_packs_dir.mkdir()
             settings.phase2_prompt_packs_dir.mkdir()
-            settings.toyapollo_output_dir.mkdir(parents=True)
+            settings.canonical_lean_dir.mkdir(parents=True)
             settings.project_ledger_file.write_text(
                 json.dumps({"tasks": {}}, indent=2),
                 encoding="utf-8",
@@ -483,7 +484,7 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             (settings.plans_dir / "sentinel.json").write_text("plan sentinel\n", encoding="utf-8")
             (settings.phase1_prompt_packs_dir / "sentinel.txt").write_text("phase1 sentinel\n", encoding="utf-8")
             (settings.phase2_prompt_packs_dir / "sentinel.txt").write_text("phase2 sentinel\n", encoding="utf-8")
-            (settings.toyapollo_output_dir / "Sentinel.lean").write_text("theorem sentinel : True := by trivial\n", encoding="utf-8")
+            (settings.canonical_lean_dir / "Sentinel.lean").write_text("theorem sentinel : True := by trivial\n", encoding="utf-8")
 
             def snapshot() -> dict[str, tuple[bytes, int]]:
                 return {
@@ -495,10 +496,10 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             before = snapshot()
             stdout = io.StringIO()
             env = {
-                "TOY_APOLLO_RUNTIME_ROOT": str(root),
-                "TOY_APOLLO_ARTIFACT_ROOT": str(root),
+                "FORMALIZATION_ENGINE_RUNTIME_ROOT": str(root),
+                "FORMALIZATION_ENGINE_ARTIFACT_ROOT": str(root),
             }
-            with patch.object(sys, "argv", ["toy-apollo", "--status"]), patch.object(
+            with patch.object(sys, "argv", ["formalize", "--status"]), patch.object(
                 cli_app,
                 "get_settings",
                 return_value=settings,
@@ -520,7 +521,7 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             process_target_mock.assert_not_awaited()
 
     def test_status_reports_active_sqlite_campaign_when_legacy_json_is_absent(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "runtime"
@@ -545,10 +546,10 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             stdout = io.StringIO()
 
             with patch(
-                "src.toy_apollo.state_store.WorkspaceStateStore",
+                "formalization_engine.state_store.WorkspaceStateStore",
                 return_value=fake_store,
             ), patch(
-                "src.toy_apollo.core.open_runtime_ledger",
+                "formalization_engine.core.open_runtime_ledger",
                 return_value=fake_ledger,
             ), redirect_stdout(stdout):
                 cli_app.print_read_only_status(settings)
@@ -560,10 +561,10 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertIn("LEDGER_STATUS=active_sqlite_campaign", output)
 
     def test_status_rejects_operational_arguments_before_loading_settings(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         stderr = io.StringIO()
-        with patch.object(sys, "argv", ["toy-apollo", "--status", "--phase", "2"]), patch.object(
+        with patch.object(sys, "argv", ["formalize", "--status", "--phase", "2"]), patch.object(
             cli_app,
             "get_settings",
         ) as get_settings_mock, patch.object(
@@ -579,13 +580,13 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         process_target_mock.assert_not_awaited()
 
     def test_cli_rejects_removed_phase3_mode_flag(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--phase2-mode",
@@ -600,24 +601,24 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(caught.exception.code, 2)
 
     def test_cli_review_apply_requires_review_result(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
-            ["toy-apollo", "--phase", "2", "--phase2-mode", "review-apply", "--tasks", "thm_4_cli_review"],
+            ["formalize", "--phase", "2", "--phase2-mode", "review-apply", "--tasks", "thm_4_cli_review"],
         ), self.assertRaises(SystemExit) as caught:
             cli_app.main()
         self.assertEqual(caught.exception.code, 2)
 
     def test_cli_review_result_is_only_for_review_apply(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--phase2-mode",
@@ -632,8 +633,8 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(caught.exception.code, 2)
 
     def test_process_target_batch_plan_opens_read_only_and_creates_no_directories(self):
-        from src.toy_apollo.cli import app as cli_app
-        from src.toy_apollo.core.settings import Settings
+        from formalization_engine.cli import app as cli_app
+        from formalization_engine.core.settings import Settings
 
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -649,7 +650,8 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 phase2_prompt_packs_dir=artifact / "phase2_prompt_packs",
                 phase2_softdep_packs_dir=artifact / "phase2_softdep_packs",
                 error_logs_dir=artifact / "error_logs",
-                toyapollo_output_dir=runtime / "ToyApollo" / "Output",
+                canonical_lean_dir=runtime / "ProbabilityTheory",
+                canonical_manifest_required=False,
                 aristotle_outbox_dir=artifact / "aristotle_outbox",
                 aristotle_archives_dir=artifact / "aristotle_archives",
                 mathlib_index_file=artifact / "mathlib_index.faiss",
@@ -677,13 +679,13 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             )
 
             with patch.object(cli_app, "get_settings", return_value=settings), patch(
-                "src.toy_apollo.core.open_runtime_ledger",
+                "formalization_engine.core.open_runtime_ledger",
                 return_value=ledger,
             ) as open_ledger, patch(
-                "src.toy_apollo.phase2_batch_runner.plan_batch_from_ledger",
+                "formalization_engine.phase2_batch_runner.plan_batch_from_ledger",
                 return_value=object(),
             ), patch(
-                "src.toy_apollo.phase2_batch_runner.render_batch_runner_plan",
+                "formalization_engine.phase2_batch_runner.render_batch_runner_plan",
                 return_value="# plan\n",
             ), patch("builtins.print"):
                 asyncio.run(cli_app.process_target(args))
@@ -693,7 +695,7 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertFalse(artifact.exists())
 
     def test_process_target_review_now_prints_request_ready_banner(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         root = REPO_ROOT / "tests" / "_tmp_phase2_cli_review_now_banner"
         try:
@@ -719,23 +721,28 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 status=False,
             )
             with patch.object(cli_app, "get_settings", return_value=settings), patch(
-                "src.toy_apollo.core.open_runtime_ledger",
+                "formalization_engine.core.open_runtime_ledger",
                 return_value=ledger,
             ), patch(
-                "src.toy_apollo.phase2_review_loop.run_codex_review_now",
-                new=AsyncMock(return_value=(True, "detail")),
+                "formalization_engine.phase2_review_loop.run_codex_review_now",
+                new=AsyncMock(return_value=ReviewLoopOutcome(True, "detail", next_action="reviewer_write_result")),
             ), patch("builtins.print") as print_mock:
                 asyncio.run(cli_app.process_target(args))
 
             printed = " ".join(" ".join(str(item) for item in call.args) for call in print_mock.call_args_list)
             self.assertIn("review request ready", printed.lower())
             self.assertIn("reviewer step required now", printed.lower())
+            handoff_line = next(call.args[0] for call in print_mock.call_args_list if str(call.args[0]).startswith("PHASE2_HANDOFF_JSON="))
+            handoff = json.loads(handoff_line.split("=", 1)[1])
+            self.assertEqual(handoff["task_id"], task_id)
+            self.assertEqual(handoff["next_action"], "reviewer_write_result")
+            self.assertFalse(handoff["is_terminal"])
             self.assertNotIn("waiting", printed.lower())
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
     def test_process_target_review_now_failure_exits_nonzero(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         root = REPO_ROOT / "tests" / "_tmp_phase2_cli_review_now_failure"
         try:
@@ -761,11 +768,11 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 status=False,
             )
             with patch.object(cli_app, "get_settings", return_value=settings), patch(
-                "src.toy_apollo.core.open_runtime_ledger",
+                "formalization_engine.core.open_runtime_ledger",
                 return_value=ledger,
             ), patch(
-                "src.toy_apollo.phase2_review_loop.run_codex_review_now",
-                new=AsyncMock(return_value=(False, "basis changed")),
+                "formalization_engine.phase2_review_loop.run_codex_review_now",
+                new=AsyncMock(return_value=ReviewLoopOutcome(False, "basis changed", next_action="resolve_blocker")),
             ), patch("builtins.print"):
                 with self.assertRaises(SystemExit) as caught:
                     asyncio.run(cli_app.process_target(args))
@@ -775,7 +782,7 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             shutil.rmtree(root, ignore_errors=True)
 
     def test_process_target_auto_loop_prints_continue_now_banner(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         root = REPO_ROOT / "tests" / "_tmp_phase2_cli_auto_loop_banner"
         try:
@@ -801,11 +808,11 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 status=False,
             )
             with patch.object(cli_app, "get_settings", return_value=settings), patch(
-                "src.toy_apollo.core.open_runtime_ledger",
+                "formalization_engine.core.open_runtime_ledger",
                 return_value=ledger,
             ), patch(
-                "src.toy_apollo.phase2_review_loop.run_codex_auto_loop",
-                new=AsyncMock(return_value=(True, "detail")),
+                "formalization_engine.phase2_review_loop.run_codex_auto_loop",
+                new=AsyncMock(return_value=ReviewLoopOutcome(True, "detail", next_action="author_repair")),
             ), patch("builtins.print") as print_mock:
                 asyncio.run(cli_app.process_target(args))
 
@@ -816,7 +823,7 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
             shutil.rmtree(root, ignore_errors=True)
 
     def test_process_target_auto_loop_rejects_multiple_tasks(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         root = REPO_ROOT / "tests" / "_tmp_phase2_cli_auto_loop_multi_guard"
         try:
@@ -842,10 +849,10 @@ class Phase2CliReviewTests(Phase2ReviewTestSupport, unittest.TestCase):
                 status=False,
             )
             with patch.object(cli_app, "get_settings", return_value=settings), patch(
-                "src.toy_apollo.core.open_runtime_ledger",
+                "formalization_engine.core.open_runtime_ledger",
                 return_value=ledger,
             ), patch(
-                "src.toy_apollo.phase2_review_loop.run_codex_auto_loop",
+                "formalization_engine.phase2_review_loop.run_codex_auto_loop",
                 new=AsyncMock(return_value=(True, "should not run")),
             ) as auto_loop_mock, patch("builtins.print") as print_mock:
                 asyncio.run(cli_app.process_target(args))

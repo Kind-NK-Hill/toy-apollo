@@ -22,11 +22,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.block_id_naming import canonicalize_block_id, extract_chapter
-from src.toy_apollo.core.settings import get_settings
-from src.toy_apollo.phase1_plan_audit import normalize_phase1_task_type
-from src.toy_apollo.state_reconcile import discover_formal_plan_task_ids, task_id_from_path
-from src.toy_apollo.state_store import WorkspaceStateStore, sha256_file, utc_now
+from formalization_engine.block_id_naming import canonicalize_block_id, extract_chapter
+from formalization_engine.core.settings import get_settings
+from formalization_engine.phase1_plan_audit import normalize_phase1_task_type
+from formalization_engine.state_reconcile import discover_formal_plan_task_ids, task_id_from_path
+from formalization_engine.state_store import WorkspaceStateStore, sha256_file, utc_now
 
 
 IMPORT_RE = re.compile(r"(?m)^\s*import\s+([A-Za-z0-9_'.]+)\s*$")
@@ -587,7 +587,7 @@ def main() -> int:
     settings = get_settings()
     runtime_root = Path(settings.runtime_root).resolve()
     plans_dir = runtime_root / "plans"
-    output_dir = runtime_root / "ToyApollo" / "Output"
+    output_dir = Path(settings.canonical_lean_dir).resolve()
     store = WorkspaceStateStore(settings.state_db_file)
     store.assert_integrity()
     formal_ids = discover_formal_plan_task_ids(plans_dir, chapters=chapters)
@@ -729,7 +729,7 @@ def main() -> int:
         )
 
     payload = {
-        "schema_version": "toy-apollo.chapter-state-reconciliation-evidence.v1",
+        "schema_version": "formalization-engine.chapter-state-reconciliation-evidence.v2",
         "generated_at": utc_now(),
         "state_database": str(Path(settings.state_db_file).resolve()),
         "state_database_sha256": sha256_file(Path(settings.state_db_file)),

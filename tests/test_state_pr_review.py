@@ -3,27 +3,37 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+from unittest.mock import patch
 
-from src.toy_apollo.core.settings import Settings
-from src.toy_apollo.state_migration import rebuild_workspace_database
-from src.toy_apollo.state_pr_review import (
+from formalization_engine.core.settings import Settings
+from formalization_engine.state_migration import rebuild_workspace_database
+from formalization_engine.state_pr_review import (
     ExternalPrReviewError,
     PullRequestObservation,
+    _module_name,
     adopt_external_pr_evidence,
     apply_external_pr_review,
     prepare_external_pr_review,
 )
-from src.toy_apollo.state_store import SubjectBundle, WorkspaceStateStore
+from formalization_engine.state_store import SubjectBundle, WorkspaceStateStore
 
 
 class ExternalPrReviewTests(unittest.TestCase):
     task_id = "thm_1_1"
     code = "import Mathlib\n\ntheorem exact_pr_fixture : True := by trivial\n"
 
+    def test_pr_module_name_is_portable_to_posix_hosts(self):
+        with patch("formalization_engine.state_pr_review.Path", PurePosixPath):
+            for primary in ("ProbabilityTheory/chapter_01/thm_1_1.lean",
+                            r"ProbabilityTheory\chapter_01\thm_1_1.lean"):
+                with self.subTest(primary=primary):
+                    self.assertEqual(_module_name(primary),
+                                     "ProbabilityTheory.chapter_01.thm_1_1")
+
     def _settings(self, root: Path) -> Settings:
-        runtime = root / "toy-apollo"
-        artifacts = root / "toy-apollo-artifacts"
+        runtime = root / "ProbabilityTheoryFormalization"
+        artifacts = root / "ProbabilityTheoryFormalization-artifacts"
         runtime.mkdir()
         artifacts.mkdir()
         (runtime / "inputs").mkdir()
@@ -35,11 +45,11 @@ class ExternalPrReviewTests(unittest.TestCase):
         plans.mkdir()
         phase2 = runtime / "phase2_prompt_packs"
         phase2.mkdir()
-        output = runtime / "ToyApollo" / "Output"
+        output = runtime / "ProbabilityTheory"
         output.mkdir(parents=True)
         return Settings(
             runtime_root=runtime,
-            artifact_root=runtime,
+            artifact_root=artifacts,
             plans_dir=plans,
             reports_dir=runtime / "reports",
             formalized_chapters_dir=runtime / "formalized_chapters",
@@ -47,7 +57,8 @@ class ExternalPrReviewTests(unittest.TestCase):
             phase2_prompt_packs_dir=phase2,
             phase2_softdep_packs_dir=runtime / "phase2_softdep_packs",
             error_logs_dir=runtime / "error_logs",
-            toyapollo_output_dir=output,
+            canonical_lean_dir=output,
+            canonical_manifest_required=False,
             aristotle_outbox_dir=runtime / "aristotle_outbox",
             aristotle_archives_dir=runtime / "aristotle_archives",
             mathlib_index_file=runtime / "mathlib_index.faiss",
@@ -245,7 +256,7 @@ class ExternalPrReviewTests(unittest.TestCase):
             self.assertEqual(review_input["review_subject_kind"], "external_pr")
             self.assertEqual(review_input["subject_bundle"]["bundle_hash"], observation.subject.bundle_hash)
             self.assertEqual(review_input["review_basis"]["external_subject"]["head_sha"], observation.head_sha)
-            self.assertFalse((settings.toyapollo_output_dir / f"{self.task_id}.lean").exists())
+            self.assertFalse((settings.canonical_lean_dir / f"{self.task_id}.lean").exists())
             self.assertFalse((settings.phase2_prompt_packs_dir / self.task_id / "proof_obligations.json").exists())
             report = store.task_report(self.task_id)
             self.assertEqual(

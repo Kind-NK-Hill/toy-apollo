@@ -40,7 +40,7 @@ correctly invalidate an older conclusion.
   probability-one Interfaces with reusable bridges.
 - [`review-timeline.json`](review-timeline.json): eight curated structured
   verdicts plus private-evidence hashes.
-- [`ToyApollo/Output/def_10_1.lean`](../../../ToyApollo/Output/def_10_1.lean):
+- [`ProbabilityTheory/chapter_10/def_10_1.lean`](../../../ProbabilityTheory/chapter_10/def_10_1.lean):
   current repository owner.
 
 ## Scope

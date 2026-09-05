@@ -1,6 +1,6 @@
 # Output Auxiliary Module Classification
 
-This file classifies `ToyApollo/Output/*.lean` modules whose basename is not a
+This file classifies `ProbabilityTheory/**/*.lean` modules whose basename is not a
 live `project_ledger.json` task id. These modules are not Phase2 task roots and
 must not be counted as fresh existing-output review tasks.
 
@@ -15,13 +15,13 @@ as one of:
   task family. The parent ledger task remains the review root.
 - `retired_build_probe`: stale build-probe output that is not an official task,
   support module, bridge, or family member. These files should not remain under
-  `ToyApollo/Output`.
+  `ProbabilityTheory`.
 
 `PackBuildCheck_*` modules are retired build probes. They are not tasks, are not
 valid completion evidence, and should not be imported by Lean output modules.
 Historical prompt-pack logs may still mention old `PackBuildCheck_*` module
 names because they record prior build attempts; those mentions are historical
-text only and do not make a current `ToyApollo/Output` module authoritative.
+text only and do not make a current `ProbabilityTheory` module authoritative.
 
 ## Current Non-Task Core Modules
 

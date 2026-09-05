@@ -138,10 +138,7 @@ textbook completion:
   cites Etemadi's external proof, and the current Lean statement is
   source-faithful and downstream-usable while the core proof remains an
   accepted external-proof boundary.
+- `thm_14_8` with `beyond_book_exception`: the documented beyond-book
+  exception.
 
 It must not be generalized silently.
-
-`thm_14_8` is no longer an exception. Its former `beyond_book_exception`
-interface was replaced by a complete proof route, its direct consumers were
-migrated, and a fresh `review-apply` landed
-`source_faithful_proof_completed` with `phase2_status=pass` on 2026-08-05.

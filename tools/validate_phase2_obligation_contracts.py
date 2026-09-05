@@ -40,7 +40,8 @@ DECL_RE = re.compile(
     re.MULTILINE,
 )
 
-ALLOWED_EXTERNAL_PROOF_TASK = "thm_11_8"
+ALLOWED_BEYOND_BOOK = "thm_14_8_ProofBeyondBook"
+ALLOWED_BEYOND_BOOK_TASK = "thm_14_8"
 
 OPEN_STATUSES = {"open", "partial", "blocked", "in_progress"}
 FORBIDDEN_PROVED_LANDING_KINDS = {
@@ -155,10 +156,10 @@ def _strip_lean_comments(source: str) -> str:
 
 def _scan_declarations(root: Path) -> dict[str, Declaration]:
     declarations: dict[str, Declaration] = {}
-    output_dir = root / "ToyApollo" / "Output"
+    output_dir = root / "ProbabilityTheory"
     if not output_dir.exists():
         return declarations
-    for path in sorted(output_dir.glob("*.lean")):
+    for path in sorted(output_dir.rglob("*.lean")):
         try:
             text = _strip_lean_comments(path.read_text(encoding="utf-8", errors="replace"))
         except OSError:
@@ -311,18 +312,10 @@ def _skip_landing_not_found(
     )
 
 
-def _is_allowed_external_proof_contract(
-    task_id: str,
-    landing: str,
-    proof_contract_status: str,
-    proof_contract_notes: str,
-) -> bool:
-    if task_id != ALLOWED_EXTERNAL_PROOF_TASK:
+def _is_allowed_beyond_book(task_id: str, landing: str, proof_contract_status: str) -> bool:
+    if task_id != ALLOWED_BEYOND_BOOK_TASK:
         return False
-    if proof_contract_status != "beyond_book_exception":
-        return False
-    notes = proof_contract_notes.lower()
-    return "strong_law" in landing or "etemadi" in notes or "external" in notes
+    return ALLOWED_BEYOND_BOOK in landing or proof_contract_status == "beyond_book_exception"
 
 
 def _finding(
@@ -369,12 +362,7 @@ def _validate_obligation(
 
     if (
         ("ProofBeyondBook" in landing or proof_contract_status == "beyond_book_exception")
-        and not _is_allowed_external_proof_contract(
-            task_id,
-            landing,
-            proof_contract_status,
-            proof_contract_notes,
-        )
+        and not _is_allowed_beyond_book(task_id, landing, proof_contract_status)
     ):
         findings.append(
             _finding(
@@ -384,8 +372,8 @@ def _validate_obligation(
                 context.root,
                 obligation_id,
                 "non_exception_beyond_book",
-                "No thm_14_8 beyond-book proof contract remains allowed.",
-                "Reclassify this obligation as open debt or replace it with theorem-level proof evidence; only the explicit thm_11_8 cited-external contract remains nonlocal.",
+                "Beyond-book proof contract is only allowed for thm_14_8_ProofBeyondBook.",
+                "Reclassify this obligation as open debt or route it through the exact thm_14_8 exception boundary.",
             )
         )
 

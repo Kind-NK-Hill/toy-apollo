@@ -1,7 +1,7 @@
-name = "toy_apollo"
-version = "0.1.0"
+name = "ProbabilityTheoryFormalization"
+version = "0.2.0"
 keywords = ["math"]
-defaultTargets = ["ToyApollo"]
+defaultTargets = ["ProbabilityTheory"]
 
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
@@ -18,5 +18,10 @@ name = "repl"
 git = "https://github.com/leanprover-community/repl.git"
 rev = "v4.31.0"
 [[lean_lib]]
-name = "ToyApollo"
+name = "ProbabilityTheory"
 srcDir = "."
+# Build every corpus module and its imports, including modules not imported by
+# another task. The manifest guard in CI checks the complete file inventory.
+# A single root importing the whole corpus is intentionally not required:
+# chapters 1 and 7 retain the documented Partition joint-import boundary.
+globs = ["ProbabilityTheory.+"]

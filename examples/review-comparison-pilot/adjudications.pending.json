@@ -1,0 +1,14 @@
+[
+  {
+    "task_id": "case01",
+    "subject_sha256": "1d8ba44e47ac96ed8d8e7b41e8953ce6518fa8ddbcdadceb69cebab73c44fb98",
+    "provenance": "independent_human",
+    "verdict": "pending"
+  },
+  {
+    "task_id": "case02",
+    "subject_sha256": "cc075175eafc4a32fd72085943dc2e78bf9b4a46acc81e2906dc2a483a026608",
+    "provenance": "independent_human",
+    "verdict": "pending"
+  }
+]

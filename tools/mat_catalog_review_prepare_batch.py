@@ -15,14 +15,14 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.block_id_naming import canonicalize_block_id, is_canonical_block_id  # noqa: E402
-from src.toy_apollo.state_exact_build_batch import (  # noqa: E402
+from formalization_engine.block_id_naming import canonicalize_block_id, is_canonical_block_id  # noqa: E402
+from formalization_engine.state_exact_build_batch import (  # noqa: E402
     ExactBuildBatchError,
     catalog_owned_build_modules,
     validate_current_exact_build_receipt,
 )
-from src.toy_apollo.state_store import SubjectBundle, sha256_file  # noqa: E402
-from src.toy_apollo.task_catalog import TaskCatalog, load_catalog  # noqa: E402
+from formalization_engine.state_store import SubjectBundle, sha256_file  # noqa: E402
+from formalization_engine.task_catalog import TaskCatalog, load_catalog  # noqa: E402
 from tools.mat_catalog_review_apply import (  # noqa: E402
     ApplyError,
     _read_json as _read_pack_json,

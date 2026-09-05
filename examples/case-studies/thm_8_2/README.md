@@ -34,3 +34,6 @@ mathematical construction works, rather than merely restate a library theorem.
   passes.
 
 Both snapshots compile independently and omit the textbook excerpt.
+
+Current maintained corpus implementation: [ProbabilityTheory/chapter_08/thm_8_2.lean](../../../ProbabilityTheory/chapter_08/thm_8_2.lean).
+The fixed snapshots above retain their historical scope and hashes.

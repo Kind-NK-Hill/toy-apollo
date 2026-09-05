@@ -21,7 +21,7 @@ When evidence establishes that one registered task's
 only that task instead of re-applying the whole Phase 1 source unit:
 
 ```powershell
-python .\run_chapter.py --phase 2 --phase2-mode dependency-reconcile --tasks <task_id> --expected-old-dependencies <dep_id>,<dep_id>
+formalize --phase 2 --phase2-mode dependency-reconcile --tasks <task_id> --expected-old-dependencies <dep_id>,<dep_id>
 ```
 
 The replacement dependencies are not supplied by the operator. The runtime
@@ -37,7 +37,7 @@ build/review/apply evidence as directed by `batch-plan`.
 ## 1. Pack
 
 ```powershell
-python .\run_chapter.py --phase 2 --phase2-mode pack --tasks <task_id>
+formalize --phase 2 --phase2-mode pack --tasks <task_id>
 ```
 
 This writes `phase2_prompt_packs/<task_id>/` with the task, source context,
@@ -109,7 +109,7 @@ classification, audit, or verify files as completion evidence.
 ## 4. Build Gate
 
 ```powershell
-python .\run_chapter.py --phase 2 --phase2-mode build-check --tasks <task_id>
+formalize --phase 2 --phase2-mode build-check --tasks <task_id>
 ```
 
 The build gate writes `candidate_vN.lean` and `build_result_vN.json`. Passing
@@ -124,13 +124,13 @@ the latest math review verdict is `go`.
 For a build-ready candidate:
 
 ```powershell
-python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject candidate
+formalize --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject candidate
 ```
 
 For an already runnable official output:
 
 ```powershell
-python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject existing
+formalize --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject existing
 ```
 
 The existing-output path runs the same static hard checks used by `build-check`
@@ -173,7 +173,7 @@ completion remains under `build-check -> review-now -> review-apply`.
 ## 6. Apply Gate
 
 ```powershell
-python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks <task_id> --review-result <path>
+formalize --phase 2 --phase2-mode review-apply --tasks <task_id> --review-result <path>
 ```
 
 `review-apply` validates the review result, freshness, hashes, schema, reviewer
@@ -223,7 +223,8 @@ If reviewer verdict is `pass` but `phase2_status` is `fail`, `blocked`, or
 `allowed_exception`, `review-apply` records the result and does not promote a
 candidate as clean completion. `allowed_exception` is only for explicit
 task/class pairs documented in [status_contract.md](status_contract.md), such as
-`thm_11_8`'s cited external Etemadi proof boundary.
+`thm_11_8`'s cited external Etemadi proof boundary and the `thm_14_8`
+beyond-book case.
 
 Failed or inconclusive existing-output review preserves official output by
 default and records repair-required evidence. Quarantine is explicit
@@ -234,7 +235,7 @@ maintenance after downstream/import checks, not the default apply outcome.
 After a failed or inconclusive review, repair with the runtime loop:
 
 ```powershell
-python .\run_chapter.py --phase 2 --phase2-mode auto-loop --tasks <task_id> --review-subject current
+formalize --phase 2 --phase2-mode auto-loop --tasks <task_id> --review-subject current
 ```
 
 The default auto-loop budget and CLI floor are hard-coded to 15 review rounds
@@ -291,7 +292,7 @@ only if the verdict is `go`.
 For a group of tasks, first ask the runtime for a read-only scheduling view:
 
 ```powershell
-python .\run_chapter.py --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id>
+formalize --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id>
 ```
 
 `batch-plan` reads the ledger and existing Phase2 metadata, then tells the
@@ -330,7 +331,7 @@ For a larger repair push, ask for a worker queue instead of manually picking
 tasks:
 
 ```powershell
-python .\run_chapter.py --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id> --batch-task-kinds theorem,definition --batch-limit 15 --batch-workers 5
+formalize --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id> --batch-task-kinds theorem,definition --batch-limit 15 --batch-workers 5
 ```
 
 This keeps Problem tasks out of the first queue, ranks candidates by downstream
@@ -345,7 +346,7 @@ authority.
 To let the runtime advance a bounded number of selected actions:
 
 ```powershell
-python .\run_chapter.py --phase 2 --phase2-mode batch-run --tasks <task_id>,<task_id> --batch-max-actions 1
+formalize --phase 2 --phase2-mode batch-run --tasks <task_id>,<task_id> --batch-max-actions 1
 ```
 
 `batch-run` is only a dispatcher over existing single-task actions. Completion

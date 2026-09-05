@@ -1,0 +1,13 @@
+# Hide archived Phase2 history from ordinary docs searches.
+# Use `rg --no-ignore docs/archive docs/phase2/archive` for audit work.
+
+archive/
+phase2/archive/
+phase2/textbook_complete_targets.json
+phase2_completion_classification.md
+phase2_completion_classification.json
+phase2_ch10_14_clean_debt_surface_audit.md
+phase2_ch10_14_clean_debt_surface_audit.json
+phase2_unfinished_tasks_audit.md
+phase2_unfinished_tasks_audit.json
+phase2_source_output_alignment_audit.md
