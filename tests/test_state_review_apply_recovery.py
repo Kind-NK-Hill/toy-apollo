@@ -7,19 +7,19 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from src.toy_apollo.phase2_semantic_review import render_semantic_review_prompt
-from src.toy_apollo.state_bundle_delta import analyze_current_mat_bundles
-from src.toy_apollo.state_migration import (
+from formalization_engine.phase2_semantic_review import render_semantic_review_prompt
+from formalization_engine.state_bundle_delta import analyze_current_mat_bundles
+from formalization_engine.state_migration import (
     MigrationReport,
     import_historical_review_apply_recovery_receipt,
     import_validated_transformation_receipt,
     rebuild_workspace_database,
 )
-from src.toy_apollo.state_review_apply_recovery import (
+from formalization_engine.state_review_apply_recovery import (
     HistoricalReviewApplyRecoveryError,
     build_historical_review_apply_recovery,
 )
-from src.toy_apollo.state_store import (
+from formalization_engine.state_store import (
     SubjectBundle,
     WorkspaceStateStore,
     sha256_file,
@@ -86,7 +86,7 @@ class HistoricalReviewApplyRecoveryTests(unittest.TestCase):
                 "primary_hash": candidate_hash,
                 "bundle_hash": sha256_json(manifest),
                 "files": manifest,
-                "source_repo": "toy_apollo",
+                "source_repo": "formalization_engine",
                 "source_commit": "",
                 "layout": "historical_review",
                 "subject_kind": "review_input_bundle",
@@ -419,7 +419,7 @@ class HistoricalReviewApplyRecoveryTests(unittest.TestCase):
             state_path = root / "state.sqlite3"
 
             with patch(
-                "src.toy_apollo.state_migration.refresh_workspace_state",
+                "formalization_engine.state_migration.refresh_workspace_state",
                 return_value={
                     "local": {"mat_main": 0, "mat_candidate": 0, "toy_current": 0, "errors": []},
                     "remote": {"subjects": 0, "errors": []},
@@ -638,7 +638,7 @@ class HistoricalReviewApplyRecoveryTests(unittest.TestCase):
                     "remote": {"subjects": 0, "errors": []},
                 }
 
-            with patch("src.toy_apollo.state_migration.refresh_workspace_state", side_effect=refresh):
+            with patch("formalization_engine.state_migration.refresh_workspace_state", side_effect=refresh):
                 report = rebuild_workspace_database(
                     state_path=state_path,
                     workspace_root=root,

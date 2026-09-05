@@ -6,7 +6,7 @@
 # Use `rg --no-ignore ...` when intentionally auditing archives, generated
 # artifacts, prompt packs, dependency provenance, or historical migration notes.
 
-src/toy_apollo/backups/
+src/formalization_engine/backups/
 
 phase0_ingestion_packs/
 phase1_prompt_packs/
@@ -18,7 +18,6 @@ phase3_post_harvest_packs/
 
 aristotle_outbox/
 aristotle_archives/
-output_lean_files/
 formalized_chapters/
 reports/
 error_logs*/
@@ -36,3 +35,10 @@ plans/offload_candidates_legacy.json
 project_ledger.backup.json
 docs/phase2_current_status_snapshot.md
 docs/phase2_current_status_snapshot.json
+
+# Private evidence stays outside the public release.
+/inputs/
+/plans/
+/upstream/
+/data/workspace_inventory/
+*.sqlite3

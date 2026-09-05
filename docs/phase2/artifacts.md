@@ -19,7 +19,7 @@ Review authority:
 
 These decide semantic review verdict and `proof_class`.
 Existing-output review subjects are bound only to
-`ToyApollo/Output/<task_id>.lean`; legacy `output_lean_files` copies are shadow
+the manifest-resolved file under `ProbabilityTheory/`; legacy `output_lean_files` copies are shadow
 evidence, not alternate review subjects. The review basis separately hashes the
 resolved `inputs/<source_plan>.tex` file and the task content, so changing the
 source TeX invalidates an older request even when ledger/plan text is unchanged.

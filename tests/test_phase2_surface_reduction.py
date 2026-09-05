@@ -12,16 +12,16 @@ if str(REPO_ROOT) not in sys.path:
 
 class Phase2SurfaceReductionTests(unittest.TestCase):
     OWNER_MODULES = {
-        "phase2_review_request.py": REPO_ROOT / "src" / "toy_apollo" / "phase2_review_request.py",
-        "phase2_review_apply.py": REPO_ROOT / "src" / "toy_apollo" / "phase2_review_apply.py",
-        "phase2_review_loop.py": REPO_ROOT / "src" / "toy_apollo" / "phase2_review_loop.py",
-        "phase2_pack_views.py": REPO_ROOT / "src" / "toy_apollo" / "phase2_pack_views.py",
+        "phase2_review_request.py": REPO_ROOT / "src" / "formalization_engine" / "phase2_review_request.py",
+        "phase2_review_apply.py": REPO_ROOT / "src" / "formalization_engine" / "phase2_review_apply.py",
+        "phase2_review_loop.py": REPO_ROOT / "src" / "formalization_engine" / "phase2_review_loop.py",
+        "phase2_pack_views.py": REPO_ROOT / "src" / "formalization_engine" / "phase2_pack_views.py",
     }
 
     NO_PROMPT_PACK_IMPORT_MODULES = {
-        "phase2_review_apply.py": REPO_ROOT / "src" / "toy_apollo" / "phase2_review_apply.py",
-        "phase2_review_loop.py": REPO_ROOT / "src" / "toy_apollo" / "phase2_review_loop.py",
-        "review_basis_parts.py": REPO_ROOT / "src" / "toy_apollo" / "phase2_pack_shared" / "review_basis_parts.py",
+        "phase2_review_apply.py": REPO_ROOT / "src" / "formalization_engine" / "phase2_review_apply.py",
+        "phase2_review_loop.py": REPO_ROOT / "src" / "formalization_engine" / "phase2_review_loop.py",
+        "review_basis_parts.py": REPO_ROOT / "src" / "formalization_engine" / "phase2_pack_shared" / "review_basis_parts.py",
     }
 
     FOCUSED_TEST_MODULES = {
@@ -67,12 +67,12 @@ class Phase2SurfaceReductionTests(unittest.TestCase):
             tree = ast.parse(path.read_text(encoding="utf-8"))
             for node in ast.walk(tree):
                 if isinstance(node, ast.ImportFrom):
-                    self.assertNotEqual(node.module, "src.toy_apollo.phase2_prompt_pack")
+                    self.assertNotEqual(node.module, "formalization_engine.phase2_prompt_pack")
                     self.assertNotEqual(node.module, ".phase2_prompt_pack")
                     self.assertNotEqual(node.module, "phase2_prompt_pack")
                 elif isinstance(node, ast.Import):
                     imported = {alias.name for alias in node.names}
-                    self.assertNotIn("src.toy_apollo.phase2_prompt_pack", imported)
+                    self.assertNotIn("formalization_engine.phase2_prompt_pack", imported)
                     self.assertNotIn("phase2_prompt_pack", imported)
 
     def test_apply_owner_no_longer_registers_review_fix_callback(self):
@@ -88,7 +88,7 @@ class Phase2SurfaceReductionTests(unittest.TestCase):
             self.assertNotIn("_run_prompt_pack_test", source, f"{label} still wraps prompt-pack tests instead of owning them")
 
     def test_prompt_pack_wrapper_functions_are_thin(self):
-        path = REPO_ROOT / "src" / "toy_apollo" / "phase2_prompt_pack.py"
+        path = REPO_ROOT / "src" / "formalization_engine" / "phase2_prompt_pack.py"
         tree = ast.parse(path.read_text(encoding="utf-8"))
         functions = {
             node.name: node
@@ -105,7 +105,7 @@ class Phase2SurfaceReductionTests(unittest.TestCase):
             )
 
     def test_prompt_pack_has_single_owner_symbol_definition(self):
-        path = REPO_ROOT / "src" / "toy_apollo" / "phase2_prompt_pack.py"
+        path = REPO_ROOT / "src" / "formalization_engine" / "phase2_prompt_pack.py"
         tree = ast.parse(path.read_text(encoding="utf-8"))
         counts: dict[str, int] = {}
         for node in tree.body:
@@ -156,7 +156,7 @@ class Phase2SurfaceReductionTests(unittest.TestCase):
         self.assertIn("textbook-first, bridge-then-Mathlib", rs_boundary)
 
     def test_explicit_documented_cli_modes_match_parser_constants(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         tracked_docs = subprocess.run(
             ["git", "ls-files", "--", "*.md"],
@@ -200,7 +200,7 @@ class Phase2SurfaceReductionTests(unittest.TestCase):
         self.assertTrue(declarations, "No explicit active/deprecated CLI mode declarations were found")
 
     def test_explicit_completion_paths_end_at_review_apply(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         tracked_docs = subprocess.run(
             ["git", "ls-files", "--", "*.md"],

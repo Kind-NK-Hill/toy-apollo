@@ -5,7 +5,7 @@ Read the nearest folder-level `AGENTS.md` before changing files there.
 Current folder playbooks:
 
 - `src/AGENTS.md`
-- `src/toy_apollo/AGENTS.md`
+- `src/formalization_engine/AGENTS.md`
 - `docs/AGENTS.md`
 - `plans/AGENTS.md`
 - `tests/AGENTS.md`

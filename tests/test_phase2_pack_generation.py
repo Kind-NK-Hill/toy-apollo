@@ -12,32 +12,32 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.phase2_pack_generation import (  # noqa: E402
+from formalization_engine.phase2_pack_generation import (  # noqa: E402
     build_check_prompt_pack_candidate,
     write_codex_review_pack,
     write_existing_output_review_pack,
     write_existing_output_review_queue,
     write_prompt_pack,
 )
-from src.toy_apollo.phase2_prompt_pack import (  # noqa: E402
+from formalization_engine.phase2_prompt_pack import (  # noqa: E402
     _build_build_result_payload,
     _run_staged_official_build,
     resolve_phase2_task,
     validate_candidate_hard_checks,
 )
-from src.toy_apollo.phase2_pack_shared.io import (  # noqa: E402
+from formalization_engine.phase2_pack_shared.io import (  # noqa: E402
     fs_path,
     make_dirs,
     path_exists,
     read_file_safely,
     write_text,
 )
-from src.ledger_manager import LedgerManager, TaskStatus  # noqa: E402
-from src.toy_apollo.phase2_semantic_review import (  # noqa: E402
+from formalization_engine.ledger_manager import LedgerManager, TaskStatus  # noqa: E402
+from formalization_engine.phase2_semantic_review import (  # noqa: E402
     SEMANTIC_REVIEW_PROMPT_VERSION,
     SEMANTIC_REVIEW_RUBRIC_VERSION,
 )
-from src.toy_apollo.phase2_task_status import PROOF_BEARING_PASS_PREFIXES  # noqa: E402
+from formalization_engine.phase2_task_status import PROOF_BEARING_PASS_PREFIXES  # noqa: E402
 from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E402
 
 
@@ -93,7 +93,7 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
         self.assertEqual(explicit_empty["dependencies"], [])
 
     def test_staged_official_build_uses_short_backup_names_for_long_child_obligation_paths(self):
-        root = Path(tempfile.gettempdir()) / "toy_apollo_staged_long_backup"
+        root = Path(tempfile.gettempdir()) / "formalization_engine_staged_long_backup"
         try:
             self._clean_root(root)
             plans_dir = root / "plans"
@@ -108,14 +108,14 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             pack_dir.mkdir(parents=True, exist_ok=True)
             owner_pack_dir = settings.phase2_prompt_packs_dir / owner_id
             owner_pack_dir.mkdir(parents=True, exist_ok=True)
-            output_path = settings.toyapollo_output_dir / f"{owner_id}.lean"
+            output_path = settings.canonical_lean_dir / f"{owner_id}.lean"
             output_path.parent.mkdir(parents=True, exist_ok=True)
             old_code = f"import Mathlib\n\ntheorem {owner_id} : True := by\n  trivial\n"
             new_code = old_code.replace("trivial", "trivial")
             output_path.write_text(old_code, encoding="utf-8")
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "final build ok"),
             ):
                 success, detail = _run_staged_official_build(
@@ -137,9 +137,7 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             shutil.rmtree(root, ignore_errors=True)
 
     def test_staged_official_build_handles_long_owner_pack_staging_path(self):
-        root = Path(tempfile.gettempdir()) / (
-            "toy_apollo_staged_long_owner_pack_" + "x" * 48
-        )
+        root = Path(tempfile.gettempdir()) / "formalization_engine_staged_long_owner_pack"
         try:
             self._clean_root(root)
             plans_dir = root / "plans"
@@ -154,7 +152,7 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             owner_pack_dir = settings.phase2_prompt_packs_dir / owner_id
             make_dirs(pack_dir, exist_ok=True)
             make_dirs(owner_pack_dir, exist_ok=True)
-            output_path = settings.toyapollo_output_dir / f"{owner_id}.lean"
+            output_path = settings.canonical_lean_dir / f"{owner_id}.lean"
             make_dirs(output_path.parent, exist_ok=True)
             old_code = f"import Mathlib\n\ntheorem {owner_id} : True := by\n  trivial\n"
             new_code = old_code + "\n-- landed through long owner staging path\n"
@@ -164,7 +162,7 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertGreater(len(str(staging_dir)), 260)
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "final build ok"),
             ):
                 success, detail = _run_staged_official_build(
@@ -198,7 +196,7 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             output_path.write_text(candidate_code, encoding="utf-8")
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "final build ok"),
             ):
                 success, detail = _run_staged_official_build(
@@ -318,7 +316,7 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
                 """.strip(),
                 encoding="utf-8",
             )
-            from src.toy_apollo.core import LedgerManager
+            from formalization_engine.core import LedgerManager
 
             ledger = LedgerManager(ledger_path=str(root / "project_ledger.json"))
             ledger.add_or_update_task(
@@ -348,11 +346,11 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
 
             build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
             self.assertTrue(build_success, build_detail)
-            with patch.dict(os.environ, {"TOY_APOLLO_PHASE2_REVIEWER_ARGV_JSON": ""}, clear=False), patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+            with patch.dict(os.environ, {"FORMALIZATION_ENGINE_PHASE2_REVIEWER_ARGV_JSON": ""}, clear=False), patch(
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
                 new=AsyncMock(return_value=(True, "unexpected")),
             ) as repl_mock, patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.build_async",
                 new=AsyncMock(return_value=(True, "unexpected")),
             ) as build_mock:
                 success, detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
@@ -484,7 +482,7 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             shutil.rmtree(root, ignore_errors=True)
 
     def test_codex_review_pack_writes_template_for_long_nested_obligation_path(self):
-        root = Path(tempfile.gettempdir()) / "toy_apollo_pack_generation_long_review_path"
+        root = Path(tempfile.gettempdir()) / "formalization_engine_pack_generation_long_review_path"
         try:
             self._clean_root(root)
             task_id = (
@@ -672,15 +670,15 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             os.utime(secondary_output, (2000, 2000))
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
                 new_callable=AsyncMock,
                 return_value=(True, "repl ok"),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.build_async",
                 new_callable=AsyncMock,
                 return_value=(True, "temp build ok"),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack._run_staged_official_build",
+                "formalization_engine.phase2_prompt_pack._run_staged_official_build",
                 return_value=(True, "final build ok"),
             ):
                 success, detail = asyncio.run(build_check_prompt_pack_candidate(task_id, ledger, settings))
@@ -792,7 +790,7 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
 
             for local_dep_id in [dep_id, stale_dep_id]:
                 dep_code = f"import Mathlib\n\ntheorem {local_dep_id} : True := by\n  trivial\n"
-                dep_path = settings.toyapollo_output_dir / f"{local_dep_id}.lean"
+                dep_path = settings.canonical_lean_dir / f"{local_dep_id}.lean"
                 dep_path.parent.mkdir(parents=True, exist_ok=True)
                 dep_path.write_text(dep_code, encoding="utf-8")
                 ledger.add_or_update_task(
@@ -814,13 +812,13 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             task_payload["final_import_union"] = [dep_id]
             task_json_path.write_text(json.dumps(task_payload, indent=2, ensure_ascii=False), encoding="utf-8")
             (pack_dir / "draft.lean").write_text(
-                f"import Mathlib\nimport ToyApollo.Output.{dep_id}\n\ntheorem {task_id} : True := by\n  exact {dep_id}\n",
+                f"import Mathlib\nimport ProbabilityTheory.{dep_id}\n\ntheorem {task_id} : True := by\n  exact {dep_id}\n",
                 encoding="utf-8",
             )
 
             build_success, build_detail = self._run_successful_build_check(task_id, ledger, settings)
             self.assertTrue(build_success, build_detail)
-            with patch.dict(os.environ, {"TOY_APOLLO_PHASE2_REVIEWER_ARGV_JSON": ""}, clear=False):
+            with patch.dict(os.environ, {"FORMALIZATION_ENGINE_PHASE2_REVIEWER_ARGV_JSON": ""}, clear=False):
                 review_success, review_detail = asyncio.run(write_codex_review_pack(task_id, ledger, settings))
 
             self.assertTrue(review_success, review_detail)
@@ -829,8 +827,8 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertIn(dep_id, review_input["review_basis"]["task"]["soft_imports"])
             self.assertNotIn(stale_dep_id, review_input["task"]["soft_imports"])
             self.assertNotIn(stale_dep_id, review_input["review_basis"]["task"]["soft_imports"])
-            self.assertIn(f"import ToyApollo.Output.{dep_id}", review_input["imports"])
-            self.assertNotIn(f"import ToyApollo.Output.{stale_dep_id}", review_input["imports"])
+            self.assertIn(f"import ProbabilityTheory.{dep_id}", review_input["imports"])
+            self.assertNotIn(f"import ProbabilityTheory.{stale_dep_id}", review_input["imports"])
             self.assertIn(dep_id, {entry["task_id"] for entry in review_input["dependencies"]})
             self.assertNotIn(stale_dep_id, {entry["task_id"] for entry in review_input["dependencies"]})
             review_context = (pack_dir / "semantic_review_context_v1.md").read_text(encoding="utf-8")
@@ -848,10 +846,10 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id)
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
                 new=AsyncMock(return_value=(False, "repl failed")),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.build_async",
                 new=AsyncMock(return_value=(False, "temp build failed")),
             ):
                 success, detail = asyncio.run(build_check_prompt_pack_candidate(task_id, ledger, settings))
@@ -875,10 +873,10 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
             self._seed_build_failures(pack_dir, task_id, 14)
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.validate_with_repl_async",
                 new=AsyncMock(return_value=(False, "repl failed")),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack.LeanCompiler.build_module_async",
+                "formalization_engine.phase2_prompt_pack.LeanCompiler.build_async",
                 new=AsyncMock(return_value=(False, "temp build failed")),
             ):
                 success, detail = asyncio.run(build_check_prompt_pack_candidate(task_id, ledger, settings))
@@ -914,7 +912,7 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
         task = {"block_id": "thm_10_8", "type": "Theorem_with_Proof", "dependencies": []}
         candidate = """
 import Mathlib
-import ToyApollo.Output.thm_10_8_quantile_defs
+import ProbabilityTheory.thm_10_8_quantile_defs
 
 theorem thm_10_8 : True := by
   trivial
@@ -957,7 +955,7 @@ end Cordis.Foundations
         task = {"block_id": "thm_10_8", "type": "Theorem_with_Proof", "dependencies": []}
         candidate = """
 import Mathlib
-import ToyApollo.Output.thm_10_8
+import ProbabilityTheory.thm_10_8
 
 theorem thm_10_8 : True := by
   trivial
@@ -1011,7 +1009,7 @@ theorem thm_10_8_quantile_event_measurability : True := by
         task = {"block_id": "thm_10_8", "type": "Theorem_with_Proof", "dependencies": []}
         candidate = """
 import Mathlib
-import ToyApollo.Output.prob_10_10
+import ProbabilityTheory.prob_10_10
 
 theorem thm_10_8 : True := by
   trivial
@@ -1069,7 +1067,7 @@ theorem thm_10_8 : True := by
             self.assertTrue(output_path.exists())
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -1095,14 +1093,14 @@ theorem thm_10_8 : True := by
             ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack.validate_candidate_hard_checks",
+                "formalization_engine.phase2_prompt_pack.validate_candidate_hard_checks",
                 return_value=(
                     False,
                     [{"severity": "error", "code": "contains_sorry", "message": "fixture hard-check failure"}],
                     "fixture hard-check failure",
                 ),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
             ) as build_mock:
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
 
@@ -1156,14 +1154,14 @@ theorem thm_10_8 : True := by
             )
             ledger.mark_soft_imports_confirmed(task_id, [])
             settings = self._make_settings(root, plans_dir)
-            output_path = settings.toyapollo_output_dir / f"{task_id}.lean"
+            output_path = settings.canonical_lean_dir / f"{task_id}.lean"
             output_path.parent.mkdir(parents=True, exist_ok=True)
             official_code = f"import Mathlib\n\ntheorem {task_id} : True := by\n  trivial\n"
             output_path.write_text(official_code, encoding="utf-8")
             ledger.register_success(task_id, official_code, ledger._hash_text(official_code))
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -1200,7 +1198,7 @@ theorem thm_10_8 : True := by
             os.utime(secondary_output, (2000, 2000))
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -1232,7 +1230,7 @@ theorem thm_10_8 : True := by
             os.utime(secondary_output, (2000, 2000))
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_queue([task_id], ledger, settings))
@@ -1253,10 +1251,10 @@ theorem thm_10_8 : True := by
             ledger, settings, pack_dir, output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack.validate_candidate_hard_checks",
+                "formalization_engine.phase2_prompt_pack.validate_candidate_hard_checks",
                 return_value=(
                     False,
                     [{"severity": "error", "code": "contains_sorry", "message": "fixture queue hard-check failure"}],
@@ -1284,7 +1282,7 @@ theorem thm_10_8 : True := by
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id, completed=True)
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -1295,7 +1293,7 @@ theorem thm_10_8 : True := by
             result_path.write_text(json.dumps(result_payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_queue([], ledger, settings))
@@ -1322,7 +1320,7 @@ theorem thm_10_8 : True := by
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id, completed=True)
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_queue([task_id], ledger, settings))
@@ -1342,7 +1340,7 @@ theorem thm_10_8 : True := by
             )
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_queue([task_id], ledger, settings))

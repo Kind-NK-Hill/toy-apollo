@@ -1,0 +1,112 @@
+/-
+TASK ID: ex_3_1_4
+SOURCE MATERIAL: omitted from the public source snapshot; see docs/repository_scope.md.
+-/
+
+import ProbabilityTheory.chapter_03.def_3_2
+import ProbabilityTheory.chapter_03.thm_3_8
+import ProbabilityTheory.chapter_03.ex_3_1_2
+import ProbabilityTheory.chapter_03.def_3_3
+import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
+import Mathlib.MeasureTheory.Constructions.BorelSpace.Order
+import Mathlib.Tactic
+
+open MeasureTheory Set ENNReal
+
+ 
+theorem Example_3_1_2_sigmaFinite : IsSigmaFinite Example_3_1_2 := by
+  refine ⟨fun n => Ioc (-(n : ℝ)) n, ?_, ?_, ?_⟩
+  · intro n
+    exact GeneratedField.basic _ (Or.inl ⟨-(n : ℝ), (n : ℝ), rfl⟩)
+  · ext x
+    constructor
+    · intro _
+      simp
+    · intro _
+      rcases exists_nat_gt |x| with ⟨n, hn⟩
+      refine mem_iUnion.mpr ⟨n, ?_⟩
+      rw [mem_Ioc]
+      constructor
+      · have hleft : -(n : ℝ) < -|x| := by linarith
+        exact lt_of_lt_of_le hleft (neg_abs_le x)
+      · have hright : x ≤ |x| := le_abs_self x
+        linarith
+  · intro n
+    rw [Example_3_1_2_apply, intervalLength_Ioc]
+    exact ENNReal.ofReal_lt_top
+
+ 
+theorem generateFrom_B0_eq_borel : MeasurableSpace.generateFrom B0.carrier = borel ℝ := by
+  apply le_antisymm
+  · exact MeasurableSpace.generateFrom_le fun s hs => measurable_of_mem_B0 s hs
+  · rw [borel_eq_generateFrom_Ioc]
+    exact MeasurableSpace.generateFrom_mono fun s hs => by
+      rcases hs with ⟨a, b, _, rfl⟩
+      exact GeneratedField.basic _ (Or.inl ⟨a, b, rfl⟩)
+
+ 
+theorem volume_extends_Example_3_1_2 (s : Set ℝ) (hs : s ∈ B0.carrier) :
+    volume s = Example_3_1_2.μ₀ ⟨s, hs⟩ := by
+  rw [Example_3_1_2_apply]
+  exact volume_eq_intervalLength s hs
+
+
+
+theorem borel_measure_extension_unique (μ : Measure ℝ)
+    (h : ∀ a b, μ (Ioc a b) = ENNReal.ofReal (b - a)) :
+    μ = volume := by
+  haveI : IsLocallyFiniteMeasure μ := ⟨by
+    intro x
+    refine ⟨Ioo (x - 1) (x + 1), Ioo_mem_nhds (by linarith) (by linarith), ?_⟩
+    calc
+      μ (Ioo (x - 1) (x + 1)) ≤ μ (Ioc (x - 1) (x + 1)) := measure_mono Ioo_subset_Ioc_self
+      _ = ENNReal.ofReal ((x + 1) - (x - 1)) := h (x - 1) (x + 1)
+      _ < ⊤ := ENNReal.ofReal_lt_top⟩
+  apply Measure.ext_of_Ioc
+  intro a b _
+  rw [h a b, Real.volume_Ioc]
+
+private theorem castMeasure_apply {X : Type*} {m₁ m₂ : MeasurableSpace X}
+    (h : m₁ = m₂) (μ : @Measure X m₂) (s : Set X) :
+    (Eq.mpr (congrArg (fun m => @Measure X m) h) μ) s = μ s := by
+  subst m₂
+  rfl
+
+private theorem generateFrom_B0_eq_real_measurable :
+    MeasurableSpace.generateFrom B0.carrier =
+      (inferInstance : MeasurableSpace ℝ) :=
+  generateFrom_B0_eq_borel.trans BorelSpace.measurable_eq.symm
+
+
+
+noncomputable def borelVolumeOnGenerated :
+    @Measure ℝ (MeasurableSpace.generateFrom B0.carrier) :=
+  Eq.mpr
+    (congrArg (fun m => @Measure ℝ m) generateFrom_B0_eq_real_measurable)
+    volume
+
+ 
+theorem borelVolumeOnGenerated_isExtension :
+    IsExtension B0.carrier Example_3_1_2.toSetFunction borelVolumeOnGenerated := by
+  intro s hs
+  change
+    (Eq.mpr
+      (congrArg (fun m => @Measure ℝ m) generateFrom_B0_eq_real_measurable)
+      volume) s = Example_3_1_2.toSetFunction s
+  exact
+    (castMeasure_apply generateFrom_B0_eq_real_measurable volume s).trans
+      ((volume_extends_Example_3_1_2 s hs).trans
+        (Example_3_1_2.toSetFunction_of_mem hs).symm)
+
+ 
+theorem ex_3_1_4 :
+    ∃! μ : @Measure ℝ (MeasurableSpace.generateFrom B0.carrier),
+      IsExtension B0.carrier Example_3_1_2.toSetFunction μ :=
+  extension_unique B0 Example_3_1_2 Example_3_1_2_sigmaFinite
+
+ 
+theorem borelVolumeOnGenerated_unique
+    (μ : @Measure ℝ (MeasurableSpace.generateFrom B0.carrier))
+    (hμ : IsExtension B0.carrier Example_3_1_2.toSetFunction μ) :
+    μ = borelVolumeOnGenerated :=
+  ex_3_1_4.unique hμ borelVolumeOnGenerated_isExtension

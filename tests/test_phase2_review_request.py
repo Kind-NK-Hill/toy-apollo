@@ -11,13 +11,13 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.phase2_review_loop import run_codex_review_now  # noqa: E402
-from src.ledger_manager import LedgerManager  # noqa: E402
-from src.toy_apollo.phase2_pack_shared.artifacts import select_latest_existing_task_file  # noqa: E402
-from src.toy_apollo.phase2_pack_shared.io import sha256_text  # noqa: E402
-from src.toy_apollo.phase2_pack_generation import resolve_phase2_task  # noqa: E402
-from src.toy_apollo.phase2_prompt_pack import write_existing_output_review_pack  # noqa: E402
-from src.toy_apollo.phase2_review_request import (  # noqa: E402
+from formalization_engine.phase2_review_loop import run_codex_review_now  # noqa: E402
+from formalization_engine.ledger_manager import LedgerManager  # noqa: E402
+from formalization_engine.phase2_pack_shared.artifacts import select_latest_existing_task_file  # noqa: E402
+from formalization_engine.phase2_pack_shared.io import sha256_text  # noqa: E402
+from formalization_engine.phase2_pack_generation import resolve_phase2_task  # noqa: E402
+from formalization_engine.phase2_prompt_pack import write_existing_output_review_pack  # noqa: E402
+from formalization_engine.phase2_review_request import (  # noqa: E402
     _basis_change_is_retirement_only,
     _validate_review_input_freshness,
     build_semantic_review_basis,
@@ -89,7 +89,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
             ledger.add_or_update_task(plan[0])
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(
@@ -370,7 +370,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
             source_tex.parent.mkdir(parents=True, exist_ok=True)
             source_tex.write_text("original source theorem\n", encoding="utf-8")
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -387,6 +387,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
             )
 
             self.assertIn("basis changed", error)
+            self.assertIn("target_context", error)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -402,7 +403,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
                 completed=True,
             )
             self._append_direct_downstream_consumer(settings.plans_dir, task_id, consumer_id)
-            consumer_path = settings.toyapollo_output_dir / f"{consumer_id}.lean"
+            consumer_path = settings.canonical_lean_dir / f"{consumer_id}.lean"
             consumer_path.parent.mkdir(parents=True, exist_ok=True)
             original_consumer = (
                 "import Mathlib\n\n"
@@ -412,7 +413,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
             consumer_path.write_text(original_consumer, encoding="utf-8")
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -435,7 +436,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
                 review_input=review_input,
             )
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -469,7 +470,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertFalse(missing["official_output_exists"])
             self.assertEqual(missing["official_output_hash"], "")
 
-            consumer_path = settings.toyapollo_output_dir / f"{consumer_id}.lean"
+            consumer_path = settings.canonical_lean_dir / f"{consumer_id}.lean"
             consumer_path.parent.mkdir(parents=True, exist_ok=True)
             consumer_path.write_text("", encoding="utf-8")
             empty_basis = build_semantic_review_basis(
@@ -493,7 +494,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
             task_id = "thm_4_review_snapshot_freshness"
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id, completed=True)
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -524,7 +525,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
             task_id = "thm_4_review_inline_candidate_binding"
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id, completed=True)
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -551,7 +552,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
             task_id = "thm_4_review_task_context_binding"
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id, completed=True)
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -589,7 +590,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
             task_id = "thm_4_review_full_input_hash_binding"
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id, completed=True)
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -616,7 +617,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
             task_id = "thm_4_review_prompt_binding"
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id, completed=True)
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -662,7 +663,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
                 encoding="utf-8",
             )
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -715,7 +716,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertTrue(output_path.exists())
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -741,7 +742,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
             draft_path.write_text("import Missing.Module\n#check impossible_name\n", encoding="utf-8")
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(run_codex_review_now(task_id, ledger, settings, review_subject="existing"))
@@ -764,7 +765,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
             ledger, settings, _, output_path = self._setup_trivial_phase2_task(root, task_id, completed=True)
             toolchain = "leanprover/lean4:v4.31.0\n"
             manifest = '{"version": "1.1.0", "packages": [{"name": "mathlib", "rev": "v4.31.0"}]}\n'
-            lakefile = 'name = "ToyApollo"\n'
+            lakefile = 'name = "ProbabilityTheoryFormalization"\n'
             (root / "lean-toolchain").write_text(toolchain, encoding="utf-8")
             (root / "lake-manifest.json").write_text(manifest, encoding="utf-8")
             (root / "lakefile.toml").write_text(lakefile, encoding="utf-8")
@@ -796,9 +797,11 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
             ledger, settings, pack_dir, _ = self._setup_trivial_phase2_task(root, task_id, completed=True)
             (root / "lean-toolchain").write_text("leanprover/lean4:v4.29.0\n", encoding="utf-8")
             (root / "lake-manifest.json").write_text('{"packages": []}\n', encoding="utf-8")
-            (root / "lakefile.toml").write_text('name = "ToyApollo"\n', encoding="utf-8")
+            (root / "lakefile.toml").write_text(
+                'name = "ProbabilityTheoryFormalization"\n', encoding="utf-8"
+            )
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -815,6 +818,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
             )
 
             self.assertIn("basis changed", error)
+            self.assertIn("environment", error)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -836,7 +840,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
             ledger.save()
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(
@@ -858,7 +862,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
             self.assertTrue(output_path.exists())
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(write_existing_output_review_pack(task_id, ledger, settings))
@@ -868,7 +872,7 @@ class Phase2ReviewRequestTests(Phase2ReviewTestSupport, unittest.TestCase):
             self._write_codex_review_result(pack_dir, verdict="pass")
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(run_codex_review_now(task_id, ledger, settings, review_subject="current"))

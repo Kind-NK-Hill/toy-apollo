@@ -1,0 +1,173 @@
+{
+  "schema_version": "teaching-review-v1",
+  "provenance": {
+    "reviewer_identity": "/root/comparison_audit",
+    "role": "independent_read_only_reviewer",
+    "reviewed_at": "2026-09-05T10:24:30Z",
+    "scope": "synthetic teaching fixture, not catalog authority",
+    "method": "本次独立读取 source.tex 与三个 Lean 快照，按仓库第二阶段审查标准进行声明、域约束、计算证明和直接调用核对；不以作者注释、预期结果或历史通过记录作为判定依据。文件哈希在审查前后核对。审查者未运行 Lean 编译，编译结论由另存的实际构建记录提供。"
+  },
+  "reviewer_independence": {
+    "independent": true,
+    "reviewer_identity": "/root/comparison_audit",
+    "authored_candidate": false,
+    "modified_source_or_candidate": false,
+    "statement": "审查者未参与四个被审文件的编写，仅写本审查记录。"
+  },
+  "authority": {
+    "catalog_authority": false,
+    "production_schema_validated": false,
+    "production_review_request": null,
+    "production_apply_eligible": false,
+    "limitation": "这是教学审查记录，不是正式 semantic_review_result，不得导入、推广或冒充 452 项目录中的生产审查权威。重放此记录只重用已有证据，不产生新的独立审查。"
+  },
+  "reviewed_files": {
+    "source.tex": "e6e623dce12b0315acaadfbde4f177b77f82820db684814d8397e19316ec5d10",
+    "initial.lean": "522cd82dd22a7bacef9d89cfebe7cc5625442085135438cd502d942818d3f7ba",
+    "interface-only.lean": "9d8f4eb777b23830a62c65fca187c42858def1df7a90a3b6d10bb9138f4f68a3",
+    "final.lean": "15c6c891fb73d04576378338e1503e8696cae4ccbd90bb9a14c053198f1b1e4d"
+  },
+  "freshness_policy": "上述路径均相对于本记录所在目录，哈希为原始文件字节的 SHA-256。任一被审文件变化均使本次完整审查包陈旧；不得改写旧哈希或 reviewed_at 来伪装新的审查。",
+  "evidence_review": {
+    "source": "直接读取 source.tex 全文。它明确规定自然数上的千分计数整数除法，结果不是精确实数概率。",
+    "subjects": "直接读取 initial.lean、interface-only.lean、final.lean 全文。",
+    "dependencies": "三个快照均无显式 import，也不引用 ProbabilityTheory 正式模块；运算和 decide 使用 Lean 基础环境。",
+    "environment_context": "本地仓库 lean-toolchain 为 leanprover/lean4:v4.31.0；本记录不替代实际构建使用环境的单独记录。",
+    "source_plan": "不适用：合成教学来源，没有正式目录计划。",
+    "classification_history": "不适用：本次教学示例没有正式分类历史。",
+    "ledger_state": "不适用且未查询或修改：本示例不属于正式目录。",
+    "production_bundle": "不存在生产 review request、build-ready 绑定或 review-apply 收据，因此本记录仅作教学语义证据。",
+    "required_reading": [
+      "AGENTS.md",
+      ".agents/skills/formalization-engine-phase2-entrypoint/SKILL.md",
+      ".claude/rules/10-phase-runtime.md",
+      "docs/phase2/README.md",
+      "docs/phase2/workflow.md",
+      "docs/phase2/status_contract.md",
+      "docs/phase2/review_criteria.md",
+      "docs/phase2/artifacts.md"
+    ]
+  },
+  "reviews": {
+    "initial": {
+      "verdict": "fail",
+      "proof_class": "semantic_fail",
+      "completion_class": "semantic_fail",
+      "summary": "整数运算及 2/4=500 的计算正确，但公开定义没有强制源文要求的 0<n 与 hits<=n，调用也未提交两项条件，故源文接口审查失败。 Source statement mismatch: the definition omits the source-required domain conditions 0 < total and hits <= total.",
+      "source_claims": [
+        "hits 与 total 是自然数。",
+        "输出是 floor(1000*hits/total) 的自然数值。",
+        "定义接口必须要求 0<total 和 hits<=total。",
+        "2 次命中、4 次观察的调用必须提供两项条件，并通过计算证明结果为 500。"
+      ],
+      "claim_mapping": [
+        {"claim": "自然数输入及向下取整运算", "lean": "initial.lean:2 def_demo_frequency (hits total : Nat) : Nat := 1000 * hits / total", "status": "covered", "reason": "Nat 除法在正除数上给出非负整数商，与源文 floor 运算对应。"},
+        {"claim": "接口必须要求两项域条件", "lean": "initial.lean:2", "status": "missing", "reason": "只有两个 Nat 参数，未要求正观察数或命中数上界。"},
+        {"claim": "调用提交条件并算得 500", "lean": "initial.lean:4 demo_two_of_four", "status": "partial", "reason": "2000/4=500 的计算成立，但调用没有提交源文要求的两项条件。"}
+      ],
+      "route_inspection": {
+        "source_route": "先限制合法自然数样本，再定义整数商，最后在 2/4 实例上直接计算。",
+        "expected_answer_or_statement": "受 0<total、hits<=total 约束的自然数接口及结果为 500 的合法调用。",
+        "local_mathlib_search": "不适用：这是无显式导入的基础自然数定义和闭合计算，无需 Mathlib 或正式概率模块。",
+        "public_interface_check": "失败：数学定义的合法输入条件没有成为接口要求。",
+        "support_or_reassembly_decision": "需要把两项源文条件加入定义接口，并迁移直接调用。",
+        "stop_go_verdict": "stop"
+      },
+      "spine_alignment": {
+        "status": "partial",
+        "source_steps_checked": [
+          {"source_step": "限制输入为 0<total 且 hits<=total", "lean_landing": "initial.lean:2", "status": "missing"},
+          {"source_step": "计算 1000*hits/total 的整数商", "lean_landing": "initial.lean:2", "status": "covered"},
+          {"source_step": "提供 2≤4、0<4 的域证据后算得 500", "lean_landing": "initial.lean:4", "status": "partial"}
+        ]
+      },
+      "interface_contract": {
+        "status": "fail",
+        "missing_conditions": ["0 < total", "hits <= total"],
+        "evidence": "定义可被应用到 total=0 或 hits>total；例如 def_demo_frequency 5 4 表示 1250，说明接口允许源文禁止的样本。2/4 这个单例结果正确并不能验证整个输入契约。"
+      },
+      "downstream_adequacy": {
+        "status": "fail",
+        "consumers_checked": ["initial.lean:4 demo_two_of_four"],
+        "reason": "现有调用只使用两个自然数参数，没有承载源文明确要求由调用方提供的合法性条件。"
+      },
+      "findings": [
+        {"severity": "error", "category": "statement_or_source_mismatch", "code": "missing_domain_contract", "location": "initial.lean:2", "description": "定义接口遗漏正观察数及命中数上界。"},
+        {"severity": "error", "code": "caller_omits_required_evidence", "location": "initial.lean:4", "description": "计算结果为 500 的证明没有补足源文所要求的调用接口。"}
+      ]
+    },
+    "final": {
+      "verdict": "pass",
+      "proof_class": "source_faithful_proof_completed",
+      "completion_class": "source_faithful_proof_completed",
+      "summary": "在教学语义范围内通过：定义显式要求 0<total 与 hits<=total，保持自然数千分计数的整数除法；直接调用提供两项域证据，并以闭合计算证明 500。此结论不是正式目录通过状态，也不替代实际 Lean 构建。",
+      "source_claims": [
+        "hits 与 total 是自然数。",
+        "输出是 floor(1000*hits/total) 的自然数值，而非精确实数概率。",
+        "定义接口必须要求 0<total 和 hits<=total。",
+        "2 次命中、4 次观察的调用提供两项域条件，并通过计算证明结果为 500。"
+      ],
+      "claim_mapping": [
+        {"claim": "自然数输入", "lean": "final.lean:2 def_demo_frequency (hits total : Nat)", "status": "covered"},
+        {"claim": "正观察数与命中数上界", "lean": "final.lean:3 (_positive : 0 < total) (_bounded : hits <= total)", "status": "covered", "reason": "两项都是显式证明参数。虽然参数不参与数值计算，调用仍必须提供其证明。"},
+        {"claim": "向下取整的自然数千分计数", "lean": "final.lean:4 1000 * hits / total", "status": "covered", "reason": "在已有正除数条件下，Nat 除法正是所要求的非负整数商。"},
+        {"claim": "合法的 2/4 调用与计算结果", "lean": "final.lean:6-7 demo_two_of_four", "status": "covered", "reason": "两个 by decide 分别证明 0<4 与 2<=4；结论通过 1000*2/4=500 的闭合计算证明。"}
+      ],
+      "route_inspection": {
+        "source_route": "用证明参数限制样本域，按整数除法定义千分计数，再直接计算合法实例。",
+        "expected_answer_or_statement": "def_demo_frequency 2 4 的合法完整应用等于 500。",
+        "local_mathlib_search": "不适用：无显式导入，基础自然数算术已足够。",
+        "public_interface_check": "两项公开前提均来自源文；没有把待证结论 500 或其等价命题设为输入。",
+        "support_or_reassembly_decision": "不需要额外桥接、辅助公理或支持引理。",
+        "stop_go_verdict": "go"
+      },
+      "spine_alignment": {
+        "status": "covered",
+        "source_steps_checked": [
+          {"source_step": "限制输入为 0<total 且 hits<=total", "lean_landing": "final.lean:2-3", "status": "covered"},
+          {"source_step": "定义 floor(1000*hits/total)", "lean_landing": "final.lean:4", "status": "covered"},
+          {"source_step": "为 2/4 调用提供两项条件", "lean_landing": "final.lean:7 两个参数位置的 by decide", "status": "covered"},
+          {"source_step": "计算证明输出 500", "lean_landing": "final.lean:7 定理证明的 by decide", "status": "covered"}
+        ]
+      },
+      "interface_contract": {
+        "status": "covered",
+        "required_conditions": ["0 < total", "hits <= total"],
+        "forbidden_weakening": false,
+        "reason": "所有源文域条件均保留；hits=0、hits=total 且 total>0 等合法边界不被排除；total=0 与 hits>total 无法在可靠证明环境中满足调用参数。"
+      },
+      "downstream_adequacy": {
+        "status": "covered",
+        "consumers_checked": ["final.lean:6-7 demo_two_of_four"],
+        "reason": "唯一直接调用已迁移并提供两个必需证明参数；输入、输出类型与源文一致，未引入额外非源文条件。"
+      },
+      "findings": []
+    }
+  },
+  "classification_addendum": {
+    "assessed_at": "2026-09-05T10:33:14Z",
+    "reviewer_identity": "/root/comparison_audit",
+    "scope": "对现有教学审查失败的路由分类补充；不改变原数学判决，不替代数学审查门禁。",
+    "original_reviewed_at_preserved": "2026-09-05T10:24:30Z",
+    "original_initial_summary": "整数运算及 2/4=500 的计算正确，但公开定义没有强制源文要求的 0<n 与 hits<=n，调用也未提交两项条件，故源文接口审查失败。",
+    "initial_category": "statement_or_source_mismatch",
+    "initial_requires_math_review_gate_under_current_contract": true,
+    "reason": "初稿缺少源文明确规定的定义域，是公开数学接口的语义契约缺陷。整数计算路线无需改动不等于源文声明已经匹配。初稿的调用并未违反其实际Lean参数个数，因此不能把初稿的失败归成编译或普通调用错误。",
+    "interface_only_category": "lean_engineering",
+    "distinction": "interface-only.lean已加入正确域参数，但其直接调用未提供两项显式证明，属于调用迁移错误；该错误不能回写成initial.lean原始语义缺陷的类别。",
+    "classification_rule_observation": "当前分类器先匹配工程错误英文标记，再匹配源文声明不一致；因此不能为了改变路由而在语义失败摘要中加入不准确的工程错误标记。此次仅增加准确的英文源文不匹配说明和结构化类别。",
+    "required_next_route": "为受约束的自然数定义及实例计算准备简短自然语言骨架，依现行规则取得独立三轮数学审查go，再继续动态演示的作者/构建流程。现有最终稿的教学语义pass不是该门禁收据。",
+    "reviewed_rule_files_sha256": {
+      "src/formalization_engine/phase2_semantic_fail_triage.py": "a9c97f879f7e1044af34310fbeb660a7692218565d04950cddc1ebfe4353a2b8",
+      "src/formalization_engine/phase2_math_review_gate.py": "795af4249dde28eec41e457271248795ff766b6e7a6bb7dc8542ff340b9b828f",
+      "tests/test_phase2_semantic_fail_triage.py": "1fe854979a6b60c499fc83ba36e7524cc7098eb36c4cb3ba22398d92cfdbe011"
+    }
+  },
+  "interface_transition": {
+    "subject": "interface-only.lean",
+    "verdict": "fail",
+    "summary": "定义本身补齐两项域参数，但调用仍只传入 2 和 4，未构成源文要求的完整自然数值调用。",
+    "evidence": "interface-only.lean:6 的 def_demo_frequency 2 4 还需要 0<4 和 2<=4 两个显式证明参数；该调用不能作为已迁移的消费者。",
+    "compiler_observation": "审查者未运行编译；编译错误及退出码必须来自单独保存的实际构建记录，不能从本字段的静态判断冒充得到。"
+  }
+}

@@ -11,8 +11,8 @@ from unittest.mock import patch
 
 from tests.git_fixture_cleanup import remove_git_fixture_tree
 
-from src.toy_apollo.state_bundle_delta import analyze_current_mat_bundles
-from src.toy_apollo.state_evidence_bridge import (
+from formalization_engine.state_bundle_delta import analyze_current_mat_bundles
+from formalization_engine.state_evidence_bridge import (
     EVIDENCE_BRIDGE_INPUT_SCHEMA,
     EVIDENCE_BRIDGE_SCHEMA,
     FINAL122_BATCH_RECEIPT_SCHEMA,
@@ -35,21 +35,21 @@ from src.toy_apollo.state_evidence_bridge import (
     subject_payload,
     validate_evidence_bridge_receipt,
 )
-from src.toy_apollo.state_migration import (
+from formalization_engine.state_migration import (
     MigrationReport,
     discover_evidence_inventory,
     import_validated_evidence_bridge_receipt,
     import_validated_evidence_bridge_batch_receipt,
     rebuild_invariants,
 )
-from src.toy_apollo.state_store import (
+from formalization_engine.state_store import (
     StateIntegrityError,
     SubjectBundle,
     WorkspaceStateStore,
     sha256_file,
     sha256_json,
 )
-from src.toy_apollo.task_catalog import build_catalog
+from formalization_engine.task_catalog import build_catalog
 
 
 class EvidenceBridgeTests(unittest.TestCase):
@@ -88,7 +88,7 @@ class EvidenceBridgeTests(unittest.TestCase):
             "bridge_reason": "immutable author selection plus reviewed synchronization",
             "fail_closed_conditions": ["bind full scope"],
         }
-        with patch("src.toy_apollo.state_evidence_bridge._check_file_ref", return_value={}):
+        with patch("formalization_engine.state_evidence_bridge._check_file_ref", return_value={}):
             self.assertEqual(
                 _validate_special_author_sync(row, task_id="ex_14_4_1", target=target)["decision_status"],
                 "pass",
@@ -124,8 +124,8 @@ class EvidenceBridgeTests(unittest.TestCase):
             }
             output = root / "receipt.json"
             with (
-                patch("src.toy_apollo.state_evidence_bridge.inspect_final122_minimal_index", return_value=inspected),
-                patch("src.toy_apollo.state_evidence_bridge._run", return_value=("b" * 40 + "\n").encode()),
+                patch("formalization_engine.state_evidence_bridge.inspect_final122_minimal_index", return_value=inspected),
+                patch("formalization_engine.state_evidence_bridge._run", return_value=("b" * 40 + "\n").encode()),
             ):
                 dry_payload = build_final122_bridge_batch_receipt(
                     index, target_repo=root, kenneth_repo=root,
@@ -261,7 +261,7 @@ class EvidenceBridgeTests(unittest.TestCase):
         ).hexdigest()
         # Use the implementation-computed declaration hash; keeping this in
         # the fixture avoids weakening production comparison for test setup.
-        from src.toy_apollo.state_boundary_delta_receipt import _declaration_signatures
+        from formalization_engine.state_boundary_delta_receipt import _declaration_signatures
         signature_hash = _declaration_signatures(lean, {})[0]["signature_sha256"]
         unit = {
             "unit_id": "bridge_fixture", "owner_task": "thm_5_1",
@@ -691,7 +691,7 @@ class EvidenceBridgeTests(unittest.TestCase):
             store.set_task_head(task_id=target.task_id, role="mat_main", subject_id=target.subject_id)
             report = MigrationReport(database=str(store.path))
             with patch(
-                "src.toy_apollo.state_migration.load_validated_final122_bridge_batch_receipt",
+                "formalization_engine.state_migration.load_validated_final122_bridge_batch_receipt",
                 return_value=(validated, digest),
             ):
                 import_validated_evidence_bridge_batch_receipt(
@@ -721,7 +721,7 @@ class EvidenceBridgeTests(unittest.TestCase):
                 )
             before = store.summary()
             with patch(
-                "src.toy_apollo.state_migration.load_validated_final122_bridge_batch_receipt",
+                "formalization_engine.state_migration.load_validated_final122_bridge_batch_receipt",
                 return_value=(validated, digest),
             ):
                 with self.assertRaisesRegex(ValueError, "idempotent state mismatch"):
@@ -742,7 +742,7 @@ class EvidenceBridgeTests(unittest.TestCase):
                 )
             replay = MigrationReport(database=str(store.path))
             with patch(
-                "src.toy_apollo.state_migration.load_validated_final122_bridge_batch_receipt",
+                "formalization_engine.state_migration.load_validated_final122_bridge_batch_receipt",
                 return_value=(validated, digest),
             ):
                 import_validated_evidence_bridge_batch_receipt(

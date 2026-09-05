@@ -11,20 +11,20 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.ledger_manager import LedgerDependencyConflictError, TaskStatus  # noqa: E402
-from src.toy_apollo.core.sqlite_ledger import SQLiteLedgerManager  # noqa: E402
-from src.toy_apollo.phase2_batch_runner import plan_batch_from_ledger  # noqa: E402
-from src.toy_apollo.phase2_dependency_reconcile import (  # noqa: E402
+from formalization_engine.ledger_manager import LedgerDependencyConflictError, TaskStatus  # noqa: E402
+from formalization_engine.core.sqlite_ledger import SQLiteLedgerManager  # noqa: E402
+from formalization_engine.phase2_batch_runner import plan_batch_from_ledger  # noqa: E402
+from formalization_engine.phase2_dependency_reconcile import (  # noqa: E402
     DependencyReconciliationError,
     reconcile_phase2_task_dependencies,
 )
-from src.toy_apollo.phase2_pack_generation import resolve_phase2_task  # noqa: E402
-from src.toy_apollo.phase2_prompt_pack import (  # noqa: E402
+from formalization_engine.phase2_pack_generation import resolve_phase2_task  # noqa: E402
+from formalization_engine.phase2_prompt_pack import (  # noqa: E402
     apply_codex_review_result,
     write_existing_output_review_pack,
 )
-from src.toy_apollo.phase2_review_request import _validate_review_input_freshness  # noqa: E402
-from src.toy_apollo.state_store import WorkspaceStateStore  # noqa: E402
+from formalization_engine.phase2_review_request import _validate_review_input_freshness  # noqa: E402
+from formalization_engine.state_store import WorkspaceStateStore  # noqa: E402
 from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E402
 
 
@@ -186,7 +186,7 @@ class Phase2DependencyReconcileTests(Phase2ReviewTestSupport, unittest.TestCase)
             root = Path(tmp)
             ledger, settings, pack_dir, _output_path, _plan_path = self._setup_contaminated_task(root)
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 success, detail = asyncio.run(
@@ -225,7 +225,7 @@ class Phase2DependencyReconcileTests(Phase2ReviewTestSupport, unittest.TestCase)
                 expected_old_dependencies=self.WRONG_DEPENDENCIES,
             )
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "build ok"),
             ):
                 review_success, review_detail = asyncio.run(
@@ -240,7 +240,7 @@ class Phase2DependencyReconcileTests(Phase2ReviewTestSupport, unittest.TestCase)
             result_path = self._write_codex_review_result(pack_dir, verdict="pass")
 
             with patch(
-                "src.toy_apollo.phase2_prompt_pack._run_official_module_build",
+                "formalization_engine.phase2_prompt_pack._run_official_module_build",
                 return_value=(True, "apply build ok"),
             ):
                 success, detail = asyncio.run(
@@ -262,13 +262,13 @@ class Phase2DependencyReconcileTests(Phase2ReviewTestSupport, unittest.TestCase)
             self.assertEqual(record["phase2_status"], "pass")
 
     def test_cli_requires_and_parses_expected_old_dependencies(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         with patch.object(
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--phase2-mode",
@@ -289,7 +289,7 @@ class Phase2DependencyReconcileTests(Phase2ReviewTestSupport, unittest.TestCase)
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--phase2-mode",

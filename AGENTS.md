@@ -1,39 +1,36 @@
-# Toy Apollo Agent Contract
+# Formalization Engine Agent Contract
 
-This is the canonical root contract for coding agents working in `toy-apollo`.
+This is the canonical root contract for coding agents working in `ProbabilityTheoryFormalization`.
 
 If this file conflicts with older notes, trust current runtime code and the rule files under `.claude/rules/`.
 
 ## Always Do
 
-- Keep active execution under `python run_chapter.py --phase {0,1,2}`. No other phase is part of the current CLI.
-- Keep `python run_chapter.py --status` strictly read-only. Its resolved roots describe only the current process, not an active campaign's global authority.
-- Use `python run_chapter.py status <task>` or `worklist` for live derived repository/review/PR state; these refresh GitHub by default and never commit, push, open, or merge a PR.
-- Use `python run_chapter.py pr-review prepare/apply` for an exact Kenneth PR head. This path records external review coverage only; it never lands the candidate in Toy output or changes PR readiness/merge state.
+- Keep active execution under `formalize --phase {0,1,2}`. No other phase is part of the current CLI.
+- Keep `formalize --status` strictly read-only. Its resolved roots describe only the current process, not an active campaign's global authority.
+- Use `formalize status <task>` or `worklist` for live derived repository/review/PR state; these refresh GitHub by default and never commit, push, open, or merge a PR.
+- Use `formalize pr-review prepare/apply` for an exact Kenneth PR head. This path records external review coverage only; it never lands the candidate in `ProbabilityTheory/` or changes PR readiness/merge state.
 - Treat `.claude/rules/10-phase-runtime.md` as the phase behavior source of truth before making any phase-routing decision.
-- Prefer active package paths under `src/toy_apollo/*` for new code.
-- Treat `toy-apollo-artifacts/state.sqlite3` as the workspace operational state described in `docs/workspace_state.md`. Legacy `project_ledger.json` is protected, frozen import evidence after SQLite activation.
-- Load the pinned task catalog through `src/toy_apollo/task_catalog.py`; do not infer the task denominator or support ownership from whichever rows happen to exist in SQLite. The catalog contains 452 formal tasks, 445 printed-label families, and 584 MAT Lean modules. The named 344-item legacy review cohort is a retained projection, not the complete task catalog.
+- Prefer active package paths under `src/formalization_engine/*` for new code.
+- Treat `ProbabilityTheoryFormalization-artifacts/state.sqlite3` as the workspace operational state described in `docs/workspace_state.md`. Legacy `project_ledger.json` is protected, frozen import evidence after SQLite activation.
+- Load the pinned task catalog through `src/formalization_engine/task_catalog.py`; do not infer the task denominator or support ownership from whichever rows happen to exist in SQLite. The catalog contains 452 formal tasks, 445 printed-label families, and 584 MAT Lean modules. The named 344-item legacy review cohort is a retained projection, not the complete task catalog.
 - Treat SQLite as a rebuildable index over immutable evidence, not as review authority by itself. Keep “a compatible PASS exists” separate from “that PASS is bound to the exact current subject bundle”; a validated rebind can carry a compatible verdict across an exact/mechanical transformation, but it cannot upgrade an obsolete rubric.
 - Remember that must-protect is not the same as must-track: important runtime/provenance files may be ignored by Git while still being protected from deletion or cleanup.
 - Validate changes with the smallest relevant check before finishing.
 
 ## Repository Flow (Hard Boundary)
 
-- Active formalization code flows from `ToyApollo/Output` to the
-  `MAT3280-formalization-output` refinement repository only. Reviewed MAT code
-  does not flow back into `ToyApollo/Output`.
-- Kenneth's `wkshum/ProbabilityTheory` is bidirectional only with MAT: copy an
-  exact current Kenneth file into a MAT review branch, review/repair it there,
-  then return the accepted MAT version through a PR branch.
-- Never copy, port, or merge an active Kenneth candidate into
-  `ToyApollo/Output`. Review tools may run from this checkout, but that does not
-  make ToyApollo the owner of the candidate.
-- `Kind-NK-Hill/ProbabilityTheory` is PR transport only. It is not a refinement
-  repository or an additional source of truth.
-- Frozen Kenneth snapshots under provenance/history paths are read-only
-  evidence, not active imports and not authorization for Kenneth-to-Toy code
-  flow.
+- `ProbabilityTheory/` is the only canonical Lean corpus in this repository.
+- Its migration baseline is the exact Git object at MAT commit
+  `3acca18c01aebc1fedee47b56e380e0d30b5094c`; ordinary author/build/review
+  operations work in artifact staging and do not write this tree.
+- Only `review-apply`, after exact-subject semantic review, may update a
+  manifest-resolved canonical path. It must restore the prior bytes on failure.
+- Kenneth and historical MAT repositories are external evidence/review sources,
+  not alternative active output trees. Never copy an unreviewed external
+  candidate directly into `ProbabilityTheory/`.
+- `Kind-NK-Hill/ProbabilityTheory` remains PR transport only. Frozen external
+  snapshots are read-only evidence, not authorization for source mutation.
 
 ## Phase Map
 
@@ -49,7 +46,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
   - the middle `draft_plan.json` authoring step is not a CLI mode; CLI supports only `--phase1-mode pack` and `--phase1-mode apply`
   - CLI `apply --input` points to the source `.tex` or `inputs/` directory, not to `phase1_prompt_packs/<source>/draft_plan.json`
 - Phase 2:
-  - before any authoring, review, repair, hard-failure decision, or chapter/task-set batch, use the repo skill `.agents/skills/toy-apollo-phase2-entrypoint/SKILL.md`; if the Codex skill system has not auto-loaded it, read that file manually and follow its entry report before task-specific work
+  - before any authoring, review, repair, hard-failure decision, or chapter/task-set batch, use the repo skill `.agents/skills/formalization-engine-phase2-entrypoint/SKILL.md`; if the Codex skill system has not auto-loaded it, read that file manually and follow its entry report before task-specific work
   - proof-fidelity verdicts are governed by `docs/phase2/status_contract.md` and `docs/phase2/review_criteria.md`; do not treat Lean build success, `#print axioms` cleanliness, ledger cleanliness, audit cleanliness, or classification cleanliness as textbook proof completion
   - `#print axioms` cleanliness is only a proof-dependency-debt check for checked declarations; it does not prove source fidelity, human validation, or semantic completion. For detailed proof-status semantics, follow `docs/phase2/status_contract.md`.
   - default authority is three-gate: build gate only proves technical build readiness; review gate supplies a strict semantic verdict and proof class; apply gate lands clean completion only when `phase2_status=pass`
@@ -65,9 +62,6 @@ If this file conflicts with older notes, trust current runtime code and the rule
 - `soft-apply` does not call an external provider, does not generate execution batches, and does not perform a Lean verification gate.
 - Retired provider and post-processing artifacts remain protected local/historical state, not active workflow inputs.
 - Do not describe AI-generated Lean, docs, review files, prompt-pack contents, or audit artifacts as handwritten by the user unless local authorship evidence explicitly proves it.
-- Keep the full `inputs/`, `plans/`, prompt-pack, batch, and operational-state
-  corpora in the private evidence plane. Public examples belong only under
-  `examples/case-studies/` after source-rights review and path sanitization.
 
 ## Recommended Routing
 
@@ -89,7 +83,7 @@ If this file conflicts with older notes, trust current runtime code and the rule
   - same-session orchestration: `auto-loop`
   - current default workflow: `docs/phase2/workflow.md`
   - `review-pack` / `review-existing` are low-level prepare-only modes and should not be presented as the preferred Codex operator path.
-- If `ToyApollo/Output/<task_id>.lean` is newer than and differs from the latest
+- If the manifest-resolved canonical file for a task is newer than and differs from the latest
   `draft.lean` / `candidate_vN.lean`, the candidate review target is stale.
   Do not build-check or review that stale candidate. Review the official output
   with `review-now --review-subject existing`, or intentionally sync the output
@@ -115,7 +109,7 @@ The non-negotiable entry rules are:
 
 - Deleting or bulk-moving runtime outputs, prompt packs, logs, or historical plans.
 - Changing ledger status names, plan JSON schema, or stable CLI flags.
-- Reworking directory layout for `ToyApollo/Output`, `output_lean_files`, or artifacts sync.
+- Reworking directory layout for `ProbabilityTheory`, `output_lean_files`, or artifacts sync.
 - Reintroducing retired external-provider behavior or adding new external service dependencies.
 
 ## Never Do
@@ -129,21 +123,19 @@ The non-negotiable entry rules are:
 
 ## Repo Map
 
-- Runtime entry: `run_chapter.py`
-- Active CLI: `src/toy_apollo/cli/app.py`
-- New package home: `src/toy_apollo/`
-- Root-level `src/*.py` modules are retained only where active package code imports them; old direct-generation/orchestrator modules are not a supported runtime layer.
-- Lean output module root: `ToyApollo/Output`
-- Runtime state and generated outputs: artifact-rooted paths from `src/toy_apollo/core/settings.py`
-- Public mechanism examples: `examples/case-studies/`
-- Public repository/evidence policy: `docs/repository_scope.md`
+- Runtime entry: installed `formalize` command
+- Active CLI: `src/formalization_engine/cli/app.py`
+- New package home: `src/formalization_engine/`
+- All active Python modules live under `src/formalization_engine/`; there is no `src` compatibility package.
+- Lean output module root: `ProbabilityTheory`
+- Runtime state and generated outputs: artifact-rooted paths from `src/formalization_engine/core/settings.py`
 
 ## Minimum Verification
 
-- `python run_chapter.py -h`
-- `python run_chapter.py --status`
+- `formalize -h`
+- `formalize --status`
 - `python tools/check_repo_hygiene.py`
-- `lake build ToyApollo.Output.<block_id>` for any touched Lean-facing task path
+- `lake build <manifest-resolved ProbabilityTheory module>` for any touched Lean-facing task path
 
 ## Progressive Disclosure
 

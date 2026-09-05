@@ -78,7 +78,7 @@ def write_json(path: Path, payload: Any) -> None:
 
 def scan_output_declarations(output_dir: Path) -> dict[str, Declaration]:
     declarations: dict[str, Declaration] = {}
-    for path in sorted(output_dir.glob("*.lean")):
+    for path in sorted(output_dir.rglob("*.lean")):
         for index, line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), start=1):
             match = DECL_RE.match(line)
             if not match:
@@ -167,7 +167,7 @@ def next_action_for(audit_class: str) -> str:
         return "Use the existing theorem part; split or replace each missing support landing with a source lemma or interface translation."
     if audit_class in {"C_support_predicate_or_structure_only", "C_support_field_gap_no_decl"}:
         return "Do not count this as proof; replace the support predicate, structure, or field with theorem-level evidence."
-    return "Re-open the source and ToyApollo/Output search, then assign a real Lean landing before repair."
+    return "Re-open the source and canonical-corpus search, then assign a real Lean landing before repair."
 
 
 def classify_alignment(names: list[str], declarations: dict[str, Declaration]) -> tuple[str, list[Declaration], list[str]]:
@@ -376,7 +376,7 @@ def main() -> int:
     args = parser.parse_args()
 
     root = repo_root()
-    declarations = scan_output_declarations(root / "ToyApollo" / "Output")
+    declarations = scan_output_declarations(root / "ProbabilityTheory")
     rows = collect_rows(root, declarations)
     if args.apply:
         apply_alignment_metadata(root, declarations)

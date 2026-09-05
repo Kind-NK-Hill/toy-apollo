@@ -21,7 +21,7 @@ class Phase2UnfinishedTasksAuditTests(unittest.TestCase):
     def test_inventory_merges_ledger_obligations_surface_and_critical_bridge(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "ToyApollo" / "Output").mkdir(parents=True)
+            (root / "ProbabilityTheory").mkdir(parents=True)
             (root / "docs").mkdir()
             (root / "phase2_prompt_packs" / "prob_11_4").mkdir(parents=True)
             (root / "phase2_prompt_packs" / "prob_11_6").mkdir(parents=True)
@@ -36,13 +36,13 @@ class Phase2UnfinishedTasksAuditTests(unittest.TestCase):
                 "thm_13_13",
                 "thm_9_5_kernel",
             ]:
-                (root / "ToyApollo" / "Output" / f"{task_id}.lean").write_text(
+                (root / "ProbabilityTheory" / f"{task_id}.lean").write_text(
                     "theorem dummy : True := by exact True.intro\n",
                     encoding="utf-8",
                 )
-            (root / "ToyApollo" / "Output" / "prob_11_6.lean").write_text(
+            (root / "ProbabilityTheory" / "prob_11_6.lean").write_text(
                 """
-import ToyApollo.Output.thm_9_5_kernel
+import ProbabilityTheory.thm_9_5_kernel
 
 structure TailSupport where
   field : True
@@ -116,17 +116,23 @@ theorem dummy : True := by exact True.intro
                 json.dumps(ledger),
                 encoding="utf-8",
             )
-            (root / ".lake" / "build" / "lib" / "lean" / "ToyApollo" / "Output").mkdir(
-                parents=True
-            )
             (
                 root
                 / ".lake"
                 / "build"
                 / "lib"
                 / "lean"
-                / "ToyApollo"
-                / "Output"
+                / "ProbabilityTheory"
+                / "chapter_11"
+            ).mkdir(parents=True)
+            (
+                root
+                / ".lake"
+                / "build"
+                / "lib"
+                / "lean"
+                / "ProbabilityTheory"
+                / "chapter_11"
                 / "PackBuildCheck_obl_prob_11_6_tail_support.olean"
             ).write_text("cache", encoding="utf-8")
             (root / "docs" / "phase2_ch10_14_clean_debt_surface_audit.json").write_text(
@@ -151,7 +157,7 @@ theorem dummy : True := by exact True.intro
                 ),
                 encoding="utf-8",
             )
-            (root / "ToyApollo" / "Output" / "prob_11_4.lean").write_text(
+            (root / "ProbabilityTheory" / "prob_11_4.lean").write_text(
                 "theorem prob_11_4_mean_of_density : True := by exact True.intro\n",
                 encoding="utf-8",
             )
@@ -250,7 +256,7 @@ theorem dummy : True := by exact True.intro
     def test_build_check_only_runs_on_unfinished_or_verify_items(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             output.mkdir(parents=True)
             (root / "docs").mkdir()
             for task_id in ["prob_11_1", "prob_11_6"]:
@@ -303,7 +309,7 @@ theorem dummy : True := by exact True.intro
     def test_proved_projection_wrapper_still_counts_as_open_proof_debt(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             output.mkdir(parents=True)
             (root / "docs").mkdir()
             (root / "phase2_prompt_packs" / "prob_14_8").mkdir(parents=True)
@@ -379,7 +385,7 @@ theorem prob_14_8_mgf_convergence_gives_characteristic_convergence
     def test_alignment_theorem_landings_clear_stale_proof_debt_landing(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             output.mkdir(parents=True)
             (root / "docs").mkdir()
             (root / "phase2_prompt_packs" / "prob_10_10").mkdir(parents=True)
@@ -451,7 +457,7 @@ theorem prob_10_10 : True := by exact True.intro
     def test_review_covered_support_predicate_source_step_is_not_open(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             output.mkdir(parents=True)
             (root / "docs").mkdir()
             (root / "phase2_prompt_packs" / "prob_11_9").mkdir(parents=True)
@@ -524,7 +530,7 @@ theorem prob_11_9 : True := by exact True.intro
     def test_unreviewed_support_predicate_source_step_still_counts_open(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             output.mkdir(parents=True)
             (root / "docs").mkdir()
             (root / "phase2_prompt_packs" / "prob_11_9").mkdir(parents=True)
@@ -586,7 +592,7 @@ theorem prob_11_9 : True := by exact True.intro
     def test_allowed_exception_boundary_is_visible_but_not_blocking(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             output.mkdir(parents=True)
             (root / "docs").mkdir()
             (root / "phase2_prompt_packs" / "thm_11_8").mkdir(parents=True)
@@ -677,7 +683,7 @@ theorem prob_11_9 : True := by exact True.intro
     def test_task_filter_limits_inventory_and_build_checks(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             output.mkdir(parents=True)
             (root / "docs").mkdir()
             for task_id in ["prob_11_6", "prob_11_7"]:
@@ -726,7 +732,7 @@ theorem prob_11_9 : True := by exact True.intro
     def test_metadata_drift_fix_requires_successful_build_and_updates_symbols(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            output = root / "ToyApollo" / "Output"
+            output = root / "ProbabilityTheory"
             output.mkdir(parents=True)
             (root / "docs").mkdir()
             (output / "prob_11_5.lean").write_text(

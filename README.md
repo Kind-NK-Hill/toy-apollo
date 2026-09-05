@@ -13,6 +13,7 @@ on it.
 author of the linked preprint. **Stack:** Python · Lean 4 · SQLite · automated verification.
 
 [Paper](https://arxiv.org/abs/2607.27298) ·
+[Run the complete workflow](docs/workflow_demo.md) ·
 [Two representative cases](#two-representative-cases) ·
 [Merged collaboration](https://github.com/wkshum/ProbabilityTheory/pull/8) ·
 [Contact](mailto:kdsdengshuo2823@gmail.com)
@@ -24,7 +25,7 @@ textbook formalization. My work covers:
 
 - **Workflow design and implementation:** organize textbook passages into tasks,
   coordinate code generation and checks, and support iterative repair and
-  recovery from interrupted work. [Workflow and architecture](docs/architecture.md)
+  recovery from interrupted work. [Workflow and architecture](docs/phase2/workflow.md)
 - **Verification and state management:** bind reviews to the code and
   dependencies actually checked; retain build and repair records; use SQLite
   to track state and prevent outdated reviews from approving changed code.
@@ -46,11 +47,14 @@ of wholly handwritten work; mathematical interpretation still requires human jud
 | Output | Evidence |
 | --- | --- |
 | **First-author preprint** | [*From Lecture Notes to Lean: Formalizing a Textbook on Probability Theory*](https://arxiv.org/abs/2607.27298) — **Shuo Deng**, Kenneth W. Shum. **arXiv preprint**, July 2026. |
-| **Public system and cases** | [Workflow implementation](src/toy_apollo/) and [eight selected cases](examples/case-studies/), with code comparisons and review timelines. |
+| **Runnable workflow** | [Complete production-API demonstration](docs/workflow_demo.md): real Lean builds, isolated SQLite state, caller repair and stale-review rejection. Default opinions are recorded teaching reviews. |
+| **Public system and cases** | [Workflow implementation](src/formalization_engine/) and [eight selected cases](examples/case-studies/), with code comparisons and review timelines. |
 | **Merged collaboration** | [Chapter 2: align assumptions and interfaces](https://github.com/wkshum/ProbabilityTheory/pull/7) and [Chapter 3: refactor measure extension](https://github.com/wkshum/ProbabilityTheory/pull/8), both merged into Kenneth's repository. |
 
-Review-history evaluation is ongoing: current analysis examines review consistency
-and repair trajectories; final evaluation results are not yet reported here.
+Review-history research has reconstructed the historical records and completed a
+first round of descriptive repair-trajectory analysis. Recorded judgments are not
+independently established mathematical truth, and no causal review benefit or
+completed accuracy benchmark is claimed. [Progress and limits](docs/project_notes.md#paper-and-ongoing-evaluation)
 
 ## Two representative cases
 
@@ -76,7 +80,7 @@ migrate the caller through another review cycle.
 **Result:** a fresh review accepted the repaired theorem and downstream migration.
 
 [Case and timeline](examples/case-studies/thm_14_8/) ·
-[Full proof](ToyApollo/Output/thm_14_8.lean)
+[Full proof](ProbabilityTheory/chapter_14/thm_14_8.lean)
 
 The second case's short before/after files are **reduced interface demonstrations**;
 the full mathematical proof is linked separately. All eight cases are selected
@@ -93,7 +97,9 @@ The system checks compilation, reviews the intended meaning independently, then
 accepts changes only while the reviewed code and dependencies remain current.
 Model-assisted review is evidence, not a guarantee of mathematical correctness.
 
-- [Architecture and workflow](docs/architecture.md)
+- [Architecture](docs/architecture.md) and [workflow](docs/phase2/workflow.md)
+- [Run the complete workflow](docs/workflow_demo.md)
+- [Review-basis identity experiment](docs/review_basis_pilot.md) and [prospective comparison protocol](docs/review_comparison_pilot.md)
 - [Installation and verification commands](docs/development.md)
 - [All eight cases and reproduction commands](examples/case-studies/)
 - [Review criteria](docs/phase2/review_criteria.md) and [status contract](docs/phase2/status_contract.md)
@@ -101,6 +107,7 @@ Model-assisted review is evidence, not a guarantee of mathematical correctness.
 - [Repository scope and publication history](docs/repository_scope.md)
 - [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [MIT License](LICENSE)
 
-The project was formerly called **ToyApollo**; existing code identifiers retain
-that name for compatibility. Use **ProbabilityTheoryFormalization** when citing
+The project was formerly called **ToyApollo**; historical schemas and case evidence
+retain that name. The active command is `formalize`, the package is
+`src/formalization_engine/`, and the corpus is `ProbabilityTheory/`. Use **ProbabilityTheoryFormalization** when citing
 the project.

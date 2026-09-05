@@ -8,13 +8,13 @@
 
 **技术栈**：Python、Lean 4、SQLite、自动化验证。
 
-[English](README.md) · [论文](https://arxiv.org/abs/2607.27298) · [两个代表案例](#两个代表案例) · [已合并的协作贡献](https://github.com/wkshum/ProbabilityTheory/pull/8) · [联系邮箱](mailto:kdsdengshuo2823@gmail.com)
+[English](README.md) · [论文](https://arxiv.org/abs/2607.27298) · [运行完整流程](docs/workflow_demo.md) · [两个代表案例](#两个代表案例) · [已合并的协作贡献](https://github.com/wkshum/ProbabilityTheory/pull/8) · [联系邮箱](mailto:kdsdengshuo2823@gmail.com)
 
 ## 我的职责与贡献
 
 我是 **Shuo Deng**，负责这套工作流的开发，并参与教材形式化。具体工作包括：
 
-- **流程设计与实现**：将教材内容组织成任务，串联代码生成、检查和迭代修复，支持中断后的恢复。[流程与架构](docs/architecture.md)
+- **流程设计与实现**：将教材内容组织成任务，串联代码生成、检查和迭代修复，支持中断后的恢复。[流程与架构](docs/phase2/workflow.md)
 - **验证与状态管理**：将审查结论绑定到实际检查的代码及依赖版本，保留构建和修复记录，使用 SQLite 管理状态，防止旧审查批准已经变化的代码。[状态与证据管理](docs/workspace_state.md)
 - **失败分析与研究**：分析遗漏条件、定理接口变化和下游调用问题，提交经过审查的修复，并共同撰写概率论形式化预印本。[完整案例](examples/case-studies/) · [已合并修复](https://github.com/wkshum/ProbabilityTheory/pull/7)
 
@@ -24,11 +24,13 @@
 
 | 成果 | 证据入口 |
 | --- | --- |
-| **第一作者预印本** | [*From Lecture Notes to Lean: Formalizing a Textbook on Probability Theory*](https://arxiv.org/abs/2607.27298)，作者：**Shuo Deng**、Kenneth W. Shum。状态**：arXiv 预印本**，2026 年 7 月。 |
-| **公开系统与案例** | [工作流实现](src/toy_apollo/)与[八个精选案例](examples/case-studies/)，包含代码对照和审查时间线。 |
+| **第一作者预印本** | [*From Lecture Notes to Lean: Formalizing a Textbook on Probability Theory*](https://arxiv.org/abs/2607.27298)，作者：**Shuo Deng**、Kenneth W. Shum。**状态**：arXiv 预印本，2026 年 7 月。 |
+| **可运行的完整流程** | [正式接口演示](docs/workflow_demo.md)：真实 Lean 编译、隔离数据库、调用方修复和旧审查拒绝。默认使用已登记的教学审查。 |
+| **公开系统与案例** | [工作流实现](src/formalization_engine/)与[八个精选案例](examples/case-studies/)，包含代码对照和审查时间线。 |
 | **已合并的协作贡献** | [第二章：对齐假设与接口](https://github.com/wkshum/ProbabilityTheory/pull/7)、[第三章：重构测度扩张](https://github.com/wkshum/ProbabilityTheory/pull/8)，均已合并至 Kenneth 的仓库。 |
 
-审查历史评估仍在进行：当前分析审查结论的一致性与修复轨迹，最终评估结果尚未在此发布。
+审查历史研究已完成历史记录重建与首轮修复轨迹描述。登记判断未经独立数学真值标注，
+当前结果不支持审查的因果收益或完整准确率评测。[进度与限制](docs/project_notes.md#paper-and-ongoing-evaluation)
 
 ## 两个代表案例
 
@@ -50,7 +52,7 @@
 
 **结果**：新的审查接受了修复后的定理和下游迁移。
 
-[案例与审查时间线](examples/case-studies/thm_14_8/) · [完整证明](ToyApollo/Output/thm_14_8.lean)
+[案例与审查时间线](examples/case-studies/thm_14_8/) · [完整证明](ProbabilityTheory/chapter_14/thm_14_8.lean)
 
 第二例的简短前后文件是**简化的接口演示**，完整数学证明见单独链接。八个案例均经过选择，**不代表准确率、成本或生产率评测结果**。
 
@@ -62,12 +64,16 @@
 
 流程先检查能否编译，再独立审查是否符合原文含义；只有审查对应的代码和依赖仍然有效，才接受修改。模型辅助审查提供证据，不能保证数学判断绝对正确。
 
-- [系统架构与流程](docs/architecture.md)
-- [安装与验证命令](docs/development.md)
+- [系统架构](docs/architecture.md)与[工作流](docs/phase2/workflow.md)
+- [运行完整流程](docs/workflow_demo.md)
+- [审查身份试验](docs/review_basis_pilot.md)与[前瞻比较方案](docs/review_comparison_pilot.md)
+- [安装与验证命令](docs/getting_started.zh-CN.md)
 - [八个案例及复现命令](examples/case-studies/)
 - [审查标准](docs/phase2/review_criteria.md)与[状态规则](docs/phase2/status_contract.md)
 - [研究背景、相关工作与限制](docs/project_notes.md)
 - [仓库范围与公开历史说明](docs/repository_scope.md)
 - [贡献指南](CONTRIBUTING.md) · [安全策略](SECURITY.md) · [MIT 许可证](LICENSE)
 
-项目旧名为 **ToyApollo**，现有代码标识保留旧名以维持兼容。简历和引用请统一使用 **ProbabilityTheoryFormalization**。
+项目旧名为 **ToyApollo**，历史证据与格式标识保留旧名。当前命令为 `formalize`，
+程序位于 `src/formalization_engine/`，正文位于 `ProbabilityTheory/`。
+简历和引用请统一使用 **ProbabilityTheoryFormalization**。

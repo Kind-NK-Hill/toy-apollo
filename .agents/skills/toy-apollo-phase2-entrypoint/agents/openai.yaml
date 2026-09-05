@@ -1,4 +1,0 @@
-interface:
-  display_name: "ToyApollo Phase 2"
-  short_description: "Start Phase 2 proof tasks safely"
-  default_prompt: "Use $toy-apollo-phase2-entrypoint to start or resume a ToyApollo Phase 2 proof task."

@@ -13,7 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.state_exact_build_batch import (  # noqa: E402
+from formalization_engine.state_exact_build_batch import (  # noqa: E402
     ExactBuildBatchError,
     collect_exact_build_selection,
     emit_current_exact_builds_batch,

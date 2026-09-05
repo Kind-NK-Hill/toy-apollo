@@ -1,0 +1,2931 @@
+{
+  "authority": "publication_integrity_only_not_semantic_review",
+  "files": [
+    {
+      "path": "ProbabilityTheory/common_support/ch8_bernoulli_bool_core.lean",
+      "published_sha256": "9b43972f083dad3dacd2222097a90a9e0923810460b1923e2a526bee9b2d2419",
+      "source_sha256": "3e75018489bf674a6ef95b393c6f7177aa1418e24f2d363cea1acc6d9a81cf6d"
+    },
+    {
+      "path": "ProbabilityTheory/common_support/ch8_discrete_pmf_core.lean",
+      "published_sha256": "904bd0c5893f24de6c48f071a7d43983ac2694fe3984fbd7aed6ffa124522283",
+      "source_sha256": "a6fd4f8fb8bcb81ea1285774c5cb616e4738ce4e5f5aee0781fd992fea5aa35c"
+    },
+    {
+      "path": "ProbabilityTheory/common_support/chapter13_stopping_support.lean",
+      "published_sha256": "f95d533dad554892c8e28f04e0970a888bd8d052c3fe6ed0b9111c080a4b16d7",
+      "source_sha256": "a7ac9ca5d7de1c2179c0bc5565c4f0eafd60562ab4394f03e14668a17f207674"
+    },
+    {
+      "path": "ProbabilityTheory/common_support/chapter14_coupon_geometric_support.lean",
+      "published_sha256": "cfa905c1def568ca34141ffd0554a2114ccd4c135f6c086dad8d9035dc31b392",
+      "source_sha256": "1697fdd8235469d81016e59b43cda400c106982241d82f0a45abc1dd87182532"
+    },
+    {
+      "path": "ProbabilityTheory/common_support/chapter14_mgf_support.lean",
+      "published_sha256": "50367031a2b2f2ef3e14d125c45a75aad4f885349e1f2a271e338ac2727252cb",
+      "source_sha256": "af23964a7682d2d69636dfc3ece220a2e763162757c33f62322cbe3a2c7abc68"
+    },
+    {
+      "path": "ProbabilityTheory/common_support/chapter14_tightness_support.lean",
+      "published_sha256": "c2fb19833f7334547ecac4cd7934ba633a95340e2c102f0649728cc7e9e11a5d",
+      "source_sha256": "a288f42e31974cf19a322d14b15bac3df4d59ebfb51172513c45f22b996cdab9"
+    },
+    {
+      "path": "ProbabilityTheory/common_support/chapter14_triangular_array_support.lean",
+      "published_sha256": "b9ea615f9ed6df663afef1a4e7ce945a74ae690342358b198ec7b8e76376fcaf",
+      "source_sha256": "4cbf0198c3fc979539431a754668fe74fccce817d0997861bf1fef3d3b2cac66"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/def_10_1.lean",
+      "published_sha256": "38c11ee8b78b7d159a58f3bfd4a795bbe8b435259a4a423b641f5feabab3e219",
+      "source_sha256": "d98553649be1dce5c33243f71fc0fc6eff72405c82c005e6e9c1ccc59fe53067"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/def_10_2.lean",
+      "published_sha256": "6518cc55e4f0a9173af59b1a1434f0d176bc9b2feaade805018a176e02069089",
+      "source_sha256": "3191defd2b13ff5b993237e45d5eef262509703cf4f621bcded794824f1f6914"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/def_10_3.lean",
+      "published_sha256": "632e8d7275a03e8be3b2cf3ef935583e9b953f20a63b54dac644851a2eaef82d",
+      "source_sha256": "9800a645e7331f5ba3641529d54b51f593e15f0864478a7bf8832c50c743e3ec"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/def_10_4.lean",
+      "published_sha256": "80392f49a758abb9f56034a98ff00c633b19dcb68d6f2ec314d6043b200eb0b4",
+      "source_sha256": "3a1acf25daa209a89fc590bb47e562fccd83051433688af7a1383512f637bc24"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/def_10_5.lean",
+      "published_sha256": "f935c9f5054fe2ec6ac0b9ec83038724157d582efe9bf12bff23b290028ee260",
+      "source_sha256": "eddf0d56154ef3104ab5fc2852c1fdae85d39da52d8baa5ce6486aba702d762a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/def_10_6.lean",
+      "published_sha256": "14437c1bcace13f16b864a8bfbba122cedac94a1dd71ce3632183d9a794e1963",
+      "source_sha256": "c408214fca92bd3531134688545a17d2b3c7f4a8a50d514e088a43ff38debc1b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/def_12_1.lean",
+      "published_sha256": "830f682f0925768cdefbe0813c68f1e99c30f12f19c22d6d58087b945120b99c",
+      "source_sha256": "9a99bf8b0fa7486ca3a7e45986a7bceb6534a049ffeccac06b23d2728968e218"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/def_12_2.lean",
+      "published_sha256": "5a1b2ef6e6f65de9e54aa7710dd8037e2470be7a774c6d9d157d380d79deb466",
+      "source_sha256": "4f49c706963c3aa99007b4a4bc409e4bb741a3a99f0371ad67f9b8247e9c414a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/def_12_3.lean",
+      "published_sha256": "9d0ee4a0227b0ab5a8fc3ba0bfa283a5ff85f70b67ca6d5051f20818556941a6",
+      "source_sha256": "54285dd2cc6603020d917a68f27b09141e726192ac6d0222abf44ca0f4066dbf"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/def_12_4.lean",
+      "published_sha256": "d7fe08cc814c0877df7ce2a98b8c8335641ac0a5b846aa26731ce0faceca6850",
+      "source_sha256": "31d600b3d0f9abe1cae788fdc1d5dbf86c79145f2960dadecd547f35ed8fdaad"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/def_12_5.lean",
+      "published_sha256": "af77899fe1a735c3cd15894ba78c4461e66bd9f1a108d58ac479433870ddccb9",
+      "source_sha256": "1c974f552284e591a17a3e16f1621290f3e6b098cff4b83c17f858f086ccd15d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/def_13_1.lean",
+      "published_sha256": "eed54128220add37e203bdb0d5bce6b057d8354061373c50f9fc03a7692ec22c",
+      "source_sha256": "64d5a228f0026adb9a50f1fadfc9305c07bf187d4c79b699a9cbff00bd81ec19"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/def_13_2.lean",
+      "published_sha256": "a7ae3320202646b0f78f708d1388fee3a2f81015c6df441896a677915886c55a",
+      "source_sha256": "3c363cee8151e695602ef52a1bccd792bcfe849103f12423786849d3f2eb3ee5"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/def_13_3.lean",
+      "published_sha256": "a82aa972f006e1e758c4736ab31257a13d02015982c12cdc248166c95cb3990f",
+      "source_sha256": "c8e514f934ea8508943ba8a99f6023dd3d241b6195be30adc39c595a235f1444"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/def_13_4.lean",
+      "published_sha256": "8374ead5246233d3918094e83ae8c82a9e722d557213289f62e29f0f7bc9726a",
+      "source_sha256": "f27f1fe34c9a0bcb6a9fd30f0f6d662f98b1c0bd565b373637598124dff2a98a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/def_13_5.lean",
+      "published_sha256": "9b8ae350f797a9ef61995d12eaeced1ce53ee7b486a6077ca19f0721b300a405",
+      "source_sha256": "e4ff56d1a16f799cf89d7abbbcbc1d01d1c2f6d6b90112528654eb893ee38177"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/def_13_6.lean",
+      "published_sha256": "f913ac7de49454bf4208acc0728686a517ff2f163b25ad569a3542d4caacab5c",
+      "source_sha256": "13c023da4791a0613a9573574251bee494b3eb453005407157de65d97524a443"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/def_13_7.lean",
+      "published_sha256": "4dcc1f7ae5e461ea3645dc7b4a2f162e39f3372eeb99c698a0833e5e73f39c9c",
+      "source_sha256": "0c8f41af4c7208cbf62111e5c2af9c7070e77d59788dca22b4d0a7787200f462"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/def_13_8.lean",
+      "published_sha256": "ce892f28412c529be2202820a39b23d5fa5d37ce3031c26fd61b73ad69d89d87",
+      "source_sha256": "eb0f1cd066efc5b26a30e937e385909431e9538fb91ff17d5eeaff55a1a768c2"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/def_13_9.lean",
+      "published_sha256": "9b5eef75a81fa8c875ccdf45aa29cdbcb0baf70d8af40c7f5bb74fd186ab9200",
+      "source_sha256": "ab5f5b8a2495f704ed320c5111c2b8affcc94d4b7941986d4f65174e036f2882"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/def_14_1.lean",
+      "published_sha256": "0f98d93d519e6ba9a9f928d921a5a6c74280429e583d59b4d65235cf7c8d852a",
+      "source_sha256": "5f6fad3aea7270b16c5b339f2535a4d1777b72f43073ad01a32658f458144cc1"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/def_14_2.lean",
+      "published_sha256": "e788f2a4412600cd7eec9107991d724599679bcd11ce17fb2e0c24175a3476e3",
+      "source_sha256": "5b08ae85902dc909c99fe1ad6fba27842545d2ff58417ebebf6c00daf6f17015"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/def_14_3.lean",
+      "published_sha256": "c292c27751fb8b48983fbba6958e762165d7fe90b3fd080a21c178cf00fa448e",
+      "source_sha256": "f627d8c7bd1152b2709ea82b3fbe48ef856bd7210ec805bf624f32b8b3492131"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/def_1_1.lean",
+      "published_sha256": "9f207b952a28215dc4db05b8811f361c15033ce49a651ae9eede99d201a6258f",
+      "source_sha256": "60b357fe630cb12b78b9d25e345095031c2196a5e06db153ee1cb31d6aea338d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/def_1_2.lean",
+      "published_sha256": "c4e625ac5696894b81775270e1efad303a5b6f055b36208507acbfabe05ea427",
+      "source_sha256": "4ee1d19cf952f43a1cce79e070169977cf83676a36807acfe122409e38efb5a9"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/def_1_3.lean",
+      "published_sha256": "2c196809f5c81562ffc92dee1e44be4e255c8a483636a8e236302555cb853531",
+      "source_sha256": "dbae75d691048c9528dbede998e3b9c4b42519230e48d78f23be624c8ec56529"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/def_1_4.lean",
+      "published_sha256": "84e5843c010266493131fd718bb29abfac9904f4f3e29cc1408593129c56e9c0",
+      "source_sha256": "0d032b3bd0afb4014ed62318ba5f6bedaa928f9a9c65359bad0f1f3e46a1ba6a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/DirichletGamma.lean",
+      "published_sha256": "4f0d3b62810a6579fc702c76f87affc3390cd7549758ad23ee6d622146e65a55",
+      "source_sha256": "48d9401bc531bc4795594746e05143100adf856da95b2dbfa6016ab34930b43e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/DirichletGammaDensity.lean",
+      "published_sha256": "fd0953c0642914e3b0f84050e26bc88f180723c4cf2995269c1b2d4c8350972b",
+      "source_sha256": "b4523ec11b6316dc209bf330cec78bb949d62929aec1406e6b36059cf2abbbb2"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/DirichletGammaProductDensity.lean",
+      "published_sha256": "8007a48eee007206323e49ba3033fe7f8ea24b6af1020c6789d2aee5a2d84c2a",
+      "source_sha256": "3f2a9e4dd9aa9b8ec13ec99a8fe911f2e4325684470bbd4706ceff70b1edddf9"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/DirichletGammaProjectedDensity.lean",
+      "published_sha256": "4224b4d7b475da0b52a52b6763849935d173aaef501c8f7bac8aec40fb763c75",
+      "source_sha256": "efdeccef2fcaeb0db565021047cdd1bf0511a957553a8ecd7f356d1cd672f9cb"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/DirichletGammaSimplexChart.lean",
+      "published_sha256": "eea6a14c1c5d81bf05705d06e47ab48c8f4bd3cbe88dc5a868d2d0bfe030cb4c",
+      "source_sha256": "9affef5c86a18b1c81184e9b02ae3cd270baf39efc96ea9f6052acfb3c07c206"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/Ex_1_2_1.lean",
+      "published_sha256": "948cabf7be0573ff7040f435ce50b08e844fd024eeb1fa3cdf63fcc123d26a99",
+      "source_sha256": "b8a86ba7cba76144f6688fcfdaed1ed744fe9185ddb04c96768dd3fe3e3eaa0e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/Ex_1_2_2.lean",
+      "published_sha256": "d87d71ad65e6132a406f5c8574c76b94c562e62ce164c24963fe6fd84b68f838",
+      "source_sha256": "93f3f97188ede021b82ebfdea3e46da752195b1a0254cd4e2685bbef75696a59"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/ex_1_2_2_dirichlet_gamma_beta.lean",
+      "published_sha256": "1481a8ce19b7c13a5763dc80ed3991648d32a4b554e74389f4c6ccd6bd4628b7",
+      "source_sha256": "31d9f0423d728f35956f10a427207201ef2d45d130e8f24f70e51d10101804b6"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/ex_1_2_2_dirichlet_gamma_chart.lean",
+      "published_sha256": "ca9c51898ca44b8ee57585c4d773e3729868bb2cc1ad6cb7ad8da5871fe481fb",
+      "source_sha256": "5c86bdbb7f96d3d0b63942b1fc08d0b670f06f80c5b7f63fd0ebe429b7b3293b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/ex_1_2_2_dirichlet_gamma_core.lean",
+      "published_sha256": "f8a4c274ec2d90a241c0181323476d331b9955ed984f53a2e265340f6babca06",
+      "source_sha256": "80de4f72e610964840bb31aabcf36d6c4df3020db781bd2a39540653fd288f54"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/ex_1_2_2_dirichlet_gamma_support.lean",
+      "published_sha256": "13069a3d695b8411a188efdc3979e265f3bc72ce47f6b81a0fc5f3e44a0c8f58",
+      "source_sha256": "0fb1ddaabda1e108d421c16b9d28a96b8092f9b76881ef88f888d9fc6c20e868"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/Ex_1_2_3.lean",
+      "published_sha256": "96e777a51c0fa4afe06468948b6ccf76fa6255eef95e78e7511888cd987ebcb1",
+      "source_sha256": "e4976994f08fee1dbb6c1e83fd8275a62bd0e2e3134d6dd9e8bc073b7af36fc3"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/Ex_1_3_1.lean",
+      "published_sha256": "162f8ab9430ca87947289797a20f42bcefb863cb7fab1367a6870f27d22ee373",
+      "source_sha256": "1f659e8203b7c115d947ab172de14f9b9c453e9ee44a4dcd029e77e4f5db2e01"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/Ex_1_3_2.lean",
+      "published_sha256": "9fed0e16ce15063e8818940594cff05b080a047da07a233a142fd26cd9adc255",
+      "source_sha256": "146b0c70fff4e2ba9e6b521ea85e35a84962a6333d13ff728ced8f97f898896c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/prob_1_1.lean",
+      "published_sha256": "afcbd02a0e11b8f284a4f42dc784b27f56f2d52a13eaeb21cf3805f248433d78",
+      "source_sha256": "ceafab900bdf6f34ad97dd6fa451c624bc3562cc127b8a2473e76ff70b9ea0fc"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/prob_1_10.lean",
+      "published_sha256": "b81cdab8e9f6f09591821422161722b2cd2aaa73534fab1c887adffcb7e52200",
+      "source_sha256": "ab6458ccae7f5c7003e95c05c4bac93ed1da47d899c088d0efae324f2d06a34a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/prob_1_2.lean",
+      "published_sha256": "9aac7bd2c9b6ba963f87ff469bae6e720ed9c233584fa7092de63159356bed0c",
+      "source_sha256": "3dc6e6ecc835863113c765affbdfe5eec3a46cf2515897800fc4e494fefb163e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/prob_1_3.lean",
+      "published_sha256": "7b70ad22160baca1118c7972515d1dee98bbf69fa3b19c70bc81e1214497b6e3",
+      "source_sha256": "c4e5d6f3191931feb4b1ca41ee7256ad6519210d1ec3610a75485df6252abadf"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/prob_1_4.lean",
+      "published_sha256": "6e845e85f24765497065241f3cf84d3ca874b3de7d674e7e3d88005ebba35c50",
+      "source_sha256": "575f23ab3b46894ab1fc5ddecd354085b6b8280665e1db6c66457d44641bcba6"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/prob_1_4_dirichlet_gamma_support.lean",
+      "published_sha256": "feeb0c633ebf82a6bd95f11605d6984cb788acc5766c469ca69d9950a75896fd",
+      "source_sha256": "df8cfbc756838daed0dab948124b417c09e4a51f40c452351da76e331adef809"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/prob_1_5.lean",
+      "published_sha256": "6a9222cdeab2070c4afe9568a88b7c19f0097435ff2d85d880cfb0f455ebbdf5",
+      "source_sha256": "0164ce7eaf5d1fb227dd4014bc3efad69f7eb3febd52b1f334ae9ad6e8559b19"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/prob_1_6.lean",
+      "published_sha256": "de55ec03d83e2a16b1b37162c65fd089c943411921e9233c3546eb07f50a27ea",
+      "source_sha256": "1a870b6d3e932354f53412f2627e179fe8db79965105bc68b34919733ec7987c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/prob_1_7.lean",
+      "published_sha256": "421841c1d139bc02faba51498f4af69b5ec3d01d723f3a56c6feabacb78058e0",
+      "source_sha256": "f102d30cb3f8d00e6781131ebca431a326b087fce48ede1df387e0aacbc630e2"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/prob_1_8.lean",
+      "published_sha256": "a51989a58ea2018243e5ab45de44fcc04904ba502fd969322c536dd3d18483e7",
+      "source_sha256": "30d5f40dbb336558be9692d52a6a9117fffd124e7522e847c8b9073acc1a5be6"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/prob_1_9.lean",
+      "published_sha256": "ee0ff322180ba518c45a90199e2271b42eb1d154fb7065dbe80b11b061de8d61",
+      "source_sha256": "372c36e4a292871573b1133ce773880d5797219bcafd94eade24ac62737f82ac"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/rs_stieltjes_darboux_support.lean",
+      "published_sha256": "2433e24b7e75efb5a4a7dca8abbeb48d356be7f3ff26523994d148a45c42c609",
+      "source_sha256": "8122b36b7229c534b7c0826d98c4a1baf049db7c556c69997613c7e3cf3b0e98"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/rs_stieltjes_measure_bridge.lean",
+      "published_sha256": "1102a80aeddb204ee1a2bb689c1e8c1c516698878509359416d057a77289b2da",
+      "source_sha256": "8ab690b0cfbad3a8406015342a1c68135417f0acb4827e3ec60591c13becf28d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/rs_stieltjes_step_support.lean",
+      "published_sha256": "ddc8660c99d8cbe14b7da4f15207474bc0d90e9574f058fa4ebf00ee22ae8f97",
+      "source_sha256": "6685d0f850d7348a203a57017b6a5a5efb793f5bff5c1ea73821bdcdc0c7323b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/def_2_1.lean",
+      "published_sha256": "9ab7692d276649cac041ff8e33a917806bf478a348aca5922a50580c20e7fa7f",
+      "source_sha256": "145650a35a5d1e77966e022592c303549e417449f9d6dccf1fd348263316e0c3"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/def_2_2.lean",
+      "published_sha256": "892de9244cf83ccb011d2ceab30dc993aaee6955ad504e9104bd6470bb3abbee",
+      "source_sha256": "2e7809f7a195a815b29f0a85faa29a2e65d2a84ec745f8c5ec03e14c34412b82"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/def_2_3.lean",
+      "published_sha256": "74f45cc604f926289d7f72bc3e2deafcdb439d07e158da0af3a67fabab2dba7f",
+      "source_sha256": "5d6f451f7c05b11f519cd75c9f3809fcaac00714621cf9d9b7e0b48caf8f3cca"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/def_2_4.lean",
+      "published_sha256": "d6f27ef7ec3314d0baa8e93b85d8f5ec52c7fe7db8bf9ca7057131f78d1f9782",
+      "source_sha256": "d24fe07bbe734bdbf8eec5749aed3afb973e21050649fb196c12a7746247f03c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/def_2_5.lean",
+      "published_sha256": "c75a1d989dc85123a28463512eb77564a34d5542a2dbe84dcc3b0312c553e338",
+      "source_sha256": "098bee697027cdd46a3866f60808987197d4d2c2ec6f426c8340eca4c9e114c3"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/def_2_6.lean",
+      "published_sha256": "241daad1dde6028ff7e54d7aa90e3377794344e66bc41557e85f9e66fa146949",
+      "source_sha256": "44fe956df0295a6ad3f6a82e2cf1a9447b610f25bc1ada11dfd943a32cc502d3"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/def_2_7.lean",
+      "published_sha256": "34201ad356564e915bb1dc6ba7ba7543d97c6079ca59e636aefe52c23d61c50d",
+      "source_sha256": "6ec3dfeba779dbb8742c673633b59633c04e923cdaca9e73f436450aaabe1d9d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/def_2_8.lean",
+      "published_sha256": "09433d3b2fed779eefa8ea63108c180796434abd26a0d0258421a1daf2721c3b",
+      "source_sha256": "72f0b2a477d52384d99482e1a0daae7bd8afb97b4dcd4d45cde403a8bf56f2c4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/def_3_1.lean",
+      "published_sha256": "33d6d8430a4bc9417d636f73a6ff82eaf2ec88cca8c167a1594cd6f144e4f818",
+      "source_sha256": "961ea0a7386b55c1af5048e00235a769597e0aff270a0229519dd38d9f6405c4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/def_3_10.lean",
+      "published_sha256": "3b01e28ffea4843828b794b6faed8533fed5659b4cb17526ae327ac50c5b469b",
+      "source_sha256": "106dfb6b86559b67079b84886d6e5917210032ff2cf8621b524684e953e2fc70"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/def_3_2.lean",
+      "published_sha256": "b92080de6c223440cd1d9fe0ba25e8869f5b82463f7f5ecee8875c53b2dfd389",
+      "source_sha256": "0aebbf31066bd9165a3266079003c7c704e373b90d47da51e49e6ec9e3981099"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/def_3_3.lean",
+      "published_sha256": "152497370230c87fbf83245b89b8ec22c600d935a96e5a8d0189ae3a699ca051",
+      "source_sha256": "b0d7c4fd2800931fa7b3cf137fdcf294147813cbd9405e1306b567748c742480"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/def_3_4.lean",
+      "published_sha256": "081e0402cad21834f8c8bca89375f8b915c6e39c97b102ea4452bf0b58032783",
+      "source_sha256": "1e69bb1c86c535ab1073995f313c5672c4286f500531c21b126b32e54ab09d9c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/def_3_5.lean",
+      "published_sha256": "0c3254e4043572b46647d0ec18b6c5a0a70d6f06f165209abeba2155ecbf0e40",
+      "source_sha256": "02a4b9d52e88ce19a10b13794ce1973463ffb258816240f4b431cf9b3947b9f7"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/def_3_6.lean",
+      "published_sha256": "7e72734e54af5f7e6f8113e1bad54f2871a992c2199fbef685869ee7599a4bd9",
+      "source_sha256": "664b5dad23eed86f3c602761f1237665c55b15a78a7477b654311ddd0879b879"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/def_3_7.lean",
+      "published_sha256": "5d8dcf67d0e20488e9ea04940827287ae722b7ade5b62ab954ad75036ee666ff",
+      "source_sha256": "6201c81724ccec8176e3d7f210f8beb7d23130a3c9b3e9dcc7514813a7f2acd9"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/def_3_8.lean",
+      "published_sha256": "d6a3ec91d7eb2af2cf18296e95e6326719dcbf706da6e11434e7fb4c9cf15a9b",
+      "source_sha256": "54531e9768e1e767ae6667a86211d593baf9617e24be7a39aca349dd7e083ee8"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/def_3_9.lean",
+      "published_sha256": "3c2964433bdd3a6afa8362689eb378852dc3a05cefdccaf16b2cc804904439e3",
+      "source_sha256": "e119b302ff1120a3e09393d6a14232f057a483c03671fa1d6d534adc0eaf6b33"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/def_4_1.lean",
+      "published_sha256": "71ee80f0e6ffa85c9b720bf518b0f1b730abe3bbba72f9fee9c311f717677773",
+      "source_sha256": "644fbe933174540521be6dc6cf9ec53c7cb3c2d681c7a2bdc6ef5bdeeaaa8182"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/def_4_2.lean",
+      "published_sha256": "d974f4c4e598bd0e84b6c63d57d04f08959f60e8cc015d15a4f7ebe9adb5898d",
+      "source_sha256": "e17cf72cd22e9fe60a96c00f230577062d855801ee327dfe811cc1da71966e18"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/def_4_2_inverse_image.lean",
+      "published_sha256": "d20a2da79744d6828dfdfef7b168f5a65f8ad00b68cc35e599d29b9c70dc5a59",
+      "source_sha256": "dcc131707c7faa4ee5b50dac73b6d44d6310e8dd98ba440075b487802009f901"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/def_4_3_limsup_liminf.lean",
+      "published_sha256": "561c03cc6fe9f25d9267f449833870dda6e08db5775dd139a59ae628ad5e1a2e",
+      "source_sha256": "ceb55db5d575564e6db9aa4c0945cccd6662498c8c7c32a895b323901a25a0b0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/def_4_3_sup_inf.lean",
+      "published_sha256": "23a05b34e2ff35cc6ae51841547ca95838b348c56a938e7c3391cae46d17cb8f",
+      "source_sha256": "03d9d13df588c71c77717ac06d2693fb95f5060b0d1418ef20289245d3caa044"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/def_4_4_complex_number.lean",
+      "published_sha256": "5b4e9cf65bd949092e95fb343b7cdf08c2cf5531ff652ba76c378acdda894e43",
+      "source_sha256": "5c23ed335ef2bc8ae13719861a210a27bfd20f01221beab8fe326c1f1a68a150"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/def_4_4_complex_operations.lean",
+      "published_sha256": "46db45fc72248c2dd4504ab3c8b66d6b34e9e7899a9f8f5ebef1fef667f0589a",
+      "source_sha256": "c926ce1a4d717e7c83d574bb37892aa7199efc850a7ff0e33b93a022cd6096c2"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/def_4_4_complex_random_variable.lean",
+      "published_sha256": "6f13fcc120757e7df9e63452bde9faf3a076e4cb8c149ce01c1ac1fd62c3e017",
+      "source_sha256": "fb1d7b325cc8e3f01c89948caa6ff038bdfc036973fe5abc718be29a331bd364"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/def_4_4_polar_form.lean",
+      "published_sha256": "ed55ea5c2beda38731d76aaec368a4a2adcafe51263e5871a067d67cf0af0782",
+      "source_sha256": "c50181dd3142cb0da08ce8dccdf82323610f77849298d17872c70adaef234347"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/def_5_1.lean",
+      "published_sha256": "e1daa47dda04c1cfa04fa6a5e7acced4e0fbc91e7c100fd97d5c2a013c7cf628",
+      "source_sha256": "e9d27c381e3b4c038a72225173f27ce89f799613548aad33bf7373dcb831e450"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/def_5_10.lean",
+      "published_sha256": "b8dfb61876a6c507907616644985540f2a4b155c9a2dd48fe7161db1533c5676",
+      "source_sha256": "d34630b37164b4976a034f7f6d2e966ea34bb7e4bcb07f2175fbe671e3b0e4e5"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/def_5_2.lean",
+      "published_sha256": "79c5fab355be4f2064d8e6a8313d7f4f6d6f8b3b015120d25a0e2cfded9fdc32",
+      "source_sha256": "b7e61e3e2a311b7fecef435f03852523e768d150939fe799e72740cd04aa4b3f"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/def_5_3.lean",
+      "published_sha256": "3bef467d855f3578c54a79d8387e55872c4a510c867d2ea5fa7bb40a90e0ca5d",
+      "source_sha256": "fa012c0373cc4ded1c567e697c4fb7ed8faaadc2c5a8848e3d099161ea903312"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/def_5_4.lean",
+      "published_sha256": "dba877cc00f0d8f871fd11336413ab37c8fcc8fa367d619723768c5336d01d8f",
+      "source_sha256": "d6315550e857ffcf1bd2d019d24254e85988a17092181153b04757c12e62e376"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/def_5_5.lean",
+      "published_sha256": "365aad7b0373c0efbc1fc1b30d8acb39d6c742950231d4e5cd6ca11bf1517aa1",
+      "source_sha256": "86f5025af5d32362517fbc0d3f24827d4f00571cf2af2efae21f531d6236b181"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/def_5_6.lean",
+      "published_sha256": "2be837c8720d0f6a0dfe842bb259368f10d5cf8691c4126e7e4192305ab032ff",
+      "source_sha256": "90f0aec079414cd27748a4862f64f6903a34490ddd4988aee5d2d7fc530377fb"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/def_5_7.lean",
+      "published_sha256": "2857c523cf18cdf55739647839bd873136419979f536b4e1f423963be9c1927a",
+      "source_sha256": "76ed9c6dcc9751fe06b9f712cccc1ec319a61957fe4fa5bf89b0a359edc5a73c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/def_5_8.lean",
+      "published_sha256": "000618205d07ccc2039d183760f3c669e98d46bf455fa03130a57ac55cfadf6f",
+      "source_sha256": "44c554eb175c332394d90047dda4b15a6feedd06436c9e6507d43bd42eca9f22"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/def_5_9.lean",
+      "published_sha256": "3f4a785d6a803e507bbbacf7ec525b2cd6a2264c6f47964affa9a1fe706d76af",
+      "source_sha256": "ab36d0366926aa2a6536ff8f38e4fa0b75c493e38d83dce2aefc322f91cc7e54"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/def_6_1.lean",
+      "published_sha256": "36f18d3ff1e63cd90abc59e6e59ff4c2ad4fed5e3955c5d6cbd920e9a8d9c647",
+      "source_sha256": "b2d2bfa5fce9a546564988cfd9bc0a53bdeeffb1f060ef129846518a9d4ad002"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/def_6_2.lean",
+      "published_sha256": "6f385599cac4910a082ade9a3ba44b1628a4a832d5a1de39b60a92e7d9d4d872",
+      "source_sha256": "35623e51049b356f41db517974fe878862e8b60faccab6a9d892622fa9a0174b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/def_6_3.lean",
+      "published_sha256": "37c6dc77c53331b1fa61b1ad02591f1ed6ca83f262f75220a030f8a3c2ca1ba0",
+      "source_sha256": "9193da4ea7cb79f025467875e33cadba783dfc8be6f1926e145d3311f48bfeeb"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/def_6_4.lean",
+      "published_sha256": "38fa3fae5b70df83bfbc9f2e6aa7a01c322afd591fdb56bbeed4f3d79b386927",
+      "source_sha256": "c1d99f6840e31ba654867b1a66b7053b1117398e89216c32f4be2cb387044c27"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/def_6_5.lean",
+      "published_sha256": "8cc38ee1ccdcb655a59c7692f602859ea89cad89d43019db094d5f6fec1597f5",
+      "source_sha256": "a753e8a7d58254c7cf59253ef71f08352feb1eab0c41be22613ef7a5fdbbf19d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/def_6_6.lean",
+      "published_sha256": "4550a17301378484218938487ecb3822814ebafb1d7ce581e1b94bbe781243be",
+      "source_sha256": "317cface901224e4ec26f6a8c691734c82c53353fa6ac70748f127fe5248a6c8"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/def_6_7.lean",
+      "published_sha256": "9f954d971e26a7f65027157afd30930d322c233e244452f808df9f8c26e89f92",
+      "source_sha256": "46df0894fa497714fb69f7a64d548b0f384fd153271949f0a5f576f54268d92f"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/def_7_1.lean",
+      "published_sha256": "edc39b3f8be2496268e266748d185aad9bec1195b36375ec084f99dce14a84ae",
+      "source_sha256": "8ca2467781a2eb698e3d29063702474450ee14c8e9de11d96c78272927cc5ef4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/def_7_2.lean",
+      "published_sha256": "2c6374e48bdcba58042fc6b3588b07f6f57d1f763cf6373e3c78385aa1c2dd7e",
+      "source_sha256": "066e4189625cadf262f7c7b14781735fcb8b98af201bd0ad92d7511945a62e7b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/def_7_3.lean",
+      "published_sha256": "4a1ee629cc571d99aec1492e765326bce1a36f6e634f6f7cfff8f4b0b63973c9",
+      "source_sha256": "6e7e0c1477c956e5e2980f74cdc70836585c3daf57723021bd857783b8965d77"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/def_8_1.lean",
+      "published_sha256": "bda0d6d9ba9ec32d36f5b0cf09daac3c03ec7a483e90ae55ca34c443dcfefbca",
+      "source_sha256": "19615f4c5f479e96ba3399481083892c9a583798230236eb8c913233c2bf59b8"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/def_8_2.lean",
+      "published_sha256": "2fcc7ae3b26c84f6ad00dd4f1f5b2da735f7d333c8fab9b239770b43b3e560a4",
+      "source_sha256": "9392558f2e24812166d01241e66fa17e8273a4755902c9e1761654818edef769"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/def_8_3.lean",
+      "published_sha256": "a12c3fe203be5b567e0516d0adb8ca3069063379ce57de65498b5e8ccf550060",
+      "source_sha256": "8e632a95c571f2fa266324019776a37494972b27916849331fec734dace59d94"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/def_8_4.lean",
+      "published_sha256": "634f1af3270e8f3de79daba59c0ce9a17b132950af06a132427d61125956b9cb",
+      "source_sha256": "372f771988fb07f32174fb3dac8040af53ac31cf94b9629c5831ccfac54ad382"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/def_8_5.lean",
+      "published_sha256": "dab29ad77753dfae9e10f54e9b6307204e5afc3347f810a1c5193f0c06388a1f",
+      "source_sha256": "f1eabbdb8039dcb106bf5c1d2e45cb19709c5e09e1a646dd8a9ec5a7d2485963"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/def_9_1.lean",
+      "published_sha256": "d2e0eebea5313aeffdd498eb2e69265f06e061351b023bd505e6aabc46d13a4a",
+      "source_sha256": "c03e02565d8cd10d0d65e6ad4b94ce6925071e4eb1bcf52a51a35c267b390b27"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/def_9_2.lean",
+      "published_sha256": "29e17fffd6d933909ffd6c4b53066f84cf2394865cf084ddbe6e026bd7283f90",
+      "source_sha256": "3447374961b11de3e69bfa0c2a13cf4aea913cd64d9f0f4f1874fe5d85810a28"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/def_9_3.lean",
+      "published_sha256": "ca8c56804f887223561bc8fb7580242cb3679c21c80fc979320c6523ba0ab55f",
+      "source_sha256": "f8adc17200316261d1675545864d080fbed27a63e784c7c4f262c8563ac04e1f"
+    },
+    {
+      "path": "ProbabilityTheory/common_support/dirichlet_simplex_bridge.lean",
+      "published_sha256": "974e3bad03c251ad2adcfc8c065eb11dc594dcfbffabbe94948389d0f7a9454b",
+      "source_sha256": "8dc9badd431c46507c5c58ca3b04767dcf04b59079d7b9aec819c6cab0a3baae"
+    },
+    {
+      "path": "ProbabilityTheory/common_support/etemadi_pairwise_iid_slln.lean",
+      "published_sha256": "e5d1f77480477a699a853f5480fd28df58eeeda0284960dc7474dba81315f0de",
+      "source_sha256": "cd88a12e33333a051ec8316c479d9506b6679babeddbe5458c481e533e26f652"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/ex_10_1_1.lean",
+      "published_sha256": "8c628744933c5cf6f2e1976f51547a7e52dafa87bea1cb39cfaf21b1d17cd9b9",
+      "source_sha256": "e54492461be2572dec02aa5661fe18f706c545a474501f548faaa3ce4246317e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/ex_10_2_1.lean",
+      "published_sha256": "b8f24f19f78e1a5a09502b70fe845a7b8e226e2d814d72d73121eef5360ad7f9",
+      "source_sha256": "692e569af421633eac274b9ab33b26edc7fd36c0a11c3502bd1f508a7484b2ab"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/ex_10_2_2.lean",
+      "published_sha256": "f4acc4ca655497f1818aaf3f4aa0361cbaca26f92c1f868292a44bf50a069941",
+      "source_sha256": "1b7bf5e31ca7ecfd5e4dd5d32044cb03835a744b42c38a86d65e08440e0f1b99"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/ex_10_3_1.lean",
+      "published_sha256": "65930fd3473565cda825bbaa003124a1c9df936adde78ecf51a4dbe02d3ef79d",
+      "source_sha256": "90ec14c6ebf589763e63b7afe24ddb71d693b704ee4f82acaf1228b3f67578bb"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/ex_10_3_2.lean",
+      "published_sha256": "ac82b6168729d55fbca3585d78a38a8e6aa90e084b891b3a821c6432e5502a58",
+      "source_sha256": "12e4853bfe7a48056628b0bcc99a1f04fd01509fbf2996eb310d9aabb088d3cd"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/ex_10_3_3.lean",
+      "published_sha256": "cfdfdcc605d8a96f5db7b8b290d978b4f84fdcdb26980e133400305e5ccdabd6",
+      "source_sha256": "3ce20a0cbbfb9babd0e186fe32bc999475ebd240991d7f07bd725d73bd635404"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/ex_10_5_1.lean",
+      "published_sha256": "9a666d7d5b495beb404f4bc61a352b4faae2cd6249a334563e9b329547814e07",
+      "source_sha256": "7bafa17f489609663916a8dc191a8366a4b2c29bec3b4c2e10f65ff8527ea988"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/ex_11_5_1.lean",
+      "published_sha256": "88eb511dedc77e46983315820970ea70dac168cbe7950fe339077a6180e13c48",
+      "source_sha256": "1e46c430151c5c331025b6abc7133403460f9e4de27c765bd40dd2750cad5979"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/ex_11_5_2.lean",
+      "published_sha256": "a37d6a34d83f69b9db3462b12324bb37fe11e9710ceb736e3ad3baca93e1971d",
+      "source_sha256": "f9a2dbb30888dbab6aebd0c0f1d5c609116e79cbabb495323543bfeca6b2b89f"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/ex_12_1_1.lean",
+      "published_sha256": "5fa7187d5442184021205ea1b57332be26f8cfde20ab399c522ad210a678312e",
+      "source_sha256": "e1039c995cffe94d65ec07a6c7c3f468b2711055ad69a96ed415cbbbc3f36aea"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/ex_12_1_2.lean",
+      "published_sha256": "d39585c396c086b4b75117fd17f49a44ffc7a31ff7645d16b8608f662d06661d",
+      "source_sha256": "2c2931529478300680f51f4f685f008f92318b15fe6177600500c5a5d657b14c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/ex_12_2_1.lean",
+      "published_sha256": "063436b030632949347f8933c5bab7625443b04fecc7a4e83cb8ccea36cc5b89",
+      "source_sha256": "48544af7d9c0538d12f8cc4c14128927856dfe6fb57a704e9bf7742a8fc41476"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/ex_12_2_2.lean",
+      "published_sha256": "431c45016958efc3266781e011e81e740bbac9adc70d40a8263e96bc294cfa8a",
+      "source_sha256": "229a11b9b5eec7dc27870776c2504b229e92f51937332175569e806b3919408d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/ex_12_2_3.lean",
+      "published_sha256": "732b567603d8e1adea8962668785ae0cf36d3987c28000a1451a6d0476a525e4",
+      "source_sha256": "415258b09054ac4cd4245956bb6b3652e70a0728d8fee8a8374e9e634181ec4b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/ex_12_4_1.lean",
+      "published_sha256": "1d2a659eba55da1156bb3d22e686556973fd02e0da8beda127907e7b3d420d65",
+      "source_sha256": "1baecfdae271e9e4ff3c00c671ee71a7db134340697133a9d1fdc4965e2eca91"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/ex_12_4_2.lean",
+      "published_sha256": "d01f746d9db5b773536af7c2cd710db61c856207fec3984201ea8e2897749774",
+      "source_sha256": "62eaa91126dc485b4d6be6dabae5df78d34b538ec8689019f73c101a9858edc7"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/ex_12_4_3.lean",
+      "published_sha256": "c29174fd16087d23ddc2a8b55144d1717ae9f0b78800f089ac85b4b436d6e28b",
+      "source_sha256": "02978a4da085b961af2918a18e4f395c2ca72bb2a9e2fcf3622578d8a92eaf81"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/ex_13_2_1.lean",
+      "published_sha256": "8761bd4560fe8503e7111de9dee34e152e7c803ef9c352b93b8ff1bf72c6659f",
+      "source_sha256": "fb3b94e74332d9689c5326653fb20c8cb7f693a533c63900d71dd43277e911f9"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/ex_13_2_2.lean",
+      "published_sha256": "3f10ad26f32e4938d0330df3fe0a2bd12fd0bc337b0c203297ca47396c02d882",
+      "source_sha256": "70bb82ade463f9115a995e11156aea4a628852e95f509c64cb77874aeecb8805"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/ex_13_3_1.lean",
+      "published_sha256": "f323d1531d2495375a0347b5c5ce4fcb51606f533a0dece0bff925fa376cb27a",
+      "source_sha256": "6204eab1ffa930ddbe7f109d065224a1c5eef6d331f145c245db39dd6c083ee1"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/ex_13_5_1.lean",
+      "published_sha256": "0c7e58cb9c02f8a82ccb4f596a90c25d93262a10c61ca22640a59c28f5a34f54",
+      "source_sha256": "60b63aea935bd28cf94846ff5cf00b89bfa0b158f01e8da6fd1ecb9777423e48"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/ex_13_6_1.lean",
+      "published_sha256": "de9c5e14b017bb881d70c017a876b3644d97f3cf619b719b658055a3db4e7a3f",
+      "source_sha256": "f617c3d30a93cdf1b41b3fbc095b86230b7355ecaf6e6eb6af31641457c7ebc5"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/ex_13_6_2.lean",
+      "published_sha256": "a4e009e1e057991a181073998b1382ef1afb116ef72090b6c8e4ef55be6ba988",
+      "source_sha256": "eac0e994920294d4d80781f9d3bc192d109fcba00ce49d1b5f8755a6ba408a91"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/ex_13_6_3.lean",
+      "published_sha256": "4f09aff446b8244ce1ac7e446c73ab221f5be570517226b8cb0e0def7a97fa2a",
+      "source_sha256": "abdf6910de5bf87615b1b19e79955a2fdcf8d71c03329d04990a1ee275224909"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/ex_13_6_4.lean",
+      "published_sha256": "efd69ed85a059551dfbd9dd54e846ed7ed1354ecc8e6341d1ed72f0e9ad15304",
+      "source_sha256": "91c38df8259c87e28e30a8d37128be33c31e5e485bb691fb2db74e54668a424c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/ex_13_6_5.lean",
+      "published_sha256": "5563629b29d1973867600b9d2e7d6919ef1f9de0131d389185dffc03c3f925cd",
+      "source_sha256": "17f1823d703fae2364c5b4343ffb2f4a38f3aa66297159652fa535f7c5482030"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/ex_13_6_5_aabb_support.lean",
+      "published_sha256": "a5fc8f38f5873e94f180e60f5ba9a9bcef8cdc507508800d960c47ddf8f038be",
+      "source_sha256": "562a4a7764b1a3b736c8d850771fd70aceedae4113cb745677216b6e4ea829d0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/ex_13_6_5_abab_support.lean",
+      "published_sha256": "54bd60df24d20bc5b20e51aa0464412b31a3d64f0e739f793b514b1d4d5a0b56",
+      "source_sha256": "053fc5e0fd67bf42fd12f3ccfb3431b0a69fb79d6438f7be5e61f82a6aebe6e1"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/ex_13_6_5_base_support.lean",
+      "published_sha256": "1e25cf4587d7090170ea46232320aaba8f61ab3427004994abb9aba7fac18e8f",
+      "source_sha256": "91c56992a637a3debe3e26dff2a8a03c68791b8ce484d4263232172adb987897"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/ex_13_6_5_optional_stopping_support.lean",
+      "published_sha256": "059263c299aaf03870c9c94f23713d9635f40f04dd0c3dc62111da04dde479a3",
+      "source_sha256": "2a5d983e46c61902fa0b9baeef79ec5de0f724aeaf11e273dc4adfb0faba207a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/ex_13_6_5_process_common_support.lean",
+      "published_sha256": "afbb3dd3f33039a32d91f25150ed7c7fa15fe7922384d945b73728d02f8532db",
+      "source_sha256": "35b28ddf3fe41dca8e7154f37cabeb9ef21c4752aa5fcdc78dc567133b1680dd"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/ex_13_6_5_waiting_time_support.lean",
+      "published_sha256": "a56c8dce4cfadf29ee99d2cca846bb7ca9e6651f870d59049f1beff4bfbec191",
+      "source_sha256": "46e87a4b3c951b428427da7ad70229ba14b41dd5d049a98040a17c8eca702e57"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/ex_13_6_5_word_pattern_support.lean",
+      "published_sha256": "ab048e1906e116a843e98662bb1392a8fbebe9271d339794c1a95f894dc614f1",
+      "source_sha256": "b67077232eb530e4e555ba15955dff0ca3ba353e3fccd814285d0b600688e9f2"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/ex_14_2_1.lean",
+      "published_sha256": "11c919b1d9a1fe28cfdaf1e027f961f9db4c49684c6494911e11cd1e88ca6af9",
+      "source_sha256": "658b56f44546b8ff2fd47684c0616e488b306e7c69709257e3059a9c64d51455"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/ex_14_3_1.lean",
+      "published_sha256": "dac6259be75d3f670908dfc8cd0339ed487c1b6b78a70c034ac1bb924abc43c4",
+      "source_sha256": "c04b0a7cc5e083316e961557db19e54c22adb2c1bb250f0b961c47602bee766f"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/ex_14_3_2.lean",
+      "published_sha256": "923a4bce018d19d4ed2baf4636fd2016909775858ce67fa0798f1a665ba14ec2",
+      "source_sha256": "35a706b71a2090175b8770512b5d7e607078f58de58d56f11d8d9e83f806e240"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/ex_14_4_1.lean",
+      "published_sha256": "af7d0690eb7d4089f6d98907790217911cc4e2404808146d3ad9bd856ddca000",
+      "source_sha256": "df383409406d2ef962ce3c4ce0fd2c6338196014e9f24149fbe3d103688eab11"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/ex_14_4_1_binomial_support.lean",
+      "published_sha256": "253d8c974f1cac0d8ae69de7108653a673363679787417278bf04a1e64b03b9e",
+      "source_sha256": "4d31cdd3aa2d273ad7cf748fbcf131f85e768e3b6d8255a4776532f3401b1fa2"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/ex_14_4_1_proof_support.lean",
+      "published_sha256": "1155cf9e7702615327901159f7d33c55006736d00375422b0ec04cc5639370cf",
+      "source_sha256": "7ec8349b757b3bf12be99842043b0aaf4bbb95cd760c6ebd6d3a659cf0304490"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/ex_14_4_1_source_support.lean",
+      "published_sha256": "3b7e73d5e3cfac8a00d1b4925372fbf02cbd9551c047c641ff390073ecd42f67",
+      "source_sha256": "06a99b49bf56624b51fc29775c7bfb27a215f8d75d7f7ebd9cbf02df7ccf45e0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/ex_14_4_2.lean",
+      "published_sha256": "a5990dcfeb862753b2aa5d8b258736e57bb53c9ed5ea199d7c716f245cfff1e7",
+      "source_sha256": "415b4674fcf4a229f62e48fcde434cd4a0b64045f941a2e1265ab19686ea1c67"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/ex_14_4_3.lean",
+      "published_sha256": "df12aa1a27f767e858ea7af81a205206f25c232488e8c887b066630bfa875407",
+      "source_sha256": "e119af588bdbe78023907bfc6179362195f307dec95c144421dfaa990c7abeef"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/ex_14_4_3_coupon_stage_support.lean",
+      "published_sha256": "8efd2679067d81a49bebba626d734df6fad87fb9b022010c1fcba477de8923d2",
+      "source_sha256": "e945ec0413cb3f65bc18a8634f15851e71941167047d01e50b1cdb2df3412491"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/ex_2_1_1.lean",
+      "published_sha256": "64c516baee437d0dc63aeb9b60e3e18e7986e21b0a0a20280d158ec73694d715",
+      "source_sha256": "935f5e5b1d2f88c3110b8ed2c472097ab9baf7e853faea4c0fc54e478eee9f08"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/ex_2_1_2.lean",
+      "published_sha256": "e8cecb118ba0473b255592a8e3ce1047f30196c6fe169136c9bc3781a85aadb1",
+      "source_sha256": "89de1aa93b6ed164c3bf778ecc14549cd9af2c7a3f1c66e7c20ac739e2efb455"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/ex_2_2_1.lean",
+      "published_sha256": "0eff2ca161fc371ff4819512aab33af314d8ced49283a94286ccc05ca2dcc55a",
+      "source_sha256": "ccb88ae637d1db7c53b1a0ead2b512d2e19742d038edf4a6313d34c594eb5650"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/ex_2_2_2.lean",
+      "published_sha256": "3e2679b32d3afdd388f9da97fc65cfe4109399b9d51e8774d2b4ebccf538b088",
+      "source_sha256": "add3fe923d78c65b3bafd1a25b124bc43ab8fbed280c492ac46f0c7726d86696"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/ex_2_3_1.lean",
+      "published_sha256": "202dde32284342e59ff09bcb577f27daf2532c1d1ee9b7ad64f115047e4e774e",
+      "source_sha256": "7f12ece72c72797f930a3cddf99dd28cde9e46b0d910ab7d56823cb5f2474d38"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/ex_2_3_2.lean",
+      "published_sha256": "5dfaf79956e83d0c82a7f7660bf48dd4ba9dd4f1c797246e802c9094000fed0e",
+      "source_sha256": "dc5de15b57d132053aa63fd39b02178dbfc725e6d760ba64364468611efc03ab"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/ex_2_4_1.lean",
+      "published_sha256": "3ea350233bccc56ab4b43e549debd3da4b621e8d4daceebfd7e692657fd8afd6",
+      "source_sha256": "4b356f8dddf7813766838fd8e83bb2e7fe548b9cd64071d3c81bb4541dd91e5b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/ex_3_1_1.lean",
+      "published_sha256": "327c04c85b554fed8a18e6065b8cfccf7ca5d6118eea61765cc08b0b8eef1323",
+      "source_sha256": "3a0ddcbf96ce6c210f86fdd8053ef122c49008ce51cf2a702c3e53dd5da8ed2c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/ex_3_1_2.lean",
+      "published_sha256": "c84eb9c64e13b32015c47adf06abc11dc00287038ee4d1f1e7a13ae1204ed2d8",
+      "source_sha256": "34d8e1f534f4fdd42cfb0436a1d517125ac3bb08658e53e47227d76b7626d7ae"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/ex_3_1_3.lean",
+      "published_sha256": "f3ce22a6dabc92daf5a1349444e7a15f04d044f7784022f482a85126375adfe4",
+      "source_sha256": "ab27a3eeda07bff3127f299eb0ea4765c1ca7f1c059ea9d86688a3ebbd558433"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/ex_3_1_4.lean",
+      "published_sha256": "4ebc27973a99ec24d1c989eafd85259b5d94f08fda9d025fffcdfca08398f5ef",
+      "source_sha256": "d460c743dfe777da6606d4a186b79bec782e009801eceb98e25687f78d2df95e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/ex_3_2_1.lean",
+      "published_sha256": "aa92f99353788d6c043de0cca0e03ed68f864bcb373ffbbe6ca31000bef89bea",
+      "source_sha256": "c11ce94c22a407c5c29ec8b9c082e4721aea3d51a6918c7bdf64d515e5bd8be9"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/ex_3_3_1.lean",
+      "published_sha256": "77348b38eb24f286ca400e4b4b51d8dc0d0c8b779fb48e656bcbca0dc0d10b6e",
+      "source_sha256": "f937a69e627271ed27d48e886ffbc16ef96a53a891fc48f47b5a35a460a60c5a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/ex_3_3_2.lean",
+      "published_sha256": "97cf82ad7a19ab8944f78c70ba8803073d33d9e1871e5e115efb8b99caf4dae5",
+      "source_sha256": "2dcb45c6751396733b6e20434c1b14d81304992794cde6e5e8a095e773350d3d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/ex_3_3_3.lean",
+      "published_sha256": "92b9f9cbf6fe5386b53595c211d47ab41fb863717b3bded19eda7da10b3dcb00",
+      "source_sha256": "702eaab392c035a6eb658314463e2e54bfeb15f8ec646f15fa08a7cf86579ab6"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/ex_3_3_4.lean",
+      "published_sha256": "b9adbfd9087fc7bf0025df31ebd2ea65a7d0b3af69b06014a4336453c15dd27f",
+      "source_sha256": "739e51808d50c3a17ada8314fe97f39acdec0ebe920629b595cbcfcb14c308aa"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/ex_3_3_5.lean",
+      "published_sha256": "961c763c815afb45db97c02bab2b58c555e2bd9aec501b7528d8277823840ba6",
+      "source_sha256": "94d88d0b5965e55deca6fcd6aea11ae03dceec4c8aac11d7d3a8da0b2dc6b2ab"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/ex_3_3_6.lean",
+      "published_sha256": "d582595a28f6a18f6b3b87507ee7c8f224c77f75ab96e3665cda71950d0e54f7",
+      "source_sha256": "84111bfb1e37968aa4bc2500e91689bfd51d089751af9708cc3095f8b2f90413"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/ex_4_1_1.lean",
+      "published_sha256": "d8bd0db2f0f6bbdb57c8cbfd87a6936ad6676536d0e1e0e6dc011ee27f939aec",
+      "source_sha256": "c57501fb1874469b263800f30764dde8d164966684c61f3110081a6f957f86f9"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/ex_4_1_2.lean",
+      "published_sha256": "b50280aad2c81e4a440fd781f82297517693e8e48e8958fe8740b6b361a50182",
+      "source_sha256": "72bbf4242354209f48821e1598653b2660f1a1888e9c93c377cb8e9371aa5e72"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/ex_4_1_indicator_examples.lean",
+      "published_sha256": "d2ea1a1b59e2656986e642ffaa376c495bf24cd814d655d8f5e311210a9c2ed5",
+      "source_sha256": "ad3fc259381bf7908e1dae9082f742ecb2b1f67a523f28129079fc3f1b8622c2"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/ex_4_2_lebesgue_borel.lean",
+      "published_sha256": "883198d53d937d3a5991e670e3cf6f2beb529912560796f819012e040e26bbe6",
+      "source_sha256": "836d7cef4724cafd024f5f175b48e410f7bc90f16e8bde08e885b92577616baf"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/ex_4_3_1.lean",
+      "published_sha256": "63ed138dadb05c60158cd4397c9a921d0b9e9e1cebb6af080db3d036ba8b0d7c",
+      "source_sha256": "28891de742fad2638bb81908a5fe0fa5366ec0281881aac4654c61bab3396409"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/ex_4_3_2.lean",
+      "published_sha256": "78d655a582eff70aafc8a9dff9f3996d6f5d6f6844cccdf3e0a3d7a080fd011d",
+      "source_sha256": "ba3b6d4c959f150b082305afb818a2d4f0a9340d1fefa9c6fce51da067a141f4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/ex_4_4_1.lean",
+      "published_sha256": "f56a154a79ff8965a73be3c4d75d6944e1bc85d07600ac321a15fb80d5ecec90",
+      "source_sha256": "9a36c127423808fcc727b12c4935e25ec140c3e987444f5023aa41567ea95535"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/ex_4_4_2.lean",
+      "published_sha256": "ac46b821ed151bfffd39f26b1484d5a67b4a594f2cd466eb694fe6bb2b0f5787",
+      "source_sha256": "ebd8a1c963d3cbb6e07ebfe558ddd677ac4c3f71a0ca36f630ffa8a77b06965a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/ex_4_4_3.lean",
+      "published_sha256": "4205c14a091d4662f228e3ac9d888e9a63fc69ce1f7db91d2dfcaa0051801869",
+      "source_sha256": "a8adc20205d66a2367bc05aa5521a6812f00f5f229bd01b56783908489a4179a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/ex_5_1_1.lean",
+      "published_sha256": "2773d4837e99f1a105ff26e6e0253cd895c65c0eacf5c6562f6bb3b645d54421",
+      "source_sha256": "b7c9e5dfe3e1538069d78fb4e32c9562980d1a206524f49f53e5c6cc4a2abe04"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/ex_5_2_1.lean",
+      "published_sha256": "db65b83797d55f4d051fbfcc9dc197de2dab9c0534391c7f102d32fc6265d906",
+      "source_sha256": "6525638adace6b451384e299562e74662b69cb8f05d11a3eb40ead019871d3a4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/ex_5_2_2.lean",
+      "published_sha256": "33e28cf908060a5bc2ee1d2074d09e2a6b9c85fc7e6cacc5e84fa1432a2dce55",
+      "source_sha256": "fee72bdbf8245bd7ecb107460b56dae8579650990c3482077f3c370c9ed6e777"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/ex_5_3_1.lean",
+      "published_sha256": "23bb9661059e67c2eb72f82ddcfd9fd499e29fc2c572e23133f2280f629fc0bb",
+      "source_sha256": "871c9acda82c83abdd51f330707a6bb183fa7e68a72ca721576729b59bfda62e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/ex_5_4_1.lean",
+      "published_sha256": "0651f3f9110cde4df333ece2023e50bb74de3f4e724d66239b86004925a59ae0",
+      "source_sha256": "e082d071ee6eec95c320e9fc09dbc60d9bf3a3cce95cb5e2dc3ea1f2120f8ca0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/ex_5_4_2.lean",
+      "published_sha256": "493ae30972bdf08c79d09a6225fbe8aeb1068b7b29889ad55827b03f682f63c3",
+      "source_sha256": "9ca53227dc1fad4c68e417fb7d2fb8c68b67878720137a0653d41e9b4acf8457"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/ex_5_4_3.lean",
+      "published_sha256": "7891bff530155b77786131f51acf9af6af6c758f98506353c6e09966b93a62f4",
+      "source_sha256": "10012f0a29a3abf927987e2ee2d0cd682135582330755b63d0059400a737b4c0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/ex_6_1_1.lean",
+      "published_sha256": "59b4ad3544c5540ba548aec1f5fb4a924f366f89c3f55a5d3aad3adb1560b85e",
+      "source_sha256": "9da158bcf092ae5aca62de04f3af3d105e7fc082d6373ed5ed41bf900c76ec6b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/ex_6_1_2.lean",
+      "published_sha256": "84b35faa672af75432787cc788f3cd7e2631b08bfbed1106d1ba885dcb065fac",
+      "source_sha256": "86e269f2832b28e1aebb385f6e43a7f741c56146d35327c1a71a9b25f5878451"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/ex_6_3_1.lean",
+      "published_sha256": "c22b96727dd0ce72563a60088ef970b534594e7a467f9cad81cf64236e30e936",
+      "source_sha256": "0799c01047cbde83bb1b4c5f321765ef1b6af16f1efd5b0be0bdc6d44ff37625"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/ex_6_3_1_harmonic.lean",
+      "published_sha256": "21bacc8f469ada9d21965eab85a16afd9939ae97c3bff93f26d893467010a2da",
+      "source_sha256": "4c10db13b349fff351def55a81fbe1f5da0d1064878a58a4548733faaffab63b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/ex_6_3_2.lean",
+      "published_sha256": "b5e40806d84e78871b6c35fa791e6ad5888e0f4ec1a47102a87113aa6476acbe",
+      "source_sha256": "d234af52e690c41c936db0729915ee643cc88b9453d1d6013e300126f0992cb6"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/ex_6_4_1.lean",
+      "published_sha256": "7ae778c42b51bbe8d34bf64023b3757b1a98bd96cf1de21eb13077e232db4a68",
+      "source_sha256": "c2152d43566175a0e13e9c7846a39b077ef12f7f3213f5fec421ef81b629043b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/ex_6_4_2.lean",
+      "published_sha256": "9241d94593d3990792bed86415d0533bcfee225eb02d3bba6eb284154207d8ee",
+      "source_sha256": "5dd2a5ca9b0265ecf6cb59c2c6c32dc6deb6abd401d8cebbad0f87852a0d9228"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/ex_6_5_1.lean",
+      "published_sha256": "38506b89410a5935df78929db813cbf13c6e0285e5120da7e9584c09def5d107",
+      "source_sha256": "12e8087bf3f398ee4a74a998c6f10d952f8c2e7506156426b33696b02684a102"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/ex_6_5_2.lean",
+      "published_sha256": "bba71a73e1bd19a1120b1e00de5f05d16ebf655551d23d8a77d40d8582e06338",
+      "source_sha256": "0908bf1a4b6e863d38c8d805f1fa89760a23441e867fa31d02e8bdb6b998d002"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/ex_7_2_1.lean",
+      "published_sha256": "d0de5970903831bd92c079547f78d52fe889c73f1639549af8bbfd8d56085e5b",
+      "source_sha256": "48425743cd90505e4a57ec6c4fc787d94d4b6a59609ad12dac78e4d8617209de"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/ex_7_2_2.lean",
+      "published_sha256": "f86ac9efbf5e99c4f47418449b031323f543700215834b8d04564d089b7e2f4f",
+      "source_sha256": "18bf6cd85228f2337400079f85b6461126dc81b1947d8f11286094e05a212853"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/ex_7_2_3.lean",
+      "published_sha256": "6287ead8722db4fc116ba90e3577a9f44887f54a0b17776d961f37f904dbf763",
+      "source_sha256": "564e7fb171eb5a09f2ab8e73ffd14de3c3c8131aba3236c905c67282f28ae38c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/ex_7_3_1.lean",
+      "published_sha256": "83e1694cd860bb0341688a577ca5d0f000bfab640142c7a85a8c613fdd3e13b9",
+      "source_sha256": "b2bf94e18a3c06e41cb6f244f487a460dbd5e820407775ac052b04e081414d18"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/ex_7_3_2.lean",
+      "published_sha256": "7f9cde08f35566d1feb7cc5e4978b3a3096fbc133702204cd313e954e6f2c484",
+      "source_sha256": "652d3830a2c842e88d2b06c32f1b39391b4a2dfe91dba9e755d7770b2b4a27d9"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/ex_7_4_1_rayleigh_distribution.lean",
+      "published_sha256": "0ec3509c8902a9802cafca4812ccca17593d2bc94b205a5b76f4eeec1c7d4d41",
+      "source_sha256": "bc4d2b754f58ddd2068c9b3f1d7d1ec24e4fa7bb3cdc2bbf43ef16a82de46baf"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/ex_7_4_1_variance_of_a_random_variable.lean",
+      "published_sha256": "b40e6f0d1684f6f345995c8121fc5ed0d371bb48206cf61c917e9aa90d76fe28",
+      "source_sha256": "fb410e53204f1ac09713d0180631cb15535229c01c1e3258c89d76f3dbb5cdc4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/ex_7_4_2.lean",
+      "published_sha256": "afe2da56e8cad7b8ea567a147e41836ec15d83a960f81bdfbc8bc26379a6b627",
+      "source_sha256": "112effd17f8a2d213e4e0c551cc54c9fec18cc8cf1aa0e4dda0069c1fa540cd1"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/ex_7_5_1.lean",
+      "published_sha256": "f5c890646cdb2978a31ef4288ab2bce6ab3c6adba3d4c07acff25fbc3db2f72d",
+      "source_sha256": "34c7c8d8cf50f095c7c6cff39ec376433b5f907ef807396cf3fc62e3a85ed3f5"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/ex_8_1_1.lean",
+      "published_sha256": "b43e607b9b400900f942ff0b11cb96b87dac00acffe5b9d6f1a99804556f0203",
+      "source_sha256": "bb8c80d25aaf52a96692af50b4bc36f2f40eb8ce3ef7837f51f11541390df6e0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/ex_8_1_2.lean",
+      "published_sha256": "165dd77430e37d5e449b163f9c900aceec4ad43cb93d0c585afee420e40513e2",
+      "source_sha256": "7e4c61a97bd11b6d9c89ee2dad824450ddc3cc873fc4b23228c018c7dee70e9c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/ex_8_1_3.lean",
+      "published_sha256": "c82720b9bf6f04b81dad3560e837e5896f7e2668cb31853ed145f7dac463f875",
+      "source_sha256": "1b65ffe24ba319746b8437e58680eb6e88186700ccdb7498d7842ba0f3c1bd02"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/ex_8_2_1.lean",
+      "published_sha256": "8a39836906f8e742ce1578689a69b8da3c844420f1149ae0027bb28ad43db45f",
+      "source_sha256": "8cd1150912e77de46882ef218cb167ce905e79779f65fdb69f1d3e24ce7bce82"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/ex_8_2_2.lean",
+      "published_sha256": "783886a735a9eaabfc1f1cb219c8c21450eb4f233312af110cdca02e0cf2147b",
+      "source_sha256": "c5f4b457a2c0f431ee048fed0aac15a2e3ed227a241aa01d40eabced27dc463e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/ex_8_3_1.lean",
+      "published_sha256": "757289306a6b0520a081876a988209d19a2662aa105d8813c8e43b162b23f62b",
+      "source_sha256": "9a47780080616ca5d0a11a422ab87d0f80c4f375063dc315b187d27d41300668"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/ex_8_3_2.lean",
+      "published_sha256": "f9337a8de86f1d24afa3c0fcc21a42ee44970fac2f1495abd3266158a8add992",
+      "source_sha256": "df438946b02b2e0acd203253b4914aca85c8e27b4996fb6c75a6dac95a1e5e96"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/ex_8_3_3.lean",
+      "published_sha256": "1f7cf21307f41db773661efe7feb643c1881c51c99a6e1f8cd082395617b5904",
+      "source_sha256": "aa4951c159e6941e18f98409f8a5d49f6e45de2d9715a4cb4aa320408ebfb2e0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/ex_8_3_4.lean",
+      "published_sha256": "223fb4bbef11e1f27216309153ac5ec5a43e67b5102c34b3435463a51c70f48c",
+      "source_sha256": "7b4d5c979de29b86f9c8aa23e8b571d7f11ac6e39f8b07736d56c15ca48f7a16"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/ex_8_4_1.lean",
+      "published_sha256": "6a20d73ca9ae29dd8643c4fd144f926aaac9f6e31786187a2a2cd7b41648044b",
+      "source_sha256": "00aac54e9c3887bad013b556a2a2d15eb8abe65025aa5646439256b5dc7278c3"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/ex_8_4_2.lean",
+      "published_sha256": "2526d3a9783954b60ef867e22180069e7000354657630b16b4d1944168941827",
+      "source_sha256": "78315087b4d2d7331c46432f54872e5e5b8311e092a592360ed98ddc68d4ccaa"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/ex_8_4_3.lean",
+      "published_sha256": "f92eaca051ef8dbf44923698774a4eca36d7a11b1d8c8e18d3e359dd5b6ad639",
+      "source_sha256": "b3cc3f0d9cf6932b76e60acd6128fa935ecae3744e6de94b77b3ed0893f02405"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/ex_8_4_4.lean",
+      "published_sha256": "067f43f43bf9daa611a85589809f69129a66f2a158dc49f67a9f9880371840ef",
+      "source_sha256": "403b32599b277200c7554ba2dd0fcc193a425aa634160208932518f5cdab4ec1"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/ex_9_1_1.lean",
+      "published_sha256": "98b804ee654bc869f2471e3e13fc2a28ec92ffd16c3f228e2e8d9ddaedbb7fe9",
+      "source_sha256": "9ec24daa294e547108b683b678181cb0131ab3f109adde3d39f5fe99fdb1c83a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/ex_9_2_1.lean",
+      "published_sha256": "54351234dec73892440eaeab47635cc293dbe078bae723e85179111429984e1e",
+      "source_sha256": "a0b4088f7fc4f3e3ed7962bb0984f47b59900b5bdd7b260a7c30f94748bf31ee"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/ex_9_2_2.lean",
+      "published_sha256": "920f3aecef7b70c6ed562d24582ab73e743110e5544c3e7ddc24556a3360a3d9",
+      "source_sha256": "98cd95a6890b64ec14353b63dee8775b51791135182259173cfdcf38ab95871a"
+    },
+    {
+      "path": "ProbabilityTheory/common_support/gamma_beta_bridge.lean",
+      "published_sha256": "da048c1708d42a41a9a6823e447b4525ba6ea910b82ea8dbc276d7d8b3031967",
+      "source_sha256": "28e9ff91a86a3b90e1692ce6f0cc48d6536b2cd5a91c9e32a064eced3d8ecae8"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/prob_10_1.lean",
+      "published_sha256": "49f8840b1ca79f37ad73fa8ae5e5424870aaa4eae78d77b716c566503af51514",
+      "source_sha256": "1d90093caa6f3a4d4e8270095a8616c1302cfe30cfcdd1d3afaf2feb4f03552e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/prob_10_10.lean",
+      "published_sha256": "23dfe766d20b6878afb05068482628c35eedbbb7acf4834fcb68b260671583e7",
+      "source_sha256": "8d0f86e407ca13ea98fb126c0ccd241f4c2e4d16ecf0a36df16b879b797b98d2"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/prob_10_10_distribution_bridge.lean",
+      "published_sha256": "df790b4c8ab99671f98076c6c735e987250c1d5af9904dfedd83bdfac30ef018",
+      "source_sha256": "5cd53006f7fc1ef2f8b3fc5b1bb63f21fd43f8521f75de10288b249a4fb1ec66"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/prob_10_2.lean",
+      "published_sha256": "cd696a647db544a41416645bebba63d29bfc1f5f43b0098d079e7c51723c6828",
+      "source_sha256": "f824eb7917dbf30b28a68b5a2300ea6d45238697b113491e6105e6353c494059"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/prob_10_3.lean",
+      "published_sha256": "e42d1631c00a78e9cd944061a06d80815fbabb93ecfd7c972cc4777eaedbdf68",
+      "source_sha256": "5fe55a305b06bab0b60dd7a33c39dfd5cd9b99a74e891636c5e9dff42af887a2"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/prob_10_4.lean",
+      "published_sha256": "98ac0a3d71fdcadf0fde01714686a071879d123086bf5cb3809f58cd5a31f8a0",
+      "source_sha256": "d60ccb8f4091fcbd59747f6672b04cec2c7844c8bce6b1cc9859bd158b307b42"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/prob_10_5.lean",
+      "published_sha256": "d7a3a8e2a3d0bdfb91660debc40ee89d521980e0ef207c814bb02cc13aed5980",
+      "source_sha256": "791fe2be03e952f18fe66f78f325d7fb6924bed4096ed6cbd6746aeb63250f52"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/prob_10_6.lean",
+      "published_sha256": "6d5d8dc49a5acc4a089231f1159527d20be9bd8efb3b6b9815bb4610a9041045",
+      "source_sha256": "91bd1d64a5e1f1e58519965e158c8d5378439d62640afef313b23f7f71ac18fe"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/prob_10_7.lean",
+      "published_sha256": "b2429a588234de6a7f50b2e05f5d688d5c5a2419e24387ea70c2a48b5ea954f9",
+      "source_sha256": "75017cb0c620126e1e9a57e3944d9e1611cf353431bfc884c33e8f12af5ef29c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/prob_10_8.lean",
+      "published_sha256": "8babfb74c7027284bf660e38e6e3ef47f441ec9d0b1c1978626be338bcbe2778",
+      "source_sha256": "e18d2d11fda6fc9aabacf7fbd8539e3572878dc4921c8f19f11be2a4b2020f8e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/prob_10_9.lean",
+      "published_sha256": "702bc7697c5ad21c89841dfaa5f572366628276b10f7ace162770a4078b839c5",
+      "source_sha256": "7e114185dd6703c3b707ce8e794ef0d338fb91891379972f257ac9bf47a8ffce"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/prob_11_1.lean",
+      "published_sha256": "7158502d6414345ea3a5d3df83628af8515f575bd9487fd3b49d191359938822",
+      "source_sha256": "3525235f32c548a6b7cb1962775955b54f163f40dd7054e18354a2790be14c0a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/prob_11_10.lean",
+      "published_sha256": "a85407beec045b0fd438ce9606a21878eae19d39fdb0e4d9fe268144ee6525aa",
+      "source_sha256": "acb6c2b0b484bc7d0a485e489702202c10ab846e54a5d79b9a36c2aa2a2f5cf8"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/prob_11_2.lean",
+      "published_sha256": "800282a14dfde5eeba19c443e24a9e393e6042d7b120c3f8a7737616a560ccbb",
+      "source_sha256": "72909628c6f04fb7732f5fc075bbc9cbd4c3a6674fff19aaa952d7bc139bdb73"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/prob_11_3.lean",
+      "published_sha256": "9525f76f25d2e4102b0e61ee236f5674582d25b76cffe5b32eb6d8e0a5bf7b58",
+      "source_sha256": "e8e3f63e221d74349dd62dd457d48527afeb50707cfaf35215baf688f7f3403d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/prob_11_4.lean",
+      "published_sha256": "35d9e98be9525bb2e8aa0457b61e1ec2af2210a8886f38215cb92b9cb9a2f6bf",
+      "source_sha256": "2b498b06f18d8eb2efc062014c79faa941b871d030f2dbaf9ef9f2baedb9f9cc"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/prob_11_5.lean",
+      "published_sha256": "676045ccd7d7f79df981bf78fd6d0ca619c0def7237c77f31dccf7191d54fc2e",
+      "source_sha256": "ed279c9a54a38a58190f62e95abb8909ed84deec400885f2df6ced4248bf8a04"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/prob_11_6.lean",
+      "published_sha256": "71db0b9f61dc0138d6abd2a81969ec2ebb12e7fec707e32c18e390f86776d2c1",
+      "source_sha256": "47ab72eac78c650e11afb96380bb470a8e929bd659d4b163840dc6d432eb5673"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/prob_11_7.lean",
+      "published_sha256": "1fa3303551f047538cde3d81990783226a83fe3f2a96595a4f5e6b275f13cf5d",
+      "source_sha256": "2d20a99bbe929fe41de0052d4c5595127430c362c27a790b2b386b0f029ac6b6"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/prob_11_8.lean",
+      "published_sha256": "e789420d353f3323c8404254a18190a9c6abcae0d1640214af150beeb36d347c",
+      "source_sha256": "e8f1fadb566eadb9b739cb5d51122c534f10f9caa3f0873fc8b3e64a74d47841"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/prob_11_9.lean",
+      "published_sha256": "f456b53281370421fa67c3cac8af551b8a4555f0c1167526e67c6f2482ccf8d8",
+      "source_sha256": "447262ae1edc284dc47e9b85463ae4df0b046ef874b9e7c844e1a5f38e827740"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/prob_11_9_final_support.lean",
+      "published_sha256": "68b8e37e9940011f474021beb5eaa34993944df98846bca0d629e53365b0187d",
+      "source_sha256": "fc00e992cdba75c33084c3d8b81c30bbc126aa64d9a8e7a824e8f277bd2574c0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/prob_11_9_limit_support.lean",
+      "published_sha256": "a0ebca0e3c125f18ff25a1f1b5552b68a264c845620241091425c9126256f15c",
+      "source_sha256": "da9a51d41f0fa5f705088023e624a09671ae408cdc1750e0326dc1708747fe48"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/prob_11_9_model_support.lean",
+      "published_sha256": "94e66ad46a46fdaa14feca584c3f7a920c2593a827ca3d957d1236bdc49153a1",
+      "source_sha256": "92f27176e8cd4a13197526cee4dcb7ea018e18d87bd5be9d209e9554b82dbe78"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/prob_11_9_moment_support.lean",
+      "published_sha256": "2ba0810e34659b9c4930716012f884fa06301178afe0941d9f1bc5188231ae96",
+      "source_sha256": "440b1f1e867a34596da6cd502972f4311fb3421194ca9bfc28390c949035f2b4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/prob_11_9_probability_support.lean",
+      "published_sha256": "8632de9b7e5b4fc8b184a50718cb0d61c9fcffc76d422a14ba816d95cbd5c23a",
+      "source_sha256": "9a6123d12a7ff11fded9abb4fa18528dc6f14618aa6b89e476865e419e7d2ecc"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/prob_11_9_proof_support.lean",
+      "published_sha256": "1f53424e570d03b364b23a907318d8a4c6394ac15f34b7e460e3ab045c3b34b1",
+      "source_sha256": "c31033a4f613a3df758b73a3fd57e4dceaf0149d2ee348dfd36738f86cd8e744"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/prob_12_1.lean",
+      "published_sha256": "62732f4fba98904158b79328897d8b32e73f92af740ff6bad92a85ddf4a72ecb",
+      "source_sha256": "3a22d46a5e6fb37a6b9bb897ed4fe0ec68e84e008b0b21a4269b54cd452b9966"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/prob_12_2.lean",
+      "published_sha256": "7f63f96b650de48b0e1435ace91a40865dc8b13a1f321a01835a52e16c057dde",
+      "source_sha256": "ff4df12fc0b288563ff06b9511d86c480d9567b8eb44f8c27895b9477dccef04"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/prob_12_3.lean",
+      "published_sha256": "0173c7588d34b9fbb2f8927a3e7650a76c4b06a6bf3cfb1f628e6dec5d00ffbe",
+      "source_sha256": "1525afd3a6d39cea856a0411517adbc4bfdb95ea8bc95ce10d013a275261f6fd"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/prob_12_4.lean",
+      "published_sha256": "430a1be16e1a6efc26fe6b94caf5245ccc43ff6c1e91606b9b1ccbc3f05bfa53",
+      "source_sha256": "ede04870ba62760d5f00156845f65d3740e2dad17ea2a76769192c677b0b1345"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/prob_12_5.lean",
+      "published_sha256": "ab57e7fc027d1ea20b610ac9e709850365e673407fc9ee28614c17c640686a01",
+      "source_sha256": "b91d427ae24542deeec8c561b86ef6af69f2566e0beff24851255fb30b3fb609"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/prob_13_1.lean",
+      "published_sha256": "fd54e8c3c22b179bebd0d254ba732c8758c2827c805e76da80904a0076a06dbc",
+      "source_sha256": "4edf1bc5df19c6b52732e1d8c93157321cd5b698e5458063e7aa52237e4746b4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/prob_13_2.lean",
+      "published_sha256": "8b5aea2b9689f88ca7a8985308c4f101fc7ee73915c139ed78ee4a4485667e36",
+      "source_sha256": "5435de45bb8e35ef1bae4fc79e504f132c4140a344f21fd5047e35829dc37ea1"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/prob_13_2_support.lean",
+      "published_sha256": "f8ba7dc9ac4f66cc7ba0642347a02a26fb457625852bd0a9850720a52ef874e4",
+      "source_sha256": "8796511ccac482c43a6a6253f57faa6c12c72329ca38a84d518cf480dda74c97"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/prob_13_3.lean",
+      "published_sha256": "21c692977530214f4288551fa5bcc171b07fbd265f44d418f354e7ee50794d61",
+      "source_sha256": "f86b6efd1fec6af832bcfe5f9aa8e0ae7fa0f70d385bb54191365b99cb684aa0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/prob_13_4.lean",
+      "published_sha256": "add944c573e2fd12ca77d8e946c07a3ee55466e4aee70befc0d31084e37dce33",
+      "source_sha256": "e8bedbb34352687223ee2f4490ee6631cc1863df79b282a022c9093fc7b9a959"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/prob_13_4_support.lean",
+      "published_sha256": "3065f4756ad587c977739d9a62a1d123e78897bcf2596c0c571b5a644a2a050b",
+      "source_sha256": "38cf6cf4a8472b17580b62ee54168a98b7579ae621e679f70de86f93ce19c32b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/prob_13_10.lean",
+      "published_sha256": "6ad1d2b643b04901025dc7a2d261accc754b1a143ccc802c458a70638e458c7f",
+      "source_sha256": "da022061447c9f1b5ad31e431a527da3f1fc889de0da987bfc70d591edf0fd81"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/prob_13_10_centered_wald_support.lean",
+      "published_sha256": "4c43e107bcda1848427204b47d975b55d30f9af6894a96c84449441981d7de96",
+      "source_sha256": "9cee7b8b8d5c7b383bfd8b347065bc16826231230b739cd02d9f0890ffe26303"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/prob_13_10_independent_count_support.lean",
+      "published_sha256": "4e971a861d2647321cd5af9b17bee52d1367a3eea75a39cc8443be2fe16f8b60",
+      "source_sha256": "4f26b61f4c7ac85754511f2f1f24272677d20fbc3db852d05e91aa96720fc957"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/prob_13_10_relaxed_optional_stopping_support.lean",
+      "published_sha256": "d02d538ebd575aef35254efa1a50903826ef96b0fca87b1561273be65b016bac",
+      "source_sha256": "93d6278237590cee6f0d598d284c423b8a02ec2d19c4bd5befe5b7cec4627837"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/prob_13_10_stopped_sum_support.lean",
+      "published_sha256": "bf4538810970d23e3d924289afd87cbfd1136eb1e67efd88160b71ba426b2d1a",
+      "source_sha256": "23a90f4c9efe6bcf46cc7a0f7a0be6d3362e9565dc20e7179c19e5ecf5f0e898"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/prob_13_11.lean",
+      "published_sha256": "fedc5fd1d6431eae07ddc8505ae8228e5e2a350ec7c66c87413a434e8e4e5326",
+      "source_sha256": "980db7c9f5fce7c18759b2d1d4f6e54a318e85eb3b6e4c55aaadab4e06928e8b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/prob_13_5.lean",
+      "published_sha256": "9b1fba71b2d2ee8735e09e2674f1a299b0d05f96b4ea98c29b7e34c0154e6b34",
+      "source_sha256": "68effcbce980a651cf6fd9c8d48c7888f14df6b9003626cf216807e97d673bd9"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/prob_13_6.lean",
+      "published_sha256": "ff1f6c62b8d1cb48fba8ef2f8848d5d3c6728cec51dc69417e5f34ad1997517d",
+      "source_sha256": "3d14e703fe784baca8d92e5953f41d72ae01220f4796229c2b46d2e8076dbd30"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/prob_13_7.lean",
+      "published_sha256": "9c423d17e67fc763e75a9704ce069ff6691d82ebee588146c0980db25b57b586",
+      "source_sha256": "70c0dbbbb9e11f48346b828a7e4d84fd3c95baff7201ce6afa22034e22655af9"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/prob_13_8.lean",
+      "published_sha256": "1e39b2d2173485268b07acdfa57e3a05f76511affe0476b47946637ba7abf6d5",
+      "source_sha256": "758312156af83bf3c35133aff7dc24a07a27aeb42ba87a5dbe3a49eecebb51fd"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/prob_13_9.lean",
+      "published_sha256": "23e1fc9039747dc7314aa2ca8cf9b4fc2eb9073a04d3fb5adc5485280d5a7587",
+      "source_sha256": "db72e007f257056aa151cd8596e774ede6f657eff430f1031a4bcb10ea08c504"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_1.lean",
+      "published_sha256": "56a97367b7bf6cd75d81acafc116dcae18ffcd2ffc10a5d10769460a2815d373",
+      "source_sha256": "bbcfe9f69a2a8800ac03f3c1881d80a165a512f14f6fc52fb9058b4f3263b517"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_10.lean",
+      "published_sha256": "83db2785dfea719929de473c0a435ac3faf9a0ac3cb68bbd14fc299bbc388175",
+      "source_sha256": "b125477e997294fa413e0032b9debb5b2ae1899c646058033b231aadecc2b4ec"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_11.lean",
+      "published_sha256": "e90bea18a2375ee076cc11d3668a866b2ce7cc48c2f1846153064ab3deabd50e",
+      "source_sha256": "fa884d211e9a85370bafc612d0c7e843d350f631be9e483cbe5ef9929cfee39a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_11_support.lean",
+      "published_sha256": "b90aaccab952065077c85ab7eae90fb5b6455d3042387d9efbfe4e3b8c095e47",
+      "source_sha256": "1ce8a0a30f459e3d6b56385123006e1cb96a5a4ae53f19f7839b9ae123fd35a3"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_12.lean",
+      "published_sha256": "b725c3e76c7a87bb37560d872b42b2d9e3a6b7a86e8c12feccada05f67047f16",
+      "source_sha256": "10f2d0155edfbd7c23ba3fab517712337d535818eb51306715a56d09e6662c87"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_12_limit_truncation_tail_support.lean",
+      "published_sha256": "cc7898c77c3e92448456dd348991030d01e9cbfdb62366997dd49cb7d1d857d9",
+      "source_sha256": "0b0c1bd670b4baa88370b9fb207aa54b323586d3007c189d843556dcd6b04903"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_12_mean_convergence_support.lean",
+      "published_sha256": "72008d1ac442c50eeed708b4b05fc8079afb690f00eb38133de6e9d5d0011d95",
+      "source_sha256": "daa04c7c013e900e27148dc2510428f5a6f910a2c186bf6c60309c867e3e61be"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_1_asymptotic_support.lean",
+      "published_sha256": "5cd083e1531b973016dfefb536a87fc2c362f98fd4733a82c1b9931090dd929a",
+      "source_sha256": "30a43bab3a5412fe7ad612fc4c936592c12e0f0237debb00e50e42aa79a75018"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_1_finite_law_support.lean",
+      "published_sha256": "4d93abf58ae10d322112c1b3fb4fbe2b583824e438d692ac9b8b09a15fd5108b",
+      "source_sha256": "075e99006006a5ffc4cd789b24b1336be79d4e38003136098ff7b551f0d51752"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_1_grid_cdf_support.lean",
+      "published_sha256": "499d018835abdcf91b4f0afe3d5ad2fa708f606f3d5e78a979159c5d640074cd",
+      "source_sha256": "b402c941daf80c6368c455a8d3a488b9ce7a8b54c8cce382f49965ed8cc831d0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_1_proof_support.lean",
+      "published_sha256": "db2ff6f0be3a42df0887cc34b5c22583b08985986e687641dab10815e5ec0466",
+      "source_sha256": "2a9baadb53aab06a704692264ffcde5d041996b869bf6df3229c2d47559143af"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_1_tail_endpoint_support.lean",
+      "published_sha256": "ab0f29e9f7ed744c59d1b305b0b8fc8989374bfefbe26d523aa72b156ef02993",
+      "source_sha256": "6a54999a7c7963a2eda26006389d68deb07642a11e9b1f38109b7e0ee3c748f4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_1_tail_riemann_support.lean",
+      "published_sha256": "96b73e76b99c663077be01e68f748ad4aba704ccdb2ee1271032553c953bfb97",
+      "source_sha256": "3fa12db791985bed1272f909e02ae8fbca06c3df52eaefe216cb63b6959302f7"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_1_tail_support.lean",
+      "published_sha256": "5c41eb87ea3baddcec4abb84099e75f0ba8e48968b22462a11a75b4088906b9b",
+      "source_sha256": "25c092dabbcad434c43ff1ef6af78147310a4522b5191448c0096385a9155e38"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_2.lean",
+      "published_sha256": "32646e45b1e4b5179f4c2ca22308c4561ae380884537167809e13afb26088758",
+      "source_sha256": "f7d8d99df7cf6175f2e87b8fc3eb4d9ab8cca9933c77c977ef62c66b7ee2589b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_3.lean",
+      "published_sha256": "6e116def1a15c1c814cd118f5dfbe29db60aa2fadf09295d008e37832f3186c9",
+      "source_sha256": "d4ead8d1f90faf5606a65ef345c44f3369dea9087ef6969b32573f6f20a9a98a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_4.lean",
+      "published_sha256": "4cc3050bf07073555a99175c1d769ce11c8bc29d18f6c5b2e9210483ba08909f",
+      "source_sha256": "ac8355c96cb89bfcde2b6ec43212aeb87231a1426437cb9a01eba80c4d9a5e05"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_5.lean",
+      "published_sha256": "e6cec4f28d89d53f6d0687529b7094616bb228ab21184aef978c1ad6446018fa",
+      "source_sha256": "6d6c6b749e0d61890de840ccfaf1eaa5cf96a93fe60685a5f6752721e0176168"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_6.lean",
+      "published_sha256": "fede9d9165410214a662fcb17bc2cff72540cc77ea3f65cfb3b9ac8d89bd20f8",
+      "source_sha256": "4204186a3685555e0991fbc2212643a3f4410b2be0999bde3f8e5bfe24c88bb5"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_7.lean",
+      "published_sha256": "6b33ffcad2630c09bcf6c37a6e23daec0c10ecd92dea70d548aa953a37fe30a3",
+      "source_sha256": "17c64bfb67ce66b14ff06cfaef41a71a959644fcfb19061852476bf479d516ad"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_8.lean",
+      "published_sha256": "5aaf49fd864308c258cdd857c4dbdc0bde63eae98c7de40f78deb8be2ebcc6c1",
+      "source_sha256": "9f72f9b2577ee6f55591bdf20494fd2e987ddd6a96bdb8e8216c73597454c812"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_8_mgf_support.lean",
+      "published_sha256": "4d07ed78b1acfe038ec9b87fa98091bddb3affc88d82b69f5fa66a10d8f37cb3",
+      "source_sha256": "dc495c9946fe3a1924b6224e381c88c5ae581598f224394dc34449fbb02b4d47"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_8_montel_support.lean",
+      "published_sha256": "d976e0a379f53fa276890d8fef4e2be61154ec66c7c6b693af4d67b162e6299c",
+      "source_sha256": "c278ee8eb2f1e41d34496e570b1f80272a96b35e79e5fea2130580b55c8950c0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_8_proof_support.lean",
+      "published_sha256": "31cf90ae58327ce182e0232186d7d868995e4a6dd02d7496f2c44ca8f3b302aa",
+      "source_sha256": "b5bd60cc8f4048a5cb9a131cb0d95d21cbfc2b71a5637c4fd451b76cf7e613d3"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_8_subseq_support.lean",
+      "published_sha256": "ba9a6fab9cce8a3cdd45df4677e699319b4948507bd24caa33bbd6c494ab329c",
+      "source_sha256": "b505618d542c91a114bfdbd3f7429ab94fc0d00a4dc2b8a949d90d5932ee3a0a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/prob_14_9.lean",
+      "published_sha256": "d87beccf4e67f929a0f1a0445836682f61548e0524e9d8f1359dbea73df8b62b",
+      "source_sha256": "e64dfa7a548a3d54b5d6cc813926e6e6386ed010afe089ac4d7420d75f6afe6d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/prob_2_1.lean",
+      "published_sha256": "2dbcac90f01a7ece9a1654107ab5e42febcf8a0072d6ee2e49ee5f28f5ab05dd",
+      "source_sha256": "3e7e5a035d76a5ce2530387ddc4e48763b23eb71559e01302741da4057f9b733"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/prob_2_10.lean",
+      "published_sha256": "8a23d3f4560d331ad1805d1a1cb68bb5925c444947289093b1fae83cf3796437",
+      "source_sha256": "7dd99c2a03654682f4bf3d89c2ac4ee807bc3f6ab95250e24041e473862d0c44"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/prob_2_11.lean",
+      "published_sha256": "43e6ed8631ef80d8010e295e67d954ea0a6842648647ade1dc2304bb68aec828",
+      "source_sha256": "180dc1b087a0693c68bda3bac8e2d6b449a2eb906f0c1de01b566b0617b1fa97"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/prob_2_12.lean",
+      "published_sha256": "887e1f2e4c117d037dc167bb9b3fb3651d703a1576f39eb9d829a3f2bde41e87",
+      "source_sha256": "b0d33ebcea366329a7b03c864bdc0454d1cc39f6f0dcfbd4aac570c18ed8558e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/prob_2_2.lean",
+      "published_sha256": "4362662437fc285a623c843ae42c4052dd4df130b6714b27c049d8c66658df47",
+      "source_sha256": "6c4f603fcd59b8f00fc3e353c1a39ec26881f3ca72ec9fa196f2164ea833f99e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/prob_2_3.lean",
+      "published_sha256": "d6d7b948d072bd6bd1b705bf590c226d9f15323b665231eb4b04f0fb88e451ef",
+      "source_sha256": "c6d41cb51f63de093d48f240f822fdb05d7d3dcb68c50e021e52ab3f81ba62c9"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/prob_2_4.lean",
+      "published_sha256": "cf1e6837befdf5e2d47ae3e8877737c08b6cb5f70fa2a695e8b1ab4545e9c4e1",
+      "source_sha256": "276f944550e2fbaa7f13eaa836d3f2ba4cd9c642c0d2593b2097d952246db3b8"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/prob_2_5.lean",
+      "published_sha256": "88dd02f3a8fb9d597584f8c7db7470f9735ee2decb1233a90336afbced709f36",
+      "source_sha256": "d9f6196096553df939760a8ab34147b14e1e73deeda318748e355235aaa180b6"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/prob_2_6.lean",
+      "published_sha256": "c316d99ebb04771e65e33f8947201f77dd368dc78b452138fd62b57345ee86a1",
+      "source_sha256": "be5e70caac02318cf8a84a623033cb808cd961fdc9d7b21dba923f322c1dc5e6"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/prob_2_7.lean",
+      "published_sha256": "e3d1b52b3c25b7cfeec329ed304a5275ade5306d22c5a5817fe2eace8f3a371f",
+      "source_sha256": "b1dbaaafcfa7ae54a1a1478e68dbc157ce95ff351057ffdcdf8553995849a476"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/prob_2_8.lean",
+      "published_sha256": "2d466f6ff355db338cc2118ddb8ff82ffb6ee6cee6c6da2a861ab8a69cbf2edc",
+      "source_sha256": "7efdd47018deb4c1b367790d6ac6a58fc3a240af751533e0cf01ec18bfcb003e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/prob_2_9.lean",
+      "published_sha256": "e688f55c3e1cbcf5c0da099f392382ef72db495b027e259384a8851cb16d5b79",
+      "source_sha256": "bfd2777df2a8f1cf64c09c4fdabf85979f3ae744d00d5b434df0b1e2cac7767a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/prob_3_1.lean",
+      "published_sha256": "01abd52e99837864fbc25ad7adf7b95fded2b5e0fbc39e6af9f1634ceb04a46e",
+      "source_sha256": "d6aa2ad928371e1295058f70672dfeade8cf59f2ffd779841f47b3ce1ad1ea29"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/prob_3_2.lean",
+      "published_sha256": "f3b4f61d7ba07a7abc33ed8634292faa5247db4d4f6c1ffd52f24464134ec4cf",
+      "source_sha256": "6a3815bebe4fa9c87c60a2eae6654a197d6fdf8c20c8d3bbd331c376c2f12211"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/prob_3_3.lean",
+      "published_sha256": "d77d8bbf235041fe5a9cdd6431d5e68a21c3d43e223a5cbe9a6a798929f54e8c",
+      "source_sha256": "a6364e9af79504271d5508cd21a90c390eb8a20209c69d39fb35ea6c264e11a4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/prob_3_4.lean",
+      "published_sha256": "67dce86ef2546613caac7ea30c4800658f1a9931278b2de73061789a3fd2c7e2",
+      "source_sha256": "c97fbc69ae0f8e4d63c7fea5af7b04dedeecbdeaf1ab5019815d33723a9d12f7"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/prob_3_5.lean",
+      "published_sha256": "0c1cf53bc5f3b6d2d1ead42e6d5a163ce64e7678476de1b80797cc3b682b6ed8",
+      "source_sha256": "650312a1ba2a93ffa9ccd5fc6fca1de7ccf002d17b03c8e2df17ac8b52b4c3e2"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/prob_3_6.lean",
+      "published_sha256": "0e8329ee565eb5db30781a936819327867d0f3497441c4ea37e3bfb44152c6a4",
+      "source_sha256": "228856dc785de710953d09352229410daf7202bbfbc0f28df031a444fa36ed0b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/prob_3_7.lean",
+      "published_sha256": "7a17250cb2cb5868cec73d82c5b5a90b9544fd64fca6bc0ac0b1f1d45928e2b2",
+      "source_sha256": "1b5f55e757f49121542041dc1fee8c78a0225684481b4f70871c854cd80b8941"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/prob_3_8.lean",
+      "published_sha256": "3685e405ed8b37d0dcd701dbdff8d8d507dac33871a210706f281826a0c9201b",
+      "source_sha256": "9728b90a78f5b2e6f2fd3870f33e09b3101c7e936f25bf63df333012270f96ff"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/prob_3_9.lean",
+      "published_sha256": "28db1d2aea4fb9be2c39d3ff2d1b37511f13728f9c50a6179ff869bbd33c2a4a",
+      "source_sha256": "467b6944e119f5408dc842182780256eed303af2b490aa38b1deb34a0c99cca3"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/prob_4_1.lean",
+      "published_sha256": "d396f1da8e73b0830eff81f26afdce007fc529390b86b90811d407d6035a1213",
+      "source_sha256": "ef4cbeb81d6dc7ee699b736877253f6519141e81fd6feb2f1c135facc4d4edb4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/prob_4_10.lean",
+      "published_sha256": "85cdfec383d0290cf17df7925435197405a472030aa02c4b366f3b51b2719e33",
+      "source_sha256": "afc7462f3411fd883bff25659ceafb03a42bb5de83495c4b4917a2a22fd55ecb"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/prob_4_11.lean",
+      "published_sha256": "4e9cdec68a76466e28f1d29662ff05576d31fd4c7450245ef891d2600b18a62d",
+      "source_sha256": "80a1829293b52db217be5b884cf6a6fd316309e2c6a58892d9eb6df1803920d1"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/prob_4_12.lean",
+      "published_sha256": "ac5f22f993bb3ef30c609d6517be2d95038fec1776f7252e0a14517d8b654cbf",
+      "source_sha256": "7ee9c97c7ab29fd6d69964543fb1ff996f78ac570239f3d52d64a454e00f6401"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/prob_4_13.lean",
+      "published_sha256": "7e28d7c6f2eb43dac551a3d363d63fb197b1c5c2511c8706bde820f669f2d0c5",
+      "source_sha256": "0e97319074c487cc386624752b289f5a6ece57659907ab092798a618d1360e41"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/prob_4_2.lean",
+      "published_sha256": "66123dd1857f689a15ef9b59b2c514142598b5056d4b86f2aeb323cd0db3fdf4",
+      "source_sha256": "6405dc8381a797c762dfc4b4b87dca792ec462efa99650a5439c92ef85cbf9ae"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/prob_4_3.lean",
+      "published_sha256": "7f8290399a90ad08bccb02c0dbfda0170ab7dffbe67104a549152b34978f6e7e",
+      "source_sha256": "c2c3af6342c223f782756ed8ed495bd3f0f5d42f7f5b56a6a24c155bf466b0c4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/prob_4_4.lean",
+      "published_sha256": "6b2d741b3513af07acd9bf2bc46f029c804e94db7663606cd002277de129cefa",
+      "source_sha256": "228e4ce29262167a87a2945ac6cc03d5ba54dc5675dc6a4184ce22ea98084d40"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/prob_4_5.lean",
+      "published_sha256": "fd07fd560dff8d28eb2c988c3d28bf8a6f3f121ce35231d08329a724fa0ad12b",
+      "source_sha256": "d4fdda2a39cce8a81173ab32f355bdbcf01ea23906b894c43131a59fbbc6b7a3"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/prob_4_6.lean",
+      "published_sha256": "9100f764f5bdc06fe740ec0095699f7cc80a4cfdfe492a4c9b605243bd8575bf",
+      "source_sha256": "e36a0bad6a485f33bf9c8570eadb1a558f64d572e0c61908985690d5a2ecccb6"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/prob_4_7.lean",
+      "published_sha256": "868c5ef5c9715d0b2b6aaca5e0a2f8fda141ecb65ce029a11646f65468633f28",
+      "source_sha256": "a54eaf178828ecda22bcaa9b8ac148feabf95091b3679e67d61cf854c45938cb"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/prob_4_8.lean",
+      "published_sha256": "1d5ccd33828fb26bd9a9613085f898dc4ce640380f890934fe7978f41535fe49",
+      "source_sha256": "6749d6cc4734f0252e0fc84dd53207d7f12861f4506d4bb1e8e7cc4d08497108"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/prob_4_9.lean",
+      "published_sha256": "2ae9ef29441731898cb7948b1b998743fb04e84d623d7eb30c341c4c51c8704b",
+      "source_sha256": "fd821bc2eb53364f4bc5e20fbd1bdbcb0ae705d1c20011094ea79d517969b2cd"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/prob_5_1.lean",
+      "published_sha256": "d031289d688c9e2ba802948cc5ce3fb7e6f901fc116b2cf727e4c8051808b360",
+      "source_sha256": "68e806fb19ce146ad9e3565c4ac9d4d1c0c5928fbcae07a5a1eeee7b51e36fac"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/prob_5_2.lean",
+      "published_sha256": "71401417e21481999816d165fe50e2fd74ce2b399574f303c382783c7810ac32",
+      "source_sha256": "5144864284249e76a2636fac9b09e0e124148ff5bb89e7648ca54bededd881c6"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/prob_5_3.lean",
+      "published_sha256": "99679ac5afb5a85f7a54876156dff183e1eeb80f470861ef5a2170c2449f6571",
+      "source_sha256": "af9b1dbc57a3a9c93f95bec02f3f67f0b379c9ce4faffa57384aef85a5271088"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/prob_5_4.lean",
+      "published_sha256": "6da982ce98c8cc6b7fbb20286f9e8f10df813e0b995d4706e16512dce1cbca0e",
+      "source_sha256": "fbec59999cc137bb2a18dc3ef77b01eeacba174504fd348942c40cfae3d53cef"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/prob_5_5.lean",
+      "published_sha256": "bac1bf0c93dbc883ee837745efb3e9813fab7a9294165617984f5d4d7e4764f4",
+      "source_sha256": "3b43f9746328ace5b07e6905da2532d9a4974b052dff8a47551eb9f8d82f1d0b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/prob_5_6.lean",
+      "published_sha256": "7cc779539030960ce2fb1af67d4ca4515b8dd04d8da0fad459bee3683074a0da",
+      "source_sha256": "58a812ea250dc36663672635ed4866d8a93ed047e43c27031dc89b2609de3890"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/prob_5_7.lean",
+      "published_sha256": "26a9167eba30c6fd725ec840a5be3fbe59f790522acad792e8379219c55ad51a",
+      "source_sha256": "8dd1d630ae81762ea2bd5db1eca352d5dc4b0e986858cb64196c9848ff7e996b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/prob_5_8.lean",
+      "published_sha256": "72eacd97535e29419f965e0608199bd89eef38062515a6bde327c1a5731a66ad",
+      "source_sha256": "9bdd1e1d2e0cc9fbc384f54479ef3f8aa38c8cd54e504b5a6d4d8c62e38d5698"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/prob_5_9.lean",
+      "published_sha256": "f5bb0ad4d4c41e0653b15c387d8eddabdbc7861fd8cd155a15c7861dde069a34",
+      "source_sha256": "6a1fdc59b999ce7b37d8daff3cf4d7f2fcb5fc2748c616b7a2761db7d8172ec4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/prob_6_1.lean",
+      "published_sha256": "f304bcdbec121112db09fdd90616b38cb50e958a780c5833bfce6c76ab88d105",
+      "source_sha256": "e619f2b18d45ee016e95a43e70ee0f18dd12c30077632637ba2a8811edb3b748"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/prob_6_10.lean",
+      "published_sha256": "34056bde8b327db7ff1a1baac44a41fede6f44e1200fa038136ac3d0167b2346",
+      "source_sha256": "03b1c08c1889ea52584a3fd979673ef28e7ea226900216088c871a1c3a841907"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/prob_6_2.lean",
+      "published_sha256": "e7d4369a691df27d268073f55c67806feca8c6a33e3e4fde353b04dc4d1d343e",
+      "source_sha256": "7523f79d5349461af10a60c1e1c6325086b4e48cdef3a7a84a494d806824e2c4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/prob_6_3.lean",
+      "published_sha256": "0bbd76cae1ced0c8011794ad4601eb65f89381b2bd6e591846c5ec4f0d0bf290",
+      "source_sha256": "84c3318b9d439c1437d48c8b2231a050f00a6a2b8787daf15d02449aab365b32"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/prob_6_4.lean",
+      "published_sha256": "63139b456bc0c69d4480b69334f3730c7fa0fde8cfc0263df7a529d6eff13c8c",
+      "source_sha256": "1b6574ded87cbd01a93fd26a767935f8e7e84187c87ac5812531f03d0fb6e50a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/prob_6_5.lean",
+      "published_sha256": "25f01857771a30a8fd4e5477ef77aaf1b66870a19040901e498954a2ec69d553",
+      "source_sha256": "4a393b23e52d2c14e85d7c97f6a4e9564298becf7222a1236429500530c9d28a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/prob_6_6.lean",
+      "published_sha256": "66e6af53dc224a42cd6100fa5d3393317b2a9da5d1c78a74016a46eec2cea908",
+      "source_sha256": "c8c6d5bbf9201a98bc3144f2804264812d52184aa4636f8b8c76ae3d38c4accd"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/prob_6_7.lean",
+      "published_sha256": "951c4427d3f0c28990fee1c0acee8eeeda362d2d01a6fdff2dc25fddd022ac32",
+      "source_sha256": "af80d8f31a65bd5c3f88d2e62697ac2532cd5593c084a630b003c86b5acec26d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/prob_6_8.lean",
+      "published_sha256": "68409e68d0ac0ffc2c2b296264f6b852ec498582b1cafd9220ffd5f23b7eae69",
+      "source_sha256": "ff443a2f825c03f250a2ad65a933dc5297e0c6d8e876ad0e68c8be1988f1ab9e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/prob_6_9.lean",
+      "published_sha256": "3b4ecb97b4f09b71adffedce03a5ca7117edb529d59b9135b17638d45ad94b70",
+      "source_sha256": "de7d8ae5fa2ad5c94289442868944edbf1b9c78be5678a06ff6a478bad9bfad0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/prob_7_1.lean",
+      "published_sha256": "a477516e8c342482671124f2792d3cca1e1b8a8d1da17914476947d386ea3351",
+      "source_sha256": "c9740df1de8dbd87533433fbf8aeec5489e9da1d86e29e0c71552211a4d43ada"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/prob_7_2.lean",
+      "published_sha256": "e17bd87b3ae87f47661f2fd9e1f1b36135daf459e5adeaf03a49583e99a912cb",
+      "source_sha256": "35ae54962b226b26fb8abe09e17b1960b4b6a34a8a4acd3afdcdfa36405e67bc"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/prob_7_3.lean",
+      "published_sha256": "8f61a79316df0d4fc31db59cfb79add1d8d599e444883c3ba2dafc7e0b78d9e1",
+      "source_sha256": "f40061ccc73db42a0ea2b0d0c4a70f5c4b451393c902903ba46e99ec1f41b214"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/prob_7_3_completion_support.lean",
+      "published_sha256": "b1670cfcae241ec7126b87e49d4b6df05c59e47f9f4837e1c8c1abb63fe2e8fb",
+      "source_sha256": "39009b646d2c97f59b3bb224a8bd6145c5e20d0fa65bc7049484f857fa8adaa6"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/prob_7_3_forward_support.lean",
+      "published_sha256": "630994c97816b336940d743b05885632a940cbe2d1155f27e063d01be6608630",
+      "source_sha256": "acf36fbf824888c24a21995a96d1db5e32cabd2e718093940c0954b07ffb05a5"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/prob_7_3_lebesgue_support.lean",
+      "published_sha256": "c65f9829867b8e7ab402343f20c08b40b8edb2774f17e25180ad1a972745ee8d",
+      "source_sha256": "c325ca31f85deeef9fa967629bbf58b5511be556dca6eca4ac5a64b067b5e9c3"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/prob_7_3_oscillation_support.lean",
+      "published_sha256": "d46ce3444c92aa5b261838e14ba8eb7e8f995ae32852e67dbc396a0af940c06e",
+      "source_sha256": "7c58921565fd792e33d93153b7ee34862d7de6b379940df6e86cada2937d9d8c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/prob_7_3_partition_atom_support.lean",
+      "published_sha256": "87ad6732882b244239cb98778146e18a0e501981025ed9c411922c23819b4b8d",
+      "source_sha256": "ef2c5074994f0932ed6e64c9f7822e28a53d05f779d2ac93bb393db2ccabe61b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/prob_7_3_partition_protected_support.lean",
+      "published_sha256": "0bae8b49ae71f7aac34f6e42243ba56691f4d91b423714c992c27f824f77f1c5",
+      "source_sha256": "41e7a830d4e8d67eb9d9e406f99967d15848188b1b1df45b3e13054cfd5e7c1d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/prob_7_3_partition_support.lean",
+      "published_sha256": "798e3f2eed67f6e4567fdabf7f2b227a35ae0cdf9308336052661c02e5f52f43",
+      "source_sha256": "40d06d481a9dfad8afca19bdfcfd86c7f4cacc9aca6faf090255c0cee1286661"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/prob_7_3_proof_support.lean",
+      "published_sha256": "1d3760055057407b657b521b0e834f152fa1a9c91997e748a123c8149ac64196",
+      "source_sha256": "49122c2fe4f774d809b443fbe0975202d7809bed90b841b86ab43243e47aa269"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/prob_7_4.lean",
+      "published_sha256": "01df67d5763b23fcf546e9129e34f99cdbce4b892bcf2a25950392c35ab04bb2",
+      "source_sha256": "f03b2747da244ddb5085f297d419a33b1cf4e7001d9a70028ef7221773709bd9"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/prob_7_5.lean",
+      "published_sha256": "5a7052e7e965e90e518f71494230d0cf28601dfdea52e277abce11f742896f6c",
+      "source_sha256": "dadf6e9d3204ad550224331f41166ab0b365826580f5d66f03505393f4b7d80f"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/prob_7_6.lean",
+      "published_sha256": "a9345009f68a5aff4ff223e37dec9fddf50bc9738083254e576b15ee1e5d14a2",
+      "source_sha256": "7ad941e2888714d252e6f477b4d68c129f3f17239c5bc9787fdf404fc4ade3a0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/prob_7_7.lean",
+      "published_sha256": "075a6c7f649cd1ce99ef2ad3f1ec806cc122631712df522153a211fd566a4c31",
+      "source_sha256": "5b5da099b1a491d53ccacacce0d3aad759d2ac1a31fdce892920adb9134deaed"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/prob_7_8.lean",
+      "published_sha256": "797fe7c1cf4aeef225376d72698906cd809a66291dcbdfeaa61b4024e0e4cf43",
+      "source_sha256": "d45371cf8816b187b826011776d8d80b4f0b97871dff2063ba2908c021d73e12"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/prob_7_9.lean",
+      "published_sha256": "fe867ad6d01a2cb0aad8fdd27cfa2c039ce5caadfb8e6cf325d805c5a3b672ef",
+      "source_sha256": "35f567396b8fa9ea9df578c8641772fd196a084d348a355cd2391d1a43af70c4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/prob_8_1.lean",
+      "published_sha256": "0ece6676ea92a883a61d043b49c110308ae6e8d5b0a1802bc2a2e27da53796f7",
+      "source_sha256": "51bf194476ba69f9b451f048287d64dbcda968028ce334a2f5e48d138dbe9a64"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/prob_8_2.lean",
+      "published_sha256": "9190ad37cfde58bc318a99474a4b687806a484124f69d4a3a4de4f074093ae30",
+      "source_sha256": "3b9230be227f4efad06eb8aec2f5df356a05c9ace8c2a1646d54c0a17eb00707"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/prob_8_3.lean",
+      "published_sha256": "0d46a5f1036bcf0ef9581bd55bd18198c0336d415457ee2cdd0fbff8bb1df037",
+      "source_sha256": "712dc42d7a50c405f0958698dd4b9aaef9406e141c5909109f2676c0789fb430"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/prob_8_4.lean",
+      "published_sha256": "74d00b1f63f240b5bbaa477ca3d45fcb07b6092bf10eb804fd1aaecc0fac7ea1",
+      "source_sha256": "63f9946588fec2df95f90caa6b7a9dbb9039d5931161828df36d9f23d4019aa9"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/prob_8_5.lean",
+      "published_sha256": "cabfb5252facd6f5ea30124e92c89ed01a44c34cb8d515dac31029cf2a7798d3",
+      "source_sha256": "32e4e26c112fc2bf91c77a28c9dbafbeb0b25442d87da9cb2ac1a87f7e05afaa"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/prob_8_6.lean",
+      "published_sha256": "86c56e22a94da4f3e68f8109c4e4b7997b39d2cb52026a523bb46469818fcf03",
+      "source_sha256": "8448348cc84afe211033840aadf609645f3c157b56bd531fb65d7e04b3b6f32b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/prob_8_6_basic_support.lean",
+      "published_sha256": "04557092f8dcba05652a09c0e0eb236d510fcb84bb5abb3e09c7a788aa9bd631",
+      "source_sha256": "3684884a7833e1bfd9511119e1bd4f1461efefb7abd7e25dfa074bf1323404d6"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/prob_8_6_component_support.lean",
+      "published_sha256": "4a1fd9700cd14d28a7469d33509b9408eb172646c73ff07876ba2c546d9d0413",
+      "source_sha256": "5ee3d6f4dd1f63c9cd3f502f07446a70959452c7766aa6000303d1044e6b4242"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/prob_8_6_convolution_support.lean",
+      "published_sha256": "d4a69a4d6886fb10ae8ff90b1778f4deea219483208206a7dc1e6876aa2fceb1",
+      "source_sha256": "9620c2b51b8c91176aa6301b402b5780285e2b8045805e5547a80fd1e4f53b3d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/prob_8_6_final_support.lean",
+      "published_sha256": "b860d9d041a067a9c797bd5b8299571086d1028c85e6ee3b4c28e1817dc6f981",
+      "source_sha256": "c7d495c757e8cce4a52c498e5fe841ac3dbdd483f7db07242ab837f9cd0f7ce0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/prob_8_6_proof_support.lean",
+      "published_sha256": "54e1e2a4652393d20c9e8d04af9df103505a3941aa6cb3e5a5898a77a400d569",
+      "source_sha256": "9ec806da6e7be79f7ba6c32e42f6bdb3aa59406afaa88720d18f7a8e78fb1b65"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/prob_8_6_single_step_support.lean",
+      "published_sha256": "a649a88b31a248162e8e7ea73686319c5e052f84fa8f1fdc206f418dfcfe723a",
+      "source_sha256": "8b662f6d49ced2f4f1b681f6f9b6ebb7bb2029564f81d38cb4b1df8756f31c07"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/prob_8_7.lean",
+      "published_sha256": "43ecb6f8aa844665d9300b01f613a424bc2983d9e84e0aaf3cb3b708b66589f7",
+      "source_sha256": "e519469e0774622e346298e4302f07f3a1ecbac0ce9a0d5d3ca598f1d850d7d2"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/prob_9_1.lean",
+      "published_sha256": "b8ddecd5b2286e8a4734dfb48bb23aa13c0c3a8c796e7efe4a44364f9bd43e7b",
+      "source_sha256": "73b03e4442d55e89804bb274a976668e1639ce9e13b5e43834fa0866bf2b177b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/prob_9_10.lean",
+      "published_sha256": "ed18e847dbdcbfc4ee70ecf6b411ffe7fcd5a6eb82b179381f73611717c822b9",
+      "source_sha256": "ec59c7ff37cf86834047c57f7e0e3fa32221b782332ed632519ded1d7ac783c0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/prob_9_11.lean",
+      "published_sha256": "45bc8f8f73feeb4aea463c31c0392f19b81da3b72997fc2aab9e717e4a4cf98e",
+      "source_sha256": "3051853f3f65fe21ad9408c53eea66ecd9be1f96cc9f6a94f18ef9b4dab371a8"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/prob_9_2.lean",
+      "published_sha256": "6b7e16606ef552ff7eeb80a3b385327f21918b9dd8f8da8778349b11753bc076",
+      "source_sha256": "98fd1ad97a126992d16379226b0001d71056f030c0f94acd278243c2cffb1272"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/prob_9_3.lean",
+      "published_sha256": "51913beeff1903f855478682407e89e55e14c7a2408e11e80cd4273e5eb6a2df",
+      "source_sha256": "0934e67d82659c01532f72e38b28d28cb3d50620d3bc6598144d161c0e40718a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/prob_9_3_basic_support.lean",
+      "published_sha256": "57dfb73f66ed4b26332466311832b6c4144ac88d06ff3b6cf751864ee549cfa5",
+      "source_sha256": "b75c5f33db391bb5860f2e1bd54a60b5ce38f111e534cabe7c35b879805f2c7d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/prob_9_3_final_support.lean",
+      "published_sha256": "8b6c48387fd151cbaf76188b28b7e011b3ae5b641867c72ec1d40d4605ba2fdb",
+      "source_sha256": "455047c6688d30cde83dfc65c52e84c05cd751bded5657b25100617c9e0e32fe"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/prob_9_3_fourier_support.lean",
+      "published_sha256": "05418419b04ed3c1acf51f800f1355ec47741d921c7d990553f9a8d04402ec2d",
+      "source_sha256": "d4b54c06e30f9ac6b4fdcc176d14308ae6369ae8aecac7bfc168b61f2faaa312"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/prob_9_3_kernel_support.lean",
+      "published_sha256": "1ece367500510695d2e4099ab2dc0d716ba05d472ec5a7c3774c9814c63ccc15",
+      "source_sha256": "ecfdd3dbf0b88bfb9768964730f6434a35ff0789701e43fee412dc116bfdf3c1"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/prob_9_3_law_support.lean",
+      "published_sha256": "c579a6dd77716b4e15025f1ecdc15312228074e54f56bd893086c2444afa40b5",
+      "source_sha256": "c2c5e91e8d35b4cf592ea8317152f98f744a2df38b636d69bd3550fa8a2fb3d8"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/prob_9_3_proof_support.lean",
+      "published_sha256": "ca2ad8d904dbaef87f395cb40e66ba9779765db0333268945253746d2f375cd9",
+      "source_sha256": "e0d4ab75e4ae3fb5f0f64825a37e265b71bfc90ada85eb38d128f11f03ba97f7"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/prob_9_4.lean",
+      "published_sha256": "630ce5d362be4b7cf67460aa80bf67bfcbe8c1100c6c4beafe0b64f5448986c0",
+      "source_sha256": "c730f8b66b3f18645825e298e38ed8cc7cd72109b0d7f11d026f10c6119456bd"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/prob_9_5.lean",
+      "published_sha256": "cdac6df8717aea9f8ed443680dce87d6ccacdb25e84d839d269276dc44e18b62",
+      "source_sha256": "0f2375bb9614938f400a86c42ca3fa69c01fca7916127aa54bb083379a1deac8"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/prob_9_6.lean",
+      "published_sha256": "c21a66f0d53b96934fc66aeb7f3494210dd258e9e654928cae49b04db9fcfd11",
+      "source_sha256": "8a66d105dc529427223265dec8e7a5a5b773f83338478abc1501a97e2ed67036"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/prob_9_7.lean",
+      "published_sha256": "b9944a8f55dc1c1705e6fa33bfd04526d350403afc53dca18cbf3e49c6cee83f",
+      "source_sha256": "8fbb09c8f88749ccd253170c4b42e39c4ebde779ff6d139d16851e39fd609e0e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/prob_9_8.lean",
+      "published_sha256": "0ebc78f0908870d6e99010b201fb03d69747f29a68b6327c510c9f455679a677",
+      "source_sha256": "14b49420126b45a7dbd1249e23bfaacc27fd2806c2c8b74f9a0de1f23cf73f2a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/prob_9_9.lean",
+      "published_sha256": "a77f6655158b6394f86da01cc1bb95c16a7e8d327c7a0c721ef70d31a0aa34ff",
+      "source_sha256": "a1ab7517f8a0633ab70d00e4b5bf41ad8e79b5ffd73b37c865d5d02b8bdf4b96"
+    },
+    {
+      "path": "ProbabilityTheory/common_support/rs_partition_core.lean",
+      "published_sha256": "58c1e8aa00514031919b090f7c2620e7efa1da3ab9f45d636b440e95aa9e429e",
+      "source_sha256": "56236982bc06e4c7815eead232226c08e18a16b760b315b77682101f6e42b7f4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/thm_10_1.lean",
+      "published_sha256": "2f56b0465f74747126856ab2979593dacfef9845957f94d602ec7f0cae87f2f2",
+      "source_sha256": "375af183416c49f80f2a49ec1e1845f0d71ef3a2e05d32239fae067bc80aeecf"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/thm_10_10.lean",
+      "published_sha256": "613cd5f9e2c9a0aeae3d9323e87cb07ecb73b37ddb6628531deb06943c531c55",
+      "source_sha256": "a51b9c0735ca95c86aa8060fb03c3bacdd7ebcc0563523048b607bf89d4c8042"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/thm_10_11.lean",
+      "published_sha256": "5685f1e8a94d7bbdf0a253da8794029aa296fa51054deddfd708ac39c2e2173c",
+      "source_sha256": "3301c85bf432906e7d8cac2320849782adef4d3e5bf494a7140815f05c88c676"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/thm_10_12.lean",
+      "published_sha256": "8471b2761409f7b35dfd676b5b8d24353fee295c9ca27ddf429a1fb4d6696a1b",
+      "source_sha256": "ed81077b883cb14e164fe46d7b6bcca3143f32112e16c892a1c0878bffb5c12c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/thm_10_2.lean",
+      "published_sha256": "6e817701e73706379e36b899c84bec6bcac0f090c2d90b92b8bdd182e78ffbea",
+      "source_sha256": "c41655a9f006b47cc2fe833fc716a4d8fc2d71110b4a94c15eb6d759ebada058"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/thm_10_3.lean",
+      "published_sha256": "c74a07f25c74ac17efef0bccb6754324dfe7ceb3ca576935a3b091aae8e84f75",
+      "source_sha256": "2e4a799d071c7af5b07cc2ed0b36ba5af2fdc89217230b93aad8c85bed59d502"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/thm_10_4.lean",
+      "published_sha256": "4f579f26d93ef3a825d22934712896ce48fae7b0710a48a5e557af2f03fff3cd",
+      "source_sha256": "8d989e4df7e05cfa9dc047eebdd833c6fe2a8dd92947619c9ec24be2596b57d4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/thm_10_5.lean",
+      "published_sha256": "9d1b5aaf15d8f4b5884e82306872ef27613ff4fdab9ec62b1ddd7c22f858c093",
+      "source_sha256": "9969b07d8d4188dadb90a4fb884633313b8a9bf63ff724eef615f6d972e5a204"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/thm_10_6.lean",
+      "published_sha256": "f505c0b16c76583553ce5da8187b930ecf8107df4df4d37af89b2b810c740a2e",
+      "source_sha256": "2572f91885ca57222a32a058ddf665174438756581f2739ddc149ae15047d38d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/thm_10_7.lean",
+      "published_sha256": "7d9e25c5abcdf71b18ae81bca8d8453c947dd63e78f89f67b6238275b0ae013a",
+      "source_sha256": "c64b3b11fc7f32bec2a3bc7af523acf0b6b4284a6601f9122d488f5ba266c516"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/thm_10_8.lean",
+      "published_sha256": "fec4e768d289ae850b516eba230b3e568dad1bc6396bc8d8b8114039ed7660d3",
+      "source_sha256": "45c3539515ef2d5fc09c57d181f27f07565e2f6a3ebea1533daa019fa56dbc42"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/thm_10_8_inverse_comparison.lean",
+      "published_sha256": "a3d63a4694961835d57d07debba7816afab1644571b3b6e8b2e0938a61bb2f31",
+      "source_sha256": "2e170660d347c5e3433f8bc51e465544ae0d2dd84b78b21fccf1920a9a00a9c0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/thm_10_8_quantile_convergence.lean",
+      "published_sha256": "120826f22a4d1f60fd3e3d01c5cef4a55dea481c131586c32aacc47c25d65677",
+      "source_sha256": "a8aacdb2ae6e9a059e158e93113a2af06c3f62fef8df2acfe24cc980545deda7"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/thm_10_8_quantile_defs.lean",
+      "published_sha256": "67ef628e4f4c0ed658cc8db97c7dcf9dbc5f3a73c6b415b44c62a99c0f799f8d",
+      "source_sha256": "738802608f31a1c505859dab26b109a118eb2aafdf6e9702227b0ea7dff3772f"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/thm_10_8_quantile_law.lean",
+      "published_sha256": "c3aad8d5154a630f2e176266f41f5bb60951fa0640c71e1a9f22a184cee9c8fb",
+      "source_sha256": "71100e0e573425dcd0060ff652baecc5ca648c1dee6d5772a2d079357f909c6a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/thm_10_8_quantile_space.lean",
+      "published_sha256": "e0eeb8fd197022d289eebcc8eb690ab16df12e2b86b95356208ee53579f9dcd4",
+      "source_sha256": "0ab8ea69df6765ac26826602fd93aeac2a72c11d20f02909350a7633b4721ef1"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_10/thm_10_9.lean",
+      "published_sha256": "5a9a2d259997613cb0994222f3440c3dc79d391adf79de51cfb5d1098e9a2f30",
+      "source_sha256": "4c458f7dd1ed801b4e18af2818f5024743bab71b507c388c0650ac4e0d50f239"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/thm_11_1.lean",
+      "published_sha256": "492d35bcf596022d24835644e264901e79ebda34a9b1a92abe8355e410788b26",
+      "source_sha256": "51f52e3a4119579c2dbfe617c432210b2dde5677fd01049e45ae37b71f05d720"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/thm_11_2.lean",
+      "published_sha256": "84ce59687959fea8e4f1633593552d4c355848aea9b26bf7c9e0905dfdf58da5",
+      "source_sha256": "cf7d125e1244c88b13df375e2466028407b3e523957bbc9f4f4b39a91e30fdee"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/thm_11_3.lean",
+      "published_sha256": "495203645c0802b1b9828c1194f7ca71cd411120b4fb6dc21293d44cbc0e2562",
+      "source_sha256": "19d8408461d8048d841e11a8d6ebdae7dd23cf2707963ab45ab26dbf0d477110"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/thm_11_4.lean",
+      "published_sha256": "d6c6d1e143d1cd4386870c7a60f786af8a7e4c37065b70d22f6a645be40661a4",
+      "source_sha256": "a32ff1cd25934f731da1465e080d7c753623998b3618691924691235a2526e20"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/thm_11_5.lean",
+      "published_sha256": "dbcd7f8e3ee6eedfbe30307a18eea3d4a38baca79816904261961572196303e9",
+      "source_sha256": "3b545454866c09cc1d43cfd6a37a2c4aa1b93948d53718c1460d99140faeac48"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/thm_11_6.lean",
+      "published_sha256": "295d473b15bbdf5874f8b32e9da0ddfe9aeac9fcbf3a8f3d8a1a4b169dda8de3",
+      "source_sha256": "9b95ecbb80b455827355491af033e9e63b461603b5163ad237c7ce0fdb197c8d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/thm_11_7.lean",
+      "published_sha256": "a938090869e2e0ac9e94fa12bf0b544565190e43d165208182ddc261ff5189f4",
+      "source_sha256": "1d4716a8ab23ef6fa63e3fe360eaf0b2b70abced5f4c2d25c246f269b0ba3d85"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/thm_11_7_support.lean",
+      "published_sha256": "fe3867ca3c18250e8972956010f16fcb8c08c1ce8fdd77b48442d975fee73b53",
+      "source_sha256": "b45f9d8de71de253c2aac1bb8992867d3122c78ab1fdae0ce81f00b73d0b415c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_11/thm_11_8.lean",
+      "published_sha256": "70761918ea1535565c31c2f6d75a7566a9fb175521f18d428172f84aa78fb689",
+      "source_sha256": "3317753a3060a845ba6f3d97abd0fdc9b2d26581d648339ae5355f11b58c536d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/thm_12_1.lean",
+      "published_sha256": "2db743b2d8a0cadf69289da81392b303d463f1133fb41eb40339412c63587677",
+      "source_sha256": "2d9ac70fd6e8d156cbd92af5bd334fca001dc3307d83ba5a44f9b32029d014d2"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/thm_12_2.lean",
+      "published_sha256": "3a546524886a4bbff1215cc1485fda8500423461bb429f7ee6351337223bfeef",
+      "source_sha256": "744be78852dfc4d1975e28e647d0fab0e94e7440879982f30c0844e9874ebef0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/thm_12_3.lean",
+      "published_sha256": "bb45ed2f60f2671b486d9db3f54a7c3815c446acf3468422ace4d1a780d322a7",
+      "source_sha256": "47b4eb02b0fade1e2661cdf99a1d84cc22fb0c27d8dce24de2a717c7e998d0b6"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/thm_12_4.lean",
+      "published_sha256": "54aa86d2a94bcce94c59f33362cdc7f502b7c5aac823601887bd3199e072315f",
+      "source_sha256": "3f944107c22cfeb5abf13fa607ed858fbf8b18045f82d7fd308bcd2ecbfbbc80"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/thm_12_5.lean",
+      "published_sha256": "7bd6465dd87bace7b7d558437c68e60d4a161b1bc0885f9a05eda7188e1c0d91",
+      "source_sha256": "abce9342ad0d560ff2e8e01164952abad5dcb4cb4917d9deae711f3db3a15e98"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_12/thm_12_6.lean",
+      "published_sha256": "e66fcb3b648e76dc57af39f2a261ac649e709ab46df6e6b65a3a2438eb020bbb",
+      "source_sha256": "d81354b394ea8c1a04ff17d2490331fbfeb00fde7e76e212161903e53d5fd061"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_1.lean",
+      "published_sha256": "8273a2d55a3da1fdf029913fa093812b760cac022e7757bbac7f527f20ae37a2",
+      "source_sha256": "c30a86b6df75f66e73ee198592d54421119feb81a8710370349aafd1f58b86fd"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_10.lean",
+      "published_sha256": "fa3fbc133fac97b52de27c2c41fceb68a5d3a221b8b3e00e03cce4370099d56d",
+      "source_sha256": "c67985371816aab367efda8a956b3a4128397d95ed1118c494103dc1a8b0c5c4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_11.lean",
+      "published_sha256": "960c03be7fbb7a74bc165f5fd1a9674c39109d64bad78f274b7e03330e18aa8e",
+      "source_sha256": "58cc801c61016c72777cf7d7b1be57d374db67bbe7543de9a465ca8f9f1f7fc3"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_12.lean",
+      "published_sha256": "c83113e8b7b2f2884f2ac68a2e31a18e11ace1e134d98788b9c6eb0f51f64ab0",
+      "source_sha256": "34c8f7ddb9c939d007b0434e247a6cfcd01b4427a16327bef9b4e7c1993d7bc6"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_12_support.lean",
+      "published_sha256": "c45fc4e23ecaa25bd6269e9b91e9bb3c0a498c7a71188162a037b9ac012d1392",
+      "source_sha256": "2c0855db4938bd1a04543c0281b106931215550919b9a2266fdb7912993a6648"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_13.lean",
+      "published_sha256": "71b3ad6fc81c469ea5fac1cdd4451ca9e7c6f415674a9b3d4db203f7e6bf718b",
+      "source_sha256": "cf303074f1f9adb9651fb1a9bf548fa2ce6c00199409c7b468e168427be6d403"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_14.lean",
+      "published_sha256": "8e7f2b253af8dce576f362ea905670b75a1a02f5d4e8ccc4321e452d4c8e28de",
+      "source_sha256": "f02acdadff4a04182a2a427037e2147a7e6ae4624487307c1660827bb032fb3f"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_14_support.lean",
+      "published_sha256": "70797dd8aaeda000a1cc9a795af2286bb57279adc5a91f800ba8a122d1a02cd1",
+      "source_sha256": "07ef4e7e3a0b8ca13919dd4508e36d5c29776118a0b0e60361c8c4c3d5a31f55"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_15.lean",
+      "published_sha256": "694190a38044b650e3ae723a1c7a72521b5e86b312bf2ab07392791768106876",
+      "source_sha256": "da2dcc770e248ba9a2b2ace6b8e20965b363d6f44d7298c91fcd74e53a7723d5"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_16.lean",
+      "published_sha256": "22fc8c2538436a2e3a2b3e0f2a11374fc0bbdd92fef0c6bfa02445572596bc3e",
+      "source_sha256": "bde276fa21566fa2f5e50d3910902fa5ed20a5fef2d57ebf791fb2dc158e6fb6"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_17.lean",
+      "published_sha256": "1b16cab03a99be9e39b81580415c54a9226c06366458192df22063df8f7c3a4e",
+      "source_sha256": "053b35e29aa19c9f324c0fbb66bf54dcef8112291c3a6a60ac923f4f0971e2f9"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_18.lean",
+      "published_sha256": "47102df9c79204e576b9af1b75f048cd527587d759de3ccb84f656ee09b5c1bb",
+      "source_sha256": "7f3ef82972501c9070d55e3792da95d6f9a60b79e66997150ad3f22494883093"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_18_support.lean",
+      "published_sha256": "d0869af492eb905a07a26b3dbd6302d05faa5d2e8266b86d83609d5ebddeed83",
+      "source_sha256": "f64a34793f339858d7ee7eda1429f1d1a825cb3b73fcf782d6529e10d62ef42e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_2.lean",
+      "published_sha256": "cac17b77fad30364b836d4182781468ea519af751e64b4acf8708f03c17169ca",
+      "source_sha256": "b34d07da9af9122a84ddbca992cae07c23df3e62fd2f5a54ba72e9725f83de69"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_3.lean",
+      "published_sha256": "dd4b44159d1cc66f297a09b65cdeef59c3303fec5559dd816983b21a037a5b05",
+      "source_sha256": "54e1fa0f154ffc3fe3873380ad881622afff5c45ebf26f92fe324dd9fd19a09c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_3_l2_support.lean",
+      "published_sha256": "2a5006cdff4a3ad791a0ffccb1d1e85798fc309b475cbe6473b18cd862eb9c29",
+      "source_sha256": "4e5651245c3abb1fd09d48ae7d45d5506e54624e86e309a833715085c9b92355"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_4.lean",
+      "published_sha256": "eb9e4bcd29b3589d216331e03ed9ca38ae5c48dc4afc41aedc8901955dc4c1f0",
+      "source_sha256": "82d9b24d570405ff40ab5baba450f86b31ed9bda6c5199948d5dd49055cc0fe4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_5.lean",
+      "published_sha256": "129c4e6350c880aebed7ce273782a36242ab3f9740471a739ec3a8cea1ed70a3",
+      "source_sha256": "1f873b33c7c446e3f9840896c8a4362eb1fa1757e96a8a5be39774652e4d2edc"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_6.lean",
+      "published_sha256": "eea30dc56b95501ad483c0bad3aa060f74fee9fbc81a4448ddcfeea651fc9a4f",
+      "source_sha256": "68fc3f3fc34908e7a8f158dd788b671f14944a92f5f9fd3690fa3d720cb76480"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_7.lean",
+      "published_sha256": "13d4e05526f8d4d38c12e78b99b999f494e85ca9c0c6153b8d4e199ee4843d16",
+      "source_sha256": "e0f2331d7a3b4a1a9ea91f5b7632048791e9b69c6f47953f7ea188f17fe78bb4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_8.lean",
+      "published_sha256": "deb4630772ef103c40b7acbc0ad91e0977e39b85e11310a9230cfe6c9bda8d20",
+      "source_sha256": "556eace8982d070440cecf587464c8460cedb60bebee79dd151d8918d7ff7018"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_13/thm_13_9.lean",
+      "published_sha256": "add8356e0de32ef9ffd9e2cd7a189bbd7a4bd22afaa26473196339a95ea5602c",
+      "source_sha256": "867e953f554695f30648795c3df13251520472f14fe2b7a6e664c4d4218fea92"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/thm_14_1.lean",
+      "published_sha256": "a5defe87fff45639114602286c11643ad0ac0809c19d51fadf68d81bbf582066",
+      "source_sha256": "b60c0caf3f1f1a21e84a318ee22e1e6696a9400c9b42ff8c5700df8e630472a1"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/thm_14_2.lean",
+      "published_sha256": "2c55d044f078bc807508681c96573be33e631bee085c8737909f4b07808b13c8",
+      "source_sha256": "7f8c3075d07ffe658d03da1f1e6613ed2215b164e17178a429bdf0beb1b80c83"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/thm_14_3.lean",
+      "published_sha256": "4c205531e5a2d564118bf63d6585d2abf9a782ea6b095286c40a430c881e1fef",
+      "source_sha256": "e301d8250fa7dba6002b365f342bfff74a43a4399fbd91b09ed90aff48b7b9c4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/thm_14_4.lean",
+      "published_sha256": "36111dd30df4ddea547b5f06b31fdd70f091c5e4c5671d2414807b70d3d95cec",
+      "source_sha256": "921416e3fbe6525b2e87e6b88f1ab42fcb87c7757f4fda5568c74ae73dcf1f47"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/thm_14_4_density_support.lean",
+      "published_sha256": "d74a310c90d40884368021848123a3c92d1d431541f36bba253374aa35df9325",
+      "source_sha256": "08b047e2251579d907798fbdee67e11a33a6b258cc0a4150a90b9a9460ad6ccb"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/thm_14_4_dominating_measure.lean",
+      "published_sha256": "219c99e424ef9a44f331ca248506b7e5bee11dc6977f3a72200e2bd5d2e8e2ef",
+      "source_sha256": "f5a1f21acd9e1a37c2f445acb4f9d64b33b1442151b6fa90f18c00a0cf43ddfe"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/thm_14_5.lean",
+      "published_sha256": "5e909c1bf5d7159ac458e3d59a5ac162a94b7b0672f84edb8b5e1b93481b0384",
+      "source_sha256": "f32881c2fff279ab78b83039df4e614a624a54288c3486066aec0dee8c3364df"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/thm_14_5_support.lean",
+      "published_sha256": "7e68d2797619f05aed7e63909afcaf42b5a36b8606302e8ed036945fbedf1e5b",
+      "source_sha256": "fd520f5183a5e2b5fbd86d4a042ec4d78fd0e67dd232df264fd7a5ace8297a81"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/thm_14_6.lean",
+      "published_sha256": "48eb9cd510fe1ee0aed3279597ca526728a4af7850add154428c5ee2aba68b6b",
+      "source_sha256": "262a95bc4b9da11b11c8241a2d8be4948f9fe35f6843f6955e238d6e3587f2d9"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/thm_14_7.lean",
+      "published_sha256": "1b61df2dfeb381e62d5b3d6fbb8bc9d2837797bc756b74bd668d21c3a31509a7",
+      "source_sha256": "ec13715c8e6e3ef2bde892b711be8b8dc18f116a3ec859e84ea98567416d68b3"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/thm_14_7_support.lean",
+      "published_sha256": "b4cb5f1b3cb627524c160d78b0a0068351e856a3ef0a38273f7f5bac68613294",
+      "source_sha256": "7902a11522a70b5faecb5afc885c1168e83e0261a3b4d023f37a2539a829c8f2"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_14/thm_14_8.lean",
+      "published_sha256": "1041fc84468b1abb7db50f6473f5812bd44c26523cad5d226f1e7c11dd59b608",
+      "source_sha256": "9de9deef9f0897141e4319e96171567c9b7f1393345718784f299436454b89ae"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/thm_1_1.lean",
+      "published_sha256": "eca582cab442b4d00a8f82f093cd4c314d00791b0fbf0d9a568454d216024872",
+      "source_sha256": "bbc7b868a44c76c7e8931ca656b5234861c96abbe9e35dd09f489b7534485131"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/thm_1_1_bad_cells.lean",
+      "published_sha256": "fd8f6561c124d2847b20f984b60b2b3d45f9a03511a52980d1572fb3727b1d9e",
+      "source_sha256": "44e97dab4a3d8db8f8fa7a0018c6c0484d950152f8923d3a3f14857909d564df"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/thm_1_1_basic.lean",
+      "published_sha256": "c9c5818df9c5db404193ff537be37a0cdc0e9023b0558c8b1e5cf541cc5f696a",
+      "source_sha256": "0771e5bd927629939bdc859eb839cfdb8aa18a0aa4f15811eadf67413b95175d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/thm_1_1_common_limit.lean",
+      "published_sha256": "73eda1a05c3730923f2e4d988b6b452e077cb8b82a119399147e9ec1c5915311",
+      "source_sha256": "e62d1bea617aa5a306412fea42c72f52a198a429b0d5ca2dddd094e20321e783"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/thm_1_1_common_refinement_monotonicity.lean",
+      "published_sha256": "b2fb17518b49a43297440509e2571a025d940968c602328bfbba1d8f88ffd09b",
+      "source_sha256": "bde35e5bc05ceeb73a4a6e8879bc785e071f67e0aad68a196872055046a13451"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/thm_1_1_common_refinement_points.lean",
+      "published_sha256": "bfbfd44e8ce1e4c32a0c80e22669937365917cbf247b947ce30b10ac930087ef",
+      "source_sha256": "1a97adaf8f76100dc948e80c9b86272f83043d982c33a9dc0a6a70dd2d51fc97"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/thm_1_1_darboux_gap.lean",
+      "published_sha256": "72f8d4057c7e45b4e4f778f6fc97854946611ba9b3d6d1a8ffe93a31c7c41209",
+      "source_sha256": "b072858be5780897f395f8eaf1afef93fda58b09c6fa524e9a69462aeba3261b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/thm_1_1_finite_discontinuity.lean",
+      "published_sha256": "77e2b362440a164c20a1111fa7b795252b90dd6c0b3e1acdee36500fbf4dedf7",
+      "source_sha256": "25824ba3fde5e8da7c0407df9a9860091ad5a97f4e5c37ad6e550411ff3b7964"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/thm_1_1_oscillation_basic.lean",
+      "published_sha256": "451cd6dc93097e6c98db8837b9c26ecfc8f3e26305d5379ec8aff5bed4a91b6f",
+      "source_sha256": "1a8a2619a0e0b625299728b41fe6eb2dea001eb06d819cd2d65915edb800f52f"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/thm_1_2.lean",
+      "published_sha256": "a5117233612fe20c76a85b52237302073e625995e1b5525004b61311e84ae335",
+      "source_sha256": "e895b468614a78cce9f8861427d3c723a29b73d0efb30803ec1bf2391edf865b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/thm_1_2_4.lean",
+      "published_sha256": "b999871cfb287b75fb1c2eb38c341ad10b54e4f9e2cc7f185a64c8c91f9cdab0",
+      "source_sha256": "c52ccbc3ee81a58bd5d19bcab22fd3501bdd78b5b06ca2cc0539a051b7e340a3"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/thm_1_3.lean",
+      "published_sha256": "b3da5e1a392d06ca190baa98dec21fbe0cdf672ad3c57c9999c9fb940bc56e34",
+      "source_sha256": "968657e6d6e40c887c90a16c59548126d11e7ac9fa422c7705630cc3944aa4e8"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/thm_1_4.lean",
+      "published_sha256": "7d0caa81bb27b3fbfde57e89b680fc0cd444f18783bb67ee87def4695a91a9cf",
+      "source_sha256": "33873c093b472a5b1c4ad30557c3182295e4a956f9a745d2dd6474af1f590b46"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/thm_2_1.lean",
+      "published_sha256": "3f786c4331d768d6c9424a3fb57d2ab0e82585133aa1de50780669c63d135cfe",
+      "source_sha256": "4e6d3295f4f5e16ce2cae7e598bdcad88d3dafe1725008255afecd5f54f93764"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/thm_2_2.lean",
+      "published_sha256": "d7d4281f7e74fb930e32c2b319086dc050e219912f5402f6cc856c583e6ada54",
+      "source_sha256": "ce33404b81ab6acde28712963a8dfa72176b5e00d0448a89bae982192cc77307"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/thm_2_3.lean",
+      "published_sha256": "5d94e26832b99121b6d0ecde93ab495478fd7b0c9a5fda2a1a91fb7e3767bd48",
+      "source_sha256": "49b97f4091018729c7de13728e904a69b382f77146b742db2046fb25256b0613"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/thm_2_4.lean",
+      "published_sha256": "0abac869fe5e5a7f134ad5459f094b0a1abc6ae6f4ae94167fdf9250b07dbd14",
+      "source_sha256": "72ae2d49de9e5c530dc13a8f9ed706be991ebfd1bc81839c9125b56ab4a5b289"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/thm_2_5.lean",
+      "published_sha256": "7b5e1505477aa73e87065d340c038b6c11f412dae9222d52e599039fb301bd46",
+      "source_sha256": "a4f01485051ced8a4719d4f536c4402133b9e3d91ebabe8b5c97a219d1ff2fc8"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/thm_2_6.lean",
+      "published_sha256": "f7f9b5474f59d2a72a09c96237114364124f10ec82b0bae7fb64fd1c25c5ab0a",
+      "source_sha256": "41c3065e4c5a95591caf967c1e05ebd5a6c5add40d5ceaba0851a4c2bdcc18d8"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/thm_2_7.lean",
+      "published_sha256": "e0e94d421d6c4d16859e4e43843eff0a0c625f5ff4fdf393c4f33a6e8ce9dbae",
+      "source_sha256": "fa7d4663ccea4e50335e095e7f138cd6f4d727ac9046e548934ef5e802109c29"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/thm_2_8.lean",
+      "published_sha256": "610cc2e50b4580c17fd0c2fd73c5ec4095024263f2003e34b0682a587c9c647b",
+      "source_sha256": "1ceddff10a2445e12ab43da89c901dc4fc729524f9db4c2915ac6185926b3c0a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/thm_2_9.lean",
+      "published_sha256": "a4adc55a0591f9686a8e441b1c52173e2045ca47bbe9e021354b4a331f36ed5f",
+      "source_sha256": "d125bb58dd8e730fe2ca1877b5f0a42ced4a41d64e9021e512589708988642e0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/thm_3_1.lean",
+      "published_sha256": "c8ca43ed43e8dfa9aeac41bb01e9bcfc40b64bbec8e7953ab1314c5e43b26ed7",
+      "source_sha256": "1b6044bdfcc96b52c4f83f53ed9f12307755f2b1816db58b4fc58623f6b9b695"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/thm_3_2.lean",
+      "published_sha256": "618981774fa74d2fed99c84f06c8a536c78baa714314bf0bd5ed67564a815c24",
+      "source_sha256": "4feb5fd0dca46ab4f6af475e0150c3dbc1a1564ea888e4782a9dcaa50e08d73b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/thm_3_3.lean",
+      "published_sha256": "febf3a21ab48a1ec18e379723691c5c2cb2e679fde4faba11273d6efcd2c98d4",
+      "source_sha256": "b5150d6afdf3fe53d2aad68a79946f42035ced2f233384fc23fcdd266074de5d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/thm_3_4.lean",
+      "published_sha256": "433a18825a3f56f24460022cc8e4fc879af8a1793eddfeae9273c37efc92d653",
+      "source_sha256": "b13c5d6ce6ca52b6bef71814a5fa3a781487c27f0ab12c50cdbd28569b2dcd8c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/thm_3_5.lean",
+      "published_sha256": "cf2f793a72d875bc1c302b1ea0c3c142453a3c4ca242325b00db9ddb276d25ea",
+      "source_sha256": "83ed0128baf8d876652ced301ac4415a46e5795076655f139e50deb8a18eef65"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/thm_3_6.lean",
+      "published_sha256": "934243673fcaa68125973a53542596c59fb3fd92363d3c56d6380475ec9f9897",
+      "source_sha256": "e07037c80e5ffd7e1de131425c2bf8971dc73191d9fa96e80375e732f6be7f2a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/thm_3_7.lean",
+      "published_sha256": "350dad291cd52aba66e8b37c034f0fa67c757f4eb6be0181fa549c74dde943e7",
+      "source_sha256": "e9a4655e45b1adf4bcce12e96fa0a69b18323cfa416e3d53bf8e1fba41f2b77d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/thm_3_8.lean",
+      "published_sha256": "4b212643d242be99da8972357ecd7a3da38ec686e04a45b3461e634bbdab9fec",
+      "source_sha256": "61ad28656872c07b0482da12bd0f9e21c3242f59e00e3e18ca30024b753d84e9"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_03/thm_3_9.lean",
+      "published_sha256": "cd93efd466f2fcdfc6667f17b3f1d8d9ea75d1615b292d0b7de1801348da3275",
+      "source_sha256": "a3e07073575ba674f2bef5a5add697a1c5d9de57c87ba06d84bc840def0edfec"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/thm_4_1.lean",
+      "published_sha256": "23c7c853f26498d4c1cb342f27046cac6d7e172544891036fd6e91d6eadc81c1",
+      "source_sha256": "7dd82858683dab289cf7dcde51ec519a740f4be1293e6bf1bc706b042ce31720"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/thm_4_2.lean",
+      "published_sha256": "57ade5ef63e851a16c8148e2c718de2b5b1f0dc81d0444e0f4e00893825a065d",
+      "source_sha256": "f1965aa67737e540891b35cfd885ecb70e04e60decc5a2c97c5920170eb61ba0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/thm_4_3.lean",
+      "published_sha256": "46424864763445c24f3465a3b14d859b9b9aa7b376e504cf68c09d0de6a47044",
+      "source_sha256": "cbb3d234df81fe8e0112ae062455ce4d3fa186d25ca2cdf1ba8394caac58550c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/thm_4_4.lean",
+      "published_sha256": "07780ab9376c5f95a6c266501b5142eacf4225838cd0a32d64545eef13fc0457",
+      "source_sha256": "3747d51a1abc97d0c0e8e33637079bf0963bb7125558a1af3d0a5cee03959a9a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/thm_4_5.lean",
+      "published_sha256": "89bc3a7d91f1aff6a18100dc687df65663e7e9a0038bc8c8bdfa4d4d2dc07b8e",
+      "source_sha256": "c02fdd5745389f2dd95cef1e21cf813e245c03d8e8ee169040e0e412d4913a3c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/thm_4_6.lean",
+      "published_sha256": "000e82b9e61e4cab7cc9b3fb2f4e18971eba62270ab0e10e0ce69e919afec9fb",
+      "source_sha256": "300646cade6330f93c916744f0876486ea56407c7837c1b93444758fdc466dd4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/thm_4_7.lean",
+      "published_sha256": "1f2da33a45fd92f5a94326363d21f8f3df2be3dd80f11622a0e838ac4e8ad1c2",
+      "source_sha256": "da19d4b333c07bc683145461bc626c7f3c1af3c9fc8f1a57292e9d14cc2ac5f8"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_04/thm_4_8.lean",
+      "published_sha256": "d38aad33637431903e7c7e1995ffea16629aed4e0f6a6dcfb96b38317807ba2d",
+      "source_sha256": "0117fa1eb0625a3824402bbc40d3cb3f9d8926ce3b560347b5b96858cb1d2adb"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/thm_5_1.lean",
+      "published_sha256": "38dc828ee6bf883c9569ee4c8a499d9b0bb4a61915e8b9062bfc5d9eb99774cc",
+      "source_sha256": "09257cb66820d72cd712640fcf513c97e14fe634fed735824129d8d97974ea8b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/thm_5_10.lean",
+      "published_sha256": "104ff3970edc0bc5368b900795e763e120ca764a1d550d259cce745775d4e15b",
+      "source_sha256": "9bed61bfaa09b91b23a69958cc82509b943749f28674069bd06a3378068b08bf"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/thm_5_11.lean",
+      "published_sha256": "eeed1041f289cd4bd2b5cfa3811e0d12cf3bec4fcb9c7b083fa415a66a626377",
+      "source_sha256": "7a4b9c2c277bca31d0d0998026010d2921d75dd6c59d638c51e58445ce68d4b6"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/thm_5_2.lean",
+      "published_sha256": "103b22bd547b4bce1b2c82c7b66d529e82bbb82b4eee99ae9a829b4ad26c5e0c",
+      "source_sha256": "8ee2b123e289e97a64bc89df326cfdc3c1aabdb1941332005ca08402ce439904"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/thm_5_3.lean",
+      "published_sha256": "99a2ad1053a1893c2ee051823540fc3dc13e4e926ada08350909dc7f43ef4ba4",
+      "source_sha256": "a7c4de526c3db5e7f510df514d393aa916f8f02701a97de4732fea52fe82a1fc"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/thm_5_4.lean",
+      "published_sha256": "b68427569bbe4429c72e77a3c849af21bf1ae57041b0dfd33c0f14eb9f8fa3d0",
+      "source_sha256": "5a9a5d724c08476bf67a26b578bbc93ab23845eae0c5f478ee77a42974f35a72"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/thm_5_5.lean",
+      "published_sha256": "c6f6ae6a928574c38e4f33c4562bde77db17c3d8d2d4b87f0ff863bbbc7cc829",
+      "source_sha256": "cec3588b998c2ced75ef788cc37371800f3517256c409a8358baad1b997496e0"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/thm_5_6.lean",
+      "published_sha256": "dafb5f92117731591366c1fcd1d03511441486fb947b656ec3218a66f8c3467b",
+      "source_sha256": "782bbea3005ea64bdcfb3f924ee3bfb610bd54e6a0b36fa60dc39bb290f70163"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/thm_5_7.lean",
+      "published_sha256": "3aa2aec91220368fc10b03fe739de81c355bba1a25f997f8b2e0431a018e3e4b",
+      "source_sha256": "3347ff850357602467d2c0cd46547d6cbe5cb2e6ca698336d9b4f4880a3396c1"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/thm_5_8.lean",
+      "published_sha256": "44ee59b6cdce2ab6699606de5037b64611adf3470e8397de4842639f95ecb80c",
+      "source_sha256": "d4c3e19494bc2f160e4ffb17bbaa49ecc9f719eb82728a2ac499869d4e6c74b2"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/thm_5_9.lean",
+      "published_sha256": "651fa37e3095367309440b1f6d609d0d1df0fb73446b6835df28795383541105",
+      "source_sha256": "717ed2fb35e8a7d78183b509f70c6bd0ce95ef0935e483abccf585a78656588c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/thm_6_1.lean",
+      "published_sha256": "d55d17dac1165275067506db623550961b53548dbe5c70f70e8d9a5128d8b726",
+      "source_sha256": "7b9ebc235baa237435b1e11445279e1c355c3687476704dd3ac4f4695d396058"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/thm_6_2.lean",
+      "published_sha256": "7a6dc9173453ad2e31f3f6723168b7b9e262166ddcb73a08310e92f4a380d271",
+      "source_sha256": "598bdeb11abc8810719d8df2efa638f1aa3d97a87feab1d4aaf20445b3e0774c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/thm_6_3.lean",
+      "published_sha256": "c528790c8b74b84369207f4d3ad3525ef1c59aac9628b45e8076355e177a9541",
+      "source_sha256": "accaffd5389589d6395f1d32ba424044b812aad9376c2696e0431d599033e8a4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/thm_6_4.lean",
+      "published_sha256": "55ff548584c997995c76544d2ffeb2af4a398225d110d9e237d2f88b52555a43",
+      "source_sha256": "48508c927568f713f6bfd74d6ad753edbc8c920a0c6b5e1b9299373cf71decd4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/thm_6_5.lean",
+      "published_sha256": "c613e188a42213eb9bc9129ca82d403421a8e37add32f702391605f19c1b35e8",
+      "source_sha256": "ef311bc05f38d0e04932f98e7076c1c37e0311d9cc9d00fedf8db34da91927f7"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/thm_6_6.lean",
+      "published_sha256": "b004f7c847f4e44fb6fac229c2c007d4fd6a4a99e21fb4ad2661d8e6db0f4cc5",
+      "source_sha256": "e33726edca342efa38e8e75c6831117e3ee89d59fb02755f0d8f0329392a50a2"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/thm_6_7.lean",
+      "published_sha256": "14b8e9f3be1874fb8a72b9bf94cc6b2567bd4f685959095c5a54c993eda34bc3",
+      "source_sha256": "128a3d0c0f3c05b9a7a55c6b4fd7c7873ceee1ec1c1d48e7200d7362f4d08e7c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_06/thm_6_7__lemma_1.lean",
+      "published_sha256": "784f13a4445fe591f9e5e8a5200d54fe11f49a69007893670703923d55173d8c",
+      "source_sha256": "cb87826cf29e5032829773646f42ccbcd9b216456d09233b21fb025708bea23e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_1.lean",
+      "published_sha256": "6e17ca5ae08f344be75d542bdba21b1184fafdd2aeb72571b066022e9ab33bdf",
+      "source_sha256": "34f25b67e7afe150bb3317c1c9870dd2c3f61d6dcb27d33003ec5a4b30f9334e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_10.lean",
+      "published_sha256": "604031edbdefe692fe0964a2be373cd905dfd76ce8023f2cc79917ed3a892d32",
+      "source_sha256": "39084d5f343842f8d46c030c99c10a8c00947f22a7aae105492469a3bec26486"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_11.lean",
+      "published_sha256": "e9ed416f6c654a8b9a180a84a0c0f573f32506718c2e5efb3fa1a42f54d5b5af",
+      "source_sha256": "d426c39e02bb1c0021872b986bcb5efef4201f01fcfd7f0d836cecf367a04b68"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_12.lean",
+      "published_sha256": "dfdda50a24e3f06b91a2342392b101a8408d5160620743d43aadca236f6ee405",
+      "source_sha256": "adc86016e871b5525198e25e0a1e670ef901142398cea98798d1850db71f5f9d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_13.lean",
+      "published_sha256": "c355d7ca2e310e37f67c283f11de1c3300c6087ed46bc5cb9babf8ac2fac8523",
+      "source_sha256": "76130297fc94ae8a22629f7ad1c3096dba73b2f53f8816a0d15f356e9db95227"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_2.lean",
+      "published_sha256": "4e1ec439d1584f0cc5e02b47b7bd5448903754d9adc7609bd7656df4dd6eac0e",
+      "source_sha256": "ad2991833325addf66f905bcc1f1c0a55a97ec754faf6a066df81075a4ecb38e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_3.lean",
+      "published_sha256": "08e2569fa1e70c1bd85878b24bdb419a08f47638456f2543311be5bc20657aa1",
+      "source_sha256": "ff82437e607a7c429c0861be3d1d1363f5f890ce28249f01f037b61d01bec0b2"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_4.lean",
+      "published_sha256": "9f758e8feea9d924c9452f866e739503fbbe10e2d960542245f3b48bdae2fb3b",
+      "source_sha256": "7c8e4c9f04a826773bd9c6135cf8bd4b615d92cf41a82131178ad9a70d381b7d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_5.lean",
+      "published_sha256": "adf8be49b031e253b8f27a4ea50fbb616cca834b4db6bd909e4af98a960aaa9b",
+      "source_sha256": "43639f960e229790bb9292bbfdd5a8586257319300fe129e47d5002d1bfe43ca"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_6.lean",
+      "published_sha256": "959e7f563cdd0bfdf14f6523d2516d9c964615cce629bf49a041ff463947f9bc",
+      "source_sha256": "f604db6660407e1d2ead1a54eb669975057e7d072001d2a19a2bc8da185e5cec"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_7.lean",
+      "published_sha256": "8d7860950965b47c5e669a684de14c666c6efd0ab92a35ef72ee9a08d22bd60c",
+      "source_sha256": "a70aafa5b26fb8e1e3731c6037fc4f01d5b7b81947d379fa976ab20471e854b4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_8.lean",
+      "published_sha256": "e3656a7fc97a7e9c10d0afb26d03eb6fc3cf8a41ec0156cac181712204cb0195",
+      "source_sha256": "4120f9b224a39d03be1269302745b7059a688fd75f715bf83b0b945fa8eefacb"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_8_ioc_bounded_bridge_support.lean",
+      "published_sha256": "174c70b252c2a7540d8f9cabcb8f06318c68d08691f9dc9e5f41b242639f82e4",
+      "source_sha256": "5a009466e81acde826b4ad4d9e3c1ba597cbea80485387be5f6e0f3533c2c662"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_8_ioc_bridge_support.lean",
+      "published_sha256": "5a63582f045a177661c198c9cb9d162b0938169977e7fbc4db48eb75089403c0",
+      "source_sha256": "6e6c7a89a434ec619ec4fa979550cedd2cba7f7ec211605311cbf1b943cffe8f"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_8_sandwich_support.lean",
+      "published_sha256": "22aa6fe44f17f5ac2178b1781ddc93cbc81a4ecf0c3a4b185e56178d52921f1a",
+      "source_sha256": "c8ddd2ea09c186a770d1111e4e9367847a23cd5509d65a18eb0c0fdf913e27da"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_9.lean",
+      "published_sha256": "5c7bfea1180d1de882ad781e2214b45186fd4a5400aee4c79d27a736a34592b2",
+      "source_sha256": "e741e32080479887d05e1bd4722d483fd8c1d3fd66d8b9d283e0723c422929b7"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_9_bounded_finite_bridge_support.lean",
+      "published_sha256": "812c96c9eaefd3dc1d66c478add295c18f6d06be70b5913f52e5c1fd37e22c76",
+      "source_sha256": "8671b1cbcc99795a96f9d97cf09688296cfe5182ae30f1732e9a31e660247725"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_9_dct_support.lean",
+      "published_sha256": "a601d6d1a8518baa7929427bbbd4399bbacc9fcaabef58a34794ef9e88da0c42",
+      "source_sha256": "0540cb7392400bc71cfb42c396d374e31a07fe4030c470264a3ac2a8966ef6e4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_9_double_filter_support.lean",
+      "published_sha256": "60cd225f7e14e4ce15759719cfbb31276ea3d0839b2d9b61c87d94fdee2f5fab",
+      "source_sha256": "57e2aa51537cf0692f66551b21d41f28c2ee25bfbbc1a114bfcbf6d69465522a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_9_endpoint_support.lean",
+      "published_sha256": "fdd8c80e2b48d3775e972e9a6bc3b720541b7b19d40bdd2f2a6c8521c4fafdb9",
+      "source_sha256": "1cf76d7aa9c92870bbb41d575b18b90a4ade9fb6e81ae5773eba69cf6494a80b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_9_filter_support.lean",
+      "published_sha256": "d05aa1f410bf762e23de27ae267df1c1ba7039f588c9b6b8b48ace71ed76c123",
+      "source_sha256": "74f509b227809ebbd0f6cbc87024dd71cdfb493a652a514e646e9de3a20d95a9"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_9_finite_abs_bridge_support.lean",
+      "published_sha256": "66b5386c7a73d5df6ca5018685f8079b7ca3a5c6daee92eaa478b4610ba8d0f6",
+      "source_sha256": "4f82148ad89db4797dbce54fb4433f52365f906098d73259549b1b3478dcae4a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_9_improper_filter_support.lean",
+      "published_sha256": "1b9571567d5dc0aebc902e0210e6fa4a632a5584d235823c15461f130f388966",
+      "source_sha256": "9361e411c9319e109c50f92937458e964288ba6b5bd66ec076794faf2651291c"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_9_mct_support.lean",
+      "published_sha256": "20e9faf001774a3ccfbaac4d32e81a574de8e9ff9529c869b02fa783aade64fc",
+      "source_sha256": "a79231006c5db854344f0346b7d8d9d14cb77b0f69116b586a238eb57b68de51"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_9_piecewise_regular_support.lean",
+      "published_sha256": "2cc1b8eedac41423d13b8ead2a243501dd788b9614c4498cb81a33ebf8e7d28a",
+      "source_sha256": "b384a4888a4eae26d705ab5e76057c0769ba9f124c6f6ffd3e689968534961ff"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_9_regularity_support.lean",
+      "published_sha256": "44ecb657519598a432e48d15f5a6e1a73c42161bad205e10112bff1bb73db8a9",
+      "source_sha256": "3950976b39460ed7ce762498e88362403d3d5cadcf4ca5a87041888fd51b1072"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_9_reverse_bound_support.lean",
+      "published_sha256": "04951e6d6cbf4332a788f659334861b78b0ce46ba274fa0ca2b97c85c7b995ba",
+      "source_sha256": "042adc20a2361acc6ec0b5edddeb59acdfb8a052b000b0b195a4231f8e02252b"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_9_truncation_support.lean",
+      "published_sha256": "10634fed7be5ef56aac74f5434a85cee56433be5cba988af6d1c01e76d3a6042",
+      "source_sha256": "036b0fbcc1aa594f456eed28c8e748c5e4562da3c9727ec26f03293575536b93"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_07/thm_7_9_value_support.lean",
+      "published_sha256": "99c142165abe4570b8edd680cb1c71c228a4c2031f81502553e1c9275a273686",
+      "source_sha256": "8689d24ed4763aa4509ac14515293f849554630363678448eb644513db36ed17"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/thm_8_1.lean",
+      "published_sha256": "61d5a35ad34c57514511e18a8707646a69feb908187d4718340bf5f793f571b8",
+      "source_sha256": "a12fbe6b5af58c005118a2c0eb90dfa33484353b0fd0fa8e25f56b2c0d6e7d54"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/thm_8_2.lean",
+      "published_sha256": "ca57f25b23e6ee833f72b76aa009a920c892aafd01036fef9aa02bd072a2d51d",
+      "source_sha256": "ff7df47da1a0a060dbefede0c33c67352437c613889c83a95db36d341098ae19"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/thm_8_3.lean",
+      "published_sha256": "fd0854013d4544999c3e05ee2916b1615ad31a9a71b2aae0135c56deeac96bd1",
+      "source_sha256": "3809b1295a9b2198741269acf2e5018688898263107f8c65aff9b044c8ed1615"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/thm_8_4.lean",
+      "published_sha256": "50786ed4140604bc62a45a262ad392a8039f3a871191b8969586664311fa95eb",
+      "source_sha256": "d6eca29f8e3bf508bf5f7a16a976ea335da7ee48d2a72ea3063f60ca9e410c0e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/thm_8_5.lean",
+      "published_sha256": "ed08b40ea17ed71b1da9658638a32e99c5b6d4383cb029bd419e3d4db86e6631",
+      "source_sha256": "33151b2b924fc3b4dbe6139ebd7f51d9a447d6629a2d3fe02626ec6784ee2106"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/thm_8_6.lean",
+      "published_sha256": "63ef031b050fb131528b27ead362942d27ab1d5469421ecc8b137a97d420a4e6",
+      "source_sha256": "6bdefb8b6d56ede91290d4b5cabf2be96badb792b177178ceb9813b9ade0330a"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_08/thm_8_7.lean",
+      "published_sha256": "17aec0df2c98d153f3930c63a20da76a21f69fbc4606fc073344a4dd45780451",
+      "source_sha256": "61769f0a7fb4c7ee7e6167d17d56fb41d3eba92388607629751d321cac73a08e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/thm_9_1.lean",
+      "published_sha256": "ccdc642fd937ccf7122b7111979cfff9eb981d68ce3c7f9e094bb487774a41a4",
+      "source_sha256": "9447a20314f6ae88a7bb33c4dc27276a1c9368b5d97f8e86f457a8c426c8c08d"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/thm_9_2.lean",
+      "published_sha256": "3c690695cbe7aeaa01e41bb30933b7848951b816eadb584d985d948ebb4deea4",
+      "source_sha256": "51cc25eb0f1f594533d079aac228a103d405bf098d1206ad991c5b648b0a1b06"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/thm_9_3.lean",
+      "published_sha256": "2f2e0e5d4b97009b46fdd2e37f9b1cec10ab019a1ac0c70837c9de36f40a7ff5",
+      "source_sha256": "6e6042e969db8cfaab2f9a785f8d40b6471f8f7531872f020c35f07e0c7a5ede"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/thm_9_4.lean",
+      "published_sha256": "3c9397edb1bac900a026b6b25a3d90f328163731dda9d754790baa127e263dd3",
+      "source_sha256": "8b2f77bea5bb7ca71c79996128261be5e5ecb8ce396161fa35642d3d5f1485be"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/thm_9_5.lean",
+      "published_sha256": "9c1ba670f930087af776691068dc75abc7132bda977253f55ee0c066a9ccc430",
+      "source_sha256": "500a7a2786b72268360380e645ffff777e26ff00db2c62698637ae80709ec9fc"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/thm_9_5_dirichlet.lean",
+      "published_sha256": "84fc60ab4e43562760ae7b61eaa795a4110cd2089fe18d7756c01a5700c5fab3",
+      "source_sha256": "594399c77909edbdb634833edd326fe94c3d12b84c1c17fc5aea694c81a82c39"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/thm_9_5_fubini.lean",
+      "published_sha256": "56029d0751a2a419af438f8d29d288b87fb573409045d5af39f8259491f36bca",
+      "source_sha256": "2821b5b7851b0d9466b072217b8dadc11857540bac839bde75991e919188ea36"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/thm_9_5_kernel.lean",
+      "published_sha256": "b437ee7a24bafaf94ff1c028315185d459a980713dbb7fba2bf6923377bbecb2",
+      "source_sha256": "3c2a7a51ed3ffbd93d675b164186af54c6ad5b6a26f74a9881cd646c3a75e937"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/thm_9_6.lean",
+      "published_sha256": "52f2b1b85047fea1c2b339110e9e4b2bf00be4dc1a66a1e0a807cb8dcdb108b9",
+      "source_sha256": "bf06d97d6644d196e28c115d3ceb203afe028d2ab667c98e20058b007e19062e"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_09/thm_9_7.lean",
+      "published_sha256": "2342088a0ae9b13703a78901ce78c630b5c66c086a91e1ad3a3c507c0f808076",
+      "source_sha256": "4a6630846102a0988e2beeb4ca100ef75db2fe86cdd0c997ff74a0be70b3d3b2"
+    },
+    {
+      "path": "ProbabilityTheory/common_support/tv_distance_core.lean",
+      "published_sha256": "1e01a35e0026caf94cb2afdffd405a239496d29e9dfd2ee1f155733e4a5c1e4c",
+      "source_sha256": "b05b2b4d9b460fd9be5d1a3d4327ed6642ff0aa96a88b65ff2aa577987f80881"
+    },
+    {
+      "path": "ProbabilityTheory/Support/IIDWord.lean",
+      "published_sha256": "f7a26458362a42b022a13a4c11b185a605889be1333409644b5421dde1260049",
+      "source_sha256": "c71103ba49ac6623b03c9571174a14444bf1f8a6dec3b580d0823020c600e17f"
+    },
+    {
+      "path": "ProbabilityTheory/Phase2/DensityIntegralBridge.lean",
+      "published_sha256": "77cc1107a80e10f0f08dd045946654381439ee2e8f12582ee498febd11f16dc4",
+      "source_sha256": "394d38f7cfd73c0b43c367e5852efeacffcebd291cba2e927bc117934fb7462c"
+    },
+    {
+      "path": "ProbabilityTheory/Phase2/VectorMeasureBorelBridge.lean",
+      "published_sha256": "d0840870a2fa27134c51af220f69875d4c237636ef79e39fd3be0ba03cdb91db",
+      "source_sha256": "c2d6acf907a794eebffdc085c1cc489b469290f97a6fb8b3119521de2e92ce78"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_01/thm_1_2_glue_support.lean",
+      "published_sha256": "310a4e500d1930ef83ef24ae777160fe806cc2c9afb1907f37059c0c6912d3ee",
+      "source_sha256": "a36424d0e923c707f1f9cb75d8f209d881d0a080b0f6a03b6b7bdee94da73ef4"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_02/thm_2_9_vitali_support.lean",
+      "published_sha256": "eecc481700cd83ff4d1f138b08107117cd778c7bf1e2a765b63658681810f3e8",
+      "source_sha256": "36c413ca2c58886ecd5d429d389a3e52ea1ea7761ed210d6e77bd9312d59e5fa"
+    },
+    {
+      "path": "ProbabilityTheory/chapter_05/def_5_5to10.lean",
+      "published_sha256": "99369b2908bd5a2b349d60298d48e93cf423054913a1264b7c52139f17c3cb68",
+      "source_sha256": "71a098455a75ac38e25e40f5a75151a2e8f4468ab9a502f67307873e13292379"
+    }
+  ],
+  "manifest_sha256": "d50beac341f1552731e44c63ffbe97fe8dd500d6bfdb41fd730f3180cdff19a6",
+  "published_corpus_sha256": "6f73af8b485cae051c4017a82b3d2a28e213f04ace920d03ff5ac6bbb6cd5dac",
+  "schema": "formalization-engine.public-corpus-map.v1",
+  "source_commit": "a949e0d816b033087cffed04b209a90e43aac4d1",
+  "source_corpus_sha256": "1a3b7918d71469c290a80b500d829d6300832482015a5aa841552195b6d34ebc",
+  "source_manifest_sha256": "24042e03cfac9a2a31d37d7c45d8bf9914cb550fb9b6d8da942885e413b4de4c"
+}

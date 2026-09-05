@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This note records how ToyApollo should handle common textbook notation that
+This note records how ProbabilityTheoryFormalization should handle common textbook notation that
 appears again and again in later chapters.
 
 Examples:

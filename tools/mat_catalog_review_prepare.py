@@ -24,15 +24,15 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.core import get_settings, open_runtime_ledger
-from src.toy_apollo.phase2_pack_generation import _write_codex_handoff_review_artifacts
-from src.toy_apollo.state_reconcile import git_file_at_ref
-from src.toy_apollo.state_exact_build_batch import (
+from formalization_engine.core import get_settings, open_runtime_ledger
+from formalization_engine.phase2_pack_generation import _write_codex_handoff_review_artifacts
+from formalization_engine.state_reconcile import git_file_at_ref
+from formalization_engine.state_exact_build_batch import (
     ExactBuildBatchError,
     catalog_owned_build_modules,
     validate_current_exact_build_receipt,
 )
-from src.toy_apollo.state_store import (
+from formalization_engine.state_store import (
     SubjectBundle,
     canonical_subject_bytes,
     sha256_bytes,
@@ -40,7 +40,7 @@ from src.toy_apollo.state_store import (
     sha256_json,
     utc_now,
 )
-from src.toy_apollo.task_catalog import TaskCatalog, load_catalog
+from formalization_engine.task_catalog import TaskCatalog, load_catalog
 
 
 CAMPAIGN_ID = "modern_catalog_gap_closure_20260807"

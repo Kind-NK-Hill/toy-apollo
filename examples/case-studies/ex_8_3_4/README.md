@@ -36,3 +36,6 @@ statement while leaving compilable code.
 
 The complete compactness, continuity, attainment, and value-equality proofs
 remain hash-bound in the private evidence pack.
+
+Current maintained corpus implementation: [ProbabilityTheory/chapter_08/ex_8_3_4.lean](../../../ProbabilityTheory/chapter_08/ex_8_3_4.lean).
+The fixed snapshots above retain their historical scope and hashes.

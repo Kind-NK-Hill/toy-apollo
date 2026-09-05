@@ -10,8 +10,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.phase2_batch_controller import analyze_batch_state  # noqa: E402
-from src.toy_apollo.phase2_batch_runner import (  # noqa: E402
+from formalization_engine.phase2_batch_controller import analyze_batch_state  # noqa: E402
+from formalization_engine.phase2_batch_runner import (  # noqa: E402
     build_live_batch_state,
     plan_batch_from_ledger,
 )
@@ -24,12 +24,13 @@ class FakeLedger:
 
 class Phase2DependencyGateTests(unittest.TestCase):
     def _settings(self, root: Path):
-        output_dir = root / "ToyApollo" / "Output"
+        output_dir = root / "ProbabilityTheory"
         output_dir.mkdir(parents=True)
         plans_dir = root / "plans"
         plans_dir.mkdir(parents=True)
         return SimpleNamespace(
-            toyapollo_output_dir=output_dir,
+            canonical_lean_dir=output_dir,
+            canonical_manifest_required=False,
             phase2_prompt_packs_dir=root / "phase2_prompt_packs",
             plans_dir=plans_dir,
         )
@@ -123,8 +124,8 @@ class Phase2DependencyGateTests(unittest.TestCase):
             self._write_plan(settings, plan_tasks)
             ledger_tasks = {}
             for task_id, imported_task_id in mappings.items():
-                (settings.toyapollo_output_dir / f"{task_id}.lean").write_text(
-                    f"import Mathlib\nimport ToyApollo.Output.{imported_task_id}\n",
+                (settings.canonical_lean_dir / f"{task_id}.lean").write_text(
+                    f"import Mathlib\nimport ProbabilityTheory.{imported_task_id}\n",
                     encoding="utf-8",
                 )
                 ledger_tasks[task_id] = {
@@ -199,21 +200,21 @@ class Phase2DependencyGateTests(unittest.TestCase):
                     self._plan_task("thm_7_8", "Theorem_Statement"),
                 ],
             )
-            (settings.toyapollo_output_dir / "prob_7_3.lean").write_text(
-                "import ToyApollo.Output.prob_7_3_proof_support\n",
+            (settings.canonical_lean_dir / "prob_7_3.lean").write_text(
+                "import ProbabilityTheory.prob_7_3_proof_support\n",
                 encoding="utf-8",
             )
-            (settings.toyapollo_output_dir / "prob_7_3_proof_support.lean").write_text(
+            (settings.canonical_lean_dir / "prob_7_3_proof_support.lean").write_text(
                 "\n".join(
                     [
-                        "import ToyApollo.Output.prob_7_3_nested_support",
-                        "import ToyApollo.Output.def_1_2",
+                        "import ProbabilityTheory.prob_7_3_nested_support",
+                        "import ProbabilityTheory.def_1_2",
                     ]
                 ),
                 encoding="utf-8",
             )
-            (settings.toyapollo_output_dir / "prob_7_3_nested_support.lean").write_text(
-                "import ToyApollo.Output.thm_7_8\n",
+            (settings.canonical_lean_dir / "prob_7_3_nested_support.lean").write_text(
+                "import ProbabilityTheory.thm_7_8\n",
                 encoding="utf-8",
             )
             ledger = FakeLedger(

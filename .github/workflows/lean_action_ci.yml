@@ -11,30 +11,59 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      # Bound Lake and Lean concurrency to avoid peak-memory failures.
+      LEAN_NUM_THREADS: "1"
 
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - name: Install test tools
+      - name: Install runtime and test tools
         run: |
           sudo apt-get update
           sudo apt-get install --yes ripgrep
-      - name: Enforce Main Repo Hygiene
+          python -m pip install --editable .
+      - name: Enforce repository hygiene
         run: python tools/check_repo_hygiene.py
-      - name: Check Public Snapshot Scope
-        run: |
-          python tools/prepare_public_snapshot.py
-          python tools/check_case_studies.py
-          python -m unittest tests.test_repo_hygiene tests.test_prepare_public_snapshot tests.test_case_studies
-      - uses: leanprover/lean-action@v1
-      - name: Run Python Test Suite
-        run: python -m unittest discover -s tests -p "test_*.py"
-      - name: Compile Public Case Snapshots
+      - name: Verify full corpus inventory and export integrity
         shell: bash
         run: |
           set -euo pipefail
-          while IFS= read -r snapshot; do
+          if [[ -f data/publication/corpus_map.json ]]; then
+            python tools/check_public_release.py
+            python tools/check_formal_corpus.py --publication-map data/publication/corpus_map.json
+          else
+            python tools/check_active_surface.py --final
+            python tools/check_formal_corpus.py
+          fi
+      - name: Check public source and case snapshot scope
+        if: hashFiles('data/publication/corpus_map.json') != ''
+        run: |
+          python tools/prepare_public_snapshot.py
+          python tools/check_case_studies.py
+      - name: Build every ProbabilityTheory module and its dependencies
+        uses: leanprover/lean-action@v1
+        with:
+          build: "true"
+          build-args: "ProbabilityTheory"
+      - name: Check supported chapter joint imports
+        run: python tools/check_chapter_imports.py
+      - name: Run Python test suite including the Lean interface contract
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+      - name: Replay the complete isolated production workflow
+        run: python tools/run_workflow_demo.py
+      - name: Exercise the prospective comparison protocol with synthetic records
+        run: python examples/review-comparison-pilot/run_synthetic_fixture.py
+      - name: Compile all public case snapshots
+        if: hashFiles('data/publication/corpus_map.json') != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t snapshots < <(find examples/case-studies -type f -name '*.lean' | sort)
+          test "${#snapshots[@]}" -gt 0
+          for snapshot in "${snapshots[@]}"; do
             lake env lean "$snapshot"
-          done < <(find examples/case-studies -type f -name '*.lean' | sort)
+          done

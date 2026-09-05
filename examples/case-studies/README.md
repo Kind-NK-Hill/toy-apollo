@@ -1,6 +1,6 @@
 # Case studies
 
-These eight case studies are small, immutable exports from ToyApollo's private
+These eight case studies are small, immutable exports from ProbabilityTheoryFormalization's retained private
 runtime evidence. They show why the project separates Lean compilation,
 semantic review, diagnosis, downstream revalidation, and the final apply
 decision.
@@ -38,7 +38,7 @@ proof-route drift while keeping the theorem statement fixed.
 
 ## One-minute explanation
 
-> ToyApollo treats Lean compilation as one gate, not as a semantic certificate.
+> ProbabilityTheoryFormalization treats Lean compilation as one gate, not as a semantic certificate.
 > I preserved eight real repair histories in which compilable code used the
 > wrong domain, carrier, quantifier structure, undefinedness convention, or
 > proof route. Every public timeline binds its verdicts to candidate and review
@@ -69,3 +69,7 @@ insufficient to decide the semantic verdict; read the adjacent timeline.
 For the authority model, see
 [`docs/phase2/artifacts.md`](../../docs/phase2/artifacts.md) and
 [`docs/phase2/review_criteria.md`](../../docs/phase2/review_criteria.md).
+
+For an executable build/review/repair/apply sequence, use the separate
+[production workflow demonstration](../../docs/workflow_demo.md). Its newly
+authored teaching fixture does not replay these eight historical task packs.

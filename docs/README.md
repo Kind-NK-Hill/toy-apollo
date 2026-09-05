@@ -1,64 +1,100 @@
-# Documentation
+# Docs Boundary
 
-For a project introduction, start with the [homepage](../README.md).
-For research context, authorship, and related work, see [project notes](project_notes.md).
+Start with the [project homepage](../README.md) or its [Chinese version](../README.zh-CN.md).
+Use the [development guide](development.md) for a public clone or the
+[Chinese operator guide](getting_started.zh-CN.md) for both publication and full-workspace commands.
+See [project notes](project_notes.md) for research context, authorship, and related work.
 
-Start with the stable public model, then enter operator detail only when the
-task requires it.
+This directory is for current operator runbooks and stable policy notes.
+Historical migration, reorg, provider-offload, and one-off handoff notes should
+not sit beside current policy.
 
-## Public project model
+## Current authority and history
 
-- [`architecture.md`](architecture.md): Module ownership, runtime flow, trust
-  model, and source/evidence planes.
-- [`repository_scope.md`](repository_scope.md): what is public, what remains
-  private, and how case studies are curated.
-- [`development.md`](development.md): fresh-checkout setup and focused checks.
-- [`../examples/case-studies/`](../examples/case-studies/): eight inspectable
-  review-and-repair histories.
+- [Architecture](architecture.md): active package, corpus, and artifact roots.
+- [Workspace state](workspace_state.md): current catalog, evidence, and external review boundaries.
+- [Publication scope](repository_scope.md): what is included in a public release and how to verify it.
 
-## Current operator contracts
+The complete local workspace also retains `cutover_v2.md`,
+`workspace_inventory.md`, and `archive/workspace_state_pre_unified_index_20260905.md`.
+Those local history and inventory documents are omitted from public exports;
+the archived MAT procedures do not authorize active corpus writes.
+
+## Demonstrations and experiments
+
+- [Workflow demonstration](workflow_demo.md): an executable teaching example of build, review, repair, downstream migration, and apply; replay is distinct from a new model review.
+- [Review-basis identity pilot](review_basis_pilot.md): a small experiment separating identity dimensions and explaining why review evidence expires; it does not grant semantic authority.
+- [Prospective review comparison](review_comparison_pilot.md): a comparison protocol and runner whose empirical claims require independent adjudication; historical verdicts are not ground truth.
+
+## Current Runtime Docs
 
 Use these when operating or modifying Phase 2:
 
-- [`phase2/README.md`](phase2/README.md)
-- [`phase2/workflow.md`](phase2/workflow.md)
-- [`phase2/status_contract.md`](phase2/status_contract.md)
-- [`phase2/review_criteria.md`](phase2/review_criteria.md)
-- [`phase2/artifacts.md`](phase2/artifacts.md)
-- [`phase2/tools.md`](phase2/tools.md)
-- [`workspace_state.md`](workspace_state.md)
-- [`evidence_bridge.md`](evidence_bridge.md)
+- `phase2/README.md`
+- `phase2/workflow.md`
+- `phase2/status_contract.md`
+- `phase2/review_criteria.md`
+- `phase2/artifacts.md`
+- `phase2/tools.md`
+- `workspace_state.md`
+- `evidence_bridge.md`
+- `workspace_inventory.md`
 
-`phase2/textbook_complete_targets.json` is a data artifact, not a policy
-entry.
+`phase2/textbook_complete_targets.json` is a data artifact, not a policy entry.
 
-## Policy notes
+## Generated artifacts in the complete local workspace
 
-Use these when changing dependency modeling or source-plan Interfaces:
+These are local generated or maintained artifacts that current tools may read or
+refresh. They are omitted from public releases. Preserve their paths in the
+complete workspace unless the tools are updated at the same time:
 
-- [`chapter1_2_cross_chapter_dependency.md`](chapter1_2_cross_chapter_dependency.md)
-- [`dependency_decision_trail.md`](dependency_decision_trail.md)
-- [`interface_dependency_policy.md`](interface_dependency_policy.md)
+- `phase2_completion_classification.md`
+- `phase2_completion_classification.json`
+- `phase2_ch10_14_clean_debt_surface_audit.md`
+- `phase2_ch10_14_clean_debt_surface_audit.json`
+- `phase2_unfinished_tasks_audit.md`
+- `phase2_unfinished_tasks_audit.json`
+- `phase2_source_output_alignment_audit.md`
 
-## Generated reports
+These are reports/cache. They do not decide Phase2 completion. Current state is
+queried from the local workspace database; it is not checked in as a snapshot.
 
-Classification, alignment, completion, and unfinished-task reports are cache or
-diagnostic artifacts. They may provide review context, but they do not decide
-Phase 2 completion. The operational state is queried from the private workspace
-database and is not published as a current snapshot.
+Short-lived manifest files produced by cleanup tools should not be kept in this
+root directory unless a current tool reads them as input. Tools that need those
+manifests can regenerate them.
 
-## Historical material
+## Step And Temporary Docs
 
-Historical migration notes, one-off handoffs, old provider plans, rescue logs,
-and superseded Phase 2 policies remain preserved in the private evidence plane
-and Git history. They are intentionally absent from the default public
-documentation surface.
+Historical step plans, queues, decision records, postmortems, and one-off
+diagnostic reports are audit trail only. They are not stable runtime policy and
+should not appear in the default docs surface.
 
-Archive material is never runtime truth merely because it exists. Current CLI
-behavior and the current contracts above take precedence.
+Current handoff notes for an active run should live with generated run reports,
+for example under `phase2_prompt_packs/_reports/`, not in `docs/phase2/`.
 
-## Search behavior
+## Policy Notes
 
-Normal `rg` searches exclude generated packs, artifact paths, and private
-archives through `.rgignore`. Use `rg --no-ignore` only for a deliberate
-evidence audit.
+Use these when changing dependency modeling or source-plan boundaries:
+
+- `chapter1_2_cross_chapter_dependency.md`
+- `dependency_decision_trail.md`
+- `interface_dependency_policy.md`
+
+## Runtime Boundary
+
+- Problem soft dependency selection is a Phase 2 special case with two active entries: `--phase 2 --phase2-mode soft-pack` and `--phase 2 --phase2-mode soft-apply`.
+- Removed legacy mode names such as `plan-batches`, `offload-batch`, `repair-pack`, and `repair-verify` are not active contracts.
+
+## Search Boundary
+
+Default active searches should use normal `rg`; `.rgignore` excludes backup, archive, generated pack, and artifact directories. Use `rg --no-ignore` only when intentionally auditing historical or generated content.
+
+## Archive Boundary
+
+Archived material is audit trail only. Do not use archived handoff files or old
+Phase2 policy drafts as current proof-debt policy. Current generated reports
+remain cache/report artifacts and do not decide completion.
+
+## Legacy Metadata
+
+Names such as `legacy_ids`, `legacy_ids_for`, and `legacy_inferred` are compatibility and audit metadata. They are not the old Gemini/DeepSeek direct-generation pipeline.

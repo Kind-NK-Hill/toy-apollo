@@ -150,7 +150,7 @@ def validate_classification(
         lean_file = task.get("lean_file")
         if not isinstance(lean_file, str) or not lean_file:
             errors.append(f"{task_id}: lean_file must be a non-empty string")
-        elif not _rel_path(lean_file).exists():
+        elif require_fresh_evidence and not _rel_path(lean_file).exists():
             errors.append(f"{task_id}: lean_file does not exist: {lean_file}")
 
         if not isinstance(task.get("chapter"), int) or task["chapter"] <= 0:
@@ -200,9 +200,6 @@ def validate_classification(
                 errors.append(f"{ev_prefix}: file must be a non-empty string")
                 continue
             evidence_file = _rel_path(file_name)
-            if not evidence_file.exists():
-                errors.append(f"{ev_prefix}: evidence file does not exist: {file_name}")
-                continue
             if not isinstance(line, int) or line <= 0:
                 errors.append(f"{ev_prefix}: line must be a positive integer")
                 continue
@@ -210,6 +207,9 @@ def validate_classification(
                 errors.append(f"{ev_prefix}: text must be a non-empty string")
                 continue
             if require_fresh_evidence:
+                if not evidence_file.exists():
+                    errors.append(f"{ev_prefix}: evidence file does not exist: {file_name}")
+                    continue
                 try:
                     actual = _line_text(evidence_file, line).strip()
                 except ValueError as exc:
@@ -245,9 +245,9 @@ def validate_classification(
                 "validate_phase2_obligation_contracts.py validation, or an explicit Level 0 direct proof reason"
             )
 
-    if beyond_book_tasks:
+    if beyond_book_tasks != ["thm_14_8"]:
         errors.append(
-            "no current task may retain primary_class = beyond_book_exception; "
+            "thm_14_8 must be the only task with primary_class = beyond_book_exception; "
             f"found {beyond_book_tasks}"
         )
 

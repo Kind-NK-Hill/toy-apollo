@@ -30,3 +30,6 @@ explicit; Mathlib remains behind a checked bridge.
 
 The Lean files are sanitized Interface slices. Full prompts, source excerpts,
 consumer snapshots, and mutable pack pointers remain private.
+
+Current maintained corpus implementation: [ProbabilityTheory/chapter_05/def_5_5.lean](../../../ProbabilityTheory/chapter_05/def_5_5.lean).
+The fixed snapshots above retain their historical scope and hashes.

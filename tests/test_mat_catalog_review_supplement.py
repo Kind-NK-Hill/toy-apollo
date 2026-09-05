@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.toy_apollo.state_store import SubjectBundle, sha256_file, sha256_json
+from formalization_engine.state_store import SubjectBundle, sha256_file, sha256_json
 from tools.mat_catalog_review_apply import (
     ApplyError,
     _render_review_supplement_context,

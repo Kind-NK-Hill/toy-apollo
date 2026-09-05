@@ -9,7 +9,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-from src.toy_apollo.state_store import SubjectBundle, sha256_file
+from formalization_engine.state_store import SubjectBundle, sha256_file
 from tools.mat_catalog_review_apply import (
     ApplyError,
     _revalidate_current_subject_before_state_mutation,
@@ -37,7 +37,7 @@ class PrebuiltExactBuildReceiptTests(unittest.TestCase):
         self.root = root
         self.addCleanup(shutil.rmtree, root)
         self.workspace = root / "workspace"
-        self.runtime = self.workspace / "toy-apollo"
+        self.runtime = self.workspace / "ProbabilityTheoryFormalization"
         self.build_root = root / "clean-checkout"
         self.pack = root / "pack"
         self.runtime.mkdir(parents=True)

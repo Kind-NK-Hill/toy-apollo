@@ -15,8 +15,8 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 
-from src.toy_apollo.phase2_review_decision import evaluate_semantic_review_result  # noqa: E402
-from src.toy_apollo.phase2_semantic_review import (  # noqa: E402
+from formalization_engine.phase2_review_decision import evaluate_semantic_review_result  # noqa: E402
+from formalization_engine.phase2_semantic_review import (  # noqa: E402
     SEMANTIC_REVIEW_PROMPT_VERSION,
     SEMANTIC_REVIEW_RUBRIC_VERSION,
     build_semantic_review_input,
@@ -30,10 +30,10 @@ from src.toy_apollo.phase2_semantic_review import (  # noqa: E402
 
 class Phase2ReviewDecisionTests(unittest.TestCase):
     def test_legacy_obligation_schema_is_profile_scoped(self):
-        with patch.dict(os.environ, {"TOY_APOLLO_PROFILE": "mat"}):
+        with patch.dict(os.environ, {"FORMALIZATION_ENGINE_PROFILE": "mat"}):
             self.assertTrue(_uses_legacy_obligation_review_schema({"prompt_version": 9}))
             self.assertFalse(_uses_legacy_obligation_review_schema({"prompt_version": 11}))
-        with patch.dict(os.environ, {"TOY_APOLLO_PROFILE": "cordis"}):
+        with patch.dict(os.environ, {"FORMALIZATION_ENGINE_PROFILE": "cordis"}):
             self.assertFalse(_uses_legacy_obligation_review_schema({"prompt_version": 1}))
 
     def test_bound_legacy_prompt_results_remain_valid_after_prompt_v11(self):
@@ -306,7 +306,7 @@ class Phase2ReviewDecisionTests(unittest.TestCase):
         self.assertIsNone(decision.task_status_projection)
         self.assertNotIn("phase2_status", decision.result)
 
-    def test_retired_thm_14_8_exception_is_rejected(self):
+    def test_allowed_exception_is_not_counted_as_clean_pass(self):
         review_input = self._review_input("thm_14_8", "Theorem")
         raw = self._raw_result(
             review_input,
@@ -317,7 +317,7 @@ class Phase2ReviewDecisionTests(unittest.TestCase):
         decision = evaluate_semantic_review_result(raw, review_input=review_input, runner_metadata={"status": "test"})
 
         self.assertTrue(decision.is_semantic_verdict)
-        self.assertEqual(decision.task_status_projection.task_status, "fail")
+        self.assertEqual(decision.task_status_projection.task_status, "allowed_exception")
         self.assertFalse(decision.is_clean_pass)
 
     def test_reviewer_cannot_override_authoritative_binding_metadata(self):
@@ -524,7 +524,7 @@ class Phase2ReviewDecisionTests(unittest.TestCase):
     def test_review_bundle_and_cache_bind_task_owned_support_files(self):
         with tempfile.TemporaryDirectory() as tmp:
             runtime = Path(tmp)
-            support = runtime / "ToyApollo" / "Output" / "thm_1_1_support" / "core.lean"
+            support = runtime / "ProbabilityTheory" / "thm_1_1_support" / "core.lean"
             support.parent.mkdir(parents=True)
             support.write_text("theorem helper : True := by trivial\n", encoding="utf-8")
             task = self._review_input("thm_1_1")["task"]
@@ -542,6 +542,7 @@ class Phase2ReviewDecisionTests(unittest.TestCase):
                 "reviewer_argv_hash": "runner",
                 "review_basis": {"task": task},
                 "runtime_root": runtime,
+                "canonical_manifest_required": False,
             }
 
             first = build_semantic_review_input(**common)

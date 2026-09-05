@@ -1,2 +1,0 @@
-"""Toy Apollo namespace package."""
-

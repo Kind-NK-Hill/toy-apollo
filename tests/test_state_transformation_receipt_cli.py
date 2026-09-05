@@ -8,13 +8,13 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from src.toy_apollo.state_cli import _batch_task_ids, build_parser
-from src.toy_apollo.state_migration import (
+from formalization_engine.state_cli import _batch_task_ids, build_parser
+from formalization_engine.state_migration import (
     MigrationReport,
     import_validated_transformation_receipt,
 )
-from src.toy_apollo.state_store import SubjectBundle, WorkspaceStateStore
-from src.toy_apollo.state_transformation_receipt import (
+from formalization_engine.state_store import SubjectBundle, WorkspaceStateStore
+from formalization_engine.state_transformation_receipt import (
     TransformationReceiptError,
     _revalidate_emit_heads,
     emit_validated_transformation,
@@ -180,22 +180,22 @@ class TransformationReceiptCliTests(unittest.TestCase):
 
             with (
                 patch(
-                    "src.toy_apollo.state_transformation_receipt.load_catalog",
+                    "formalization_engine.state_transformation_receipt.load_catalog",
                     return_value=self._catalog(),
                 ),
                 patch(
-                    "src.toy_apollo.state_transformation_receipt._command_text",
+                    "formalization_engine.state_transformation_receipt._command_text",
                     side_effect=git_text,
                 ),
                 patch(
-                    "src.toy_apollo.state_transformation_receipt.discover_catalog_git_subjects",
+                    "formalization_engine.state_transformation_receipt.discover_catalog_git_subjects",
                     return_value={self.task_id: target},
                 ),
             ):
                 result = inspect_validated_transformation(
                     store=store,
                     workspace_root=root,
-                    runtime_root=root / "toy-apollo",
+                    runtime_root=root / "formalize",
                     task_id=self.task_id,
                 )
 
@@ -222,15 +222,15 @@ class TransformationReceiptCliTests(unittest.TestCase):
 
                 with (
                     patch(
-                        "src.toy_apollo.state_transformation_receipt.load_catalog",
+                        "formalization_engine.state_transformation_receipt.load_catalog",
                         return_value=self._catalog(),
                     ),
                     patch(
-                        "src.toy_apollo.state_transformation_receipt._command_text",
+                        "formalization_engine.state_transformation_receipt._command_text",
                         side_effect=git_text,
                     ),
                     patch(
-                        "src.toy_apollo.state_transformation_receipt.discover_catalog_git_subjects",
+                        "formalization_engine.state_transformation_receipt.discover_catalog_git_subjects",
                         return_value={self.task_id: target},
                     ),
                     self.assertRaises(TransformationReceiptError),
@@ -238,7 +238,7 @@ class TransformationReceiptCliTests(unittest.TestCase):
                     inspect_validated_transformation(
                         store=store,
                         workspace_root=root,
-                        runtime_root=root / "toy-apollo",
+                        runtime_root=root / "formalize",
                         task_id=self.task_id,
                     )
 
@@ -304,20 +304,20 @@ class TransformationReceiptCliTests(unittest.TestCase):
             )
             with (
                 patch(
-                    "src.toy_apollo.state_transformation_receipt.inspect_validated_transformation",
+                    "formalization_engine.state_transformation_receipt.inspect_validated_transformation",
                     return_value=inspection,
                 ),
-                patch("src.toy_apollo.state_transformation_receipt._run", return_value=completed),
+                patch("formalization_engine.state_transformation_receipt._run", return_value=completed),
                 patch(
-                    "src.toy_apollo.state_transformation_receipt._forbidden_findings",
+                    "formalization_engine.state_transformation_receipt._forbidden_findings",
                     return_value=[],
                 ),
-                patch("src.toy_apollo.state_transformation_receipt._revalidate_emit_heads"),
+                patch("formalization_engine.state_transformation_receipt._revalidate_emit_heads"),
             ):
                 result = emit_validated_transformation(
                     store=store,
                     workspace_root=root,
-                    runtime_root=root / "toy-apollo",
+                    runtime_root=root / "formalize",
                     task_id=self.task_id,
                     output_dir=output,
                 )
@@ -333,21 +333,21 @@ class TransformationReceiptCliTests(unittest.TestCase):
 
             with (
                 patch(
-                    "src.toy_apollo.state_transformation_receipt.inspect_validated_transformation",
+                    "formalization_engine.state_transformation_receipt.inspect_validated_transformation",
                     return_value=inspection,
                 ),
-                patch("src.toy_apollo.state_transformation_receipt._run", return_value=completed),
+                patch("formalization_engine.state_transformation_receipt._run", return_value=completed),
                 patch(
-                    "src.toy_apollo.state_transformation_receipt._forbidden_findings",
+                    "formalization_engine.state_transformation_receipt._forbidden_findings",
                     return_value=[],
                 ),
-                patch("src.toy_apollo.state_transformation_receipt._revalidate_emit_heads"),
+                patch("formalization_engine.state_transformation_receipt._revalidate_emit_heads"),
                 self.assertRaises(TransformationReceiptError),
             ):
                 emit_validated_transformation(
                     store=store,
                     workspace_root=root,
-                    runtime_root=root / "toy-apollo",
+                    runtime_root=root / "formalize",
                     task_id=self.task_id,
                     output_dir=output,
                 )
@@ -369,16 +369,16 @@ class TransformationReceiptCliTests(unittest.TestCase):
             )
             with (
                 patch(
-                    "src.toy_apollo.state_transformation_receipt.inspect_validated_transformation",
+                    "formalization_engine.state_transformation_receipt.inspect_validated_transformation",
                     return_value=inspection,
                 ),
-                patch("src.toy_apollo.state_transformation_receipt._run", return_value=failed),
+                patch("formalization_engine.state_transformation_receipt._run", return_value=failed),
                 self.assertRaises(TransformationReceiptError),
             ):
                 emit_validated_transformation(
                     store=WorkspaceStateStore(root / "unused.sqlite3"),
                     workspace_root=root,
-                    runtime_root=root / "toy-apollo",
+                    runtime_root=root / "formalize",
                     task_id=self.task_id,
                     output_dir=output,
                 )
@@ -392,7 +392,7 @@ class TransformationReceiptCliTests(unittest.TestCase):
         }
         with (
             patch(
-                "src.toy_apollo.state_transformation_receipt._command_text",
+                "formalization_engine.state_transformation_receipt._command_text",
                 return_value="c" * 40,
             ),
             self.assertRaisesRegex(TransformationReceiptError, "origin/main changed"),
@@ -468,22 +468,22 @@ class TransformationReceiptCliTests(unittest.TestCase):
             )
             with (
                 patch(
-                    "src.toy_apollo.state_transformation_receipt._inspect_validated_transformations",
+                    "formalization_engine.state_transformation_receipt._inspect_validated_transformations",
                     return_value=inspections,
                 ) as inspect_mock,
                 patch(
-                    "src.toy_apollo.state_transformation_receipt._run", return_value=completed
+                    "formalization_engine.state_transformation_receipt._run", return_value=completed
                 ) as run_mock,
                 patch(
-                    "src.toy_apollo.state_transformation_receipt._forbidden_findings",
+                    "formalization_engine.state_transformation_receipt._forbidden_findings",
                     return_value=[],
                 ),
-                patch("src.toy_apollo.state_transformation_receipt._revalidate_emit_heads"),
+                patch("formalization_engine.state_transformation_receipt._revalidate_emit_heads"),
             ):
                 result = emit_validated_transformations_batch(
                     store=WorkspaceStateStore(root / "unused.sqlite3"),
                     workspace_root=root,
-                    runtime_root=root / "toy-apollo",
+                    runtime_root=root / "formalize",
                     task_ids=["thm_1_1", "thm_1_2"],
                     output_dir=output,
                 )
@@ -506,15 +506,15 @@ class TransformationReceiptCliTests(unittest.TestCase):
 
             with (
                 patch(
-                    "src.toy_apollo.state_transformation_receipt._inspect_validated_transformations",
+                    "formalization_engine.state_transformation_receipt._inspect_validated_transformations",
                     return_value=inspections,
                 ),
-                patch("src.toy_apollo.state_transformation_receipt._run") as second_run,
+                patch("formalization_engine.state_transformation_receipt._run") as second_run,
             ):
                 skipped = emit_validated_transformations_batch(
                     store=WorkspaceStateStore(root / "unused.sqlite3"),
                     workspace_root=root,
-                    runtime_root=root / "toy-apollo",
+                    runtime_root=root / "formalize",
                     task_ids=["thm_1_1", "thm_1_2"],
                     output_dir=output,
                 )
@@ -529,16 +529,16 @@ class TransformationReceiptCliTests(unittest.TestCase):
             ).unlink()
             with (
                 patch(
-                    "src.toy_apollo.state_transformation_receipt._inspect_validated_transformations",
+                    "formalization_engine.state_transformation_receipt._inspect_validated_transformations",
                     return_value=inspections,
                 ),
-                patch("src.toy_apollo.state_transformation_receipt._run") as partial_run,
+                patch("formalization_engine.state_transformation_receipt._run") as partial_run,
                 self.assertRaisesRegex(TransformationReceiptError, "partial"),
             ):
                 emit_validated_transformations_batch(
                     store=WorkspaceStateStore(root / "unused.sqlite3"),
                     workspace_root=root,
-                    runtime_root=root / "toy-apollo",
+                    runtime_root=root / "formalize",
                     task_ids=["thm_1_1", "thm_1_2"],
                     output_dir=output,
                 )

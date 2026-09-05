@@ -12,9 +12,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.state_reconcile import git_file_at_ref  # noqa: E402
-from src.toy_apollo.state_store import SubjectBundle  # noqa: E402
-from src.toy_apollo.task_catalog import load_catalog  # noqa: E402
+from formalization_engine.state_reconcile import git_file_at_ref  # noqa: E402
+from formalization_engine.state_store import SubjectBundle  # noqa: E402
+from formalization_engine.task_catalog import load_catalog  # noqa: E402
 
 
 def _git(repo: Path, *args: str) -> str:

@@ -1,4 +1,4 @@
-import ToyApollo.Output.def_1_2
+import ProbabilityTheory.chapter_01.def_1_2
 
 open Finset BigOperators
 
@@ -8,27 +8,30 @@ noncomputable section
 the public integrability predicate is the textbook upper/lower common-limit
 criterion; tagged convergence is a theorem derived from that criterion. -/
 
-example {a b : ℝ} (P : DarbouxRS.Partition a b) : Fin (P.n + 1) → ℝ :=
+example {a b : ℝ} (P : Partition a b) : Fin (P.n + 1) → ℝ :=
   P.pts
 
-example {a b : ℝ} (P : DarbouxRS.Partition a b) (i : Fin P.n) : Set ℝ :=
-  DarbouxRS.subinterval P i
+example {a b : ℝ} (P : Partition a b) (i : Fin P.n) : Set ℝ :=
+  Partition.subinterval P i
 
-example {a b : ℝ} (P : DarbouxRS.Partition a b) (tags : Fin P.n → ℝ)
+example {a b : ℝ} (P : Partition a b) (tags : Fin P.n → ℝ)
     (f alpha : ℝ → ℝ) : ℝ :=
-  DarbouxRS.taggedSum P tags f alpha
+  taggedSum P tags f alpha
 
-example {a b : ℝ} (P : DarbouxRS.Partition a b) (f alpha : ℝ → ℝ) : ℝ :=
+example {a b : ℝ} (P : Partition a b) (f alpha : ℝ → ℝ) : ℝ :=
   ∑ i : Fin P.n,
-    DarbouxRS.upperStep P f i *
+    upperStep P f i *
       (alpha (P.pts i.succ) - alpha (P.pts i.castSucc))
 
 example (f alpha : ℝ → ℝ) (a b : ℝ) :
     RSIntegrable f alpha a b ↔
-      ∃ L, DarbouxRS.UpperLowerCommonLimit a b f alpha L :=
+      Nonempty (RSIntegralWitness f alpha a b) :=
   Iff.rfl
 
-example {f alpha : ℝ → ℝ} {a b L : ℝ}
-    (h : DarbouxRS.UpperLowerCommonLimit a b f alpha L) :
-    DarbouxRS.TaggedCommonLimit a b f alpha L :=
-  DarbouxRS.taggedBridgeObligation h
+example {f alpha : ℝ → ℝ} {a b : ℝ} (h : RSIntegrable f alpha a b) :
+    rsUpperLowerCommonLimit a b f alpha (rsIntegral f alpha a b h) :=
+  rsIntegral_source_spec h
+
+example {f alpha : ℝ → ℝ} {a b : ℝ} (h : RSIntegrable f alpha a b) :
+    rsTaggedCommonLimit a b f alpha (rsIntegral f alpha a b h) :=
+  rsIntegral_spec h

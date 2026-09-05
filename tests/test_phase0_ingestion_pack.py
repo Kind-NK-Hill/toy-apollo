@@ -11,8 +11,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.core.settings import Settings  # noqa: E402
-from src.toy_apollo.phase0_ingestion_pack import (  # noqa: E402
+from formalization_engine.core.settings import Settings  # noqa: E402
+from formalization_engine.phase0_ingestion_pack import (  # noqa: E402
     apply_phase0_pack,
     validate_phase0_pack,
     write_phase0_pack,
@@ -30,7 +30,8 @@ def make_settings(root: Path) -> Settings:
         phase2_prompt_packs_dir=root / "phase2_prompt_packs",
         phase2_softdep_packs_dir=root / "phase2_softdep_packs",
         error_logs_dir=root / "error_logs",
-        toyapollo_output_dir=root / "ToyApollo" / "Output",
+        canonical_lean_dir=root / "ProbabilityTheory",
+        canonical_manifest_required=False,
         aristotle_outbox_dir=root / "aristotle_outbox",
         aristotle_archives_dir=root / "aristotle_archives",
         mathlib_index_file=root / "mathlib_index.faiss",
@@ -84,7 +85,7 @@ class Phase0IngestionPackTests(unittest.TestCase):
             pdf_path.write_bytes(b"%PDF fixture placeholder")
 
             with patch(
-                "src.toy_apollo.phase0_ingestion_pack._extract_pdf_pages",
+                "formalization_engine.phase0_ingestion_pack._extract_pdf_pages",
                 return_value="9 Moment Generating Functions\n9.1 Moments and Moment Generating Functions",
             ):
                 pack_dir = write_phase0_pack(pdf_path, "157-160", "chapter9-moments-mgf", settings)
@@ -226,7 +227,7 @@ class Phase0IngestionPackTests(unittest.TestCase):
         env = os.environ.copy()
         env.pop("DEEPSEEK_API_KEY", None)
         result = subprocess.run(
-            [sys.executable, str(REPO_ROOT / "run_chapter.py"), "-h"],
+            [sys.executable, "-m", "formalization_engine", "-h"],
             capture_output=True,
             text=True,
             cwd=str(REPO_ROOT),

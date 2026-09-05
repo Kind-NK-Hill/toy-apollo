@@ -11,11 +11,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.ledger_manager import (  # noqa: E402
+from formalization_engine.ledger_manager import (  # noqa: E402
     LedgerBasisRebindConflictError,
     TaskStatus,
 )
-from src.toy_apollo.phase2_basis_rebind import (  # noqa: E402
+from formalization_engine.phase2_basis_rebind import (  # noqa: E402
     AppliedReviewBasisRebindError,
     _materialize_receipt_before_cas,
     _next_receipt_path,
@@ -32,7 +32,7 @@ from src.toy_apollo.phase2_basis_rebind import (  # noqa: E402
     validate_rebind_basis_delta_with_accepted_output_advancements,
     validate_rebind_chain_tip,
 )
-from src.toy_apollo.phase2_pack_shared.io import sha256_json, sha256_text  # noqa: E402
+from formalization_engine.phase2_pack_shared.io import sha256_json, sha256_text  # noqa: E402
 from tests.phase2_review_test_support import Phase2ReviewTestSupport  # noqa: E402
 
 
@@ -45,7 +45,7 @@ class AppliedReviewBasisRebindLedgerTests(Phase2ReviewTestSupport, unittest.Test
             with self.subTest(failure_point=failure_point), tempfile.TemporaryDirectory() as tmp:
                 receipt_path = Path(tmp) / "basis_rebind_receipt_v1.json"
                 land_cas = Mock(return_value={"landed": True})
-                target = f"src.toy_apollo.phase2_basis_rebind.os.{failure_point}"
+                target = f"formalization_engine.phase2_basis_rebind.os.{failure_point}"
                 with patch(target, side_effect=OSError(f"injected {failure_point} failure")):
                     with self.assertRaisesRegex(
                         AppliedReviewBasisRebindError,
@@ -274,7 +274,7 @@ class AppliedReviewBasisRebindLedgerTests(Phase2ReviewTestSupport, unittest.Test
                 "official_output_file": "thm.lean",
                 "official_output_exists": True,
                 "official_output_hash": "thm-hash",
-                "official_output_imports": ["import ToyApollo.Output.def_6_2"],
+                "official_output_imports": ["import ProbabilityTheory.def_6_2"],
             }
         ]
         if include_added:
@@ -293,7 +293,7 @@ class AppliedReviewBasisRebindLedgerTests(Phase2ReviewTestSupport, unittest.Test
                     "official_output_file": "ex.lean",
                     "official_output_exists": True,
                     "official_output_hash": "ex-hash",
-                    "official_output_imports": ["import ToyApollo.Output.def_6_2"],
+                    "official_output_imports": ["import ProbabilityTheory.def_6_2"],
                 },
             )
         return {
@@ -435,7 +435,7 @@ class AppliedReviewBasisRebindLedgerTests(Phase2ReviewTestSupport, unittest.Test
             "official_output_file": "thm.lean",
             "official_output_exists": True,
             "official_output_hash": "a" * 64,
-            "official_output_imports": ["import ToyApollo.Output.def_6_2"],
+            "official_output_imports": ["import ProbabilityTheory.def_6_2"],
         }
         prior = {**origin, "official_output_hash": "b" * 64}
         current = {**origin, "official_output_hash": "c" * 64}
@@ -583,7 +583,7 @@ class AppliedReviewBasisRebindLedgerTests(Phase2ReviewTestSupport, unittest.Test
                 "official_output_file": "thm.lean",
                 "official_output_exists": True,
                 "official_output_hash": "b" * 64,
-                "official_output_imports": ["import ToyApollo.Output.def_6_2"],
+                "official_output_imports": ["import ProbabilityTheory.def_6_2"],
             }
         )
 
@@ -619,7 +619,7 @@ class AppliedReviewBasisRebindLedgerTests(Phase2ReviewTestSupport, unittest.Test
                 "official_output_file": "thm.lean",
                 "official_output_exists": True,
                 "official_output_hash": "b" * 64,
-                "official_output_imports": ["import ToyApollo.Output.def_6_2"],
+                "official_output_imports": ["import ProbabilityTheory.def_6_2"],
             }
         )
         dirty_pending = json.loads(json.dumps(pending))
@@ -650,7 +650,7 @@ class AppliedReviewBasisRebindLedgerTests(Phase2ReviewTestSupport, unittest.Test
             )
             shadow = settings.output_lean_files_dir / "general" / "ex_6_1_1.lean"
             shadow.parent.mkdir(parents=True)
-            shadow_text = "import ToyApollo.Output.def_6_2\n"
+            shadow_text = "import ProbabilityTheory.def_6_2\n"
             shadow.write_text(shadow_text, encoding="utf-8")
             shadow_hash = sha256_text(shadow_text)
             ledger.ledger["tasks"]["ex_6_1_1"].update(
@@ -665,7 +665,7 @@ class AppliedReviewBasisRebindLedgerTests(Phase2ReviewTestSupport, unittest.Test
                     "official_output_exists": True,
                     "official_output_file": str(shadow),
                     "official_output_hash": shadow_hash,
-                    "official_output_imports": ["import ToyApollo.Output.def_6_2"],
+                    "official_output_imports": ["import ProbabilityTheory.def_6_2"],
                 }
             )
 
@@ -697,7 +697,8 @@ class AppliedReviewBasisRebindLedgerTests(Phase2ReviewTestSupport, unittest.Test
         settings = SimpleNamespace(
             plans_dir=plans_dir,
             phase2_prompt_packs_dir=root / "phase2_prompt_packs",
-            toyapollo_output_dir=root / "ToyApollo" / "Output",
+            canonical_lean_dir=root / "ProbabilityTheory",
+            canonical_manifest_required=False,
             output_lean_files_dir=root / "output_lean_files",
         )
         ledger = SimpleNamespace(
@@ -924,7 +925,7 @@ class AppliedReviewBasisRebindLedgerTests(Phase2ReviewTestSupport, unittest.Test
             root,
             dependencies=["def_6_2"],
         )
-        output_path = settings.toyapollo_output_dir / "ex_6_1_1.lean"
+        output_path = settings.canonical_lean_dir / "ex_6_1_1.lean"
         output_path.parent.mkdir(parents=True)
         output_text = f"{import_line}\n\ntheorem downstream : True := by trivial\n"
         output_path.write_text(output_text, encoding="utf-8")
@@ -1011,7 +1012,7 @@ class AppliedReviewBasisRebindLedgerTests(Phase2ReviewTestSupport, unittest.Test
         with tempfile.TemporaryDirectory() as tmp:
             ledger, settings, addition = self._completed_consumer_fixture(
                 Path(tmp),
-                import_line="import ToyApollo.Output.def_6_2",
+                import_line="import ProbabilityTheory.def_6_2",
             )
             self._bind_completed_consumer_review(ledger, settings, addition)
             advancement = self._accepted_output_advancement(addition)
@@ -1044,7 +1045,7 @@ class AppliedReviewBasisRebindLedgerTests(Phase2ReviewTestSupport, unittest.Test
         for label in cases:
             with self.subTest(label=label), tempfile.TemporaryDirectory() as tmp:
                 dependencies = [] if label == "no_hard_dep" else ["def_6_2"]
-                import_line = "import Mathlib" if label == "import_mismatch" else "import ToyApollo.Output.def_6_2"
+                import_line = "import Mathlib" if label == "import_mismatch" else "import ProbabilityTheory.def_6_2"
                 ledger, settings, addition = self._completed_consumer_fixture(
                     Path(tmp),
                     import_line=import_line,
@@ -1099,7 +1100,7 @@ class AppliedReviewBasisRebindLedgerTests(Phase2ReviewTestSupport, unittest.Test
             root = Path(tmp)
             ledger, settings, addition = self._completed_consumer_fixture(
                 root,
-                import_line="import ToyApollo.Output.def_6_2",
+                import_line="import ProbabilityTheory.def_6_2",
             )
             completed = _validate_added_consumer(
                 task_id="def_6_2",
@@ -1191,14 +1192,14 @@ class AppliedReviewBasisRebindLedgerTests(Phase2ReviewTestSupport, unittest.Test
         self.assertEqual(normalized["phase2_status"], "pass")
 
     def test_cli_requires_and_parses_all_basis_rebind_cas_values(self):
-        from src.toy_apollo.cli import app as cli_app
+        from formalization_engine.cli import app as cli_app
 
         digest = "a" * 64
         with patch.object(
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--phase2-mode",
@@ -1226,7 +1227,7 @@ class AppliedReviewBasisRebindLedgerTests(Phase2ReviewTestSupport, unittest.Test
             sys,
             "argv",
             [
-                "toy-apollo",
+                "formalize",
                 "--phase",
                 "2",
                 "--phase2-mode",

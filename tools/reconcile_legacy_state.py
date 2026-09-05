@@ -3,21 +3,15 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-
-REPO_ROOT = Path(__file__).resolve().parents[1]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
-
-from src.toy_apollo.state_store import refuse_legacy_ledger_write
+from formalization_engine.state_store import refuse_legacy_ledger_write
 
 try:
-    from src.ledger_manager import TaskStatus
+    from formalization_engine.ledger_manager import TaskStatus
 
     VALID_STATUSES = {s.value for s in TaskStatus}
 except Exception:
@@ -35,7 +29,7 @@ except Exception:
     }
 
 
-LEGACY_ROOT_DEFAULT = REPO_ROOT.parent / "toy-apollo-archive-20260508"
+LEGACY_ROOT_DEFAULT = Path(r"D:\Grad_Study\Practimum\Formalization\toy-apollo-archive-20260508")
 CURRENT_LEDGER_DEFAULT = Path("project_ledger.json")
 REPORT_DIR_DEFAULT = Path("reports/legacy_reconcile")
 

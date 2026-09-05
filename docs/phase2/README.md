@@ -4,7 +4,7 @@ For chapter-wide/task-set review, state reconciliation, `auto-loop`, or
 existing-output batch behavior, read
 [agent_review_contract.md](agent_review_contract.md).
 
-Phase2 turns one task candidate into an official ToyApollo output only through
+Phase2 turns one task candidate into an official ProbabilityTheoryFormalization output only through
 three completion gates:
 
 1. Build gate: the candidate must build.
@@ -27,11 +27,11 @@ is a correct stop signal for rewrite planning, not a completion result.
 Use the normal path in [workflow.md](workflow.md):
 
 ```powershell
-python .\run_chapter.py --phase 2 --phase2-mode pack --tasks <task_id>
+formalize --phase 2 --phase2-mode pack --tasks <task_id>
 # edit phase2_prompt_packs/<task_id>/draft.lean
-python .\run_chapter.py --phase 2 --phase2-mode build-check --tasks <task_id>
-python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject candidate
-python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks <task_id> --review-result <path>
+formalize --phase 2 --phase2-mode build-check --tasks <task_id>
+formalize --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject candidate
+formalize --phase 2 --phase2-mode review-apply --tasks <task_id> --review-result <path>
 ```
 
 For Math Review Gate tasks, insert:
@@ -62,7 +62,7 @@ is repair evidence, not a completion state, unless it is recorded through
 - [artifacts.md](artifacts.md): authority files versus cache/report/history.
 - [tools.md](tools.md): short notes for diagnostics-only tools.
 - [output_auxiliary_modules.md](output_auxiliary_modules.md): classification
-  for non-task `ToyApollo/Output` support, bridge, family-member, and retired
+  for non-task `ProbabilityTheory` support, bridge, family-member, and retired
   build-probe modules.
 - [../interface_dependency_policy.md](../interface_dependency_policy.md): the
   textbook-first, bridge-then-Mathlib policy for shared mathematical
@@ -72,10 +72,11 @@ is repair evidence, not a completion state, unless it is recorded through
 
 ## Non-Default Material
 
-Historical runbooks, status snapshots, classification policy notes, debt
-cleanup notes, and old review-loop docs are retained in the private evidence
-plane and Git history. They are useful evidence, not public Phase 2 entry
-points. Old step/rescue records are historical material, not an operator path.
+The `archive/` directory contains historical runbooks, status snapshots,
+classification policy notes, debt cleanup notes, and old review-loop docs. They
+are useful evidence, not default Phase2 entry points.
+May 2026 step/rescue records under the root archive are historical material, not
+an operator path.
 
 ## Core Rule
 

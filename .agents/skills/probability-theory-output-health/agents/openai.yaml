@@ -1,0 +1,4 @@
+interface:
+  display_name: "ProbabilityTheory Output Health"
+  short_description: "Audit and refactor Phase 2 output support safely"
+  default_prompt: "Use $probability-theory-output-health to scan or refactor ProbabilityTheory output health."

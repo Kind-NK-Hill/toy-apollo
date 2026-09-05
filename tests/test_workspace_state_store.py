@@ -8,21 +8,21 @@ from contextlib import closing
 from pathlib import Path
 from unittest.mock import patch
 
-from src.ledger_manager import LedgerDangerousStateError, TaskStatus
-from src.toy_apollo.core.sqlite_ledger import SQLiteLedgerManager
-from src.toy_apollo.state_migration import (
+from formalization_engine.ledger_manager import LedgerDangerousStateError, LedgerManager, TaskStatus
+from formalization_engine.core.sqlite_ledger import SQLiteLedgerManager
+from formalization_engine.state_migration import (
     MigrationReport,
     import_workspace_review_binding,
     rebuild_workspace_database,
 )
-from src.toy_apollo.state_review import record_review_apply_state
-from src.toy_apollo.state_reconcile import (
+from formalization_engine.state_review import record_review_apply_state
+from formalization_engine.state_reconcile import (
     discover_formal_plan_task_ids,
     discover_runtime_support_files,
     is_task_owned_path,
     task_id_from_path,
 )
-from src.toy_apollo.state_store import (
+from formalization_engine.state_store import (
     StateIntegrityError,
     StateDatabaseMissingError,
     StateStoreError,
@@ -89,7 +89,7 @@ class WorkspaceStateStoreTests(unittest.TestCase):
                 task_id="thm_8_6",
                 files={"ToyApollo/Output/shared_core.lean": support_path.read_bytes()},
                 primary_path="ToyApollo/Output/shared_core.lean",
-                source_repo="toy_apollo",
+                source_repo="formalization_engine",
             ).primary_hash
             projection_path = root / "phase2_prompt_packs" / "thm_8_6" / "subject_support_projection.json"
             projection_path.parent.mkdir(parents=True)
@@ -145,7 +145,7 @@ class WorkspaceStateStoreTests(unittest.TestCase):
     def test_chapters_two_to_four_formal_plan_catalog_is_exact(self):
         plans_dir = Path(__file__).resolve().parents[1] / "plans"
         if not plans_dir.is_dir():
-            self.skipTest("private formal-plan corpus is not included in the public source snapshot")
+            self.skipTest("requires private formal-plan corpus fixture")
         task_ids = discover_formal_plan_task_ids(plans_dir, chapters=(2, 3, 4))
         counts = {
             chapter: sum(1 for task_id in task_ids if task_id.split("_", 2)[1] == str(chapter))
@@ -287,7 +287,7 @@ class WorkspaceStateStoreTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             runtime = Path(tmp) / "runtime"
             runtime.mkdir()
-            state_path = canonical_state_path(runtime)
+            state_path = canonical_state_path(runtime.parent / "ProbabilityTheoryFormalization-artifacts")
             WorkspaceStateStore(state_path).initialize()
             with self.assertRaises(StateStoreError):
                 refuse_legacy_ledger_write(runtime, operation="test legacy write")
@@ -704,6 +704,106 @@ class WorkspaceStateStoreTests(unittest.TestCase):
                 )
             self.assertFalse(state_path.exists())
 
+    def test_existing_sqlite_campaign_never_loads_legacy_json(self):
+        for read_only in (False, True):
+            for legacy_state in ("missing", "corrupt"):
+                with self.subTest(read_only=read_only, legacy_state=legacy_state), tempfile.TemporaryDirectory() as tmp:
+                    root = Path(tmp)
+                    legacy = root / "project_ledger.json"
+                    if legacy_state == "corrupt":
+                        legacy.write_bytes(b"{corrupt historical evidence")
+                    store = WorkspaceStateStore(root / "state.sqlite3")
+                    store.import_campaign_ledger(
+                        campaign_id="workspace:active", artifact_root=root,
+                        ledger={"tasks": {}, "symbols": {}, "marker": "sqlite authority"},
+                    )
+                    before = store.path.read_bytes()
+                    with patch.object(
+                        LedgerManager, "_load_ledger",
+                        side_effect=AssertionError("existing campaign must not read legacy JSON"),
+                    ):
+                        ledger = SQLiteLedgerManager(
+                            state_store=store, artifact_root=root, legacy_ledger_path=legacy,
+                            campaign_id="workspace:active", read_only=read_only,
+                        )
+                    self.assertEqual(ledger.ledger["marker"], "sqlite authority")
+                    self.assertEqual(store.path.read_bytes(), before)
+                    if legacy_state == "corrupt":
+                        self.assertEqual(legacy.read_bytes(), b"{corrupt historical evidence")
+                    else:
+                        self.assertFalse(legacy.exists())
+
+    def test_missing_campaign_rejects_corrupt_legacy_without_import(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            legacy = root / "project_ledger.json"
+            legacy.write_bytes(b"{corrupt historical evidence")
+            store = WorkspaceStateStore(root / "state.sqlite3")
+            store.initialize()
+            with self.assertRaises(LedgerDangerousStateError):
+                SQLiteLedgerManager(
+                    state_store=store, artifact_root=root, legacy_ledger_path=legacy,
+                    campaign_id="workspace:active",
+                )
+            self.assertIsNone(store.load_campaign_ledger("workspace:active"))
+            self.assertEqual(legacy.read_bytes(), b"{corrupt historical evidence")
+
+    def test_sqlite_ledger_import_race_uses_persisted_payload_and_revision(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            legacy = root / "project_ledger.json"
+            legacy.write_text(json.dumps({"tasks": {}, "symbols": {}, "marker": "old JSON"}), encoding="utf-8")
+            store = WorkspaceStateStore(root / "state.sqlite3")
+            store.initialize()
+            original_import = store.import_campaign_ledger
+
+            def competing_import(**kwargs):
+                original_import(**{**kwargs, "ledger": {"tasks": {}, "symbols": {}, "marker": "concurrent import"}})
+                return original_import(**kwargs)
+
+            with patch.object(store, "import_campaign_ledger", side_effect=competing_import):
+                ledger = SQLiteLedgerManager(
+                    state_store=store, artifact_root=root, legacy_ledger_path=legacy,
+                    campaign_id="workspace:active",
+                )
+            self.assertEqual(ledger.ledger["marker"], "concurrent import")
+            persisted, revision = store.load_campaign_ledger("workspace:active")
+            self.assertEqual(ledger._db_revision, revision)
+            ledger.save(force_empty_save=True)
+            self.assertEqual(store.load_campaign_ledger("workspace:active")[0]["marker"], persisted["marker"])
+
+    def test_existing_sqlite_ledger_rejects_incompatible_schema_without_legacy_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            store = WorkspaceStateStore(root / "state.sqlite3")
+            store.import_campaign_ledger(
+                campaign_id="workspace:active", artifact_root=root,
+                ledger={"tasks": {}, "symbols": {}},
+            )
+            with store._connection(write=True) as connection:
+                connection.execute("UPDATE meta SET value = '999' WHERE key = 'schema_version'")
+            with patch.object(LedgerManager, "_load_ledger", side_effect=AssertionError("no legacy fallback")):
+                with self.assertRaisesRegex(StateIntegrityError, "newer than supported"):
+                    SQLiteLedgerManager(
+                        state_store=WorkspaceStateStore(store.path), artifact_root=root,
+                        legacy_ledger_path=root / "project_ledger.json", campaign_id="workspace:active",
+                    )
+
+    def test_read_only_missing_campaign_does_not_import_legacy(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            store = WorkspaceStateStore(root / "state.sqlite3")
+            store.initialize()
+            before = store.path.read_bytes()
+            with patch.object(LedgerManager, "_load_ledger", side_effect=AssertionError("no legacy fallback")):
+                with self.assertRaises(LedgerDangerousStateError):
+                    SQLiteLedgerManager(
+                        state_store=store, artifact_root=root, legacy_ledger_path=root / "project_ledger.json",
+                        campaign_id="workspace:active", read_only=True,
+                    )
+            self.assertEqual(store.path.read_bytes(), before)
+            self.assertIsNone(store.load_campaign_ledger("workspace:active"))
+
     def test_sqlite_ledger_read_only_loads_without_initialize_and_rejects_writes(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "runtime"
@@ -802,7 +902,7 @@ class WorkspaceStateStoreTests(unittest.TestCase):
                     "ToyApollo/Output/thm_1_1_support/core.lean": support_code,
                 },
                 primary_path=str(pack / "candidate_v1.lean"),
-                source_repo="toy_apollo",
+                source_repo="formalization_engine",
                 layout="review_candidate",
             )
             review_input = {

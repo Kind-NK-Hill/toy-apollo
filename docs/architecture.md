@@ -1,158 +1,108 @@
 # Architecture
 
-ToyApollo is a local-first pipeline for converting textbook-scoped probability
-tasks into source-reviewed Lean 4 output. Its central design choice is to keep
-technical validity, semantic fidelity, and landed completion as different
-authorities.
+ProbabilityTheoryFormalization develops AI-assisted textbook formalization
+through separate build, independent review, and apply gates. Python coordinates
+the workflow; Lean checks the formal code; SQLite indexes retained evidence.
 
-## Trust model
+## Runtime and corpus
 
-No single artifact proves that a task is complete:
+- Installed command: `formalize`.
+- CLI routing: `src/formalization_engine/cli/app.py`.
+- Python package: `src/formalization_engine/`; the earlier compatibility package
+  has been retired.
+- Canonical Lean tree: `ProbabilityTheory/chapter_XX/`.
+- Module lookup: `manifest_by_chapter.csv`.
+- Mutable drafts, packs, logs, and state: the separately resolved artifact root.
 
-| Claim | Authority | What it does not prove |
-| --- | --- | --- |
-| The subject elaborates | `candidate_vN.lean` plus `build_result_vN.json` | Source fidelity or proof-route fidelity |
-| The subject matches the source | A current, hash-bound semantic-review result | That the result has been applied |
-| The task is cleanly landed | `review-apply` projecting `phase2_status=pass` | Universal mathematical correctness outside the reviewed basis |
-
-The Interface for this model is deliberately narrow: callers submit a
-task-scoped subject to the gates; the Implementation may collect source,
-dependency, downstream, audit, and freshness evidence behind that Interface.
-This creates Leverage for CLI callers and Locality for review-policy changes.
-
-## Runtime flow
-
-```mermaid
-flowchart TB
-  subgraph P0[Phase 0 — source ingestion]
-    PDF[PDF or page range] --> INPUT[Clean source unit]
-  end
-
-  subgraph P1[Phase 1 — task planning]
-    INPUT --> PACK1[Planning pack]
-    PACK1 --> PLAN[Reviewed task plan]
-  end
-
-  subgraph P2[Phase 2 — formalization]
-    PLAN --> PACK2[Task prompt pack]
-    PACK2 --> CANDIDATE[Lean candidate]
-    CANDIDATE --> BUILD{Build gate}
-    BUILD -- fail --> CANDIDATE
-    BUILD -- pass --> REVIEW{Independent semantic review}
-    REVIEW -- fail / inconclusive --> REPAIR[Structured repair evidence]
-    REPAIR --> CANDIDATE
-    REVIEW -- pass --> APPLY{Apply gate}
-    APPLY --> OUTPUT[Official Task Parent]
-  end
-```
-
-The stable CLI entry is `run_chapter.py`; active routing lives in
-`src/toy_apollo/cli/app.py`. Only Phases 0, 1, and 2 are part of the current
-Interface.
-
-## Source plane and evidence plane
+Only phases 0, 1, and 2 are active CLI phases:
 
 ```mermaid
 flowchart LR
-  subgraph SOURCE[Public source plane]
-    CLI[CLI and Python Modules]
-    LEAN[Lean Task Parents and support]
-    TESTS[Tests and hygiene tools]
-    DOCS[Stable docs]
-    CASES[Eight curated case studies]
-  end
-
-  subgraph EVIDENCE[Private evidence plane]
-    CORPUS[Full source corpus and plans]
-    PACKS[Mutable prompt packs]
-    RECEIPTS[Build/review/apply receipts]
-    BATCH[Batch queues, logs, reports]
-    STATE[Operational SQLite state]
-  end
-
-  SOURCE -->|generates and reads locally| EVIDENCE
-  EVIDENCE -->|sanitized immutable export| CASES
+  S[Source pages] --> I[Clean source unit]
+  I --> P[Task plan]
+  P --> C[Lean candidate]
+  C --> B{Build}
+  B -- failure --> C
+  B -- success --> R{Independent review}
+  R -- fail or inconclusive --> F[Repair with findings]
+  F --> C
+  R -- pass --> A{Recheck evidence and apply}
+  A --> O[Canonical task file]
 ```
 
-The separation is about authority and publication scope, not deletion.
-Evidence remains preserved even when it is ignored by the source repository.
-See [repository_scope.md](repository_scope.md) for exact classifications.
+Source ingestion and planning require source material supplied by the operator.
+The public release includes code and a build manifest, while the owner's source
+corpus, plans, catalog policy, upstream snapshots, and operational database remain
+private. A public clone can compile the corpus and run the isolated demonstration;
+it cannot reconstruct the owner's completion verdict from the build manifest.
 
-## Domain Modules
+## Three separate claims
 
-ToyApollo uses the vocabulary in [`CONTEXT.md`](../CONTEXT.md):
+| Claim | Evidence | Scope |
+| --- | --- | --- |
+| Code compiles | The exact Lean subject and build receipt | Technical validity in that environment |
+| Code matches the requested mathematics | A current, hash-bound independent review | Statement and requested proof-route interpretation |
+| Reviewed code was accepted | Successful `review-apply` with current evidence | The exact accepted subject; not a guarantee of reviewer correctness |
 
-- **Textbook Source** is the mathematical authority. A prompt pack mirrors it
-  but does not replace it.
-- **Task Parent** owns the public Lean statement for one textbook task.
-- **Proof-Layer Support** holds one coherent layer of a task-owned proof.
-- **Interface Support** translates between textbook definitions, local
-  conventions, and Mathlib Interfaces.
-- **Shared Support** is reusable across real task families; extraction merely
-  to shorten a file does not justify this Module.
-- **Source-Statement Risk** records a mismatch that requires a convention or
-  statement decision rather than repeated proof search.
-- **Phase 2 Completion** is landed only by build, independent review, and apply.
+`review-now` prepares the request and exposes the next action. The outer agent or
+operator invokes an independent reviewer; preparation alone does not run a model
+or complete the task. Failed reviews lead to repair, and a changed subject or
+review basis rejects stale evidence before acceptance. Application restores prior
+canonical bytes on failure.
 
-## Python ownership
+The [complete workflow demonstration](workflow_demo.md) exercises these production
+functions with real Lean builds and an isolated SQLite database. Its default
+recorded teaching opinions are replayed in an explicitly simulated protocol
+envelope. They are not new model judgments or textbook-catalog authority. The
+same runner can invoke a separately configured, independent external reviewer.
 
-`src/toy_apollo/` is the target package home. The root-level `src/*.py` Modules
-still contain active compatibility Implementation, so the migration is not
-complete. The current legacy Adapter keeps the stable CLI working while new
-Implementation moves into the package.
+## Lean ownership and verification
 
-This is a temporary Seam, not evidence that two permanent Adapters are needed.
-New code belongs under `src/toy_apollo/`; removing the legacy Adapter requires
-focused import and CLI regression tests.
+The vocabulary in [CONTEXT.md](../CONTEXT.md) separates the task's public statement,
+task-owned proof support, interface translations, and genuinely shared support.
+The authoritative textbook statement is supplied source material; a generated
+prompt pack is its working copy.
 
-## Lean ownership
+For example, build a task and its dependencies with:
 
-`ToyApollo/Output/<task_id>.lean` is the active Task Parent path. A large task
-may own several Proof-Layer Support Modules when each carries one coherent
-proof responsibility. Shared Support requires a second real consumer or a
-stable recurring textbook Interface.
-
-Build success should normally be checked with:
-
-```powershell
-lake build ToyApollo.Output.<task_id>
+```console
+lake build ProbabilityTheory.chapter_08.def_8_5
 ```
 
-The build result is a technical health signal, not semantic completion.
+`lake build ProbabilityTheory` builds every module in the library. This does not
+mean all modules can be imported into a single environment. The supported joint
+chapter imports are checked separately by `tools/check_chapter_imports.py`;
+chapters 1 and 7 retain the documented Kenneth/Mathlib `Partition` boundary.
 
-## Review evidence
+## Review identity and operational state
 
-A valid semantic review binds at least:
+The review binds the source, subject bundle, relevant support/dependencies,
+toolchain, prompt/rubric, and review evidence. The production acceptance decision
+continues to use the complete basis. [Review-basis diagnostics](review_basis_pilot.md)
+explain which dimensions changed without weakening freshness checks. The small
+target-identity experiment is a design probe, not an implemented semantic cache.
 
-- task and source identity;
-- review subject and content hash;
-- prompt and rubric versions;
-- complete review-basis hash;
-- source claims and their Lean landings;
-- public Interface and direct downstream consumers;
-- verdict, `proof_class`, and `completion_class`.
+SQLite is an index over immutable evidence. The legacy JSON ledger remains
+protected import history after database activation. `formalize --status` is a
+read-only roots diagnostic; the full workspace's `formalize state validate --json`
+queries its catalog verdict. Compatible PASS, exact-bundle coverage, typed
+authority, and candidate maintenance are distinct dimensions. See
+[workspace_state.md](workspace_state.md).
 
-The review Interface is the test surface. Tests and callers should exercise the
-same review/apply Seam rather than mutating metadata to manufacture completion.
+Kenneth and historical MAT repositories are external review/evidence sources.
+External PR review binds one exact PR head and never lands it automatically in
+the canonical corpus. The transport fork is not another active refinement tree.
 
-## Operational state
+## Publication and remaining limits
 
-The sibling artifact root owns `state.sqlite3`. It is a rebuildable index over
-retained evidence, not semantic authority by itself. The older
-`project_ledger.json` is frozen compatibility evidence after SQLite activation.
+The [release exporter](repository_scope.md) selects committed source, removes
+source-derived block prose from published Lean, and records source/published
+fingerprints. It does not copy private Git history. The public manifest supports
+build lookup and content checks, not review authority.
 
-`python run_chapter.py --status` is read-only and reports paths resolved for
-the current process. It does not declare global campaign authority.
-
-## Known architectural debt
-
-- Python ownership is split between `src/*.py` and `src/toy_apollo/`.
-- Several Phase 2 Modules expose wide Interfaces and contain multiple domain
-  responsibilities.
-- Python dependency versions and the minimum Python version are not pinned.
-- CI does not yet provide a single format/lint/type/test/docs gate.
-- The public case-study exporter is currently a curated process rather than a
-  dedicated reproducible export command.
-
-These are explicit follow-up areas; the public documentation does not claim
-they are already solved.
+The runtime remains a research system. Some review modules have broad
+responsibilities; dependency versions are not fully locked. Cordis configuration
+initialization is supported, but complete end-to-end operation on a second
+project has not been established. Review comparisons are
+[prepared for prospective execution](review_comparison_pilot.md), with empirical
+quality claims pending independent adjudication.

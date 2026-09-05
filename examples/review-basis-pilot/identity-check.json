@@ -1,0 +1,149 @@
+{
+  "schema_version": "phase2.frozen_target.identity_pilot.v1",
+  "experiment_kind": "synthetic_manifest_identity_check",
+  "baseline": {
+    "target": {
+      "declaration": "theorem eligible_self (n : Nat) (h : Eligible n) : Eligible n",
+      "definition_dependencies": {
+        "Eligible": "def Eligible (n : Nat) : Prop := 0 < n"
+      },
+      "toolchain": {
+        "lean": "leanprover/lean4:v4.19.0",
+        "imports": []
+      }
+    },
+    "proof": "by exact h",
+    "review_evidence": {
+      "rubric": "fixture-v1",
+      "observations": []
+    },
+    "runtime_mirrors": {
+      "status": "awaiting_review",
+      "report": "run-1.json"
+    }
+  },
+  "baseline_fingerprints": {
+    "target_identity": "7c7556ea2b2b77291d1e7eb82864b81908615d0e34bf31db820d34009c474a83",
+    "proof_version": "22bd7482771091d3a7148c433361676a272aa6c4eb662a56892d3c627c633de1",
+    "review_evidence": "5dfca6bbb83c96b09355ea0d6b9becf960bc5f23d0ec7612dd30f9ad663b80d5",
+    "runtime_mirrors": "55f4b37c608bb7b7ff9b993cefda4d184de866d82012edd0ce25e36370cedc5d"
+  },
+  "scenarios": [
+    {
+      "scenario": "unchanged",
+      "changed_identities": [],
+      "expected": [],
+      "check_passed": true,
+      "fingerprints": {
+        "target_identity": "7c7556ea2b2b77291d1e7eb82864b81908615d0e34bf31db820d34009c474a83",
+        "proof_version": "22bd7482771091d3a7148c433361676a272aa6c4eb662a56892d3c627c633de1",
+        "review_evidence": "5dfca6bbb83c96b09355ea0d6b9becf960bc5f23d0ec7612dd30f9ad663b80d5",
+        "runtime_mirrors": "55f4b37c608bb7b7ff9b993cefda4d184de866d82012edd0ce25e36370cedc5d"
+      }
+    },
+    {
+      "scenario": "runtime_status",
+      "changed_identities": [
+        "runtime_mirrors"
+      ],
+      "expected": [
+        "runtime_mirrors"
+      ],
+      "check_passed": true,
+      "fingerprints": {
+        "target_identity": "7c7556ea2b2b77291d1e7eb82864b81908615d0e34bf31db820d34009c474a83",
+        "proof_version": "22bd7482771091d3a7148c433361676a272aa6c4eb662a56892d3c627c633de1",
+        "review_evidence": "5dfca6bbb83c96b09355ea0d6b9becf960bc5f23d0ec7612dd30f9ad663b80d5",
+        "runtime_mirrors": "bd687efcf52e0ebf6719d9e5ae7765b73b614cdd98de4e1d2c6507fe492822c7"
+      }
+    },
+    {
+      "scenario": "proof_only",
+      "changed_identities": [
+        "proof_version"
+      ],
+      "expected": [
+        "proof_version"
+      ],
+      "check_passed": true,
+      "fingerprints": {
+        "target_identity": "7c7556ea2b2b77291d1e7eb82864b81908615d0e34bf31db820d34009c474a83",
+        "proof_version": "6033f6d4dbfbcb1f09fb549e87e66eeeb5d6cf81508937b0809988e96bdd5db4",
+        "review_evidence": "5dfca6bbb83c96b09355ea0d6b9becf960bc5f23d0ec7612dd30f9ad663b80d5",
+        "runtime_mirrors": "55f4b37c608bb7b7ff9b993cefda4d184de866d82012edd0ce25e36370cedc5d"
+      }
+    },
+    {
+      "scenario": "declaration",
+      "changed_identities": [
+        "target_identity"
+      ],
+      "expected": [
+        "target_identity"
+      ],
+      "check_passed": true,
+      "fingerprints": {
+        "target_identity": "a2e99e823dd829b85796a4540af70089c2edd706aa88f9e404eea073c224aa20",
+        "proof_version": "22bd7482771091d3a7148c433361676a272aa6c4eb662a56892d3c627c633de1",
+        "review_evidence": "5dfca6bbb83c96b09355ea0d6b9becf960bc5f23d0ec7612dd30f9ad663b80d5",
+        "runtime_mirrors": "55f4b37c608bb7b7ff9b993cefda4d184de866d82012edd0ce25e36370cedc5d"
+      }
+    },
+    {
+      "scenario": "definition_dependency",
+      "changed_identities": [
+        "target_identity"
+      ],
+      "expected": [
+        "target_identity"
+      ],
+      "check_passed": true,
+      "fingerprints": {
+        "target_identity": "e6decd89f1c97d5fd0af99f97d9c68953ada756e2c87cb1da0745acb8bddca92",
+        "proof_version": "22bd7482771091d3a7148c433361676a272aa6c4eb662a56892d3c627c633de1",
+        "review_evidence": "5dfca6bbb83c96b09355ea0d6b9becf960bc5f23d0ec7612dd30f9ad663b80d5",
+        "runtime_mirrors": "55f4b37c608bb7b7ff9b993cefda4d184de866d82012edd0ce25e36370cedc5d"
+      }
+    },
+    {
+      "scenario": "toolchain",
+      "changed_identities": [
+        "target_identity"
+      ],
+      "expected": [
+        "target_identity"
+      ],
+      "check_passed": true,
+      "fingerprints": {
+        "target_identity": "851813e4a851ec2eb32f10c0bfd927f751126e4c1df7aec52e907ad439430611",
+        "proof_version": "22bd7482771091d3a7148c433361676a272aa6c4eb662a56892d3c627c633de1",
+        "review_evidence": "5dfca6bbb83c96b09355ea0d6b9becf960bc5f23d0ec7612dd30f9ad663b80d5",
+        "runtime_mirrors": "55f4b37c608bb7b7ff9b993cefda4d184de866d82012edd0ce25e36370cedc5d"
+      }
+    },
+    {
+      "scenario": "review_evidence",
+      "changed_identities": [
+        "review_evidence"
+      ],
+      "expected": [
+        "review_evidence"
+      ],
+      "check_passed": true,
+      "fingerprints": {
+        "target_identity": "7c7556ea2b2b77291d1e7eb82864b81908615d0e34bf31db820d34009c474a83",
+        "proof_version": "22bd7482771091d3a7148c433361676a272aa6c4eb662a56892d3c627c633de1",
+        "review_evidence": "0e7d2799b8f45a28fecb4387ac05752f352a5fe1653d1345ff88eeb146da48c3",
+        "runtime_mirrors": "55f4b37c608bb7b7ff9b993cefda4d184de866d82012edd0ce25e36370cedc5d"
+      }
+    }
+  ],
+  "all_checks_passed": true,
+  "authority_effect": "none",
+  "limitations": [
+    "The target/dependency manifest is explicit, not extracted from Lean.",
+    "Declaration edits are identity probes, not new proved theorems.",
+    "No semantic accuracy, model cost, performance, or historical churn improvement is measured.",
+    "No review may be reused on this basis; production exact-hash checks remain unchanged."
+  ]
+}

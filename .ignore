@@ -1,0 +1,41 @@
+# Default ripgrep noise filter for active-source searches.
+#
+# Search-ignore is not Git-ignore and is not a deletion signal.
+# Use `rg --no-ignore` when intentionally auditing archived or generated
+# Phase2 provenance.
+
+src/formalization_engine/backups/
+
+phase0_ingestion_packs/
+phase1_prompt_packs/
+phase2_prompt_packs/
+phase2_softdep_packs/
+phase3_softdep_packs/
+phase3_execution_batches/
+phase3_post_harvest_packs/
+
+aristotle_outbox/
+aristotle_archives/
+formalized_chapters/
+reports/
+error_logs*/
+docs/archive/
+docs/phase2/archive/
+docs/phase2/textbook_complete_targets.json
+docs/phase2_completion_classification.md
+docs/phase2_completion_classification.json
+docs/phase2_ch10_14_clean_debt_surface_audit.md
+docs/phase2_ch10_14_clean_debt_surface_audit.json
+docs/phase2_current_status_snapshot.md
+docs/phase2_current_status_snapshot.json
+docs/phase2_unfinished_tasks_audit.md
+docs/phase2_unfinished_tasks_audit.json
+docs/phase2_source_output_alignment_audit.md
+
+dependency_decisions/
+
+tests/_tmp*/
+plans/legacy/
+inputs/legacy/
+plans/offload_candidates_legacy.json
+project_ledger.backup.json

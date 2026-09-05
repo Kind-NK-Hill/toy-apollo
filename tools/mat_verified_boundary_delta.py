@@ -10,13 +10,13 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.state_boundary_delta_receipt import (  # noqa: E402
+from formalization_engine.state_boundary_delta_receipt import (  # noqa: E402
     BoundaryDeltaReceiptError,
     _atomic_publish_no_replace,
     build_verified_boundary_delta,
     emit_verified_boundary_delta_batch,
 )
-from src.block_id_naming import canonicalize_block_id, is_canonical_block_id  # noqa: E402
+from formalization_engine.block_id_naming import canonicalize_block_id, is_canonical_block_id  # noqa: E402
 
 
 def _task_selection(tasks: list[str], task_files: list[Path]) -> list[str]:

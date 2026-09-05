@@ -4,13 +4,13 @@ Scope: everything under `src/`.
 
 ## Purpose
 
-- `src/*.py` still contains active compatibility-layer runtime logic.
-- `src/toy_apollo/*` is the target package layout for future code ownership.
+- `src/formalization_engine/*` is the canonical package layout and owns the
+  active runtime.
 
 ## Edit Rules
 
-- Prefer adding new code under `src/toy_apollo/*`.
-- Do not assume `src/*.py` is dead code; many package modules still rely on it.
+- Add new runtime code under `src/formalization_engine/*`.
+- Do not add root-level compatibility modules under `src/`.
 - Keep imports and behavior compatible with the stable CLI entry.
 
 ## Verify

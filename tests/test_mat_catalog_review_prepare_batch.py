@@ -8,7 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from src.toy_apollo.state_store import SubjectBundle, sha256_file
+from formalization_engine.state_store import SubjectBundle, sha256_file
 from tools.mat_catalog_review_prepare_batch import (
     PrepareBatchError,
     load_prepare_batch_manifest,
@@ -31,7 +31,7 @@ class ExactReviewPrepareBatchTests(unittest.TestCase):
         self.root.mkdir(parents=True)
         self.addCleanup(shutil.rmtree, self.root)
         self.workspace = self.root / "workspace"
-        self.runtime = self.workspace / "toy-apollo"
+        self.runtime = self.workspace / "ProbabilityTheoryFormalization"
         self.checkout = self.root / "checkout"
         self.builds = self.root / "exact-builds"
         self.output = self.root / "packs"

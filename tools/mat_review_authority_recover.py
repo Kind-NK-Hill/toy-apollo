@@ -10,7 +10,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.state_review_apply_recovery import (  # noqa: E402
+from formalization_engine.state_review_apply_recovery import (  # noqa: E402
     HistoricalReviewApplyRecoveryError,
     build_historical_review_apply_recovery,
 )

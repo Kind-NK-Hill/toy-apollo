@@ -42,7 +42,7 @@ builds Lean, creates a review, or changes rubric/head state. The separate
 ## State projection
 
 Migration discovery recognizes both canonical single-item receipts and the
-`toy-apollo.validated-evidence-bridge-batch-receipt.v1` schema. A batch is fully
+`ProbabilityTheoryFormalization.validated-evidence-bridge-batch-receipt.v1` schema. A batch is fully
 replayed and all active MAT targets are checked before its first write; all
 bindings are then imported under one transaction/savepoint and one batch import
 marker binds the batch hash with the exact item count. A conflict rolls back the

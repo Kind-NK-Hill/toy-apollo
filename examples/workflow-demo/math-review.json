@@ -1,0 +1,53 @@
+{
+  "schema_version": "workflow_demo.math_review.v1",
+  "task_id": "def_demo_frequency",
+  "verdict": "go",
+  "provenance": {
+    "reviewer_identity": "/root/comparison_audit",
+    "reviewed_at": "2026-09-05T10:37:19Z",
+    "role": "independent_read_only_math_reviewer",
+    "scope": "synthetic teaching fixture, not catalog authority",
+    "independent_of_skeleton_author": true,
+    "modified_source_or_candidate": false,
+    "authored_proof_skeleton": false,
+    "method": "同一独立审查者直接读取原始 source.tex 与 math-proof-skeleton.md，执行三个不同重点的审查轮次。三个轮次不是三个独立审查者，也不是随机重复样本。initial.lean、final.lean仅用于核对既有示例上下文，最终判决依据源文与骨架的实际内容，未以既有通过记录代替本次判断。",
+    "compiler_check_performed_by_reviewer": false
+  },
+  "source_sha256": "e6e623dce12b0315acaadfbde4f177b77f82820db684814d8397e19316ec5d10",
+  "proof_skeleton_sha256": "78f94e39c4e7d26a026a7d6372267c2ef174b7e075bd3a1548a4e0b46b94e536",
+  "context_files_sha256": {
+    "initial.lean": "522cd82dd22a7bacef9d89cfebe7cc5625442085135438cd502d942818d3f7ba",
+    "final.lean": "15c6c891fb73d04576378338e1503e8696cae4ccbd90bb9a14c053198f1b1e4d"
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "focus": "源文声明、数据类型与合法定义域",
+      "verdict": "go",
+      "findings": [],
+      "reason": "骨架第1步保留hits、total为自然数，并要求0<total与hits<=total，恰好对应源文规定的域。第2步返回自然数1000*hits/total；在正除数上它是非负整数商，等于源文floor(1000*hits/total)而非精确实数概率。骨架未把该教学定义误称为概率测度定理，未删减源文域条件或排除额外的合法输入。"
+    },
+    {
+      "round": 2,
+      "focus": "公开前提、证明负担与循环论证检查",
+      "verdict": "go",
+      "findings": [],
+      "reason": "新增的两个证明参数都来自源文，分别只承担正观察数和命中数上界的合法性检查。骨架没有要求调用方先证明输出500，也未将等价的目标结论、辅助定理或概率性质改写为输入。2/4调用需要证明的0<4与2<=4是闭合的基础自然数命题，能够直接判定；接口参数即使不参与返回值计算，也仍能约束调用是否合法。未发现额外非源文前提、隐藏证明债务或循环依赖。"
+    },
+    {
+      "round": 3,
+      "focus": "计算证明路线、合法边界与调用迁移",
+      "verdict": "go",
+      "findings": [],
+      "reason": "第3步按定义先得1000*2=2000，再作自然数除法2000/4=500；域证据与该等式均可由Lean闭合计算检查，无需新的数学引理或用户添加的公理。边界检查：total>0时hits=0得到0，hits=total得到1000；total=0和hits>total被接口排除。合法的较小正比率向下取整后可以为0，这符合整数千分计数而非实数概率的源文约定。骨架明确要求同时迁移定义与直接调用，并把仅修定义的中间稿列为尚未完成，路线可执行且未以中间编译状态冒充语义完成。"
+    }
+  ],
+  "authority": {
+    "catalog_authority": false,
+    "candidate_semantic_approval": false,
+    "production_apply_eligible": false,
+    "meaning_of_go": "仅认可这个合成教学修复的数学声明形状与计算路线，允许演示继续其作者和构建步骤；不批准任一动态Lean候选，不替代后续绑定到实际候选的语义审查或应用门禁。",
+    "replay_policy": "以后回放本记录只能表示重用2026-09-05T10:37:19Z这次教学数学审查，不能更新该时间或声称刚完成新的独立审查。它不影响452项正式目录状态。"
+  },
+  "freshness_policy": "source_sha256与proof_skeleton_sha256均为同目录原始文件字节的SHA-256。源文或骨架变化后必须重新审查；不得仅替换旧哈希继续使用此go。"
+}

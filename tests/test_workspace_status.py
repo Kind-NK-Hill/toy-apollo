@@ -7,14 +7,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.toy_apollo.state_store import SubjectBundle, WorkspaceStateStore
-from src.toy_apollo.task_catalog import (
+from formalization_engine.state_store import SubjectBundle, WorkspaceStateStore
+from formalization_engine.task_catalog import (
     CatalogFamily,
     CatalogModule,
     CatalogTask,
     TaskCatalog,
 )
-from src.toy_apollo.workspace_status import (
+from formalization_engine.workspace_status import (
     analysis_tmp_inventory,
     render_analysis_tmp_index,
     repository_status,
@@ -179,10 +179,28 @@ class WorkspaceStatusTests(unittest.TestCase):
             self.assertTrue(report["valid"])
             self.assertEqual(report["optional_generated_absent"], ["CURRENT_STATUS.md"])
 
+    def test_policy_coverage_ignores_inventory_excluded_top_level_cache(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            (workspace / "active").mkdir()
+            (workspace / ".pytest_cache").mkdir()
+            policy = {
+                "inventory": {"exclude_directory_names": [".pytest_cache"]},
+                "entries": {"active": {"edit_policy": "active"}},
+            }
+
+            report = validate_policy_coverage(workspace, policy)
+
+            self.assertTrue(report["valid"])
+            self.assertEqual(report["unclassified_entries"], [])
+            self.assertEqual(report["ignored_top_level_entries"], [".pytest_cache"])
+            self.assertEqual(report["actual_entry_count"], 2)
+            self.assertEqual(report["declared_entry_count"], 1)
+
     def test_file_inventory_records_actual_purpose_provenance(self):
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp)
-            runtime = workspace / "toy-apollo"
+            runtime = workspace / "ProbabilityTheoryFormalization"
             runtime.mkdir()
             (runtime / "tool.py").write_text(
                 '"""Explain the current workspace state."""\n\ndef main():\n    pass\n',
@@ -201,10 +219,10 @@ class WorkspaceStatusTests(unittest.TestCase):
             policy = {
                 "inventory": {
                     "exclude_directory_names": [],
-                    "semantic_inspection_roots": ["toy-apollo"],
+                    "semantic_inspection_roots": ["ProbabilityTheoryFormalization"],
                 },
                 "entries": {
-                    "toy-apollo": {
+                    "ProbabilityTheoryFormalization": {
                         "role": "active_runtime_repository",
                         "description": "Active runtime.",
                         "authority": "runtime_source",
@@ -233,14 +251,26 @@ class WorkspaceStatusTests(unittest.TestCase):
             files = {row["path"]: row for row in rows if row["record_type"] == "file"}
 
             self.assertEqual(summary["files"], 4)
-            self.assertEqual(files["toy-apollo/tool.py"]["purpose_source"], "module_docstring")
-            self.assertEqual(files["toy-apollo/thm_1_1.lean"]["purpose_source"], "task_catalog")
-            self.assertIn("Task Parent", files["toy-apollo/thm_1_1.lean"]["purpose"])
+            self.assertEqual(
+                files["ProbabilityTheoryFormalization/tool.py"]["purpose_source"],
+                "module_docstring",
+            )
+            self.assertEqual(
+                files["ProbabilityTheoryFormalization/thm_1_1.lean"]["purpose_source"],
+                "task_catalog",
+            )
+            self.assertIn(
+                "Task Parent",
+                files["ProbabilityTheoryFormalization/thm_1_1.lean"]["purpose"],
+            )
             self.assertIn(
                 "Proof-Layer Support",
-                files["toy-apollo/thm_1_1_support.lean"]["purpose"],
+                files["ProbabilityTheoryFormalization/thm_1_1_support.lean"]["purpose"],
             )
-            self.assertIn("Shared Support", files["toy-apollo/shared.lean"]["purpose"])
+            self.assertIn(
+                "Shared Support",
+                files["ProbabilityTheoryFormalization/shared.lean"]["purpose"],
+            )
 
     def test_task_status_keeps_completion_and_current_coverage_separate(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -251,7 +281,7 @@ class WorkspaceStatusTests(unittest.TestCase):
                 task_id="thm_1_1",
                 files={"review/thm_1_1.lean": "theorem t : True := by trivial\n"},
                 primary_path="review/thm_1_1.lean",
-                source_repo="toy_apollo",
+                source_repo="formalization_engine",
                 source_commit="toy",
                 layout="toy",
             )
@@ -300,7 +330,7 @@ class WorkspaceStatusTests(unittest.TestCase):
 
             self.assertTrue(row["compatible_pass"])
             self.assertTrue(row["authority_eligible_pass"])
-            self.assertEqual(row["current_mat_coverage"], "validated_transformation")
+            self.assertEqual(row["current_catalog_coverage"], "validated_transformation")
             self.assertFalse(row["typed_authority"])
 
 

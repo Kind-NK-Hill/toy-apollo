@@ -42,5 +42,5 @@ consumer were reviewed together.
 Both snapshots deliberately collapse the mathematical conditions to a toy
 predicate so they compile quickly and compare only the Interface change. The
 full proof remains in
-[`ToyApollo/Output/thm_14_8.lean`](../../../ToyApollo/Output/thm_14_8.lean);
+[`ProbabilityTheory/chapter_14/thm_14_8.lean`](../../../ProbabilityTheory/chapter_14/thm_14_8.lean);
 the case slice does not claim to reproduce that proof.

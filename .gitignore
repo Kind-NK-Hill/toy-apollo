@@ -4,18 +4,11 @@
 /.lake
 .repl_tmp/
 __pycache__/
-.coverage
-.mypy_cache/
-.pytest_cache/
-.ruff_cache/
-.venv/
-htmlcov/
 *.pyc
 *.pyo
 *.pyd
-*.sqlite3
+*.egg-info/
 
-output_lean_files/
 formalized_chapters/
 reports/
 error_logs/
@@ -28,38 +21,6 @@ phase2_softdep_packs/
 phase3_softdep_packs/
 phase3_execution_batches/
 phase3_post_harvest_packs/
-
-# Local/source-derived corpus. Preserve it outside the public source tree.
-# Public, path-relative excerpts belong under examples/case-studies/.
-inputs/
-plans/
-
-# Historical notes remain available in the private evidence plane and Git
-# history, but do not belong to the current public documentation surface.
-docs/archive/
-docs/phase2/archive/
-docs/plans/
-docs/superpowers/
-
-# Machine/workspace-specific inventory policy is private operational context.
-data/workspace_inventory/
-artifacts_manifest.json
-
-# Generated or private workspace reports; current state is queried locally.
-docs/phase2_ch10_14_clean_debt_surface_audit.*
-docs/phase2_completion_classification.*
-docs/phase2_source_output_alignment_audit.md
-docs/phase2_unfinished_tasks_audit.*
-docs/phase2/textbook_complete_targets.json
-docs/workspace_inventory.md
-
-# Frozen external snapshots and campaign-specific evidence remain private.
-upstream/
-tests/test_kenneth_upstream_provenance.py
-docs/phase2/*_reconciliation.md
-docs/phase2/*_audit_*.md
-docs/phase2/author_errata_confirmations_*.md
-docs/phase2/ch1_kenneth_integration_*.md
 
 aristotle_outbox/
 aristotle_archives/
@@ -78,8 +39,15 @@ _migration_*/
 _rollback/
 _tmp_artifacts/
 tests/_tmp*/
-src/toy_apollo/backups/
+src/formalization_engine/backups/
 .claude/worktrees/
 
 .env
 .env.*
+
+# Private evidence stays outside the public release.
+/inputs/
+/plans/
+/upstream/
+/data/workspace_inventory/
+*.sqlite3

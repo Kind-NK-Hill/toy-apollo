@@ -13,6 +13,12 @@ from tools.prepare_public_snapshot import (
 
 
 class PreparePublicSnapshotTest(unittest.TestCase):
+    def test_multiline_string_whitespace_is_preserved(self) -> None:
+        original = '/- private prose -/\ndef message : String := "a  \n\nb"\n'
+        result = sanitize_task_parent(original, task_id="def_message")
+        self.assertIn('"a  \n\nb"', result.text)
+        self.assertEqual(sanitize_task_parent(result.text, task_id="def_message").text, result.text)
+
     def test_sanitizes_source_excerpt_and_preserves_metadata_and_code(self) -> None:
         original = """import Mathlib
 
@@ -110,7 +116,6 @@ theorem public_code : True := by trivial
         self.assertIn('"/- this is string data, not a comment -/"', result.text)
         self.assertTrue(result.text.startswith("/-\n"))
         self.assertEqual(len(block_comments(result.text)), 1)
-        self.assertNotIn("\n\n\n", result.text)
         self.assertTrue(task_parent_is_public(result.text))
 
     def test_task_parent_policy_fails_closed(self) -> None:

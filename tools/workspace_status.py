@@ -13,7 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.workspace_status import (
+from formalization_engine.workspace_status import (
     WorkspaceStatusError,
     build_workspace_status,
     capture_workspace_baseline,
@@ -32,12 +32,12 @@ def main() -> int:
     parser.add_argument(
         "--policy",
         type=Path,
-        default=REPO_ROOT / "data" / "workspace_inventory" / "policy_v1.json",
+        default=REPO_ROOT / "data" / "workspace_inventory" / "policy_v2.json",
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
-        help="Default: <workspace>/toy-apollo-artifacts/workspace_status",
+        help="Default: <workspace>/ProbabilityTheoryFormalization-artifacts/workspace_status",
     )
     parser.add_argument(
         "--markdown",
@@ -55,7 +55,7 @@ def main() -> int:
     output_dir = (
         args.output_dir.resolve()
         if args.output_dir
-        else workspace_root / "toy-apollo-artifacts" / "workspace_status"
+        else workspace_root / "ProbabilityTheoryFormalization-artifacts" / "workspace_status"
     )
     markdown_path = (
         args.markdown.resolve() if args.markdown else workspace_root / "CURRENT_STATUS.md"

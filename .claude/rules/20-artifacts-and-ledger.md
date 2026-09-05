@@ -2,13 +2,10 @@
 
 ## What The Artifacts Repo Is For
 
-`toy-apollo-artifacts` exists to hold runtime outputs and large generated state so the main repository can stay source-focused.
+`ProbabilityTheoryFormalization-artifacts` exists to hold runtime outputs and large generated state so the main repository can stay source-focused.
 
 Typical artifact sets:
 
-- `inputs/` and `plans/` (private source-derived corpus)
-- `phase0_ingestion_packs/`, `phase1_prompt_packs/`, and
-  `phase2_prompt_packs/`
 - `output_lean_files/`
 - `formalized_chapters/`
 - `reports/`
@@ -31,17 +28,17 @@ Typical artifact sets:
 
 ## Current Runtime Resolution
 
-Settings come from `src/toy_apollo/core/settings.py`:
+Settings come from `src/formalization_engine/core/settings.py`:
 
-- `TOY_APOLLO_RUNTIME_ROOT`
-- `TOY_APOLLO_ARTIFACT_ROOT`
+- `FORMALIZATION_ENGINE_RUNTIME_ROOT`
+- `FORMALIZATION_ENGINE_ARTIFACT_ROOT`
 
 The canonical state database always resolves to the sibling artifacts root;
 campaign/artifact overrides do not move it into a campaign.
 
 ## Ledger Rules
 
-- `toy-apollo-artifacts/state.sqlite3` is the single operational state database and is `ignored-but-protected`.
+- `ProbabilityTheoryFormalization-artifacts/state.sqlite3` is the single operational state database and is `ignored-but-protected`.
 - `project_ledger.json` is frozen legacy evidence after SQLite activation; compatibility code reads its imported copy but must not rewrite the file.
 - `lab_notebook.json` follows the same preserve-by-default rule.
 - Do not delete it as cleanup.
@@ -54,15 +51,13 @@ campaign/artifact overrides do not move it into a campaign.
 - `phase0_ingestion_packs/` and `phase1_prompt_packs/` are prompt-pack handoff state: ignore them, preserve them locally, and archive summaries when needed instead of deleting packs.
 - Chapter 9 prompt packs and related provenance deserve special preserve-before-review handling; do not collapse them into a generic cleanup bucket.
 - Phase 2 prompt packs and Phase 2 Problem soft-dependency packs are generated runtime state. They are normally `must-ignore-but-preserve`, not tracked source.
-- Full input and plan corpora are also preserved privately. Public examples are
-  curated immutable exports, never live runtime authority.
 - Retired provider artifacts are still protected local artifacts. Do not delete them as cleanup, and do not treat them as active workflow inputs.
 
 ## Sync Commands
 
 ```powershell
-.\tools\sync_artifacts.ps1 -Mode push -ArtifactsRepoPath ..\toy-apollo-artifacts -MainRepoPath .
-.\tools\sync_artifacts.ps1 -Mode pull -ArtifactsRepoPath ..\toy-apollo-artifacts -MainRepoPath .
+.\tools\sync_artifacts.ps1 -Mode push -ArtifactsRepoPath ..\ProbabilityTheoryFormalization-artifacts -MainRepoPath .
+.\tools\sync_artifacts.ps1 -Mode pull -ArtifactsRepoPath ..\ProbabilityTheoryFormalization-artifacts -MainRepoPath .
 ```
 
 ## Important Current Gap

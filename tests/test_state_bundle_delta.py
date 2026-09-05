@@ -4,8 +4,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from src.toy_apollo.state_bundle_delta import analyze_current_mat_bundles, compare_bundles
-from src.toy_apollo.state_store import SubjectBundle, WorkspaceStateStore
+from formalization_engine.state_bundle_delta import analyze_current_mat_bundles, compare_bundles
+from formalization_engine.state_store import SubjectBundle, WorkspaceStateStore
 
 
 class BundleDeltaTests(unittest.TestCase):

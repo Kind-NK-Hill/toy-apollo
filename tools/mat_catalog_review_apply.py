@@ -24,26 +24,26 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.phase2_review_decision import evaluate_semantic_review_result
-from src.toy_apollo.phase2_semantic_review import (
+from formalization_engine.phase2_review_decision import evaluate_semantic_review_result
+from formalization_engine.phase2_semantic_review import (
     _validate_review_input_internal_binding,
     render_semantic_review_prompt,
     render_semantic_review_report,
 )
-from src.toy_apollo.state_reconcile import git_file_at_ref
-from src.toy_apollo.state_exact_build_batch import (
+from formalization_engine.state_reconcile import git_file_at_ref
+from formalization_engine.state_exact_build_batch import (
     ExactBuildBatchError,
     catalog_owned_build_modules,
     validate_current_exact_build_receipt,
 )
-from src.toy_apollo.state_store import (
+from formalization_engine.state_store import (
     SubjectBundle,
     WorkspaceStateStore,
     sha256_file,
     sha256_json,
     utc_now,
 )
-from src.toy_apollo.task_catalog import TaskCatalog, load_catalog
+from formalization_engine.task_catalog import TaskCatalog, load_catalog
 
 
 RECEIPT_SCHEMA = "mat.rubric78.review-apply-receipt.v1"
@@ -734,7 +734,7 @@ def main() -> int:
     parser.add_argument(
         "--state",
         type=Path,
-        default=REPO_ROOT.parent / "toy-apollo-artifacts" / "state.sqlite3",
+        default=REPO_ROOT.parent / "ProbabilityTheoryFormalization-artifacts" / "state.sqlite3",
     )
     parser.add_argument(
         "--candidate-root",

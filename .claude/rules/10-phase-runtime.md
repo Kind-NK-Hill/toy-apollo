@@ -3,32 +3,32 @@
 ## Stable Commands
 
 ```powershell
-python .\run_chapter.py -h
-python .\run_chapter.py --status
-python .\run_chapter.py --phase 0 --phase0-mode pack --input <source.pdf> --page-range <start-end> --phase0-output <output_stem>
-python .\run_chapter.py --phase 0 --phase0-mode validate --phase0-output <output_stem>
-python .\run_chapter.py --phase 0 --phase0-mode apply --phase0-output <output_stem>
-python .\run_chapter.py --phase 1 --phase1-mode pack --input .\inputs\<source>.tex
-python .\run_chapter.py --phase 1 --phase1-mode apply --input .\inputs\<source>.tex
-python .\run_chapter.py --phase 1 --phase1-mode apply --input .\inputs
-python .\run_chapter.py --phase 2 --phase2-mode pack --tasks <task_id>
-python .\run_chapter.py --phase 2 --phase2-mode build-check --tasks <task_id>
-python .\run_chapter.py --phase 2 --phase2-mode build-check --tasks <task_id> --candidate <path>
-python .\run_chapter.py --phase 2 --phase2-mode review-pack --tasks <task_id>
-python .\run_chapter.py --phase 2 --phase2-mode review-existing --tasks <task_id>
-python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject candidate
-python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject existing
-python .\run_chapter.py --phase 2 --phase2-mode review-apply --tasks <task_id> --review-result <path>
-python .\run_chapter.py --phase 2 --phase2-mode dependency-reconcile --tasks <task_id> --expected-old-dependencies <dep_id>,<dep_id>
-python .\run_chapter.py --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id>
-python .\run_chapter.py --phase 2 --phase2-mode batch-run --tasks <task_id>,<task_id> --batch-max-actions 1
-python .\run_chapter.py --phase 2 --phase2-mode soft-pack --tasks <problem_ids>
-python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids> --selection <path>
+formalize -h
+formalize --status
+formalize --phase 0 --phase0-mode pack --input <source.pdf> --page-range <start-end> --phase0-output <output_stem>
+formalize --phase 0 --phase0-mode validate --phase0-output <output_stem>
+formalize --phase 0 --phase0-mode apply --phase0-output <output_stem>
+formalize --phase 1 --phase1-mode pack --input .\inputs\<source>.tex
+formalize --phase 1 --phase1-mode apply --input .\inputs\<source>.tex
+formalize --phase 1 --phase1-mode apply --input .\inputs
+formalize --phase 2 --phase2-mode pack --tasks <task_id>
+formalize --phase 2 --phase2-mode build-check --tasks <task_id>
+formalize --phase 2 --phase2-mode build-check --tasks <task_id> --candidate <path>
+formalize --phase 2 --phase2-mode review-pack --tasks <task_id>
+formalize --phase 2 --phase2-mode review-existing --tasks <task_id>
+formalize --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject candidate
+formalize --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject existing
+formalize --phase 2 --phase2-mode review-apply --tasks <task_id> --review-result <path>
+formalize --phase 2 --phase2-mode dependency-reconcile --tasks <task_id> --expected-old-dependencies <dep_id>,<dep_id>
+formalize --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id>
+formalize --phase 2 --phase2-mode batch-run --tasks <task_id>,<task_id> --batch-max-actions 1
+formalize --phase 2 --phase2-mode soft-pack --tasks <problem_ids>
+formalize --phase 2 --phase2-mode soft-apply --tasks <problem_ids> --selection <path>
 ```
 
 `--status` is strictly read-only. It reports roots resolved for this process,
-the presence/value of `TOY_APOLLO_RUNTIME_ROOT` and
-`TOY_APOLLO_ARTIFACT_ROOT`, the artifact-root source, and
+the presence/value of `FORMALIZATION_ENGINE_RUNTIME_ROOT` and
+`FORMALIZATION_ENGINE_ARTIFACT_ROOT`, the artifact-root source, and
 `STATUS_SCOPE=resolved_for_this_process_not_global_authority`. It must not be
 used as global campaign authority and must not create a missing ledger or root.
 
@@ -70,7 +70,7 @@ used as global campaign authority and must not create a missing ledger or root.
   - default workflow is two-stage:
     1. `pack`
     2. edit `draft.lean`
-    3. `build-check` until `lake build ToyApollo.Output.<task_id>` passes
+    3. `build-check` until `lake build <manifest-resolved ProbabilityTheory module>` passes
     4. `review-now --review-subject candidate` for a new candidate, `review-now --review-subject existing` for one runnable official output, or `review-existing-queue` followed by existing-output review/apply in deterministic queue order for a batch existing-output queue
     5. reviewer writes `semantic_review_result_vM.json`
     6. `review-apply`
@@ -85,7 +85,7 @@ used as global campaign authority and must not create a missing ledger or root.
     `batch-run --batch-max-actions 1` may advance a bounded number of selected
     actions, but it only dispatches existing review/auto-loop commands and does
     not decide completion.
-  - if `ToyApollo/Output/<task_id>.lean` is newer than and differs from the
+  - if the manifest-resolved canonical task file is newer than and differs from the
     latest `draft.lean` or build-ready `candidate_vN.lean`, candidate review is
     stale; do not build-check or review that stale candidate. Review the
     official output with `review-now --review-subject existing`, or
@@ -93,6 +93,10 @@ used as global campaign authority and must not create a missing ledger or root.
   - `review-pack` is not a build gate
   - `review-pack`, `review-existing`, and `review-existing-queue` only prepare review materials and are prepare-only/compatibility paths, not the default semantic review entrypoint
   - `review-now` is the current semantic review orchestration entrypoint
+  - `review-now`, `review-fix`, and `auto-loop` expose structured next-action
+    and terminal fields; consume `PHASE2_HANDOFF_JSON` as documented in
+    `docs/phase2/agent_review_contract.md`, not the legacy success flag, to
+    distinguish author/reviewer/diagnoser handoffs from completion
   - semantic review results must include `evidence_review` covering source TeX,
     Lean subject, audit, classification, dependency status, downstream/import
     evidence, ledger status, and hashes; `spine_alignment.source_steps_checked`
@@ -111,7 +115,7 @@ used as global campaign authority and must not create a missing ledger or root.
     dependents and selected soft imports wait until direct source-spine review
     and ordinary `review-apply` clear it.
   - before adding a reusable support theorem or helper, inspect
-    existing `ToyApollo/Output` files, including older textbook outputs,
+    existing `ProbabilityTheory` files, including older textbook outputs,
     definition files, bridge/foundation files, renamed helper variants, and
     downstream-imported files; reuse or register buildable local outputs before
     treating the needed source step as unavailable
@@ -196,19 +200,19 @@ used as global campaign authority and must not create a missing ledger or root.
 
 ## Verification Pattern
 
-- Use `python run_chapter.py --status` for state summary
-- Use `python .\run_chapter.py --phase 2 --phase2-mode build-check --tasks <task_id>` for the default technical gate
-- Use `python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject candidate` for the default semantic review of a build-ready candidate
-- Use `python .\run_chapter.py --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject existing` for existing runnable official output
-- Use `python .\run_chapter.py --phase 2 --phase2-mode auto-loop --tasks <task_id> --review-subject current` for failed/inconclusive semantic-review repair
-- Use `python .\run_chapter.py --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id>` before chapter-wide or task-set routing decisions
-- Use `python .\run_chapter.py --phase 2 --phase2-mode batch-run --tasks <task_id>,<task_id> --batch-max-actions 1` only to dispatch a bounded number of existing review/auto-loop actions
+- Use `formalize --status` for state summary
+- Use `formalize --phase 2 --phase2-mode build-check --tasks <task_id>` for the default technical gate
+- Use `formalize --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject candidate` for the default semantic review of a build-ready candidate
+- Use `formalize --phase 2 --phase2-mode review-now --tasks <task_id> --review-subject existing` for existing runnable official output
+- Use `formalize --phase 2 --phase2-mode auto-loop --tasks <task_id> --review-subject current` for failed/inconclusive semantic-review repair
+- Use `formalize --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id>` before chapter-wide or task-set routing decisions
+- Use `formalize --phase 2 --phase2-mode batch-run --tasks <task_id>,<task_id> --batch-max-actions 1` only to dispatch a bounded number of existing review/auto-loop actions
 - If a hard dependency is explicitly `COMPLETED_WITH_PROOF_DEBT`, skip
   downstream work, run `review-now --review-subject existing` on the blocker,
   and use the ordinary review-fix/auto-loop plus `review-apply` workflow.
 - Never infer proof debt from a historical checklist or ledger summary.
 - Use `review-pack` and `review-existing` only as prepare-only/compatibility material-generation modes
-- Use `python .\run_chapter.py --phase 2 --phase2-mode review-existing-queue` to build the batch Codex reviewer queue from `ToyApollo/Output`
-- Use `python .\run_chapter.py --phase 2 --phase2-mode soft-apply --tasks <problem_ids> --selection <path>` only to persist selected soft imports
-- Use `lake build ToyApollo.Output.<block_id>` as the Lean-facing health signal
-- Avoid treating `lake build ToyApollo` as the only health signal
+- Use `formalize --phase 2 --phase2-mode review-existing-queue` to build the batch Codex reviewer queue from `ProbabilityTheory`
+- Use `formalize --phase 2 --phase2-mode soft-apply --tasks <problem_ids> --selection <path>` only to persist selected soft imports
+- Use `lake build <manifest-resolved ProbabilityTheory module>` as the Lean-facing health signal
+- Avoid treating `lake build ProbabilityTheoryFormalization` as the only health signal

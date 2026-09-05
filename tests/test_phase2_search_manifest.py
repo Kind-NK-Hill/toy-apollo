@@ -8,7 +8,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.phase2_prompt_pack import _search_top_level_decls  # noqa: E402
+from formalization_engine.phase2_prompt_pack import _search_top_level_decls  # noqa: E402
 
 
 class Phase2SearchManifestTests(unittest.TestCase):
@@ -19,7 +19,7 @@ class Phase2SearchManifestTests(unittest.TestCase):
         source.write_text("theorem Cauchy : True := by trivial\n", encoding="utf-8")
         try:
             with patch(
-                "src.toy_apollo.phase2_prompt_pack.subprocess.run",
+                "formalization_engine.phase2_prompt_pack.subprocess.run",
                 return_value=subprocess.CompletedProcess(
                     args=[],
                     returncode=0,
@@ -27,7 +27,7 @@ class Phase2SearchManifestTests(unittest.TestCase):
                     stderr="",
                 ),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack._iter_lean_files",
+                "formalization_engine.phase2_prompt_pack._iter_lean_files",
                 side_effect=AssertionError("full Python scan should be fallback-only"),
             ):
                 hits = _search_top_level_decls(root, "Cauchy", max_results=3, file_cache={})
@@ -45,10 +45,10 @@ class Phase2SearchManifestTests(unittest.TestCase):
         root.mkdir(parents=True, exist_ok=True)
         try:
             with patch(
-                "src.toy_apollo.phase2_prompt_pack.subprocess.run",
+                "formalization_engine.phase2_prompt_pack.subprocess.run",
                 return_value=subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr=""),
             ), patch(
-                "src.toy_apollo.phase2_prompt_pack._iter_lean_files",
+                "formalization_engine.phase2_prompt_pack._iter_lean_files",
                 side_effect=AssertionError("rg miss should not trigger full Python scan"),
             ):
                 hits = _search_top_level_decls(root, "Chebyshev", max_results=3, file_cache={})

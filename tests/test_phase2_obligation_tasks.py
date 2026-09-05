@@ -8,7 +8,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.phase2_obligation_tasks import (  # noqa: E402
+from formalization_engine.phase2_obligation_tasks import (  # noqa: E402
     MAX_OBLIGATION_TASK_ID_LENGTH,
     obligation_task_id,
     promote_all_obligation_tasks,

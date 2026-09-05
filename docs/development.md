@@ -1,143 +1,136 @@
 # Development
 
-This guide takes a fresh source checkout to a focused, verified development
-state. The complete private source corpus and runtime evidence are optional and
-are not required for CLI help, hygiene checks, Lean output builds, or public
-case-study inspection.
-
-## Prerequisites
-
-- Python 3.12 is the currently verified environment. The repository has not
-  yet declared a minimum supported Python version.
-- [Elan](https://github.com/leanprover/elan) for the Lean version pinned by
-  `lean-toolchain`.
-- Git.
-- [ripgrep](https://github.com/BurntSushi/ripgrep) for the repository-surface
-  checks in the full Python test suite.
-
-Windows PowerShell is the primary documented shell. Public CI also runs the
-Python suite and Lean case snapshots on Ubuntu; a broader operating-system
-matrix is not yet present.
+A public checkout supports Python development, Lean corpus builds, case
+inspection, and a complete isolated workflow demonstration. The owner's source
+corpus, task plans, catalog policy and operational SQLite database are not needed
+for those checks and are not distributed in the release.
 
 ## Set up
+
+Use Python 3.11 or newer (`pyproject.toml`); CI runs Python 3.12 on Ubuntu.
+Install Git, [Elan](https://github.com/leanprover/elan) for the version in
+`lean-toolchain`, and [ripgrep](https://github.com/BurntSushi/ripgrep) for repository
+surface tests. Windows PowerShell commands are shown below:
 
 ```powershell
 git clone https://github.com/Kind-NK-Hill/ProbabilityTheoryFormalization.git
 Set-Location .\ProbabilityTheoryFormalization
-
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-pip install -r requirements.txt
-
-lake update
+python -m pip install --editable .
 lake exe cache get
-python .\run_chapter.py -h
+formalize -h
+formalize --status
 ```
 
-`requirements.txt` is currently unpinned. Reproducible dependency locking is a
-known follow-up, not an existing guarantee.
+On Linux/macOS, activate the environment with `source .venv/bin/activate`.
+Use the committed `lake-manifest.json` and `lean-toolchain`; `lake update` is for
+intentional dependency updates or initialization when dependencies have not yet
+been resolved. Python dependencies are not fully locked, and the declared minimum
+version is not a claim of a complete platform/version test matrix.
 
-## Focused verification
+Optional semantic indexing/retrieval needs the additional components in
+`requirements.txt`; install them with `python -m pip install -e ".[retrieval]"`
+(or `python -m pip install -r requirements.txt`). Core prompt packs and the
+workflow demonstration do not require those retrieval dependencies.
 
-Run the smallest check that covers the changed Interface:
+## Run the complete demonstration
 
 ```powershell
-# CLI import and command surface
-python .\run_chapter.py -h
+python tools/run_workflow_demo.py
+```
 
-# Tracked-artifact policy
-python .\tools\check_repo_hygiene.py
+This runs production pack/build/review/apply code, real Lean builds, a rejected
+stale review, and an isolated SQLite database. It preserves its generated evidence
+directory. Default reviews are recorded teaching opinions, explicitly distinct
+from newly executed model reviews. See [workflow_demo.md](workflow_demo.md) for
+the external-reviewer adapter, provenance, and expected outputs.
 
-# Fail-closed Task Parent source-excerpt policy
-python .\tools\prepare_public_snapshot.py
+## Verify the public release
 
-# Public case catalog, timeline, and diversity policy
-python .\tools\check_case_studies.py
+From an unmodified public release checkout:
 
-# One Python test Module
+```powershell
+python tools/check_public_release.py
+python tools/check_formal_corpus.py --publication-map data/publication/corpus_map.json
+python tools/prepare_public_snapshot.py
+python tools/check_case_studies.py
+python tools/check_repo_hygiene.py
+$env:LEAN_NUM_THREADS = "1"
+lake build ProbabilityTheory
+python tools/check_chapter_imports.py
+python -m unittest discover -s tests -p "test_*.py" -v
+```
+
+The thread limit matches CI and bounds peak memory during the corpus build. On
+Linux/macOS, use `export LEAN_NUM_THREADS=1` before the build. Increase it only
+when the machine has sufficient memory for concurrent Lean processes.
+
+The release check compares the published file inventory and normalized UTF-8/LF
+fingerprints. It is expected to detect local edits; it does not grant semantic
+review authority. Publication mappings are generated from committed source by
+the maintainer, not edited to hide a mismatch.
+
+The library build covers all corpus modules and their dependencies. Chapter
+joint-import checks are separate: chapters 1 and 7 retain the Kenneth/Mathlib
+`Partition` boundary. The Python suite includes the Lean definition-interface
+contract; use its normal discovery runner so the contract is actually executed.
+Tests requiring omitted private evidence explicitly skip in the public checkout.
+
+For a focused change:
+
+```powershell
 python -m unittest tests.test_settings
+lake build ProbabilityTheory.chapter_08.def_8_5
+```
 
-# One Lean Task Parent
-lake build ToyApollo.Output.def_8_5
+Compile the preserved historical slices independently:
 
-# All public case snapshots
-Get-ChildItem .\examples\case-studies -Directory | ForEach-Object {
-    lake env lean (Join-Path $_.FullName 'initial.lean')
-    if ($LASTEXITCODE -ne 0) { throw "initial snapshot failed: $($_.Name)" }
-    lake env lean (Join-Path $_.FullName 'final.lean')
-    if ($LASTEXITCODE -ne 0) { throw "final snapshot failed: $($_.Name)" }
+```powershell
+Get-ChildItem .\examples\case-studies -Recurse -Filter *.lean | ForEach-Object {
+    lake env lean $_.FullName
+    if ($LASTEXITCODE -ne 0) { throw "case snapshot failed: $($_.FullName)" }
 }
 ```
 
-For a broader Python run:
+Both rejected and accepted historical slices can compile; the accompanying
+timeline explains the semantic distinction.
+
+## Operate a complete private workspace
+
+Corpus completion and normal textbook generation require the operator's source
+units, plans, catalog policy, source/evidence roots and compatible state. The
+public build manifest deliberately contains only `basename`, `file_path`,
+`module_name`, `chapter` and `sha256`; it cannot replace that catalog.
+
+If those materials are available, configure the roots explicitly:
 
 ```powershell
-python -m unittest discover -s tests -p "test_*.py"
+$env:FORMALIZATION_ENGINE_RUNTIME_ROOT = "C:\work\ProbabilityTheoryFormalization"
+$env:FORMALIZATION_ENGINE_ARTIFACT_ROOT = "C:\work\ProbabilityTheoryFormalization-artifacts"
+formalize --status
+formalize state validate --json
 ```
 
-In a public checkout, tests whose authority is the omitted private evidence
-plane report explicit skips instead of silently fabricating fixtures. The
-source-only runtime, state, review, publication-boundary, and hygiene tests
-still run normally; each skip names the missing private evidence class.
+`--status` reports the current process's roots without writing state. The catalog
+validation command belongs to this complete workspace, not the public-clone
+quick start. `status <task>` and `worklist` refresh repository/GitHub observations
+by default; they do not commit, push, open or merge PRs. See
+[workspace_state.md](workspace_state.md) and [the Chinese operator guide](getting_started.zh-CN.md).
 
-The repository does not yet have a single command combining formatter, lint,
-type, Python test, Lean build, and documentation checks. Do not describe that
-gate as present until it is implemented.
+## Before a pull request
 
-## Local evidence plane
+Describe the changed behavior and evidence boundary, run checks proportional to
+the change, and preserve unrelated work. A changed canonical mathematical task
+still needs the project's independent review/apply process; compiling it does
+not establish source fidelity.
 
-To operate against a private runtime/evidence checkout, point ToyApollo at the
-two roots without changing the CLI:
+Keep complete inputs/plans, catalog policy, upstream snapshots, operational
+databases, live packs, logs and receipts outside public commits. New examples
+need appropriate publication rights, bounded source descriptions, and honest
+AI-assistance attribution. Do not run the source sanitizer with `--apply` against
+the private canonical corpus; the release exporter transforms only its output.
 
-```powershell
-$env:TOY_APOLLO_RUNTIME_ROOT="D:\path\to\toy-apollo"
-$env:TOY_APOLLO_ARTIFACT_ROOT="D:\path\to\toy-apollo-artifacts"
-python .\run_chapter.py --status
-```
-
-`--status` is read-only and describes roots resolved for that process. The
-artifact root owns the operational SQLite database.
-
-Do not commit:
-
-- source-derived `inputs/` or `plans/` corpora;
-- prompt packs;
-- SQLite databases or ledger snapshots;
-- logs, batch queues, receipts, or generated reports;
-- `.env` files, tokens, or credentials.
-
-When a runtime history is worth showing publicly, export a sanitized immutable
-case under `examples/case-studies/` and retain the full original privately.
-
-## Formatting
-
-`.editorconfig` and `.gitattributes` establish UTF-8/LF source conventions.
-Do not run a repository-wide normalization over unrelated work. Format only
-the files in scope until a dedicated formatter/linter gate is adopted.
-
-## Phase 2 changes
-
-Before changing Phase 2 review, apply, status, or batch behavior, read:
-
-- [`phase2/README.md`](phase2/README.md)
-- [`phase2/workflow.md`](phase2/workflow.md)
-- [`phase2/status_contract.md`](phase2/status_contract.md)
-- [`phase2/review_criteria.md`](phase2/review_criteria.md)
-- [`phase2/artifacts.md`](phase2/artifacts.md)
-
-Build success, review success, and applied completion must remain separate
-claims.
-
-## Pull requests
-
-Before opening a pull request:
-
-1. explain the changed Interface and its authority implications;
-2. run focused Python and Lean checks;
-3. show that no generated corpus or local path entered the diff;
-4. run `python tools/prepare_public_snapshot.py` after changing Lean outputs;
-5. document any AI-assisted code or review artifact accurately;
-6. include source-rights information for new examples.
-
-See [`../CONTRIBUTING.md`](../CONTRIBUTING.md) for contribution policy.
+See [CONTRIBUTING.md](../CONTRIBUTING.md) and
+[repository_scope.md](repository_scope.md) for the release/export boundary.

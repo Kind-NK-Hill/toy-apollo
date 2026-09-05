@@ -1,0 +1,126 @@
+---
+name: formalization-engine-phase2-entrypoint
+description: Use when starting, resuming, reviewing, or repairing Formalization Engine Phase 2 proof tasks, chapter batches, semantic review loops, hard-failure decisions, or complex Lean formalization work in this repository.
+---
+
+# Formalization Engine Phase 2 Entrypoint
+
+## Purpose
+
+Use this skill as a thin entry router. It does not replace repository docs or repeat their full rules. It forces the agent to load the right source-of-truth documents before touching Lean files, ledgers, prompt packs, or review state.
+
+## Required Reading
+
+Read these files before doing task-specific work:
+
+1. `AGENTS.md`
+2. `docs/phase2/README.md`
+3. `docs/phase2/workflow.md`
+4. `docs/phase2/status_contract.md`
+5. `docs/phase2/review_criteria.md`
+6. `docs/phase2/artifacts.md`
+
+Read the task-local artifacts next:
+
+1. `plans/<chapter>/<task>.json` or the relevant plan entry
+2. `inputs/<source>.tex` for the original textbook statement and proof
+3. Existing manifest-resolved `ProbabilityTheory/**/*.lean` dependencies and live workspace state (`formalize status <task>`); use frozen `project_ledger.json` only as imported history/compatibility evidence
+4. Existing `phase2_prompt_packs/...` review, build, obligation, audit, and hash artifacts
+5. Classification history, dependency status, downstream/import evidence, and ledger runtime status
+
+## CLI Boundary
+
+- Active execution phases are Phase 0, Phase 1, and Phase 2.
+- `--status` is strictly read-only. Its roots are resolved for the current
+  process and are not global campaign authority; it does not decide or sync
+  plans.
+
+## Start Checklist
+
+Before editing, state the following in working notes:
+
+1. Task id or chapter batch.
+2. Whether the task is proof-bearing.
+3. Original TeX source span inspected.
+4. Existing local dependencies found in `ProbabilityTheory`.
+5. Whether the task is normal or complex under the repository's structural criteria.
+6. Current proof-fidelity target: textbook proof, Mathlib-backed adapter, interface bridge, open debt repair, or beyond-book exception.
+7. Current ledger state and latest valid operation.
+8. Intended route: authoring, build repair, semantic review repair, dependency skip, or hard-failure assessment.
+
+## Complex Task Gate
+
+Treat complexity as a structural property, not a theorem-name whitelist. Use
+`docs/phase2/status_contract.md` and `docs/phase2/review_criteria.md` for the
+task-status projection, adapter/proof-debt boundary, and strict review rules.
+
+## Operation Route
+
+Use the repository workflow rather than ad hoc state changes:
+
+CLI completion [active phase=2]: `pack -> build-check -> review-now -> review-apply`.
+
+0. For a chapter or task-set scope, run `batch-plan` first:
+   `formalize --phase 2 --phase2-mode batch-plan --tasks <task_id>,<task_id>`.
+   Use it to identify clean tasks, fresh-review targets, auto-loop repair
+   targets, and blocked downstream tasks. To advance a bounded amount of work,
+   use `batch-run --batch-max-actions 1`; it only dispatches existing Phase2
+   actions and does not decide completion.
+   For chapter-scale repair, add `--batch-task-kinds theorem,definition
+   --batch-limit 15 --batch-workers <n>` to produce a non-Problem worker queue
+   for subagent assignment.
+1. Generate or inspect the Phase 2 prompt pack.
+2. Read the source grounding and dependency evidence from the pack, but verify against original TeX when the proof matters. Semantic review must also read proof obligations, audit signals, classification history, dependency status, downstream/import evidence, ledger runtime status, and hash/freshness evidence.
+3. Choose the review target route before editing or reviewing:
+   - existing official output already repaired in `ProbabilityTheory/<task>.lean`: `review-now --review-subject existing`;
+   - active candidate repair: edit `draft.lean`, run `build-check`, then `review-now --review-subject candidate`;
+   - stale candidate/draft behind a newer official output: do not build-check or review the stale candidate; use `review-subject existing` or sync official output into `draft.lean` and rerun `build-check`.
+4. Edit candidate Lean only on the active candidate route.
+5. Run local build checks.
+6. Run semantic review on the correct subject.
+7. Apply only through `review-apply` when review passes. For failed existing-output review, use `review-apply` only to record repair-required evidence; do not quarantine official output by default.
+8. After failed or inconclusive review, run `auto-loop` for repair. The normal
+   runtime budget and CLI floor are 15 review rounds and 15 build-check
+   attempts before each review round. Do not replace this with a manual loop
+   that stops after naming a blocker.
+
+Semantic review of a current candidate is independent and read-only. The author
+worker must not review its own candidate. Use a separate reviewer subagent or a
+configured reviewer runner, and ensure the result contains
+`reviewer_independence`.
+
+Historical audit/verify artifacts are read-only context. Use the active
+build/review/apply path for new work.
+
+## Red Flags
+
+Stop and re-read the required docs when any of these occur:
+
+- Claiming `hard_failure` before source proof-spine decomposition, dependency search, and retry-budget evidence.
+- Adding scaffold hypotheses that state the task's main conclusion or hide source mathematics.
+- Treating a Mathlib-backed adapter, bridge theorem, private axiom, support field, or clean ledger row as textbook proof completion.
+- Treating proof obligations, classification, audit, batch state, or ledger status as an independent completion verdict.
+- Treating prompt-pack summaries as a substitute for original TeX.
+- Landing a task without `review-apply`.
+- For selected textbook-completion targets, stopping at `bridge_landed`, `foundation_lemma_landed`, build success, `contract_clean`, or metadata repair instead of returning to the selected public theorem.
+- Stopping after a precise missing bridge/theorem/API is identified, when the
+  task goal is repair rather than diagnosis.
+- Mixing unrelated dirty files, old plan reviews, and new chapter source output in one change.
+- Stopping a chapter batch after one failed task while independent tasks remain.
+
+## Expected Output
+
+When this skill is used, produce a short entry report before implementation:
+
+```text
+Phase 2 entry report:
+- Task scope:
+- Source TeX inspected:
+- Local dependencies:
+- Complexity:
+- Proof-fidelity target:
+- Ledger state:
+- Review evidence bundle:
+- Route:
+- Immediate next command/action:
+```

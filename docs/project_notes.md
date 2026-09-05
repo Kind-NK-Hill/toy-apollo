@@ -31,10 +31,35 @@ review was performed by a human.
 is an **arXiv preprint**, submitted on 29 July 2026, by Shuo Deng and Kenneth W.
 Shum. Its scope is the textbook formalization and its interfaces with Mathlib.
 
-The subsequent review-history evaluation is ongoing. It examines review
-consistency and how findings relate to later repairs. The homepage does not
-report a completed benchmark, a repair success rate, or an isolated causal
-effect of the review procedure.
+The subsequent review-history study has reconstructed historical records and
+completed a first round of descriptive candidate-repair analysis. The fixed
+analysis population contains 3,231 distinct review-evidence signatures, not
+independent executions. Later stages distinguish candidate repair from official
+re-review, external review and duplicate representations of the same review.
+
+The first-round repair analysis uses 230 fail-origin episodes and separates the
+first recorded PASS from later revisions. Its changing risk sets show task
+composition and selection effects; it does not identify a stable within-task
+effect of attempt count. Same-condition independent repeat reviews are absent
+from this historical sample. Automated finding alignment has not become an
+independently adjudicated resolution label.
+
+These are interim descriptions of retained private research data. They are not
+independent mathematical truth labels, reviewer accuracy, a repair success rate,
+or causal evidence that the review process improves outcomes. The source data
+and full analysis release are not bundled into this public runtime release.
+
+Three separately inspectable additions support engineering and future evaluation:
+
+- The [complete workflow demonstration](workflow_demo.md) runs production APIs,
+  real Lean builds and isolated state using recorded teaching opinions by default.
+- The [review-basis pilot](review_basis_pilot.md) explains invalidation dimensions
+  and tests explicit target/proof/evidence/state identities; it does not relax
+  acceptance or measure historical invalidation rates.
+- The [paired review pilot](review_comparison_pilot.md) prepares ordinary and
+  blind-translation-assisted review under matched total budgets. Prospective
+  model runs and independent human adjudication remain pending; synthetic QA is
+  not evidence of quality gain.
 
 ## Related work
 

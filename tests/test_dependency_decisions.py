@@ -8,8 +8,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.toy_apollo.core.settings import Settings  # noqa: E402
-from src.toy_apollo.dependency_decisions import (  # noqa: E402
+from formalization_engine.core.settings import Settings  # noqa: E402
+from formalization_engine.dependency_decisions import (  # noqa: E402
     DependencyDecision,
     load_dependency_decisions,
     record_dependency_decision,
@@ -27,7 +27,8 @@ def make_settings(root: Path) -> Settings:
         phase2_prompt_packs_dir=root / "phase2_prompt_packs",
         phase2_softdep_packs_dir=root / "phase2_softdep_packs",
         error_logs_dir=root / "error_logs",
-        toyapollo_output_dir=root / "ToyApollo" / "Output",
+        canonical_lean_dir=root / "ProbabilityTheory",
+        canonical_manifest_required=False,
         aristotle_outbox_dir=root / "aristotle_outbox",
         aristotle_archives_dir=root / "aristotle_archives",
         mathlib_index_file=root / "mathlib_index.faiss",
