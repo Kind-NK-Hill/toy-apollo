@@ -1,5 +1,8 @@
 # Documentation
 
+For a project introduction, start with the [homepage](../README.md).
+For research context, authorship, and related work, see [project notes](project_notes.md).
+
 Start with the stable public model, then enter operator detail only when the
 task requires it.
 
@@ -10,7 +13,7 @@ task requires it.
 - [`repository_scope.md`](repository_scope.md): what is public, what remains
   private, and how case studies are curated.
 - [`development.md`](development.md): fresh-checkout setup and focused checks.
-- [`../examples/case-studies/`](../examples/case-studies/): two inspectable
+- [`../examples/case-studies/`](../examples/case-studies/): eight inspectable
   review-and-repair histories.
 
 ## Current operator contracts

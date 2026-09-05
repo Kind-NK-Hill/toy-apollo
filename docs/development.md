@@ -22,8 +22,8 @@ matrix is not yet present.
 ## Set up
 
 ```powershell
-git clone https://github.com/Kind-NK-Hill/toy-apollo.git
-Set-Location .\toy-apollo
+git clone https://github.com/Kind-NK-Hill/ProbabilityTheoryFormalization.git
+Set-Location .\ProbabilityTheoryFormalization
 
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
