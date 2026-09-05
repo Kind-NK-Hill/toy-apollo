@@ -1,8 +1,10 @@
 import os
 import sys
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -43,6 +45,10 @@ class LeanREPLTests(unittest.TestCase):
                 self.pid = 43210
                 self.returncode = None
                 self._calls = 0
+                self.kill_calls = 0
+
+            def kill(self):
+                self.kill_calls += 1
 
             def communicate(self, timeout=None):
                 self._calls += 1
@@ -53,32 +59,40 @@ class LeanREPLTests(unittest.TestCase):
                     )
                 return ("", "")
 
-        repl_input = REPO_ROOT / "repl_input_deadbeef.json"
-        if repl_input.exists():
-            repl_input.unlink()
+        for platform in ("nt", "posix"):
+            with self.subTest(platform=platform), tempfile.TemporaryDirectory() as tmp:
+                fake_process = FakeProcess()
+                with patch.dict(os.environ, {}, clear=True):
+                    repl = LeanREPL(str(REPO_ROOT), temp_dir=tmp)
+                repl_input = repl.temp_dir / "repl_input_deadbeef.json"
+                # Replace only the compiler's platform view, not global os.name:
+                # pathlib must retain the host's real filesystem implementation.
+                with patch("formalization_engine.compiler.os", SimpleNamespace(name=platform)), patch(
+                    "formalization_engine.compiler.uuid.uuid4",
+                    return_value="deadbeefcafebabe",
+                ), patch(
+                    "formalization_engine.compiler.subprocess.Popen",
+                    return_value=fake_process,
+                ) as popen_mock, patch(
+                    "formalization_engine.compiler.subprocess.run"
+                ) as run_mock:
+                    run_mock.return_value.returncode = 0
+                    run_mock.return_value.stdout = ""
+                    run_mock.return_value.stderr = ""
+                    result = repl._run_oneshot({"cmd": "#check True"})
 
-        with patch.dict(os.environ, {}, clear=True), patch(
-            "formalization_engine.compiler.uuid.uuid4",
-            return_value="deadbeefcafebabe",
-        ), patch(
-            "formalization_engine.compiler.subprocess.Popen",
-            return_value=FakeProcess(),
-        ) as popen_mock, patch(
-            "formalization_engine.compiler.subprocess.run"
-        ) as run_mock:
-            run_mock.return_value.returncode = 0
-            run_mock.return_value.stdout = ""
-            run_mock.return_value.stderr = ""
-            repl = LeanREPL(str(REPO_ROOT))
-
-            result = repl._run_oneshot({"cmd": "#check True"})
-
-        self.assertIn("timed out after 300 seconds", result["error"])
-        self.assertIn("cleanup: terminated process tree", result["error"])
-        self.assertFalse(repl_input.exists())
-        self.assertEqual(popen_mock.call_args.kwargs["timeout"] if "timeout" in popen_mock.call_args.kwargs else None, None)
-        self.assertEqual(run_mock.call_args.args[0][:4], ["taskkill", "/T", "/F", "/PID"])
-        self.assertEqual(run_mock.call_args.args[0][4], "43210")
+                self.assertIn("timed out after 300 seconds", result["error"])
+                self.assertFalse(repl_input.exists())
+                self.assertIsNone(popen_mock.call_args.kwargs.get("timeout"))
+                if platform == "nt":
+                    self.assertIn("cleanup: terminated process tree via taskkill", result["error"])
+                    run_mock.assert_called_once()
+                    self.assertEqual(run_mock.call_args.args[0], ["taskkill", "/T", "/F", "/PID", "43210"])
+                    self.assertEqual(fake_process.kill_calls, 0)
+                else:
+                    self.assertIn("cleanup: terminated process via kill()", result["error"])
+                    run_mock.assert_not_called()
+                    self.assertEqual(fake_process.kill_calls, 1)
 
 
 if __name__ == "__main__":

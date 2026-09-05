@@ -2925,7 +2925,7 @@
   "manifest_sha256": "d50beac341f1552731e44c63ffbe97fe8dd500d6bfdb41fd730f3180cdff19a6",
   "published_corpus_sha256": "6f73af8b485cae051c4017a82b3d2a28e213f04ace920d03ff5ac6bbb6cd5dac",
   "schema": "formalization-engine.public-corpus-map.v1",
-  "source_commit": "a949e0d816b033087cffed04b209a90e43aac4d1",
+  "source_commit": "ebe367457ea7c5aa2db1f1fe89133c904b1c651d",
   "source_corpus_sha256": "1a3b7918d71469c290a80b500d829d6300832482015a5aa841552195b6d34ebc",
   "source_manifest_sha256": "24042e03cfac9a2a31d37d7c45d8bf9914cb550fb9b6d8da942885e413b4de4c"
 }

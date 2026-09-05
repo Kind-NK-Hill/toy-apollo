@@ -3,13 +3,15 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+from unittest.mock import patch
 
 from formalization_engine.core.settings import Settings
 from formalization_engine.state_migration import rebuild_workspace_database
 from formalization_engine.state_pr_review import (
     ExternalPrReviewError,
     PullRequestObservation,
+    _module_name,
     adopt_external_pr_evidence,
     apply_external_pr_review,
     prepare_external_pr_review,
@@ -20,6 +22,14 @@ from formalization_engine.state_store import SubjectBundle, WorkspaceStateStore
 class ExternalPrReviewTests(unittest.TestCase):
     task_id = "thm_1_1"
     code = "import Mathlib\n\ntheorem exact_pr_fixture : True := by trivial\n"
+
+    def test_pr_module_name_is_portable_to_posix_hosts(self):
+        with patch("formalization_engine.state_pr_review.Path", PurePosixPath):
+            for primary in ("ProbabilityTheory/chapter_01/thm_1_1.lean",
+                            r"ProbabilityTheory\chapter_01\thm_1_1.lean"):
+                with self.subTest(primary=primary):
+                    self.assertEqual(_module_name(primary),
+                                     "ProbabilityTheory.chapter_01.thm_1_1")
 
     def _settings(self, root: Path) -> Settings:
         runtime = root / "ProbabilityTheoryFormalization"

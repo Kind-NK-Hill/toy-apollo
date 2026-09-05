@@ -4,7 +4,7 @@ Scope: everything under `src/formalization_engine/`.
 
 ## Purpose
 
-This is the active package namespace behind `run_chapter.py`.
+This is the active package namespace behind the installed `formalize` command.
 
 ## Local Ownership
 
@@ -21,5 +21,5 @@ This is the active package namespace behind `run_chapter.py`.
 
 ## Verify
 
-- `python run_chapter.py -h`
-- `python run_chapter.py --status`
+- `formalize -h`
+- `formalize --status`

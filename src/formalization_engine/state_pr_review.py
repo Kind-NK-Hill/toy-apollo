@@ -160,7 +160,7 @@ def _require_reviewable_pr(observation: PullRequestObservation) -> None:
 
 
 def _module_name(primary_path: str) -> str:
-    path = Path(primary_path.replace("/", "\\"))
+    path = Path(primary_path.replace("\\", "/"))
     return ".".join(path.with_suffix("").parts)
 
 
@@ -187,7 +187,7 @@ def verify_exact_checkout(
     if status_result.returncode != 0 or status_result.text.strip():
         raise ExternalPrReviewError("Exact PR build checkout must be clean before review preparation.")
 
-    primary_file = checkout / Path(observation.subject.primary_path.replace("/", "\\"))
+    primary_file = checkout / Path(observation.subject.primary_path.replace("\\", "/"))
     if not primary_file.is_file():
         raise ExternalPrReviewError(f"Exact PR primary file is missing: {primary_file}")
     if sha256_file(primary_file) != observation.subject.primary_hash:
@@ -331,7 +331,7 @@ def prepare_external_pr_review(
         pack_dir=pack_dir,
         attempt=1,
         candidate_path=Path(observation.subject.primary_path),
-        candidate_code=(checkout / Path(observation.subject.primary_path.replace("/", "\\"))).read_text(encoding="utf-8"),
+        candidate_code=(checkout / Path(observation.subject.primary_path.replace("\\", "/"))).read_text(encoding="utf-8"),
         build_summary=build_receipt,
         mode="external-pr-review",
         review_subject_kind="external_pr",
@@ -339,7 +339,7 @@ def prepare_external_pr_review(
         build_candidate_file=observation.subject.primary_path,
         build_candidate_hash=observation.subject.primary_hash,
         subject_bundle_override=subject_bundle,
-        review_basis_subject_file=checkout / Path(observation.subject.primary_path.replace("/", "\\")),
+        review_basis_subject_file=checkout / Path(observation.subject.primary_path.replace("\\", "/")),
         review_basis_extra=external_basis,
         review_context_suffix=context_suffix,
     )

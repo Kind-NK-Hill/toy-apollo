@@ -147,6 +147,10 @@ class Phase2PackGenerationTests(Phase2ReviewTestSupport, unittest.TestCase):
                 "obl_obl_obl_obl_obl_prob_14_8_obligation_4_obligation_4_analytic_continuation_"
                 "vitali_montel_convergence_general_vitali_montel_foundation_montel_extract"
             )
+            initial_staging_dir = settings.phase2_prompt_packs_dir / owner_id / ".staging" / "review-apply-1"
+            # /tmp is shorter than the Windows user temp directory. Ensure the
+            # same long-path condition on either host without weakening it.
+            owner_id += "x" * max(0, 261 - len(str(initial_staging_dir)))
             child_id = f"{owner_id}_compact_stage_sequence_data_5f911e86badd"
             pack_dir = settings.phase2_prompt_packs_dir / child_id
             owner_pack_dir = settings.phase2_prompt_packs_dir / owner_id
